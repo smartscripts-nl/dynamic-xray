@@ -444,8 +444,10 @@ function Dialogs:textBoxTabbed(active_tab, args)
 end
 
 function Dialogs:showButtonDialog(title, button_table, no_overlay, show_parent)
+    if not no_overlay then
+        self:showOverlay()
+    end
     local dialog
-    self:showOverlay()
     dialog = ButtonDialogTitle:new{
         title = title,
         no_overlay = no_overlay,
