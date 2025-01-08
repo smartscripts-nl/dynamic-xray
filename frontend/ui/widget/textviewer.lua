@@ -353,7 +353,7 @@ function TextViewer:findCallback(input_dialog, external_search_string, overrule_
         if self.search_value == "" then return end
         UIManager:close(input_dialog)
     elseif external_search_string then
-        self.search_value = KOR.xrayhelpers:removeHitReliabilityIcons(external_search_string)
+        self.search_value = KOR.xrayhelpers:removeMatchReliabilityIndicators(external_search_string)
         self._find_next = false
     end
     local start_pos = 1

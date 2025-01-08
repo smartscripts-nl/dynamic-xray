@@ -778,9 +778,9 @@ function XrayHelpers:ReaderHighlightGenerateXrayInformation(pos)
 end
 
 -- called from ((TextViewer#findCallback)):
-function XrayHelpers:removeHitReliabilityIcons(subject)
+function XrayHelpers:removeMatchReliabilityIndicators(subject)
     for _, indicator in pairs(self.xray_match_reliability_indicators) do
-        subject = subject:gsub(indicator, "")
+        subject = subject:gsub(indicator .. " ", "")
     end
     return subject
 end
@@ -1218,11 +1218,11 @@ function XrayHelpers:generateParagraphInformation(xray_rects, nr)
                 xray_match_reliability_icon = explanation:match(self.separator .. "([^ ]+)")
             end
 
-            local icon = self:getIcon(xray_items[i])
+            local xray_type_icon = self:getIcon(xray_items[i])
 
             -- here the info gets combined:
             -- #((xray items dialog add match reliability explanations))
-            local first_line = prefix .. icon .. name .. explanation
+            local first_line = prefix .. xray_type_icon .. name .. explanation
             first_line = Strings:splitLinesToMaxLength(first_line, self.max_line_length, indent) .. "\n"
             local hit_block = first_line .. description .. "\n" .. aliases .. linkwords
             paragraph_hits_info = paragraph_hits_info .. hit_block
@@ -1231,7 +1231,8 @@ function XrayHelpers:generateParagraphInformation(xray_rects, nr)
             -- needles will be used in ((TextViewer#blockDown)) and  ((TextViewer#blockUp)):
             table.insert(paragraph_headings, {
                 name = name,
-                needle = xray_match_reliability_icon .. icon .. name,
+                -- in paragraph/page info popup first show icon for type of item and importance thereof, and only after that the match reliability indicator icon:
+                needle = xray_type_icon .. xray_match_reliability_icon .. " " .. name,
                 length = hit_block:len(),
                 xray_item = xray_items[i],
             })
