@@ -866,9 +866,12 @@ function TextViewer:showToc(called_from_button)
                 icon = "info",
                 icon_size_ratio = 0.5,
                 callback = function()
-                    local message = KOR.xrayhelpers:getXrayHitsReliabilityExplanation()
+                    local message = KOR.xrayhelpers:getXrayMatchReliabilityExplanation()
                     KOR.dialogs:alertInfo("\n" .. message .. "\n")
-                end
+                end,
+                hold_callback = function()
+                    KOR.dialogs:alertInfo("Show explanation of xray match reliability indicator icons.")
+                end,
             },
     {
             text = Icons.back_bare,

@@ -107,14 +107,19 @@ KOR.dialogs:alertInfo("information")
 -- #((DYNAMIC XRAY PLUGIN))
 --- DYNAMIC XRAY PLUGIN
 
--- main files: plugin ((XrayItems)) and extension ((XrayHelpers))
-
 -- drawing rects for xray info: ((ReaderView#paintTo)) > ((XrayHelpers#ReaderViewGenerateXrayInformation)) > ((XrayHelpers#ReaderViewInitParaOrPageData)) > ((XrayHelpers#ReaderViewLoopThroughParagraphOrPage))
 
 -- adding match reliability indicators for the page/paragraph info popup: ((XrayHelpers#matchNameToParagraph))
--- using these indicators: ((XrayHelpers#generateParagraphInformation)) > ((use xray match reliability indicators))
+-- using these indicators: ((XrayHelpers#generateParagraphInformation)) > ((xray items dialog add match reliability explanations)) & ((use xray match reliability indicators))
 
 -- show paragraph hits: ((ReaderView#paintTo)) > ((XrayHelpers#ReaderViewGenerateXrayInformation)) > ((XrayHelpers#getXrayMarker)) and ((CreDocument#storeCurrentPageParagraphs)) > ((CreDocument#paragraphCleanForXrayMatching)) > ((XrayHelpers#getXrayInfoMatches)): here matches on page or paragraphs evaluated > ((XrayHelpers#drawMarker)) > ((set xray page info rects)) Registry:set("xray_page_info_rects") > ((ReaderHighlight#onTapXPointerSavedHighlight)) > here the information in the popup gets combined: ((XrayHelpers#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)) > ((XrayHelpers#showXrayItemsInfo))
+
+-- automatic toc upon loading of dialog: ((xray paragraph info: after load callback)) > ((TextViewer#showToc))
+-- automatic move of toc popup to top of screen: prop "move_to_top" true in ((Dialogs#showButtonDialog)) - called from ((TextViewer#showToc)) - > ((move ButtonDialogTitle to top))
+
+-- adding button to popup toc for closing toc AND paragraph info dialog: ((TextViewer toc popup: add close button for popup and info dialog))
+
+-- #((tapped word hits)): called from 2 locations in ReaderHighlight: ((ReaderHighlight#onShowHighlightMenu)) and ((ReaderHighlight#lookup)) > ((XrayHelpers#getXrayItemAsDictionaryEntry)); placing exact partial matches in name or linkwords at top and marking them bold: ((XrayHelpers#sortByBoldProp)); placing exact fullname matches at position 1: ((XrayHelpers#getRelatedItems)) in case of needle_matches_fullname == true, which was set in ((XrayHelpers#upgradeNeedleItem))
 
 -- list: ((XrayItems#onShowXrayList))
 
@@ -135,15 +140,6 @@ KOR.dialogs:alertInfo("information")
 -- storing new xray items: called from save button generated with ((XrayItems#getFormButtons)) > ((XrayItems#saveItemCallback)) with modus "add" > ((XrayItems#onSaveNewXrayItem)) > ((XrayHelpers#storeAddedXrayItem)) > ((XrayItems#showListConditionally)) > ((XrayItems#updateXrayItemsTable))
 
 -- storing edited xray items: called from save button generated with ((XrayItems#getFormButtons)) > ((XrayItems#saveItemCallback)) with modus "edit" > ((XrayItems#renameXrayItem)) > ((XrayItems#updateXrayItemsList)) > ((XrayHelpers#storeUpdatedXrayItem)) > ((XrayItems#showListConditionally)) > ((XrayItems#updateXrayItemsTable))
-
--- adding match reliability icons to the items in the dialog with page or paragraphs information: ((XrayHelpers#getMatchReliabilityIcon)) > ((XrayHelpers#generateParagraphInformation)) > ((xray items dialog add match reliability explanations))
-
--- automatic toc upon loading of dialog: ((xray paragraph info: after load callback)) > ((TextViewer#showToc))
--- automatic move of toc popup to top of screen: prop "move_to_top" true in ((Dialogs#showButtonDialog)) - called from ((TextViewer#showToc)) - > ((move ButtonDialogTitle to top))
-
--- adding button to popup toc for closing toc AND paragraph info dialog: ((TextViewer toc popup: add close button for popup and info dialog))
-
--- #((tapped word hits)): called from 2 locations in ReaderHighlight: ((ReaderHighlight#onShowHighlightMenu)) and ((ReaderHighlight#lookup)) > ((XrayHelpers#getXrayItemAsDictionaryEntry)); placing exact partial matches in name or linkwords at top and marking them bold: ((XrayHelpers#sortByBoldProp)); placing exact fullname matches at position 1: ((XrayHelpers#getRelatedItems)) in case of needle_matches_fullname == true, which was set in ((XrayHelpers#upgradeNeedleItem))
 
 
 -- #((MAX DIALOG HEIGHT))

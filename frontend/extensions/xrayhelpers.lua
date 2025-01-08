@@ -1,4 +1,3 @@
-
 local Blitbuffer = require("ffi/blitbuffer")
 local ButtonDialogTitle = require("ui/widget/buttondialogtitle")
 local Colors = require("extensions/colors")
@@ -82,6 +81,16 @@ local XrayHelpers = WidgetContainer:new{
     xray_items_terms = {},
     xray_items_persons = {},
     xray_matches = nil,
+    -- #((xray match reliability indicators))
+    -- these match reliability indicators will be injected in the dialog with page or paragraphs information in ((XrayHelpers#generateParagraphInformation)) > ((xray items dialog add match reliability explanations)):
+    xray_match_reliability_indicators = {
+        full_name = Icons.xray_full_bare,
+        alias = Icons.xray_alias_bare,
+        first_name = Icons.xray_half_left_bare,
+        last_name = Icons.xray_half_right_bare,
+        partial_match = Icons.xray_partial_bare,
+        linked_item = Icons.xray_link_bare,
+    },
     xray_page = nil,
 }
 
@@ -137,11 +146,11 @@ function XrayHelpers:addButton(button_table, xray_item, data)
     -- regular button insert:
     local icon = self:getIcon(xray_item)
     local text = icon .. " " .. Strings:lower(xray_item.name)
-    -- match_reliability_indicators were added in ((XrayHelpers#getMatchReliabilityIcon)):
-    if xray_item.match_reliability_indicator then
-        text = xray_item.match_reliability_indicator .. text
+    -- reliability_icons were added in using ((xray match reliability indicators)):
+    if xray_item.reliability_indicator then
+        text = xray_item.reliability_indicator .. text
     else
-        text = Icons.xray_link_bare .. text
+        text = self.xray_match_reliability_indicators.linked_item .. text
     end
     table.insert(button_table[current_row], {
         text = text,
@@ -165,8 +174,6 @@ end
 
 -- current method called from 2 locations in ReaderHighlight: ((ReaderHighlight#onShowHighlightMenu)) and ((ReaderHighlight#lookup))
 function XrayHelpers:getXrayItemAsDictionaryEntry(tapped_word, ui)
-
-    KOR.xrayitems:initDataJIT()
 
     -- First try to treat the word as the name of an XrayItem:
     local spaces_count = Strings:substrCount(tapped_word, " ")
@@ -193,7 +200,7 @@ function XrayHelpers:getXrayItemAsDictionaryEntry(tapped_word, ui)
                 local item_with_alias_found = false
                 for nr, item in ipairs(copies) do
 
-                    local is_alias = item.match_reliability_indicator and item.match_reliability_indicator == Icons.xray_alias_bare
+                    local is_alias = item.reliability_indicator and item.reliability_indicator == self.xray_match_reliability_indicators.alias
                     local is_non_bold_alias = is_alias and not item.is_bold
                     if is_non_bold_alias then
                         item_with_alias_found = true
@@ -253,7 +260,7 @@ function XrayHelpers:getXrayItemAsDictionaryEntry(tapped_word, ui)
         info = "BOLD ITEMS\n\nItems in bold lay-out contain the selected text in their main name or their aliases. Bold items will always be shown at the start of the group of buttons.\n\nNon-bold items were linked from a bold item or share a link-term with a bold item.",
                                     },
                                     {
-                                        tab = "match reliability icons",
+                                        tab = "match reliability indicators",
                                         info = self:getXrayHitsReliabilityExplanation(),
                                     },
                                 },
@@ -438,7 +445,7 @@ function XrayHelpers:upgradeNeedleItem(needle_item, args, for_relations)
                     and (needle_item.index == item.index or needle_item.name == item.name or item.name:match("^" .. matcher .. "s$")) or (do_match_for_lowercase_variant and uc_first_name:match("^" .. matcher .. "s$"))
                 then
                     if for_relations then
-                        item.match_reliability_indicator = self:getMatchReliabilityIcon("full name")
+                        item.reliability_indicator = self.xray_match_reliability_indicators.full_name
                         item = { item }
                     end
                     -- second returned value is for item was upgraded status and third for upgraded by exact match:
@@ -450,7 +457,7 @@ function XrayHelpers:upgradeNeedleItem(needle_item, args, for_relations)
                 ))
                 then
                     if for_relations then
-                        item.match_reliability_indicator = self:getMatchReliabilityIcon("first name")
+                        item.reliability_indicator = self.xray_match_reliability_indicators.first_name
                     end
                     table.insert(partial_matches, item)
                     upgraded = true
@@ -459,7 +466,7 @@ function XrayHelpers:upgradeNeedleItem(needle_item, args, for_relations)
                     and (item.name:match(matcher .. "s?$") or (do_match_for_lowercase_variant and uc_first_name:match(matcher .. "s?$")))
                 then
                     if for_relations then
-                        item.match_reliability_indicator = self:getMatchReliabilityIcon("last name")
+                        item.reliability_indicator = self.xray_match_reliability_indicators.last_name
                     end
                     table.insert(partial_matches, item)
                     upgraded = true
@@ -469,14 +476,14 @@ function XrayHelpers:upgradeNeedleItem(needle_item, args, for_relations)
                     or (do_match_for_lowercase_variant and uc_first_name:match(matcher))
                 then
                     if for_relations then
-                        item.match_reliability_indicator = self:getMatchReliabilityIcon("part/parts")
+                        item.reliability_indicator = self.xray_match_reliability_indicators.partial_match
                     end
                     table.insert(partial_matches, item)
                     upgraded = true
 
                 elseif i == 2 and item.aliases:match(matcher) then
                     if for_relations then
-                        item.match_reliability_indicator = self:getMatchReliabilityIcon("alias found")
+                        item.reliability_indicator = self.xray_match_reliability_indicators.alias
                     end
                     table.insert(partial_matches, item)
                     upgraded = __
@@ -772,13 +779,10 @@ end
 
 -- called from ((TextViewer#findCallback)):
 function XrayHelpers:removeHitReliabilityIcons(subject)
+    for _, indicator in pairs(self.xray_match_reliability_indicators) do
+        subject = subject:gsub(indicator, "")
+    end
     return subject
-        :gsub(Icons.xray_full_bare, "")
-        :gsub(Icons.xray_alias_bare, "")
-        :gsub(Icons.xray_partial_bare, "")
-        :gsub(Icons.xray_half_left_bare, "")
-        :gsub(Icons.xray_half_right_bare, "")
-        :gsub(Icons.xray_link_bare, "")
 end
 
 function XrayHelpers:resetData()
@@ -869,20 +873,33 @@ function XrayHelpers:showXrayItemsInfo(hits_info, headings, hits_count, extra_bu
                     Dialogs:alertInfo("Show list of xray items and filter that immediately.")
                 end,
             },
+            extra_button3_position = 3,
+            extra_button3 = {
+                icon = "info",
+                icon_size_ratio = 0.58,
+                callback = function()
+                    local message = self:getXrayMatchReliabilityExplanation()
+                    KOR.dialogs:alertInfo("\n" .. message .. "\n")
+                end,
+                hold_callback = function()
+                    Dialogs:alertInfo("Show explanation of xray match reliability indicator icons.")
+                end,
+            },
             extra_button_rows = extra_button_rows,
         })
     end
 end
 
 -- called from ((TextViewer#showToc)) or ((XrayHelpers#getXrayItemAsDictionaryEntry)), for info icon:
-function XrayHelpers:getXrayHitsReliabilityExplanation()
+function XrayHelpers:getXrayMatchReliabilityExplanation()
+    local indicators = self.xray_match_reliability_indicators
     local explanations = {
-        Icons.xray_full_bare .. " full name",
-        Icons.xray_alias_bare .. " alias",
-        Icons.xray_half_left_bare .. " first name",
-        Icons.xray_half_right_bare .. " last name",
-        Icons.xray_partial_bare .. " partial hit",
-        Icons.xray_link_bare .. " linked item",
+        indicators.full_name .. " full name",
+        indicators.alias .. " alias",
+        indicators.first_name .. " first name",
+        indicators.last_name .. " last name",
+        indicators.partial_match .. " partial hit",
+        indicators.linked_item .. " linked item",
     }
     local message = "XRAY RELIABILITY ICONS\n\nThe type of the hit determines the associated icon. Full names, aliases and linked items yield the most reliable hits:\n\n"
     for _, lemma in ipairs(explanations) do
@@ -1194,9 +1211,8 @@ function XrayHelpers:generateParagraphInformation(xray_rects, nr)
                 local noun = xray_items[i].linkwords:match(" ") and "Link-termen: " or "Link-term: "
                 linkwords = Strings:splitLinesToMaxLength(xray_items[i].linkwords, self.max_line_length, indent .. extra_indent, noun) .. "\n"
             end
-
             -- #((use xray match reliability indicators))
-            local xray_match_reliability_icon = Icons.xray_full_bare
+            local xray_match_reliability_icon = self.xray_match_reliability_indicators.full_name
             if has_text(xray_explanations[i]) then
                 explanation = xray_explanations[i]
                 xray_match_reliability_icon = explanation:match(self.separator .. "([^ ]+)")
@@ -1208,7 +1224,6 @@ function XrayHelpers:generateParagraphInformation(xray_rects, nr)
             -- #((xray items dialog add match reliability explanations))
             local first_line = prefix .. icon .. name .. explanation
             first_line = Strings:splitLinesToMaxLength(first_line, self.max_line_length, indent) .. "\n"
-
             local hit_block = first_line .. description .. "\n" .. aliases .. linkwords
             paragraph_hits_info = paragraph_hits_info .. hit_block
 
@@ -1239,6 +1254,8 @@ function XrayHelpers:generateParagraphInformation(xray_rects, nr)
         end
     end -- end for xray_items
     paragraph_hits_count = injected_nr
+    -- correction for indentation of first line in dialog; this should not be necessary:
+    paragraph_hits_info = paragraph_hits_info:gsub("^ +", "")
 
     -- #((xray paragraph info callback))
     -- callback defined in ((set xray info for paragraphs)) and calls ((XrayHelpers#showXrayItemsInfo)):
@@ -1317,11 +1334,10 @@ end
 
 function XrayHelpers:matchAliasesToParagraph(paragraph, hits, explanations, xray_item)
     local aliases = xray_item.aliases
-    local xray_name = xray_item.name
     local alias_table = self:splitByCommaOrSpace(aliases)
     for _, alias in ipairs(alias_table) do
         if paragraph:match(alias) then
-            self:registerParagraphHit(hits, explanations, xray_item, "alias found for \"" .. xray_name .. "\"" .. self.separator .. alias)
+            self:registerParagraphHit(hits, explanations, xray_item, self.separator .. self.xray_match_reliability_indicators.alias .. " " .. alias)
             return true
         end
     end
@@ -1361,7 +1377,10 @@ function XrayHelpers:matchNameToParagraph(paragraph, xray_needle, hits, part_hit
     local matcher = xray_needle:gsub("%-", "%%-")
     if self:isFullWordMatch(paragraph, matcher)
     then
-        self:registerParagraphHit(hits, explanations, xray_item, self.separator .. Icons.xray_full_bare .. " " .. xray_needle)
+
+        -- info: for full matches don't add the xray_needle to the explanation, that would lead to stupid repetion of the full name:
+        self:registerParagraphHit(hits, explanations, xray_item, self.separator .. self.xray_match_reliability_indicators.full_name)
+
         -- #((log family name))
         if has_family_name and not is_lower_case then
             self.families_matched_by_multiple_parts[family_name] = 0
@@ -1407,12 +1426,12 @@ function XrayHelpers:matchNameToParagraph(paragraph, xray_needle, hits, part_hit
     end
 
     if match_found then
-        local match_reliability_indicator = Icons.xray_partial_bare
+        local match_reliability_indicator = self.xray_match_reliability_indicators.partial_match
         matching_parts = matching_parts:gsub(", $", "")
         if left_match_found then
-            match_reliability_indicator = Icons.xray_half_left_bare
+            match_reliability_indicator = self.xray_match_reliability_indicators.first_name
         elseif right_match_found then
-            match_reliability_indicator = Icons.xray_half_right_bare
+            match_reliability_indicator = self.xray_match_reliability_indicators.last_name
         end
         self:registerParagraphHit(hits, explanations, xray_item, self.separator .. match_reliability_indicator .. " " .. matching_parts)
     end
@@ -1428,21 +1447,6 @@ function XrayHelpers:getFullPageText()
         page_text = page_text:gsub("\n$", "", 1)
     end
     return page_text
-end
-
--- these reliability icons will be injected in the dialog with page or paragraphs information in ((XrayHelpers#generateParagraphInformation)) > ((xray items dialog add match reliability explanations)):
-function XrayHelpers:getMatchReliabilityIcon(explanation)
-    if explanation:match("full name") then
-        return Icons.xray_full_bare
-    elseif explanation:match("part/parts") then
-        return Icons.xray_partial_bare
-    elseif explanation:match("alias found") then
-        return Icons.xray_alias_bare
-    elseif explanation:match("last name") then
-        return Icons.xray_half_right_bare
-    end
-    -- explanation matches "first name":
-    return Icons.xray_half_left_bare
 end
 
 function XrayHelpers:isFullWordMatch(paragraph, needle)
@@ -1474,27 +1478,27 @@ function XrayHelpers:matchItemToNeedleItem(extra_items, item, needle_item, inclu
 
     -- include extact fullname match, if allowed:
     if include_name_match and (not tapped_word or tapped_word == item.name) and (item.index == needle_item.index or item.name == needle_item.name or item.name:match("^" .. needle_item.name .. "s$")) then
-        item.match_reliability_indicator = Icons.xray_full_bare
+        item.reliability_indicator = self.xray_match_reliability_indicators.full_name
         table.insert(extra_items, item)
 
     elseif include_name_match and tapped_word and item.name:match("^" .. tapped_word_matcher) then
-        item.match_reliability_indicator = Icons.xray_half_left_bare
+        item.reliability_indicator = self.xray_match_reliability_indicators.first_name
         table.insert(extra_items, item)
 
     elseif include_name_match and tapped_word and item.name:match(tapped_word_matcher .. "$") then
-        item.match_reliability_indicator = Icons.xray_half_right_bare
+        item.reliability_indicator = self.xray_match_reliability_indicators.last_name
         table.insert(extra_items, item)
 
     elseif include_name_match and tapped_word and item.name:match(tapped_word_matcher) then
-        item.match_reliability_indicator = Icons.xray_partial_bare
+        item.reliability_indicator = self.xray_match_reliability_indicators.partial_match
         table.insert(extra_items, item)
 
-        -- include items which in their aliases match to the aliases of the needle item:
+    -- include items which in their aliases match to the aliases of the needle item:
     elseif #aliases > 0 then
         for _, alias in ipairs(aliases) do
             alias = alias:gsub("%-", "%%-")
             if self:hasExactMatch(item.aliases, alias) then
-                item.match_reliability_indicator = Icons.xray_alias_bare
+                item.reliability_indicator = self.xray_match_reliability_indicators.alias
                 table.insert(extra_items, item)
                 break
             end
