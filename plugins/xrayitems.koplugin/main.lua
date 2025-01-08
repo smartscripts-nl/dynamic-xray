@@ -93,10 +93,6 @@ function XrayItems:init()
 end
 
 function XrayItems:_initData()
-    self.xray_items = {}
-    self.xray_items_persons = {}
-    self.xray_items_terms = {}
-
     self.current_ebook_basename = FileDirNames:basename(self.view.document.file)
     self:setSeries()
 
@@ -724,7 +720,7 @@ function XrayItems:onShowXrayList(focus_item, dont_show, filter_immediately)
             end,
         },
         title_submenu_buttontable = title_submenu_buttontable,
-        -- self.current_series should have been set from the doc_props in ((XrayItems#onReaderReady)) > ((XrayItems#_initData)) > ((XrayItems#setSeries)):
+        -- self.current_series should have been set from the doc_props in ((XrayItems#onReaderReady)) > ((XrayHelpers#resetData)) & ((XrayItems#_initData)) > ((XrayItems#setSeries)):
         footer_buttons_left = self.current_series and {
             Button:new({
                 text = Icons.book_bare,
@@ -871,6 +867,7 @@ function XrayItems:onMenuHold(item)
 end
 
 function XrayItems:onReaderReady()
+    XrayHelpers:resetData()
     -- make data available for display of xray items on page or in paragraphs:
     self:_initData()
     XrayHelpers:prepareData()

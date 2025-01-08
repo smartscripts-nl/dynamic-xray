@@ -785,6 +785,12 @@ function XrayHelpers:removeHitReliabilityIcons(subject)
         :gsub(Icons.xray_link_bare, "")
 end
 
+function XrayHelpers:resetData()
+    self.xray_items = {}
+    self.xray_items_persons = {}
+    self.xray_items_terms = {}
+end
+
 -- information for this dialog was generated in ((ReaderView#paintTo)) > ((XrayHelpers#ReaderViewGenerateXrayInformation))
 -- extra buttons (from xray items) were populated in ((XrayHelpers#ReaderHighlightGenerateXrayInformation))
 -- current method called from callback in ((xray paragraph info callback)):
