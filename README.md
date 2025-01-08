@@ -25,3 +25,7 @@ Dynamic Xray uses a stripped down version of my personal extensions system for K
 ## Development history and usage
 
 See [Dynamic Xray plugin · koreader/koreader · Discussion #12964 · GitHub](https://github.com/koreader/koreader/discussions/12964) for the development history of this plugin and for Dynamic Xray usage examples by screenprints and screencasts.
+
+## No support provided
+
+Alas, I don't have time to support this plugin. Use it at your own risk. If and when the KOReader developers community would integrate this plugin into the source code of KOReader, you can probably get support there.
