@@ -111,6 +111,9 @@ KOR.dialogs:alertInfo("information")
 
 -- drawing rects for xray info: ((ReaderView#paintTo)) > ((XrayHelpers#ReaderViewGenerateXrayInformation)) > ((XrayHelpers#ReaderViewInitParaOrPageData)) > ((XrayHelpers#ReaderViewLoopThroughParagraphOrPage))
 
+-- adding match reliability indicators for the page/paragraph info popup: ((XrayHelpers#matchNameToParagraph))
+-- using these indicators: ((XrayHelpers#generateParagraphInformation)) > ((use xray hit reliability indicators))
+
 -- show paragraph hits: ((ReaderView#paintTo)) > ((XrayHelpers#ReaderViewGenerateXrayInformation)) > ((XrayHelpers#getXrayMarker)) and ((CreDocument#storeCurrentPageParagraphs)) > ((CreDocument#paragraphCleanForXrayMatching)) > ((XrayHelpers#getXrayInfoMatches)): here matches on page or paragraphs evaluated > ((XrayHelpers#drawMarker)) > ((set xray page info rects)) Registry:set("xray_page_info_rects") > ((ReaderHighlight#onTapXPointerSavedHighlight)) > here the information in the popup gets combined: ((XrayHelpers#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)) > ((XrayHelpers#showXrayItemsInfo))
 
 -- list: ((XrayItems#onShowXrayList))
@@ -133,7 +136,7 @@ KOR.dialogs:alertInfo("information")
 
 -- storing edited xray items: called from save button generated with ((XrayItems#getFormButtons)) > ((XrayItems#saveItemCallback)) with modus "edit" > ((XrayItems#renameXrayItem)) > ((XrayItems#updateXrayItemsList)) > ((XrayHelpers#storeUpdatedXrayItem)) > ((XrayItems#showListConditionally)) > ((XrayItems#updateXrayItemsTable))
 
--- adding hit reliability icons to the items in the dialog with page or paragraphs information: ((XrayHelpers#getReliabilityIcon)) > ((XrayHelpers#generateParagraphInformation)) > ((xray items dialog add hit reliability icons))
+-- adding hit reliability icons to the items in the dialog with page or paragraphs information: ((XrayHelpers#getMatchReliabilityIcon)) > ((XrayHelpers#generateParagraphInformation)) > ((xray items dialog add hit reliability icons))
 
 -- automatic toc upon loading of dialog: ((xray paragraph info: after load callback)) > ((TextViewer#showToc))
 -- automatic move of toc popup to top of screen: prop "move_to_top" true in ((Dialogs#showButtonDialog)) - called from ((TextViewer#showToc)) - > ((move ButtonDialogTitle to top))
