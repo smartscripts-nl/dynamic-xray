@@ -869,6 +869,8 @@ end
 
 function XrayItems:onReaderReady()
     XrayHelpers:resetData()
+    -- make data available for display of xray items on page or in paragraphs:
+    self:initDataJIT()
 end
 
 -- called from add dialog and other ReaderDictionary and other plugins:
