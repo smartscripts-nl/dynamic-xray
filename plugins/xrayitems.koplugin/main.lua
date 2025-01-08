@@ -93,6 +93,10 @@ function XrayItems:init()
 end
 
 function XrayItems:_initData()
+    self.xray_items = {}
+    self.xray_items_persons = {}
+    self.xray_items_terms = {}
+
     self.current_ebook_basename = FileDirNames:basename(self.view.document.file)
     self:setSeries()
 
@@ -616,7 +620,6 @@ function XrayItems:importXrayItems(nr, book)
 end
 
 function XrayItems:onShowXrayList(focus_item, dont_show, filter_immediately)
-    self:initDataJIT()
     self.item_requested = focus_item
     self.called_from_list = false
     if self.xray_items_chooser_menu then
@@ -721,7 +724,7 @@ function XrayItems:onShowXrayList(focus_item, dont_show, filter_immediately)
             end,
         },
         title_submenu_buttontable = title_submenu_buttontable,
-        -- self.current_series should have been set from the doc_props in ((XrayItems#initDataJIT)) > ((XrayItems#_initData)) > ((XrayItems#setSeries)):
+        -- self.current_series should have been set from the doc_props in ((XrayItems#onReaderReady)) > ((XrayItems#_initData)) > ((XrayItems#setSeries)):
         footer_buttons_left = self.current_series and {
             Button:new({
                 text = Icons.book_bare,
@@ -868,7 +871,9 @@ function XrayItems:onMenuHold(item)
 end
 
 function XrayItems:onReaderReady()
-    XrayHelpers:resetData()
+    -- make data available for display of xray items on page or in paragraphs:
+    self:_initData()
+    XrayHelpers:prepareData()
 end
 
 -- called from add dialog and other ReaderDictionary and other plugins:
@@ -1148,7 +1153,6 @@ function XrayItems:removeContextButtonWhenReaderSearchActive(buttons)
 end
 
 function XrayItems:onShowXrayItem(needle_item, called_from_list, tapped_word)
-    self:initDataJIT()
     self.called_from_list = called_from_list
     -- this will sometimes be the case when we first call up a definition through ReaderHighlight:
     if #self.item_table == 0 then
@@ -2069,11 +2073,6 @@ function XrayItems:addHitsToFormOrDialogTitle(xray_item, title, hits_in_book)
     self.form_item_hits = hits_in_book
 
     return title
-end
-
-function XrayItems:initDataJIT()
-    self:_initData()
-    XrayHelpers:prepareData()
 end
 
 return XrayItems
