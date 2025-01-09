@@ -854,12 +854,11 @@ end
 
 -- called automatically with a after_load_callback from ((XrayHelpers#showXrayItemsInfo)) - see ((call TextViewer TOC))
 -- or from a button: ((TextViewer#getDefaultButtons)) > ((TextViewer toc button))
-function TextViewer:showToc(called_from_button)
+function TextViewer:showToc()
 
     local button_table, buttons_count = ButtonTableGenerators:getVerticallyArrangedButtonTable(
     -- self.paragraph_headings were generated in ((XrayHelpers#ReaderHighlightGenerateXrayInformation)):
         self.paragraph_headings,
-        called_from_button,
         function(i)
             return self:getTocButton(i)
         end,
@@ -1109,7 +1108,7 @@ function TextViewer:getDefaultButtons()
             fgcolor = Colors.lighter_text,
             font_bold = false,
             callback = function()
-                self:showToc("called_from_button")
+                self:showToc()
             end,
             hold_callback = function()
                 KOR.dialogs:alertInfo("Show toc of xray items in current page or in current paragraph.")
