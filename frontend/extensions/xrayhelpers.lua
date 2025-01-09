@@ -55,9 +55,9 @@ local XrayHelpers = WidgetContainer:new{
     min_match_word_length = 4,
     paragraph_texts = nil,
     queries = {
-        create = "INSERT INTO xray_items (ebook, name, short_names, description, xray_type, aliases, linkwords, hits) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        create = "INSERT INTO xray_items (ebook, name, short_names, description, xray_type, aliases, linkwords, matches) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 
-        update = "UPDATE xray_items SET name = ?, short_names = ?, description = ?, xray_type = ?, aliases = ?, linkwords = ?, hits = ? WHERE ebook = ? AND id = ?",
+        update = "UPDATE xray_items SET name = ?, short_names = ?, description = ?, xray_type = ?, aliases = ?, linkwords = ?, matches = ? WHERE ebook = ? AND id = ?",
     },
     separator = " " .. Icons.arrow_bare .. " ",
     xray_icons = {
@@ -1018,7 +1018,7 @@ function XrayHelpers:loadAllXrayItems(current_ebook, current_series, force_refre
 
     -- disable caching while we are still updating matches in database:
     local conn = Databases:getDBconnForStatistics("XrayHelpers#loadAllXrayItems")
-    local sql_stmt = "SELECT id FROM xray_items WHERE ebook = ? AND ebook_hits_retrieved = 1 LIMIT 1"
+    local sql_stmt = "SELECT id FROM xray_items WHERE ebook = ? AND ebook_matches_retrieved = 1 LIMIT 1"
     local result = conn:rowexec(sql_stmt)
     if not result then
         force_refresh = true
@@ -1038,7 +1038,7 @@ function XrayHelpers:loadAllXrayItems(current_ebook, current_series, force_refre
         end
     end
 
-    sql_stmt = "SELECT id, ebook, name, short_names, description, xray_type, aliases, linkwords, hits, ebook_hits_retrieved FROM xray_items ORDER BY ebook, name"
+    sql_stmt = "SELECT id, ebook, name, short_names, description, xray_type, aliases, linkwords, matches, ebook_matches_retrieved FROM xray_items ORDER BY ebook, name"
     result = conn:exec(sql_stmt)
     XrayHelpers.ebooks = {}
     local update_matches_for_current_ebook = false
@@ -1051,8 +1051,8 @@ function XrayHelpers:loadAllXrayItems(current_ebook, current_series, force_refre
         local id = tonumber(result["id"][i])
         local name = result["name"][i]
         local aliases = result["aliases"][i] or ""
-        local matches = tonumber(result["hits"][i])
-        local matches_retrieved_for_ebook = tonumber(result["ebook_hits_retrieved"][i])
+        local matches = tonumber(result["matches"][i])
+        local matches_retrieved_for_ebook = tonumber(result["ebook_matches_retrieved"][i])
 
         if not update_matches_for_current_ebook and ebook_or_series == current_ebook and matches_retrieved_for_ebook == 0 then
             update_matches_for_current_ebook = current_ebook
@@ -1569,7 +1569,7 @@ function XrayHelpers:updateMatchesCount(xray_item_needle, conn)
     local xray_item_id = xray_item_needle.id
 
     local matches = KOR.xrayitems:getAllTextCount(xray_item_needle)
-    local sql_stmt = "UPDATE xray_items SET hits = ? WHERE id = ?"
+    local sql_stmt = "UPDATE xray_items SET matches = ? WHERE id = ?"
     local stmt
     if matches > 0 then
         stmt = conn:prepare(sql_stmt)
@@ -1581,7 +1581,7 @@ end
 
 function XrayHelpers:markCurrentEbookOrSeriesMatchesUpdated(ebook_or_series, conn)
     if ebook_or_series then
-        local sql_stmt = "UPDATE xray_items SET ebook_hits_retrieved = 1 WHERE ebook = ?"
+        local sql_stmt = "UPDATE xray_items SET ebook_matches_retrieved = 1 WHERE ebook = ?"
         local stmt = conn:prepare(sql_stmt)
         ebook_or_series = Databases:escape(ebook_or_series)
         stmt:reset():bind(ebook_or_series):step()
