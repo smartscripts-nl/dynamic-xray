@@ -32,5 +32,5 @@ return {
 
     title_bar_bottom_line = Blitbuffer.COLOR_GRAY,
 
-    xray_page_or_paragraph_hit_marker = Blitbuffer.COLOR_GRAY_9,
+    xray_page_or_paragraph_match_marker = Blitbuffer.COLOR_GRAY_9,
 }

@@ -46,10 +46,10 @@ local XrayHelpers = WidgetContainer:new{
         This = 1,
         Thou = 1,
     },
-    hits_buttons_max = 30,
     -- partially disable clicks on xray lines (for region closest to left side of ereader):
     inert_left_region_width = 25,
     info_mode = G_reader_settings:readSetting("xray_info_mode") or "paragraph",
+    matches_buttons_max = 30,
     max_buttons_per_row = 4,
     max_line_length = 72,
     min_match_word_length = 4,
@@ -177,7 +177,7 @@ function XrayHelpers:getXrayItemAsDictionaryEntry(tapped_word, ui)
 
     -- First try to treat the word as the name of an XrayItem:
     local spaces_count = Strings:substrCount(tapped_word, " ")
-    -- don't allow larger strings which contain a saved name to trigger hits:
+    -- don't allow larger strings which contain a saved name to trigger matches:
     if spaces_count <= 1 then
         -- match by name only is falsy in this case:
         local items_found = self:itemExists(tapped_word, tapped_word)
@@ -196,7 +196,7 @@ function XrayHelpers:getXrayItemAsDictionaryEntry(tapped_word, ui)
 
                 local buttons = {}
                 local buttons_count = 0
-                local add_more_button = #copies > self.hits_buttons_max
+                local add_more_button = #copies > self.matches_buttons_max
                 local item_with_alias_found = false
                 for nr, item in ipairs(copies) do
 
@@ -209,7 +209,7 @@ function XrayHelpers:getXrayItemAsDictionaryEntry(tapped_word, ui)
                         buttons_count = buttons_count + 1
                         local more_button_added = self:addButton(buttons, item, {
                             add_more_button = add_more_button,
-                            max_total_buttons = self.hits_buttons_max,
+                            max_total_buttons = self.matches_buttons_max,
                             max_buttons_per_row = self.max_buttons_per_row,
                             nr = nr,
                             source_items = copies,
@@ -261,7 +261,7 @@ function XrayHelpers:getXrayItemAsDictionaryEntry(tapped_word, ui)
                                     },
                                     {
                                         tab = "match reliability indicators",
-                                        info = self:getXrayHitsReliabilityExplanation(),
+                                        info = self:getXrayMatchReliabilityExplanation(),
                                     },
                                 },
                             })
@@ -328,7 +328,7 @@ end
 -- these matches are to be consumed in ((XrayHelpers#ReaderHighlightGenerateXrayInformation)) > ((XrayHelpers#showXrayItemsInfo))
 function XrayHelpers:getXrayInfoMatches(page_or_paragraph_text)
 
-    local part_hits, hits, explanations = {}, {}, {}
+    local part_matches, matches, explanations = {}, {}, {}
     local multiple_parts_count = 0
     local a_name_matched, an_alias_matched = false, false
     self.families_matched_by_multiple_parts = {}
@@ -342,13 +342,13 @@ function XrayHelpers:getXrayInfoMatches(page_or_paragraph_text)
         -- for case insensitive matching:
         local lower_text = Strings:lower(page_or_paragraph_text)
         for nr, xname in ipairs(names) do
-            match_found, multiple_parts_count = self:matchNameInPageOrParagraph(page_or_paragraph_text, lower_text, xname, hits, part_hits, explanations, xray_item, nr)
+            match_found, multiple_parts_count = self:matchNameInPageOrParagraph(page_or_paragraph_text, lower_text, xname, matches, part_matches, explanations, xray_item, nr)
             if match_found then
                 a_name_matched = true
                 break
             end
             if has_text(xray_item.aliases) then
-                alias_match_found = self:matchAliasesInPageOrParagraph(page_or_paragraph_text, hits, explanations, xray_item)
+                alias_match_found = self:matchAliasesInPageOrParagraph(page_or_paragraph_text, matches, explanations, xray_item)
                 if alias_match_found then
                     an_alias_matched = true
                     break
@@ -360,20 +360,20 @@ function XrayHelpers:getXrayInfoMatches(page_or_paragraph_text)
     local skip_items = {}
     if (a_name_matched or an_alias_matched) then
 
-        hits, explanations = self:reduceParagraphMatches(hits, part_hits, explanations)
+        matches, explanations = self:reduceParagraphMatches(matches, part_matches, explanations)
 
-        hits, explanations, skip_items = self:removePartialMatchesIfFullHitFound(hits, explanations, part_hits)
+        matches, explanations, skip_items = self:removePartialMatchesIfFullMatchFound(matches, explanations, part_matches)
     end
 
-    if #hits == 0 then
+    if #matches == 0 then
         return
     end
-    return hits, explanations, skip_items
+    return matches, explanations, skip_items
 end
 
--- remove duplicated hits and hits by incorrect names matching another item's surname
+-- remove duplicated matches and matches by incorrect names matching another item's surname
 function XrayHelpers:reduceParagraphMatches(matches, part_matches, explanations)
-    -- when hits found for families with name and surname, remove all items which only match on surname:
+    -- when matches found for families with name and surname, remove all items which only match on surname:
     local reduced = {}
     local reduced_explanations = {}
     local processed_names = {}
@@ -384,24 +384,24 @@ function XrayHelpers:reduceParagraphMatches(matches, part_matches, explanations)
         local first_name_matches_a_surname = false
         local has_family_name = xray_name:match(" ") and xray_name:match("[A-Z]")
         local family_name = xray_name:gsub("^.+ ", "")
-        local partial_hits = part_matches[xray_name]
-        local multiple_hits = self.families_matched_by_multiple_parts[family_name]
-        local skip_partial_hit = multiple_hits == 0 and partial_hits and partial_hits > 0
+        local partial_matches = part_matches[xray_name]
+        local multiple_matches = self.families_matched_by_multiple_parts[family_name]
+        local skip_partial_hit = multiple_matches == 0 and partial_matches and partial_matches > 0
         if not processed_names[xray_name] then
             -- whole name matches must always be kept:
-            if multiple_hits == 0 and partial_hits == 0 then
+            if multiple_matches == 0 and partial_matches == 0 then
                 table.insert(reduced, xray_item)
                 table.insert(reduced_explanations, explanations[nr])
                 processed_names[xray_name] = 1
 
                 -- when full name and surname found in a paragraph, e.g. Thomas Carlyle), but also found the single name Carlyle, prevent Carlyle Foster to be counted as a hit:
-            elseif not skip_partial_hit and partial_hits == 1 and has_family_name then
+            elseif not skip_partial_hit and partial_matches == 1 and has_family_name then
                 local first_name = xray_name:gsub(" .+$", "")
                 if self.families_matched_by_multiple_parts[first_name] then
                     first_name_matches_a_surname = true
                 end
             end
-            if not first_name_matches_a_surname and (not multiple_hits or partial_hits) then
+            if not first_name_matches_a_surname and (not multiple_matches or partial_matches) then
                 table.insert(reduced, xray_item)
                 table.insert(reduced_explanations, explanations[nr])
                 processed_names[xray_name] = 1
@@ -658,12 +658,12 @@ end
 function XrayHelpers:ReaderViewInitParaOrPageData()
 
     -- text of paragraphs, for debugging:
-    self.paragraphs_with_hits = {}
-    self.paragraph_hits = {}
+    self.paragraphs_with_matches = {}
+    self.paragraph_matches = {}
     self.paragraph_explanations = {}
-    self.rects_with_hits = {}
+    self.rects_with_matches = {}
     self.xray_info_found = false
-    -- register partial hits to be skipped per paragraph. This filter will be executed upon clicking on the first line of the concerned paragraph. See ((skip partial name matches if familiy member with full name also found)):
+    -- register partial matches to be skipped per paragraph. This filter will be executed upon clicking on the first line of the concerned paragraph. See ((skip partial name matches if familiy member with full name also found)):
     self.skip_xray_items = {}
     local screen_width = Screen:getWidth()
     if self.paragraphs and #self.xray_items > 0 then
@@ -700,9 +700,9 @@ function XrayHelpers:ReaderViewLoopThroughParagraphOrPage(page_text, p, screen_w
     local matches, explanations, skip_items = self:getXrayInfoMatches(haystack)
     if matches then
         -- for debugging only:
-        table.insert(self.paragraphs_with_hits, self.paragraphs[p].text)
+        table.insert(self.paragraphs_with_matches, self.paragraphs[p].text)
         -- to be consumed in ((XrayHelpers#ReaderHighlightGenerateXrayInformation)):
-        table.insert(self.paragraph_hits, matches)
+        table.insert(self.paragraph_matches, matches)
         table.insert(self.paragraph_explanations, explanations)
         table.insert(self.skip_xray_items, skip_items)
         for xi = 1, #matches do
@@ -745,7 +745,7 @@ function XrayHelpers:ReaderViewLoopThroughParagraphOrPage(page_text, p, screen_w
                     rect.w = rect.w - self.inert_left_region_width
                 end
                 self:drawMarker(self.ui, c.bb, c.x, c.y, rect, c.marker, c.marker_width)
-                table.insert(self.rects_with_hits, rect)
+                table.insert(self.rects_with_matches, rect)
 
                 return true
             end
@@ -758,20 +758,20 @@ function XrayHelpers:ReaderViewPopulateInfoRects()
     -- #((set xray page info rects))
     -- to be consumed in ((ReaderHighlight#onTapXPointerSavedHighlight)):
     self.xray_page_info_rects = {
-        paragraph_texts = self.paragraphs_with_hits,
-        hits = self.paragraph_hits,
+        paragraph_texts = self.paragraphs_with_matches,
+        matches = self.paragraph_matches,
         skip_xray_items = self.skip_xray_items,
         explanations = self.paragraph_explanations,
-        rects = self.rects_with_hits,
-        callback = function(paragraph_hits_info, extra_button_rows, paragraph_text)
+        rects = self.rects_with_matches,
+        callback = function(paragraph_matches_info, extra_button_rows, paragraph_text)
             -- paragraph_text only needed for debugging purposes, to ascertain we are looking at the correct paragraph:
-            self:showXrayItemsInfo(paragraph_hits_info, extra_button_rows, paragraph_text)
+            self:showXrayItemsInfo(paragraph_matches_info, extra_button_rows, paragraph_text)
         end
     }
 end
 
 function XrayHelpers:ReaderHighlightGenerateXrayInformation(pos)
-    -- this var, containing texts and hits info, was defined above in ((XrayHelpers#ReaderViewGenerateXrayInformation)) > ((XrayHelpers#getXrayInfoMatches)) > ((set xray info for paragraphs)):
+    -- this var, containing texts and matches info, was defined above in ((XrayHelpers#ReaderViewGenerateXrayInformation)) > ((XrayHelpers#getXrayInfoMatches)) > ((set xray info for paragraphs)):
     local xray_rects = self.xray_page_info_rects
     if xray_rects then
         self.paragraph_texts = xray_rects.paragraph_texts
@@ -803,21 +803,21 @@ end
 -- information for this dialog was generated in ((ReaderView#paintTo)) > ((XrayHelpers#ReaderViewGenerateXrayInformation))
 -- extra buttons (from xray items) were populated in ((XrayHelpers#ReaderHighlightGenerateXrayInformation))
 -- current method called from callback in ((xray paragraph info callback)):
-function XrayHelpers:showXrayItemsInfo(hits_info, headings, hits_count, extra_button_rows, haystack_text)
+function XrayHelpers:showXrayItemsInfo(matches_info, headings, matches_count, extra_button_rows, haystack_text)
     local debug = false
-    local info = hits_info
+    local info = matches_info
     if not self.xray_info_dialog and has_text(info) then
         -- paragraph_text only needed for debugging purposes, to ascertain we are looking at the correct paragraph:
         if debug and haystack_text then
             info = haystack_text .. "\n\n" .. info
         end
-        local hits_count_info = hits_count == 1 and "1 item" or hits_count .. " items"
+        local matches_count_info = matches_count == 1 and "1 item" or matches_count .. " items"
         local subject = self.info_mode == "paragraph" and "paragraph" or "page"
         local target = self.info_mode == "paragraph" and "in the WHOLE PAGE" or "PARAGRAPHS"
         local new_trigger = self.info_mode == "paragraph" and "a sentence marked with a lightning-icon" or "a paragraph marked with a star"
         -- the data below was populated in ((XrayHelpers#ReaderViewGenerateXrayInformation)):
         self.xray_info_dialog = Dialogs:textBox({
-            title = "Xray information for this " .. subject .. " - " .. hits_count_info,
+            title = "Xray information for this " .. subject .. " - " .. matches_count_info,
             info = info,
             fullscreen = true,
             covers_fullscreen = true,
@@ -852,7 +852,7 @@ function XrayHelpers:showXrayItemsInfo(hits_info, headings, hits_count, extra_bu
             -- #((xray paragraph info: after load callback))
             --- @param target_class TextViewer
             after_load_callback = function(target_class)
-                Registry:set("toc_info_button_injected", false)
+                Registry:unset("toc_info_button_injected")
                 -- info: only show the toc automatically when there are more than 2 xray items:
                 if #headings > 2 then
                     -- #((call TextViewer TOC))
@@ -912,7 +912,7 @@ function XrayHelpers:getXrayMatchReliabilityExplanation()
         indicators.partial_match .. " partial hit",
         indicators.linked_item .. " linked item",
     }
-    local message = "XRAY RELIABILITY ICONS\n\nThe type of the hit determines the associated icon. Full names, aliases and linked items yield the most reliable hits:\n\n"
+    local message = "XRAY RELIABILITY ICONS\n\nThe type of the hit determines the associated icon. Full names, aliases and linked items yield the most reliable matches:\n\n"
     for _, lemma in ipairs(explanations) do
         message = message .. lemma .. "\n"
     end
@@ -1004,7 +1004,7 @@ function XrayHelpers:getXrayMarker(bb)
         marker = TextWidget:new{
             text = self.info_mode == "paragraph" and Icons.xray_item or Icons.lightning_bare,
             face = Font:getFace("smallinfofont", size),
-            fgcolor = Colors.xray_page_or_paragraph_hit_marker,
+            fgcolor = Colors.xray_page_or_paragraph_match_marker,
             padding = 0,
         }
         marker_width = marker:getSize().h
@@ -1016,7 +1016,7 @@ end
 function XrayHelpers:loadAllXrayItems(current_ebook, current_series, force_refresh)
     local has_series_index = false
 
-    -- disable caching while we are still updating hits in database:
+    -- disable caching while we are still updating matches in database:
     local conn = Databases:getDBconnForStatistics("XrayHelpers#loadAllXrayItems")
     local sql_stmt = "SELECT id FROM xray_items WHERE ebook = ? AND ebook_hits_retrieved = 1 LIMIT 1"
     local result = conn:rowexec(sql_stmt)
@@ -1041,7 +1041,7 @@ function XrayHelpers:loadAllXrayItems(current_ebook, current_series, force_refre
     sql_stmt = "SELECT id, ebook, name, short_names, description, xray_type, aliases, linkwords, hits, ebook_hits_retrieved FROM xray_items ORDER BY ebook, name"
     result = conn:exec(sql_stmt)
     XrayHelpers.ebooks = {}
-    local update_hits_for_current_ebook = false
+    local update_matches_for_current_ebook = false
     for i = 1, #result["ebook"] do
         local ebook_or_series = result["ebook"][i]
         if not self.ebooks[ebook_or_series] then
@@ -1051,18 +1051,18 @@ function XrayHelpers:loadAllXrayItems(current_ebook, current_series, force_refre
         local id = tonumber(result["id"][i])
         local name = result["name"][i]
         local aliases = result["aliases"][i] or ""
-        local hits = tonumber(result["hits"][i])
-        local hits_retrieved_for_ebook = tonumber(result["ebook_hits_retrieved"][i])
+        local matches = tonumber(result["hits"][i])
+        local matches_retrieved_for_ebook = tonumber(result["ebook_hits_retrieved"][i])
 
-        if not update_hits_for_current_ebook and ebook_or_series == current_ebook and hits_retrieved_for_ebook == 0 then
-            update_hits_for_current_ebook = current_ebook
+        if not update_matches_for_current_ebook and ebook_or_series == current_ebook and matches_retrieved_for_ebook == 0 then
+            update_matches_for_current_ebook = current_ebook
 
-        elseif not update_hits_for_current_ebook and ebook_or_series == current_series and hits_retrieved_for_ebook == 0 then
-            update_hits_for_current_ebook = current_series
+        elseif not update_matches_for_current_ebook and ebook_or_series == current_series and matches_retrieved_for_ebook == 0 then
+            update_matches_for_current_ebook = current_series
         end
 
-        if update_hits_for_current_ebook and name then
-            hits = self:updateHitsCount({
+        if update_matches_for_current_ebook and name then
+            matches = self:updateMatchesCount({
                 id = id,
                 name = name,
                 aliases = aliases,
@@ -1077,11 +1077,11 @@ function XrayHelpers:loadAllXrayItems(current_ebook, current_series, force_refre
             xray_type = tonumber(result["xray_type"][i]) or 1,
             aliases = aliases,
             linkwords = result["linkwords"][i] or "",
-            hits = hits,
+            matches = matches,
         })
     end
-    if update_hits_for_current_ebook then
-        self:markCurrentEbookOrSeriesHitsUpdated(update_hits_for_current_ebook, conn)
+    if update_matches_for_current_ebook then
+        self:markCurrentEbookOrSeriesMatchesUpdated(update_matches_for_current_ebook, conn)
     end
     conn = Databases:closeConnections(conn)
 
@@ -1091,7 +1091,7 @@ function XrayHelpers:loadAllXrayItems(current_ebook, current_series, force_refre
     return has_series_index
 end
 
-function XrayHelpers:removePartialMatchesIfFullHitFound(matches, explanations, part_matches)
+function XrayHelpers:removePartialMatchesIfFullMatchFound(matches, explanations, part_matches)
     local pruned_collection = {}
     local pruned_explanations = {}
     local is_pruned = false
@@ -1128,7 +1128,7 @@ function XrayHelpers:storeAddedXrayItem(current_ebook_or_series, new_xray_item)
     local conn = Databases:getDBconnForStatistics("XrayHelpers#addXrayItem")
     local stmt = conn:prepare(self.queries.create)
     local x = new_xray_item
-    stmt:reset():bind(current_ebook_or_series, x.name, x.short_names, x.description, x.xray_type, x.aliases, x.linkwords, x.hits):step()
+    stmt:reset():bind(current_ebook_or_series, x.name, x.short_names, x.description, x.xray_type, x.aliases, x.linkwords, x.matches):step()
     stmt = Databases:closeStmts(stmt)
     conn = Databases:closeConnections(conn)
 end
@@ -1155,7 +1155,7 @@ function XrayHelpers:storeImportedXrayItems(current_ebook_or_series)
     local initial_items_count = #self.xray_items
     for _, item in ipairs(self.xray_items) do
         if item.name ~= previous_item_name then
-            stmt:reset():bind(current_ebook_or_series, item.name, item.short_names, item.description, item.xray_type, item.aliases, item.linkwords, item.hits):step()
+            stmt:reset():bind(current_ebook_or_series, item.name, item.short_names, item.description, item.xray_type, item.aliases, item.linkwords, item.matches):step()
             table.insert(unduplicated, item)
             previous_item_name = item.name
         end
@@ -1182,17 +1182,17 @@ function XrayHelpers:storeUpdatedXrayItem(current_ebook_or_series, id, updated_x
     local conn = Databases:getDBconnForStatistics("XrayHelpers#updateXrayItem")
     local stmt = conn:prepare(self.queries.update)
     local x = updated_xray_item
-    stmt:reset():bind(x.name, x.short_names, x.description, x.xray_type, x.aliases, x.linkwords, x.hits, current_ebook_or_series, id):step()
+    stmt:reset():bind(x.name, x.short_names, x.description, x.xray_type, x.aliases, x.linkwords, x.matches, current_ebook_or_series, id):step()
     stmt = Databases:closeStmts(stmt)
     conn = Databases:closeConnections(conn)
 end
 
 function XrayHelpers:generateParagraphInformation(xray_rects, nr)
     local paragraph_text = self.paragraph_texts[nr]
-    local paragraph_hits_info = ""
+    local paragraph_matches_info = ""
     local paragraph_headings = {}
-    local xray_items = xray_rects.hits[nr]
-    local paragraph_hits_count
+    local xray_items = xray_rects.matches[nr]
+    local paragraph_matches_count
     local xray_explanations = xray_rects.explanations[nr]
     -- #((skip partial name matches if familiy member with full name also found))
     -- xray items with partial family name matches that must be removed, because a family member with full name has been found:
@@ -1224,7 +1224,7 @@ function XrayHelpers:generateParagraphInformation(xray_rects, nr)
             end
             -- #((use xray match reliability indicators))
             local xray_match_reliability_icon = self.xray_match_reliability_indicators.full_name
-            -- ! don't use has_text here, because for full name hits we don't add a text (the full name) after the reliability weight icon)! Under Ubuntu this is not a problem, but using has_text under Android causes explanation not to be shown:
+            -- ! don't use has_text here, because for full name matches we don't add a text (the full name) after the reliability weight icon)! Under Ubuntu this is not a problem, but using has_text under Android causes explanation not to be shown:
             if has_content(xray_explanations[i]) then
                 explanation = xray_explanations[i]
                 xray_match_reliability_icon = explanation:match(self.separator .. "([^ ]+)")
@@ -1237,7 +1237,7 @@ function XrayHelpers:generateParagraphInformation(xray_rects, nr)
             local first_line = prefix .. xray_type_icon .. name .. explanation
             first_line = Strings:splitLinesToMaxLength(first_line, self.max_line_length, indent) .. "\n"
             local hit_block = first_line .. description .. "\n" .. aliases .. linkwords
-            paragraph_hits_info = paragraph_hits_info .. hit_block
+            paragraph_matches_info = paragraph_matches_info .. hit_block
 
             -- #((headings for use in TextViewer))
             -- needles will be used in ((TextViewer#blockDown)) and  ((TextViewer#blockUp)):
@@ -1266,13 +1266,13 @@ function XrayHelpers:generateParagraphInformation(xray_rects, nr)
             end
         end
     end -- end for xray_items
-    paragraph_hits_count = injected_nr
+    paragraph_matches_count = injected_nr
     -- correction for indentation of first line in dialog; this should not be necessary:
-    paragraph_hits_info = paragraph_hits_info:gsub("^ +", "")
+    paragraph_matches_info = paragraph_matches_info:gsub("^ +", "")
 
     -- #((xray paragraph info callback))
     -- callback defined in ((set xray info for paragraphs)) and calls ((XrayHelpers#showXrayItemsInfo)):
-    xray_rects.callback(paragraph_hits_info, paragraph_headings, paragraph_hits_count, self.xray_info_extra_button_rows, paragraph_text)
+    xray_rects.callback(paragraph_matches_info, paragraph_headings, paragraph_matches_count, self.xray_info_extra_button_rows, paragraph_text)
 end
 
 function XrayHelpers:getInfo(item, ucfirst)
@@ -1345,12 +1345,12 @@ function XrayHelpers:hasExactMatch(haystack, needle)
             and (haystack:match(needle) and not haystack:match(needle .. "%l+"))
 end
 
-function XrayHelpers:matchAliasesInPageOrParagraph(paragraph, hits, explanations, xray_item)
+function XrayHelpers:matchAliasesInPageOrParagraph(paragraph, matches, explanations, xray_item)
     local aliases = xray_item.aliases
     local alias_table = self:splitByCommaOrSpace(aliases)
     for _, alias in ipairs(alias_table) do
         if paragraph:match(alias) then
-            self:registerParagraphHit(hits, explanations, xray_item, self.separator .. self.xray_match_reliability_indicators.alias .. " " .. alias)
+            self:registerParagraphMatch(matches, explanations, xray_item, self.separator .. self.xray_match_reliability_indicators.alias .. " " .. alias)
             return true
         end
     end
@@ -1376,7 +1376,7 @@ function XrayHelpers:splitByCommaOrSpace(subject, add_singulars)
     return keywords
 end
 
-function XrayHelpers:matchNameInPageOrParagraph(text, lower_text, xray_needle, hits, part_hits, explanations, xray_item)
+function XrayHelpers:matchNameInPageOrParagraph(text, lower_text, xray_needle, matches, part_matches, explanations, xray_item)
     local xray_name = xray_item.name
     local has_family_name = xray_needle:match(" ")
     local is_single_word = not has_family_name
@@ -1398,12 +1398,12 @@ function XrayHelpers:matchNameInPageOrParagraph(text, lower_text, xray_needle, h
     then
 
         -- info: for full matches don't add the xray_needle to the explanation, that would lead to stupid repetion of the full name:
-        self:registerParagraphHit(hits, explanations, xray_item, self.separator .. self.xray_match_reliability_indicators.full_name)
+        self:registerParagraphMatch(matches, explanations, xray_item, self.separator .. self.xray_match_reliability_indicators.full_name)
 
         -- #((log family name))
         if has_family_name and not is_lower_case then
             self.families_matched_by_multiple_parts[family_name] = 0
-            part_hits[xray_name] = 0
+            part_matches[xray_name] = 0
             --Debug:hoera("whole name fam injected for " .. xray_name)
             return true, 2
         end
@@ -1433,10 +1433,10 @@ function XrayHelpers:matchNameInPageOrParagraph(text, lower_text, xray_needle, h
         end
     end
     if multiple_parts_count > 0 then
-        part_hits[xray_name] = multiple_parts_count
+        part_matches[xray_name] = multiple_parts_count
     end
 
-    -- when a full name for a specific family already has been found above, we don't want hits for only their surname; see ((log family name)):
+    -- when a full name for a specific family already has been found above, we don't want matches for only their surname; see ((log family name)):
     if self.families_matched_by_multiple_parts[family_name] and multiple_parts_count == 1 then
         return false, 0
     end
@@ -1453,7 +1453,7 @@ function XrayHelpers:matchNameInPageOrParagraph(text, lower_text, xray_needle, h
         elseif right_match_found then
             match_reliability_indicator = self.xray_match_reliability_indicators.last_name
         end
-        self:registerParagraphHit(hits, explanations, xray_item, self.separator .. match_reliability_indicator .. " " .. matching_parts)
+        self:registerParagraphMatch(matches, explanations, xray_item, self.separator .. match_reliability_indicator .. " " .. matching_parts)
     end
     return match_found, multiple_parts_count
 end
@@ -1520,8 +1520,8 @@ function XrayHelpers:matchItemToNeedleItem(extra_items, item, needle_item, inclu
     end
 end
 
-function XrayHelpers:registerParagraphHit(hits, explanations, xray_item, message)
-    table.insert(hits, xray_item)
+function XrayHelpers:registerParagraphMatch(matches, explanations, xray_item, message)
+    table.insert(matches, xray_item)
     table.insert(explanations, message)
 end
 
@@ -1565,21 +1565,21 @@ function XrayHelpers:prepareData()
 end
 
 --- @param xray_item_needle table Also has a aliases prop, for matching in KOR.xrayitems:getAllTextCount
-function XrayHelpers:updateHitsCount(xray_item_needle, conn)
+function XrayHelpers:updateMatchesCount(xray_item_needle, conn)
     local xray_item_id = xray_item_needle.id
 
-    local hits = KOR.xrayitems:getAllTextCount(xray_item_needle)
+    local matches = KOR.xrayitems:getAllTextCount(xray_item_needle)
     local sql_stmt = "UPDATE xray_items SET hits = ? WHERE id = ?"
     local stmt
-    if hits > 0 then
+    if matches > 0 then
         stmt = conn:prepare(sql_stmt)
-        stmt:reset():bind(hits, xray_item_id):step()
+        stmt:reset():bind(matches, xray_item_id):step()
         stmt = Databases:closeStmts(stmt)
     end
-    return hits
+    return matches
 end
 
-function XrayHelpers:markCurrentEbookOrSeriesHitsUpdated(ebook_or_series, conn)
+function XrayHelpers:markCurrentEbookOrSeriesMatchesUpdated(ebook_or_series, conn)
     if ebook_or_series then
         local sql_stmt = "UPDATE xray_items SET ebook_hits_retrieved = 1 WHERE ebook = ?"
         local stmt = conn:prepare(sql_stmt)

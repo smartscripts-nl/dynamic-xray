@@ -10,7 +10,7 @@ function ButtonTableGenerators:getVerticallyArrangedButtonTable(source_items, bu
 	local button_table = {}
 
 	-- info: prevent repeated injections of info button into the ButtonTable:
-	-- this Registry var was set to false in ((xray paragraph info: after load callback)):
+	-- this Registry var was unset in ((xray paragraph info: after load callback)):
 	if info_button and not Registry:get("toc_info_button_injected") then
 		table.insert(source_items, info_button)
 		Registry:set("toc_info_button_injected", true)

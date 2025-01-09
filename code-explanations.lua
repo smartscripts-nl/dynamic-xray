@@ -112,14 +112,14 @@ KOR.dialogs:alertInfo("information")
 -- adding match reliability indicators for the page/paragraph info popup: ((XrayHelpers#matchNameInPageOrParagraph))
 -- using these indicators: ((XrayHelpers#generateParagraphInformation)) > ((xray items dialog add match reliability explanations)) & ((use xray match reliability indicators))
 
--- show paragraph hits: ((ReaderView#paintTo)) > ((XrayHelpers#ReaderViewGenerateXrayInformation)) > ((XrayHelpers#getXrayMarker)) and ((CreDocument#storeCurrentPageParagraphs)) > ((CreDocument#paragraphCleanForXrayMatching)) > ((XrayHelpers#getXrayInfoMatches)): here matches on page or paragraphs evaluated > ((XrayHelpers#drawMarker)) > ((set xray page info rects)) Registry:set("xray_page_info_rects") > ((ReaderHighlight#onTapXPointerSavedHighlight)) > here the information in the popup gets combined: ((XrayHelpers#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)) > ((XrayHelpers#showXrayItemsInfo))
+-- show paragraph matches: ((ReaderView#paintTo)) > ((XrayHelpers#ReaderViewGenerateXrayInformation)) > ((XrayHelpers#getXrayMarker)) and ((CreDocument#storeCurrentPageParagraphs)) > ((CreDocument#paragraphCleanForXrayMatching)) > ((XrayHelpers#getXrayInfoMatches)): here matches on page or paragraphs evaluated > ((XrayHelpers#drawMarker)) > ((set xray page info rects)) Registry:set("xray_page_info_rects") > ((ReaderHighlight#onTapXPointerSavedHighlight)) > here the information in the popup gets combined: ((XrayHelpers#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)) > ((XrayHelpers#showXrayItemsInfo))
 
 -- automatic toc upon loading of dialog: ((xray paragraph info: after load callback)) > ((TextViewer#showToc))
 -- automatic move of toc popup to top of screen: prop "move_to_top" true in ((Dialogs#showButtonDialog)) - called from ((TextViewer#showToc)) - > ((move ButtonDialogTitle to top))
 
 -- adding button to popup toc for closing toc AND paragraph info dialog: ((TextViewer toc popup: add close button for popup and info dialog))
 
--- #((tapped word hits)): called from 2 locations in ReaderHighlight: ((ReaderHighlight#onShowHighlightMenu)) and ((ReaderHighlight#lookup)) > ((XrayHelpers#getXrayItemAsDictionaryEntry)); placing exact partial matches in name or linkwords at top and marking them bold: ((XrayHelpers#sortByBoldProp)); placing exact fullname matches at position 1: ((XrayHelpers#getRelatedItems)) in case of needle_matches_fullname == true, which was set in ((XrayHelpers#upgradeNeedleItem))
+-- #((tapped word matches)): called from 2 locations in ReaderHighlight: ((ReaderHighlight#onShowHighlightMenu)) and ((ReaderHighlight#lookup)) > ((XrayHelpers#getXrayItemAsDictionaryEntry)); placing exact partial matches in name or linkwords at top and marking them bold: ((XrayHelpers#sortByBoldProp)); placing exact fullname matches at position 1: ((XrayHelpers#getRelatedItems)) in case of needle_matches_fullname == true, which was set in ((XrayHelpers#upgradeNeedleItem))
 
 -- list: ((XrayItems#onShowXrayList))
 

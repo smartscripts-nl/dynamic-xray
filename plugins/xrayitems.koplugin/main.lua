@@ -51,8 +51,8 @@ local XrayItems = FocusManager:new{
     items_per_page = G_reader_settings:readSetting("items_per_page") or 16,
     item_table = {},
     max_buttons_per_row = 4,
-    max_hits = 2048,
     max_line_length = 44,
+    max_matches = 2048,
     needle_for_subpage = "",
     other_ebooks = {},
     other_fields_face = Font:getFontFamily("Red Hat Text", 19),
@@ -246,15 +246,15 @@ function XrayItems:onAddXrayItemShowForm(name_from_selected_text, active_form_ta
         linkwords = "",
         aliases = "",
         xray_type = xray_type,
-        hits = 0,
+        matches = 0,
     }
 
     -- show how many times the selected text occurs in the book:
     local search_text = name_from_selected_text or item_copy.name
     local title = "Voeg xray-item toe"
     if has_text(search_text) then
-        local hits_in_book = self:getAllTextCount(search_text)
-        title = self:addHitsToFormOrDialogTitle(item_copy, title, hits_in_book)
+        local matches_in_book = self:getAllTextCount(search_text)
+        title = self:addMatchesToFormOrDialogTitle(item_copy, title, matches_in_book)
     end
 
     local fields = self:getFormFields(item_copy, target_field, name_from_selected_text)
@@ -294,16 +294,16 @@ function XrayItems:onEditXrayItem(xray_item, reload_manager, active_form_tab)
 
     local title = "Bewerk xray-item"
     -- info: when xray items are shown for a series of books, the count will be updated here for only the current ebook:
-    local hits_in_current_book = self:getAllTextCount(xray_item)
-    if hits_in_current_book then
-        xray_item.hits = hits_in_current_book
+    local matches_in_current_book = self:getAllTextCount(xray_item)
+    if matches_in_current_book then
+        xray_item.matches = matches_in_current_book
     end
-    local hits_for_title = hits_in_current_book or xray_item.hits
+    local matches_for_title = matches_in_current_book or xray_item.matches
     -- ! because of tabs in edit form, we need to re-attach the "hidden" item id after switching between tabs:
     if self.form_item_id then
         xray_item.id = self.form_item_id
     end
-    title = self:addHitsToFormOrDialogTitle(xray_item, title, hits_for_title)
+    title = self:addMatchesToFormOrDialogTitle(xray_item, title, matches_for_title)
 
     -- active_form_tab can be higher than 1 when the tab callback has been called and set the argument to a higher number:
     if not active_form_tab then
@@ -628,7 +628,7 @@ function XrayItems:onShowXrayList(focus_item, dont_show, filter_immediately)
     -- info: optionally items are filtered here also:
     local title = self:updateXrayItemsTable(select_number)
 
-    -- if no hits found with a filter, all lists and filters have been reset and we restart the list:
+    -- if no matches found with a filter, all lists and filters have been reset and we restart the list:
     if title == false then
         self:onShowXrayList(focus_item, dont_show, filter_immediately)
         return
@@ -927,7 +927,7 @@ function XrayItems:renameXrayItem(field_values)
         Dialogs:alertError("XrayItems.edit_item_index van het te bewerken item is niet gezet.")
         return
     end
-    -- current method is called from ((XrayItems#saveItemCallback)) in edit modus; hits count was added to the edited item there:
+    -- current method is called from ((XrayItems#saveItemCallback)) in edit modus; matches count was added to the edited item there:
     local new_props = self:convertFieldValuesToXrayProps(field_values)
     self:itemAddHiddenFieldValues(new_props)
     -- name field MUST be present:
@@ -942,7 +942,7 @@ function XrayItems:renameXrayItem(field_values)
             aliases = new_props.aliases,
             index = self.edit_item_index,
             xray_type = new_props.xray_type,
-            hits = new_props.hits,
+            matches = new_props.matches,
         }
         -- self.edit_item_index was set in ((XrayItems#onEditXrayItem)):
         XrayHelpers.xray_items[self.edit_item_index] = edited_item
@@ -963,7 +963,7 @@ function XrayItems:renameXrayItem(field_values)
                     self.item_table[nr].aliases = new_props.aliases
                     self.item_table[nr].linkwords = new_props.linkwords
                     self.item_table[nr].xray_type = new_props.xray_type
-                    self.item_table[nr].hits = new_props.hits
+                    self.item_table[nr].matches = new_props.matches
                     break
                 end
             end
@@ -986,21 +986,21 @@ end
 function XrayItems:searchFromStart(pattern)
     self.direction = 0
     self._expect_back_results = true
-    -- returns table with hits_positions and the words_count:
+    -- returns table with matches_positions and the words_count:
     return self:search(pattern, -1)
 end
 
 function XrayItems:searchFromEnd(pattern)
     self.direction = 1
     self._expect_back_results = false
-    -- returns table with hits_positions and the words_count:
+    -- returns table with matches_positions and the words_count:
     return self:search(pattern, -1)
 end
 
 function XrayItems:searchFromCurrent(pattern, direction)
     self.direction = direction
     self._expect_back_results = direction == 1
-    -- returns table with hits_positions and the words_count:
+    -- returns table with matches_positions and the words_count:
     return self:search(pattern, 0)
 end
 
@@ -1019,15 +1019,13 @@ function XrayItems:search(pattern, origin)
     local page = self.view.state.page
     local case_insensitive = false
 
-    local hits_positions, words_count = self.ui.document:findText(pattern, origin, direction, case_insensitive, page, nil, self.max_hits)
+    local matches_positions, words_count = self.ui.document:findText(pattern, origin, direction, case_insensitive, page, nil, self.max_matches)
     Device:setIgnoreInput(false)
-    if words_count and words_count > self.max_hits then
+    if words_count and words_count > self.max_matches then
         Dialogs:notify("Te veel treffers...", 4)
     end
 
-    --Dialogs:alertMulti({ "hits_positions", hits_positions, "type hp", type(hits_positions), "words_count", words_count })
-
-    return hits_positions, words_count
+    return matches_positions, words_count
 end
 
 function XrayItems:do_search(search_func, _text, param)
@@ -1170,7 +1168,7 @@ function XrayItems:onShowXrayItem(needle_item, called_from_list, tapped_word)
     local name = needle_item.name
     local icon = XrayHelpers:getIcon(needle_item)
     local title = icon .. name .. " (" .. needle_item.index .. "/" .. #self.item_table .. ")"
-    title = self:addHitsToFormOrDialogTitle(needle_item, title, needle_item.hits)
+    title = self:addMatchesToFormOrDialogTitle(needle_item, title, needle_item.matches)
     Registry:set("force_non_bold_buttons", true)
     local buttons = {
         {
@@ -1346,28 +1344,6 @@ function XrayItems:onShowXrayItemLocations(user_name)
     KOR.readersearch:onShowTextLocationsForNeedle(user_name)
 end
 
-function XrayItems:expandHitToContext(hit, context_words)
-
-    local translated = {
-        pos0 = hit["start"],
-        pos1 = hit["end"],
-    }
-    for _ = 1, context_words do
-        local new_pos0 = self.ui.document:getPrevVisibleWordStart(translated.pos0)
-        local new_pos1 = self.ui.document:getNextVisibleWordEnd(translated.pos1)
-        if new_pos0 then
-            translated.pos0 = new_pos0
-        end
-        if new_pos1 then
-            translated.pos1 = new_pos1
-        end
-    end
-    hit["start"] = translated.pos0
-    hit["end"] = translated.pos1
-
-    return hit
-end
-
 -- change a suggested name like Joe Glass to Glass, Joe. If self.switch_sur_and_last_name is set to true:
 function XrayItems:switchSurAndLastName(name)
     if self.switch_sur_and_last_name and name:match(" ") then
@@ -1519,7 +1495,7 @@ function XrayItems:filterByIcon(xray_items_tables, select_number)
                             linkwords = item.linkwords,
                             aliases = item.aliases,
                             xray_type = item.xray_type,
-                            hits = item.hits,
+                            matches = item.matches,
                             bold = bold,
                             index = #self.item_table + 1,
                             callback = function()
@@ -1537,7 +1513,7 @@ function XrayItems:filterByIcon(xray_items_tables, select_number)
     return select_number
 end
 
--- filter list by text; compare finding matching items for tapped text ((tapped word hits)) & ((XrayHelpers#getXrayItemAsDictionaryEntry)):
+-- filter list by text; compare finding matching items for tapped text ((tapped word matches)) & ((XrayHelpers#getXrayItemAsDictionaryEntry)):
 function XrayItems:filterByText(xray_items_tables, select_number)
     local keywords
     if has_text(self.filter_string) then
@@ -1592,7 +1568,7 @@ function XrayItems:filterByText(xray_items_tables, select_number)
                         short_names = item.short_names,
                         linkwords = item.linkwords,
                         aliases = item.aliases,
-                        hits = item.hits,
+                        matches = item.matches,
                         bold = bold,
                         index = #self.item_table + 1,
                         callback = function()
@@ -1646,9 +1622,9 @@ function XrayItems:addContextButtons(buttons, needle_item, tapped_word)
                 break
             end
             local icon = XrayHelpers:getIcon(item)
-            local linked_item_hits = item.hits and item.hits > 0 and " (" .. item.hits .. ")" or ""
+            local linked_item_matches = item.matches and item.matches > 0 and " (" .. item.matches .. ")" or ""
             table.insert(buttons[current_row], {
-                text = Icons.xray_link_bare .. icon .. " " .. item.name:lower() .. linked_item_hits,
+                text = Icons.xray_link_bare .. icon .. " " .. item.name:lower() .. linked_item_matches,
                 font_bold = item.is_bold,
                 text_font_face = Font:getFace("x_smallinfofont"),
                 font_size = 18,
@@ -1684,7 +1660,7 @@ function XrayItems:getAllTextCount(search_text_or_item)
         alias_table = XrayHelpers:splitByCommaOrSpace(aliases)
     end
 
-    -- info: if applicable, we only search for first names (then probably more accurate hits count):
+    -- info: if applicable, we only search for first names (then probably more accurate matches count):
     search_text_or_item = search_text_or_item:gsub(" .+$", "")
     -- info: for lowercase needles (terms instead of persons), we search case insensitive:
     local case_insensitive = search_text_or_item:match("[A-Z]") and true or false
@@ -1943,16 +1919,6 @@ function XrayItems:getTabCallback(modus, active_form_tab, item_copy)
         --- @type MultiInputDialog source
         local source = modus == "add" and self.add_item_input or self.edit_item_input
         item_copy = self:convertFieldValuesToXrayProps(source:getValues())
-        --[[Dialogs:alertMulti({
-            id = item.id,
-            name = item.name,
-            xray_type = item.xray_type,
-            description = item.description,
-            short_names = item.short_names,
-            linkwords = item.linkwords,
-            aliases = item.aliases,
-            hits = item.hits,
-        })]]
         self:closeForm(modus)
         if modus == "edit" then
             self.edit_item_input = nil
@@ -2026,8 +1992,8 @@ end
 
 function XrayItems:generateListItemText(xray_item, nr)
     local icon = XrayHelpers:getIcon(xray_item)
-    local hits = has_content(xray_item.hits) and xray_item.hits > 0 and " (" .. xray_item.hits .. ")" or ""
-    local text = icon .. xray_item.name .. hits .. ": " .. Strings:lcfirst(xray_item.description)
+    local matches = has_content(xray_item.matches) and xray_item.matches > 0 and " (" .. xray_item.matches .. ")" or ""
+    local text = icon .. xray_item.name .. matches .. ": " .. Strings:lcfirst(xray_item.description)
 
     return Strings:formatListItemNumber(nr, text, "use_spacer")
 end
@@ -2046,28 +2012,28 @@ function XrayItems:getItems()
 end
 
 function XrayItems:itemAddHiddenFieldValues(xray_item)
-    -- these "hidden" field values were set in ((XrayItems#addHitsToFormOrDialogTitle)):
+    -- these "hidden" field values were set in ((XrayItems#addMatchesToFormOrDialogTitle)):
     if self.form_item_id then
         -- ! never set this value to nil, because we need it when switching between form tabs in the edit form:
         xray_item.id = self.form_item_id
     end
-    if self.form_item_hits then
-        xray_item.hits = self.form_item_hits
-        self.form_item_hits = nil
+    if self.form_item_matches then
+        xray_item.matches = self.form_item_matches
+        self.form_item_matches = nil
     end
 end
 
-function XrayItems:addHitsToFormOrDialogTitle(xray_item, title, hits_in_book)
-    if not hits_in_book or hits_in_book == 0 then
+function XrayItems:addMatchesToFormOrDialogTitle(xray_item, title, matches_in_book)
+    if not matches_in_book or matches_in_book == 0 then
         return title
     end
-    local hit_noun = hits_in_book == 1 and " hit" or " hits"
-    title = title .. " - " .. hits_in_book .. hit_noun .. " in boek"
-    xray_item.hits = hits_in_book
+    local match_noun = matches_in_book == 1 and " location" or " locations"
+    title = title .. " - " .. matches_in_book .. match_noun .. " in book"
+    xray_item.matches = matches_in_book
 
     -- "hidden" fields, re-attached to item after form updates in ((XrayItems#itemAddHiddenFieldValues)):
     self.form_item_id = xray_item.id
-    self.form_item_hits = hits_in_book
+    self.form_item_matches = matches_in_book
 
     return title
 end

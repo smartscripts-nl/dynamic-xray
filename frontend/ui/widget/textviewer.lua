@@ -917,7 +917,7 @@ function TextViewer:setConfigForContainersWithTitlebar(radius, padding)
         radius = radius,
         padding = padding,
         margin = self.add_margin and Size.margin.default or 0,
-        background = Blitbuffer.COLOR_WHITE,
+        background = Colors.background,
         VerticalGroup:new{
             align = "left",
             self.titlebar,
@@ -945,7 +945,7 @@ function TextViewer:setConfigForContainersWithTitlebar(radius, padding)
         radius = radius,
         padding = padding,
         margin = self.add_margin and Size.margin.default or 0,
-        background = Blitbuffer.COLOR_WHITE,
+        background = Colors.background,
         VerticalGroup:new{
             align = "left",
             self.titlebar,
@@ -968,7 +968,7 @@ function TextViewer:setConfigForContainersWithoutTitlebar(radius, padding)
         radius = radius,
         padding = padding,
         margin = self.add_margin and Size.margin.default or 0,
-        background = Blitbuffer.COLOR_WHITE,
+        background = Colors.background,
         VerticalGroup:new{
             align = "left",
             CenterContainer:new{
@@ -1001,7 +1001,7 @@ function TextViewer:setConfigForContainersWithoutTitlebar(radius, padding)
         radius = radius,
         padding = padding,
         margin = self.add_margin and Size.margin.default or 0,
-        background = Blitbuffer.COLOR_WHITE,
+        background = Colors.background,
         VerticalGroup:new{
             align = "left",
             self.top_spacer,
