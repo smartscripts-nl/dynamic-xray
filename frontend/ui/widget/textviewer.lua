@@ -852,7 +852,8 @@ function TextViewer:generateTabsTable()
     }
 end
 
--- called from ((XrayHelpers#showXrayItemsInfo)) - see ((call TextViewer TOC)) - or from a callback:
+-- called automatically with a after_load_callback from ((XrayHelpers#showXrayItemsInfo)) - see ((call TextViewer TOC))
+-- or from a button: ((TextViewer#getDefaultButtons)) > ((TextViewer toc button))
 function TextViewer:showToc(called_from_button)
 
     local button_table, buttons_count = ButtonTableGenerators:getVerticallyArrangedButtonTable(

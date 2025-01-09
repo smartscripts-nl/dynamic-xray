@@ -852,6 +852,8 @@ function XrayHelpers:showXrayItemsInfo(hits_info, headings, hits_count, extra_bu
             -- #((xray paragraph info: after load callback))
             --- @param target_class TextViewer
             after_load_callback = function(target_class)
+                Registry:set("toc_info_button_injected", false)
+                -- info: only show the toc automatically when there are more than 2 xray items:
                 if #headings > 2 then
                     -- #((call TextViewer TOC))
                     -- call ((TextViewer#init)) > ((TextViewer execute after load callback)) > ((TextViewer#showToc)) after a short delay:
