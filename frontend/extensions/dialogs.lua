@@ -102,7 +102,7 @@ function Dialogs:notify(message, timeout, dont_inhibit_input, at_right_top)
     return Messages:notify(message, timeout, dont_inhibit_input, at_right_top)
 end
 
---- @param args table, containing: value, hint, callback, cancel_callback
+--- @param args table, which can contain items: value, hint, callback, cancel_callback, middle_callback, allow_newline, fields
 function Dialogs:prompt(args)
     local allow_newline = args.allow_newline or false
     local prompt_dialog, cancel_button, save_button
@@ -153,7 +153,7 @@ function Dialogs:prompt(args)
         })
     end
     local config = {
-        title = args.title or "Bewerk",
+        title = args.title or "Edit",
         -- if not forced to fullscreen, width MUST be set, to not get problems with CheckButton, if that widget must be included in the dialog:
         width = args.width or self:getTwoThirdDialogWidth(),
         fullscreen = args.fullscreen or false,

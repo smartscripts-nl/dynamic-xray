@@ -912,11 +912,7 @@ function XrayHelpers:getXrayMatchReliabilityExplanation()
         indicators.partial_match .. " partial hit",
         indicators.linked_item .. " linked item",
     }
-    local message = "XRAY RELIABILITY ICONS\n\nThe type of the hit determines the associated icon. Full names, aliases and linked items yield the most reliable matches:\n\n"
-    for _, lemma in ipairs(explanations) do
-        message = message .. lemma .. "\n"
-    end
-    return message
+    return "XRAY RELIABILITY ICONS\n\nThe type of the hit determines the associated icon. Full names and aliases yield the most reliable matches.\n\n" .. table.concat(explanations, "\n")
 end
 
 function XrayHelpers:drawRect(bb, _x, _y, rect)
@@ -1016,12 +1012,15 @@ end
 function XrayHelpers:loadAllXrayItems(current_ebook, current_series, force_refresh)
     local has_series_index = false
 
-    -- disable caching while we are still updating matches in database:
     local conn = Databases:getDBconnForStatistics("XrayHelpers#loadAllXrayItems")
-    local sql_stmt = "SELECT id FROM xray_items WHERE ebook = ? AND ebook_matches_retrieved = 1 LIMIT 1"
-    local result = conn:rowexec(sql_stmt)
-    if not result then
-        force_refresh = true
+    local sql_stmt, result
+    -- disable caching for the current ebook while we are still updating matches in database:
+    if current_ebook then
+        sql_stmt = Databases:injectSafePath("SELECT id FROM xray_items WHERE ebook = 'safe_path' AND ebook_matches_retrieved = 1 LIMIT 1", current_ebook)
+        result = conn:rowexec(sql_stmt)
+        if not result then
+            force_refresh = true
+        end
     end
 
     if not force_refresh then
