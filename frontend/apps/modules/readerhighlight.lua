@@ -1,4 +1,5 @@
 
+local Dialogs = require("extensions/dialogs")
 local Event = require("ui/event")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local KOR = require("extensions/kor")
@@ -8,6 +9,57 @@ local XrayHelpers = require("extensions/xrayhelpers")
 local ReaderHighlight = InputContainer:extend{
     -- [...]
 }
+
+-- [...]
+
+function ReaderHighlight:init()
+    -- [...]
+    self._highlight_buttons = {
+        -- highlight and add_note are for the document itself,
+        -- so we put them first.
+        ["01_select"] = function(this)
+            return {
+                text = _("Select"),
+                enabled = this.hold_pos ~= nil,
+                callback = function()
+                    this:startSelection()
+                    this:onClose()
+                end,
+            }
+        end,
+        -- [...]
+        ["12_search"] = function(this)
+            return {
+                text = _("Search"),
+                callback = function()
+                    this:onHighlightSearch()
+                    -- We don't call this:onClose(), crengine will highlight
+                    -- search matches on the current page, and self:clear()
+                    -- would redraw and remove crengine native highlights
+                end,
+            }
+        end,
+        -- #((add xray item button for selected text popup in ReaderHighlight))
+        ["13_add_xray_item"] = function(this)
+            return {
+                text = "+ Add xray item",
+                callback = function()
+                    -- SmartScripts: maybe the next statements are now old code for KOReader?:
+                    self:highlightFromHoldPos()
+                    if self.selected_text then
+                        KOR.xrayitems:onSaveNewXrayItem(self.selected_text)
+                        self:onClearHighlight()
+                        this:onClose()
+                    else
+                        Dialogs:alertError("Xray-item kon niet worden bepaald vanuit de tekst", 3)
+                    end
+                end,
+            }
+        end,
+    }
+
+    --[...]
+end
 
 -- [...]
 

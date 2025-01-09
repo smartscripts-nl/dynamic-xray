@@ -125,6 +125,8 @@ KOR.dialogs:alertInfo("information")
 
 -- showing list conditionally after saving an item: ((XrayItems#onSaveNewXrayItem)) or ((XrayItems#onEditXrayItem)) > ((XrayItems#showListConditionally))
 
+-- adding an "add xray item" button to the ReaderHighlight popup for a newly selected selection: ((add xray item button for selected text popup in ReaderHighlight))
+
 -- viewer, show item: ((XrayItems#onShowXrayItem))
 
 -- viewer, ((multiple related xray items found)) and adding linked items to that dialog: ((XrayItems#addContextButtons))
