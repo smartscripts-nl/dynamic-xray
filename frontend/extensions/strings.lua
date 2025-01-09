@@ -198,18 +198,26 @@ function Strings:splitLinesToMaxLength(text, max_length, indent, first_word)
 	return table.concat(lined_text, "\n")
 end
 
-function Strings:wholeWordMatch(haystack, needle, case_sensitive)
-	if case_sensitive then
-		haystack = self:lower(haystack)
+function Strings:wholeWordMatch(haystack, haystack_lower, needle, case_sensitive)
+
+	local case_insensitive = not case_sensitive
+	if case_insensitive then
 		needle = self:lower(needle)
+		return haystack_lower:match(needle)
+		and (
+		-- e.g. matches for Xray items after cleaning of paragraph texts in ((CreDocument#paragraphCleanForXrayMatching)):
+		haystack_lower:match(" " .. needle .. " ")
+		or
+		(not haystack_lower:match("%l" .. needle) and not haystack_lower:match(needle .. "%l"))
+		)
 	end
+
+	-- case sensitive:
 	return haystack:match(needle)
 	and (
-		-- e.g. matches for Xray items after cleaning of paragraph texts in ((CreDocument#paragraphCleanForXrayMatching)):
-		haystack:match(" " .. needle .. " ")
-		or
-		(not haystack:match("%l" .. needle)
-		and not haystack:match(needle .. "%l"))
+	haystack:match(" " .. needle .. " ")
+	or
+	(not haystack:match("%l" .. needle) and not haystack:match(needle .. "%l"))
 	)
 end
 

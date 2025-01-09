@@ -345,7 +345,7 @@ function TextViewer:findDialog()
 end
 
 -- when argument external_search_string not nil: called via ((XrayHelpers#ReaderHighlightGenerateXrayInformation)) > ((XrayHelpers#generateParagraphInformation)) >
--- click on line with xray marker > ((XrayHelpers#showXrayItemsInfo)) - here match reliability icons and xray type icons injected for buttons > ((Dialogs#textBox)) > ((send external searchstring for xray info)) > ((TextViewer#showToc)) > ((TextViewer#getTocButton)) >
+-- click on line with xray marker > ((XrayHelpers#showXrayItemsInfo)) - here reliability icons and xray type icons injected for buttons > ((Dialogs#textBox)) > ((send external searchstring for xray info)) > ((TextViewer#showToc)) > ((TextViewer#getTocButton)) >
 -- click on button > ((TextViewer#blockUp)) or ((TextViewer#blockDown)):
 function TextViewer:findCallback(input_dialog, external_search_string, overrule_pos)
     if input_dialog then

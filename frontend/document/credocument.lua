@@ -106,7 +106,7 @@ function CreDocument:storeCurrentPageParagraphs(xp, starting_page)
 end
 
 function CreDocument:paragraphCleanForXrayMatching(paragraph)
-    -- matching on these texts afterwards performed in ((XrayHelpers#matchNameToParagraph)) > ((XrayHelpers#isFullWordMatch)) > ((Strings#wholeWordMatch)):
+    -- matching on these texts afterwards performed in ((XrayHelpers#matchNameInPageOrParagraph)) > ((XrayHelpers#isFullWordMatch)) > ((Strings#wholeWordMatch)):
     if paragraph and paragraph.text then
         paragraph.text = paragraph.text
             :gsub("<[^>]+>", "")

@@ -109,7 +109,7 @@ KOR.dialogs:alertInfo("information")
 
 -- drawing rects for xray info: ((ReaderView#paintTo)) > ((XrayHelpers#ReaderViewGenerateXrayInformation)) > ((XrayHelpers#ReaderViewInitParaOrPageData)) > ((XrayHelpers#ReaderViewLoopThroughParagraphOrPage))
 
--- adding match reliability indicators for the page/paragraph info popup: ((XrayHelpers#matchNameToParagraph))
+-- adding match reliability indicators for the page/paragraph info popup: ((XrayHelpers#matchNameInPageOrParagraph))
 -- using these indicators: ((XrayHelpers#generateParagraphInformation)) > ((xray items dialog add match reliability explanations)) & ((use xray match reliability indicators))
 
 -- show paragraph hits: ((ReaderView#paintTo)) > ((XrayHelpers#ReaderViewGenerateXrayInformation)) > ((XrayHelpers#getXrayMarker)) and ((CreDocument#storeCurrentPageParagraphs)) > ((CreDocument#paragraphCleanForXrayMatching)) > ((XrayHelpers#getXrayInfoMatches)): here matches on page or paragraphs evaluated > ((XrayHelpers#drawMarker)) > ((set xray page info rects)) Registry:set("xray_page_info_rects") > ((ReaderHighlight#onTapXPointerSavedHighlight)) > here the information in the popup gets combined: ((XrayHelpers#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)) > ((XrayHelpers#showXrayItemsInfo))
