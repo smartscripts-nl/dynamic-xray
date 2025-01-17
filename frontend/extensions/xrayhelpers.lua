@@ -1403,7 +1403,6 @@ function XrayHelpers:matchNameInPageOrParagraph(text, lower_text, xray_needle, m
         if has_family_name and not is_lower_case then
             self.families_matched_by_multiple_parts[family_name] = 0
             part_matches[xray_name] = 0
-            --Debug:hoera("whole name fam injected for " .. xray_name)
             return true, 2
         end
         return true, 1
@@ -1546,6 +1545,22 @@ function XrayHelpers:sortAndIndexItems()
     end
 end
 
+function XrayHelpers:paragraphCleanForXrayMatching(paragraph)
+    -- matching on these texts afterwards performed in ((XrayHelpers#matchNameInPageOrParagraph)) > ((XrayHelpers#isFullWordMatch)) > ((Strings#wholeWordMatch)):
+    if paragraph and paragraph.text then
+        paragraph.text = paragraph.text
+          :gsub("<[^>]+>", "")
+          :gsub("[-.,!?:;()]", "")
+          :gsub(KOR.strings.curly_apo_l, "")
+          :gsub(KOR.strings.curly_apo_r, "")
+          :gsub(KOR.strings.curly_quote_l, "")
+          :gsub(KOR.strings.curly_quote_r, "")
+          :gsub("\n", " \n")
+          --remove footnote numbers:
+          :gsub("([a-z])%d+ ", "%1 ")
+    end
+end
+
 function XrayHelpers:populateTypeTables()
     self.xray_items_terms = {}
     self.xray_items_persons = {}
@@ -1586,6 +1601,27 @@ function XrayHelpers:markCurrentEbookOrSeriesMatchesUpdated(ebook_or_series, con
         stmt:reset():bind(ebook_or_series):step()
         stmt = Databases:closeStmts(stmt)
     end
+end
+
+function XrayHelpers:getHtmlElementIndex(position)
+    if not position then
+        return 1
+    end
+
+    -- info: bookmark / highlight positions have these formats:
+    --[[
+    /body/DocFragment[13]/body/section/section[1]/p[8]/text()[1].93,
+    or
+    /body/DocFragment[12]/body/p[179]/text().157
+    or
+    /body/DocFragment[13]/body/section/section[1]/p[18]/sup[5]/a/text().0
+    ]]
+    local tail = position
+            :gsub("^.+body/", "")
+            :gsub("section/section%[%d+%]/", "")
+
+    -- return main html elem number (is first number match in tail of position):
+    return tonumber(tail:match("%d+"))
 end
 
 return XrayHelpers

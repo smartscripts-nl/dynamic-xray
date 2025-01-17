@@ -1,6 +1,6 @@
 local CanvasContext = require("document/canvascontext")
 local Document = require("document/document")
-local Strings = require("extensions/strings")
+local KOR = require("extensions/kor")
 local cre -- Delayed loading
 
 -- [...]
@@ -41,83 +41,119 @@ function CreDocument:setDocument()
     end
 end
 
-function CreDocument:_getHtmlElementIndex(index)
-    if not index then
-        return 1
+-- sel_end will be initially page_xp when called from ((CreDocument#storeCurrentPageParagraphs)):
+function CreDocument:expandToEntireParagraph(sel_end, element_number)
+
+    if not element_number then
+        return {
+            pos0 = sel_end,
+            pos1 = sel_end,
+            text = "",
+        }
     end
-    -- bookmark / highlight positions have this format:
-    -- "/body/DocFragment[12]/body/p[179]/text().157"
-    -- so second number in line is the current HTML element
-    index = index:gsub("^.+body/", "")
-    index = index:match("[0-9]+")
 
-    return tonumber(index)
-end
+    -- set sel_start to start of paragraph, even if that is situated on previous page:
+    local sel_start = sel_end
+            :gsub("%[%d+%]%.%d+$", "[1].0")
 
-function CreDocument:expandToParagraphEnd(paragraph, sel_end, element_number)
+    local validated_sel_end = sel_end
+    local next_para_index = element_number + 1
+    local next_para_pos = sel_end
+            :gsub("%[" .. element_number .. "%]/text%(%)", "[" .. next_para_index .. "]/text()")
+            :gsub("%.%d+$", ".0")
+            :gsub("%[%d+%]%.%d+$", "[1].0")
+
+    -- info: next para DOES exist inside current doc section:
+    local page_no = self:getPageFromXPointer(next_para_pos)
+    if page_no and self.start_page_no and page_no >= self.start_page_no then
+        self.next_paragraph_position = next_para_pos
+        sel_end = self:getPrevVisibleWordEnd(next_para_pos)
+        validated_sel_end = self:expandSelectionToPunctuationMarks(element_number, sel_end)
+
+        return {
+            pos0 = sel_start,
+            pos1 = validated_sel_end,
+            text = self:getNotelessText(sel_start, validated_sel_end),
+        }
+    end
+
+    -- info: next para DOESNOT exist inside current doc section:
+    self.next_paragraph_position = nil
+
     local next_word_position = self:getNextVisibleWordStart(sel_end)
-    while self:_getHtmlElementIndex(next_word_position) == element_number and self:getPageFromXPointer(next_word_position) == self.start_page_no do --
+
+    while KOR.xrayhelpers:getHtmlElementIndex(next_word_position) == element_number do
         sel_end = next_word_position
+        validated_sel_end = sel_end
         next_word_position = self:getNextVisibleWordStart(next_word_position)
     end
-    local next_paragraph_position = next_word_position
-    if self:getPageFromXPointer(next_paragraph_position) == self.start_page_no then
-        self.next_paragraph_position = next_paragraph_position
-    else
-        self.next_paragraph_position = nil
-    end
+
+    validated_sel_end = self:expandSelectionToPunctuationMarks(element_number, validated_sel_end)
+
+    return {
+        pos0 = sel_start,
+        pos1 = validated_sel_end,
+        text = self:getNotelessText(sel_start, validated_sel_end),
+    }
+end
+
+function CreDocument:expandSelectionToPunctuationMarks(element_number, validated_sel_end)
+
+    local sel_end = validated_sel_end
     local next_char_position = self:getNextVisibleChar(sel_end)
-    while self:_getHtmlElementIndex(next_char_position) == element_number and self:getPageFromXPointer(next_char_position) == self.start_page_no do --
+
+    while KOR.xrayhelpers:getHtmlElementIndex(next_char_position) == element_number do
         sel_end = next_char_position
+        validated_sel_end = sel_end
         next_char_position = self:getNextVisibleChar(next_char_position)
     end
-    paragraph.pos1 = sel_end
-    paragraph.text = self:getTextFromXPointers(paragraph.pos0, paragraph.pos1)
+    return validated_sel_end
+end
+
+function CreDocument:getNotelessText(sel_start, sel_end)
+    local text = self:getTextFromXPointers(sel_start, sel_end)
+    return KOR.strings:removeNotes(text)
 end
 
 -- populates self.paragraphs, to be used in ((ReaderView#paintTo)) > ((XrayHelpers#ReaderViewGenerateXrayInformation)):
-function CreDocument:storeCurrentPageParagraphs(xp, starting_page)
+function CreDocument:storeCurrentPageParagraphs(page_xp, starting_page)
 
     self.paragraphs = {}
-    self.start_page_no = starting_page or self:getPageFromXPointer(xp)
-    local element_number = self:_getHtmlElementIndex(xp)
-    local paragraph = {
-        pos0 = xp,
-        pos1 = xp,
-        text = "",
-    }
-    self:expandToParagraphEnd(paragraph, xp, element_number)
-    self:paragraphCleanForXrayMatching(paragraph)
+    self.start_page_no = starting_page or self:getPageFromXPointer(page_xp)
+    local element_number = KOR.xrayhelpers:getHtmlElementIndex(page_xp)
+
+    local paragraph = self:expandToEntireParagraph(page_xp, element_number)
+    paragraph.full_text = paragraph.text
+    paragraph.element_no = element_number
+
+    KOR.xrayhelpers:paragraphCleanForXrayMatching(paragraph)
     table.insert(self.paragraphs, paragraph)
+
     while self.next_paragraph_position do
-        element_number = self:_getHtmlElementIndex(self.next_paragraph_position)
-        paragraph = {
-            pos0 = self.next_paragraph_position,
-            pos1 = self.next_paragraph_position,
-            text = "",
-        }
-        self:expandToParagraphEnd(paragraph, self.next_paragraph_position, element_number)
+        element_number = KOR.xrayhelpers:getHtmlElementIndex(self.next_paragraph_position)
+        paragraph = self:expandToEntireParagraph(self.next_paragraph_position, element_number)
+        paragraph.full_text = paragraph.text
+        paragraph.element_no = element_number
         if paragraph.text then
-            -- remove html tags and reading signs, for more accurate matching:
-            self:paragraphCleanForXrayMatching(paragraph)
+            -- remove html tags and punctuation marks, for more accurate matching:
+            KOR.xrayhelpers:paragraphCleanForXrayMatching(paragraph)
             table.insert(self.paragraphs, paragraph)
         end
     end
 end
 
-function CreDocument:paragraphCleanForXrayMatching(paragraph)
-    -- matching on these texts afterwards performed in ((XrayHelpers#matchNameInPageOrParagraph)) > ((XrayHelpers#isFullWordMatch)) > ((Strings#wholeWordMatch)):
-    if paragraph and paragraph.text then
-        paragraph.text = paragraph.text
-            :gsub("<[^>]+>", "")
-            :gsub("[-.,!?:;()]", "")
-            :gsub(Strings.curly_apo_l, "")
-            :gsub(Strings.curly_apo_r, "")
-            :gsub(Strings.curly_quote_l, "")
-            :gsub(Strings.curly_quote_r, "")
-            :gsub("\n", " \n")
-            --remove footnote numbers:
-            :gsub("([a-z])%d+ ", "%1 ")
+function CreDocument:getParagraphProps(xp)
+    if not xp then
+        return
+    end
+    local element_no = KOR.xrayhelpers:getHtmlElementIndex(xp)
+    for p = 1, #self.paragraphs do
+        local para = self.paragraphs[p]
+        if para.element_no == element_no then
+            -- info: make sure we select the real start of the html element (most often a paragraph), event if the element starts on a previous page:
+            para.pos0 = para.pos0:gsub("%d+$", "0")
+            return para.pos0, para.pos1, para.full_text, p
+        end
     end
 end
 

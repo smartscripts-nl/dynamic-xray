@@ -572,19 +572,6 @@ function XrayItems:getNextXrayItem(item)
     return self.item_table[next]
 end
 
-function XrayItems:_getHtmlElementIndex(index)
-    if not index then
-        return 1
-    end
-    -- bookmark / highlight positions have this format:
-    -- "/body/DocFragment[12]/body/p[179]/text().157"
-    -- so second number in line is the current HTML element
-    index = index:gsub("^.+body/", "")
-    index = index:match("[0-9]+")
-
-    return tonumber(index)
-end
-
 function XrayItems:getOtherEbooks()
     if #self.other_ebooks == 0 then
         -- determine other ebooks:

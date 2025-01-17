@@ -83,6 +83,18 @@ function Strings:limitLength(text, max_length)
 	return text
 end
 
+function Strings:removeNotes(text)
+	-- remove (foot)note markings in text:
+	-- double colon excluded, because otherwise clock hours destroyed:
+	-- exclude h, so we don't damage html headings:
+	text = text:gsub("([a-g,i-z?!;)])[0-9]+", "%1")
+	text = text:gsub("([a-zA-Z][.,])[0-9]+([ \n\r])", "%1%2")
+	text = text:gsub("%.[0-9]+$", "")
+	text = text:gsub("(”%.?)[0-9]+", "%1")
+
+	return text:gsub(" ?%*", ""):gsub(" ?%†", ""):gsub(" ?%‡", "")
+end
+
 -- count is meant for loops: only on first loop convert strings to singular:
 function Strings:singular(text, count)
 	if count == 1 then
