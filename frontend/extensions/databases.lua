@@ -6,57 +6,54 @@ local SQ3 = require("lua-ljsqlite3/init")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 
 --- @class Databases
-local Databases = WidgetContainer:extend{}
+local Databases = WidgetContainer:extend{
+    settings_folder = nil,
+}
 
-function Databases:closeConnections(conn, conn2)
+function Databases:closeConnections(conn, ...)
     if conn and not conn._closed then
         conn:close()
+        conn = nil
     end
-    if conn2 and not conn2._closed then
-        conn2:close()
+    for _, iconn in ipairs({ ... }) do
+        iconn:close()
+        iconn = nil
     end
     Registry:unset("db_conn")
-    return nil, nil
+    -- return nil, nil etc.
 end
 
-function Databases:closeStmts(stmt, stmt2, stmt3, stmt4)
+function Databases:closeStmts(stmt, ...)
     if stmt then
         stmt:clearbind():reset():close()
+        stmt = nil
     end
-    if stmt2 then
-        stmt2:clearbind():reset():close()
+    for _, istmt in ipairs({ ... }) do
+        istmt:clearbind():reset():close()
+        istmt = nil
     end
-    if stmt3 then
-        stmt3:clearbind():reset():close()
-    end
-    if stmt4 then
-        stmt4:clearbind():reset():close()
-    end
-    return nil, nil, nil, nil
+    -- return nil, nil etc.
 end
 
 function Databases:closeInfoConnections(conn)
     if conn and not conn._closed then
         conn:close()
+        conn = nil
     end
     Registry:unset("db_conn_info")
     return nil
 end
 
-function Databases:closeInfoStmts(stmt, stmt2, stmt3, stmt4)
+function Databases:closeInfoStmts(stmt, ...)
     if stmt then
         stmt:clearbind():reset():close()
+        stmt = nil
     end
-    if stmt2 then
-        stmt2:clearbind():reset():close()
+    for _, istmt in ipairs({ ... }) do
+        istmt:clearbind():reset():close()
+        istmt = nil
     end
-    if stmt3 then
-        stmt3:clearbind():reset():close()
-    end
-    if stmt4 then
-        stmt4:clearbind():reset():close()
-    end
-    return nil, nil, nil, nil
+    -- return nil, nil, nil, nil etc.
 end
 
 function Databases:getDBconnForBookInfo()
@@ -65,7 +62,8 @@ function Databases:getDBconnForBookInfo()
         return external_conn
     end
 
-    return SQ3.open(DataStorage:getSettingsDir() .. "/bookinfo_cache.sqlite3")
+    self.settings_folder = self.settings_folder or DataStorage:getSettingsDir()
+    return SQ3.open(self.settings_folder .. "/bookinfo_cache.sqlite3")
 end
 
 function Databases:getDBconnForStatistics()
@@ -74,7 +72,8 @@ function Databases:getDBconnForStatistics()
         return external_conn
     end
 
-    return SQ3.open(DataStorage:getSettingsDir()
+    self.settings_folder = self.settings_folder or DataStorage:getSettingsDir()
+    return SQ3.open(self.settings_folder
     .. "/statistics.sqlite3")
 end
 
