@@ -27,7 +27,6 @@ local function inside_box(pos, box)
     end
 end
 
--- used as registry for global vars:
 --- @class XrayHelpers
 local XrayHelpers = WidgetContainer:new{
     button_info = {
