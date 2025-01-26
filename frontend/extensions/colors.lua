@@ -5,6 +5,8 @@ local Blitbuffer = require("ffi/blitbuffer")
 return {
     -- info: Blitbuffer.COLOR_DARK_GRAY (disabled color, substitutes de facto the missing Blitbuffer.COLOR_GRAY_8; colors go from COLOR_BLACK, COLOR_GRAY_1 to COLOR_GRAY_E AND COLOR_WHITE):
 
+    black = Blitbuffer.COLOR_BLACK,
+
     active_tab = Blitbuffer.COLOR_BLACK,
     inactive_tab = Blitbuffer.COLOR_GRAY_4,
 
@@ -12,6 +14,11 @@ return {
     background_gray = Blitbuffer.COLOR_LIGHT_GRAY,
 
     bold_button_text_color = Blitbuffer.COLOR_DARK_GRAY,
+
+    button_default = Blitbuffer.COLOR_BLACK,
+    button_disabled = Blitbuffer.COLOR_DARK_GRAY,
+    button_invisible = Blitbuffer.COLOR_WHITE,
+    button_label = Blitbuffer.COLOR_GRAY_3,
 
     label_enabled = Blitbuffer.COLOR_BLACK,
     label_disabled = Blitbuffer.COLOR_DARK_GRAY,

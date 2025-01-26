@@ -6,9 +6,9 @@ local Font = require("ui/font")
 local Geom = require("ui/geometry")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local HorizontalSpan = require("ui/widget/horizontalspan")
+local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")
 local OverlapGroup = require("ui/widget/overlapgroup")
-local Registry = require("extensions/registry")
 local Size = require("ui/size")
 local TextBoxWidget = require("ui/widget/textboxwidget")
 local TextWidget = require("ui/widget/textwidget")
@@ -57,6 +57,7 @@ local TitleBar = OverlapGroup:extend {
 
     title_top_padding = 0, -- computed if none provided
     title_h_padding = Size.padding.large, -- horizontal padding (this replaces button_padding on the inner/title side)
+    title_h_padding_portrait = Size.padding.buttontable,
     title_subtitle_v_padding = Screen:scaleBySize(3),
     bottom_v_padding = nil, -- hardcoded default values, different whether with_bottom_line true or false
 
@@ -75,7 +76,7 @@ local TitleBar = OverlapGroup:extend {
 
     show_parent = nil,
 
-    --- PROPS BY SMARTSCRIPTS ---
+    --- PROPS BY ALEX ---
 
     desired_height = nil,
     desired_heights = {
@@ -98,8 +99,11 @@ local TitleBar = OverlapGroup:extend {
     for_filemanager = false,
 
     -- info: tab buttons IN THE LEFT HALF of the titlebar itself:
-    -- must be a table with real Buttons:
-    tab_buttons = nil,
+    -- either tables of real Buttons, or tables with button configs:
+    tab_buttons_left = nil,
+    tab_buttons_right = nil,
+    -- for referencing buttons, to be able to modify them:
+    tabs = {},
 
     -- info: icon buttons IN the titlebar itself, at the left and the right (there for now only close button):
     -- if given as table, table items must have these props: icon, icon_size_ratio, rotation_angle, callback, hold_callback, allow_flash:
@@ -109,15 +113,20 @@ local TitleBar = OverlapGroup:extend {
     -- info: submenu BELOW the title bar:
     submenu_buttontable = nil,
 
-    -- ! will be set to true when top_buttons_left or top_buttons_right or tab_buttons are set:
+    -- ! will be set to true when top_buttons_left or top_buttons_right or tab_buttons_left are set:
     has_top_buttons = false,
+
+    -- dynamically set in ((TitleBar#init)):
+    is_landscape_screen = true,
 }
 
 function TitleBar:init()
 
-    --local has_left_buttons = self.top_buttons_left or self.tab_buttons
+    self.is_landscape_screen = KOR.screenhelpers:isLandscapeScreen()
+
+    --local has_left_buttons = self.top_buttons_left or self.tab_buttons_left
     -- for forms with tab buttons, always center the title:
-    if self.tab_buttons then
+    if self.tab_buttons_left then
         self.align = "center"
     end
     --- we don't want an in-your-face bottom line in case of fullscreen dialogs:
@@ -126,19 +135,33 @@ function TitleBar:init()
         self.bottom_line_thickness = Size.line.small
     end
 
-    self.has_top_buttons = self.top_buttons_left or self.top_buttons_right or self.tab_buttons
+    self.has_top_buttons = self.top_buttons_left or self.top_buttons_right or self.tab_buttons_left or self.tab_buttons_right
 
-    self.left_buttons_container = HorizontalGroup:new {
+    self.left_buttons_container = HorizontalGroup:new{
         -- ! "left" and "right" not allowed for HorizontalGroups !
         align = "center",
     }
-    self.right_buttons_container = HorizontalGroup:new {
+    self.right_buttons_container = HorizontalGroup:new{
         align = "center",
     }
-    self.submenu_buttontable_container = HorizontalGroup:new {
+    self.submenu_buttontable_container = HorizontalGroup:new{
         align = "center",
     }
 
+    -- we either have icon button in the left half of the titlebar, or tab buttons:
+    if self.tab_buttons_left and self.top_buttons_left then
+        local button
+        for i = 1, #self.top_buttons_left do
+            button = self.top_buttons_left[i]
+            button.bordersize = 0
+            table.insert(self.tab_buttons_left, 1, button)
+        end
+        self.top_buttons_left = nil
+    end
+    if not self.top_buttons_left then
+        self:injectTabButtonsLeft()
+    end
+    self:injectTabButtonsRight()
     self:addCloseButton()
 
     if not self.width then
@@ -148,10 +171,6 @@ function TitleBar:init()
 
     self:setTopButtonsSizeAndCallbacks()
     self:populateTopButtonsGroups()
-    -- we either have icon button in the left half of the titlebar, or tab buttons:
-    if not self.top_buttons_left then
-        self:populateTabButtonsGroup()
-    end
     self:populateSubMenuButtons()
 
     --- this is de facto the title text:
@@ -174,7 +193,7 @@ function TitleBar:init()
 
     self:injectSubTitle()
 
-    self.dimen = Geom:new {
+    self.dimen = Geom:new{
         x = 0,
         y = 0,
         w = self.width,
@@ -260,15 +279,23 @@ function TitleBar:setRightIcon(icon)
     end
 end
 
--- ======================== ADDED =======================
+-- ======================== ALEX =======================
+
+function TitleBar:setButtonIconType(config, button)
+    for _, prop in ipairs({ "icon", "icon_text", "text_icon", "icon_icon" }) do
+        if button[prop] then
+            config[prop] = button[prop]
+            return
+        end
+    end
+end
 
 -- compare ((TitleBar#setTopButtonsSizeAndCallbacks))
 -- compare final injection in ((TitleBar#populateTopButtonsGroups))
 function TitleBar:getAdaptedTopButton(button)
 
     -- paddings for buttons are ignored in OverlapGroups:
-    return Button:new{
-        icon = button.icon,
+    local config = {
         icon_rotation_angle = button.rotation_angle or 0,
         icon_width = button.icon_size,
         icon_height = button.icon_size,
@@ -276,11 +303,14 @@ function TitleBar:getAdaptedTopButton(button)
         bordersize = 0,
         callback = button.callback,
         hold_callback = button.hold_callback,
+        info_callback = button.info_callback,
         decrease_top_padding = button.decrease_top_padding,
         increase_top_padding = button.increase_top_padding,
         allow_flash = G_reader_settings:isNilOrFalse("night_mode"),
         show_parent = self.show_parent,
     }
+    self:setButtonIconType(config, button)
+    return Button:new(config)
 end
 
 function TitleBar:setButtonProps(button)
@@ -302,6 +332,12 @@ function TitleBar:setButtonProps(button)
             button.hold_callback(self.menu_instance)
         end
     end
+    if button.info_callback then
+        new_button.info_callback = function()
+            button.info_callback(self.menu_instance)
+        end
+    end
+
 end
 
 -- compare ((TitleBar#getAdaptedTopButton))
@@ -345,7 +381,7 @@ function TitleBar:injectCenterContainerForTitle()
     end
     -- for align == "left" we need width correction, to make sure the titlebar doesnot overlap the right title bar border:
     if self.title_multilines and self.align ~= "left" then
-        self.title_widget = TextBoxWidget:new {
+        self.title_widget = TextBoxWidget:new{
             text = self.title,
             alignment = self.align,
             width = width,
@@ -354,7 +390,7 @@ function TitleBar:injectCenterContainerForTitle()
         }
     else
         while true do
-            self.title_widget = TextWidget:new {
+            self.title_widget = TextWidget:new{
                 text = self.title,
                 face = title_face,
                 padding = 0,
@@ -381,7 +417,7 @@ function TitleBar:injectCenterContainerForTitle()
                 -- using the metrics we're computing now (self._initial*).
                 self._initial_re_init_needed = true
                 self.title_widget:free(true)
-                self.title_widget = TextWidget:new {
+                self.title_widget = TextWidget:new{
                     text = "",
                     face = title_face,
                     padding = 0,
@@ -397,7 +433,7 @@ function TitleBar:injectCenterContainerForTitle()
     self.subtitle_widget = nil
     if self.subtitle then
         if self.subtitle_multilines then
-            self.subtitle_widget = TextBoxWidget:new {
+            self.subtitle_widget = TextBoxWidget:new{
                 text = self.subtitle,
                 alignment = self.align,
                 width = subtitle_max_width,
@@ -405,7 +441,7 @@ function TitleBar:injectCenterContainerForTitle()
                 lang = self.lang,
             }
         else
-            self.subtitle_widget = TextWidget:new {
+            self.subtitle_widget = TextWidget:new{
                 text = self.subtitle,
                 face = self.subtitle_face,
                 max_width = subtitle_max_width,
@@ -416,13 +452,13 @@ function TitleBar:injectCenterContainerForTitle()
         end
     end
 
-    self.title_group = VerticalGroup:new {
+    self.title_group = VerticalGroup:new{
         align = self.align,
     }
-    self.title_group_vertically_centered = VerticalGroup:new {
+    self.title_group_vertically_centered = VerticalGroup:new{
         align = self.align,
     }
-    self.subtitle_group = VerticalGroup:new {
+    self.subtitle_group = VerticalGroup:new{
         align = self.align,
     }
 
@@ -430,7 +466,7 @@ function TitleBar:injectCenterContainerForTitle()
         -- we need to :resetLayout() both VerticalGroup and HorizontalGroup in :setTitle()
 
         local title_elems = {
-            HorizontalSpan:new { width = top_left_buttons_reserved_width + self.title_h_padding },
+            HorizontalSpan:new{ width = top_left_buttons_reserved_width + self.title_h_padding },
         }
         table.insert(title_elems, self.title_widget)
         self.inner_title_group = HorizontalGroup:new(title_elems)
@@ -439,14 +475,14 @@ function TitleBar:injectCenterContainerForTitle()
         table.insert(self.title_group, self.title_widget)
     end
     if self.subtitle_widget then
-        table.insert(self.subtitle_group, VerticalSpan:new { width = self.title_subtitle_v_padding })
+        table.insert(self.subtitle_group, VerticalSpan:new{ width = self.title_subtitle_v_padding })
         if self.align == "left" then
             local span_width = self.title_h_padding
             if not self.subtitle_fullwidth then
                 span_width = span_width + top_left_buttons_reserved_width
             end
-            self.inner_subtitle_group = HorizontalGroup:new {
-                HorizontalSpan:new { width = span_width },
+            self.inner_subtitle_group = HorizontalGroup:new{
+                HorizontalSpan:new{ width = span_width },
                 self.subtitle_widget,
             }
             table.insert(self.subtitle_group, self.inner_subtitle_group)
@@ -471,8 +507,8 @@ function TitleBar:injectCenterContainerForTitle()
 
     if self.submenu_buttontable then
         table.insert(self.title_group, self.submenu_buttontable_container)
-        local line_widget = LineWidget:new {
-            dimen = Geom:new { w = self.width, h = self.bottom_line_thickness },
+        local line_widget = LineWidget:new{
+            dimen = Geom:new{ w = self.width, h = self.bottom_line_thickness },
             background = Blitbuffer.COLOR_GRAY_9
         }
         table.insert(self.title_group, line_widget)
@@ -483,15 +519,15 @@ function TitleBar:injectCenterContainerForTitle()
     if not self.has_top_buttons then
         padding_for_vertical_centering = padding_for_vertical_centering - no_top_buttons_correction
     end
-    table.insert(self.title_group_vertically_centered, VerticalSpan:new { width = padding_for_vertical_centering })
+    table.insert(self.title_group_vertically_centered, VerticalSpan:new{ width = padding_for_vertical_centering })
     table.insert(self.title_group_vertically_centered, self.title_group)
     -- info: for titlebars without top buttons we need some extra bottom padding (but less then with top buttons):
     if not self.has_top_buttons then
         padding_for_vertical_centering = padding_for_vertical_centering + no_top_buttons_correction + 1
-        table.insert(self.title_group_vertically_centered, VerticalSpan:new { width = padding_for_vertical_centering })
+        table.insert(self.title_group_vertically_centered, VerticalSpan:new{ width = padding_for_vertical_centering })
     end
 
-    self.center_container = VerticalGroup:new {
+    self.center_container = VerticalGroup:new{
         align = self.align,
         overlap_align = self.align,
         self.title_group_vertically_centered,
@@ -519,8 +555,8 @@ function TitleBar:injectCenterContainerForTitle()
     if self.align == "center" and self.subtitle_widget then
         table.insert(self.center_container, self.subtitle_widget)
         --- we need this extra CenterContainer as wrapper to make sure that title and subtitle are nicely centered as one module:
-        self.center_container = CenterContainer:new {
-            dimen = Geom:new { w = math.max(self.title_width, self.subtitle_width), h = self.title_height },
+        self.center_container = CenterContainer:new{
+            dimen = Geom:new{ w = math.max(self.title_width, self.subtitle_width), h = self.title_height },
             align = self.align,
             overlap_align = self.align,
             self.center_container,
@@ -528,13 +564,44 @@ function TitleBar:injectCenterContainerForTitle()
     end
 
     if self.has_top_buttons then
-        local titlebar_bottom_spacer = VerticalSpan:new { width = Size.padding.button }
+        local titlebar_bottom_spacer = VerticalSpan:new{ width = Size.padding.button }
         table.insert(self.center_container, titlebar_bottom_spacer)
     end
 
     self.titlebar_height = self.center_container:getSize().h
 
     table.insert(self, self.center_container)
+end
+
+function TitleBar:injectTabButtonsLeft()
+    self.tabs = {}
+    if self.tab_buttons_left then
+        local separator = self.is_landscape_screen and HorizontalSpan:new{ width = self.title_h_padding } or HorizontalSpan:new{ width = self.title_h_padding_portrait }
+        -- horizontal padding from the left:
+        table.insert(self.left_buttons_container, HorizontalSpan:new{ width = self.title_h_padding })
+        local button
+        for i = 1, #self.tab_buttons_left do
+            button = type(self.tab_buttons_left[i]) == "table" and Button:new(self.tab_buttons_left[i]) or self.tab_buttons_left[i]
+            table.insert(self.tabs, button)
+            table.insert(self.left_buttons_container, separator)
+            table.insert(self.left_buttons_container, button)
+        end
+
+        self.left_buttons_height = self.left_buttons_container:getSize().h
+    end
+end
+
+function TitleBar:injectTabButtonsRight()
+    if self.tab_buttons_right then
+        local button
+        local separator = self.is_landscape_screen and HorizontalSpan:new{ width = self.title_h_padding } or HorizontalSpan:new{ width = self.title_h_padding_portrait }
+        for i = #self.tab_buttons_right, 1, -1 do
+            button = type(self.tab_buttons_right[i]) == "table" and Button:new(self.tab_buttons_right[i]) or self.tab_buttons_right[i]
+            table.insert(self.right_buttons_container, 1, button)
+            table.insert(self.tabs, button)
+            table.insert(self.right_buttons_container, 2, separator)
+        end
+    end
 end
 
 function TitleBar:addCloseButton()
@@ -546,7 +613,7 @@ function TitleBar:addCloseButton()
                 callback = function()
                     self.close_callback()
                 end,
-            }
+            },
         }
         if self.close_hold_callback then
             self.top_buttons_right[1].hold_callback = function()
@@ -558,14 +625,14 @@ end
 
 -- compare ((TitleBar#setTopButtonsSizeAndCallbacks))
 -- compare ((TitleBar#getAdaptedTopButton))
---- the groups generated here are only horizontally qua orientation
+--- the groups generated here are only horizontally oriented
 function TitleBar:populateTopButtonsGroups()
     local spacer_width = Size.padding.titlebarbutton
     if self.top_buttons_left then
-        if Registry.is_android_device then
+        if KOR.registry.is_android_device then
             spacer_width = Size.padding.fullscreen
         end
-        local horizontal_spacer = HorizontalSpan:new { width = spacer_width }
+        local horizontal_spacer = HorizontalSpan:new{ width = spacer_width }
         for nr, button in ipairs(self.top_buttons_left) do
             if nr == 1 then
                 table.insert(self.left_buttons_container, horizontal_spacer)
@@ -583,7 +650,7 @@ function TitleBar:populateTopButtonsGroups()
         self.left_buttons_height = self.left_buttons_container:getSize().h
     end
     if self.top_buttons_right then
-        local horizontal_spacer = HorizontalSpan:new { width = spacer_width }
+        local horizontal_spacer = HorizontalSpan:new{ width = spacer_width }
         for nr, button in ipairs(self.top_buttons_right) do
             if nr < #self.top_buttons_right then
                 table.insert(self.right_buttons_container, horizontal_spacer)
@@ -603,46 +670,33 @@ end
 
 function TitleBar:addCloseButtonRightSpacer()
     if self.for_filemanager or self.has_small_close_button_padding then
-        table.insert(self.right_buttons_container, HorizontalSpan:new { width = Size.padding.titlebar })
+        table.insert(self.right_buttons_container, HorizontalSpan:new{ width = Size.padding.titlebar })
     elseif not self.fullscreen then
         -- to simulate right margin for close button:
-        local right_border_spacer = HorizontalSpan:new { width = Size.padding.closebuttonpopupdialog }
+        local right_border_spacer = HorizontalSpan:new{ width = Size.padding.closebuttonpopupdialog }
         -- to make sure e.g. the close button doesn't overlap the radius of the dialog border:
         table.insert(self.right_buttons_container, right_border_spacer)
     else
-        table.insert(self.right_buttons_container, HorizontalSpan:new { width = Size.padding.large })
-    end
-end
-
-function TitleBar:populateTabButtonsGroup()
-    if self.tab_buttons then
-        -- horizontal padding from the left:
-        table.insert(self.left_buttons_container, HorizontalSpan:new { width = self.title_h_padding })
-        for i = 1, #self.tab_buttons do
-            table.insert(self.left_buttons_container, self.tab_buttons[i])
-            table.insert(self.left_buttons_container, HorizontalSpan:new { width = self.title_h_padding })
-        end
-
-        self.left_buttons_height = self.left_buttons_container:getSize().h
+        table.insert(self.right_buttons_container, HorizontalSpan:new{ width = Size.padding.large })
     end
 end
 
 function TitleBar:injectBottomLine()
     if self.with_bottom_line then
-        local line_widget = LineWidget:new {
-            dimen = Geom:new { w = self.width, h = self.bottom_line_thickness },
+        local line_widget = LineWidget:new{
+            dimen = Geom:new{ w = self.width, h = self.bottom_line_thickness },
             background = self.bottom_line_color
         }
         if self.bottom_line_h_padding then
             line_widget.dimen.w = line_widget.dimen.w - 2 * self.bottom_line_h_padding
-            line_widget = HorizontalGroup:new {
-                HorizontalSpan:new { width = self.bottom_line_h_padding },
+            line_widget = HorizontalGroup:new{
+                HorizontalSpan:new{ width = self.bottom_line_h_padding },
                 line_widget,
             }
         end
 
-        local filler_and_bottom_line = VerticalGroup:new {
-            VerticalSpan:new { width = self.desired_height },
+        local filler_and_bottom_line = VerticalGroup:new{
+            VerticalSpan:new{ width = self.desired_height },
             line_widget,
         }
         table.insert(self, filler_and_bottom_line)
@@ -654,11 +708,11 @@ function TitleBar:injectSubTitle()
     if self.info_text then
         local h_padding = self.info_text_h_padding or self.title_h_padding
         local v_padding = self.with_bottom_line and Size.padding.default or 0
-        local filler_and_info_text = VerticalGroup:new {
-            VerticalSpan:new { width = self.titlebar_height + v_padding },
-            HorizontalGroup:new {
-                HorizontalSpan:new { width = h_padding },
-                TextBoxWidget:new {
+        local filler_and_info_text = VerticalGroup:new{
+            VerticalSpan:new{ width = self.titlebar_height + v_padding },
+            HorizontalGroup:new{
+                HorizontalSpan:new{ width = h_padding },
+                TextBoxWidget:new{
                     text = self.info_text,
                     face = self.info_text_face,
                     width = self.width - 2 * h_padding,
@@ -674,14 +728,14 @@ end
 function TitleBar:injectSideContainers()
 
     --- inject left container, either with icon buttons or tab buttons:
-    if self.top_buttons_left or self.tab_buttons then
+    if self.top_buttons_left or self.tab_buttons_left then
 
-        -- the height used for computation was computed in ((TitleBar#populateTopButtonsGroups)) or ((TitleBar#populateTabButtonsGroup)):
+        -- the height used for computation was computed in ((TitleBar#populateTopButtonsGroups)) or ((TitleBar#injectTabButtonsLeft)):
         local padding_for_vertical_centering = self:computeVerticalPadding(self.left_buttons_height, "apply_side_group_correction")
-        table.insert(self, VerticalGroup:new {
+        table.insert(self, VerticalGroup:new{
             align = "left",
             overlap_align = "left",
-            VerticalSpan:new { width = padding_for_vertical_centering },
+            VerticalSpan:new{ width = padding_for_vertical_centering },
             self.left_buttons_container,
         })
     end
@@ -691,17 +745,17 @@ function TitleBar:injectSideContainers()
 
         -- the height used for computation was computed in ((TitleBar#populateTopButtonsGroups)):
         local padding_for_vertical_centering = self:computeVerticalPadding(self.right_buttons_height, "apply_side_group_correction")
-        table.insert(self, VerticalGroup:new {
+        table.insert(self, VerticalGroup:new{
             align = "right",
             overlap_align = "right",
-            VerticalSpan:new { width = padding_for_vertical_centering },
+            VerticalSpan:new{ width = padding_for_vertical_centering },
             self.right_buttons_container,
         })
     end
 end
 
 function TitleBar:setDesiredHeight()
-    self.desired_height = Registry.is_android_device and self.desired_heights.android or self.desired_heights.ubuntu
+    self.desired_height = KOR.registry.is_android_device and self.desired_heights.android or self.desired_heights.ubuntu
 end
 
 function TitleBar:computeVerticalPadding(height, apply_side_group_correction)
@@ -715,6 +769,16 @@ function TitleBar:populateSubMenuButtons()
     if self.submenu_buttontable then
         table.insert(self.submenu_buttontable_container, self.submenu_buttontable)
     end
+end
+
+function TitleBar:refreshTabButtons(tab_buttons_left, tab_buttons_right)
+    self.tab_buttons_left = tab_buttons_left
+    self.tab_buttons_right = tab_buttons_right
+
+    -- call WidgetContainer:clear() that will call :free() and
+    -- will remove subwidgets from the OverlapGroup we are.
+    self:clear()
+    self:init()
 end
 
 return TitleBar
