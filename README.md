@@ -29,3 +29,7 @@ See [Dynamic Xray plugin · koreader/koreader · Discussion #12964 · GitHub](ht
 ## No support provided
 
 Alas, I don't have time to support this plugin. Use it at your own risk. If and when the KOReader developers community would integrate this plugin into the source code of KOReader, you can probably get support there.
+
+## License
+
+GNU General Public License (GPLv3): free to use, modify and distribute your version. Naming me as the author of the very first version would be nice.
