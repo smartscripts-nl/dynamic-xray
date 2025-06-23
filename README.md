@@ -32,4 +32,4 @@ Alas, I don't have time to support this plugin. Use it at your own risk. If and 
 
 ## License
 
-GNU General Public License (GPLv3): free to use, modify and distribute your version. Naming me as the author of the very first version would be nice.
+GNU General Public License (GPLv3): open source software, free to use, modify and distribute your version. Naming me as the author of the very first version would be nice.
