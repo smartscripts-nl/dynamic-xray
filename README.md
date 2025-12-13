@@ -29,10 +29,10 @@ Dynamic Xray uses a stripped down version of my personal extensions system for K
   * and then tapping again on "xray-item".
   * You now should see the buttons.
   * If not, you could try closing the dialog and then re-opening it.
-  * This should be a one time problem, DX remembers the correct height for the textarea under the first tab which allows the buttons below to be visible.
+  * This should be a one time problem, DX remembers the correct height for the textarea under the first tab, which allows the buttons below to remain visible.
 
 ### Displaying help information about the function of buttons
-DX uses mostly buttons with only icons, so without explanatory labels. However, if a button contains a point at the right side of the icon, or a downwards pointing arrow at the left side, this means that you can trigger a popup with help information about the function of that button by longpressing it.
+DX uses mostly buttons with only icons, so without explanatory labels. However, if a button contains a point on the right side of the icon, or a downwards pointing arrow on the left side, this means that you can trigger a popup with help information about the function of that button by longpressing it.
 * An arrow means that a button has more than one action available upon longpress.
 * A point signifies a one action button.
 * These actions can then be executed by tapping on the buttons at the bottom of the help dialog.
