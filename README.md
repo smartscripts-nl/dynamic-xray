@@ -2,7 +2,13 @@
 
 A KOReader plugin to view "xray items", i.e. user defined explanations of persons, places and terms in books or even entire series.
 
-Dynamic Xray (DX) plugin was inspired by the X-ray system on Kindles (see explanation on [Amazon X-Ray on Kindle | All you need to know - YouTube](https://youtu.be/mreow-OrGsU?si=c_3NhHKBDa1BFEvI)). DX differs from the Kindle system in that the user can define items dynamically, while on Kindles these items are "baked into" the ebook. The advantage of the former approach is that the user can dynamically add and modify items, but the advantage of the Kindle approach is that it isn't error-prone. DX is, because it uses matching of the words in ebook texts to determine whether Xray items are present. Which can lead to incorrect hits. But in at about 95% of cases the matches will be correct.
+Dynamic Xray (DX) plugin was inspired by the X-ray system on Kindles (see explanation on [Amazon X-Ray on Kindle | All you need to know - YouTube](https://youtu.be/mreow-OrGsU?si=c_3NhHKBDa1BFEvI)).
+
+DX differs from the Kindle system in that the user can define items dynamically, while on Kindles these items are "baked into" the ebook.
+
+The advantage of the former approach is that the user can dynamically add and modify items, but the advantage of the Kindle approach is that it isn't error-prone.
+
+DX is, because it uses matching of the words in ebook texts to determine whether Xray items are present. Which can lead to incorrect hits. But in at about 95% of cases the matches will be correct.
 
 ## Use cases
 
@@ -10,7 +16,7 @@ Dynamic Xray (DX) plugin was inspired by the X-ray system on Kindles (see explan
 The user can use DX to keep track for an ebook or an entire series of many characters, places, terms etc., mark them as
 important, to see how they are linked to other items, what are their aliases, in which chapters they are mentioned and how frequent, etc.
 ### Non-fiction books
-The user can use DX for study, to keep track of terms, places, definitions, historical events etc. in ebooks, to see how these are linked to each other, in which chapters they can be found and how frequent, etc.
+The user can use DX for study: to keep track of terms, places, definitions, historical events etc. in ebooks, to see how these are linked to each other, in which chapters they can be found and how frequent, etc.
 
 ## Installation
 
@@ -61,8 +67,7 @@ Most icons used by DX were downloaded from [Online Webfonts](https://www.onlinew
 
 ## Development history and usage
 
-See [Dynamic Xray plugin · koreader/koreader · Discussion #12964 · GitHub](https://github.com/koreader/koreader/discussions/12964)
-for the development history of this plugin and for Dynamic Xray usage examples by screenprints and screencasts.
+See [Dynamic Xray plugin · koreader/koreader · Discussion #12964 · GitHub](https://github.com/koreader/koreader/discussions/12964) for the development history of this plugin and for Dynamic Xray usage examples by screenprints and screencasts.
 
 ## Tip for navigating the code
 
