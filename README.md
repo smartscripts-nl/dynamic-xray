@@ -20,7 +20,7 @@ Dynamic Xray uses a stripped down version of my personal extensions system for K
 
 ## Usage tips
 
-* The patch file adds a button "+ Xray" to the popup dialog for text selecions. With this button you can add new Xray items from the text selection.
+* The patch file adds a button "+ Xray" to the popup dialog for text selections. With this button you can add new Xray items from the text selection.
 * If in the dialog, under the first tab "xray-item" you don't see buttons, that is because the textarea for the description of the Xray item is too high. You can rectify this by tapping on the "metadata" tab and then tap again on "xray-item". You now should see the buttons. If not, you could try closing the dialog and then re-opening it. This should be a one time problem, DX remembers the correct height for the textarea under the first tab which allows the buttons below to be visible.
 
 ## Tip for navigating the code
@@ -30,6 +30,12 @@ Dynamic Xray uses a stripped down version of my personal extensions system for K
 * Also with Better Highlights you can colorize comments differently depending on the use case, for much improved readability.
 
 * In Better Highlights settings set (( and )) as wikilink start and end - the default is [[ and ]] -, so you can add clickable comments to --(( )) lua commented blocks.
+
+## About the code
+The Dynamic Xray plugin is structured according to some kind of MVC structure:
+* M = XrayModel > data handlers: XrayDataLoader, XrayFormsData, XraySettings, XrayTappedWords and XrayViewsData
+* V = XrayUI, and XrayDialogs and XrayButtons
+* C = XrayController
 
 ## Development history and usage
 
