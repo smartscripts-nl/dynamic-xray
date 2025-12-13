@@ -6,8 +6,8 @@ Dynamic Xray (DX) plugin was inspired by the X-ray system on Kindles (see explan
 
 ## Use cases
 
-* For fiction books the user can use DX to keep track of many characters in an ebook (series) and to see how they are linked to each other.
-* But you can also use DX for study of non-fiction books, to keep track of themes, terms etc. in them, how they are linked to each other, in which chapters they can be found, etc.
+* For fiction books the user can use DX to keep track of many characters in an ebook (series), to see how they are linked to each other, what are their aliases, in which chapters they are mentioned, etc.
+* You can also use DX for study of non-fiction books, to keep track of themes, terms, historical events etc. in them, how these are linked to each other, in which chapters they can be found, etc.
 
 ## Installation
 
