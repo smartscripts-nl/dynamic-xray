@@ -4,7 +4,10 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 
 Dynamic Xray (DX) plugin was inspired by the X-ray system on Kindles (see explanation on [Amazon X-Ray on Kindle | All you need to know - YouTube](https://youtu.be/mreow-OrGsU?si=c_3NhHKBDa1BFEvI)). DX differs from the Kindle system in that the user can define items dynamically, while on Kindles these items are "baked into" the ebook. The advantage of the former approach is that the user can dynamically add and modify items, but the advantage of the Kindle approach is that it isn't error-prone. DX is, because it uses matching of the words in ebook texts to determine whether Xray items are present. Which can lead to incorrect hits. But in at about 95% of cases the matches will be correct.
 
-Dynamic Xray uses a stripped down version of my personal extensions system for KOReader.
+## Use cases
+
+* For fiction books the user can use DX to keep track of many characters in an ebook (series) and to see how they are linked to each other.
+* But you can also use DX for study of non-fiction books, to keep track of themes, terms etc. in them, how they are linked to each other, in which chapters they can be found, etc.
 
 ## Installation
 
@@ -40,12 +43,18 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 
 ## About the code
 
+* Dynamic Xray uses a stripped down version of my personal extensions system for KOReader.
 * DX is added by patching the stock KOReader code, so you don't have to modify the code of the basic KOReader version.
 * The DX plugin is structured to resemble an MVC structure:
     * M = XrayModel > data handlers: XrayDataLoader, XrayFormsData, XraySettings, XrayTappedWords and XrayViewsData (extensions)
     * V = XrayUI, and XrayDialogs and XrayButtons (extensions)
     * C = XrayController (plugin)
 * In code-eplanations.lua you can find some explanations for programmers about the inner workings of DX. This file doesn't have a function in the plugin, is meant to be purely informational.
+* DeepWiki.com has an extensive analysis of the DX plugin (for now of old version 1, but probably this will soon be updated). See [DeepWiki/dynamic-xray](https://deepwiki.com/smartscripts-nl/dynamic-xray).
+
+## Icons
+
+Most icons used by DX were downloaded from [Online Webfonts](https://www.onlinewebfonts.com/icon/), and some from [SVG Repo](https://www.svgrepo.com/). In some cases I've renamed these icons, to clarify their function in DX.
 
 ## Development history and usage
 
