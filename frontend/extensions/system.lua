@@ -1,12 +1,17 @@
 
+local require = require
+
 local Device = require("device")
 local Input = Device.input
-local Registry = require("extensions/registry")
-local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 
+local pairs = pairs
+
 --- @class System
-local System = WidgetContainer:extend{}
+local System = WidgetContainer:extend{
+	crashed = false,
+	hold_menu_input_delay = 0.9,
+}
 
 function System:isClosingGesture(direction, excluded_direction)
 	local closing_directions = { "northeast", "south", "southwest", "north" }
@@ -18,21 +23,9 @@ function System:isClosingGesture(direction, excluded_direction)
 	return false
 end
 
-function System:inhibitInput(until_seconds)
-	if not until_seconds then
-		until_seconds = Registry.hold_menu_input_delay
-	end
-	Input:inhibitInputUntil(until_seconds)
-end
-
-function System:nextTick(callback)
-	if Registry.is_non_kobo_device then
-		callback()
-		return
-	end
-	UIManager:nextTick(function()
-		callback()
-	end)
+function System:inhibitInputOnHold()
+	--* currently this value is 0.9:
+	Input:inhibitInputUntil(self.hold_menu_input_delay)
 end
 
 return System

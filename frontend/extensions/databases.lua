@@ -1,38 +1,28 @@
 
+local require = require
+
 local DataStorage = require("datastorage")
--- ! don't use Dialogs here!
-local Registry = require("extensions/registry")
+--! don't use KOR.dialogs here!
+local KOR = require("extensions/kor")
 local SQ3 = require("lua-ljsqlite3/init")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 
+local pairs = pairs
+local table = table
+local tonumber = tonumber
+local type = type
+
 --- @class Databases
 local Databases = WidgetContainer:extend{
-    settings_folder = nil,
+    database_folder = nil,
+    home_dir = nil,
+    home_dir_needle = nil,
 }
 
-function Databases:closeConnections(conn, ...)
-    if conn and not conn._closed then
-        conn:close()
-        conn = nil
-    end
-    for _, iconn in ipairs({ ... }) do
-        iconn:close()
-        iconn = nil
-    end
-    Registry:unset("db_conn")
-    -- return nil, nil etc.
-end
-
-function Databases:closeStmts(stmt, ...)
-    if stmt then
-        stmt:clearbind():reset():close()
-        stmt = nil
-    end
-    for _, istmt in ipairs({ ... }) do
-        istmt:clearbind():reset():close()
-        istmt = nil
-    end
-    -- return nil, nil etc.
+function Databases:closeConnAndStmt(conn, stmt)
+    self:closeInfoStmts(stmt)
+    self:closeInfoConnections(conn)
+    return nil, nil
 end
 
 function Databases:closeInfoConnections(conn)
@@ -40,7 +30,7 @@ function Databases:closeInfoConnections(conn)
         conn:close()
         conn = nil
     end
-    Registry:unset("db_conn_info")
+    KOR.registry:unset("db_conn_info")
     return nil
 end
 
@@ -49,46 +39,81 @@ function Databases:closeInfoStmts(stmt, ...)
         stmt:clearbind():reset():close()
         stmt = nil
     end
-    for _, istmt in ipairs({ ... }) do
+    local args = { ... }
+    local istmt
+    local count = #args
+    for i = 1, count do
+        istmt = args[i]
         istmt:clearbind():reset():close()
         istmt = nil
     end
-    -- return nil, nil, nil, nil etc.
+    --* return nil, nil, nil, nil etc.
+end
+
+function Databases:_getConn(db_name)
+    self.database_folder = self.database_folder or DataStorage:getSettingsDir()
+    return SQ3.open(self.database_folder .. "/" .. db_name)
 end
 
 function Databases:getDBconnForBookInfo()
-    local external_conn = Registry:get("db_conn_info")
-    if external_conn then
-        return external_conn
+    local keep_open_conn = KOR.registry:get("db_conn_info")
+    local db_name = "bookinfo_cache.sqlite3"
+    if keep_open_conn then
+        if not keep_open_conn._closed then
+            return keep_open_conn, true
+        else
+            local conn = self:_getConn(db_name)
+            KOR.registry:set("db_conn_info", conn)
+            return conn, true
+        end
     end
 
-    self.settings_folder = self.settings_folder or DataStorage:getSettingsDir()
-    return SQ3.open(self.settings_folder .. "/bookinfo_cache.sqlite3")
+    return self:_getConn(db_name), false
 end
 
-function Databases:getDBconnForStatistics()
-    local external_conn = Registry:get("db_conn")
-    if external_conn then
-        return external_conn
-    end
-
-    self.settings_folder = self.settings_folder or DataStorage:getSettingsDir()
-    return SQ3.open(self.settings_folder
-    .. "/statistics.sqlite3")
+function Databases:getNewItemId(conn)
+    return tonumber(conn:rowexec("SELECT last_insert_rowid()"))
 end
 
 function Databases:escape(parameter)
-    -- don't remove this conditional block, otherwise errors when trying to get statistics id of an ebook:
+    if not parameter then
+        return parameter
+    end
+    --! don't remove this conditional block, otherwise errors when trying to get statistics id of an ebook:
     if not parameter:match("'") then
         return parameter
     end
     return parameter:gsub("'", "''")
 end
 
--- inject filename with apostrophs escaped. Presupposes a query in this format: UPDATE ... WHERE path = 'safe_path'
--- e.g. to prevent errors because of Wallabag filenames with apostrophs:
-function Databases:injectSafePath(sql_stmt, path)
-    return sql_stmt:gsub("safe_path", self:escape(path))
+--* inject filename with apostrophs escaped. Presupposes a query in this format: UPDATE ... WHERE path = 'safe_path'
+--* to prevent errors because of
+--* Wallabag filenames with apostrophs:
+function Databases:injectSafePath(sql, path)
+    return sql:gsub("safe_path", self:escape(path))
+end
+
+function Databases:resultsetToItemset(resultset)
+    local field_names = {}
+    for field_name in pairs(resultset) do
+        if type(field_name) ~= "number" then
+            table.insert(field_names, field_name)
+        end
+    end
+    table.sort(field_names)
+    local row, field
+    local itemset = {}
+    local rows = #resultset[1]
+    local fields_count = #field_names
+    for r = 1, rows do
+        row = {}
+        for f = 1, fields_count do
+            field = field_names[f]
+            row[field] = resultset[field][r]
+        end
+        table.insert(itemset, row)
+    end
+    return itemset
 end
 
 return Databases

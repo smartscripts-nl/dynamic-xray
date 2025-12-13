@@ -1,83 +1,130 @@
 
-local Event = require("ui/event")
-local WidgetContainer = require("ui/widget/container/widgetcontainer")
-local lfs = require("libs/libkoreader-lfs")
+local require = require
 
--- used as registry for global vars:
+local KOR = require("extensions/kor")
+local WidgetContainer = require("ui/widget/container/widgetcontainer")
+
+local AX_registry = AX_registry
+local AXR_registry = AXR_registry
+--! don't declare has_content or has_text or last_file locally here!
+local math = math
+local type = type
+
+--* used as registry for global vars:
 --- @class Registry
-local Registry = WidgetContainer:new{
-	device = nil,
-	ereader_model = nil,
-	half_screen_width = nil,
-	hold_menu_input_delay = 0.9,
-	is_android_device = false,
-	is_kobo_device = false,
-	is_non_kobo_device = true,
-	is_ubuntu_device = false,
-	line_height = 0.13,
-	-- set with Registry:set("ui" ...; see ((set ui)):
-	ui = nil,
+local Registry = WidgetContainer:new {
+    current_ebook = nil,
+    current_ebook_db = nil,
+    --* will be populated by ((Font#getDefaultDialogFontFace)):
+    default_dialog_font = nil,
+    half_screen_width = nil,
+    info_callbacks_show_indicators = true,
+    input_text_font_size = 20,
+    line_height = 0.13,
+    line_height_red_hat_text = 0.24,
+    menu_subpages = {},
+    return_to_list = false,
+    scroll_messages = {
+        "dynamische hoogte",
+        "vaste hoogte met scroll",
+        "vaste hoogte zonder scroll",
+    },
+    --* was used in ((CreDocument#skipParagraphIndexingForNoXrayBooks)), but currently that method is not used anymore:
+    skip_paragraph_indexing_needles = {
+        "Rinkeldekink",
+    },
+    use_overlay_when_opening_files = true,
+    use_scrolling_dialog = 2,
 }
 
-function Registry:get(index, force_update)
-	if index == "ereader_model" then
-
-		if self.ereader_model then
-			return self.ereader_model
-		end
-
-		local device = require("device")
-		self.ereader_model = self.ereader_model or (device.model == "Kobo_frost" and "Forma" or "Boox Page")
-		if lfs.attributes("/home/alex/Desktop/KOReader-books") then
-			device.model = "Ubuntu"
-			self.device = "ubuntu"
-			self.ereader_model = "Ubuntu"
-			self.is_ubuntu_device = true
-		else
-			if self.ereader_model == "Forma" then
-				self.is_kobo_device = true
-				self.is_non_kobo_device = false
-				self.device = "kobo"
-			else
-				self.is_android_device = true
-				self.device = "android"
-			end
-		end
-		return self.ereader_model
-
-	elseif force_update and (index == "ui" or index == "view" or index == "document") then
-		self:get("ui"):handleEvent(Event:new("SetContext"))
-	end
-
-	return AX_registry[index]
+--* AX_registry defined in ((ExtensionsInit)) (as early as possible):
+function Registry:get(index, set_if_missing_callback)
+    if index == "current_ebook" and not AX_registry[index] then
+        AX_registry[index] = last_file()
+        return AX_registry[index]
+    end
+    if AX_registry[index] == nil and set_if_missing_callback then
+        AX_registry[index] = set_if_missing_callback()
+    end
+    return AX_registry[index]
 end
 
-function Registry:getOnce(index, force_update)
-	local value = self:get(index, force_update)
-	self:unset(index)
-	return value
+function Registry:getMenuPage(module)
+    return self.menu_subpages[module]
+end
+
+function Registry:getMenuSelectNumber(module, items_per_page)
+    local subpage = self.menu_subpages[module]
+    if subpage then
+        return math.floor(subpage * items_per_page - 1)
+    end
+end
+
+function Registry:setMenuPage(module, page)
+    self.menu_subpages[module] = page
+end
+
+function Registry:getOnce(index, default_value)
+    local value = self:get(index)
+    self:unset(index)
+    if not value and default_value then
+        return default_value
+    end
+    return value
+end
+
+function Registry:isset(indices)
+    if not indices or type(indices) ~= "table" then
+        return false
+    end
+    local prop
+    local count = #indices
+    for i = 1, count do
+        prop = indices[i]
+        if self:get(prop) then
+            return true
+        end
+    end
+    return false
+end
+
+function Registry:save(index, value)
+    self:set(index, value)
 end
 
 function Registry:set(index, value)
-	AX_registry[index] = value
-	if index == "ui" then
-		self.ui = value
-	end
-end
-
-function Registry:getDocument()
-	return self:get("document")
-end
-
-function Registry:getUI()
-	return self:get("ui")
+    AX_registry[index] = value
 end
 
 function Registry:unset(index, ...)
-	AX_registry[index] = nil
-	for _, prop in ipairs({ ... }) do
-		AX_registry[prop] = nil
-	end
+    AX_registry[index] = nil
+    local prop
+    local args = { ... }
+    local count = #args
+    for i = 1, count do
+        prop = args[i]
+        AX_registry[prop] = nil
+    end
+end
+
+function Registry:toggleScrollingDialog()
+
+    --* we don't have to see an info alert to inform us about the change; we can see that the setting has changed because the height of the window changes and will be fixed if use_scrolling_dialog is 3:
+    self.use_scrolling_dialog = self.use_scrolling_dialog + 1
+    if self.use_scrolling_dialog > 3 then
+        self.use_scrolling_dialog = 1
+    end
+    KOR.messages:notify("scrolling ingesteld op " .. self.scroll_messages[self.use_scrolling_dialog] .. "...")
+end
+
+--* AXR_registry (renewable upon file updates etc.) defined in ((ExtensionsInit)) (as early as possible):
+function Registry:r_get(index)
+    return AXR_registry[index]
+end
+
+function Registry:r_set(index, value)
+    --* AXR_registry is a resettable registry:
+    AXR_registry[index] = value
 end
 
 return Registry

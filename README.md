@@ -8,11 +8,14 @@ Dynamic Xray uses a stripped down version of my personal extensions system for K
 
 ## Installation
 
-1. Import xray-items.sql into statistics.sqlite3.
-
-2. Read code-explanations.lua carefully!
-
-3. Follow the instructions in that file.
+1. Clone this repo somewhere. From there:
+2. Copy the folder "extensions" under frontend to the frontend folder of your KOReader installation (DON'T overwrite your KOReader frontend folder with the frontend folder from the archive!)
+3. Copy xraycontroller.koplugin under the plugins folder to your KOReader plugins folder (same warning as under the previous step: don't overwrite your entire plugins folder!)
+4. Copy the svg icons under resources/icons/mdlight to the corresponding folder under your KOReader installation dir (don't overwrite your original folders and files here!)
+5. The "koreader-settings" folder in the archive represents the settings folder of your koreader installation. In most cases this folder will be named "koreader". In its root you should find settings.reader.lua.
+6. In that target folder create a folder patches if it doesn't exist yet and copy koreader/patches/2-xray-patches.lua to that target patches folder.
+7. Copy koreader/settings/settings_manager.lua to the settings folder of the koreader settings folder of your current installation (this folder should already have a settings subfolder, with many files in it).
+8. If you want to translate messages in the Dynamic Xray system, you can do that in frontend/extensions/translations/xray-translations.po. In that file add your translations after "msgstr" entries, but take care that you adhere to the instructions at the start of that file.
 
 ## Tip for navigating the code
 

@@ -1,19 +1,15 @@
 
---- @class CodeExplanationsWithBetterHighlights
+--- @class XrayInfo
 
 --- SUBJECTS
 
 -- ((BETTER TYPE HINTS))
-
--- ((MODIFICATIONS TO KOREADER SOURCE CODE))
--- ! required for use of Dynamic Xray Plugin:
--- ((EXTENSIONS SYSTEM FOR KOREADER))
--- ((EXTENSIONS: CALLING VIA KOR))
-
--- ((DYNAMIC XRAY PLUGIN))
--- ((MAX DIALOG HEIGHT))
--- ((MOVE MOVABLES TO Y POSITION))
-
+-- ((DIALOGS))
+-- ((TABS))
+-- ((TAPPED_WORD_MATCHES))
+-- ((XRAY_ITEMS))
+-- ((XRAY_INFO_TOC_ADD_LINKED_ITEM_BUTTONS))
+-- ((XRAY_VIEWER_CONTEXT_BUTTONS))
 
 -- ======================================================
 
@@ -29,8 +25,8 @@
 
 -- ! @type
 --- use --- @type for variables (right above their declaration). Example:
---- @type XrayItems manager
-local manager
+--- @type XrayModel model
+local model
 
 -- ! @param
 --- use --- @param for method arguments and loop params (with name of argument first and then type); example for loops:
@@ -38,7 +34,7 @@ local titlebars
 --- @param v TitleBar
 for _, v in ipairs(titlebars) do
     -- nonsense statement :-):
-    manager:isXrayItem(v)
+    model:isXrayItem(v)
 end
 
 -- ! @see
@@ -46,111 +42,91 @@ end
 --- @see TitleBar#init
 
 
--- #((MODIFICATIONS TO KOREADER SOURCE CODE))
---- MODIFICATIONS TO KOREADER SOURCE CODE
+local XrayInfo = {}
 
--- ! WATCH OUT: I have built the extensions system using KOReader version 2024.04! So don't just copy some modified main KOReader modules, because they won't be compatible to the most recent version of KOReader anymore.
--- the reason I had to do this is that with later KOReader versions I ran into trouble when trying to compile KOReader for Android. But probably you won't experience problems when integrating just the XrayItems plugin into KOReader.
+function XrayInfo:DIALOGS()
 
---- MOST HEAVILY MODIFIED SOURCE FILES
---- titlebar.lua, textviewer.lua, multiinputdialog.lua
--- ! These files I have included unabridged. But watch out, don't simply copy them into an existing installation. That might break things. Instead compare these files with your version and adapt the code of the latter as needed.
--- For other regular KOReader source files I only have shown the adapted and added code blocks, with some context. So you can apply them to your source code yourself.
+    -- main dialogs:
 
--- ! REQUIRED MODIFICATION BY USER:
--- Via ((store ereader model)) > ((Registry#get)) device types are stored in the Registry. This detection is tailored for my situation and devices. So you will have to rewrite that code, to fit your or a more generic situation. Probably the KOReader developers can write better code for this.
+    -- ((Dialogs#niceAlert)) pretty dialogs
+    -- ((Dialogs#textBox)) interface for TextViewer, for scrolling through many paragraps
+    -- ((Dialogs#htmlBox)) same as textBox, but now text is presented as HTML, which of course results in more formatting options
+    -- ((Dialogs#textBoxTabbed)) and ((Dialogs#htmlBoxTabbed)): for plain text and html in a tabbed interface
+end
 
+function XrayInfo:TABS()
+    -- for tabbed dialogs: ((Dialogs#htmlBoxTabbed)) or ((Dialogs#textBoxTabbed)) > ((TabFactory#setTabButtonAndContent))
 
--- #((EXTENSIONS SYSTEM FOR KOREADER))
---- EXTENSIONS SYSTEM FOR KOREADER
+    -- for navigating through these tabs: e.g. ((HtmlBox#initKeyEvents)) > ((TabNavigator#init)) > ((generate tab navigation event handlers))
+    -- edge case: when we navigate back in a scrolling html widget, ((ScrollHtmlWidget#scrollText)) > code below direction < 0 ensures we activate the previous tab if we navigate back from the top of the content
 
---- essential modifications:
--- essential modifications to original KOReader to be able to use extensions system:
--- setupkoenv.lua:
--- ((extensions system: add frontend/extensions to package paths))
--- reader.lua:
--- ((reader.lua modification block 1)) for function ((extension));
--- ((reader.lua modification block 2)) for usage of extension ((Registry)) and for often used functions ((has_content)) and ((has_text)). Also here is defined global variable ((AX_registry)), which is required for ((Registry)).
--- initialisation of extensions:
--- making them also available via ((KOR)) extension: ((ReaderUI#registerExtensions)).
--- see ((EXTENSIONS: CALLING VIA KOR)) for an example how to call extension methods.
+    -- for tabbed submenu in dialogs: ((ButtonTableFactory#getTabsTable))
 
---- you can also register plugins to KOR:
--- by calling ((KOR#registerPlugin)) from their init method. For example we register the XrayItems plugin by calling KOR:registerPlugin("xrayitems", self) in ((XrayItems#init)).
---- the great advantage of this is that we can call plugin methods directly and dont have to rely on sending events. These calls will be handled noticably quicker because of this alternative way of calling methods.
+    -- Menu instance with sub tabbuttons: ((XrayDialogs#initListDialog)) with tab_labels and activate_tab_callback > ((Menu#registerTabHotkeys)). These buttons were generated in ((XrayButtons#forListSubmenu)) > ((XrayButtons#getListSubmenuButton)) and the callback for pressing the start characters of tab items is ((XrayModel#activateListTabCallback))
+end
 
---- registering main KOReader modules:
--- also the extension system links main KOReader modules to KOR via ((KOR#registerUImodules)), called in the init method of ONLY ONE plugin. For example in ((XrayItems#init)), like so: KOR:registerUImodules(self.ui).
--- by doing so we get clickable calls and code hints for these calls. E.g. KOR.link:onGotoLink() will be clickable in the code and and then jump to ((ReaderLink#onGotoLink)).
--- ! for code hints to work it is important that you define a class type at the start of each module, e.g.:
---- @class ReaderLink
+function XrayInfo:TAPPED_WORD_MATCHES()
+    -- called from ReaderHighlight: ((XrayTappedWords#getXrayItemAsDictionaryEntry)); placing exact partial matches in name or linkwords at top and marking them bold: ((XrayTappedWords#collectionPopulateAndSort)); placing exact fullname matches at position 1: ((XrayTappedWords#getCollection)) in case of needle_matches_fullname == true, which was set in ((XrayViewsData#upgradeNeedleItem))
+end
 
+function XrayInfo:XRAY_ITEMS()
 
--- #((EXTENSIONS: CALLING VIA KOR))
---- EXTENSIONS: CALLING VIA KOR
+    --* see ((Dynamic Xray: module info))
 
--- normally you will call an extension method by loading the extension at the start of a lua file and then call the method.
---- local Dialogs = require("extensions/dialogs")
---- Dialogs:alertInfo("information")
+    --! linchpin method: ((XrayUI#ReaderViewGenerateXrayInformation))
 
--- ! but sometimes loading an extension in that way will lead to a KOReader crash, because of circular dependencies.
--- in that case use indirect calls in the calling module, like shown below:
--- at the start of modules, where required modules are listed, for your own reference and to prevent accidently causing crashes, show a warning like this:
+    --! skipping paragraph indexing and so xray items for certain kinds of books: ((CreDocument#storeCurrentPageParagraphs)) > ((CreDocument#skipParagraphIndexingForNoXrayBooks))
 
--- ! use KOR.dialogs instead of Dialogs!
-local KOR = require("extensions/kor")
--- [...]
--- and somewhere in your code:
-KOR.dialogs:alertInfo("information")
+    -- drawing rects for xray info: ((ReaderView#paintTo)) > ((XrayUI#setParagraphsFromDocument)) > ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#ReaderViewInitParaOrPageData)) > ((XrayUI#ReaderViewLoopThroughParagraphOrPage)) > ((xray page marker set target line for icon)) in page mode
 
+    -- adding match reliability indicators for the page/paragraph info popup: ((XrayUI#matchNameInPageOrParagraph))
+    -- using these indicators: ((XrayUI#generateParagraphInformation)) > ((xray items dialog add match reliability explanations)) & ((use xray match reliability indicators))
 
--- #((DYNAMIC XRAY PLUGIN))
---- DYNAMIC XRAY PLUGIN
+    -- show paragraph matches: ((ReaderView#paintTo)) > ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#getParaMarker)) and ((CreDocument#storeCurrentPageParagraphs)) > ((XrayUI#getXrayItemsFoundInText)): here matches on page or paragraphs evaluated > ((XrayUI#drawMarker)) > ((set xray page info rects)) KOR.registry:set("xray_page_info_rects") > ((ReaderHighlight#onTapXPointerSavedHighlight)) > here the information in the popup gets combined: ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)) > ((XrayDialogs#showItemsInfo))
 
--- drawing rects for xray info: ((ReaderView#paintTo)) > ((XrayHelpers#ReaderViewGenerateXrayInformation)) > ((XrayHelpers#ReaderViewInitParaOrPageData)) > ((XrayHelpers#ReaderViewLoopThroughParagraphOrPage))
+    -- max line length in popup info for xray items on page: XrayModel.max_line_length
 
--- adding match reliability indicators for the page/paragraph info popup: ((XrayHelpers#matchNameInPageOrParagraph))
--- using these indicators: ((XrayHelpers#generateParagraphInformation)) > ((xray items dialog add match reliability explanations)) & ((use xray match reliability indicators))
+    -- determining valid needles for matching on page: ((XrayModel#isValidNeedle)) > needle >= 4 characters, OR contains an uppercase character
 
--- show paragraph matches: ((ReaderView#paintTo)) > ((XrayHelpers#ReaderViewGenerateXrayInformation)) > ((XrayHelpers#getXrayMarker)) and ((CreDocument#storeCurrentPageParagraphs)) > ((CreDocument#paragraphCleanForXrayMatching)) > ((XrayHelpers#getXrayInfoMatches)): here matches on page or paragraphs evaluated > ((XrayHelpers#drawMarker)) > ((set xray page info rects)) Registry:set("xray_page_info_rects") > ((ReaderHighlight#onTapXPointerSavedHighlight)) > here the information in the popup gets combined: ((XrayHelpers#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)) > ((XrayHelpers#showXrayItemsInfo))
+    -- positioning of page markers: ((XrayUI#ReaderViewLoopThroughParagraphOrPage)) > ((XrayUI#drawMarker)).
 
--- automatic toc upon loading of dialog: ((xray paragraph info: after load callback)) > ((TextViewer#showToc))
--- automatic move of toc popup to top of screen: prop "move_to_top" true in ((Dialogs#showButtonDialog)) - called from ((TextViewer#showToc)) - > ((move ButtonDialogTitle to top))
+    -- automatic toc upon loading of dialog: definition of after_load_callback in ((xray paragraph info: after load callback)) > ((TextViewer execute after load callback)) > ((XrayUI#onInfoPopupLoadShowToc)) > ((TextViewer#showToc))
+    -- adding toc buttons: ((TextViewer#getTocIndexButton))
 
--- adding button to popup toc for closing toc AND paragraph info dialog: ((TextViewer toc popup: add close button for popup and info dialog))
+    --- SVG icons
+    -- most svg icons downloaded from https://www.onlinewebfonts.com/icon: icons here are licensed by CC BY 4.0
+    -- some free svg icons were downloaded from https://www.svgrepo.com
+    -- I sometimes have renamed icons, to clarify their function in Dynamic Xray
+end
 
--- #((tapped word matches)): called from 2 locations in ReaderHighlight: ((ReaderHighlight#onShowHighlightMenu)) and ((ReaderHighlight#lookup)) > ((XrayHelpers#getXrayItemAsDictionaryEntry)); placing exact partial matches in name or linkwords at top and marking them bold: ((XrayHelpers#sortByBoldProp)); placing exact fullname matches at position 1: ((XrayHelpers#getRelatedItems)) in case of needle_matches_fullname == true, which was set in ((XrayHelpers#upgradeNeedleItem))
+function XrayInfo:XRAY_INFO_TOC_ADD_LINKED_ITEM_BUTTONS()
+    -- adding extra linked xray items buttons if available: ((TextViewer#getTocIndexButton)) (for one specific xray item) > ((ButtonChoicePopup#forXrayTocItemEdit)) > set prop extra_callbacks by calling ((TextViewer#addLinkedItemsToTocButton)); also optionally set extra_wide_dialog to true, when linked items found, for more space to display their buttons > ((ButtonProps#injectAdditionalChoiceCallbacks)) > ((ButtonTableFactory#injectButtonIntoTargetRows)); compare ((XRAY_VIEWER_CONTEXT_BUTTONS)).
+    -- setting extra wide popup width IF indeed linked items were found: set prop: ((TextViewer#getTocIndexButton)) > ((set extra wide popup for xray items with linked items)) > read prop: ((ButtonProps#popupChoice)) > ((linked xray items in popup))
 
--- list: ((XrayItems#onShowXrayList))
+    -- automatic move of toc popup to top of screen: prop "move_to_top" true in ((Dialogs#showButtonDialog)), called from ((TextViewer#showToc)) > ((move ButtonDialogTitle to top))
 
--- showing list conditionally after saving an item: ((XrayItems#onSaveNewXrayItem)) or ((XrayItems#onEditXrayItem)) > ((XrayItems#showListConditionally))
+    -- adding button to popup toc for closing toc AND paragraph info dialog: ((TextViewer toc popup: add close button for popup and info dialog))
 
--- adding an "add xray item" button to the ReaderHighlight popup for a newly selected selection: ((add xray item button for selected text popup in ReaderHighlight))
+    -- list: ((XrayController#onShowList)) > ((XrayDialogs#showList))
 
--- viewer, show item: ((XrayItems#onShowXrayItem))
+    -- showing list conditionally after saving an item: ((XrayModel#saveNewItem)) or ((XrayController#initAndShowEditItemForm)) > ((XrayController#showListConditionally))
 
--- viewer, ((multiple related xray items found)) and adding linked items to that dialog: ((XrayItems#addContextButtons))
+    -- viewer, show item: ((XrayDialogs#viewItem))
+end
 
--- add xray item button: ((XrayHelpers#addButton))
+function XrayInfo:XRAY_VIEWER_CONTEXT_BUTTONS()
+    -- viewer, ((multiple related xray items found)) and adding linked items to that dialog: ((XrayButtons#forItemViewerBottomContextButtons))
+    -- compare ((XRAY_INFO_TOC_ADD_LINKED_ITEM_BUTTONS))
 
--- edit item: ((XrayItems#onEditXrayItem))
+    -- button for creating new xray items: ((XrayButtons#addTappedWordCollectionButton))
 
--- generating linked items button rows for item viewer: ((XrayItems#addContextButtons))
+    -- edit item: ((XrayController#initAndShowEditItemForm)) > ((XrayDialogs#showEditItemForm))
 
--- filter xray items: ((XrayItems#onShowXrayList)) > ((XrayItems#updateXrayItemsTable)) > for text filter ((XrayItems#filterByText)) or for icon filter ((XrayItems#filterByIcon)) > continue with ((XrayItems#onShowXrayList))
+    -- generating linked items button rows for item viewer: ((XrayButtons#forItemViewerBottomContextButtons))
 
--- storing new xray items: called from save button generated with ((XrayItems#getFormButtons)) > ((XrayItems#saveItemCallback)) with modus "add" > ((XrayItems#onSaveNewXrayItem)) > ((XrayHelpers#storeAddedXrayItem)) > ((XrayItems#showListConditionally)) > ((XrayItems#updateXrayItemsTable))
+    -- filter xray items: ((XrayController#onShowList)) > ((XrayViewsData#updateItemsTable)) > for text filter ((XrayViewsData#filterAndPopulateItemTables)) > continue with ((XrayController#onShowList)) > ((XrayDialogs#showList))
 
--- storing edited xray items: called from save button generated with ((XrayItems#getFormButtons)) > ((XrayItems#saveItemCallback)) with modus "edit" > ((XrayItems#renameXrayItem)) > ((XrayItems#updateXrayItemsList)) > ((XrayHelpers#storeUpdatedXrayItem)) > ((XrayItems#showListConditionally)) > ((XrayItems#updateXrayItemsTable))
+    -- storing new xray items: called from save button generated with ((XrayButtons#forItemAddOrEditForm)) > ((XrayController#saveNewItem)) > ((XrayModel#saveNewItem)) > ((XrayModel#storeNewItem)) > ((XrayController#showListConditionally)) > ((XrayViewsData#updateItemsTable))
 
-
--- #((MAX DIALOG HEIGHT))
---- MAX DIALOG HEIGHT
--- keyboard height will be stored automatically via ((InputDialog#init)) > ((InputDialog#storeKeyboardHeight)).
--- the resulting max dialog height will be computed with ((MultiInputDialog#init)) > ((Dialogs#getKeyboardHeight)).
-
-
--- #((MOVE MOVABLES TO Y POSITION))
---- MOVE MOVABLES TO Y POSITION
--- ButtonDialogTitle (e.g. for index of paragraph Xray info popup: call ((TextViewer#showToc)) with click on index button, or on load of paragraph Xray info dialog, with ((XrayHelpers#showXrayItemsInfo)): call showToc from after_load_callback, to be executed in ((TextViewer execute after load callback)) > ((Dialogs#showButtonDialog)) > set prop move_to_top to true > ((ButtonDialogTitle#init)) > ((ButtonDialogTitle move to top)) > ((ScreenHelpers#moveMovableToYpos))
--- Help text popup dialog for text info icons: e.g. props info_popup_text in ((XrayItems#getFormFields)) > ((Button#onTapSelectButton)) > self.callback(pos) > ((Dialogs#alertInfo)) > set prop move_to_y_pos = pos.pos.y + 24 for InfoMessage > ((InfoMessage#init)) > ((move InfoMessage to y pos)) > ((ScreenHelpers#moveMovableToYpos))
+    -- storing edited xray items: called from save button generated with ((XrayButtons#forItemAddOrEditForm)) > ((XrayController#saveUpdatedItem)) > ((XrayFormsData#getAndStoreEditedItem)) > ((XrayFormsData#storeItemUpdates)) > ((XrayModel#storeUpdatedItem)) > ((XrayController#showListConditionally)) > ((XrayViewsData#updateItemsTable))
+end
