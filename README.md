@@ -2,7 +2,7 @@
 
 A KOReader plugin to view "xray items", i.e. user defined explanations of persons, places and terms in books or even entire series.
 
-Dynamic Xray (DX) plugin was inspired by the X-ray system on Kindles (see explanation on [Amazon X-Ray on Kindle | All you need to know - YouTube](https://youtu.be/mreow-OrGsU?si=c_3NhHKBDa1BFEvI)). DX differs from the Kindle system in that the user can define items dynamically, while on Kindles these items are "baked into" the ebook. The advantage of the former approach is that you can dynamically add and modify items, but the advantage of the Kindle approach is that it isn't error prone. DX is, because it uses matching of the words in ebook texts to determine whether Xray items are present. Which can lead to incorrect hits. But in at about 95% of cases the matches will be correct.
+Dynamic Xray (DX) plugin was inspired by the X-ray system on Kindles (see explanation on [Amazon X-Ray on Kindle | All you need to know - YouTube](https://youtu.be/mreow-OrGsU?si=c_3NhHKBDa1BFEvI)). DX differs from the Kindle system in that the user can define items dynamically, while on Kindles these items are "baked into" the ebook. The advantage of the former approach is that you can dynamically add and modify items, but the advantage of the Kindle approach is that it isn't error-prone. DX is, because it uses matching of the words in ebook texts to determine whether Xray items are present. Which can lead to incorrect hits. But in at about 95% of cases the matches will be correct.
 
 Dynamic Xray uses a stripped down version of my personal extensions system for KOReader.
 
@@ -16,7 +16,7 @@ Dynamic Xray uses a stripped down version of my personal extensions system for K
 6. In that target folder create a folder patches if it doesn't exist yet and copy koreader-settings-and-patches/patches/2-xray-patches.lua to that target patches folder.
 7. Copy koreader-settings-and-patches/settings/settings_manager.lua to the settings subfolder of the koreader settings folder of your current installation (this folder should already be present and should contain many files, e.g. sqlite3-files for KOReader's databases).
 8. If you want to translate messages in the Dynamic Xray system, you can do that in frontend/extensions/translations/xray-translations.po. In that file add your translations after "msgstr" entries, but take care that you adhere to the instructions at the start of that file.
-9. You could also choose to disable this translations (and therefor see all DX button labels etc. in English) by adding one character to the msgid blocks in the transations file. E.g. change msgid "Short names" to msgid "aShort names".
+9. You could also choose to disable these translations (and therefor see all DX button labels etc. in English) by adding one character to the msgid blocks in the transations file. E.g. change msgid "Short names" to msgid "aShort names".
 
 ## Usage tips
 
@@ -29,7 +29,7 @@ Dynamic Xray uses a stripped down version of my personal extensions system for K
   * and then tapping again on "xray-item".
   * You now should see the buttons.
   * If not, you could try closing the dialog and then re-opening it.
-  * This should be a one time problem, DX remembers the correct height for the textarea under the first tab, which allows the buttons below to remain visible.
+  * This should be a one time problem, DX remembers the correct height for the textarea under the first tab, which will allow the buttons below to remain visible on subsequent calls of the dialog.
 
 ### Displaying help information about the function of buttons
 DX uses mostly buttons with only icons, so without explanatory labels. However, if a button contains a point on the right side of the icon, or a downwards pointing arrow on the left side, this means that you can trigger a popup with help information about the function of that button by longpressing it.
@@ -41,7 +41,7 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 ## About the code
 
 * DX is added by patching the stock KOReader code, so you don't have to modify the code of the basic KOReader version.
-* The DX plugin is structured to resemble a MVC structure:
+* The DX plugin is structured to resemble an MVC structure:
     * M = XrayModel > data handlers: XrayDataLoader, XrayFormsData, XraySettings, XrayTappedWords and XrayViewsData (
       extensions)
     * V = XrayUI, and XrayDialogs and XrayButtons (extensions)
