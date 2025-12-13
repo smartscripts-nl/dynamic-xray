@@ -29,7 +29,7 @@ Dynamic Xray uses a stripped down version of my personal extensions system for K
   * and then tapping again on "xray-item".
   * You now should see the buttons.
   * If not, you could try closing the dialog and then re-opening it.
-  * This should be a one time problem, DX remembers the correct height for the textarea under the first tab, which will allow the buttons below to remain visible on subsequent calls of the dialog.
+  * This should be a one time problem, DX remembers the correct height for the textarea under the first tab, which will allow the buttons below to remain visible upon subsequent calls of the dialog.
 
 ### Displaying help information about the function of buttons
 DX uses mostly buttons with only icons, so without explanatory labels. However, if a button contains a point on the right side of the icon, or a downwards pointing arrow on the left side, this means that you can trigger a popup with help information about the function of that button by longpressing it.
@@ -42,8 +42,7 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 
 * DX is added by patching the stock KOReader code, so you don't have to modify the code of the basic KOReader version.
 * The DX plugin is structured to resemble an MVC structure:
-    * M = XrayModel > data handlers: XrayDataLoader, XrayFormsData, XraySettings, XrayTappedWords and XrayViewsData (
-      extensions)
+    * M = XrayModel > data handlers: XrayDataLoader, XrayFormsData, XraySettings, XrayTappedWords and XrayViewsData (extensions)
     * V = XrayUI, and XrayDialogs and XrayButtons (extensions)
     * C = XrayController (plugin)
 
