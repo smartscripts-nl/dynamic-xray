@@ -152,6 +152,11 @@ function XrayController:onReaderReady()
     KOR:registerUI(self.ui)
     KOR.registry.current_ebook = self.view.document.file
 
+    --! hotfix, should not be necessary:
+    if not DX.m then
+        KOR:registerXrayModules()
+    end
+
     DX.m:setTitleAndSeries(self.view.document.file) -- local series_has_changed, is_non_series_book =
 
     --if series_has_changed or is_non_series_book then

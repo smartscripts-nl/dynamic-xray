@@ -303,9 +303,11 @@ end
 --- @private
 function SettingsManager:saveSettings(dont_flush)
     self.settings_db:saveSetting(self.settings_index, self.settings)
+    --* only used when we know we'll change another setting immediately after this call to saveSettings and only after that next setting change we want to flush the settings to the settings file:
     if dont_flush then
-        self.settings_db:flush()
+        return
     end
+    self.settings_db:flush()
 end
 
 return SettingsManager
