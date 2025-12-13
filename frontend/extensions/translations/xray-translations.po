@@ -856,6 +856,23 @@ msgid "you entered an invalid value..."
 msgstr "ongeldige waarde ingevuld..."
 
 
+## ================= Labels ================
+
+msgid " add"
+msgstr " nieuw"
+
+msgid " edit"
+msgstr " bewerk"
+
+msgid " view"
+msgstr " bekijk"
+
+msgid " remove"
+msgstr " verwijder"
+
+msgid " search"
+msgstr " zoek"
+
 
 ## ================= 2-xray-patches.lua ================
 

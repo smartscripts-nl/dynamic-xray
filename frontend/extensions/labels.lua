@@ -1,28 +1,31 @@
 
+local KOR = require("extensions/kor")
+local _ = KOR:initCustomTranslations()
+
 --- @class Labels
 local Labels
 Labels = {
     edit = {
         icon = "edit",
         icon_size_ratio = 0.5,
-        text = " bewerk",
+        text = _(" edit"),
     },
     new_item = {
         icon = "add",
-        text = " nieuw",
+        text = _(" add"),
     },
     show = {
         icon = "view",
-        text = " bekijk",
+        text = _(" view"),
     },
     remove = {
         icon = "dustbin",
         icon_size_ratio = 0.5,
-        text = " verwijder",
+        text = _(" remove"),
     },
     search = {
         icon = "appbar.search",
-        text = " zoek",
+        text = _(" search"),
     },
 }
 return Labels
