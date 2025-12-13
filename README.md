@@ -2,7 +2,7 @@
 
 A KOReader plugin to view "xray items", i.e. user defined explanations of persons, places and terms in books or even entire series.
 
-Dynamic Xray (DX) plugin was inspired by the X-ray system on Kindles (see explanation on [Amazon X-Ray on Kindle | All you need to know - YouTube](https://youtu.be/mreow-OrGsU?si=c_3NhHKBDa1BFEvI)). DX differs from the Kindle system in that the user can define items dynamically, while on Kindles these items are "baked into" the ebook. The advantage of the former approach is that you can dynamically add and modify items, but the advantage of the Kindle approach is that it isn't error-prone. DX is, because it uses matching of the words in ebook texts to determine whether Xray items are present. Which can lead to incorrect hits. But in at about 95% of cases the matches will be correct.
+Dynamic Xray (DX) plugin was inspired by the X-ray system on Kindles (see explanation on [Amazon X-Ray on Kindle | All you need to know - YouTube](https://youtu.be/mreow-OrGsU?si=c_3NhHKBDa1BFEvI)). DX differs from the Kindle system in that the user can define items dynamically, while on Kindles these items are "baked into" the ebook. The advantage of the former approach is that the user can dynamically add and modify items, but the advantage of the Kindle approach is that it isn't error-prone. DX is, because it uses matching of the words in ebook texts to determine whether Xray items are present. Which can lead to incorrect hits. But in at about 95% of cases the matches will be correct.
 
 Dynamic Xray uses a stripped down version of my personal extensions system for KOReader.
 
