@@ -25,7 +25,7 @@ Dynamic Xray uses a stripped down version of my personal extensions system for K
 * The patch file adds a button "+ Xray" to the popup dialog for text selections. With this button you can add new Xray items from the text selection.
 * From the list of Xray items (to which you can assign a gesture, for quickly showing it), you can view and edit items, or add new items, by tapping on the plus-icon in the dialog footer.
 * If in the add/edit Xray item dialog, under the first tab "xray-item" you don't see buttons, that is caused by the textarea for the description of the Xray item being too high. In these cases the buttons _are_ present, but hidden under the keyboard. You can rectify this by:
-  * tapping on the "metadata" tab at the to of the dialog
+  * tapping on the "metadata" tab at the top of the dialog
   * and then tapping again on "xray-item".
   * You now should see the buttons.
   * If not, you could try closing the dialog and then re-opening it.
@@ -35,7 +35,8 @@ Dynamic Xray uses a stripped down version of my personal extensions system for K
 DX uses mostly buttons with only icons, so without explanatory labels. However, if a button contains a point at the right side of the icon, or a downwards pointing arrow at the left side, this means that you can trigger a popup with help information about the function of that button by longpressing it.
 * An arrow means that a button has more than one action available upon longpress.
 * A point signifies a one action button.
-* These actions will be presented as buttons at the bottom of the help dialog.
+* These actions can then be executed by tapping on the buttons at the bottom of the help dialog.
+* If you don't longpress the main button, which had the help information, but simply tap it, its main function will be immediately triggered.
 
 ## About the code
 
