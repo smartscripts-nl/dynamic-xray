@@ -240,7 +240,7 @@ function XrayViewsData:_returnCachedHits(item, for_display_mode)
     return item.book_hits, item.chapter_hits, item.series_hits
 end
 
-function XrayViewsData:addItemToPersonsOrTerms(item)
+function XrayViewsData:addItemToPersonsOrThings(item)
     local item_copy = KOR.tables:shallowCopy(item)
     if item.xray_type <= 2 then
         table.insert(self.item_table[2], item_copy)
@@ -253,14 +253,14 @@ function XrayViewsData:addItemToPersonsOrTerms(item)
     end
 end
 
-function XrayViewsData:repopulateItemsPersonTerms(item)
+function XrayViewsData:repopulateItemsPersonsThings(item)
     count = #self.items
     self.persons = {}
     self.things = {}
     --* luckily we don't have to update TextViewer.paragraph_headings etc. (loaded from XrayUI data) here, because those take their info from XrayModel via ((XrayUI#getXrayItemsFoundInText)) > ((get xray_item for XrayUI))...
 
     for i = 1, count do
-        --! watch out: this table MIGHT be filtered and in that have less items then self.item_table:
+        --! watch out: this table MIGHT be filtered and in that case have less items then self.item_table:
         if self.items[i] and self.items[i].id then
             if self.items[i].id == item.id then
                 self.items[i] = item
@@ -272,14 +272,14 @@ function XrayViewsData:repopulateItemsPersonTerms(item)
                 end
             end
             self.items[i].index = i
-            self:addItemToPersonsOrTerms(self.items[i])
+            self:addItemToPersonsOrThings(self.items[i])
         end
     end
 end
 
 --* only called from ((XrayController#saveUpdatedItem)), but not for newly added items; for those we call ((XrayViewsData#addNewItemToItemTables)):
 function XrayViewsData:updateAndSortAllItemTables(item)
-    self:repopulateItemsPersonTerms(item)
+    self:repopulateItemsPersonsThings(item)
     --* this call is also needed to add reliability and xray type icons:
     self:applyFilters()
 
