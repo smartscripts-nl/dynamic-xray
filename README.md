@@ -31,11 +31,25 @@ Dynamic Xray uses a stripped down version of my personal extensions system for K
   * If not, you could try closing the dialog and then re-opening it.
   * This should be a one time problem, DX remembers the correct height for the textarea under the first tab which allows the buttons below to be visible.
 
-### Buttons
+### Displaying help information about the function of buttons
 DX uses mostly buttons with only icons, so without explanatory labels. However, if a button contains a point at the right side of the icon, or a downwards pointing arrow at the left side, this means that you can trigger a popup with help information about the function of that button by longpressing it.
 * An arrow means that a button has more than one action available upon longpress.
 * A point signifies a one action button.
 * These actions will be presented as buttons at the bottom of the help dialog.
+
+## About the code
+
+* DX is added by patching the stock KOReader code, so you don't have to modify the code of the basic KOReader version.
+* The DX plugin is structured to resemble a MVC structure:
+    * M = XrayModel > data handlers: XrayDataLoader, XrayFormsData, XraySettings, XrayTappedWords and XrayViewsData (
+      extensions)
+    * V = XrayUI, and XrayDialogs and XrayButtons (extensions)
+    * C = XrayController (plugin)
+
+## Development history and usage
+
+See [Dynamic Xray plugin · koreader/koreader · Discussion #12964 · GitHub](https://github.com/koreader/koreader/discussions/12964)
+for the development history of this plugin and for Dynamic Xray usage examples by screenprints and screencasts.
 
 ## Tip for navigating the code
 
@@ -44,17 +58,6 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 * Also with Better Highlights you can colorize comments differently depending on the use case, for much improved readability.
 
 * In Better Highlights settings set (( and )) as wikilink start and end - the default is [[ and ]] -, so you can add clickable comments to --(( )) lua commented blocks.
-
-## About the code
-* DX is added by patching the stock KOReader code, so you don't have to modify the code of the basic KOReader version.
-* The DX plugin is structured to resemble a MVC structure:
-  * M = XrayModel > data handlers: XrayDataLoader, XrayFormsData, XraySettings, XrayTappedWords and XrayViewsData (extensions)
-  * V = XrayUI, and XrayDialogs and XrayButtons (extensions)
-  * C = XrayController (plugin)
-
-## Development history and usage
-
-See [Dynamic Xray plugin · koreader/koreader · Discussion #12964 · GitHub](https://github.com/koreader/koreader/discussions/12964) for the development history of this plugin and for Dynamic Xray usage examples by screenprints and screencasts.
 
 ## No support provided
 
