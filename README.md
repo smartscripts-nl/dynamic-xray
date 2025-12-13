@@ -16,6 +16,12 @@ Dynamic Xray uses a stripped down version of my personal extensions system for K
 6. In that target folder create a folder patches if it doesn't exist yet and copy koreader/patches/2-xray-patches.lua to that target patches folder.
 7. Copy koreader/settings/settings_manager.lua to the settings folder of the koreader settings folder of your current installation (this folder should already have a settings subfolder, with many files in it).
 8. If you want to translate messages in the Dynamic Xray system, you can do that in frontend/extensions/translations/xray-translations.po. In that file add your translations after "msgstr" entries, but take care that you adhere to the instructions at the start of that file.
+9. You could also choose to disable this translations (and therefor see all DX button labels etc. in English) by adding one character to the msgid blocks in the transations file. E.g. change msgid "Short names" to msgid "aShort names".
+
+## Usage tips
+
+* The patch file adds a button "+ Xray" to the popup dialog for text selecions. With this button you can add new Xray items from the text selection.
+* If in the dialog, under the first tab "xray-item" you don't see buttons, that is because the textarea for the description of the Xray item is too high. You can rectify this by tapping on the "metadata" tab and then tap again on "xray-item". You now should see the buttons. If not, you could try closing the dialog and then re-opening it. This should be a one time problem, DX remembers the correct height for the textarea under the first tab which allows the buttons below to be visible.
 
 ## Tip for navigating the code
 
@@ -23,7 +29,7 @@ Dynamic Xray uses a stripped down version of my personal extensions system for K
 
 * Also with Better Highlights you can colorize comments differently depending on the use case, for much improved readability.
 
-* In Better Highlights settings set (( and ) as wikilink start and end - the default is [[ and ]] -, so you can add clickable comments to --[[ ]] lua commented blocks.
+* In Better Highlights settings set (( and )) as wikilink start and end - the default is [[ and ]] -, so you can add clickable comments to --(( )) lua commented blocks.
 
 ## Development history and usage
 
