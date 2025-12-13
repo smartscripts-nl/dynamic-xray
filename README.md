@@ -1,22 +1,23 @@
 # Dynamic Xray plugin
 
-A KOReader plugin to view "xray items", i.e. user defined explanations of persons, places and terms in books or even entire series.
+A KOReader plugin to view "xray items", i.e. user defined explanations of persons and things in single books or even entire series.
+
+"Things" in DX can be names of things, entities, concepts, definitions, places, named events, names of literary or philosophical movements, and much more. It's all up to the imagination of the user...
 
 Dynamic Xray (DX) plugin was inspired by the X-ray system on Kindles (see explanation on [Amazon X-Ray on Kindle | All you need to know - YouTube](https://youtu.be/mreow-OrGsU?si=c_3NhHKBDa1BFEvI)).
 
 DX differs from the Kindle system in that the user can define items dynamically, while on Kindles these items are "baked into" the ebook.
 
-The advantage of the former approach is that the user can dynamically add and modify items, but the advantage of the Kindle approach is that it isn't error-prone.
+The advantage of the DX approach is that the user can dynamically add and modify items; the advantage of the Kindle approach is that it isn't error-prone.
 
-DX is, because it uses matching of the words in ebook texts to determine whether Xray items are present. Which can lead to incorrect hits. But in at about 95% of cases the matches will be correct.
+DX can produce false hits, because it uses matching of the words in ebook texts to determine whether Xray items are present. But in at about 95% of cases the matches shown will be correct.
 
 ## Use cases
 
 ### Fiction books
-The user can use DX to keep track for an ebook or an entire series of many characters, places, terms etc., mark them as
-important, to see how they are linked to other items, what are their aliases, in which chapters they are mentioned and how frequent, etc.
+The user can use DX to keep track for an ebook or an entire series of many characters and things, mark them as important, to see how they are linked to other items, what are their aliases, in which chapters they are mentioned and how frequent, etc.
 ### Non-fiction books
-The user can use DX for study: to keep track of terms, places, definitions, historical events etc. in ebooks, to see how these are linked to each other, in which chapters they can be found and how frequent, etc.
+The user can use DX for study: to keep track of things in the broad sense, to see how these are linked to each other, in which chapters they can be found and how frequent, etc.
 
 ## Installation
 

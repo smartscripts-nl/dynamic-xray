@@ -370,12 +370,12 @@ function Strings:hasWholeWordMatch(haystack, haystack_lower, needle)
         return haystack:match("%A" .. needle .. "%A") or haystack:match("^" .. needle .. "%A") or haystack:match("%A" .. needle .. "$")
     end
 
-    --* case insensitive, mostly for Xray terms (non persons):
+    --* case insensitive, mostly for Xray things (non persons):
     if haystack_lower:match("%A" .. needle .. "%A") or haystack_lower:match("^" .. needle .. "%A") or haystack_lower:match("%A" .. needle .. "$")
         then return true
     end
 
-    --* search for uppercase terms/entities at start of chapters:
+    --* search for uppercase things/entities at start of chapters:
     needle = needle:upper()
     return haystack:match("%A" .. needle .. "%A") or haystack:match("^" .. needle .. "%A") or haystack:match("%A" .. needle .. "$")
 end

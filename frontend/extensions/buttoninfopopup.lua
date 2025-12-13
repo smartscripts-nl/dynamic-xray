@@ -122,7 +122,7 @@ function ButtonInfoPopup:forXrayFilterByImportantType(props)
 		text = KOR.icons.xray_person_important_bare .. "/" .. KOR.icons.xray_term_important_bare,
 		fgcolor = Blitbuffer.COLOR_GRAY_3,
 		font_bold = false,
-		info = _("dark icons | Filter the Xray items for important persons and terms."),
+		info = _("dark icons | Filter the Xray items for important persons and things."),
 		callback_label = _("filter"),
 		--! callback defined by calling module
 	}, props)

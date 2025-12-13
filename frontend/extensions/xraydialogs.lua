@@ -9,7 +9,7 @@ C = ((XrayController))
 These modules are initialized in ((initialize Xray modules)) and ((XrayController#init)).
 --]]--
 
---! counts of items per tab (all, persons, terms) determined in ((XrayButtons#getListSubmenuButton)). Reset filter callback for this filter: ((XrayDialogs#getListFilter)) > ((XrayController#resetFilteredItems)) > ((XrayDialogs#showListWithRestoredArguments)).
+--! counts of items per tab (all, persons, things) determined in ((XrayButtons#getListSubmenuButton)). Reset filter callback for this filter: ((XrayDialogs#getListFilter)) > ((XrayController#resetFilteredItems)) > ((XrayDialogs#showListWithRestoredArguments)).
 
 
 local require = require
@@ -152,7 +152,7 @@ function XrayDialogs:getFormFields(item_copy, target_field, name_from_selected_t
             description = linkwords and T(_("Description (%1):"), linkwords) or _("Description:"),
             info_popup_text = _([[If it is your intention that a Xray item should be filterable with a term in its description, you should ensure that that term in case of:
 
-TERMS/DEFINITIONS
+CONCEPTS
 only has lower case characters in the description;
 
 NAMES OF PERSONS
@@ -174,7 +174,7 @@ is mentioned with uppercase characters at start of first and surname in the desc
             info_popup_text = _([[PERSONS
 Enter person names including uppercase starting characters [A-Za-z]. Because in that case the search for Xray items in the book will be done CASE SENSITIVE. By default when searching for Xray items, Dynamic Xray will search for first names in the text. If you want the plugin to search for occurrences/hits for the surname instead (because these references are more frequent in the text), use this format: "surname, first name".
 
-TERMS
+CONCEPTS
 Enter with only lowercase characters [a-z], because then searches for these items will be executed CASE INSENSITIVE. So as to find hits in format "term" as well as "Term".]]),
             tab = 1,
             input_face = self.other_fields_face,

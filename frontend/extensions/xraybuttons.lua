@@ -672,7 +672,7 @@ function XrayButtons:getListSubmenuButton(tab_no)
     local active_marker = KOR.icons.active_tab_bare
     local label = tab_no == 1 and _("everything (") or _("persons (")
     if tab_no == 3 then
-        label = _("terms (")
+        label = _("things (")
     end
     local active_tab = DX.m:getActiveListTab()
     return {

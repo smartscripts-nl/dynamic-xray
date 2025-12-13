@@ -604,7 +604,7 @@ function XrayModel:setTabDisplayCounts()
         self.tab_display_counts = {
             #views_data.items,
             #views_data.persons,
-            #views_data.terms,
+            #views_data.things,
         }
     end
 
