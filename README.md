@@ -50,7 +50,7 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
     * V = XrayUI, and XrayDialogs and XrayButtons (extensions)
     * C = XrayController (plugin)
 * In code-eplanations.lua you can find some explanations for programmers about the inner workings of DX. This file doesn't have a function in the plugin, is meant to be purely informational.
-* DeepWiki.com has an extensive analysis of the DX plugin (for now of old version 1, but probably this will soon be updated). See [DeepWiki/dynamic-xray](https://deepwiki.com/smartscripts-nl/dynamic-xray).
+* DeepWiki.com has an extensive analysis of the DX plugin (for now of old version 1, but probably this will soon be updated). See [DeepWiki/dynamic-xray](https://deepwiki.com/smartscripts-nl/dynamic-xray). [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/smartscripts-nl/dynamic-xray)
 
 ## Icons
 
