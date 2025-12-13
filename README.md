@@ -9,23 +9,33 @@ Dynamic Xray uses a stripped down version of my personal extensions system for K
 ## Installation
 
 1. Clone this repo somewhere. From there:
-2. Copy the folder "extensions" under frontend to the frontend folder of your KOReader installation **(DON'T overwrite your KOReader frontend folder with the frontend folder from the archive!)**
+2. Copy the folder "extensions" under frontend to the frontend folder of your KOReader installation **(DON'T overwrite your KOReader frontend folder with the frontend folder from the repository!)**
 3. Copy xraycontroller.koplugin under the plugins folder to your KOReader plugins folder **(same warning as under the previous step: don't overwrite your entire plugins folder!)**
 4. Copy the svg icons under resources/icons/mdlight to the corresponding folder under your KOReader installation dir **(don't overwrite your original folders and files here!)**
 5. The "koreader-settings-and-patches" folder in this repository represents the settings folder of your koreader installation. In most cases this target folder will be named "koreader". In its root you should find settings.reader.lua.
 6. In that target folder create a folder patches if it doesn't exist yet and copy koreader-settings-and-patches/patches/2-xray-patches.lua to that target patches folder.
-7. Copy koreader-settings-and-patches/settings/settings_manager.lua to the settings subfolder of the koreader settings folder of your current installation (this folder should already have a settings subfolder, with many files in it).
+7. Copy koreader-settings-and-patches/settings/settings_manager.lua to the settings subfolder of the koreader settings folder of your current installation (this folder should already be present and should contain many files, e.g. sqlite3-files for KOReader's databases).
 8. If you want to translate messages in the Dynamic Xray system, you can do that in frontend/extensions/translations/xray-translations.po. In that file add your translations after "msgstr" entries, but take care that you adhere to the instructions at the start of that file.
 9. You could also choose to disable this translations (and therefor see all DX button labels etc. in English) by adding one character to the msgid blocks in the transations file. E.g. change msgid "Short names" to msgid "aShort names".
 
 ## Usage tips
 
+### Adding Xray items
+
 * The patch file adds a button "+ Xray" to the popup dialog for text selections. With this button you can add new Xray items from the text selection.
-* If in the dialog, under the first tab "xray-item" you don't see buttons, that is because the textarea for the description of the Xray item is too high. You can rectify this by tapping on the "metadata" tab at the to of the dialog and then tapping again on "xray-item". You now should see the buttons. If not, you could try closing the dialog and then re-opening it. This should be a one time problem, DX remembers the correct height for the textarea under the first tab which allows the buttons below to be visible.
-* DX uses mostly buttons with only icons, so without explanatory labels. However, if a button contains a point at the right side of the icon, or a downwards pointing arrow at the left side, this means that you can trigger a popup with help information about the function of that button by longpressing it.
-  * An arrow means that a button has more than one action available upon longpress.
-  * A point signifies a one action button.
-  * These actions will be presented as buttons at the bottom of the help dialog.
+* From the list of Xray items (to which you can assign a gesture, for quickly showing it), you can view and edit items, or add new items, by tapping on the plus-icon in the dialog footer.
+* If in the add/edit Xray item dialog, under the first tab "xray-item" you don't see buttons, that is caused by the textarea for the description of the Xray item being too high. In these cases the buttons _are_ present, but hidden under the keyboard. You can rectify this by:
+  * tapping on the "metadata" tab at the to of the dialog
+  * and then tapping again on "xray-item".
+  * You now should see the buttons.
+  * If not, you could try closing the dialog and then re-opening it.
+  * This should be a one time problem, DX remembers the correct height for the textarea under the first tab which allows the buttons below to be visible.
+
+### Buttons
+DX uses mostly buttons with only icons, so without explanatory labels. However, if a button contains a point at the right side of the icon, or a downwards pointing arrow at the left side, this means that you can trigger a popup with help information about the function of that button by longpressing it.
+* An arrow means that a button has more than one action available upon longpress.
+* A point signifies a one action button.
+* These actions will be presented as buttons at the bottom of the help dialog.
 
 ## Tip for navigating the code
 
