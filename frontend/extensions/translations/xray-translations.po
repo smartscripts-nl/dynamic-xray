@@ -596,6 +596,21 @@ msgstr "Spring in geval van letter naar het eerste item dat daarmee begint. Of s
 msgid "Jump to first item starting with the character you entered."
 msgstr "Spring naar eerste item beginnend met de opgegeven letter."
 
+msgid "save"
+msgstr "sla op"
+
+msgid "target icon | Jump to context of this search hit in book."
+msgstr "schietschijf-ikoon | Spring in het boek naar context/tekst van deze zoekhit."
+
+msgid "loupe icon | Enter a new search term."
+msgstr "loupe-ikoon | Geef nieuwe zoekterm op."
+
+msgid "reset icon | Reset text in search field."
+msgstr "reset-ikoon | Reset tekst in het zoekveld."
+
+msgid "reset"
+msgstr "reset"
+
 msgid "copy icon | Copy the text to the clipboard."
 msgstr "kopieer-ikoon | Hiermee kun je de getoonde tekst naar het klembord kopiëren."
 

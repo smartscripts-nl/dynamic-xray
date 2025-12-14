@@ -172,7 +172,7 @@ end
 
 function XrayController:filterItemsByImportantTypes()
     DX.d:setProp("filter_state", "filtered")
-    DX.d:setProp("filter_icon", KOR.icons.xray_person_important_bare .. "/" .. KOR.icons.xray_term_important_bare)
+    DX.d:setProp("filter_icon", KOR.icons.xray_person_important_bare .. "/" .. KOR.icons.xray_thing_important_bare)
     DX.vd:setFilterTypes({ 2, 4 })
     --! this reset is essential to make filtering possible:
     DX.vd:updateItemsTable(nil, "reset_item_table_for_filter")

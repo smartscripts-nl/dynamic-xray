@@ -1,4 +1,3 @@
-
 --- @class XrayPatches
 
 --[[
@@ -28,6 +27,7 @@ require("extensions/korinit")
 --* =====================================================
 
 local BD = require("ui/bidi")
+local Button = require("extensions/widgets/button")
 local CanvasContext = require("document/canvascontext")
 local CheckButton = require("ui/widget/checkbutton")
 local CreDocument = require("document/credocument")
@@ -36,12 +36,14 @@ local InfoMessage = require("ui/widget/infomessage")
 local InputDialog = require("ui/widget/inputdialog")
 local KOR = require("extensions/kor")
 local LuaSettings = require("luasettings")
+local Menu = require("extensions/widgets/menu")
 local MovableContainer = require("ui/widget/container/movablecontainer")
 local ReaderDictionary = require("apps/reader/modules/readerdictionary")
 local ReaderHighlight = require("apps/reader/modules/readerhighlight")
 local ReaderSearch = require("apps/reader/modules/readersearch")
 local ReaderToc = require("apps/reader/modules/readertoc")
 local ReaderView = require("apps/reader/modules/readerview")
+local TextBoxWidget = require("ui/widget/textboxwidget")
 local UIManager = require("ui/uimanager")
 local _ = require("gettext")
 local logger = require("logger")
@@ -54,11 +56,17 @@ local T = require("ffi/util").template
 local cre --* Delayed loading
 local DX = DX
 local error = error
+local G_reader_settings = G_reader_settings
 local has_no_text = has_no_text
+local has_text = has_text
 local math = math
+local next = next
 local pcall = pcall
 local table = table
 local tonumber = tonumber
+local tostring = tostring
+
+local count
 
 local help_text = _([[
 Regular expressions allow you to search for a matching pattern in a text. The simplest pattern is a simple sequence of characters, such as `James Bond`. There are many different varieties of regular expressions, but we support the ECMAScript syntax. The basics will be explained below.
@@ -189,7 +197,7 @@ function ReaderToc:getChapterStartPage(pn_or_xp)
     if self:isChapterStart(pn_or_xp, ticks) then
         return pn_or_xp
     end
-    local count = #ticks
+    count = #ticks
     if pn_or_xp <= ticks[1] then
         return ticks[1]
     end
@@ -209,6 +217,31 @@ function ReaderToc:getTocLastChapterInfo(pos0, chapters)
     end
     --* this should be the title of the last chapter:
     return (table.remove(chapters) or "")
+end
+
+--- @param pos0 string The pos0/page prop for the text for which we want to generate context_info
+--- @param context_info string
+function ReaderToc:getTocPathInfoForText(pos0, context_info, has_own_title)
+    local title
+    if has_own_title then
+        if not context_info then
+            context_info = ""
+        end
+    else
+        title = context_info or "Informatie"
+        context_info = ""
+    end
+    local chapters = self:getFullTocTitleByPage(pos0)
+    local last = "• " .. self:getTocLastChapterInfo(pos0, chapters)
+    local indent = ""
+    if next(chapters) ~= nil then
+        count = #chapters
+        for i = 1, count do
+            context_info = context_info .. indent .. "▾ " .. chapters[i] .. "\n"
+            indent = indent .. " "
+        end
+    end
+    return context_info .. indent .. last, title
 end
 
 
@@ -251,13 +284,372 @@ end
 --- PATCH READERSEARCH
 -- #((PATCH READERSEARCH))
 
-local orig_search_init = ReaderSearch.init
+ReaderSearch.all_hits = {}
+ReaderSearch.all_hits_current_item = 1
+ReaderSearch.last_search_text = ""
+ReaderSearch.whole_words_only = false
+ReaderSearch.cached_select_number = 1
+
 ReaderSearch.init = function(self)
-    orig_search_init(self)
+    self.ui.menu:registerToMainMenu(self)
+
+    --* number of words before and after the search string in All search results
+    self.findall_nb_context_words = 80
+    self.findall_results_per_page = G_reader_settings:readSetting("fulltext_search_results_per_page") or 14
+    self.findall_results_max_lines = G_reader_settings:readSetting("fulltext_search_results_max_lines")
+
     KOR:registerModule("readersearch", self)
 end
 
-ReaderSearch.whole_words_only = false
+function ReaderSearch:findAllText(search_text)
+    local last_search_hash = (self.last_search_text or "") .. tostring(self.case_insensitive) .. tostring(self.use_regex)
+    local not_cached = self.last_search_hash ~= last_search_hash
+    if not_cached then
+        local Trapper = require("ui/trapper")
+        local info = InfoMessage:new{ text = _("Searching… (tap to cancel)") }
+        UIManager:show(info)
+        UIManager:forceRePaint()
+        local completed, res = Trapper:dismissableRunInSubprocess(function()
+            if not self.whole_words_only then
+                return KOR.document:findAllText(search_text,
+                        self.case_insensitive, self.findall_nb_context_words, self.findall_max_hits, self.use_regex)
+            else
+                return KOR.document:findAllTextWholeWords(search_text,
+                        self.case_insensitive, self.findall_nb_context_words, self.findall_max_hits)
+            end
+        end, info)
+        if not completed then
+            return
+        end
+        UIManager:close(info)
+        self.last_search_hash = last_search_hash
+        self.findall_results = res
+        self.findall_results_item_index = nil
+    end
+    if self.findall_results then
+        self:onShowFindAllResults(not_cached)
+    else
+        local non_hit_needle = self.last_search_text
+        self.last_search_text = ""
+        self:onShowFulltextSearchInput()
+        KOR.registry:set("notify_case_sensitive", true)
+        KOR.messages:notify("geen treffers met " .. non_hit_needle, 5)
+    end
+end
+
+function ReaderSearch:onShowFindAllResults(not_cached)
+    if not self.last_search_hash or (not not_cached and self.findall_results == nil) then
+        --* no cached results, show input dialog
+        self:onShowFulltextSearchInput()
+        return
+    end
+
+    --* for consumption in ((XrayDialogs#onMenuHold)):
+    KOR.registry:set("reader_search_active", true)
+
+    local select_number = not_cached and 1 or self.cached_select_number
+    if self.ui.rolling and not_cached then
+        count = #self.findall_results
+        local item, word, pageno
+        --* append context before and after the word
+        local compact_context_wordcount = 7
+        local current_page = self.ui:getCurrentPage()
+        local t, ft = {}, {}
+        for i = 1, count do
+            --* items have a start and end prop, which are de facto pos0 and pos1:
+            item = self.findall_results[i]
+            --* PDF/Kopt shows full words when only some part matches; let's do the same with CRE
+            word = item.matched_text or ""
+            t = {}
+            ft = {}
+            --* [[[ and ]]] will be replaced by <b> and </b> in ((Dialogs#htmlBox)):
+            table.insert(ft, "[[[")
+            if item.matched_word_prefix then
+                table.insert(ft, item.matched_word_prefix)
+            end
+            table.insert(ft, word)
+            if item.matched_word_suffix then
+                table.insert(ft, item.matched_word_suffix)
+            end
+            table.insert(ft, "]]]")
+
+            --* Make this word bolder, using Poor Text Formatting provided by TextBoxWidget
+            --* (we know this text ends up in a TextBoxWidget).
+            table.insert(t, TextBoxWidget.PTF_BOLD_START)
+
+            if item.matched_word_prefix then
+                table.insert(t, item.matched_word_prefix)
+            end
+            table.insert(t, word)
+            if item.matched_word_suffix then
+                table.insert(t, item.matched_word_suffix)
+            end
+            table.insert(t, TextBoxWidget.PTF_BOLD_END)
+            if item.prev_text then
+                table.insert(ft, 1, item.prev_text)
+                table.insert(ft, 2, " ")
+                --* expand the bold texts in the list with a couple of words:
+                self:injectCompactBoldHitContext(t, item.prev_text, -compact_context_wordcount, "at_start")
+                table.insert(t, 2, " ")
+            end
+            if item.next_text then
+                table.insert(ft, " ")
+                table.insert(ft, item.next_text)
+                table.insert(t, " ")
+                --* expand the bold texts in the list with a couple of words:
+                self:injectCompactBoldHitContext(t, item.next_text, compact_context_wordcount, false)
+            end
+            --* enable handling of our bold tags:
+            table.insert(t, 1, TextBoxWidget.PTF_HEADER)
+            item.text = table.concat(t, "")
+
+            --* local pageref
+            if self.ui.rolling then
+                pageno = KOR.document:getPageFromXPointer(item.start)
+            else
+                pageno = item.start
+            end
+            if pageno <= current_page then
+                select_number = i
+            end
+            item.mandatory = pageno --pageref or
+            item.mandatory_dim = pageno > current_page
+            item.full_text = table.concat(ft, "")
+            item.nr = i
+        end
+        self.cached_select_number = select_number
+
+        self.all_hits = self.findall_results
+    end
+
+    local last_search = self.last_search_text
+    self.result_menu = Menu:new{
+        title = T(_("Search results (%1)"), #self.findall_results),
+        subtitle = T("zoekopdracht: %1", last_search),
+        top_buttons_left = {
+            {
+                icon = "plus",
+                callback = function()
+                    KOR.xraymodel.saveNewItem(last_search)
+                end,
+            }
+        },
+        footer_buttons_left = {
+            Button:new(KOR.buttoninfopopup:forSearchNew({
+                callback = function()
+                    UIManager:close(self.result_menu)
+                    self.last_search_text = ""
+                    self:onShowFulltextSearchInput()
+                end,
+            })),
+        },
+        footer_buttons_right = {
+            Button:new(KOR.buttoninfopopup:forSaveToXray({
+                info = "gebruiker-lamp-ikoon | Voeg \"" .. last_search .. "\" toe als nieuw Xray-item.",
+                callback = function()
+                    UIManager:close(self.result_menu)
+                    self.last_search_text = ""
+                    KOR.xraycontroller:initAndShowNewItemForm(last_search)
+                end,
+            })),
+        },
+        item_table = self.findall_results,
+        items_per_page = self.findall_results_per_page,
+        items_max_lines = self.findall_results_max_lines,
+        multilines_forced = true, --* to always have search_string in bold
+        fullscreen = true,
+        covers_fullscreen = true,
+        enable_bold_words = true,
+        is_borderless = true,
+        is_popout = false,
+        title_bar_fm_style = true,
+        onMenuChoice = function(xx, item)
+            self:showHitWithContext(item, not_cached)
+            self.garbage = xx
+        end,
+        onMenuHold = function(menu_self, item)
+            local title
+            local context_info = T(_("Page: %1"), item.mandatory) .. "\n"
+            context_info, title = KOR.toc:getTocPathInfoForText(item.start, context_info)
+            KOR.dialogs:niceAlert(title, context_info)
+            self.garbage = menu_self
+            return true
+        end,
+        close_callback = function()
+            KOR.registry:unset("reader_search_active")
+            self.findall_results_item_index = self.result_menu:getFirstVisibleItemIndex() --* save page number to reopen
+            UIManager:close(self.result_menu)
+        end,
+    }
+    self:updateAllResultsMenu(nil, self.findall_results_item_index)
+    UIManager:show(self.result_menu)
+    self:showErrorNotification(#self.findall_results)
+end
+
+--- @param text table
+--- @param context string
+function ReaderSearch:injectCompactBoldHitContext(text, context, words_limit, at_start)
+    local words = KOR.strings:split(context, " ")
+    words = KOR.tables:slice(words, 1, words_limit)
+    count = #words
+    if at_start then
+        for i = count, 1, -1 do
+            table.insert(text, 1, words[i])
+            table.insert(text, 2, " ")
+        end
+        return
+    end
+
+    for i = 1, count do
+        table.insert(text, words[i])
+        table.insert(text, " ")
+    end
+end
+
+function ReaderSearch:showHitWithContext(item, not_cached)
+    self:closeHitviewer()
+    KOR.dialogs:closeAllOverlays()
+
+    local context_string = item.full_text
+    --* [[[ and ]]] - injected in ((ReaderSearch#onShowFindAllResults)) - will be replaced by <b> and </b> in ((Dialogs#htmlBox))
+    context_string = KOR.html:textToHtml(context_string)
+    context_string = context_string
+            :gsub("<p>", "<p>... ", 1)
+            :gsub("</p>$", " ...</p>", 1)
+    local toc_info = KOR.toc:getTocPathInfoForText(item.start, nil, "has_own_title")
+    if has_text(toc_info) then
+        toc_info = toc_info .. "\n\n"
+    end
+    context_string = toc_info .. "<p class='whitespace'>&nbsp;</p>\n" .. context_string
+
+    self.all_hits_current_item = item.nr
+    -- #((readersearch all hits navigation))
+    local title = self.last_search_text .. ": " .. item.nr .. "/" .. #self.all_hits .. " - pagina " .. item.mandatory
+    self.hit_viewer = KOR.dialogs:htmlBox({
+        title = title,
+        window_size = "fullscreen",
+        html = context_string,
+        next_item_callback = function()
+            self:toNextHit()
+        end,
+        prev_item_callback = function()
+            self:toPrevHit()
+        end,
+        buttons_table = {
+            {
+                {
+                    icon = "list",
+                    --[[icon = "search-all",
+                    icon_size_ratio = 0.55,]]
+                    callback = function()
+                        self:closeHitviewer()
+                        self:onShowFindAllResults(not_cached, item.nr)
+                    end,
+                },
+                {
+                    text = KOR.icons.first,
+                    callback = function()
+                        self:toFirstHit()
+                    end,
+                },
+                {
+                    text = KOR.icons.previous,
+                    callback = function()
+                        self:toPrevHit()
+                    end,
+                },
+                KOR.buttoninfopopup:forSearchAllLocationsGotoLocation({
+                    callback = function()
+                        self:closeHitviewer("close_item_viewer")
+                        KOR.dialogs:closeAllOverlays()
+                        if self.ui.rolling then
+                            KOR.link:addCurrentLocationToStack()
+                            KOR.rolling:onGotoXPointer(item.start, item.start) --* show target line marker
+                            KOR.document:getTextFromXPointers(item.start, item["end"], true) --* highlight
+                        else
+                            local page = item.mandatory
+                            local boxes = {}
+                            count = #item.boxes
+                            for i = 1, count do
+                                boxes[i] = KOR.document:nativeToPageRectTransform(page, item.boxes[i])
+                            end
+                            KOR.link:onGotoLink({ page = page - 1 })
+                            self.view.highlight.temp[page] = boxes
+                        end
+                    end,
+                }),
+                {
+                    text = KOR.icons.next,
+                    callback = function()
+                        self:toNextHit()
+                    end,
+                },
+                {
+                    text = KOR.icons.last,
+                    callback = function()
+                        self:toLastHit()
+                    end,
+                },
+                {
+                    icon = "back",
+                    callback = function()
+                        self:closeHitviewer()
+                    end,
+                },
+            },
+        }
+    })
+end
+
+function ReaderSearch:closeHitviewer(close_item_viewer)
+    if self.hit_viewer then
+        KOR.dialogs:closeAllOverlays()
+        UIManager:close(self.hit_viewer)
+        self.hit_viewer = nil
+    end
+    if close_item_viewer then
+        DX.d:closeViewer()
+    end
+end
+
+function ReaderSearch:storeCurrentLocation()
+    if self.ui.rolling then
+        KOR.link:addCurrentLocationToStack()
+    end
+end
+
+function ReaderSearch:toNextHit()
+    self.all_hits_current_item = self.all_hits_current_item + 1
+    if self.all_hits_current_item > #self.all_hits then
+        self.all_hits_current_item = 1
+    end
+    self:showHitWithContext(self.all_hits[self.all_hits_current_item])
+end
+
+function ReaderSearch:toLastHit()
+    self.all_hits_current_item = #self.all_hits
+    self:showHitWithContext(self.all_hits[self.all_hits_current_item])
+end
+
+function ReaderSearch:toFirstHit()
+    self.all_hits_current_item = 1
+    self:showHitWithContext(self.all_hits[self.all_hits_current_item])
+end
+
+function ReaderSearch:toPrevHit()
+    self.all_hits_current_item = self.all_hits_current_item - 1
+    if self.all_hits_current_item < 1 then
+        self.all_hits_current_item = #self.all_hits
+    end
+    self:showHitWithContext(self.all_hits[self.all_hits_current_item])
+end
+
+function ReaderSearch:showHitsHighlighted(current_page, valid_link)
+    local other_page = current_page > 1 and current_page - 1 or current_page + 1
+    local other_link = KOR.document:getPageXPointer(other_page)
+    self.ui.link:onGotoLink({ xpointer = other_link }, "neglect_current_location")
+    self.ui.link:onGotoLink({ xpointer = valid_link }, "neglect_current_location")
+end
 
 --* called from Labels.context button in ((XrayDialogs#onMenuHold)):
 function ReaderSearch:onShowTextLocationsForNeedle(item, case_insensitive)

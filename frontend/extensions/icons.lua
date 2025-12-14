@@ -82,6 +82,8 @@ return {
     reset_bare = "\u{EB58}",
     save = "\u{F0C7}" .. spacer,
     save_bare = "\u{F0C7}",
+    search = "\u{EA48}" .. spacer,
+    search_bare = "\u{EA48}",
     spacer = "\u{2002}",
     today = "\u{E7EE}" .. spacer,
     today_bare = "\u{E7EE}",
@@ -105,6 +107,6 @@ return {
     xray_series_mode_bare = "\u{F2C0}",
     xray_tapped_collection = "\u{E70D}" .. spacer,
     xray_tapped_collection_bare = "\u{E70D}",
-    xray_term_bare = "\u{EDE7}",
-    xray_term_important_bare = "\u{EDE6}",
+    xray_thing_bare = "\u{EDE7}",
+    xray_thing_important_bare = "\u{EDE6}",
 }

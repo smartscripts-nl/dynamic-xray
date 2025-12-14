@@ -104,13 +104,14 @@ Widget that displays an item for menu
 --]]
 --- @class MenuItem
 local MenuItem = InputContainer:extend{
+    font = "cfont",
+    multilines_forced = false, -- set to true to always use TextBoxWidget
+    infont = "infont",
     text = nil,
     bidi_wrap_func = nil,
     show_parent = nil,
     detail = nil,
-    font = "cfont",
     font_size = 24,
-    infont = "infont",
     infont_size = 18,
     dimen = nil,
     shortcut = nil,
@@ -170,7 +171,7 @@ function MenuItem:init()
     if self.infont_size > max_font_size then
         self.infont_size = max_font_size
     end
-    if not self.single_line and not self.multilines_show_more_text then
+    if not self.single_line and not self.multilines_forced and not self.multilines_show_more_text then
         --* For non single line menus (File browser, Bookmarks), if the
         --* user provided font size is large and would not allow showing
         --* more than one line in our item height, just switch to single
@@ -693,6 +694,7 @@ local Menu = FocusManager:extend{
 
     filter = nil,
     show_filtered_count = false,
+    enable_bold_words = false,
 }
 
 function Menu:_recalculateDimen()
@@ -1288,6 +1290,8 @@ function Menu:updateItems(select_number)
                 font_size = self.font_size,
                 infont = "infont",
                 infont_size = infont_size,
+                --! this MUST be true to enable support for bold words via TextBoxWidget:
+                multilines_forced = self.enable_bold_words,
                 dimen = self.item_dimen:copy(),
                 shortcut = item_shortcut,
                 shortcut_style = shortcut_style,

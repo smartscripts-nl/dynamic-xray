@@ -77,12 +77,52 @@ function ButtonInfoPopup:forMenuToLetter(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forSaveToXray(props)
+	return KOR.buttonprops:set({
+		text = KOR.icons.xray_person_bare .. "/" .. KOR.icons.xray_thing_bare,
+		font_bold = false,
+		--! info defined by calling module
+		callback_label = _("save"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forSearchAllLocations(props)
 	return KOR.buttonprops:set({
 		icon = "search-all",
 		icon_size_ratio = 0.55,
 		--! info defined by calling module
 		callback_label = _("search"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forSearchAllLocationsGotoLocation(props)
+	return KOR.buttonprops:set({
+		icon = "goto-location",
+		icon_size_ratio = 0.5,
+		info = _("target icon | Jump to context of this search hit in book."),
+		callback_label = _("jump"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forSearchNew(props)
+	return KOR.buttonprops:set({
+		text = KOR.icons.search_bare,
+		info = _("loupe icon | Enter a new search term."),
+		callback_label = _("search"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forSearchResetFilter(props)
+	return KOR.buttonprops:set({
+		icon = "reset",
+		id = "reset",
+		icon_size_ratio = 0.5,
+		info = _("reset icon | Reset text in search field."),
+		callback_label = _("reset"),
 		--! callback defined by calling module
 	}, props)
 end
@@ -119,7 +159,7 @@ end
 
 function ButtonInfoPopup:forXrayFilterByImportantType(props)
 	return KOR.buttonprops:set({
-		text = KOR.icons.xray_person_important_bare .. "/" .. KOR.icons.xray_term_important_bare,
+		text = KOR.icons.xray_person_important_bare .. "/" .. KOR.icons.xray_thing_important_bare,
 		fgcolor = Blitbuffer.COLOR_GRAY_3,
 		font_bold = false,
 		info = _("dark icons | Filter the Xray items for important persons and things."),
@@ -347,7 +387,7 @@ end
 
 function ButtonInfoPopup:forXrayTypeSet(props)
 	return KOR.buttonprops:set({
-		text = KOR.icons.xray_person_bare .. "/" .. KOR.icons.xray_term_bare,
+		text = KOR.icons.xray_person_bare .. "/" .. KOR.icons.xray_thing_bare,
 		fgcolor = Blitbuffer.COLOR_GRAY_3,
 		font_bold = false,
 		info = _("user/bulb icon | Set Xray type."),
