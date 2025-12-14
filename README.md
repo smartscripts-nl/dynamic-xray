@@ -38,6 +38,8 @@ The user can use DX for study: to keep track of things in the broad sense, to se
   * You now should see the buttons.
   * If not, you could try closing the dialog and then re-opening it.
   * This should be a one time problem, DX remembers the correct height for the textarea under the first tab, which will allow the buttons below to remain visible upon subsequent calls of the dialog.
+* By clicking on lightning or star icons in the margins of ebook pages you can call up an overview of Xray items in resp. the current page or the paragraph with the star icon.
+* You can assign a gesture to quickly call up the list of all Xray items in the book or series: cog icon in the main KOReader menu → Taps and gestures → Gesture manager → Multiswipes → select a gesture → Reader → Show xray-items in this book/series
 
 ### Displaying help information about the function of buttons
 DX uses mostly buttons with only icons, so without explanatory labels. However, if a button contains a point on the right side of the icon, or a downwards pointing arrow on the left side, this means that you can trigger a popup with help information about the function of that button by longpressing it.
