@@ -5,9 +5,14 @@ local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local util = require("util")
 
+local has_no_text = has_no_text
 local has_text = has_text
 local table = table
 local tonumber = tonumber
+
+local count
+local STATE_NORMAL = 0
+local STATE_POETRY = 1
 
 --- @class Html
 local Html = WidgetContainer:extend{
@@ -22,6 +27,9 @@ local Html = WidgetContainer:extend{
     placeholder_ul_end = "♡",
     placeholder_ul_li = "●",
     placeholder_ul_li_close = "⚬",
+
+    poetry_limit_length = 60,
+    poetry_limit_lines = 4,
 }
 
 function Html:htmlToPlainTextIfHtml(text)
@@ -219,6 +227,100 @@ function Html:getHtmlElementIndex(position)
 
     --* return main html elem number (is first number match in tail of position):
     return tonumber(element_number), element_type
+end
+
+function Html:textToHtml(text)
+
+    text = text
+        :gsub("\n\n\n+", "\n\n")
+        :gsub("\n\n", "\n \n")
+
+    --* remove (foot)note markings in html:
+    text = KOR.strings:removeNotes(text)
+
+    local lines = {}
+    for s in text:gmatch("[^\r\n]+") do
+        table.insert(lines, s)
+    end
+
+    self.in_poetry = 0
+    local result = {}
+    count = #lines
+    for i = 1, count do
+        self:formatHtmlLine(lines[i], result)
+    end
+    local html = table.concat(result, "\n")
+    if self.in_poetry >= self.poetry_limit_lines then
+        html = html .. "</div>"
+    end
+
+    return html
+end
+
+function Html:paragraph(text, is_blank)
+    if is_blank then
+        return "<p class='whitespace'>&#160;</p>"
+    end
+    return "<p>" .. text .. "</p>"
+end
+
+function Html:openPoetry(result, start_index)
+    result[start_index] = "<div class='poezie'>" .. result[start_index]
+end
+
+function Html:closePoetry(result, p)
+    table.insert(result, "</div>" .. p)
+end
+
+function Html:formatHtmlLine(line, result)
+
+    local is_short = #line < self.poetry_limit_length
+    local is_page = line:match("pagina %d+")
+    local is_blank = has_no_text(line)
+
+    local state = (self.in_poetry > 0) and STATE_POETRY or STATE_NORMAL
+
+    --- PAGE NUMBER (always terminates poetry)
+    if is_page then
+        if state == STATE_POETRY and self.in_poetry <= self.poetry_limit_lines then
+            self:openPoetry(result, i - self.in_poetry)
+            table.insert(result, "</div><p class=\"export-page-number\">" .. line .. "</p>")
+        else
+            table.insert(result, "<p class=\"export-page-number\">" .. line .. "</p>")
+        end
+        self.in_poetry = 0
+        return
+    end
+
+    --- POETRY STATE
+
+    if state == STATE_POETRY then
+        if is_short then
+            table.insert(result, self:paragraph(line, is_blank))
+            self.in_poetry = self.in_poetry + 1
+
+            if self.in_poetry == self.poetry_limit_lines then
+                self:openPoetry(result, i - self.poetry_limit_lines + 1)
+            end
+            return
+        end
+
+        -- poetry ends on long line
+        self:closePoetry(result, self:paragraph(line, is_blank))
+        self.in_poetry = 0
+        return
+    end
+
+    --- NORMAL STATE
+
+    if is_short then
+        table.insert(result, self:paragraph(line, is_blank))
+        self.in_poetry = 1
+        return
+    end
+
+    table.insert(result, self:paragraph(line, is_blank))
+    self.in_poetry = 0
 end
 
 return Html

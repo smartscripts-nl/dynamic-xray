@@ -1,7 +1,6 @@
 
 local require = require
 
-local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local md5 = require("ffi/sha2").md5
 
@@ -10,6 +9,7 @@ local pairs = pairs
 local table = table
 local tostring = tostring
 local type = type
+local unpack = unpack
 
 local count
 
@@ -132,6 +132,25 @@ function Tables:sortByPropDescendingAndSetTopItems(subject, sorting_prop, top_it
     self:sortByPropDescending(other_subjects, sorting_prop)
 
     return self:merge(top_subjects, other_subjects, "add_indices")
+end
+
+--- @return table
+function Tables:slice(subject, startpos, icount)
+    local sliced = {}
+    if icount > 0 then
+        for _, value in pairs({ unpack(subject, startpos, icount) }) do
+            table.insert(sliced, value)
+        end
+        return sliced
+    end
+
+    --* "negative" slice, from end of table:
+    local endpos = #subject
+    startpos = endpos - (-icount) + 1
+    for x = startpos, endpos do
+        table.insert(sliced, subject[x])
+    end
+    return sliced
 end
 
 --- @return table

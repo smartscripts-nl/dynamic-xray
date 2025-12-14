@@ -516,7 +516,7 @@ end
 --* compare buttons for item viewer ((XrayButtons#forItemViewer)):
 --- @param manager XrayController
 function XrayButtons:forListContext(manager, item)
-    local importance_label = (item.xray_type == 2 or item.xray_type == 4) and KOR.icons.xray_person_bare .. "/" .. KOR.icons.xray_term_bare .. _(" normal") or KOR.icons.xray_person_important_bare .. "/" .. KOR.icons.xray_term_important_bare .. _(" important")
+    local importance_label = (item.xray_type == 2 or item.xray_type == 4) and KOR.icons.xray_person_bare .. "/" .. KOR.icons.xray_thing_bare .. _(" normal") or KOR.icons.xray_person_important_bare .. "/" .. KOR.icons.xray_thing_important_bare .. _(" important")
     local buttons = {
         {
             {
