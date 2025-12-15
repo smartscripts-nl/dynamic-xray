@@ -434,6 +434,12 @@ msgstr "link-term"
 msgid "name of item was not determined..."
 msgstr "naam van item werd niet bepaald..."
 
+msgid "item could not be updated..."
+msgstr "item kon niet worden bijgewerkt..."
+
+msgid "item id could not be determined..."
+msgstr "item id kon niet worden bepaald..."
+
 
 
 ## =============== XrayModel ================

@@ -404,10 +404,10 @@ end
 --* for storing new items see ((XrayDataSaver#storeNewItem))
 function XrayFormsData:storeItemUpdates(mode, updated_item)
     if not updated_item then
-        KOR.messages:notify("item kon niet worden bijgewerkt...")
+        KOR.messages:notify(_("item could not be updated..."))
         return
     elseif not updated_item.id then
-        KOR.messages:notify("item id kon niet worden bepaald...")
+        KOR.messages:notify(_("item id could not be determined..."))
         return
     end
     local item_id = updated_item.id
