@@ -66,10 +66,7 @@ local XrayDataSaver = WidgetContainer:new{
         ]]
 
         delete_item_book =
-            "DELETE FROM xray_items WHERE ebook = ? AND name = ?;",
-
-        delete_item_by_id =
-            "DELETE FROM xray_items WHERE ebook = '%1' AND id = %2;",
+            "DELETE FROM xray_items WHERE id = ?;",
 
         delete_item_series =
             [[DELETE FROM xray_items
@@ -163,7 +160,7 @@ function XrayDataSaver:initDataHandlers(xray_model)
 end
 
 -- #((XrayDataSaver#storeDeletedItem))
-function XrayDataSaver.storeDeletedItem(current_series, name)
+function XrayDataSaver.storeDeletedItem(current_series, delete_item)
 
     local self = DX.ds
 
@@ -173,11 +170,11 @@ function XrayDataSaver.storeDeletedItem(current_series, name)
     if has_text(current_series) then
         sql = self.queries.delete_item_series
         stmt = conn:prepare(sql)
-        stmt:reset():bind(current_series, name):step()
+        stmt:reset():bind(current_series, delete_item.name):step()
     else
         sql = self.queries.delete_item_book
         stmt = conn:prepare(sql)
-        stmt:reset():bind(parent.current_ebook_basename, name):step()
+        stmt:reset():bind(delete_item.id):step()
     end
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 end
@@ -351,7 +348,7 @@ function XrayDataSaver:setBookHitsForImportedItems(conn, current_ebook_basename)
             }
             book_hits, chapter_hits = views_data:getAllTextHits(item)
             if item.book_hits == 0 then
-                conn:exec(T(self.queries.delete_item_by_id, current_ebook_basename, id))
+                conn:exec(T(self.queries.delete_item_book, id))
             else
                 --* here we execute self.queries.update_item_hits:
                 stmt:reset():bind(book_hits, chapter_hits, id):step()
@@ -402,7 +399,7 @@ function XrayDataSaver:setSeriesHitsForImportedItems(conn, current_ebook_basenam
                 ):step()
             else
                 name = KOR.databases:escape(xray_items[i].name)
-                conn:exec(T(self.queries.delete_item_book, current_ebook_basename, name))
+                conn:exec(T(self.queries.delete_item_book, xray_items[i].id))
             end
         end
         conn:exec("COMMIT")
@@ -466,7 +463,7 @@ function XrayDataSaver.deleteItem(delete_item, remove_all_instances_in_series)
         end
     end
     local series = remove_all_instances_in_series and parent.current_series
-    self.storeDeletedItem(series, delete_item.name)
+    self.storeDeletedItem(series, delete_item)
 
     if position > #xray_items then
         return #xray_items

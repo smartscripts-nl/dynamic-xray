@@ -11,13 +11,16 @@ local FileDirNames = WidgetContainer:extend{}
 
 function FileDirNames:basename(file, options)
     file = file:gsub("^.+/", "")
-    if options and options.remove_extension then
+    if not options then
+        return file
+    end
+    if options.remove_extension then
         file = self:removeExtension(file)
     end
-    if options and options.remove_authors then
+    if options.remove_authors then
         file = file:gsub("^.+ %- ", "")
     end
-    if options and options.lower_case then
+    if options.lower_case then
         file = KOR.strings:lower(file)
     end
     return file
