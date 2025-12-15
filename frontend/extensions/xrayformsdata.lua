@@ -2,9 +2,11 @@
 This extension is part of the Dynamic Xray plugin; it handles the data required for the forms to manage the Xray items.
 
 The Dynamic Xray plugin has kind of a MVC structure:
-M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
+M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
 V = ((XrayUI)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
+
+XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
 
 These modules are initialized in ((initialize Xray modules)) and ((XrayController#init)).
 --]]--
@@ -37,40 +39,6 @@ local XrayFormsData = WidgetContainer:new{
     form_item_id = nil,
     --* used to determine whether an item should be displayed bold in the list or not; and also used in ((XrayViewsData#storeItemHits)) to store the (updated) book_hits for an item in the database:
     last_modified_item_id = nil,
-    queries = {
-        insert_item =
-            "INSERT INTO xray_items (ebook, name, short_names, description, xray_type, aliases, linkwords) VALUES (?, ?, ?, ?, ?, ?, ?);",
-
-        update_item =
-            "UPDATE xray_items SET name = ?, short_names = ?, description = ?, xray_type = ?, aliases = ?, linkwords = ?, book_hits = ?, chapter_hits = ? WHERE ebook = ? AND id = ?;",
-
-        update_item_type =
-            "UPDATE xray_items SET xray_type = ? WHERE ebook = ? AND id = ?;",
-
-        update_item_for_entire_series =
-            [[
-            UPDATE xray_items
-            SET
-            name = ?,
-            short_names = ?,
-            description = ?,
-            xray_type = ?,
-            aliases = ?,
-            linkwords = ?
-            WHERE name = (SELECT xi.name
-              FROM xray_items xi
-              WHERE xi.id = ?)
-            AND ebook IN (
-              SELECT ab.filename
-              FROM bookinfo ab
-              WHERE ab.series = (
-                  SELECT ab2.series
-                  FROM bookinfo ab2
-                  JOIN xray_items xi2 ON xi2.ebook = ab2.filename
-                  WHERE xi2.id = ?
-              )
-          );]],
-    },
 }
 
 --- @param xray_model XrayModel
@@ -212,7 +180,7 @@ function XrayFormsData:getAndStoreEditedItem(item_copy, field_values)
         hits_in_book_for_store = nil
     end
     edited_item.book_hits = hits_in_book_for_store
-    self.storeItemUpdates("edit", edited_item.id, edited_item)
+    self:storeItemUpdates("edit", edited_item.id, edited_item)
 
     --views_data:initData()
 
@@ -351,10 +319,11 @@ function XrayFormsData:getNeedleName(item)
 end
 
 --* called from add dialog and ReaderDictionary and other plugins:
--- #((XrayModel#saveNewItem))
+-- #((XrayFormsData#saveNewItem))
 function XrayFormsData.saveNewItem(new_item)
 
     local self = DX.fd
+
     local needle_name = self:getNeedleName(new_item)
 
     --* might be set to a value by ((XrayTappedWords#itemExists)), so here we reset it:
@@ -373,7 +342,9 @@ function XrayFormsData.saveNewItem(new_item)
     new_item.name = needle_name
 
     --* this call also adds an id prop to item, needed for ((XrayViewsData#updateAndSortAllItemTables)):
-    self.storeNewItem(new_item)
+    --* always reset filters when adding a new item, to prevent problems:
+    DX.c:resetFilteredItems()
+    DX.ds.storeNewItem(new_item)
 
     --* set and store props book_hits etc. for this new item:
     views_data:setItemHits(new_item, { store_book_hits = true, mode = "add" })
@@ -381,27 +352,6 @@ function XrayFormsData.saveNewItem(new_item)
     --! don't call views_data:updateAndSortAllItemTables(item, "add") here, because then all previous items in list gone from view...
     --* we force refresh of data here, because it could be that list of items hasn't been shown yet:
     views_data:addNewItemToItemTables(new_item)
-end
-
---* compare for edited items: ((XrayFormsData#storeItemUpdates)) > ((XrayModel#storeUpdatedItem))
--- #((XrayModel#storeNewItem))
-function XrayFormsData.storeNewItem(new_item)
-
-    local self = DX.fd
-
-    --* always reset filters when adding a new item, to prevent problems:
-    DX.c:resetFilteredItems()
-
-    local conn = KOR.databases:getDBconnForBookInfo("XrayModel#storeNewItem")
-    local stmt = conn:prepare(self.queries.insert_item)
-    local x = new_item
-    stmt:reset():bind(parent.current_ebook_basename, x.name, x.short_names, x.description, x.xray_type, x.aliases, x.linkwords):step()
-
-    --* retrieve the id of the newly added item, needed for ((XrayViewsData#updateAndSortAllItemTables)):
-    new_item.id = KOR.databases:getNewItemId(conn)
-    --* to ensure only this item will be shown bold in the items list:
-    self:setProp("last_modified_item_id", new_item.id)
-    conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 end
 
 --- @private
@@ -423,7 +373,7 @@ function XrayFormsData:toggleIsImportantItem(toggle_item)
         end
         table.insert(xray_items, item)
     end
-    self.storeItemUpdates("toggle_type", toggle_item.id, toggle_item.xray_type)
+    self:storeItemUpdates("toggle_type", toggle_item.id, toggle_item.xray_type)
     views_data.initData("force_refresh")
 
     return position, toggle_item
@@ -448,28 +398,26 @@ function XrayFormsData:toggleIsPersonOrTerm(toggle_item)
         end
         table.insert(xray_items, item)
     end
-    self.storeItemUpdates("toggle_type", toggle_item.id, toggle_item.xray_type)
+    self:storeItemUpdates("toggle_type", toggle_item.id, toggle_item.xray_type)
     views_data.initData("force_refresh")
 
     return position, toggle_item
 end
 
 --* this method called upon rename/edit, toggle importance, toggle person/term of Xray item:
---* for storing new items see ((XrayModel#storeNewItem))
--- #((XrayFormsData#storeItemUpdates))
-function XrayFormsData.storeItemUpdates(mode, item_id, updated_item)
-    local self = DX.fd
+--* for storing new items see ((XrayDataSaver#storeNewItem))
+function XrayFormsData:storeItemUpdates(mode, item_id, updated_item)
     --* optionally set to a value by ((XrayTappedWords#itemExists)), so here we reset it:
     --! disabled, we want to retain a filter that has been set:
     --self.filter_string = ""
 
     --* mode has this value when called from ((XrayFormsData#toggleIsPersonOrTerm)) or ((XrayFormsData#toggleIsImportantItem)):
     if mode == "toggle_type" and item_id and updated_item then
-        self.storeUpdatedItemType(item_id, updated_item)
+        DX.ds.storeUpdatedItemType(item_id, updated_item)
 
     elseif mode == "edit" and item_id and updated_item then
         --* updated_value in this case is a xray item:
-        self.storeUpdatedItem(item_id, updated_item)
+        DX.ds.storeUpdatedItem(item_id, updated_item)
 
         --* these props nr, icons and text are needed so we get no crash because of one of these props missing when generating list items in ((XrayViewsData#generateListItemText)) and ((Strings#formatListItemNumber)):
         updated_item.nr = updated_item.index
@@ -486,43 +434,6 @@ function XrayFormsData.storeItemUpdates(mode, item_id, updated_item)
         views_data.current_item = updated_item
         views_data.items[updated_item.index] = updated_item
     end
-end
-
---- @private
-function XrayFormsData.storeUpdatedItemType(id, xray_type)
-    local self = DX.fd
-    local conn = KOR.databases:getDBconnForBookInfo("XrayModel#storeUpdatedItemType")
-    local sql = self.queries.update_item_type
-    local stmt = conn:prepare(sql)
-    stmt:reset():bind(xray_type, self.current_ebook_basename, id):step()
-    conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
-end
-
--- #((XrayModel#storeUpdatedItem))
---- @private
-function XrayFormsData.storeUpdatedItem(id, updated_item)
-
-    local self = DX.fd
-
-    if not updated_item.name then
-        KOR.messages:notify(_("name of item was not determined..."), 4)
-        return
-    end
-
-    --* in series mode we want to display the total count of all occurences of an item in the entire series:
-    local conn = KOR.databases:getDBconnForBookInfo("XrayModel#storeUpdatedItem")
-    local sql = parent.current_series and self.queries.update_item_for_entire_series or self.queries.update_item
-    local stmt = conn:prepare(sql)
-    local x = updated_item
-    --! when a xray item is defined for a series of books, all instances per book of that same item will ALL be updated!:
-    --* this query will be used in both the series AND in current book display mode of the list of items, BUT ONLY IF a series for the current ebook is defined (so parent.current_series set):
-    if parent.current_series then
-        --! don't store hits here, because otherwise this count will be saved for all same items in ebooks in the series, but they should normally differ!:
-        stmt:reset():bind(x.name, x.short_names, x.description, x.xray_type, x.aliases, x.linkwords, id, id):step()
-    else
-        stmt:reset():bind(x.name, x.short_names, x.description, x.xray_type, x.aliases, x.linkwords, x.book_hits, x.chapter_hits, self.current_ebook_basename, id):step()
-    end
-    conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 end
 
 function XrayFormsData:setProp(prop, value)

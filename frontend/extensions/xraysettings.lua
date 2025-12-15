@@ -2,9 +2,11 @@
 This extension is part of the Dynamic Xray plugin; it has buttons which are generated for dialogs and forms in XrayController and its other extensions.
 
 The Dynamic Xray plugin has kind of a MVC structure:
-M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
+M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
 V = ((XrayUI)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
+
+XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
 
 These modules are initialized in ((initialize Xray modules)) and ((XrayController#init)).
 --]]--

@@ -1,48 +1,11 @@
 
 --- @class XrayInfo
-
---- SUBJECTS
-
--- ((BETTER TYPE HINTS))
--- ((DIALOGS))
--- ((TABS))
--- ((TAPPED_WORD_MATCHES))
--- ((XRAY_ITEMS))
--- ((XRAY_INFO_TOC_ADD_LINKED_ITEM_BUTTONS))
--- ((XRAY_VIEWER_CONTEXT_BUTTONS))
-
--- ======================================================
-
-
--- #((BETTER TYPE HINTS))
-
--- ! @class
---- use --- @class for class declarations and easy opening of locations in PhpStorm
-
--- ! @field
---- use --- @field for class fields, to be named with name and type above the class declaration.
--- e.g. see start of ((KOR))
-
--- ! @type
---- use --- @type for variables (right above their declaration). Example:
---- @type XrayModel model
-local model
-
--- ! @param
---- use --- @param for method arguments and loop params (with name of argument first and then type); example for loops:
-local titlebars
---- @param v TitleBar
-for _, v in ipairs(titlebars) do
-    -- nonsense statement :-):
-    model:isXrayItem(v)
-end
-
--- ! @see
---- use @see for links to specific places. Advantage over regular ((name)) references: green color, so stands out. Example:
---- @see TitleBar#init
-
-
 local XrayInfo = {}
+
+function XrayInfo:BUTTONCHOICEPROPS_MORE_THAN_2()
+
+    -- extra callbacks added in ((ButtonProps#injectAdditionalChoiceCallbacks))
+end
 
 function XrayInfo:DIALOGS()
 
@@ -109,7 +72,7 @@ function XrayInfo:XRAY_INFO_TOC_ADD_LINKED_ITEM_BUTTONS()
 
     -- list: ((XrayController#onShowList)) > ((XrayDialogs#showList))
 
-    -- showing list conditionally after saving an item: ((XrayModel#saveNewItem)) or ((XrayController#initAndShowEditItemForm)) > ((XrayController#showListConditionally))
+    -- showing list conditionally after saving an item: ((XrayController#saveNewItem)) or ((XrayController#initAndShowEditItemForm)) > ((XrayController#showListConditionally))
 
     -- viewer, show item: ((XrayDialogs#viewItem))
 end
@@ -126,7 +89,24 @@ function XrayInfo:XRAY_VIEWER_CONTEXT_BUTTONS()
 
     -- filter xray items: ((XrayController#onShowList)) > ((XrayViewsData#updateItemsTable)) > for text filter ((XrayViewsData#filterAndPopulateItemTables)) > continue with ((XrayController#onShowList)) > ((XrayDialogs#showList))
 
-    -- storing new xray items: called from save button generated with ((XrayButtons#forItemAddOrEditForm)) > ((XrayController#saveNewItem)) > ((XrayModel#saveNewItem)) > ((XrayModel#storeNewItem)) > ((XrayController#showListConditionally)) > ((XrayViewsData#updateItemsTable))
+    -- storing new xray items: called from save button generated with ((XrayButtons#forItemAddOrEditForm)) > ((XrayController#saveNewItem)) > ((XrayFormsData#saveNewItem)) > ((XrayDataSaver#storeNewItem)) > ((XrayController#showListConditionally)) > ((XrayViewsData#updateItemsTable))
 
-    -- storing edited xray items: called from save button generated with ((XrayButtons#forItemAddOrEditForm)) > ((XrayController#saveUpdatedItem)) > ((XrayFormsData#getAndStoreEditedItem)) > ((XrayFormsData#storeItemUpdates)) > ((XrayModel#storeUpdatedItem)) > ((XrayController#showListConditionally)) > ((XrayViewsData#updateItemsTable))
+    -- storing edited xray items: called from save button generated with ((XrayButtons#forItemAddOrEditForm)) > ((XrayController#saveUpdatedItem)) > ((XrayFormsData#getAndStoreEditedItem)) > ((XrayFormsData#storeItemUpdates)) > ((XrayDataSaver#storeUpdatedItem)) > ((XrayController#showListConditionally)) > ((XrayViewsData#updateItemsTable))
+end
+
+function XrayInfo:XRAY_VIEWER_CONTEXT_BUTTONS()
+    -- viewer, ((multiple related xray items found)) and adding linked items to that dialog: ((XrayButtons#forItemViewerBottomContextButtons))
+    -- compare ((XRAY_INFO_TOC_ADD_LINKED_ITEM_BUTTONS))
+
+    -- button for creating new xray items: ((XrayButtons#addTappedWordCollectionButton))
+
+    -- edit item: ((XrayController#initAndShowEditItemForm)) > ((XrayDialogs#showEditItemForm))
+
+    -- generating linked items button rows for item viewer: ((XrayButtons#forItemViewerBottomContextButtons))
+
+    -- filter xray items: ((XrayController#onShowList)) > ((XrayViewsData#updateItemsTable)) > for text filter ((XrayViewsData#filterAndPopulateItemTables)) > continue with ((XrayController#onShowList)) > ((XrayDialogs#showList))
+
+    -- storing new xray items: called from save button generated with ((XrayButtons#forItemAddOrEditForm)) > ((XrayController#saveNewItem)) > ((XrayFormsData#saveNewItem)) > ((XrayDataSaver#storeNewItem)) > ((XrayController#showListConditionally)) > ((XrayViewsData#updateItemsTable))
+
+    -- storing edited xray items: called from save button generated with ((XrayButtons#forItemAddOrEditForm)) > ((XrayController#saveUpdatedItem)) > ((XrayFormsData#getAndStoreEditedItem)) > ((XrayFormsData#storeItemUpdates)) > ((XrayDataSaver#storeUpdatedItem)) > ((XrayController#showListConditionally)) > ((XrayViewsData#updateItemsTable))
 end

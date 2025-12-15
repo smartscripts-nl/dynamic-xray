@@ -2,9 +2,11 @@
 This extension is part of the Dynamic Xray plugin; its task is the loading of data for the Dynamic Xray module.
 
 The Dynamic Xray plugin has kind of a MVC structure:
-M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
+M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
 V = ((XrayUI)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
+
+XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
 
 These modules are initialized in ((initialize Xray modules)) and ((XrayController#init)).
 --]]--
@@ -80,7 +82,7 @@ local XrayDataLoader = WidgetContainer:new{
          LEFT JOIN xray_items x ON x.ebook = b.filename
          LEFT JOIN (SELECT x2.name, x2.book_hits, x2.chapter_hits, x2.ebook, b2.title
             FROM xray_items x2
-            LEFT JOIN all_books b2 ON b2.filename = x2.ebook
+            LEFT JOIN bookinfo b2 ON b2.filename = x2.ebook
             WHERE x2.ebook = 'safe_path'
             GROUP BY x2.name) s ON s.name = x.name
 
@@ -91,6 +93,9 @@ local XrayDataLoader = WidgetContainer:new{
         GROUP BY x.name, x.xray_type
         ORDER BY (x.xray_type = 2 or x.xray_type = 4) DESC, %2, x.ebook;
         ]],
+
+        get_series_name =
+            "SELECT series FROM bookinfo WHERE directory || filename = 'safe_path' LIMIT 1;",
     },
 }
 
@@ -145,7 +150,7 @@ end
 function XrayDataLoader:_loadAllData(mode)
     local conn = KOR.databases:getDBconnForBookInfo("XrayDataLoader:_loadAllData")
     local sql = self:_getAllDataSql(mode)
-    local result = conn:exec(sql, nil, "XrayModel:_loadAllData")
+    local result = conn:exec(sql, nil, "XrayDataLoader:_loadAllData")
     if not result then
         conn = KOR.databases:closeInfoConnections(conn)
         return
@@ -232,6 +237,14 @@ function XrayDataLoader:_addSeriesItem(result, i, series_index)
 
     -- #((set xray item props))
     table.insert(parent.series[series_index], item)
+end
+
+function XrayDataLoader:getSeriesName()
+    local conn = KOR.databases:getDBconnForBookInfo("XrayDataLoader:getSeriesName")
+    local sql = KOR.databases:injectSafePath(self.queries.get_series_name, parent.current_ebook_full_path)
+    local series = conn:rowexec(sql)
+    conn = KOR.databases:closeInfoConnections(conn)
+    return series
 end
 
 return XrayDataLoader

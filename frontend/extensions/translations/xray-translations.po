@@ -68,7 +68,7 @@ msgstr " metadata "
 msgid ""
 "If it is your intention that a Xray item should be filterable with a term in its description, you should ensure that that term in case of:\n"
 "\n"
-"CONCEPTS\n"
+"THINGS\n"
 "only has lower case characters in the description;\n"
 "\n"
 "NAMES OF PERSONS\n"
@@ -92,7 +92,7 @@ msgid ""
 "PERSONS\n"
 "Enter person names including uppercase starting characters [A-Za-z]. Because in that case the search for Xray items in the book will be done CASE SENSITIVE. By default when searching for Xray items, Dynamic Xray will search for first names in the text. If you want the plugin to search for occurrences/hits for the surname instead (because these references are more frequent in the text), use this format: \"surname, first name\".\n"
 "\n"
-"CONCEPTS\n"
+"THINGS\n"
 "Enter with only lowercase characters [a-z], because then searches for these items will be executed CASE INSENSITIVE. So as to find hits in format \"term\" as well as \"Term\"."
 msgstr ""
 "PERSONEN\n"
@@ -836,6 +836,13 @@ msgid "paragraph"
 msgstr "alinea"
 
 
+## ================= XrayDataSaver ================
+
+msgid "the series %1 was not found..."
+msgstr "de serie %1 werd niet gevonden..."
+
+
+
 ## ================= SettingsManager ================
 
 msgid "Settings management"
@@ -896,3 +903,4 @@ msgstr "+ Xray item"
 
 msgid "you forgot to supply a search term..."
 msgstr "je gaf geen zoekterm op..."
+

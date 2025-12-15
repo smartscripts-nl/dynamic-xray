@@ -2,9 +2,11 @@
 This extension is part of the Dynamic Xray plugin; its task is the management of data required for views in the Dynamic Xray module.
 
 The Dynamic Xray plugin has kind of a MVC structure:
-M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
+M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
 V = ((XrayUI)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
+
+XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
 
 These modules are initialized in ((initialize Xray modules)) and ((XrayController#init)).
 --]]--
@@ -55,21 +57,6 @@ local XrayViewsData = WidgetContainer:new {
     max_line_length = 64,
     new_item_hits = nil,
     persons = {},
-    queries = {
-        get_series_hits = [[
-            SELECT SUM(x.book_hits) AS series_hits
-            FROM xray_items x
-            JOIN bookinfo b ON b.filename = x.ebook
-            WHERE x.name = '%1' AND b.series = '%2';]],
-
-        update_hits = [[
-            UPDATE xray_items
-            SET
-            book_hits = ?,
-            chapter_hits = ?,
-            hits_determined = 1
-            WHERE ebook = 'safe_path' AND id = ?;]],
-    },
     --* this prop can be modified with the checkbox in ((XrayDialogs#showFilterDialog)):
     search_simple = false,
     things = {},
@@ -226,7 +213,7 @@ function XrayViewsData:setItemHits(item, args)
     item.chapter_query_done = true
 
     --* series_hits will dynamically be updated in the database:
-    self.storeItemHits(item)
+    DX.ds.storeItemHits(item)
 end
 
 --- @private
@@ -253,14 +240,14 @@ function XrayViewsData:addItemToPersonsOrThings(item)
     end
 end
 
-function XrayViewsData:repopulateItemsPersonsThings(item)
+function XrayViewsData:repopulateItemsPersonThings(item)
     count = #self.items
     self.persons = {}
     self.things = {}
     --* luckily we don't have to update TextViewer.paragraph_headings etc. (loaded from XrayUI data) here, because those take their info from XrayModel via ((XrayUI#getXrayItemsFoundInText)) > ((get xray_item for XrayUI))...
 
     for i = 1, count do
-        --! watch out: this table MIGHT be filtered and in that case have less items then self.item_table:
+        --! watch out: this table MIGHT be filtered and in that have less items then self.item_table:
         if self.items[i] and self.items[i].id then
             if self.items[i].id == item.id then
                 self.items[i] = item
@@ -279,7 +266,7 @@ end
 
 --* only called from ((XrayController#saveUpdatedItem)), but not for newly added items; for those we call ((XrayViewsData#addNewItemToItemTables)):
 function XrayViewsData:updateAndSortAllItemTables(item)
-    self:repopulateItemsPersonsThings(item)
+    self:repopulateItemsPersonThings(item)
     --* this call is also needed to add reliability and xray type icons:
     self:applyFilters()
 
@@ -300,24 +287,6 @@ function XrayViewsData:addNewItemToItemTables(new_item)
     --* by forcing refresh, we reload items from the database:
     self.initData("force_refresh")
     self.prepareData(new_item)
-end
-
--- #((XrayViewsData#storeItemHits))
-function XrayViewsData.storeItemHits(item)
-
-    local self = DX.vd
-
-    local id = item.id
-    local conn = KOR.databases:getDBconnForBookInfo("XrayViewsData:updateBookHits")
-    local stmt = conn:prepare(KOR.databases:injectSafePath(self.queries.update_hits, parent.current_ebook_basename))
-    stmt:reset():bind(item.book_hits, item.chapter_hits, id):step()
-    --* for items in books which are part of a series update the prop series_hits:
-    if parent.current_series then
-        local name = KOR.databases:escape(item.name)
-        local series = KOR.databases:escape(parent.current_series)
-        item.series_hits = tonumber(conn:rowexec(T(self.queries.get_series_hits, name, series))) or 0
-    end
-    conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 end
 
 --* compare ((XrayTappedWords#getCurrentListTabItems)):

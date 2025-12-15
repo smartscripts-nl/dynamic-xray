@@ -29,6 +29,7 @@ KOR:initBaseExtensions()
 --- @field c XrayController
 --- @field d XrayDialogs
 --- @field dl XrayDataLoader
+--- @field ds XrayDataSaver
 --- @field fd XrayFormsData
 --- @field m XrayModel
 --- @field s XraySettings
@@ -44,6 +45,8 @@ DX = {
     d = nil,
     --* dl is shorthand notation for DataLoader; this module will be initialized in ((XrayModel#initDataHandlers)):
     dl = nil,
+    --* ds is shorthand notation for DataStore; this module will be initialized in ((XrayModel#initDataHandlers)):
+    ds = nil,
     --* fd is shorthand notation for FormsData; this module will be initialized in ((XrayModel#initDataHandlers)):
     fd = nil,
     --* shorthand notation for Model:

@@ -47,7 +47,7 @@ for new items: ((XrayModel#saveNewItem)) > ((XrayModel#storeNewItem))
 
 --* DELETING ITEMS
 
-((XrayDialogs#showDeleteItemConfirmation)) > ((XrayModel#deleteItem)) > ((XrayModel#storeDeletedItem)) depending on argument current_series set all instances in a series will be deleted or only that in the current ebook.
+((XrayDialogs#showDeleteItemConfirmation)) > ((XrayDataSaver#deleteItem)) > ((XrayDataSaver#storeDeletedItem)) depending on argument current_series set all instances in a series will be deleted or only that in the current ebook.
 
 --* GENERATE ITEM INFO FOR DISPLAY
 
@@ -108,8 +108,8 @@ function XrayController:doBatchImport(count, callback)
     local percentage, loop_end
     local start = 1
     local loops = 0
-    local limit = DX.s.batch_count_for_import + 1
     local notification, initial_notification
+    local limit = DX.s.batch_count_for_import + 1
     while not loop_end or loop_end <= count do
         UIManager:close(notification)
         start, loop_end, percentage = callback(start, count)
@@ -212,6 +212,7 @@ function XrayController:saveNewItem(return_to_list)
     self.return_to_viewer = false
     DX.d:closeForm("add")
     DX.fd.saveNewItem(new_item)
+    DX.vd:prepareData(new_item)
     --* to force an update of the list of items in ((XrayDialogs#showList)):
     KOR.registry:set("new_item", new_item)
     self:showListConditionally(new_item, return_to_list)
@@ -292,13 +293,13 @@ function XrayController:showListConditionally(focus_item, show_list)
 end
 
 --- @param mode string "series" or "book"
-function XrayController:toggleBookOrSeriesMode(mode, item, dont_show)
+function XrayController:toggleBookOrSeriesMode(mode, focus_item, dont_show)
     DX.vd.initData("force_refresh", mode)
-    DX.d:showList(item, dont_show)
+    DX.d:showList(focus_item, dont_show)
 end
 
 function XrayController:refreshItemHitsForCurrentEbook()
-    DX.m.refreshItemHitsForCurrentEbook()
+    DX.ds.refreshItemHitsForCurrentEbook()
 end
 
 function XrayController:toggleSortingMode()

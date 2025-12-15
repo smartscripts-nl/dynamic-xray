@@ -2,9 +2,11 @@
 This extension is part of the Dynamic Xray plugin; it has all dialogs and forms (including their callbacks) which are used in XrayController and its other extensions.
 
 The Dynamic Xray plugin has kind of a MVC structure:
-M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
+M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
 V = ((XrayUI)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
+
+XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
 
 These modules are initialized in ((initialize Xray modules)) and ((XrayController#init)).
 --]]--
@@ -116,7 +118,7 @@ function XrayDialogs:showRefreshHitsForCurrentEbookConfirmation()
         local import_notification = KOR.messages:notify("import started: 0% imported...")
         UIManager:forceRePaint()
         KOR.registry:set("import_notification", import_notification)
-        --* the import will be processed and the user notified about the progress in ((XrayModel#setSeriesHitsForImportedItems)) > ((XrayController#doBatchImport)):
+        --* the import will be processed and the user notified about the progress in ((XrayDataSaver#setSeriesHitsForImportedItems)) > ((XrayController#doBatchImport)):
         DX.c:refreshItemHitsForCurrentEbook()
     end)
 end
@@ -152,7 +154,7 @@ function XrayDialogs:getFormFields(item_copy, target_field, name_from_selected_t
             description = linkwords and T(_("Description (%1):"), linkwords) or _("Description:"),
             info_popup_text = _([[If it is your intention that a Xray item should be filterable with a term in its description, you should ensure that that term in case of:
 
-CONCEPTS
+THINGS
 only has lower case characters in the description;
 
 NAMES OF PERSONS
@@ -174,7 +176,7 @@ is mentioned with uppercase characters at start of first and surname in the desc
             info_popup_text = _([[PERSONS
 Enter person names including uppercase starting characters [A-Za-z]. Because in that case the search for Xray items in the book will be done CASE SENSITIVE. By default when searching for Xray items, Dynamic Xray will search for first names in the text. If you want the plugin to search for occurrences/hits for the surname instead (because these references are more frequent in the text), use this format: "surname, first name".
 
-CONCEPTS
+THINGS
 Enter with only lowercase characters [a-z], because then searches for these items will be executed CASE INSENSITIVE. So as to find hits in format "term" as well as "Term".]]),
             tab = 1,
             input_face = self.other_fields_face,
@@ -264,7 +266,7 @@ function XrayDialogs:showImportFromOtherSeriesDialog()
         input_hint = _("name series..."),
         callback = function(series)
             UIManager:close(question)
-            DX.m.storeImportedItems(series)
+            DX.ds.storeImportedItems(series)
         end
     })
 end
@@ -349,7 +351,7 @@ function XrayDialogs:showDeleteItemConfirmation(delete_item, dialog, remove_all_
 
  ]]), delete_item.name) .. target, function()
         UIManager:close(dialog)
-        DX.m.deleteItem(delete_item, remove_all_instances_in_series)
+        DX.ds.deleteItem(delete_item, remove_all_instances_in_series)
         local message = remove_all_instances_in_series and _(" deleted for the entire series...") or _(" deleted for the current book...")
         self:refreshItemsList(delete_item.name .. message)
     end,

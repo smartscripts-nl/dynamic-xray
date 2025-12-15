@@ -1,0 +1,473 @@
+--[[--
+This is part of the Dynamic Xray plugin; it is the model (databases operations etc.) for XrayController. It has several child data handlers.
+
+The Dynamic Xray plugin has kind of a MVC structure:
+M = ((XrayDataSaver)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
+V = ((XrayUI)), and ((XrayDialogs)) and ((XrayButtons))
+C = ((XrayController))
+
+XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
+
+These modules are initialized in ((initialize Xray modules)) and ((XrayController#init)).
+--]]--
+
+--! important info
+
+--! since I ran into some weird "bad self" error messages when trying to store data in the database, I changed the format of methods involved in this from colon methods to dot functions; and in those I set a local self to DX.ds
+
+local require = require
+
+local Device = require("device")
+local KOR = require("extensions/kor")
+local WidgetContainer = require("ui/widget/container/widgetcontainer")
+local _ = KOR:initCustomTranslations()
+local T = require("ffi/util").template
+
+local DX = DX
+local G_reader_settings = G_reader_settings
+local has_text = has_text
+local math = math
+local string = string
+local table = table
+
+local DB_SCHEMA_VERSION = 20251027
+local count
+--- @type XrayModel parent
+local parent
+--- @type XrayViewsData views_data
+local views_data
+
+--- @class XrayDataSaver
+local XrayDataSaver = WidgetContainer:new{
+    create_db = true,
+    queries = {
+        create_db = [[
+            CREATE TABLE IF NOT EXISTS "xray_items" (
+                "id" INTEGER NOT NULL,
+                "ebook",
+                "name",
+                "short_names",
+                "description",
+                "xray_type"	INTEGER NOT NULL DEFAULT 1,
+                "aliases",
+                "linkwords",
+                "book_hits" INTEGER,
+                "chapter_hits",
+                "hits_determined" INTEGER NOT NULL DEFAULT 0,
+                CONSTRAINT "ebook_xray_name_unique" UNIQUE("ebook","name"),
+                PRIMARY KEY("id" AUTOINCREMENT)
+            );]],
+
+        --* no index added because of small table:
+        --[[
+        CREATE INDEX "xray_ebook_index" ON "xray_items" (
+                "ebook"	ASC
+            );
+        ]]
+
+        delete_item_book =
+            "DELETE FROM xray_items WHERE ebook = ? AND name = ?;",
+
+        delete_item_by_id =
+            "DELETE FROM xray_items WHERE ebook = '%1' AND id = %2;",
+
+        delete_item_series =
+            [[DELETE FROM xray_items
+            WHERE ebook IN (
+              SELECT filename
+              FROM bookinfo
+              WHERE series = ?
+            )
+            AND name = ?;]],
+
+        --* we need name AND aliases and short_names, to really find all text occurrences of an item:
+        get_items_for_hits_update =
+            "SELECT name, aliases, short_names, description, id FROM xray_items WHERE ebook = '%1' AND (book_hits IS NULL OR book_hits = 0) ORDER BY name;",
+
+        get_items_for_import_from_other_series =
+            "SELECT DISTINCT(x.name), x.short_names, x.description, x.xray_type, x.aliases, x.linkwords FROM xray_items x LEFT OUTER JOIN bookinfo b ON x.ebook = b.filename WHERE b.series = 'safe_path' ORDER BY x.name;",
+
+        get_series_hits =
+            [[
+            SELECT SUM(x.book_hits) AS series_hits
+            FROM xray_items x
+            JOIN bookinfo b ON b.filename = x.ebook
+            WHERE x.name = '%1' AND b.series = '%2';]],
+
+        import_items_from_other_books_in_series =
+            [[SELECT DISTINCT(x.name), x.short_names, x.description, x.xray_type, x.aliases, x.linkwords,
+            (
+                SELECT SUM(x2.book_hits)
+                FROM xray_items x2
+                JOIN bookinfo b2 ON b2.filename = x2.ebook
+                WHERE b2.series = a.series
+                  AND x2.name = x.name
+            ) AS series_hits
+            FROM xray_items x LEFT OUTER JOIN bookinfo b ON x.ebook = b.filename WHERE b.series = '%1' AND name NOT IN (SELECT name FROM xray_items WHERE ebook = '%2') ORDER BY x.name;]],
+
+        insert_imported_items =
+            "INSERT OR IGNORE INTO xray_items (ebook, name, short_names, description, xray_type, aliases, linkwords, book_hits, chapter_hits, hits_determined) VALUES ('%1', ?, ?, ?, ?, ?, ?, ?, ?, 1);",
+
+        insert_item =
+            "INSERT INTO xray_items (ebook, name, short_names, description, xray_type, aliases, linkwords) VALUES (?, ?, ?, ?, ?, ?, ?);",
+
+        update_hits =
+            [[UPDATE xray_items
+            SET
+            book_hits = ?,
+            chapter_hits = ?,
+            hits_determined = 1
+            WHERE ebook = 'safe_path' AND id = ?;]],
+
+        update_item =
+            "UPDATE xray_items SET name = ?, short_names = ?, description = ?, xray_type = ?, aliases = ?, linkwords = ?, book_hits = ?, chapter_hits = ? WHERE ebook = ? AND id = ?;",
+
+        update_item_for_entire_series =
+            [[UPDATE xray_items
+            SET
+            name = ?,
+            short_names = ?,
+            description = ?,
+            xray_type = ?,
+            aliases = ?,
+            linkwords = ?
+            WHERE name = (SELECT xi.name
+              FROM xray_items xi
+              WHERE xi.id = ?)
+            AND ebook IN (
+              SELECT bi.filename
+              FROM bookinfo bi
+              WHERE bi.series = (
+                  SELECT bi2.series
+                  FROM bookinfo bi2
+                  JOIN xray_items xi2 ON xi2.ebook = bi2.filename
+                  WHERE xi2.id = ?
+              )
+          );]],
+
+        update_item_hits =
+            "UPDATE xray_items SET book_hits = ?, chapter_hits = ?, hits_determined = 1 WHERE ebook = '%1' AND id = ?;",
+
+        set_db_version =
+            "PRAGMA user_version=%1;",
+
+        update_item_type =
+            "UPDATE xray_items SET xray_type = ? WHERE ebook = ? AND id = ?;",
+    },
+}
+
+--- @param xray_model XrayModel
+function XrayDataSaver:initDataHandlers(xray_model)
+    parent = xray_model
+    views_data = DX.vd
+end
+
+-- #((XrayDataSaver#storeDeletedItem))
+function XrayDataSaver.storeDeletedItem(current_series, name)
+
+    local self = DX.ds
+
+    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver:storeDeletedItem")
+    local sql, stmt
+    --! this argument CAN be nil!, so don't use parent.current_series here:
+    if has_text(current_series) then
+        sql = self.queries.delete_item_series
+        stmt = conn:prepare(sql)
+        stmt:reset():bind(current_series, name):step()
+    else
+        sql = self.queries.delete_item_book
+        stmt = conn:prepare(sql)
+        stmt:reset():bind(parent.current_ebook_basename, name):step()
+    end
+    conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
+end
+
+function XrayDataSaver.storeImportedItems(series)
+
+    local self = DX.ds
+
+    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver:storeImportedItems")
+    KOR.registry:set("db_conn", conn)
+    local sql = KOR.databases:injectSafePath(self.queries.get_items_for_import_from_other_series, series)
+    local result = conn:exec(sql)
+    if not result then
+        conn = KOR.databases:closeInfoConnections(conn)
+        KOR.messages:notify(T(_("the series %1 was not found..."), series))
+        return
+    end
+    local current_ebook_basename = KOR.databases:escape(parent.current_ebook_basename)
+    local stmt = conn:prepare(T(self.queries.insert_imported_items, current_ebook_basename))
+
+    count = #result["name"]
+    for i = 1, count do
+        stmt:reset():bind(
+            result["name"][i],
+            result["short_names"][i],
+            result["description"][i],
+            result["xray_type"][i],
+            result["aliases"][i],
+            result["linkwords"][i],
+            0, --* book_hits (integer)
+            0 --* chapter_hits (html)
+        ):step()
+    end
+    stmt = KOR.databases:closeStmts(stmt)
+    --* above statementa were only concerned with metadata; actual hits update wil now be done in the model: ((XrayDataSaver#refreshItemHitsForCurrentEbook)):
+    --* we don't close conn here, because it will be used there:
+    DX.c:refreshItemHitsForCurrentEbook()
+end
+
+-- #((XrayViewsData#storeItemHits))
+function XrayDataSaver.storeItemHits(item)
+
+    local self = DX.ds
+
+    --KOR.debug:alertTable("XrayViewsData.storeItemHits", "item", item)
+
+    local id = item.id
+    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver:updateBookHits")
+    local stmt = conn:prepare(KOR.databases:injectSafePath(self.queries.update_hits, parent.current_ebook_basename))
+    stmt:reset():bind(item.book_hits, item.chapter_hits, id):step()
+    --* for items in books which are part of a series update the prop series_hits:
+    if parent.current_series then
+        local name = KOR.databases:escape(item.name)
+        local series = KOR.databases:escape(parent.current_series)
+        item.series_hits = conn:rowexec(T(self.queries.get_series_hits, name, series)) or 0
+    end
+    conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
+end
+
+--* compare for edited items: ((XrayFormsData#storeItemUpdates)) > ((XrayDataSaver#storeUpdatedItem))
+-- #((XrayDataSaver#storeNewItem))
+function XrayDataSaver.storeNewItem(new_item)
+
+    local self = DX.ds
+
+    --* always reset filters when adding a new item, to prevent problems:
+    DX.c:resetFilteredItems()
+
+    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver#storeNewItem")
+    local stmt = conn:prepare(self.queries.insert_item)
+    local x = new_item
+    stmt:reset():bind(parent.current_ebook_basename, x.name, x.short_names, x.description, x.xray_type, x.aliases, x.linkwords):step()
+
+    --* retrieve the id of the newly added item, needed for ((XrayViewsData#updateAndSortAllItemTables)):
+    new_item.id = KOR.databases:getNewItemId(conn)
+    --* to ensure only this item will be shown bold in the items list:
+    DX.fd:setProp("last_modified_item_id", new_item.id)
+    conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
+end
+
+-- #((XrayDataSaver#storeUpdatedItem))
+--- @private
+function XrayDataSaver.storeUpdatedItem(id, updated_item)
+
+    local self = DX.ds
+
+    if not updated_item.name then
+        KOR.messages:notify("naam van item werd niet bepaald...", 4)
+        return
+    end
+
+    --* in series mode we want to display the total count of all occurences of an item in the entire series:
+    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver#storeUpdatedItem")
+    local sql = parent.current_series and self.queries.update_item_for_entire_series or self.queries.update_item
+    local stmt = conn:prepare(sql)
+    local x = updated_item
+    --! when a xray item is defined for a series of books, all instances per book of that same item will ALL be updated!:
+    --* this query will be used in both the series AND in current book display mode of the list of items, BUT ONLY IF a series for the current ebook is defined (so parent.current_series set):
+    if parent.current_series then
+        --! don't store hits here, because otherwise this count will be saved for all same items in ebooks in the series, but they should normally differ!:
+        stmt:reset():bind(x.name, x.short_names, x.description, x.xray_type, x.aliases, x.linkwords, id, id):step()
+    else
+        stmt:reset():bind(x.name, x.short_names, x.description, x.xray_type, x.aliases, x.linkwords, x.book_hits, x.chapter_hits, parent.current_ebook_basename, id):step()
+    end
+    conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
+end
+
+function XrayDataSaver.storeUpdatedItemType(id, xray_type)
+    local self = DX.fd
+    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver#updateXrayItemType")
+    local sql = self.queries.update_item_type
+    local stmt = conn:prepare(sql)
+    stmt:reset():bind(xray_type, KOR.databases:escape(parent.current_ebook_basename), id):step()
+    conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
+end
+
+-- #((XrayDataSaver#refreshItemHitsForCurrentEbook))
+--* compare ((XrayDialogs#showImportFromOtherSeriesDialog)):
+function XrayDataSaver.refreshItemHitsForCurrentEbook()
+    local self = DX.ds
+
+    --* recount all occurrences and save to database; if count = 0, then save as 0 for current book.
+    --* if book is part of series, then import all items which are not in the current book, search for their occurrences in current book and only if found store that occurrence for the current book
+
+    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver:refreshItemHitsForCurrentEbook")
+    local current_ebook_basename = KOR.databases:escape(parent.current_ebook_basename)
+
+    --* determine whether there are items in the series which are not in the current ebook:
+    if parent.current_series then
+        self:setSeriesHitsForImportedItems(conn, current_ebook_basename)
+    else
+        self:setBookHitsForImportedItems(conn, current_ebook_basename)
+    end
+    conn = KOR.databases:closeInfoConnections(conn)
+end
+
+--* compare ((XrayDataSaver#setSeriesHitsForImportedItems)):
+--- @private
+function XrayDataSaver:setBookHitsForImportedItems(conn, current_ebook_basename)
+    local sql = T(self.queries.get_items_for_hits_update, current_ebook_basename)
+    local result = conn:exec(sql)
+    if not result then
+        return
+    end
+
+    local name, item, id, book_hits, chapter_hits
+    count = #result[1]
+    local items_per_batch = math.floor(count / DX.s.batch_count_for_import)
+    local stmt = conn:prepare(T(self.queries.update_item_hits, current_ebook_basename))
+    DX.c:doBatchImport(count, function(start, icount)
+        conn:exec("BEGIN IMMEDIATE")
+        local loop_end = start + items_per_batch - 1 <= icount and start + items_per_batch - 1 or icount
+        for i = start, loop_end do
+            id = result["id"][i]
+            name = result["name"][i]
+            item = {
+                name = name,
+                chapter_query_done = false,
+                aliases = result["aliases"][i],
+                short_names = result["short_names"][i],
+            }
+            book_hits, chapter_hits = views_data:getAllTextHits(item)
+            if item.book_hits == 0 then
+                --KOR.debug:hoera("dsgdsgsdg", name)
+                conn:exec(T(self.queries.delete_item_by_id, current_ebook_basename, id))
+            else
+                --* here we execute self.queries.update_item_hits:
+                stmt:reset():bind(book_hits, chapter_hits, id):step()
+            end
+        end
+        conn:exec("COMMIT")
+        local percentage = math.ceil(loop_end / icount * 100) .. "%"
+        return start + items_per_batch, loop_end, percentage
+    end)
+    stmt = KOR.databases:closeStmts(stmt)
+end
+
+--* compare ((XrayDataSaver#setBookHitsForImportedItems)):
+--- @private
+function XrayDataSaver:setSeriesHitsForImportedItems(conn, current_ebook_basename)
+    local current_series = KOR.databases:escape(parent.current_series)
+    local sql = T(self.queries.import_items_from_other_books_in_series, current_series, current_ebook_basename)
+    local new_items_result = conn:exec(sql)
+    if not new_items_result then
+        return
+    end
+
+    local xray_items = KOR.databases:resultsetToItemset(new_items_result)
+    local item, book_hits, chapter_hits
+    count = #xray_items
+    local stmt = conn:prepare(T(self.queries.insert_imported_items, current_ebook_basename))
+    local items_per_batch = math.floor(count / DX.s.batch_count_for_import)
+    DX.c:doBatchImport(count, function(start, icount)
+        conn:exec("BEGIN IMMEDIATE")
+        local loop_end = start + items_per_batch - 1 <= icount and start + items_per_batch - 1 or icount
+        local name
+        for i = start, loop_end do
+            item = {
+                name = xray_items[i].name,
+                aliases = xray_items[i].aliases,
+            }
+            book_hits, chapter_hits = views_data:getAllTextHits(item)
+            if book_hits > 0 then
+                stmt:reset():bind(
+                    xray_items[i].name,
+                    xray_items[i].short_names,
+                    xray_items[i].description,
+                    xray_items[i].xray_type,
+                    xray_items[i].aliases,
+                    xray_items[i].linkwords,
+                    book_hits,
+                    chapter_hits
+                ):step()
+            else
+                name = KOR.databases:escape(xray_items[i].name)
+                conn:exec(T(self.queries.delete_item_book, current_ebook_basename, name))
+            end
+        end
+        conn:exec("COMMIT")
+        local percentage = math.ceil(loop_end / icount * 100) .. "%"
+        return start + items_per_batch, loop_end, percentage
+    end)
+    stmt = KOR.databases:closeStmts(stmt)
+end
+
+--- @private
+function XrayDataSaver:createDB()
+    if not self.create_db or G_reader_settings:isTrue("xray_items_db_created") then
+        return
+    end
+
+    local db_conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver:createDB")
+    --* make it WAL, if possible
+    local pragma = Device:canUseWAL() and "WAL" or "TRUNCATE"
+    db_conn:exec(string.format("PRAGMA journal_mode=%s;", pragma))
+    --* create db
+    db_conn:exec(self.queries.create_db)
+    --* check version; user_version is unique to sqlite and cannot be changed to another name:
+    local db_version = db_conn:rowexec("PRAGMA user_version;")
+    --* Update version
+    if db_version == 0 then
+        db_conn:exec(T(self.queries.set_db_version, DB_SCHEMA_VERSION))
+    elseif db_version < DB_SCHEMA_VERSION then
+        --[[local ok, re
+        local log = function(msg)
+            logger.warn("[vocab builder db migration]", msg)
+        end
+        if db_version < 20220608 then
+            ok, re = pcall(db_conn.exec, db_conn, "ALTER TABLE vocabulary ADD prev_context TEXT;")
+            if not ok then
+                log(re)
+            end
+        end
+
+        db_conn:exec("CREATE INDEX IF NOT EXISTS title_id_index ON vocabulary(title_id);")]]
+        --* update version
+        db_conn:exec(T(self.queries.set_db_version, DB_SCHEMA_VERSION))
+    end
+    db_conn:close()
+
+    G_reader_settings:saveSetting("xray_items_db_created", true)
+end
+
+-- #((XrayDataSaver#deleteItem))
+function XrayDataSaver.deleteItem(delete_item, remove_all_instances_in_series)
+    local self = DX.ds
+    local xray_items = {}
+    local position = 1
+    --KOR.debug:simple(#XrayDataSaver.xray_items)
+    local xray_item
+    count = #views_data.items
+    for nr = 1, count do
+        xray_item = views_data.items[nr]
+        --KOR.debug:simple(xray_item.name .. " > " .. delete_item.name)
+        if xray_item.id ~= delete_item.id then
+            table.insert(xray_items, xray_item)
+        else
+            position = nr
+        end
+    end
+    local series = remove_all_instances_in_series and parent.current_series
+    self.storeDeletedItem(series, delete_item.name)
+
+    if position > #xray_items then
+        return #xray_items
+    end
+    if position == 0 then
+        return 1
+    end
+    return position
+end
+
+return XrayDataSaver
