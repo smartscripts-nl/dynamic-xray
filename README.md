@@ -53,7 +53,7 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 * Dynamic Xray uses a stripped down version of my personal extensions system for KOReader.
 * DX is added by patching the stock KOReader code, so you don't have to modify the code of the basic KOReader version.
 * The DX plugin is structured to resemble an MVC structure:
-    * M = XrayModel > data handlers: XrayDataLoader, XrayFormsData, XraySettings, XrayTappedWords and XrayViewsData (extensions)
+    * M = XrayModel > data handlers: XrayDataLoader, XrayDataSaver, XrayFormsData, XraySettings, XrayTappedWords and XrayViewsData (extensions)
     * V = XrayUI, and XrayDialogs and XrayButtons (extensions)
     * C = XrayController (plugin)
 * In code-eplanations.lua you can find some explanations for programmers about the inner workings of DX. This file doesn't have a function in the plugin, is meant to be purely informational.
