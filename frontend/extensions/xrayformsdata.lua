@@ -180,9 +180,7 @@ function XrayFormsData:getAndStoreEditedItem(item_copy, field_values)
         hits_in_book_for_store = nil
     end
     edited_item.book_hits = hits_in_book_for_store
-    self:storeItemUpdates("edit", edited_item.id, edited_item)
-
-    --views_data:initData()
+    self:storeItemUpdates("edit", edited_item)
 
     --* no filter was set, so return simply edited_item:
     if views_data.filter_state == "unfiltered" then
@@ -351,7 +349,7 @@ function XrayFormsData.saveNewItem(new_item)
 
     --! don't call views_data:updateAndSortAllItemTables(item, "add") here, because then all previous items in list gone from view...
     --* we force refresh of data here, because it could be that list of items hasn't been shown yet:
-    views_data:addNewItemToItemTables(new_item)
+    views_data:registerNewItem(new_item)
 end
 
 --- @private
@@ -373,8 +371,7 @@ function XrayFormsData:toggleIsImportantItem(toggle_item)
         end
         table.insert(xray_items, item)
     end
-    self:storeItemUpdates("toggle_type", toggle_item.id, toggle_item.xray_type)
-    views_data.initData("force_refresh")
+    self:storeItemUpdates("toggle_type", toggle_item)
 
     return position, toggle_item
 end
@@ -398,42 +395,38 @@ function XrayFormsData:toggleIsPersonOrTerm(toggle_item)
         end
         table.insert(xray_items, item)
     end
-    self:storeItemUpdates("toggle_type", toggle_item.id, toggle_item.xray_type)
-    views_data.initData("force_refresh")
+    self:storeItemUpdates("toggle_type", toggle_item)
 
     return position, toggle_item
 end
 
 --* this method called upon rename/edit, toggle importance, toggle person/term of Xray item:
 --* for storing new items see ((XrayDataSaver#storeNewItem))
-function XrayFormsData:storeItemUpdates(mode, item_id, updated_item)
+function XrayFormsData:storeItemUpdates(mode, updated_item)
+    if not updated_item then
+        KOR.messages:notify("item kon niet worden bijgewerkt...")
+        return
+    elseif not updated_item.id then
+        KOR.messages:notify("item id kon niet worden bepaald...")
+        return
+    end
+    local item_id = updated_item.id
+    self:setProp("last_modified_item_id", updated_item.id)
+
     --* optionally set to a value by ((XrayTappedWords#itemExists)), so here we reset it:
     --! disabled, we want to retain a filter that has been set:
     --self.filter_string = ""
 
     --* mode has this value when called from ((XrayFormsData#toggleIsPersonOrTerm)) or ((XrayFormsData#toggleIsImportantItem)):
-    if mode == "toggle_type" and item_id and updated_item then
-        DX.ds.storeUpdatedItemType(item_id, updated_item)
+    if mode == "toggle_type" then
+        DX.ds.storeUpdatedItemType(item_id, updated_item.xray_type)
 
-    elseif mode == "edit" and item_id and updated_item then
+    elseif mode == "edit" then
         --* updated_value in this case is a xray item:
         DX.ds.storeUpdatedItem(item_id, updated_item)
-
-        --* these props nr, icons and text are needed so we get no crash because of one of these props missing when generating list items in ((XrayViewsData#generateListItemText)) and ((Strings#formatListItemNumber)):
-        updated_item.nr = updated_item.index
-        local old_icons = views_data.items[updated_item.index].icons
-        updated_item.icons = old_icons or ""
-        updated_item.text = views_data:generateListItemText(updated_item)
-
-        --! when saving items from the tapped words popup, the index and nr props have to be retrieved from the non tapped word items, otherwise these props would be wrong and the normal, non tapped word items list would show seemingly duplicated items (overwriting another item with the same index):
-        if DX.m.use_tapped_word_data then
-            updated_item.index = views_data:getItemIndexById(updated_item.id)
-            updated_item.nr = updated_item.index
-        end
-        self:setProp("last_modified_item_id", updated_item.id)
-        views_data.current_item = updated_item
-        views_data.items[updated_item.index] = updated_item
     end
+
+    views_data:registerUpdatedItem(updated_item)
 end
 
 function XrayFormsData:setProp(prop, value)

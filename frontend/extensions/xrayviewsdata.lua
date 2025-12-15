@@ -264,7 +264,7 @@ function XrayViewsData:repopulateItemsPersonThings(item)
     end
 end
 
---* only called from ((XrayController#saveUpdatedItem)), but not for newly added items; for those we call ((XrayViewsData#addNewItemToItemTables)):
+--* only called from ((XrayController#saveUpdatedItem)), but not for newly added items; for those we call ((XrayViewsData#registerNewItem)):
 function XrayViewsData:updateAndSortAllItemTables(item)
     self:repopulateItemsPersonThings(item)
     --* this call is also needed to add reliability and xray type icons:
@@ -282,8 +282,8 @@ function XrayViewsData:updateAndSortAllItemTables(item)
     self.things = parent:placeImportantItemsAtTop(self.things, -1)
 end
 
---* compare ((XrayViewsData#updateAndSortAllItemTables)) for edited items:
-function XrayViewsData:addNewItemToItemTables(new_item)
+--* compare ((XrayViewsData#registerUpdatedItem)) and ((XrayViewsData#updateAndSortAllItemTables)) for edited items:
+function XrayViewsData:registerNewItem(new_item)
     --* by forcing refresh, we reload items from the database:
     self.initData("force_refresh")
     self.prepareData(new_item)
@@ -1157,6 +1157,26 @@ function XrayViewsData:populateTypeTables()
             table.insert(self.things, xray_item)
         end
     end
+end
+
+--* compare ((XrayViewsData#registerNewItem)):
+function XrayViewsData:registerUpdatedItem(updated_item)
+    --* these props nr, icons and text are needed so we get no crash because of one of these props missing when generating list items in ((XrayViewsData#generateListItemText)) and ((Strings#formatListItemNumber)):
+    updated_item.nr = updated_item.index
+    local old_icons = self.items[updated_item.index].icons
+    updated_item.icons = old_icons or ""
+    updated_item.text = self:generateListItemText(updated_item)
+
+    --! when saving items from the tapped words popup, the index and nr props have to be retrieved from the non tapped word items, otherwise these props would be wrong and the normal, non tapped word items list would show seemingly duplicated items (overwriting another item with the same index):
+    if DX.m.use_tapped_word_data then
+        updated_item.index = self:getItemIndexById(updated_item.id)
+        updated_item.nr = updated_item.index
+    end
+    --KOR.debug:alertTable("XrayFormsData.storeItemUpdates", "updated_item", updated_item)
+    self.current_item = updated_item
+    self.items[updated_item.index] = updated_item
+
+    self:updateAndSortAllItemTables(updated_item)
 end
 
 function XrayViewsData:setItems(items)
