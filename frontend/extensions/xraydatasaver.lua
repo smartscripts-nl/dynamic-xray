@@ -322,8 +322,8 @@ function XrayDataSaver.refreshItemHitsForCurrentEbook()
 end
 
 --- @private
-function XrayDataSaver:processItemsInBatches(conn, items, batch_count, process_item)
-    count = #items
+function XrayDataSaver:processItemsInBatches(conn, item_ids, batch_count, process_item)
+    count = #item_ids
     if count == 0 then
         return
     end
@@ -335,7 +335,7 @@ function XrayDataSaver:processItemsInBatches(conn, items, batch_count, process_i
 
         local loop_end = math.min(start + items_per_batch - 1, icount)
         for i = start, loop_end do
-            process_item(i, items[i])
+            process_item(i, item_ids[i])
         end
 
         conn:exec("COMMIT")
@@ -354,7 +354,7 @@ function XrayDataSaver:setBookHitsForImportedItems(conn, current_ebook_basename)
     end
 
     local stmt = conn:prepare(self.queries.update_item_hits)
-    local ids = result.id
+    local ids = result.id --* this is a table of ids
     self:processItemsInBatches(conn, ids, DX.s.batch_count_for_import, function(i)
         local item = {
             name = result.name[i],
