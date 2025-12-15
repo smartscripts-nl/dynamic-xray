@@ -847,6 +847,8 @@ msgstr "alinea"
 msgid "the series %1 was not found..."
 msgstr "de serie %1 werd niet gevonden..."
 
+msgid " of item could not be determined..."
+msgstr " van item kon niet worden bepaald..."
 
 
 ## ================= SettingsManager ================

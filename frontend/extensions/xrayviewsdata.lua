@@ -878,8 +878,6 @@ function XrayViewsData:getItemInfoHtml(item, ucfirst)
     local separator = "<br>"
     local info = ucfirst and KOR.strings:ucfirst(item.description) .. separator or separator .. item.description .. separator
 
-    --KOR.debug:alertTable("getItemInfoHtml", "item", item)
-
     local meta_info_html = { "<table style='margin-top: 2.5em'>" }
     self:addAliasesHtml(meta_info_html, item)
     self:addLinkWordsHtml(meta_info_html, item)
@@ -1172,7 +1170,6 @@ function XrayViewsData:registerUpdatedItem(updated_item)
         updated_item.index = self:getItemIndexById(updated_item.id)
         updated_item.nr = updated_item.index
     end
-    --KOR.debug:alertTable("XrayFormsData.storeItemUpdates", "updated_item", updated_item)
     self.current_item = updated_item
     self.items[updated_item.index] = updated_item
 

@@ -781,11 +781,9 @@ function Input:handleKeyBoardEv(ev)
         if ev.value == KEY_PRESS then
             -- #((get active modifier key))
             self.modifiers[keycode] = true
-            --KOR.debug:hoera("Input:handleKeyBoardEv", "keycode: " .. keycode)
             KOR.registry:set("pressed_modifier", keycode)
 
             local key = Key:new(keycode, self.modifiers)
-            --KOR.debug:table("Input:handleKeyBoardEv", "key with modifier: ", key)
             return Event:new("KeyPress", key)
 
         elseif ev.value == KEY_RELEASE then

@@ -117,10 +117,10 @@ local XrayDataSaver = WidgetContainer:new{
             book_hits = ?,
             chapter_hits = ?,
             hits_determined = 1
-            WHERE ebook = 'safe_path' AND id = ?;]],
+            WHERE id = ?;]],
 
         update_item =
-            "UPDATE xray_items SET name = ?, short_names = ?, description = ?, xray_type = ?, aliases = ?, linkwords = ?, book_hits = ?, chapter_hits = ? WHERE ebook = ? AND id = ?;",
+            "UPDATE xray_items SET name = ?, short_names = ?, description = ?, xray_type = ?, aliases = ?, linkwords = ?, book_hits = ?, chapter_hits = ? WHERE id = ?;",
 
         update_item_for_entire_series =
             [[UPDATE xray_items
@@ -146,13 +146,13 @@ local XrayDataSaver = WidgetContainer:new{
           );]],
 
         update_item_hits =
-            "UPDATE xray_items SET book_hits = ?, chapter_hits = ?, hits_determined = 1 WHERE ebook = '%1' AND id = ?;",
+            "UPDATE xray_items SET book_hits = ?, chapter_hits = ?, hits_determined = 1 WHERE id = ?;",
 
         set_db_version =
             "PRAGMA user_version=%1;",
 
         update_item_type =
-            "UPDATE xray_items SET xray_type = ? WHERE ebook = ? AND id = ?;",
+            "UPDATE xray_items SET xray_type = ? WHERE id = ?;",
     },
 }
 
@@ -222,11 +222,9 @@ function XrayDataSaver.storeItemHits(item)
 
     local self = DX.ds
 
-    --KOR.debug:alertTable("XrayViewsData.storeItemHits", "item", item)
-
     local id = item.id
     local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver:updateBookHits")
-    local stmt = conn:prepare(KOR.databases:injectSafePath(self.queries.update_hits, parent.current_ebook_basename))
+    local stmt = conn:prepare(self.queries.update_hits)
     stmt:reset():bind(item.book_hits, item.chapter_hits, id):step()
     --* for items in books which are part of a series update the prop series_hits:
     if parent.current_series then
@@ -260,12 +258,10 @@ end
 
 -- #((XrayDataSaver#storeUpdatedItem))
 --- @private
-function XrayDataSaver.storeUpdatedItem(id, updated_item)
+function XrayDataSaver.storeUpdatedItem(updated_item)
 
     local self = DX.ds
-
-    if not updated_item.name then
-        KOR.messages:notify("naam van item werd niet bepaald...", 4)
+    if self:itemPropWasMissing(updated_item, { "id", "name" }) then
         return
     end
 
@@ -278,20 +274,34 @@ function XrayDataSaver.storeUpdatedItem(id, updated_item)
     --* this query will be used in both the series AND in current book display mode of the list of items, BUT ONLY IF a series for the current ebook is defined (so parent.current_series set):
     if parent.current_series then
         --! don't store hits here, because otherwise this count will be saved for all same items in ebooks in the series, but they should normally differ!:
-        stmt:reset():bind(x.name, x.short_names, x.description, x.xray_type, x.aliases, x.linkwords, id, id):step()
+        stmt:reset():bind(x.name, x.short_names, x.description, x.xray_type, x.aliases, x.linkwords, x.id, x.id):step()
     else
-        stmt:reset():bind(x.name, x.short_names, x.description, x.xray_type, x.aliases, x.linkwords, x.book_hits, x.chapter_hits, parent.current_ebook_basename, id):step()
+        stmt:reset():bind(x.name, x.short_names, x.description, x.xray_type, x.aliases, x.linkwords, x.book_hits, x.chapter_hits, x.id):step()
     end
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 end
 
-function XrayDataSaver.storeUpdatedItemType(id, xray_type)
-    local self = DX.fd
+function XrayDataSaver.storeUpdatedItemType(updated_item)
+    local self = DX.ds
+    if self:itemPropWasMissing(updated_item, { "id", "xray_type" }) then
+        return
+    end
     local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver#updateXrayItemType")
     local sql = self.queries.update_item_type
     local stmt = conn:prepare(sql)
-    stmt:reset():bind(xray_type, KOR.databases:escape(parent.current_ebook_basename), id):step()
+    stmt:reset():bind(updated_item.xray_type, updated_item.id):step()
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
+end
+
+function XrayDataSaver:itemPropWasMissing(updated_item, check_props)
+    count = #check_props
+    for i = 1, count do
+        if not updated_item[check_props[i]] then
+            KOR.messages:notify(check_props[i] .. _(" of item could not be determined..."), 4)
+            return true
+        end
+    end
+    return false
 end
 
 -- #((XrayDataSaver#refreshItemHitsForCurrentEbook))
@@ -326,7 +336,7 @@ function XrayDataSaver:setBookHitsForImportedItems(conn, current_ebook_basename)
     local name, item, id, book_hits, chapter_hits
     count = #result[1]
     local items_per_batch = math.floor(count / DX.s.batch_count_for_import)
-    local stmt = conn:prepare(T(self.queries.update_item_hits, current_ebook_basename))
+    local stmt = conn:prepare(self.queries.update_item_hits)
     DX.c:doBatchImport(count, function(start, icount)
         conn:exec("BEGIN IMMEDIATE")
         local loop_end = start + items_per_batch - 1 <= icount and start + items_per_batch - 1 or icount
@@ -341,7 +351,6 @@ function XrayDataSaver:setBookHitsForImportedItems(conn, current_ebook_basename)
             }
             book_hits, chapter_hits = views_data:getAllTextHits(item)
             if item.book_hits == 0 then
-                --KOR.debug:hoera("dsgdsgsdg", name)
                 conn:exec(T(self.queries.delete_item_by_id, current_ebook_basename, id))
             else
                 --* here we execute self.queries.update_item_hits:
@@ -446,12 +455,10 @@ function XrayDataSaver.deleteItem(delete_item, remove_all_instances_in_series)
     local self = DX.ds
     local xray_items = {}
     local position = 1
-    --KOR.debug:simple(#XrayDataSaver.xray_items)
     local xray_item
     count = #views_data.items
     for nr = 1, count do
         xray_item = views_data.items[nr]
-        --KOR.debug:simple(xray_item.name .. " > " .. delete_item.name)
         if xray_item.id ~= delete_item.id then
             table.insert(xray_items, xray_item)
         else

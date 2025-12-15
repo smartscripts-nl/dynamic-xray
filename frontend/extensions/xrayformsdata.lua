@@ -410,7 +410,6 @@ function XrayFormsData:storeItemUpdates(mode, updated_item)
         KOR.messages:notify(_("item id could not be determined..."))
         return
     end
-    local item_id = updated_item.id
     self:setProp("last_modified_item_id", updated_item.id)
 
     --* optionally set to a value by ((XrayTappedWords#itemExists)), so here we reset it:
@@ -419,11 +418,11 @@ function XrayFormsData:storeItemUpdates(mode, updated_item)
 
     --* mode has this value when called from ((XrayFormsData#toggleIsPersonOrTerm)) or ((XrayFormsData#toggleIsImportantItem)):
     if mode == "toggle_type" then
-        DX.ds.storeUpdatedItemType(item_id, updated_item.xray_type)
+        DX.ds.storeUpdatedItemType(updated_item)
 
     elseif mode == "edit" then
         --* updated_value in this case is a xray item:
-        DX.ds.storeUpdatedItem(item_id, updated_item)
+        DX.ds.storeUpdatedItem(updated_item)
     end
 
     views_data:registerUpdatedItem(updated_item)
