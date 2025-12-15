@@ -321,6 +321,29 @@ function XrayDataSaver.refreshItemHitsForCurrentEbook()
     conn = KOR.databases:closeInfoConnections(conn)
 end
 
+--- @private
+function XrayDataSaver:processItemsInBatches(conn, items, batch_count, process_item)
+    count = #items
+    if count == 0 then
+        return
+    end
+
+    local items_per_batch = math.max(1, math.floor(count / batch_count))
+
+    DX.c:doBatchImport(count, function(start, icount)
+        conn:exec("BEGIN IMMEDIATE")
+
+        local loop_end = math.min(start + items_per_batch - 1, icount)
+        for i = start, loop_end do
+            process_item(i, items[i])
+        end
+
+        conn:exec("COMMIT")
+        local percentage = math.ceil(loop_end / icount * 100) .. "%"
+        return start + items_per_batch, loop_end, percentage
+    end)
+end
+
 --* compare ((XrayDataSaver#setSeriesHitsForImportedItems)):
 --- @private
 function XrayDataSaver:setBookHitsForImportedItems(conn, current_ebook_basename)
@@ -330,83 +353,64 @@ function XrayDataSaver:setBookHitsForImportedItems(conn, current_ebook_basename)
         return
     end
 
-    local name, item, id, book_hits, chapter_hits
-    count = #result[1]
-    local items_per_batch = math.floor(count / DX.s.batch_count_for_import)
     local stmt = conn:prepare(self.queries.update_item_hits)
-    DX.c:doBatchImport(count, function(start, icount)
-        conn:exec("BEGIN IMMEDIATE")
-        local loop_end = start + items_per_batch - 1 <= icount and start + items_per_batch - 1 or icount
-        for i = start, loop_end do
-            id = result["id"][i]
-            name = result["name"][i]
-            item = {
-                name = name,
-                chapter_query_done = false,
-                aliases = result["aliases"][i],
-                short_names = result["short_names"][i],
-            }
-            book_hits, chapter_hits = views_data:getAllTextHits(item)
-            if item.book_hits == 0 then
-                conn:exec(T(self.queries.delete_item_book, id))
-            else
-                --* here we execute self.queries.update_item_hits:
-                stmt:reset():bind(book_hits, chapter_hits, id):step()
-            end
+    local ids = result.id
+    self:processItemsInBatches(conn, ids, DX.s.batch_count_for_import, function(i)
+        local item = {
+            name = result.name[i],
+            aliases = result.aliases[i],
+            short_names = result.short_names[i],
+            chapter_query_done = false,
+        }
+
+        local book_hits, chapter_hits = views_data:getAllTextHits(item)
+        if book_hits == 0 then
+            conn:exec(T(self.queries.delete_item_book, ids[i]))
+        else
+            stmt:reset():bind(book_hits, chapter_hits, ids[i]):step()
         end
-        conn:exec("COMMIT")
-        local percentage = math.ceil(loop_end / icount * 100) .. "%"
-        return start + items_per_batch, loop_end, percentage
     end)
-    stmt = KOR.databases:closeStmts(stmt)
+
+    KOR.databases:closeStmts(stmt)
 end
 
 --* compare ((XrayDataSaver#setBookHitsForImportedItems)):
 --- @private
 function XrayDataSaver:setSeriesHitsForImportedItems(conn, current_ebook_basename)
-    local current_series = KOR.databases:escape(parent.current_series)
-    local sql = T(self.queries.import_items_from_other_books_in_series, current_series, current_ebook_basename)
-    local new_items_result = conn:exec(sql)
-    if not new_items_result then
+    local series = KOR.databases:escape(parent.current_series)
+    local sql = T(self.queries.import_items_from_other_books_in_series, series, current_ebook_basename)
+    local result = conn:exec(sql)
+    if not result then
         return
     end
 
-    local xray_items = KOR.databases:resultsetToItemset(new_items_result)
-    local item, book_hits, chapter_hits
-    count = #xray_items
+    local items = KOR.databases:resultsetToItemset(result)
     local stmt = conn:prepare(T(self.queries.insert_imported_items, current_ebook_basename))
-    local items_per_batch = math.floor(count / DX.s.batch_count_for_import)
-    DX.c:doBatchImport(count, function(start, icount)
-        conn:exec("BEGIN IMMEDIATE")
-        local loop_end = start + items_per_batch - 1 <= icount and start + items_per_batch - 1 or icount
-        local name
-        for i = start, loop_end do
-            item = {
-                name = xray_items[i].name,
-                aliases = xray_items[i].aliases,
-            }
-            book_hits, chapter_hits = views_data:getAllTextHits(item)
-            if book_hits > 0 then
-                stmt:reset():bind(
-                    xray_items[i].name,
-                    xray_items[i].short_names,
-                    xray_items[i].description,
-                    xray_items[i].xray_type,
-                    xray_items[i].aliases,
-                    xray_items[i].linkwords,
-                    book_hits,
-                    chapter_hits
-                ):step()
-            else
-                name = KOR.databases:escape(xray_items[i].name)
-                conn:exec(T(self.queries.delete_item_book, xray_items[i].id))
-            end
+
+    self:processItemsInBatches(conn, items, DX.s.batch_count_for_import, function(_, src)
+        local item = {
+            name = src.name,
+            aliases = src.aliases,
+        }
+
+        local book_hits, chapter_hits = views_data:getAllTextHits(item)
+        if book_hits > 0 then
+            stmt:reset():bind(
+                src.name,
+                src.short_names,
+                src.description,
+                src.xray_type,
+                src.aliases,
+                src.linkwords,
+                book_hits,
+                chapter_hits
+            ):step()
+        else
+            conn:exec(T(self.queries.delete_item_book, src.id))
         end
-        conn:exec("COMMIT")
-        local percentage = math.ceil(loop_end / icount * 100) .. "%"
-        return start + items_per_batch, loop_end, percentage
     end)
-    stmt = KOR.databases:closeStmts(stmt)
+
+    KOR.databases:closeStmts(stmt)
 end
 
 --- @private
