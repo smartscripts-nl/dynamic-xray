@@ -38,8 +38,6 @@ function XrayInfo:XRAY_ITEMS()
 
     --! linchpin method: ((XrayUI#ReaderViewGenerateXrayInformation))
 
-    --! skipping paragraph indexing and so xray items for certain kinds of books: ((CreDocument#storeCurrentPageParagraphs)) > ((CreDocument#skipParagraphIndexingForNoXrayBooks))
-
     -- drawing rects for xray info: ((ReaderView#paintTo)) > ((XrayUI#setParagraphsFromDocument)) > ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#ReaderViewInitParaOrPageData)) > ((XrayUI#ReaderViewLoopThroughParagraphOrPage)) > ((xray page marker set target line for icon)) in page mode
 
     -- adding match reliability indicators for the page/paragraph info popup: ((XrayUI#matchNameInPageOrParagraph))
