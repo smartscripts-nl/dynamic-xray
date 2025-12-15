@@ -95,8 +95,9 @@ function XrayDialogs:closeForm(mode)
             --* signal that we were redirected to the item viewer:
             return true
         end
-        --* signal that we were redirected to the item viewer:
+
         self.form_was_cancelled = false
+        --* signal that we were NOT redirected to the item viewer:
         return false
     end
 
@@ -341,7 +342,7 @@ end
 
 function XrayDialogs:showDeleteItemConfirmation(delete_item, dialog, remove_all_instances_in_series)
     if not dialog then
-        dialog = DX.c.viewer
+        dialog = self.item_viewer
     end
 
     local target = remove_all_instances_in_series and _("for the entire series?") or _("for the current book?")
@@ -354,6 +355,7 @@ function XrayDialogs:showDeleteItemConfirmation(delete_item, dialog, remove_all_
         DX.ds.deleteItem(delete_item, remove_all_instances_in_series)
         local message = remove_all_instances_in_series and _(" deleted for the entire series...") or _(" deleted for the current book...")
         self:refreshItemsList(delete_item.name .. message)
+        self:showListWithRestoredArguments()
     end,
     function()
         if self.list_is_opened then
