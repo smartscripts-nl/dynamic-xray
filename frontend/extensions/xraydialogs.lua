@@ -154,13 +154,13 @@ function XrayDialogs:getFormFields(item_copy, target_field, name_from_selected_t
             input_type = "text",
             description = linkwords and T(_("Description (%1):"), linkwords) or _("Description:"),
             info_popup_title = _("field: Description"),
-            info_popup_text = _([[If it is your intention that a Xray item should be filterable with a term in its description, you should ensure that that term in case of:
+            info_popup_text = T(_([[If it is your intention that a Xray item should be filterable with a term in its description, you should ensure that that term in case of:
 
-TERMS
-only has lower case characters in the description;
+NAMES OF PERSONS %1
+is mentioned with uppercase characters at start of first and surname in the description;
 
-NAMES OF PERSONS
-is mentioned with uppercase characters at start of first and surname in the description.]]),
+TERMS %2
+only has lower case characters in the description.]]), KOR.icons.xray_person_important_bare .. "/" .. KOR.icons.xray_person_bare, KOR.icons.xray_term_important_bare .. "/" .. KOR.icons.xray_term_bare),
             tab = 1,
             height = DX.s:readDescriptionFieldHeight() or self.description_field_height,
             input_face = self.description_field_face,
