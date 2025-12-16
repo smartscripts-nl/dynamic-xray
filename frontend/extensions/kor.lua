@@ -2,6 +2,7 @@
 local require = require
 
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
+local translator = require("extensions/translations/getmoduletext")
 
 --* initialization of extensions, plugins etc. below is done through ((ExtensionsInit)), called from reader.lua or the init methods of plugins
 --- @class KOR
@@ -12,7 +13,6 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 --- @field colors Colors
 --- @field databases Databases
 --- @field dialogs Dialogs
---- @field document CreDocument
 --- @field filedirnames FileDirNames
 --- @field files Files
 --- @field html Html
@@ -56,7 +56,7 @@ local KOR = WidgetContainer:new{
 	uimanager = nil,
 	view = nil,
 
-	--* EXTENSIONS THROUGH ((ExtensionsInit)), called from ((reader.lua))
+	--* EXTENSIONS THROUGH ((ExtensionsInit)):
 
 	buttonprops = nil,
 	buttontablefactory = nil,
@@ -119,6 +119,8 @@ local KOR = WidgetContainer:new{
 		"xraymodel",
 		"xrayui",
 	},
+
+	translations_source = nil,
 }
 
 function KOR:initBaseExtensions()
@@ -211,14 +213,16 @@ function KOR:registerWidget(KOR_name, widget)
 end
 
 function KOR:initCustomTranslations()
-	local translator = require("extensions/translations/getmoduletext")
+	if self.translations_source then
+		return translator
+	end
 
-	local file = KOR.registry:get("module_translations_source", function()
+	self.translations_source = KOR.registry:get("module_translations_source", function()
 		local lfs = require("libs/libkoreader-lfs")
 		return lfs.currentdir() .. "/frontend/extensions/translations/xray-translations.po"
 	end)
-	file = file:gsub("koreader.po", "xray-translations.po")
-	translator.openTranslationsSource(file)
+	self.translations_source = self.translations_source:gsub("koreader.po", "xray-translations.po")
+	translator.openTranslationsSource(self.translations_source)
 
 	return translator
 end
