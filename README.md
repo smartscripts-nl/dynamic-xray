@@ -12,7 +12,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 ### Fiction books
 The user can use DX to keep track for an ebook or an entire series of many persons and terms, mark them as important, to see how they are linked to other items, what are their aliases, in which chapters they are mentioned and how frequent, etc.
 ### Non-fiction books
-The user can use DX for study: to keep track of terms in the broad sense, to see how these are linked to each other, in which chapters they can be found and how frequent, etc.
+The user can use DX for study: to keep track of entities, concepts, definitions, places, named events, names of literary or philosophical movements etc., to see how these are linked to each other, in which chapters they can be found and how frequent, etc.
 
 ## Installation
 
