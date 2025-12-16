@@ -108,6 +108,9 @@ local XrayDataSaver = WidgetContainer:new{
         insert_item =
             "INSERT INTO xray_items (ebook, name, short_names, description, xray_type, aliases, linkwords) VALUES (?, ?, ?, ?, ?, ?, ?);",
 
+        set_db_version =
+            "PRAGMA user_version=%1;",
+
         update_hits =
             [[UPDATE xray_items
             SET
@@ -144,9 +147,6 @@ local XrayDataSaver = WidgetContainer:new{
 
         update_item_hits =
             "UPDATE xray_items SET book_hits = ?, chapter_hits = ?, hits_determined = 1 WHERE id = ?;",
-
-        set_db_version =
-            "PRAGMA user_version=%1;",
 
         update_item_type =
             "UPDATE xray_items SET xray_type = ? WHERE id = ?;",

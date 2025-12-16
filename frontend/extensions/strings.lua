@@ -370,7 +370,7 @@ function Strings:hasWholeWordMatch(haystack, haystack_lower, needle)
         return haystack:match("%A" .. needle .. "%A") or haystack:match("^" .. needle .. "%A") or haystack:match("%A" .. needle .. "$")
     end
 
-    --* case insensitive, mostly for Xray things (non persons):
+    --* case insensitive, mostly for Xray terms (non persons):
     if haystack_lower:match("%A" .. needle .. "%A") or haystack_lower:match("^" .. needle .. "%A") or haystack_lower:match("%A" .. needle .. "$")
         then return true
     end

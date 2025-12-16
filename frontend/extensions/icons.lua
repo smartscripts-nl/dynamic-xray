@@ -107,6 +107,6 @@ return {
     xray_series_mode_bare = "\u{F2C0}",
     xray_tapped_collection = "\u{E70D}" .. spacer,
     xray_tapped_collection_bare = "\u{E70D}",
-    xray_thing_bare = "\u{EDE7}",
-    xray_thing_important_bare = "\u{EDE6}",
+    xray_term_bare = "\u{EDE7}",
+    xray_term_important_bare = "\u{EDE6}",
 }

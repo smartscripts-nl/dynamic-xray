@@ -79,7 +79,7 @@ end
 
 function ButtonInfoPopup:forSaveToXray(props)
 	return KOR.buttonprops:set({
-		text = KOR.icons.xray_person_bare .. "/" .. KOR.icons.xray_thing_bare,
+		text = KOR.icons.xray_person_bare .. "/" .. KOR.icons.xray_term_bare,
 		font_bold = false,
 		--! info defined by calling module
 		callback_label = _("save"),
@@ -159,10 +159,10 @@ end
 
 function ButtonInfoPopup:forXrayFilterByImportantType(props)
 	return KOR.buttonprops:set({
-		text = KOR.icons.xray_person_important_bare .. "/" .. KOR.icons.xray_thing_important_bare,
+		text = KOR.icons.xray_person_important_bare .. "/" .. KOR.icons.xray_term_important_bare,
 		fgcolor = Blitbuffer.COLOR_GRAY_3,
 		font_bold = false,
-		info = _("dark icons | Filter the Xray items for important persons and things."),
+		info = _("dark icons | Filter the Xray items for important persons and terms."),
 		callback_label = _("filter"),
 		--! callback defined by calling module
 	}, props)
@@ -387,7 +387,7 @@ end
 
 function ButtonInfoPopup:forXrayTypeSet(props)
 	return KOR.buttonprops:set({
-		text = KOR.icons.xray_person_bare .. "/" .. KOR.icons.xray_thing_bare,
+		text = KOR.icons.xray_person_bare .. "/" .. KOR.icons.xray_term_bare,
 		fgcolor = Blitbuffer.COLOR_GRAY_3,
 		font_bold = false,
 		info = _("user/bulb icon | Set Xray type."),

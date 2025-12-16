@@ -51,7 +51,7 @@ local XrayViewsData = WidgetContainer:new {
     filter_xray_types = nil,
     item_meta_info_template = "<tr><td><ul><li>%1</li></ul></td><td>&nbsp;</td><td>%2</td></tr>",
     item_table = { {}, {}, {} },
-    --* items, persons and things props act as some kind of temporary data store (not influenced by filters etc.) for the current ebook xray items:
+    --* items, persons and terms props act as some kind of temporary data store (not influenced by filters etc.) for the current ebook xray items:
     items = {},
     list_display_mode = "series", --* or "book"
     max_line_length = 64,
@@ -59,32 +59,32 @@ local XrayViewsData = WidgetContainer:new {
     persons = {},
     --* this prop can be modified with the checkbox in ((XrayDialogs#showFilterDialog)):
     search_simple = false,
-    things = {},
+    terms = {},
     type_matched = false,
-    xray_type_description = "1 " .. KOR.icons.arrow_bare .. " " .. KOR.icons.xray_person_bare .. "  2 " .. KOR.icons.arrow_bare .. " " .. KOR.icons.xray_person_important_bare .. "  3 " .. KOR.icons.arrow_bare .. " " .. KOR.icons.xray_thing_bare .. "  4 " .. KOR.icons.arrow_bare .. " " .. KOR.icons.xray_thing_important_bare,
+    xray_type_description = "1 " .. KOR.icons.arrow_bare .. " " .. KOR.icons.xray_person_bare .. "  2 " .. KOR.icons.arrow_bare .. " " .. KOR.icons.xray_person_important_bare .. "  3 " .. KOR.icons.arrow_bare .. " " .. KOR.icons.xray_term_bare .. "  4 " .. KOR.icons.arrow_bare .. " " .. KOR.icons.xray_term_important_bare,
     xray_type_icons = {
         KOR.icons.xray_person_bare .. " ",
         KOR.icons.xray_person_important_bare .. " ",
-        KOR.icons.xray_thing_bare .. " ",
-        KOR.icons.xray_thing_important_bare .. " ",
+        KOR.icons.xray_term_bare .. " ",
+        KOR.icons.xray_term_important_bare .. " ",
     },
     xray_type_icons_bare = {
         KOR.icons.xray_person_bare,
         KOR.icons.xray_person_important_bare,
-        KOR.icons.xray_thing_bare,
-        KOR.icons.xray_thing_important_bare,
+        KOR.icons.xray_term_bare,
+        KOR.icons.xray_term_important_bare,
     },
     --* toggle xray type to important (dark) or normal (light) icon:
     xray_type_icons_importance_toggle = {
         KOR.icons.xray_person_important_bare,
         KOR.icons.xray_person_bare,
-        KOR.icons.xray_thing_important_bare,
-        KOR.icons.xray_thing_bare,
+        KOR.icons.xray_term_important_bare,
+        KOR.icons.xray_term_bare,
     },
     --* toggle xray type from person to term or vice versa, while keeping the importance (dark or light icon) of the item:
     xray_type_icons_person_or_term_toggle = {
-        KOR.icons.xray_thing_bare,
-        KOR.icons.xray_thing_important_bare,
+        KOR.icons.xray_term_bare,
+        KOR.icons.xray_term_important_bare,
         KOR.icons.xray_person_bare,
         KOR.icons.xray_person_important_bare,
     },
@@ -102,12 +102,12 @@ function XrayViewsData:resetData()
     self.chapters_start_pages_ordered = {}
     self.items = {}
     self.persons = {}
-    self.things = {}
+    self.terms = {}
     self.filtered_count = 0
     self.item_table_for_filter = {
         {}, --* all
         {}, --* persons
-        {}, --* things
+        {}, --* terms
     }
     --! crucial to prevent seemingly duplicated items upon adding new items:
     self.item_table = { {}, {}, {} }
@@ -127,7 +127,7 @@ function XrayViewsData:updateItemsTable(select_number, reset_item_table_for_filt
         self.item_table_for_filter = {
             {}, --* all
             {}, --* persons
-            {}, --* things
+            {}, --* terms
         }
     end
 
@@ -145,7 +145,7 @@ function XrayViewsData:updateItemsTable(select_number, reset_item_table_for_filt
     end
     local source = self.list_display_mode == "series" and icon .. " " .. parent.current_series or icon .. " " .. parent.current_title
 
-    --! don't reapply filters after item_table_for_filters has been populated; otherwise count for self.item would be reduced if we select tab no 2 (persons) or 3 (things):
+    --! don't reapply filters after item_table_for_filters has been populated; otherwise count for self.item would be reduced if we select tab no 2 (persons) or 3 (terms):
     if not parent.use_tapped_word_data and has_no_items(self.item_table_for_filter[1]) then
         self:applyFilters(select_number)
     end
@@ -227,7 +227,7 @@ function XrayViewsData:_returnCachedHits(item, for_display_mode)
     return item.book_hits, item.chapter_hits, item.series_hits
 end
 
-function XrayViewsData:addItemToPersonsOrThings(item)
+function XrayViewsData:addItemToPersonsOrTerms(item)
     local item_copy = KOR.tables:shallowCopy(item)
     if item.xray_type <= 2 then
         table.insert(self.item_table[2], item_copy)
@@ -235,15 +235,15 @@ function XrayViewsData:addItemToPersonsOrThings(item)
         table.insert(self.persons, item_copy)
     else
         table.insert(self.item_table[3], item_copy)
-        item_copy.index = #self.things + 1
-        table.insert(self.things, item_copy)
+        item_copy.index = #self.terms + 1
+        table.insert(self.terms, item_copy)
     end
 end
 
-function XrayViewsData:repopulateItemsPersonThings(item)
+function XrayViewsData:repopulateItemsPersonsTerms(item)
     count = #self.items
     self.persons = {}
-    self.things = {}
+    self.terms = {}
     --* luckily we don't have to update TextViewer.paragraph_headings etc. (loaded from XrayUI data) here, because those take their info from XrayModel via ((XrayUI#getXrayItemsFoundInText)) > ((get xray_item for XrayUI))...
 
     for i = 1, count do
@@ -259,14 +259,14 @@ function XrayViewsData:repopulateItemsPersonThings(item)
                 end
             end
             self.items[i].index = i
-            self:addItemToPersonsOrThings(self.items[i])
+            self:addItemToPersonsOrTerms(self.items[i])
         end
     end
 end
 
 --* only called from ((XrayController#saveUpdatedItem)), but not for newly added items; for those we call ((XrayViewsData#registerNewItem)):
 function XrayViewsData:updateAndSortAllItemTables(item)
-    self:repopulateItemsPersonThings(item)
+    self:repopulateItemsPersonsTerms(item)
     --* this call is also needed to add reliability and xray type icons:
     self:applyFilters()
 
@@ -279,7 +279,7 @@ function XrayViewsData:updateAndSortAllItemTables(item)
         return
     end
     self.item_table[3] = parent:placeImportantItemsAtTop(self.item_table[3], -1)
-    self.things = parent:placeImportantItemsAtTop(self.things, -1)
+    self.terms = parent:placeImportantItemsAtTop(self.terms, -1)
 end
 
 --* compare ((XrayViewsData#registerUpdatedItem)) and ((XrayViewsData#updateAndSortAllItemTables)) for edited items:
@@ -296,7 +296,7 @@ function XrayViewsData:getCurrentListTabItems(needle_item)
         if has_items(self.item_table[1]) then
             self.items = KOR.tables:shallowCopy(self.item_table[1])
             self.persons = KOR.tables:shallowCopy(self.item_table[2])
-            self.things = KOR.tables:shallowCopy(self.item_table[3])
+            self.terms = KOR.tables:shallowCopy(self.item_table[3])
         else
             self.initData()
         end
@@ -304,13 +304,13 @@ function XrayViewsData:getCurrentListTabItems(needle_item)
 
     --* this can occur after a filter reset from ((XrayController#resetFilteredItems)):
     if not self.filter_xray_types or parent.items_prepared_for_basename ~= parent.current_ebook_basename then
-        --* index items and populate xray type tables self.persons and self.things:
+        --* index items and populate xray type tables self.persons and self.terms:
         self.prepareData()
     end
     local subject_tables = {
         self.items,
         self.persons,
-        self.things,
+        self.terms,
     }
     local items = subject_tables[parent.active_list_tab]
 
@@ -946,7 +946,7 @@ function XrayViewsData:filterAndPopulateItemTables(data_items)
     self.item_table_for_filter = {
         {}, --* all
         {}, --* persons
-        {}, --* things
+        {}, --* terms
     }
     self.filtered_count = 0
 
@@ -978,7 +978,7 @@ function XrayViewsData:filterAndPopulateItemTables(data_items)
         --* self.items updated here through this method for debugging purposes:
         self:setItems(self.item_table_for_filter[1])
         self.persons = self.item_table_for_filter[2]
-        self.things = self.item_table_for_filter[3]
+        self.terms = self.item_table_for_filter[3]
     end
 end
 
@@ -1025,7 +1025,7 @@ function XrayViewsData:getChapterHitsPerTerm(term, chapter_stats, chapters_order
     local results, needle, case_insensitive, last_chapter_title, last_chapter_index
     --* if applicable, we only search for first names (then probably more accurate hits count):
     needle = parent:getRealFirstOrSurName(term)
-    --* for lowercase needles (things instead of persons), we search case insensitive:
+    --* for lowercase needles (terms instead of persons), we search case insensitive:
     case_insensitive = not needle:match("[A-Z]")
 
     --! using document:findAllTextWholeWords instead of document:findAllText here crucial to get exact hits count:
@@ -1061,7 +1061,7 @@ end
 --* called from ((XrayViewsData#prepareData)):
 --- @private
 function XrayViewsData:indexItems(new_item)
-    --* here we set top items only for self.things, because later on in ((XrayViewsData#populateTypeTables)) self.persons and self.things will be populated from self.items:
+    --* here we set top items only for self.terms, because later on in ((XrayViewsData#populateTypeTables)) self.persons and self.terms will be populated from self.items:
 
     local sorting_prop = "name"
     if parent.sorting_method == "hits" and self.list_display_mode == "series" then
@@ -1117,14 +1117,14 @@ end
 --- @private
 function XrayViewsData:applyFilters()
     --* self.items etc. were populated in (())
-    local xray_items, persons, things = self.items or {}, self.persons or {}, self.things or {}
+    local xray_items, persons, terms = self.items or {}, self.persons or {}, self.terms or {}
     self.filtered_count = 0
     if #xray_items > 0 then
         --* in these calls self.filtered_count must be updated:
         local subjects = {
             xray_items,
             persons,
-            things,
+            terms,
         }
         self:filterAndPopulateItemTables(subjects)
     end
@@ -1143,7 +1143,7 @@ end
 
 --- @private
 function XrayViewsData:populateTypeTables()
-    self.things = {}
+    self.terms = {}
     self.persons = {}
     local xray_item
     count = #self.items
@@ -1152,7 +1152,7 @@ function XrayViewsData:populateTypeTables()
         if xray_item.xray_type <= 2 then
             table.insert(self.persons, xray_item)
         else
-            table.insert(self.things, xray_item)
+            table.insert(self.terms, xray_item)
         end
     end
 end
