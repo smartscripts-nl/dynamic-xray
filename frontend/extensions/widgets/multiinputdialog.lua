@@ -397,6 +397,7 @@ function MultiInputDialog:injectFieldRow(DataGroup, field_source, is_field_row, 
             text = field.text or "",
             hint = field.hint or "",
             description = field.description,
+            info_popup_title = field.info_popup_title,
             info_popup_text = field.info_popup_text,
             --* this can be used to give the field with the dscription focus upon clicking on its info_popup_text label; see ((focus field upon click on info label)):
             info_icon_field_no = #self.input_fields + 1,
@@ -579,15 +580,16 @@ function MultiInputDialog:getDescription(field, width)
                 align = "left",
                 bordersize = 0,
                 width = width,
-                callback = function(y_pos)
+                --* y_pos for the popup dialog - not used now anymore - was detected and set in ((Button#onTapSelectButton)) - look for two statements with self.callback(pos):
+                --* via ((Dialogs#alertInfo)) these pos data will be consumed in ((move InfoMessage to y pos)) > ((MovableContainer#moveToYPos)):
+                callback = function() --ypos
                     -- #((focus field upon click on info label))
                     --* this prop can be set in ((MultiInputDialog#injectFieldRow)):
                     if field.info_icon_field_no then
                         self:onSwitchFocus(self.input_fields[field.info_icon_field_no])
                     end
-                    UIManager:nextTick(function()
-                        KOR.dialogs:alertInfo("\n" .. field.info_popup_text .. "\n", nil, nil, y_pos)
-                    end)
+                    --* info_popup_title and info_popup_text e.g. defined in ((XrayDialogs#getFormFields)):
+                    KOR.dialogs:niceAlert(field.info_popup_title, field.info_popup_text)
                 end,
             }
             or TextBoxWidget:new{

@@ -43,19 +43,19 @@ DX = {
     c = nil,
     --* shorthand notation for Dialogs:
     d = nil,
-    --* dl is shorthand notation for DataLoader; this module will be initialized in ((XrayModel#initDataHandlers)):
+    --* shorthand notation for DataLoader; this module will be initialized in ((XrayModel#initDataHandlers)):
     dl = nil,
-    --* ds is shorthand notation for DataStore; this module will be initialized in ((XrayModel#initDataHandlers)):
+    --* shorthand notation for DataStore; this module will be initialized in ((XrayModel#initDataHandlers)):
     ds = nil,
-    --* fd is shorthand notation for FormsData; this module will be initialized in ((XrayModel#initDataHandlers)):
+    --* shorthand notation for FormsData; this module will be initialized in ((XrayModel#initDataHandlers)):
     fd = nil,
     --* shorthand notation for Model:
     m = nil,
     --* shorthand notation for Settings:
     s = nil,
-    --* tw is shorthand notation for TappedWords; this module will be initialized in ((XrayModel#initDataHandlers)):
+    --* shorthand notation for TappedWords; this module will be initialized in ((XrayModel#initDataHandlers)):
     tw = nil,
-    --* vd is shorthand notation for ViewsData; this module will be initialized in ((XrayModel#initDataHandlers)):
+    --* shorthand notation for ViewsData; this module will be initialized in ((XrayModel#initDataHandlers)):
     vd = nil,
     --* shorthand notation for UI:
     u = nil,

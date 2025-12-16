@@ -153,6 +153,7 @@ function XrayDialogs:getFormFields(item_copy, target_field, name_from_selected_t
             text = target_field == "description" and name_from_selected_text or item_copy.description or "",
             input_type = "text",
             description = linkwords and T(_("Description (%1):"), linkwords) or _("Description:"),
+            info_popup_title = _("field: Description"),
             info_popup_text = _([[If it is your intention that a Xray item should be filterable with a term in its description, you should ensure that that term in case of:
 
 TERMS
@@ -174,6 +175,7 @@ is mentioned with uppercase characters at start of first and surname in the desc
             text = target_field == "name" and name_from_selected_text or item_copy.name or "",
             input_type = "text",
             description = aliases and _("Name (") .. aliases .. "):  " .. icon or _("Name: ") .. icon,
+            info_popup_title = _("field: Name"),
             info_popup_text = _([[PERSONS
 Enter person names including uppercase starting characters [A-Za-z]. Because in that case the search for Xray items in the book will be done CASE SENSITIVE. By default when searching for Xray items, Dynamic Xray will search for first names in the text. If you want the plugin to search for occurrences/hits for the surname instead (because these references are more frequent in the text), use this format: "surname, first name".
 
@@ -194,8 +196,9 @@ Enter with only lowercase characters [a-z], because then searches for these item
                 text = item_copy.aliases,
                 input_type = "text",
                 description = "Aliassen:",
+                info_popup_title = _("field: Aliases"),
                 --* splitting of items done by ((XrayModel#splitByCommaOrSpace)):
-                info_popup_text = _([[Aliases: this field has space or comma separated terms, as aliases (of the main item name in the first tab). Can e.g. be a title or a nickname of a person.
+                info_popup_text = _([[This field has space or comma separated terms, as aliases (of the main item name in the first tab). Can e.g. be a title or a nickname of a person.
 
 Through aliases:
 1) main names will be found in the Xray overview of items in paragraphs on the current page;
@@ -212,8 +215,9 @@ Through aliases:
                 text = item_copy.linkwords,
                 input_type = "text",
                 description = _("Link terms:"),
+                info_popup_title = _("field: Link terms"),
                 --* splitting of items done by ((XrayModel#splitByCommaOrSpace)):
-                info_popup_text = _([[Link terms: this field has space or comma separated (partial) names of other Xray items, to link the current item to those other items.
+                info_popup_text = _([[This field has space or comma separated (partial) names of other Xray items, to link the current item to those other items.
 
 If such an other item is longpressed in the book, the linked items will be shown as extra buttons in the popup dialog.]]),
                 tab = 2,
@@ -243,8 +247,9 @@ If such an other item is longpressed in the book, the linked items will be shown
             {
                 text = item_copy.short_names,
                 input_type = "text",
-                description = _("Short names"),
-                info_popup_text = _([[Short names: comparable with aliases, but in this case comma separated short variants of the main item name in the first tab. Handy when those shorter names are sometimes used in the book instead of the longer main name.
+                description = _("Short names:"),
+                info_popup_title = _("field: Short names"),
+                info_popup_text = _([[Comparable with aliases, but in this case comma separated short variants of the main item name in the first tab. Handy when those shorter names are sometimes used in the book instead of the longer main name.
 
 For Xray overviews of (paragraphs in) the current page the scripts initially will firstly search for whole instances of these short names, or otherwise for first and surnames derived from these.]]),
                 tab = 2,
