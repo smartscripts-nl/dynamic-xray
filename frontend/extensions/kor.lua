@@ -221,7 +221,6 @@ function KOR:initCustomTranslations()
 		local lfs = require("libs/libkoreader-lfs")
 		return lfs.currentdir() .. "/frontend/extensions/translations/xray-translations.po"
 	end)
-	self.translations_source = self.translations_source:gsub("koreader.po", "xray-translations.po")
 	translator.openTranslationsSource(self.translations_source)
 
 	return translator
