@@ -23,7 +23,7 @@ local KOR = require("extensions/kor")
 KOR:initBaseExtensions()
 
 -- #((initialize Xray modules))
---* helper class for shortened notation for Dynamic Xray modules; DX.b instead of KOR.xraybuttons etc.; will be populated from ((KOR#registerXrayModules)), ((XrayModel#initDataHandlers)) and ((XrayController#init)):
+--* helper class for shortened notation for Dynamic Xray modules; DX.b, DX.d (but indices DX.xraybuttons, DX.xraydialogs etc. are NOT available, because the very short notation is the point of table DX) instead of KOR.xraybuttons, KOR.xraydialogs etc.; will be populated from ((KOR#registerXrayModules)), ((XrayModel#initDataHandlers)) and ((XrayController#init)):
 --- @class DX
 --- @field b XrayButtons
 --- @field c XrayController
