@@ -18,11 +18,9 @@ These modules are initialized in ((initialize Xray modules)) and ((XrayControlle
 
 local require = require
 
-local Device = require("device")
 local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
-local Screen = Device.screen
 
 local G_reader_settings = G_reader_settings
 local has_no_items = has_no_items
@@ -31,7 +29,7 @@ local keyboard_height = G_reader_settings:readSetting("keyboard_height")
 if has_no_items(keyboard_height) then
     keyboard_height = 744
 end
-local locked_xray_setting_message = _("This setting will be automatically computed by Dynamic Xray and therefor the user cannot modify it.")
+--local locked_xray_setting_message = _("This setting will be automatically computed by Dynamic Xray and therefor the user cannot modify it.")
 
 --- @class XraySettings
 --- @field settings_manager SettingsManager
@@ -65,17 +63,6 @@ local XraySettings = WidgetContainer:new{
             explanation = "This variables enables a number of default settings for KOReader onder Ubuntu, e.g. that the user can close some dialogs with ESC.",
             locked = 0,
         },
-        --* this two settings are saved via ((XrayDialogs#adaptTextAreaHeight)) > ((XraySettings#saveDescriptionFieldHeight)):
-        landscape_description_field_height = {
-            value = nil,
-            explanation = locked_xray_setting_message,
-            locked = 1,
-        },
-        portrait_description_field_height = {
-            value = nil,
-            explanation = locked_xray_setting_message,
-            locked = 1,
-        },
         ui_mode = {
             value = "page",
             options = { "page", "paragraph" },
@@ -93,19 +80,6 @@ function XraySettings:setUp()
         settings_index = "xray_settings",
     })
     self.settings_manager:setUp()
-end
-
-function XraySettings:readDescriptionFieldHeight()
-    local orientation = Screen:getScreenMode()
-    local index = orientation .. "_description_field_height"
-    --* SettingsManager stores this setting in the current class:
-    return self[index]
-end
-
-function XraySettings:saveDescriptionFieldHeight(height)
-    local orientation = Screen:getScreenMode()
-    local index = orientation .. "_description_field_height"
-    self.settings_manager:saveSetting(index, height)
 end
 
 function XraySettings:showSettingsManager()

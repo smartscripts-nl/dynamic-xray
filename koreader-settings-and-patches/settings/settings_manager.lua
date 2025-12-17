@@ -16,14 +16,6 @@ return {
             ["locked"] = 0,
             ["value"] = true,
         },
-        ["landscape_description_field_height"] = {
-            ["explanation"] = "Deze instelling door Dynamic Xray automatisch berekend en kan daarom niet worden aangepast door de gebruiker.",
-            ["locked"] = 1,
-        },
-        ["portrait_description_field_height"] = {
-            ["explanation"] = "Deze instelling door Dynamic Xray automatisch berekend en kan daarom niet worden aangepast door de gebruiker.",
-            ["locked"] = 1,
-        },
         ["ui_mode"] = {
             ["explanation"] = "Deze instelling bepaalt of er op paginas één bliksem marker, of ster-markers per alinea worden weergegeven",
             ["locked"] = 0,

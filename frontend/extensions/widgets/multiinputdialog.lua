@@ -104,26 +104,24 @@ local unpack = unpack
 --- @class MultiInputDialog
 local MultiInputDialog = InputDialog:extend{
     bottom_v_padding = Size.padding.small,
+    description_face = Font:getDefaultDialogFontFace(),
     description_padding = Size.padding.small,
+    description_prefix = "  ",
     description_margin = Size.margin.small,
     fields = nil, --* array, mandatory
     has_field_rows = false,
-    input_fields = nil, --* array
-    description_face = nil,
-    --[[is_popout = false,
-    is_borderless = true,
-    fullscreen = true,]]
     input_face = Font:getDefaultDialogFontFace(),
-    description_face = Font:getDefaultDialogFontFace(),
-    description_prefix = "  ",
-    --! leave these props alone, because consumed by inputdialog:
-    submenu_buttontable = nil,
-    title_tab_buttons_left = nil,
-    title_tab_callbacks = nil,
+    input_fields = nil, --* array
+    keyboard_height = nil,
+    mobile_auto_height_correction = 15,
+    --! leave the props below alone, because consumed by inputdialog:
     field_values = {},
     input_registry = nil,
     initial_auto_field_height = 10,
     one_line_height = DX.s.is_ubuntu and 15 or 30,
+    submenu_buttontable = nil,
+    title_tab_buttons_left = nil,
+    title_tab_callbacks = nil,
 }
 
 function MultiInputDialog:init()
@@ -181,9 +179,9 @@ function MultiInputDialog:init()
     local screen_height = Screen:getHeight()
     local screen_width = Screen:getWidth()
     --* keyboard was initialised in ((InputText#initKeyboard)):
-    local keyboard_height = self._input_widget:getKeyboardDimen().h
-    KOR.registry:set("keyboard_height", keyboard_height)
-    local max_dialog_height = screen_height - keyboard_height
+    self.keyboard_height = self._input_widget:getKeyboardDimen().h
+    KOR.registry:set("keyboard_height", self.keyboard_height)
+    local max_dialog_height = screen_height - self.keyboard_height
     self.button_table_height = self.button_table:getSize().h
     self.button_group = CenterContainer:new{
         dimen = Geom:new{
@@ -219,6 +217,9 @@ function MultiInputDialog:init()
             --? don't know why we need this correction:
             local correction = DX.s.is_ubuntu and 0 or 42
             self.auto_field_height = self.initial_auto_field_height + difference + correction
+            if KOR.s.is_mobile_device then
+                self.auto_field_height = self.auto_field_height - self.mobile_auto_height_correction
+            end
         end
 
         local row, is_field_set, count2, target_tab
@@ -262,7 +263,7 @@ function MultiInputDialog:init()
         table.insert(MeasureData, bottom_group)
     end
     table.insert(VerticalGroupData, bottom_group)
-    self:insertButtonGroupWithHeightCorrection(VerticalGroupData, MeasureData, max_dialog_height)
+    self:insertButtonGroup(VerticalGroupData, MeasureData, max_dialog_height)
 
     local config = {
         radius = self.fullscreen and 0 or Size.radius.window,
@@ -287,7 +288,7 @@ function MultiInputDialog:init()
         self[1] = CenterContainer:new{
             dimen = Geom:new{
                 w = screen_width,
-                h = config.height or screen_height - self._input_widget:getKeyboardDimen().h,
+                h = config.height or screen_height - self.keyboard_height,
             },
             ignore_if_over = "height",
             self.dialog_frame,
@@ -584,7 +585,6 @@ function MultiInputDialog:getDescription(field, width)
                 bordersize = 0,
                 width = width,
                 --* y_pos for the popup dialog - not used now anymore - was detected and set in ((Button#onTapSelectButton)) - look for two statements with self.callback(pos):
-                --* via ((Dialogs#alertInfo)) these pos data will be consumed in ((move InfoMessage to y pos)) > ((MovableContainer#moveToYPos)):
                 callback = function() --ypos
                     -- #((focus field upon click on info label))
                     --* this prop can be set in ((MultiInputDialog#injectFieldRow)):
@@ -731,26 +731,14 @@ function MultiInputDialog:getEditButton(field_nr, input_type, field_hint, allow_
     }
 end
 
-function MultiInputDialog:insertButtonGroupWithHeightCorrection(VerticalGroupData, MeasureData, max_dialog_height)
+function MultiInputDialog:insertButtonGroup(VerticalGroupData, MeasureData)
 
     if not self.auto_height_field_present then
-        table.insert(MeasureData, self.button_group)
-        --* apply height correction if needed:
-        local difference = max_dialog_height - MeasureData:getSize().h
         --* free memory (don't use MeasureData:free() for that, because then no titlebar text!):
         MeasureData = VerticalGroupData
-        if difference > 0 then
-            local correction = DX.s.is_ubuntu and 10 or 18
-            table.insert(VerticalGroupData, CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.full_width,
-                    h = difference + correction,
-                },
-                VerticalSpan:new{ width = self.full_width },
-            })
         end
-    end
-
+    --* add some padding above the button_group:
+    table.insert(VerticalGroupData, VerticalSpan:new{ width = 10 })
     table.insert(VerticalGroupData, self.button_group)
 end
 

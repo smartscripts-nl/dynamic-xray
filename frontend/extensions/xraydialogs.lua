@@ -167,7 +167,7 @@ is mentioned with uppercase characters at start of first and surname in the desc
 TERMS %2
 only has lower case characters in the description.]]), KOR.icons.xray_person_important_bare .. "/" .. KOR.icons.xray_person_bare, KOR.icons.xray_term_important_bare .. "/" .. KOR.icons.xray_term_bare),
             tab = 1,
-            height = DX.s:readDescriptionFieldHeight() or self.description_field_height,
+            height = "auto",
             input_face = self.description_field_face,
             scroll = true,
             scroll_by_pan = true,
