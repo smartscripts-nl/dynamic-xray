@@ -125,6 +125,7 @@ local TitleBar = OverlapGroup:extend{
     --* if given as table, table items must have these props: icon, icon_size_ratio, rotation_angle, callback, hold_callback, allow_flash:
     top_buttons_left = nil,
     top_buttons_right = nil,
+    title_width_was_adapted = false,
 
     --* submenu BELOW the title bar:
     submenu_buttontable = nil,
@@ -452,18 +453,21 @@ function TitleBar:injectTitle()
                 face = title_face,
                 padding = 0,
                 lang = self.lang,
+                --* truncate if not self.title_shrink_font_to_fit:
                 max_width = not self.title_shrink_font_to_fit and title_max_width,
-                --* truncate if not self.title_shrink_font_to_fit
             }
             adapted_width = self.title_widget:getWidth()
             if not self.title_shrink_font_to_fit then
                 break --* truncation allowed, no loop needed
             end
-            if adapted_width <= title_max_width then
+            if adapted_width < title_max_width then
                 break --* text with normal font fits, no loop needed
             end
             --* Text doesn't fit
             if not self._initial_titlebar_height then
+
+                self.title_width_was_adapted = true
+
                 --* We're with title_shrink_font_to_fit and in the first :init():
                 --* we don't want to go on measuring with this too long text.
                 --* We want metrics proper for when text fits, so if later :setTitle()
@@ -951,8 +955,9 @@ function TitleBar:addVerticalSpacers()
 
     local difference = self.desired_height - title_height
     local spacer_height = math.floor(difference / 2)
+    local config
     if highest_elem == "title" then
-        self.center_container = VerticalGroup:new{
+        config = {
             align = "left",
             overlap_align = "left",
             --* by minus correction make the title make *visually* give a more centered impression:
@@ -962,21 +967,35 @@ function TitleBar:addVerticalSpacers()
                 dimen = Geom:new{ w = self.width - self.top_left_buttons_reserved_width - self.top_right_buttons_reserved_width, h = title_height },
                 self.center_container,
             },
-            VerticalSpan:new{ width = spacer_height },
         }
+        if not self.title_width_was_adapted then
+            table.insert(config, VerticalSpan:new{ width = spacer_height })
+        end
+        self.center_container = VerticalGroup:new(config)
 
     --* title not highest elem:
     else
-        self.center_container = VerticalGroup:new{
+        --* if title was shrunk, add no spacer above the title container:
+        config = self.title_width_was_adapted and {
             align = "left",
             overlap_align = "left",
-            VerticalSpan:new{ width = spacer_height },
             CenterContainer:new{
                 --* if not topbuttons defined, then self.top_left/right_buttons_reserved_width will be zero:
                 dimen = Geom:new{ w = self.width - self.top_left_buttons_reserved_width - self.top_right_buttons_reserved_width, h = title_height },
                 self.center_container,
             },
         }
+        or
+        {
+            align = "left",
+            overlap_align = "left",
+            VerticalSpan:new{ width = spacer_height },
+            CenterContainer:new{
+                dimen = Geom:new{ w = self.width - self.top_left_buttons_reserved_width - self.top_right_buttons_reserved_width, h = title_height },
+                self.center_container,
+            },
+        }
+        self.center_container = VerticalGroup:new(config)
     end
 
     if self.has_top_buttons_left then
@@ -988,7 +1007,7 @@ function TitleBar:addVerticalSpacers()
             VerticalSpan:new{ width = spacer_height },
             self.left_buttons_container,
         }
-        if highest_elem == "left_buttons" then
+        if highest_elem == "left_buttons" and not self.title_width_was_adapted then
             table.insert(self.left_buttons_container, VerticalSpan:new{ width = spacer_height })
         end
     end
@@ -1013,15 +1032,24 @@ function TitleBar:addVerticalSpacers()
                 spacer_height = spacer_height - Screen:scaleBySize(correction)
             end
         end
-        self.right_buttons_container = VerticalGroup:new{
+        self.right_buttons_container = highest_elem == "right_buttons" and not self.title_width_was_adapted and VerticalGroup:new{
             align = "left",
             overlap_align = "left",
             VerticalSpan:new{ width = spacer_height },
             self.right_buttons_container,
+            VerticalSpan:new{ width = spacer_height }
         }
-        if highest_elem == "right_buttons" then
-            table.insert(self.right_buttons_container, VerticalSpan:new { width = spacer_height })
+        or
+        VerticalGroup:new{
+            align = "left",
+            overlap_align = "left",
+            self.right_buttons_container,
+        }
         end
+
+    --* when the title was shrunk, make the title filler less high in ((TitleBar#injectBottomLineAndOrSubmenuButtonTable)):
+    if self.title_width_was_adapted then
+        self.desired_height = math.max(self.center_container:getSize().h, self.left_buttons_container:getSize().h, self.right_buttons_container:getSize().h) - 20
     end
 end
 

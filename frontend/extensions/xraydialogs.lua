@@ -343,8 +343,6 @@ function XrayDialogs:adaptTextAreaHeight(dialog)
     else
         self.description_field_height = self.description_field_height - total_height + screen_height
     end
-
-    DX.s:saveDescriptionFieldHeight(self.description_field_height)
 end
 
 function XrayDialogs:showDeleteItemConfirmation(delete_item, dialog, remove_all_instances_in_series)

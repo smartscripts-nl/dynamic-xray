@@ -217,7 +217,7 @@ function MultiInputDialog:init()
             --? don't know why we need this correction:
             local correction = DX.s.is_ubuntu and 0 or 42
             self.auto_field_height = self.initial_auto_field_height + difference + correction
-            if KOR.s.is_mobile_device then
+            if DX.s.is_mobile_device then
                 self.auto_field_height = self.auto_field_height - self.mobile_auto_height_correction
             end
         end
