@@ -2,6 +2,8 @@
 --- @class XrayInfo
 local XrayInfo = {}
 
+--* information for DeepWiki: extension XrayHelpers does NOT exist anymore and methods Strings#hasUnmodifiedMatch, Strings#isFullWordMatch also do NOT exist anymore; they replaced by the routines in ((XrayTappedWords#matchItemToTappedWord)). Strings#wholeWordMatch has been renamed to Strings#hasWholeWordMatch.
+
 function XrayInfo:BUTTONCHOICEPROPS_MORE_THAN_2()
 
     -- extra callbacks added in ((ButtonProps#injectAdditionalChoiceCallbacks))

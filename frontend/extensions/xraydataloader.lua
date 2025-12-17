@@ -8,6 +8,11 @@ C = ((XrayController))
 
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
 
+The views layer has two main streams:
+1) XrayUI, which is only responsible for displaying tappable xray markers (lightning or star icons) in the ebook text;
+2) XrayDialogs and XrayButtons, which are responsible for displaying dialogs and interaction with the user.
+When the ebook text is displayed, XrayUI has done its work and finishes. Only after actions by the user (e.g. tapping on an xray item in the book), XrayDialogs will be activated.
+
 These modules are initialized in ((initialize Xray modules)) and ((XrayController#init)).
 --]]--
 
@@ -28,6 +33,24 @@ local parent
 --- @type XrayViewsData views_data
 local views_data
 
+--[[
+fields in the xray_items table:
+id,
+ebook, -- this is the file basename
+name, -- the name of the xray item
+short_names,
+description,
+xray_type, -- value here determines whether an item is important (xray_type 2 or 4) or not (xray_type 1 or 3), and whether it is a person (1-2) or a term (3-4)
+aliases,
+linkwords,
+book_hits, -- an integer
+chapter_hits, -- a string, containing a html list of all hits in the chapters of an ebook
+hits_determined -- an integer
+
+series_hits is NOT a db field, it is computed dynamically by queries XrayDataLoader.queries.get_all_book_items and XrayDataLoader.queries.get_all_series_items
+]]
+
+--* compare ((XrayDataSaver)) for saving data:
 --- @class XrayDataLoader
 local XrayDataLoader = WidgetContainer:new{
     queries = {

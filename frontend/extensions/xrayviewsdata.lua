@@ -8,6 +8,11 @@ C = ((XrayController))
 
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
 
+The views layer has two main streams:
+1) XrayUI, which is only responsible for displaying tappable xray markers (lightning or star icons) in the ebook text;
+2) XrayDialogs and XrayButtons, which are responsible for displaying dialogs and interaction with the user.
+When the ebook text is displayed, XrayUI has done its work and finishes. Only after actions by the user (e.g. tapping on an xray item in the book), XrayDialogs will be activated.
+
 These modules are initialized in ((initialize Xray modules)) and ((XrayController#init)).
 --]]--
 
@@ -1101,16 +1106,12 @@ function XrayViewsData.initData(force_refresh, override_mode, full_path)
     parent:setProp("current_ebook_full_path", full_path or KOR.registry.current_ebook)
     parent:setProp("current_ebook_basename", KOR.filedirnames:basename(full_path or KOR.registry.current_ebook))
 
-    --* disabled, because now called in ((XrayController#onReaderReady)):
-    --self:setTitleAndSeries(self.current_ebook_full_path)
-
     --* force book display mode for books which are not part of a series:
+    --* DX.m.current_series should have been set, when list_display_mode is "series", from the doc_props in ((XrayController#onReaderReady)) > ((XrayModel#setTitleAndSeries)):
     if not parent.current_series then
         override_mode = "book"
     end
-
     local mode = override_mode or self.list_display_mode
-    parent:setProp("list_display_mode", mode)
     data_loader:loadAllItems(mode, force_refresh)
 end
 

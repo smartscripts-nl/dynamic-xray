@@ -8,6 +8,11 @@ C = ((XrayController))
 
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
 
+The views layer has two main streams:
+1) XrayUI, which is only responsible for displaying tappable xray markers (lightning or star icons) in the ebook text;
+2) XrayDialogs and XrayButtons, which are responsible for displaying dialogs and interaction with the user.
+When the ebook text is displayed, XrayUI has done its work and finishes. Only after actions by the user (e.g. tapping on an xray item in the book), XrayDialogs will be activated.
+
 These modules are initialized in ((initialize Xray modules)) and ((XrayController#init)).
 --]]--
 
@@ -614,7 +619,6 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items)
         -- #((filter table example))
         filter = self:getListFilter(),
         title_submenu_buttontable = DX.b:forListSubmenu(),
-        --* DX.m.current_series should have been set from the doc_props in ((XrayController#onReaderReady)) > ((XrayModel#resetData)) & ((XrayViewsData#initData)) > ((XrayModel#setTitleAndSeries)):
         footer_buttons_left = DX.b:forListFooterLeft(focus_item, dont_show, base_icon_size),
         footer_buttons_right = DX.b:forListFooterRight(base_icon_size),
         --! don't use after_close_callback or call ((XrayController#resetFilteredItems)), because then filtering items will not work at all!

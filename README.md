@@ -56,7 +56,8 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
     * M = XrayModel > data handlers: XrayDataLoader, XrayDataSaver, XrayFormsData, XraySettings, XrayTappedWords and XrayViewsData (extensions)
     * V = XrayUI, and XrayDialogs and XrayButtons (extensions)
     * C = XrayController (plugin)
-* In code-eplanations.lua you can find some explanations for programmers about the inner workings of DX. This file doesn't have a function in the plugin, is meant to be purely informational.
+* The XrayHelpers extension of DX version 1.0 does not exist anymore, its methods have been redistributed over the above extensions. 
+* In xray-info.lua you can find some explanations for programmers about the inner workings of DX. This file doesn't have a function in the plugin, is meant to be purely informational.
 * Since the KOR extensions system uses many heavily modified stock KOReader modules and widgets, these modified files are loaded instead of the stock versions from the subfolders "modules" and "widgets" under the "extensions" folder.
 * DeepWiki.com has an extensive analysis of the DX system. See [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/smartscripts-nl/dynamic-xray).
 
