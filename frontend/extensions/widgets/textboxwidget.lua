@@ -21,7 +21,6 @@ local FrameContainer = require("ui/widget/container/framecontainer")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
 local InputContainer = require("ui/widget/container/inputcontainer")
-local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")
 local RenderText = require("ui/rendertext")
 local RightContainer = require("ui/widget/container/rightcontainer")
@@ -2242,7 +2241,7 @@ function TextBoxWidget:getXtextHighlightRects(text_start_idx, text_end_idx, star
     for line_num = start_line_num, end_line_num, 1 do
         local line = self.vertical_string_list[line_num]
         if line.xglyphs then -- non-empty line
-            local line_last_rect = nil
+            local line_last_rect
             for _, xglyph in ipairs(line.xglyphs) do
                 if xglyph.text_index >= text_start_idx and xglyph.text_index <= text_end_idx and not xglyph.no_drawing then
                     if line_last_rect == nil then
@@ -2279,7 +2278,7 @@ function TextBoxWidget:getNonXtextHighlightRects(text_start_idx, text_end_idx, s
     for line_num = start_line_num, end_line_num, 1 do
         local line = self.vertical_string_list[line_num]
         if line.end_offset then
-            local line_last_rect = nil
+            local line_last_rect
             local x = 0
             for text_index = line.offset, line.end_offset, 1 do
                 local width = self.char_width[self.charlist[text_index]] + (self.idx_pad[text_index] or 0)

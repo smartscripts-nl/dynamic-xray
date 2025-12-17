@@ -323,11 +323,8 @@ end
 
 --- @private
 function XrayDialogs:adaptTextAreaHeight(dialog)
-    if not DX.s or has_no_items(DX.s.keyboard_height) then
-        return
-    end
-    --* keyboard_height should have been saved by ((InputDialog#storeKeyboardHeight)):
-    local keyboard_height = DX.s.keyboard_height
+    --* this var was set in ((MultiInputDialog#init)):
+    local keyboard_height = KOR.registry:get("keyboard_height")
     local form_height = dialog:getSize().h
     local screen_height = Screen:getHeight()
     local total_height = form_height + keyboard_height

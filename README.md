@@ -50,18 +50,19 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 
 ## About the code
 
-* Dynamic Xray uses a stripped down version of my personal extensions system for KOReader.
+* Dynamic Xray uses a stripped version of my personal extensions system for KOReader.
 * DX is added by patching the stock KOReader code, so you don't have to modify the code of the basic KOReader version.
 * The DX plugin is structured to resemble an MVC structure:
     * M = XrayModel > data handlers: XrayDataLoader, XrayDataSaver, XrayFormsData, XraySettings, XrayTappedWords and XrayViewsData (extensions)
     * V = XrayUI, and XrayDialogs and XrayButtons (extensions)
     * C = XrayController (plugin)
 * In code-eplanations.lua you can find some explanations for programmers about the inner workings of DX. This file doesn't have a function in the plugin, is meant to be purely informational.
-* DeepWiki.com has an extensive analysis of the DX plugin. See [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/smartscripts-nl/dynamic-xray).
+* Since the KOR extensions system uses many heavily modified stock KOReader modules and widgets, these modified files are loaded instead of the stock versions from the subfolders "modules" and "widgets" under the "extensions" folder.
+* DeepWiki.com has an extensive analysis of the DX system. See [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/smartscripts-nl/dynamic-xray).
 
 ## Icons
 
-Most icons used by DX were downloaded from [Online Webfonts](https://www.onlinewebfonts.com/icon/), and some from [SVG Repo](https://www.svgrepo.com/). In some cases I've renamed these icons, to clarify their function in DX.
+Most icons used by DX were downloaded from [Online Webfonts](https://www.onlinewebfonts.com/icon/), and some from [SVG Repo](https://www.svgrepo.com/). In some cases, I've renamed these icons, to clarify their function in DX.
 
 ## Development history and usage
 
@@ -71,7 +72,7 @@ See [Dynamic Xray plugin · koreader/koreader · Discussion #12964 · GitHub](ht
 
 * Use a JetBrains IDE (e.g. PhpStorm) with the extensions EmmyLua and Better Highlights. With that you get clickable comments and very good type hints, which makes it much, much easier to navigate through the code.
 
-* Also with Better Highlights you can colorize comments differently depending on the use case, for much improved readability.
+* Also, with Better Highlights, you can colorize comments differently depending on the use case, for much improved readability.
 
 * In Better Highlights settings set (( and )) as wikilink start and end - the default is [[ and ]] -, so you can add clickable comments to --(( )) lua commented blocks.
 

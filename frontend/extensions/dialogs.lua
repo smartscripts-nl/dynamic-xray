@@ -15,8 +15,6 @@ local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local Screen = require("device").screen
 
-local DX = DX
-local G_reader_settings = G_reader_settings
 local math = math
 local table = table
 local type = type
@@ -69,18 +67,6 @@ function Dialogs:getTwoThirdDialogWidth()
         iwidth = Screen:getWidth() - 80
     end
     return iwidth
-end
-
---* keyboard_height was determined and stored in ((InputDialog#init)) > ((InputDialog#storeKeyboardHeight)):
-function Dialogs:getKeyboardHeight()
-    local height = G_reader_settings:readSetting("keyboard_height")
-    if height then
-        return height
-    end
-    if DX.s.is_ubuntu then
-        return 269
-    end
-    return 506
 end
 
 function Dialogs:getThreeQuarterDialogWidth()

@@ -60,11 +60,6 @@ local XraySettings = WidgetContainer:new{
             explanation = "This variables enables a number of default settings for KOReader onder Ubuntu, e.g. that the user can close some dialogs with ESC.",
             locked = 0,
         },
-        keyboard_height = {
-            value = keyboard_height,
-            explanation = locked_xray_setting_message,
-            locked = 1,
-        },
         --* this two settings are saved via ((XrayDialogs#adaptTextAreaHeight)) > ((XraySettings#saveDescriptionFieldHeight)):
         landscape_description_field_height = {
             value = nil,

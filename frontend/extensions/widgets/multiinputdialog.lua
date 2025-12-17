@@ -180,7 +180,10 @@ function MultiInputDialog:init()
     self.auto_field_height = nil
     local screen_height = Screen:getHeight()
     local screen_width = Screen:getWidth()
-    local max_dialog_height = screen_height - KOR.dialogs:getKeyboardHeight()
+    --* keyboard was initialised in ((InputText#initKeyboard)):
+    local keyboard_height = self._input_widget:getKeyboardDimen().h
+    KOR.registry:set("keyboard_height", keyboard_height)
+    local max_dialog_height = screen_height - keyboard_height
     self.button_table_height = self.button_table:getSize().h
     self.button_group = CenterContainer:new{
         dimen = Geom:new{

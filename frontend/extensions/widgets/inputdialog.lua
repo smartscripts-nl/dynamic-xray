@@ -124,8 +124,6 @@ local T = require("ffi/util").template
 local util = require("util")
 local _ = require("gettext")
 
-local G_reader_settings = G_reader_settings
-local has_items = has_items
 local has_no_text = has_no_text
 local has_text = has_text
 local math = math
@@ -420,8 +418,6 @@ function InputDialog:init()
                 - vspan_after_input_text:getSize().h
                 - buttons_container:getSize().h
                 - keyboard_height
-
-        self:storeKeyboardHeight(keyboard_height)
 
         if self.fullscreen or self.use_available_height or text_height > available_height then
             --* Don't leave unusable space in the text widget, as the user could think
@@ -1171,19 +1167,6 @@ function InputDialog:findCallback(keyboard_hidden_state, input_dialog, find_firs
     KOR.messages:notify(msg)
 end
 
-function InputDialog:storeKeyboardHeight(keyboard_height)
-    if not has_items(keyboard_height) then
-        return
-    end
-    local stored_height = G_reader_settings:readSetting("keyboard_height")
-    if not has_items(stored_height) then
-        return
-    end
-    if stored_height ~= keyboard_height then
-        G_reader_settings:saveSetting("keyboard_height", keyboard_height)
-    end
-end
-
 --* ==================== SMARTSCRIPTS =====================
 
 function InputDialog:scrollToBottom()
@@ -1202,7 +1185,7 @@ end
 --* this method can get called because of ((dont block event handling for key presses)) in ((InputText)):
 function InputDialog:onGetHardwareInput()
 
-    --! see also ((load virtual keyboard)), ((load hardware keyboard)) and ((ExternalKeyboard))
+    --! see also ((load virtual keyboard)), ((load hardware keyboard))
 
     --* see ((get pressed hardware key)):
     local key = KOR.registry:getOnce("pressed_key")

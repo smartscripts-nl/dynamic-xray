@@ -16,11 +16,6 @@ return {
             ["locked"] = 0,
             ["value"] = true,
         },
-        ["keyboard_height"] = {
-            ["explanation"] = "Deze instelling door Dynamic Xray automatisch berekend en kan daarom niet worden aangepast door de gebruiker.",
-            ["locked"] = 1,
-            ["value"] = 297,
-        },
         ["landscape_description_field_height"] = {
             ["explanation"] = "Deze instelling door Dynamic Xray automatisch berekend en kan daarom niet worden aangepast door de gebruiker.",
             ["locked"] = 1,
