@@ -153,7 +153,72 @@ function XrayDialogs:getFormFields(item_copy, target_field, name_from_selected_t
     local aliases = DX.fd:getAliasesText(item_copy)
     local linkwords = DX.fd:getLinkwordsText(item_copy)
     local icon = DX.vd:getItemTypeIcon(item_copy, "bare")
-    return {
+    local aliases_field = {
+                text = item_copy.aliases,
+                input_type = "text",
+                description = "Aliassen:",
+                info_popup_title = _("field: Aliases"),
+                --* splitting of items done by ((XrayModel#splitByCommaOrSpace)):
+                info_popup_text = _([[This field has space or comma separated terms, as aliases (of the main item name in the first tab). Can e.g. be a title or a nickname of a person.
+
+Through aliases:
+1) main names will be found in the Xray overview of items in paragraphs on the current page;
+2) the main item will be shown if the user longpresses an alias in the ebook text.]]),
+                tab = 2,
+                cursor_at_end = true,
+                input_face = self.other_fields_face,
+                scroll = true,
+                allow_newline = false,
+                force_one_line_height = true,
+                margin = Size.margin.small,
+    }
+    local linkwords_field = {
+                text = item_copy.linkwords,
+                input_type = "text",
+                description = _("Link terms:"),
+                info_popup_title = _("field: Link terms"),
+                --* splitting of items done by ((XrayModel#splitByCommaOrSpace)):
+                info_popup_text = _([[This field has space or comma separated (partial) names of other Xray items, to link the current item to those other items.
+
+If such an other item is longpressed in the book, the linked items will be shown as extra buttons in the popup dialog.]]),
+                tab = 2,
+                cursor_at_end = true,
+                input_face = self.other_fields_face,
+                scroll = true,
+                allow_newline = false,
+                force_one_line_height = true,
+                margin = Size.margin.small,
+    }
+    local xray_type_field = {
+                text = tostring(item_copy.xray_type) or "1",
+                input_type = "number",
+                description = DX.fd:getTypeLabel(item_copy) .. "\n  " .. DX.vd.xray_type_description,
+                tab = 2,
+                input_face = self.other_fields_face,
+                cursor_at_end = true,
+                scroll = false,
+                allow_newline = false,
+                force_one_line_height = true,
+                disable_paste = true,
+                margin = Size.margin.small,
+    }
+    local short_names_field = {
+                text = item_copy.short_names,
+                input_type = "text",
+                description = _("Short names:"),
+                info_popup_title = _("field: Short names"),
+                info_popup_text = _([[Comparable with aliases, but in this case comma separated short variants of the main item name in the first tab. Handy when those shorter names are sometimes used in the book instead of the longer main name.
+
+For Xray overviews of (paragraphs in) the current page the scripts initially will firstly search for whole instances of these short names, or otherwise for first and surnames derived from these.]]),
+                tab = 2,
+                input_face = self.other_fields_face,
+                cursor_at_end = true,
+                scroll = true,
+                allow_newline = false,
+                force_one_line_height = true,
+                margin = Size.margin.small,
+    }
+    local fields = {
         {
             text = target_field == "description" and name_from_selected_text or item_copy.description or "",
             input_type = "text",
@@ -195,78 +260,27 @@ Enter with only lowercase characters [a-z], because then searches for these item
             allow_newline = false,
             margin = Size.margin.small,
         },
-        --* two field row:
-        {
-            {
-                text = item_copy.aliases,
-                input_type = "text",
-                description = "Aliassen:",
-                info_popup_title = _("field: Aliases"),
-                --* splitting of items done by ((XrayModel#splitByCommaOrSpace)):
-                info_popup_text = _([[This field has space or comma separated terms, as aliases (of the main item name in the first tab). Can e.g. be a title or a nickname of a person.
-
-Through aliases:
-1) main names will be found in the Xray overview of items in paragraphs on the current page;
-2) the main item will be shown if the user longpresses an alias in the ebook text.]]),
-                tab = 2,
-                cursor_at_end = true,
-                input_face = self.other_fields_face,
-                scroll = true,
-                allow_newline = false,
-                force_one_line_height = true,
-                margin = Size.margin.small,
-            },
-            {
-                text = item_copy.linkwords,
-                input_type = "text",
-                description = _("Link terms:"),
-                info_popup_title = _("field: Link terms"),
-                --* splitting of items done by ((XrayModel#splitByCommaOrSpace)):
-                info_popup_text = _([[This field has space or comma separated (partial) names of other Xray items, to link the current item to those other items.
-
-If such an other item is longpressed in the book, the linked items will be shown as extra buttons in the popup dialog.]]),
-                tab = 2,
-                cursor_at_end = true,
-                input_face = self.other_fields_face,
-                scroll = true,
-                allow_newline = false,
-                force_one_line_height = true,
-                margin = Size.margin.small,
-            },
-        },
-        --* two field row:
-        {
-            {
-                text = tostring(item_copy.xray_type) or "1",
-                input_type = "number",
-                description = DX.fd:getTypeLabel(item_copy) .. "\n  " .. DX.vd.xray_type_description,
-                tab = 2,
-                input_face = self.other_fields_face,
-                cursor_at_end = true,
-                scroll = false,
-                allow_newline = false,
-                force_one_line_height = true,
-                disable_paste = true,
-                margin = Size.margin.small,
-            },
-            {
-                text = item_copy.short_names,
-                input_type = "text",
-                description = _("Short names:"),
-                info_popup_title = _("field: Short names"),
-                info_popup_text = _([[Comparable with aliases, but in this case comma separated short variants of the main item name in the first tab. Handy when those shorter names are sometimes used in the book instead of the longer main name.
-
-For Xray overviews of (paragraphs in) the current page the scripts initially will firstly search for whole instances of these short names, or otherwise for first and surnames derived from these.]]),
-                tab = 2,
-                input_face = self.other_fields_face,
-                cursor_at_end = true,
-                scroll = true,
-                allow_newline = false,
-                force_one_line_height = true,
-                margin = Size.margin.small,
-            },
-        },
     }
+
+    --* on mobile devices we don't want two field rows (not enough space):
+    if DX.s.is_mobile_device then
+        table.insert(fields, aliases_field)
+        table.insert(fields, linkwords_field)
+        table.insert(fields, xray_type_field)
+        table.insert(fields, short_names_field)
+    else
+        --* insert 2 two field rows:
+        table.insert(fields, {
+            aliases_field,
+            linkwords_field,
+        })
+        table.insert(fields, {
+            xray_type_field,
+            short_names_field,
+        })
+    end
+
+    return fields
 end
 
 --* compare ((XrayController#refreshItemHitsForCurrentEbook)):

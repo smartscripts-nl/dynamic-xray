@@ -56,7 +56,7 @@ local TitleBar = OverlapGroup:extend{
     --* by default: single line, truncated if overflow
     --* the default could be made dependant on self.fullscreen
     title_multilines = false, --* multilines if overflow
-    title_shrink_font_to_fit = false, --* reduce font size so that single line text fits
+    title_shrink_font_to_fit = true, --* reduce font size so that single line text fits
 
     subtitle = nil,
     subtitle_face = Font:getFace("xx_smallinfofont"),
@@ -97,7 +97,7 @@ local TitleBar = OverlapGroup:extend{
         boox_go_10 = 90,
         --* this value will be used for FileManagerHistory under Android:
         android_higher_tabs = 100,
-        ubuntu = 46,
+        ubuntu = 26,
     },
     is_popout_dialog = false,
     left_buttons_height = 0,
