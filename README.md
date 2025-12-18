@@ -36,8 +36,8 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
   * Closing the dialog
   * Open the KOReader main menu
   * Go to most left main item → Dynamic Xray (NB: this item is positioned at the bottom of the items, so you might have to navigate to the next subpage) → Settings
-  * (The settings menu is also reachable through the cog ico at the top left of these three dialogs):
-    * the Xray items list dialog
+  * This same settings menu is also reachable through the cog icon at the top left of these three dialogs:
+    * the Xray items list
     * the Xray item viewer
     * the popup dialog after you clicked upon a lightning or a star marker in the text of the e-book
   * Tap on editor_vertical_align_buttontable and set this value to false
