@@ -35,7 +35,7 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
 * If in the add/edit Xray item dialog, under the first tab "xray-item" you don't see buttons, that is caused by the textarea for the description of the Xray item being too high. In these cases, the buttons _are_ present, but hidden under the keyboard. You can rectify this by:
   * Closing the dialog
   * Open the KOReader main menu
-  * Go to most left main item → Dynamic Xray → Settings
+  * Go to most left main item → Dynamic Xray (NB: this item is positioned at the bottom of the items, so you might have to navigate to the next subpage) → Settings
   * Tap on editor_vertical_align_buttontable and set this value to false
   * Now re-open the Xray add or edit form
 * By clicking on lightning or star icons in the margins of ebook pages you can call up an overview of Xray items in resp. the current page or the paragraph with the star icon.
