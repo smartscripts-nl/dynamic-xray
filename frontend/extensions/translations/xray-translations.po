@@ -7,6 +7,9 @@
 msgid "Show xray-items in this book/series"
 msgstr "Toon xray-items in dit boek of serie"
 
+msgid "Add an Xray item"
+msgstr "Voeg een Xray item toe"
+
 msgid " imported..."
 msgstr " geïmporteerd..."
 

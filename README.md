@@ -34,13 +34,14 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
 * From the list of Xray items (to which you can assign a gesture, for quickly showing it), you can view and edit items, or add new items, by tapping on the plus-icon in the dialog footer.
 * By clicking on lightning or star icons in the margins of ebook pages, you can call up an overview of Xray items in resp. the current page or the paragraph with the star icon.
 * You can assign a gesture to quickly call up the list of all Xray items in the book or series: cog icon in the main KOReader menu → Taps and gestures → Gesture manager → Multiswipes → select a gesture → Reader → Show xray-items in this book/series
+* In the same way, you can also attach a gesture to the action "Add an Xray item".
 
 ### Displaying help information about the function of buttons
 DX uses mostly buttons with only icons, so without explanatory labels. However, if a button contains a point on the right side of the icon, or a downwards pointing arrow on the left side, this means that you can trigger a popup with help information about the function of that button by longpressing it.
 * An arrow means that a button has more than one action available upon longpress.
 * A point signifies a one action button.
 * These actions can then be executed by tapping on the buttons at the bottom of the help dialog.
-* If you don't longpress the main button, which had the help information, but simply tap it, its main function will be immediately triggered.
+* If you don't longpress the main button, which has the help information, but simply tap it, its main function will be immediately triggered.
 
 ## Problem solving
 
@@ -94,3 +95,4 @@ Alas, I don't have time to support this plugin. Use it at your own risk. If and 
 ## License
 
 GNU General Public License (GPLv3): open source software, free to use, modify and distribute your version. Naming me as the author of the very first version would be nice.
+See GPL-3.0.md in this repository or https://www.gnu.org/licenses/gpl-3.0-standalone.html for more details of the license.
