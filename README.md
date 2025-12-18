@@ -95,4 +95,4 @@ Alas, I don't have time to support this plugin. Use it at your own risk. If and 
 ## License
 
 GNU General Public License (GPLv3): open source software, free to use, modify and distribute your version. Naming me as the author of the very first version would be nice.
-See GPL-3.0.md in this repository or https://www.gnu.org/licenses/gpl-3.0-standalone.html for more details of the license.
+See license.md in this repository or https://www.gnu.org/licenses/gpl-3.0-standalone.html for more details of the license.
