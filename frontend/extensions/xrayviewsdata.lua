@@ -253,7 +253,8 @@ function XrayViewsData:repopulateItemsPersonsTerms(item)
 
     for i = 1, count do
         --! watch out: this table MIGHT be filtered and in that have less items then self.item_table:
-        if self.items[i] and self.items[i].id then
+        --* item is not given when updating the tables after importing items via ((XrayController#doBatchImport)):
+        if item and self.items[i].id == item.id then
             if self.items[i].id == item.id then
                 self.items[i] = item
                 self.current_item = item

@@ -451,6 +451,7 @@ function TitleBar:injectTitle()
             self.title_widget = TextWidget:new{
                 text = self.title,
                 face = title_face,
+                alignment = self.align,
                 padding = 0,
                 lang = self.lang,
                 --* truncate if not self.title_shrink_font_to_fit:

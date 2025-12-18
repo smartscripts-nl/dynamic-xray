@@ -112,6 +112,7 @@ function XrayController:doBatchImport(count, callback)
     local limit = DX.s.batch_count_for_import + 1
     while not loop_end or loop_end <= count do
         UIManager:close(notification)
+        --* callbacks defined in ((XrayDataSaver#processItemsInBatches)):
         start, loop_end, percentage = callback(start, count)
         --* this initial notification was set in ((XrayDialogs#showRefreshHitsForCurrentEbookConfirmation)):
         initial_notification = KOR.registry:getOnce("import_notification")
@@ -125,6 +126,9 @@ function XrayController:doBatchImport(count, callback)
             break
         end
     end
+    --* by forcing refresh, we reload items from the database:
+    DX.vd.initData("force_refresh")
+    DX.vd.prepareData()
     KOR.xraydialogs:showList()
 end
 
