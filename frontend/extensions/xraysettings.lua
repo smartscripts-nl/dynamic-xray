@@ -43,6 +43,11 @@ local XraySettings = WidgetContainer:new{
             explanation = "This number determines in how many batches Xray items from other books will be imported. In case of very many items, a higher number here is probably prudent.",
             locked = 0,
         },
+        editor_vertical_align_buttontable = {
+            value = false,
+            explanation = "If set to true, DX tries to vertically align the buttontable in the Xray item editor, so that it is shown just above the keyboard. On some e-readers this can lead to the problem that the buttons aren't visible anymore! In that case set this setting to false.",
+            locked = 0,
+        },
         is_android = {
             value = false,
             explanation = "This variabele triggers a number of default settings for Android devices.",

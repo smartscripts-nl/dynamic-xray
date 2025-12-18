@@ -733,7 +733,7 @@ end
 
 function MultiInputDialog:insertButtonGroup(VerticalGroupData, MeasureData)
 
-    if not self.auto_height_field_present then
+    if DX.s.editor_vertical_align_buttontable and not self.auto_height_field_present then
         --* free memory (don't use MeasureData:free() for that, because then no titlebar text!):
         MeasureData = VerticalGroupData
         end
