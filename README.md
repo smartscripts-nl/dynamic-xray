@@ -35,9 +35,18 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
 * By clicking on lightning or star icons in the margins of ebook pages, you can call up an overview of Xray items in resp. the current page or the paragraph with the star icon.
 * You can assign a gesture to quickly call up the list of all Xray items in the book or series: cog icon in the main KOReader menu → Taps and gestures → Gesture manager → Multiswipes → select a gesture → Reader → Show xray-items in this book/series
 
-### Problem solving
+### Displaying help information about the function of buttons
+DX uses mostly buttons with only icons, so without explanatory labels. However, if a button contains a point on the right side of the icon, or a downwards pointing arrow on the left side, this means that you can trigger a popup with help information about the function of that button by longpressing it.
+* An arrow means that a button has more than one action available upon longpress.
+* A point signifies a one action button.
+* These actions can then be executed by tapping on the buttons at the bottom of the help dialog.
+* If you don't longpress the main button, which had the help information, but simply tap it, its main function will be immediately triggered.
 
-In the add/edit Xray item dialog, under the first tab "xray-item", some users don't see buttons, because they are hidden under the keyboard. You can rectify this by:
+## Problem solving
+
+In the add/edit Xray item dialog, under the first tab "xray-item", some users don't see buttons, because they are hidden
+under the keyboard. You can rectify this by:
+
 * Closing the dialog
 * Open the KOReader main menu
 * Go to most left main item → Dynamic Xray (NB: this item is positioned at the bottom of the items, so you might have
@@ -48,13 +57,6 @@ In the add/edit Xray item dialog, under the first tab "xray-item", some users do
   * the popup dialog after you clicked upon a lightning or a star marker in the text of the e-book
 * Tap on editor_vertical_align_buttontable and set this value to false
 * Now re-open the Xray add or edit form
-
-### Displaying help information about the function of buttons
-DX uses mostly buttons with only icons, so without explanatory labels. However, if a button contains a point on the right side of the icon, or a downwards pointing arrow on the left side, this means that you can trigger a popup with help information about the function of that button by longpressing it.
-* An arrow means that a button has more than one action available upon longpress.
-* A point signifies a one action button.
-* These actions can then be executed by tapping on the buttons at the bottom of the help dialog.
-* If you don't longpress the main button, which had the help information, but simply tap it, its main function will be immediately triggered.
 
 ## About the code
 
