@@ -246,8 +246,12 @@ function XrayDataSaver.storeItemHits(item)
     local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver:updateBookHits")
     local stmt = conn:prepare(self.queries.update_hits)
     stmt:reset():bind(item.book_hits, item.chapter_hits, id):step()
+    --! hotfix, should not be necessary:
+    if not parent then
+        parent = DX.m
+    end
     --* for items in books which are part of a series update the prop series_hits:
-    if parent.current_series then
+    if has_text(parent.current_series) then
         local name = KOR.databases:escape(item.name)
         local series = KOR.databases:escape(parent.current_series)
         item.series_hits = conn:rowexec(T(self.queries.get_series_hits, name, series)) or 0
