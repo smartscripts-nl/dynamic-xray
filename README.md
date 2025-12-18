@@ -1,4 +1,5 @@
 # Dynamic Xray plugin
+# Kindle-like functionality for KOReader
 
 A KOReader plugin to view "xray items", i.e. user defined explanations of persons and terms in single books or even entire series:
 * "Terms" in Dynamic Xray (DX) can be names of things, entities, concepts, definitions, places, named events, names of literary or philosophical movements, and much more. It's all up to the imagination of the user...
