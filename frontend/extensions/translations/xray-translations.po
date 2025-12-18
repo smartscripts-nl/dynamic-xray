@@ -40,6 +40,18 @@ msgstr "Sluit formulier en ga naar lijst met Xray items."
 msgid "Close form and show list of all Xray items connected to the current item."
 msgstr "Sluit formulier en toon lijst van alle Xray items die iets te maken hebben met het huidige item."
 
+msgid " Dynamic Xray"
+msgstr " Dynamic Xray"
+
+msgid " Show list"
+msgstr " Toon lijst"
+
+msgid " Add item"
+msgstr " Voeg item toe"
+
+msgid " Settings"
+msgstr " Instellingen"
+
 
 
 ## =============== XrayDialogs ================

@@ -32,12 +32,12 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
 
 * The patch file adds a button "+ Xray" to the popup dialog for text selections. With this button you can add new Xray items from the text selection.
 * From the list of Xray items (to which you can assign a gesture, for quickly showing it), you can view and edit items, or add new items, by tapping on the plus-icon in the dialog footer.
-* If in the add/edit Xray item dialog, under the first tab "xray-item" you don't see buttons, that is caused by the textarea for the description of the Xray item being too high. In these cases the buttons _are_ present, but hidden under the keyboard. You can rectify this by:
-  * tapping on the "metadata" tab at the top of the dialog
-  * and then tapping again on "xray-item".
-  * You now should see the buttons.
-  * If not, you could try closing the dialog and then re-opening it.
-  * This should be a one time problem, DX remembers the correct height for the textarea under the first tab, which will allow the buttons below to remain visible upon subsequent calls of the dialog.
+* If in the add/edit Xray item dialog, under the first tab "xray-item" you don't see buttons, that is caused by the textarea for the description of the Xray item being too high. In these cases, the buttons _are_ present, but hidden under the keyboard. You can rectify this by:
+  * Closing the dialog
+  * Open the KOReader main menu
+  * Go to most left main item → Dynamic Xray → Settings
+  * Tap on editor_vertical_align_buttontable and set this value to false
+  * Now re-open the Xray add or edit form
 * By clicking on lightning or star icons in the margins of ebook pages you can call up an overview of Xray items in resp. the current page or the paragraph with the star icon.
 * You can assign a gesture to quickly call up the list of all Xray items in the book or series: cog icon in the main KOReader menu → Taps and gestures → Gesture manager → Multiswipes → select a gesture → Reader → Show xray-items in this book/series
 

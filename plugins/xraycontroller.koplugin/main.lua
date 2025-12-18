@@ -94,6 +94,7 @@ local XrayController = WidgetContainer:new{
 
 function XrayController:init()
     self:dispatcherRegisterActions()
+    self.ui.menu:registerToMainMenu(self)
     KOR:registerPlugin("xraycontroller", self)
     --* see ((SYNTACTIC SUGAR)):
     DX:registerController(self)
@@ -332,6 +333,35 @@ function XrayController:viewItemHits(item_name)
         item_name = DX.m:getRealFirstOrSurName(item_name)
     end
     KOR.readersearch:onShowTextLocationsForNeedle(item_name)
+end
+
+function XrayController:addToMainMenu(menu_items)
+    local icon = KOR.icons.lightning_bare
+    menu_items.dynamic_xray = {
+        text = icon .. _(" Dynamic Xray"),
+        sorting_hint = "navi",
+        sub_item_table = {
+            {
+                text = icon .. _(" Show list"),
+                callback = function()
+                    DX.d:showList()
+                end
+            },
+            {
+                text = icon .. _(" Add item"),
+                callback = function()
+                    self:resetFilteredItems()
+                    self:initAndShowNewItemForm()
+                end
+            },
+            {
+                text = KOR.icons.xray_settings_bare .. _(" Settings"),
+                callback = function()
+                    DX.s:showSettingsManager()
+                end
+            },
+        }
+    }
 end
 
 function XrayController:setProp(prop, value)
