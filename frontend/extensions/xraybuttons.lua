@@ -326,7 +326,7 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
                     -- #((enable return to viewer))
                     DX.c:setProp("return_to_viewer", true)
                     DX.c:resetFilteredItems()
-                    DX.c:initAndShowNewItemForm()
+                    DX.c:onAddNewXrayItem()
                 end,
             }),
             KOR.buttoninfopopup:forXrayItemEdit({
@@ -422,7 +422,7 @@ function XrayButtons:forTappedWordItemViewer(needle_item, called_from_list, tapp
                 callback = function()
                     DX.d:closeViewer()
                     DX.c:resetFilteredItems()
-                    DX.c:initAndShowNewItemForm()
+                    DX.c:onAddNewXrayItem()
                 end,
             }),
             KOR.buttoninfopopup:forXrayItemEdit({
@@ -534,7 +534,7 @@ function XrayButtons:forListContext(manager, item)
                     if exists_already then
                         return false
                     end
-                    DX.c:initAndShowNewItemForm(item.name)
+                    DX.c:onAddNewXrayItem(item.name)
                 end,
                 hold_callback = function()
                     KOR.dialogs:alertInfo(manager.button_info.add_item)
@@ -654,7 +654,7 @@ function XrayButtons:forListFooterRight(base_icon_size)
         KOR.buttoninfopopup:forXrayItemAdd({
             callback = function()
                 DX.d.called_from_list = true
-                DX.c:initAndShowNewItemForm("")
+                DX.c:onAddNewXrayItem("")
             end,
         }),
     }
@@ -953,7 +953,7 @@ Sneltoets %1 H]]), KOR.icons.arrow_bare),
         KOR.buttoninfopopup:forXrayItemAdd({
             callback = function()
                 UIManager:close(DX.d.xray_item_chooser)
-                DX.c:initAndShowNewItemForm("")
+                DX.c:onAddNewXrayItem("")
             end,
         }),
     })

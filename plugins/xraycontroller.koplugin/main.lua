@@ -31,15 +31,15 @@ Calls like KOR.xraybuttons:[method](), KOR.xraymodel:[method]() etc. can now be 
 
 --* ADDING ITEMS FROM SELECTED TEXT
 
-E.g. ((ReaderDictionary#onShowDictionaryLookup)) > ((XrayModel#saveNewItem)) > ((XrayController#guardIsExistingItem)) > ((XrayController#initAndShowNewItemForm))
+E.g. ((ReaderDictionary#onShowDictionaryLookup)) > ((XrayController#saveNewItem)) > ((XrayController#guardIsExistingItem)) > ((XrayController#onAddNewXrayItem))
 
 --* SAVING ITEMS
 
 ((XrayButtons#forItemAddOrEditForm)) and then:
 
-for existing items: ((XrayController#saveUpdatedItem)) > ((XrayFormsData#getAndStoreEditedItem)) > ((XrayFormsData#storeItemUpdates)) > ((XrayModel#storeUpdatedItem))
+for existing items: ((XrayController#saveUpdatedItem)) > ((XrayFormsData#getAndStoreEditedItem)) > ((XrayFormsData#storeItemUpdates)) > ((XrayDataSaver#storeUpdatedItem))
 
-for new items: ((XrayModel#saveNewItem)) > ((XrayModel#storeNewItem))
+for new items: ((XrayController#saveNewItem)) > ((XrayDataSaver#storeNewItem))
 
 --* UPDATE ITEMS IN MEMORY AFTER EDITS AND ADDITIONS
 
@@ -93,7 +93,7 @@ local XrayController = WidgetContainer:new{
 }
 
 function XrayController:init()
-    self:dispatcherRegisterActions()
+    self:onDispatcherRegisterActions()
     self.ui.menu:registerToMainMenu(self)
     KOR:registerPlugin("xraycontroller", self)
     --* see ((SYNTACTIC SUGAR)):
@@ -101,8 +101,9 @@ function XrayController:init()
 end
 
 --- @private
-function XrayController:dispatcherRegisterActions()
+function XrayController:onDispatcherRegisterActions()
     Dispatcher:registerAction("show_items", { category = "none", event = "ShowList", title = _("Show xray-items in this book/series"), reader = true })
+    Dispatcher:registerAction("add_xray_item", { category = "none", event = "AddNewXrayItem", title = _("Add an Xray item"), reader = true })
 end
 
 function XrayController:doBatchImport(count, callback)
@@ -256,7 +257,7 @@ end
 
 --* compare form for editing Xray items: ((XrayController#initAndShowEditItemForm)):
 --* see also method ((XrayController#guardIsExistingItem)), through which current method is called and which ensures no duplicated items are created:
-function XrayController:initAndShowNewItemForm(name_from_selected_text, active_form_tab, item)
+function XrayController:onAddNewXrayItem(name_from_selected_text, active_form_tab, item)
     local title, item_copy, target_field = DX.fd:initNewItemFormProps(name_from_selected_text, active_form_tab, item)
     DX.d:showNewItemForm({
         title = title,
@@ -267,7 +268,7 @@ function XrayController:initAndShowNewItemForm(name_from_selected_text, active_f
     })
 end
 
---*compare ((XrayController#initAndShowNewItemForm)):
+--*compare ((XrayController#onAddNewXrayItem)):
 function XrayController:initAndShowEditItemForm(needle_item, reload_manager, active_form_tab)
 
     local m_item, item_copy = DX.fd:initEditFormProps(needle_item, reload_manager, active_form_tab)
@@ -351,7 +352,7 @@ function XrayController:addToMainMenu(menu_items)
                 text = icon .. _(" Add item"),
                 callback = function()
                     self:resetFilteredItems()
-                    self:initAndShowNewItemForm()
+                    self:onAddNewXrayItem()
                 end
             },
             {

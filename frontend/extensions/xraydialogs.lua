@@ -792,7 +792,7 @@ function XrayDialogs:addHotkeysForList()
             label = "add",
             hotkey = { { "V" } },
             callback = function()
-                DX.c:initAndShowNewItemForm()
+                DX.c:onAddNewXrayItem()
                 return true
             end,
         },

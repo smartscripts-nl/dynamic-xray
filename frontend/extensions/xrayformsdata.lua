@@ -302,7 +302,7 @@ function XrayFormsData:getFormTabCallback(mode, active_form_tab, item_copy)
             DX.c:initAndShowEditItemForm(item_copy, false, form_tab)
         else
             DX.d.add_item_input = nil
-            DX.c:initAndShowNewItemForm(nil, form_tab, item_copy)
+            DX.c:onAddNewXrayItem(nil, form_tab, item_copy)
         end
     end
 end
@@ -338,7 +338,7 @@ function XrayFormsData.saveNewItem(new_item)
     end
     if type(new_item) == "string" or new_item.text then
         --* name_from_selected_text can be nil when we want to type and add a completely new item:
-        DX.c:initAndShowNewItemForm(needle_name)
+        DX.c:onAddNewXrayItem(needle_name)
         return
     end
 
