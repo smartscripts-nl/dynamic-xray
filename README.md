@@ -32,18 +32,22 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
 
 * The patch file adds a button "+ Xray" to the popup dialog for text selections. With this button you can add new Xray items from the text selection.
 * From the list of Xray items (to which you can assign a gesture, for quickly showing it), you can view and edit items, or add new items, by tapping on the plus-icon in the dialog footer.
-* If in the add/edit Xray item dialog, under the first tab "xray-item" you don't see buttons, that is caused by the textarea for the description of the Xray item being too high. In these cases, the buttons _are_ present, but hidden under the keyboard. You can rectify this by:
-  * Closing the dialog
-  * Open the KOReader main menu
-  * Go to most left main item → Dynamic Xray (NB: this item is positioned at the bottom of the items, so you might have to navigate to the next subpage) → Settings
-  * This same settings menu is also reachable through the cog icon at the top left of these three dialogs:
-    * the Xray items list
-    * the Xray item viewer
-    * the popup dialog after you clicked upon a lightning or a star marker in the text of the e-book
-  * Tap on editor_vertical_align_buttontable and set this value to false
-  * Now re-open the Xray add or edit form
 * By clicking on lightning or star icons in the margins of ebook pages, you can call up an overview of Xray items in resp. the current page or the paragraph with the star icon.
 * You can assign a gesture to quickly call up the list of all Xray items in the book or series: cog icon in the main KOReader menu → Taps and gestures → Gesture manager → Multiswipes → select a gesture → Reader → Show xray-items in this book/series
+
+### Problem solving
+
+In the add/edit Xray item dialog, under the first tab "xray-item", some users don't see buttons, because they are hidden under the keyboard. You can rectify this by:
+* Closing the dialog
+* Open the KOReader main menu
+* Go to most left main item → Dynamic Xray (NB: this item is positioned at the bottom of the items, so you might have
+  to navigate to the next subpage) → Settings
+* This same settings menu is also reachable through the cog icon at the top left of these three dialogs:
+  * the Xray items list
+  * the Xray item viewer
+  * the popup dialog after you clicked upon a lightning or a star marker in the text of the e-book
+* Tap on editor_vertical_align_buttontable and set this value to false
+* Now re-open the Xray add or edit form
 
 ### Displaying help information about the function of buttons
 DX uses mostly buttons with only icons, so without explanatory labels. However, if a button contains a point on the right side of the icon, or a downwards pointing arrow on the left side, this means that you can trigger a popup with help information about the function of that button by longpressing it.
