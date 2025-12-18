@@ -105,7 +105,7 @@ return {
     xray_person_bare = "\u{F2C0}",
     xray_person_important_bare = "\u{F007}",
     xray_series_mode_bare = "\u{F2C0}",
-    xray_settings_bare = "\u{F1DE}",
+    xray_settings_bare = "\u{F013}", -- cog
     xray_tapped_collection = "\u{E70D}" .. spacer,
     xray_tapped_collection_bare = "\u{E70D}",
     xray_term_bare = "\u{EDE7}",

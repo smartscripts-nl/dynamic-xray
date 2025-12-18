@@ -42,7 +42,7 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
     * the popup dialog after you clicked upon a lightning or a star marker in the text of the e-book
   * Tap on editor_vertical_align_buttontable and set this value to false
   * Now re-open the Xray add or edit form
-* By clicking on lightning or star icons in the margins of ebook pages you can call up an overview of Xray items in resp. the current page or the paragraph with the star icon.
+* By clicking on lightning or star icons in the margins of ebook pages, you can call up an overview of Xray items in resp. the current page or the paragraph with the star icon.
 * You can assign a gesture to quickly call up the list of all Xray items in the book or series: cog icon in the main KOReader menu → Taps and gestures → Gesture manager → Multiswipes → select a gesture → Reader → Show xray-items in this book/series
 
 ### Displaying help information about the function of buttons
