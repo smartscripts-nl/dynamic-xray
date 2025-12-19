@@ -1064,6 +1064,9 @@ end
 
 function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_item_search)
 
+    if tapped_word then
+        called_from_list = false
+    end
     self.called_from_list = called_from_list
     local book_hits
     --* skip_item_search is truthy when an add or edit for was cancelled and we just want to return to the most recently viewed item (no data were changed in this case):
@@ -1106,6 +1109,7 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
         --* htmlBox will always have a close_callback and therefor a close button; so no need to define a close_callback here...
         no_filter_button = true,
         title_shrink_font_to_fit = true,
+        modal = false,
         text_padding_top_bottom = Screen:scaleBySize(25),
         next_item_callback = function()
             self:viewNextItem(DX.vd.current_item)
@@ -1188,13 +1192,9 @@ function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_wo
     DX.m:showMethodsTrace("XrayDialogs:viewTappedWordItem")
 end
 
-function XrayDialogs:viewItemByIndex(item)
+function XrayDialogs:viewLinkedItem(item, tapped_word)
     self:closeViewer()
-    local current = item.index
-    local subject_table = self.current_tab_items or DX.m:getCurrentItemsForView()
-    self.current_item = subject_table[current]
-    DX.fd:setViewerItemId(self.current_item)
-    self:viewItem(self.current_item, "called_from_list", nil, "skip_item_search")
+    self:viewItem(item, "called_from_list", tapped_word)
 end
 
 function XrayDialogs:viewNextItem(item)
