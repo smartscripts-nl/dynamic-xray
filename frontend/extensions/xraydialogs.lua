@@ -675,17 +675,19 @@ function XrayDialogs:showJumpToChapterDialog()
                 return
             end
 
-            --* this table is populated by ((XrayViewsData#setChapterHits)):
-            if #DX.vd.chapters_start_pages_ordered > 0 then
-                local start_page = DX.vd.chapters_start_pages_ordered[tonumber(chapter_no)]
-                if start_page then
-                    self:closeViewer()
-                    KOR.ui.link:addCurrentLocationToStack()
-                    KOR.ui:handleEvent(Event:new("GotoPage", start_page))
-                    return
-                end
+            if has_no_items(DX.vd.chapters_start_pages_ordered) then
+                KOR.messages:notify((_ "start page information for chapters was not found..."))
+                return
             end
-            KOR.messages:notify((_"start page information for chapters was not found..."))
+
+            --* this table is populated by ((XrayViewsData#setChapterHits)):
+            local start_page = DX.vd.chapters_start_pages_ordered[tonumber(chapter_no)]
+            if start_page then
+                self:closeViewer()
+                KOR.ui.link:addCurrentLocationToStack()
+                KOR.ui:handleEvent(Event:new("GotoPage", start_page))
+                return
+            end
         end,
     })
 end

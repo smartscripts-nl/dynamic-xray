@@ -25,6 +25,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 - [Problem solving](#problem-solving)
     - [Buttons in editor not visible](#buttons-in-editor-not-visible)
     - [User has a database filename other than "bookinfo_cache.sqlite3"](#user-has-a-database-filename-other-than-bookinfo_cachesqlite3)
+- [Todos / issues to fix](#todos--issues-to-fix)
 - [About the code](#about-the-code)
 - [Development history and usage](#development-history-and-usage)
 - [Icons](#icons)
@@ -141,6 +142,10 @@ PT_bookinfo_cache.sqlite3". In that case:
 1. Go to the [DX Settings menu](#dx-settings-menu)
 2. Enter and save the correct database file name for your installation.
 3. KOReader will automatically be reloaded and then create the xray_items table in your database.
+
+## Todos / issues to fix
+
+* Jumping to a specific chapter from the Xray item viewer does not work anymore.
 
 ## About the code
 
