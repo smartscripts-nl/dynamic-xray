@@ -140,7 +140,7 @@ users have a different database filename**, with a prefix string attached by som
 PT_bookinfo_cache.sqlite3". In that case:
 
 1. Go to the [DX Settings menu](#dx-settings-menu)
-2. Enter and save the correct database file name for your installation.
+2. Enter and save the correct database file name for your installation in the setting "database_filename".
 3. KOReader will automatically be reloaded and then create the xray_items table in your database.
 
 ## Todos / issues to fix
