@@ -845,7 +845,7 @@ msgstr "Deze instelling door Dynamic Xray automatisch berekend en kan daarom nie
 msgid "This number determines in how many batches Xray items from other books will be imported. In case of very many items, a higher number here is probably prudent."
 msgstr "Dit getal bepaalt in hoeveel batches Xray items uit andere boeken worden geïmporteerd. Zijn dat heel veel items, dan is een hoger getal waarschijnlijk verstandig."
 
-msgid "Only change this setting if your database file in the KOReader settings folder has a language code at the start. E.g. like \"PT_bookinfo_cache.sqlite3\"."
+msgid "Only change this setting if your database file not is called \"bookinfo_cache.sqlite3\". E.g. because it has a language code at the front, like \"PT_bookinfo_cache.sqlite3\"."
 msgstr "Verander deze instelling enkel wanneer jouw database file in de KOReader settings map niet \"bookinfo_cache.sqlite3\" heet. Bijv. wanneer deze naam een taalcode aan het begin heeft: \"PT_bookinfo_cache.sqlite3\"."
 
 msgid "If set to true, DX tries to vertically align the buttontable in the Xray item editor, so that it is shown just above the keyboard. On some e-readers this can lead to the problem that the buttons aren't visible anymore! In that case set this setting to false."

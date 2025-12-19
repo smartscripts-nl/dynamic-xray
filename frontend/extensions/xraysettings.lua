@@ -38,7 +38,7 @@ local XraySettings = WidgetContainer:new{
         },
         database_filename = {
             value = "bookinfo_cache.sqlite3",
-            explanation = _("Only change this setting if your database file in the KOReader settings folder has a language code at the start. E.g. like \"PT_bookinfo_cache.sqlite3\"."),
+            explanation = _("Only change this setting if your database file not is called \"bookinfo_cache.sqlite3\". E.g. because it has a language code at the front, like \"PT_bookinfo_cache.sqlite3\"."),
             locked = 0,
         },
         editor_vertical_align_buttontable = {
