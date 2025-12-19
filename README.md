@@ -84,6 +84,9 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 ![07 Xray item editor tab 2](images/07-xray-item-editor-tab-2.png)
 07 Xray item editor tab 2
 
+![08 Help info for buttons](images/08-help-info-for-buttons.png)
+08 Help info for buttons
+
 ## Problem solving
 
 In the add/edit Xray item dialog, under the first tab "xray-item", some users don't see buttons, because they are hidden
