@@ -79,8 +79,7 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 
 ### Videos
 
-* [Search hits preview for Xray item](https://github.com/smartscripts-nl/dynamic-xray/videos/readersearch-hits-preview-in-htmlbox.mp4)
-* [Importing Xray items from other books in series](https://github.com/smartscripts-nl/dynamic-xray/videos/importing-xray-items-from-other-books-in-series.webm)
+* [See releases](https://github.com/smartscripts-nl/dynamic-xray/releases/tag/videos)
 
 ### Images
 
