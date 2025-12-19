@@ -18,7 +18,9 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 - [Usage tips](#usage-tips)
   - [Adding Xray items](#adding-xray-items)
   - [Displaying help information about the function of buttons](#displaying-help-information-about-the-function-of-buttons)
-- [Some pictures of DX in action](#some-pictures-of-dx-in-action)
+- [DX in action](#dx-in-action)
+    - [Videos](#videos)
+    - [Images](#images)
 - [Problem solving](#problem-solving)
 - [About the code](#about-the-code)
 - [Development history and usage](#development-history-and-usage)
@@ -73,7 +75,14 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 * These actions can then be executed by tapping on the buttons at the bottom of the help dialog.
 * If you don't longpress the main button, which has the help information, but simply tap it, its main function will be immediately triggered.
 
-## Some pictures of DX in action
+## DX in action
+
+### Videos
+
+* [Search hits preview for Xray item](https://github.com/smartscripts-nl/dynamic-xray/videos/readersearch-hits-preview-in-htmlbox.mp4)
+* [Importing Xray items from other books in series](https://github.com/smartscripts-nl/dynamic-xray/videos/importing-xray-items-from-other-books-in-series.webm)
+
+### Images
 
 ![01 Xray marker in page](images/01-xray-marker-in-page.png)
 01 Xray marker in page
