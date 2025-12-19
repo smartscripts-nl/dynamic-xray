@@ -51,9 +51,9 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
 1. If you want to translate messages in the Dynamic Xray system, you can do that in
    frontend/extensions/translations/xray-translations.po. In that file add your translations after "msgstr" entries, but
    take care that you adhere to the instructions at the start of that file.
-2. You could also choose to **⚠️ disable these translations** (and therefor see all DX button labels etc. in English) by adding
+2. You could also choose to **💡disable these translations** (and therefor see all DX button labels etc. in English) by adding
    one character to the msgid blocks in the transations file. E.g. change msgid "Short names" to msgid "aShort names".
-3. **⚠️ When you clone a new version of DX**, generate a diff of extensions/translations/xray-translations.po in that cloned version with your personal version of this file in your KOReader settings folder. And then only add the new entries to your personal translations in the latter file.
+3. **💡When you clone a new version of DX**, generate a diff of extensions/translations/xray-translations.po in that cloned version with your personal version of this file in your KOReader settings folder. And then only add the new entries to your personal translations in the latter file.
 
 ## Usage tips
 
