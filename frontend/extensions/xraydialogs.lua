@@ -92,7 +92,13 @@ function XrayDialogs:closeForm(mode)
         self.add_item_input = nil
         --* this prop can be set in ((XrayButtons#forItemViewer)) > ((cancel item form)), when the user opens an add or edit form:
         --* current_item could not be set when the user selected a word in the ebook and chose to add that to the xray items:
-        if self.form_was_cancelled and DX.vd.current_item and DX.c.return_to_viewer then
+        if
+            --* this var, set in ((XrayFormsData#initNewItemFormProps)), can be truthy if editor was activated from a text selection in the ebook:
+            not KOR.registry:getOnce("xray_editor_activated_from_text_selection")
+            and DX.c.return_to_viewer
+            and self.form_was_cancelled
+            and DX.vd.current_item
+        then
             --* reset values and go to item viewer:
             self.form_was_cancelled = false
             DX.vd:setProp("new_item_hits", nil)

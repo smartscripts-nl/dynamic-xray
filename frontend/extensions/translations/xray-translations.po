@@ -945,7 +945,6 @@ msgstr "tekst naar klembord gekopieerd..."
 
 
 
-
 ## ================= 2-xray-patches.lua ================
 
 msgid "+ Xray item"

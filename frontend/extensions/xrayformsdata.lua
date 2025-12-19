@@ -57,6 +57,8 @@ function XrayFormsData:initNewItemFormProps(name_from_selected_text, active_form
     local target_field = "name"
     self.active_form_mode = "add"
     local is_text_from_selection = has_text(name_from_selected_text)
+    --* for consumption in ((XrayDialogs#closeForm)) and to force return to ebook text there, if truthy:
+    KOR.registry:set("xray_editor_activated_from_text_selection", is_text_from_selection)
     if is_text_from_selection and KOR.strings:substrCount(name_from_selected_text, " ") > 3 then
         target_field = "description"
     end
