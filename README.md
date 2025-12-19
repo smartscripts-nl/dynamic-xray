@@ -37,14 +37,14 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
 
 1. Clone this repo somewhere. From there:
 2. Copy the folder "extensions" under frontend to the frontend folder of your KOReader installation.
-3. **⚠️ NB: Don't overwrite your KOReader frontend folder with the frontend folder from the repository!**
-4. Copy xraycontroller.koplugin under the plugins folder to your KOReader plugins folder.
-5. **⚠️ NB: Don't overwrite your entire plugins folder!**
-6. Copy the svg icons under resources/icons/mdlight to the corresponding folder under your KOReader installation dir.
-7. **⚠️ NB: Don't overwrite your original folders and files here!**
-8. The "koreader-settings-and-patches" folder in this repository represents the settings folder of your koreader installation. In most cases this target folder will be named "koreader". In its root you should find settings.reader.lua.
-9. In that target folder create a folder patches if it doesn't exist yet and copy koreader-settings-and-patches/patches/2-xray-patches.lua to that target patches folder.
-10. Copy koreader-settings-and-patches/settings/settings_manager.lua to the settings subfolder of the koreader settings folder of your current installation (this folder should already be present and should contain many files, e.g. sqlite3-files for KOReader's databases).
+   * **⚠️ NB: Don't overwrite your KOReader frontend folder with the frontend folder from the repository!**
+3. Copy xraycontroller.koplugin under the plugins folder to your KOReader plugins folder.
+   * **⚠️ NB: Don't overwrite your entire plugins folder!**
+4. Copy the svg icons under resources/icons/mdlight to the corresponding folder under your KOReader installation dir.
+   * **⚠️ NB: Don't overwrite your original folders and files here!**
+5. The "koreader-settings-and-patches" folder in this repository represents the settings folder of your koreader installation. In most cases this target folder will be named "koreader". In its root you should find settings.reader.lua.
+6. In that target folder create a folder patches if it doesn't exist yet and copy koreader-settings-and-patches/patches/2-xray-patches.lua to that target patches folder.
+7. Copy koreader-settings-and-patches/settings/settings_manager.lua to the settings subfolder of the koreader settings folder of your current installation (this folder should already be present and should contain many files, e.g. sqlite3-files for KOReader's databases).
 
 ### Entering your own translations for the DX interface
 
