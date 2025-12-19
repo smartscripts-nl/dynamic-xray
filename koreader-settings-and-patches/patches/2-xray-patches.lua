@@ -176,7 +176,9 @@ local orig_onLookupWord = ReaderDictionary.onLookupWord
 ReaderDictionary.onLookupWord = function(self, word, is_sane, boxes, highlight, link, dict_close_callback)
     --* if an Xray item was recognized, show its info instead of the Dictionary dialog:
     if DX.tw:getXrayItemAsDictionaryEntry(word) then
-        highlight:clear()
+        if highlight then
+            highlight:clear()
+        end
         return true
     end
 
