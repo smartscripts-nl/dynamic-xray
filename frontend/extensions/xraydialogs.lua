@@ -675,9 +675,9 @@ function XrayDialogs:showJumpToChapterDialog()
                 return
             end
 
-            --* this table is populated via ...
-            if #DX.m.chapters_start_pages_ordered > 0 then
-                local start_page = DX.m.chapters_start_pages_ordered[tonumber(chapter_no)]
+            --* this table is populated by ((XrayViewsData#setChapterHits)):
+            if #DX.vd.chapters_start_pages_ordered > 0 then
+                local start_page = DX.vd.chapters_start_pages_ordered[tonumber(chapter_no)]
                 if start_page then
                     self:closeViewer()
                     KOR.ui.link:addCurrentLocationToStack()
