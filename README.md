@@ -146,7 +146,7 @@ PT_bookinfo_cache.sqlite3". In that case:
 ## Todos / issues to fix
 
 * Jumping to a specific chapter from the Xray item viewer does not work anymore. Item hits/occurrences per chapter information is still available though.
-* When toggling the item type from person to term or from standard to important, after that, items are sometimes seemingly duplicated in the list of items. This is not really the case, but annoying. So a todo for me.
+* In the item viewer: when toggling the item type with a button from person to term or from standard to important, items are afterward sometimes seemingly duplicated in the list of items. This is not really the case, but annoying. So a todo for me.
 
 ## About the code
 
