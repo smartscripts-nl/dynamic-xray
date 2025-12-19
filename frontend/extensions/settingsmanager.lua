@@ -70,9 +70,8 @@ function SettingsManager:setUp()
             KOR.tables = require("extensions/tables")
         end
         self.settings = KOR.tables:shallowCopy(self.parent.settings_template)
-        self:saveSettings("dont_flush")
         self.settings_db:makeFalse(self.settings_index .. "_overrule")
-        self.settings_db:flush()
+        self:saveSettings()
     else
         local setting_was_added = false
         for key, props in pairs(self.parent.settings_template) do
@@ -315,12 +314,8 @@ function SettingsManager:saveSetting(key, value)
 end
 
 --- @private
-function SettingsManager:saveSettings(dont_flush)
+function SettingsManager:saveSettings()
     self.settings_db:saveSetting(self.settings_index, self.settings)
-    --* only used when we know we'll change another setting immediately after this call to saveSettings and only after that next setting change we want to flush the settings to the settings file:
-    if dont_flush then
-        return
-    end
     self.settings_db:flush()
 end
 
