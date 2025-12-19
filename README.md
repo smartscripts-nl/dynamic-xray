@@ -145,7 +145,7 @@ PT_bookinfo_cache.sqlite3". In that case:
 
 ## Todos / issues to fix
 
-* Jumping to a specific chapter from the Xray item viewer does not work anymore.
+* Jumping to a specific chapter from the Xray item viewer does not work anymore. Item hits/occurrences per chapter information is still available though.
 
 ## About the code
 
