@@ -353,11 +353,20 @@ function Dialogs:textBox(args)
         elseif args.narrow_text_window or args.for_description_dialog then
             args.width_factor = KOR.screenhelpers:isLandscapeScreen() and 0.87 or 0.95
             text_padding_left_right = Screen:scaleBySize(35)
+        elseif args.fullscreen then
+            --* to hide the borders:
+            local overflow = 10
+            args.height = Screen:getHeight() + overflow
+            args.width = Screen:getWidth() + overflow
+            text_padding_left_right = Screen:scaleBySize(35)
+            args.border = 0
+            args.width_factor = 1
+            args.use_computed_height = false
+        else
+            args.height = org_height or math.floor(Screen:getHeight() * 0.8)
+            args.use_computed_height = args.use_computed_height or false
+            args.text_padding_left_right = text_padding_left_right
         end
-        args.use_low_height = nil
-        args.height = org_height or math.floor(Screen:getHeight() * 0.8)
-        args.use_computed_height = args.use_computed_height or false
-        args.text_padding_left_right = text_padding_left_right
     end
 
     --* optionally search for a externally transmitted search string:
@@ -405,15 +414,12 @@ function Dialogs:textBoxTabbed(active_tab, args)
     return self.tabbed_textbox
 end
 
-function Dialogs:showButtonDialog(title, button_table, no_overlay, show_parent)
-    if not no_overlay then
-        self:showOverlay()
-    end
-
+function Dialogs:showButtonDialog(title, button_table)
     local dialog
     dialog = ButtonDialogTitle:new{
         title = title,
-        no_overlay = no_overlay,
+        no_overlay = true,
+        modal = true,
         move_to_top = true,
         use_low_title = true,
         button_font_face = "x_smallinfofont",
@@ -423,17 +429,15 @@ function Dialogs:showButtonDialog(title, button_table, no_overlay, show_parent)
         title_align = "center",
         width_factor = 0.95,
         button_width = 0.33,
-        modal = true,
-        show_parent = show_parent,
+        show_parent = KOR.ui,
         buttons = button_table,
         after_close_callback = function()
             KOR.registry:unset("xray_toc_dialog_shown")
         end
     }
     UIManager:show(dialog)
-    self:closeOverlay()
-    return dialog
     --KOR.registryset("TextViewer_index", dialog)
+    return dialog
 end
 
 --* see ((DIALOGS))

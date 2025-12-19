@@ -602,6 +602,7 @@ function XrayUI:matchNameInPageOrParagraph(text, lower_text, needle, hits, parti
 end
 
 --- @private
+--- @param textviewer TextViewer
 function XrayUI:onInfoPopupLoadShowToc(textviewer, headings)
     KOR.registry:unset("toc_info_button_injected")
     --* only show the toc automatically when there are more than 2 xray items:

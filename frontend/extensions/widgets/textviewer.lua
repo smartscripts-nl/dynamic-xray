@@ -43,6 +43,7 @@ local T = require("ffi/util").template
 local lfs = require("libs/libkoreader-lfs")
 local util = require("util")
 local _ = require("gettext")
+local tr = KOR:initCustomTranslations()
 local Input = require("extensions/modules/input")
 local Screen = Device.screen
 
@@ -914,7 +915,7 @@ function TextViewer:showToc()
     )
 
     local title = DX.s.ui_mode == "paragraph" and "Xray items in deze alinea" or "Xray items op deze pagina"
-    self.toc_dialog = KOR.dialogs:showButtonDialog(buttons_count .. " " .. title, button_table, "no_overlay", self)
+    self.toc_dialog = KOR.dialogs:showButtonDialog(buttons_count .. " " .. title, button_table)
 
     KOR.registry:set("xray_toc_dialog_shown", true)
 end
@@ -1118,7 +1119,7 @@ function TextViewer:getDefaultButtons()
             callback = function()
                 self:onClose()
                 Device.input.setClipboardText(self.text)
-                KOR.messages:notify("tekst naar klembord gekopieerd...")
+                KOR.messages:notify(tr("text copied to clipboard..."))
             end,
         }),
         KOR.buttoninfopopup:forTextViewerToTop({
