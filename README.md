@@ -14,6 +14,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
   - [Fiction books](#fiction-books)
   - [Non-fiction books](#non-fiction-books)
 - [Installation](#installation)
+  - [Entering your own translations for the DX interface](#entering-your-own-translations-for-the-dx-interface)
 - [Usage tips](#usage-tips)
   - [Adding Xray items](#adding-xray-items)
   - [Displaying help information about the function of buttons](#displaying-help-information-about-the-function-of-buttons)
@@ -35,14 +36,22 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
 ## Installation
 
 1. Clone this repo somewhere. From there:
-2. Copy the folder "extensions" under frontend to the frontend folder of your KOReader installation **(DON'T overwrite your KOReader frontend folder with the frontend folder from the repository!)**
-3. Copy xraycontroller.koplugin under the plugins folder to your KOReader plugins folder **(same warning as under the previous step: don't overwrite your entire plugins folder!)**
-4. Copy the svg icons under resources/icons/mdlight to the corresponding folder under your KOReader installation dir **(don't overwrite your original folders and files here!)**
+2. Copy the folder "extensions" under frontend to the frontend folder of your KOReader installation **(⚠️ DON'T overwrite your KOReader frontend folder with the frontend folder from the repository!)**
+3. Copy xraycontroller.koplugin under the plugins folder to your KOReader plugins folder **(⚠️ same warning as under the previous step: don't overwrite your entire plugins folder!)**
+4. Copy the svg icons under resources/icons/mdlight to the corresponding folder under your KOReader installation dir **(
+   ⚠️ don't overwrite your original folders and files here!)**
 5. The "koreader-settings-and-patches" folder in this repository represents the settings folder of your koreader installation. In most cases this target folder will be named "koreader". In its root you should find settings.reader.lua.
 6. In that target folder create a folder patches if it doesn't exist yet and copy koreader-settings-and-patches/patches/2-xray-patches.lua to that target patches folder.
 7. Copy koreader-settings-and-patches/settings/settings_manager.lua to the settings subfolder of the koreader settings folder of your current installation (this folder should already be present and should contain many files, e.g. sqlite3-files for KOReader's databases).
-8. If you want to translate messages in the Dynamic Xray system, you can do that in frontend/extensions/translations/xray-translations.po. In that file add your translations after "msgstr" entries, but take care that you adhere to the instructions at the start of that file.
-9. You could also choose to disable these translations (and therefor see all DX button labels etc. in English) by adding one character to the msgid blocks in the transations file. E.g. change msgid "Short names" to msgid "aShort names".
+
+### Entering your own translations for the DX interface
+
+1. If you want to translate messages in the Dynamic Xray system, you can do that in
+   frontend/extensions/translations/xray-translations.po. In that file add your translations after "msgstr" entries, but
+   take care that you adhere to the instructions at the start of that file.
+2. You could also choose to **⚠️ disable these translations** (and therefor see all DX button labels etc. in English) by adding
+   one character to the msgid blocks in the transations file. E.g. change msgid "Short names" to msgid "aShort names".
+3. **⚠️ When you clone a new version of DX**, generate a diff of extensions/translations/xray-translations.po in that cloned version with your personal version of this file in your KOReader settings folder. And then only add the new entries to your personal translations in the latter file.
 
 ## Usage tips
 
