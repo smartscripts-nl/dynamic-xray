@@ -192,8 +192,7 @@ function XrayModel:addLinkedItemsAsContextButtonsForViewer(buttons, needle_item,
             title = " extra xray-items:",
             parent_dialog = KOR.ui,
             item_callback = function(citem)
-                DX.c:resetFilteredItems()
-                DX.d:viewItem(citem, nil, tapped_word)
+                DX.d:viewItemByIndex(citem)
             end,
             item_hold_callback = function(citem, iicon)
                 KOR.dialogs:textBox({
@@ -221,9 +220,7 @@ function XrayModel:insertViewerContextButton(row, item, tapped_word)
         text_font_face = "x_smallinfofont",
         font_size = self.related_item_text_font_size,
         callback = function()
-            DX.c:resetFilteredItems()
-            DX.d:closeViewer()
-            DX.d:viewItem(item, nil, tapped_word)
+            DX.d:viewItemByIndex(item)
         end,
         hold_callback = function()
             KOR.dialogs:textBox({
