@@ -8,6 +8,22 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 * The advantage of the DX approach is that the user can dynamically add and modify items; the advantage of the Kindle approach is that it isn't error-prone.
 * DX can produce false hits, because it uses matching of the words in ebook texts to determine whether Xray items are present. For example: DX will be in trouble if there are two or more persons with the same first name in a book; DX won't be able to differentiate between them. But in at about 95% of cases the matches shown will be correct.
 
+## Table of contents in this readme
+- [Use cases](#use-cases)
+  - [Fiction books](#fiction-books)
+  - [Non-fiction books](#non-fiction-books)
+- [Installation](#installation)
+- [Usage tips](#usage-tips)
+  - [Adding Xray items](#adding-xray-items)
+  - [Displaying help information about the function of buttons](#displaying-help-information-about-the-function-of-buttons)
+- [Some pictures of DX in action](#some-pictures-of-dx-in-action)
+- [Problem solving](#problem-solving)
+- [About the code](#about-the-code)
+- [Development history and usage](#development-history-and-usage)
+- [Icons](#icons)
+- [Tips for navigating through the code](#tips-for-navigating-through-the-code)
+- [License](#license)
+
 ## Use cases
 
 ### Fiction books
@@ -33,6 +49,7 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
 
 * The patch file adds a button "+ Xray" to the popup dialog for text selections. With this button you can add new Xray items from the text selection.
 * From the list of Xray items (to which you can assign a gesture, for quickly showing it), you can view and edit items, or add new items, by tapping on the plus-icon in the dialog footer.
+* When you select a longer text in the ebook and tap on "+ Xray", DX will set this text as the description of the new Xray item. You then only have to type its name in the field below the description.
 * By clicking on lightning or star icons in the margins of ebook pages, you can call up an overview of Xray items in resp. the current page or the paragraph with the star icon.
 * You can assign a gesture to quickly call up the list of all Xray items in the book or series: cog icon in the main KOReader menu → Taps and gestures → Gesture manager → Multiswipes → select a gesture → Reader → Show xray-items in this book/series
 * In the same way, you can also attach a gesture to the action "Add an Xray item".
@@ -43,6 +60,29 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 * A point signifies a one action button.
 * These actions can then be executed by tapping on the buttons at the bottom of the help dialog.
 * If you don't longpress the main button, which has the help information, but simply tap it, its main function will be immediately triggered.
+
+## Some pictures of DX in action
+
+![01 Xray marker in page](images/01-xray-marker-in-page.png)
+01 Xray marker in page
+
+![02 Xray info dialog after click on marker](images/02-xray-info-dialog-after-click-on-marker.png)
+02 Xray info dialog after click on marker
+
+![03 List of Xray items](images/03-list-of-xray-items.png)
+03 List of Xray items
+
+![04 Xray item viewer tab 1](images/04-xray-item-viewer-tab-1.png)
+04 Xray item viewer tab 1
+
+![05 Xray item viewer tab 2](images/05-xray-item-viewer-tab-2.png)
+05 Xray item viewer tab 2
+
+![06 Xray item editor tab 1](images/06-xray-item-editor-tab-1.png)
+06 Xray item editor tab 1
+
+![07 Xray item editor tab 2](images/07-xray-item-editor-tab-2.png)
+07 Xray item editor tab 2
 
 ## Problem solving
 
@@ -73,25 +113,22 @@ under the keyboard. You can rectify this by:
 * Since the KOR extensions system uses many heavily modified stock KOReader modules and widgets, these modified files are loaded instead of the stock versions from the subfolders "modules" and "widgets" under the "extensions" folder.
 * DeepWiki.com has an extensive analysis of the DX system. See [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/smartscripts-nl/dynamic-xray).
 
+## Development history and usage
+
+See [Dynamic Xray plugin · koreader/koreader · Discussion #12964 · GitHub](https://github.com/koreader/koreader/discussions/12964)
+for the development history of this plugin and for Dynamic Xray usage examples by screenprints and screencasts.
+
 ## Icons
 
 Most icons used by DX were downloaded from [Online Webfonts](https://www.onlinewebfonts.com/icon/), and some from [SVG Repo](https://www.svgrepo.com/). In some cases, I've renamed these icons, to clarify their function in DX.
 
-## Development history and usage
-
-See [Dynamic Xray plugin · koreader/koreader · Discussion #12964 · GitHub](https://github.com/koreader/koreader/discussions/12964) for the development history of this plugin and for Dynamic Xray usage examples by screenprints and screencasts.
-
-## Tip for navigating the code
+## Tips for navigating through the code
 
 * Use a JetBrains IDE (e.g. PhpStorm) with the extensions EmmyLua and Better Highlights. With that you get clickable comments and very good type hints, which makes it much, much easier to navigate through the code.
 
 * Also, with Better Highlights, you can colorize comments differently depending on the use case, for much improved readability.
 
 * In Better Highlights settings set (( and )) as wikilink start and end - the default is [[ and ]] -, so you can add clickable comments to --(( )) lua commented blocks.
-
-## No support provided
-
-Alas, I don't have time to support this plugin. Use it at your own risk. If and when the KOReader developers community would integrate this plugin into the source code of KOReader, you can probably get support there.
 
 ## License
 
