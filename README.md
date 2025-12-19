@@ -21,7 +21,10 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 - [DX in action](#dx-in-action)
     - [Videos](#videos)
     - [Images](#images)
+- [DX Settings menu](#dx-settings-menu)
 - [Problem solving](#problem-solving)
+    - [Buttons in editor not visible](#buttons-in-editor-not-visible)
+    - [User has a database filename other than "bookinfo_cache.sqlite3"](#user-has-a-database-filename-other-than-bookinfo_cachesqlite3)
 - [About the code](#about-the-code)
 - [Development history and usage](#development-history-and-usage)
 - [Icons](#icons)
@@ -47,6 +50,7 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
 5. The "koreader-settings-and-patches" folder in this repository represents the settings folder of your koreader installation. In most cases this target folder will be named "koreader". In its root you should find settings.reader.lua.
 6. In that target folder create a folder patches if it doesn't exist yet and copy koreader-settings-and-patches/patches/2-xray-patches.lua to that target patches folder.
 7. Copy koreader-settings-and-patches/settings/settings_manager.lua to the settings subfolder of the koreader settings folder of your current installation (this folder should already be present and should contain many files, e.g. sqlite3-files for KOReader's databases).
+8. **⚠️ Check whether the database filename in your KOReader settings folder is "bookinfo_cache.sqlite3".** If not, go through the additional steps listed in [User has a database filename other than "bookinfo_cache.sqlite3"](#user-has-a-database-filename-other-than-bookinfo_cachesqlite3)
 
 ### Entering your own translations for the DX interface
 
@@ -107,21 +111,36 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 ![08 Help info for buttons](images/08-help-info-for-buttons.png)
 08 Help info for buttons
 
-## Problem solving
+## DX Settings menu
 
-In the add/edit Xray item dialog, under the first tab "xray-item", some users don't see buttons, because they are hidden
-under the keyboard. You can rectify this by:
-
-* Closing the dialog
 * Open the KOReader main menu
 * Go to most left main item → Dynamic Xray (NB: this item is positioned at the bottom of the items, so you might have
   to navigate to the next subpage) → Settings
 * This same settings menu is also reachable through the cog icon at the top left of these three dialogs:
-  * the Xray items list
-  * the Xray item viewer
-  * the popup dialog after you clicked upon a lightning or a star marker in the text of the e-book
+    * the Xray items list
+    * the Xray item viewer
+    * the popup dialog after you clicked upon a lightning or a star marker in the text of the e-book
+
+## Problem solving
+
+### Buttons in editor not visible
+
+In the add/edit Xray item dialog, under the first tab "xray-item", some users don't see buttons, because they are hidden under the keyboard. You can rectify this by:
+
+* Closing the dialog
+* Go to the [DX Settings menu](#dx-settings-menu)
 * Tap on editor_vertical_align_buttontable and set this value to false
 * Now re-open the Xray add or edit form
+
+### User has a database filename other than "bookinfo_cache.sqlite3"
+
+The default database filename in the KOReader settings dir will be "bookinfo_cache.sqlite3". But apparently **⚠️ some
+users have a different database filename**, with a language_code attached at the front, e.g. "
+PT_bookinfo_cache.sqlite3". In that case:
+
+1. Go to the [DX Settings menu](#dx-settings-menu)
+2. Enter and save the correct database file name for your installation.
+3. KOReader will automatically be reloaded and then create the xray_items table in your database.
 
 ## About the code
 

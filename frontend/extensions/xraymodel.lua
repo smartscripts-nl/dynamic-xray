@@ -69,12 +69,21 @@ local XrayModel = WidgetContainer:new{
 
 --* this method will be called from ((KOR#initExtensions)):
 function XrayModel:init()
+    self:setDatabaseFile()
     --* if we would use this and consequently would reference DX.c.model instead of DX.m in the other DX modules, data would be reloaded from database onReaderReady for each new book:
     self:initDataHandlers()
     data_saver:createDB()
 end
 
+--- @private
+function XrayModel:setDatabaseFile()
+    if has_text(DX.s.database_file) and DX.s.database_file ~= "bookinfo_cache.sqlite3" then
+        KOR.databases:setDatabaseFileName(DX.s.database_file ~= "bookinfo_cache.sqlite3")
+    end
+end
+
 --* using di to inject these data handlers resulted sometimes in crashes, so therefor loading them hardcoded in this method:
+--- @private
 function XrayModel:initDataHandlers()
     --* XraySettings must always be registered, so it was registered in ((KOR#initExtensions)) > ((KOR#registerXrayModules))...
 

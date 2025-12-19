@@ -14,10 +14,16 @@ local type = type
 
 --- @class Databases
 local Databases = WidgetContainer:extend{
+    --* this will be the default database filename for most users, but in case of a differing name, e.g. PT_bookinfo_cache.sqlite3, that name can be made known to DX via the XraySettings setting database_filename and ((XrayModel#setDatabaseFile)) > ((Databases#setDatabaseFileName)):
+    database_file = "bookinfo_cache.sqlite3",
     database_folder = nil,
     home_dir = nil,
     home_dir_needle = nil,
 }
+
+function Databases:setDatabaseFileName(database_file)
+    self.database_file = database_file
+end
 
 function Databases:closeConnAndStmt(conn, stmt)
     self:closeInfoStmts(stmt)
@@ -50,25 +56,24 @@ function Databases:closeInfoStmts(stmt, ...)
     --* return nil, nil, nil, nil etc.
 end
 
-function Databases:_getConn(db_name)
+function Databases:_getConn()
     self.database_folder = self.database_folder or DataStorage:getSettingsDir()
-    return SQ3.open(self.database_folder .. "/" .. db_name)
+    return SQ3.open(self.database_folder .. "/" .. self.database_file)
 end
 
 function Databases:getDBconnForBookInfo()
     local keep_open_conn = KOR.registry:get("db_conn_info")
-    local db_name = "bookinfo_cache.sqlite3"
     if keep_open_conn then
         if not keep_open_conn._closed then
             return keep_open_conn, true
         else
-            local conn = self:_getConn(db_name)
+            local conn = self:_getConn()
             KOR.registry:set("db_conn_info", conn)
             return conn, true
         end
     end
 
-    return self:_getConn(db_name), false
+    return self:_getConn(), false
 end
 
 function Databases:getNewItemId(conn)

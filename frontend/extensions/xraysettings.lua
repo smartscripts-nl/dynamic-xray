@@ -22,13 +22,6 @@ local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 
-local G_reader_settings = G_reader_settings
-local has_no_items = has_no_items
-
-local keyboard_height = G_reader_settings:readSetting("keyboard_height")
-if has_no_items(keyboard_height) then
-    keyboard_height = 744
-end
 --local locked_xray_setting_message = _("This setting will be automatically computed by Dynamic Xray and therefor the user cannot modify it.")
 
 --- @class XraySettings
@@ -41,6 +34,11 @@ local XraySettings = WidgetContainer:new{
         batch_count_for_import = {
             value = 5,
             explanation = "This number determines in how many batches Xray items from other books will be imported. In case of very many items, a higher number here is probably prudent.",
+            locked = 0,
+        },
+        database_filename = {
+            value = "bookinfo_cache.sqlite3",
+            explanation = "Only change this setting if your database file in the KOReader settings folder has a language code at the start. E.g. like \"PT_bookinfo_cache.sqlite3\".",
             locked = 0,
         },
         editor_vertical_align_buttontable = {

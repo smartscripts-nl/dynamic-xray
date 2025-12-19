@@ -24,6 +24,7 @@ local _ = KOR:initCustomTranslations()
 local Screen = Device.screen
 local T = require("ffi/util").template
 
+local G_reader_settings = G_reader_settings
 local has_text = has_text
 local pairs = pairs
 local table = table
@@ -65,6 +66,9 @@ function SettingsManager:setUp()
     end
 
     if self.settings_db:isTrue(self.settings_index .. "_overrule") or not self.settings then
+        if not KOR.tables then
+            KOR.tables = require("extensions/tables")
+        end
         self.settings = KOR.tables:shallowCopy(self.parent.settings_template)
         self:saveSettings("dont_flush")
         self.settings_db:makeFalse(self.settings_index .. "_overrule")
@@ -200,7 +204,7 @@ function SettingsManager:chooseSetting(key, current_nr, current_value, options, 
                 UIManager:close(self.option_chooser)
                 self:saveSetting(key, options[current])
                 self:changeMenuSetting(key, options[current], current_nr)
-                text_modified = _(options[current]) or options[current]
+                text_modified = _(options[current])
                 KOR.messages:notify(_("setting ") .. key .. _(" modified to ") .. tostring(text_modified), 4)
             end
         })
@@ -295,6 +299,16 @@ function SettingsManager:saveSetting(key, value)
     self.parent[key] = value
     self.settings[key].value = value
     self:saveSettings()
+    if key == "database_filename" then
+        G_reader_settings:makeFalse("xray_items_db_created")
+        KOR.messages:notify(_("KOReader will be reloaded now..."))
+        UIManager:scheduleIn(2, function()
+            if KOR.ui.document then
+                KOR.ui:reloadDocument()
+            end
+        end)
+        return
+    end
     --* this method can be called externally, so we need to re-setup:
     self.settings_for_menu = {}
     self:setUp()
