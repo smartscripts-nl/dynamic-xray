@@ -94,9 +94,11 @@ function XrayFormsData:initNewItemFormProps(name_from_selected_text, active_form
     local title = use_search_text and KOR.icons.xray_add_item_bare or no_hits_title
     if use_search_text then
         --! this statement is crucial to get an indicatior of the numerical presence of this item in de current book:
-        item_copy.name = search_text
+        item_copy.name = target_field == "name" and search_text or ""
         --* book_hits only retrieved here to give the user an indication how important this item is in the text of the book:
-        views_data:setItemHits(item_copy, { for_display_mode = "book", force_update = true })
+        if target_field ~= "description" then
+            views_data:setItemHits(item_copy, { for_display_mode = "book", force_update = true })
+        end
         self:resetViewerItemId()
         if item_copy.book_hits == 0 then
             title = no_hits_title
