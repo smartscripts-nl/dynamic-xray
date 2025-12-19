@@ -135,8 +135,8 @@ In the add/edit Xray item dialog, under the first tab "xray-item", some users do
 
 ### User has a database filename other than "bookinfo_cache.sqlite3"
 
-The default database filename in the KOReader settings dir will be "bookinfo_cache.sqlite3". But apparently **⚠️ some
-users have a different database filename**, with a language_code attached at the front, e.g. "
+The default database filename in the KOReader settings dir will almost always be "bookinfo_cache.sqlite3". But apparently **⚠️ some
+users have a different database filename**, with a prefix string attached by some other plugin at the front, e.g. "
 PT_bookinfo_cache.sqlite3". In that case:
 
 1. Go to the [DX Settings menu](#dx-settings-menu)
