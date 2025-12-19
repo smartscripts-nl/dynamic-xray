@@ -7,6 +7,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 * DX differs from the Kindle system in that the user can define items dynamically, while on Kindles these items are "baked into" the ebook.
 * The advantage of the DX approach is that the user can dynamically add and modify items; the advantage of the Kindle approach is that it isn't error-prone.
 * DX can produce false hits, because it uses matching of the words in ebook texts to determine whether Xray items are present. For example: DX will be in trouble if there are two or more persons with the same first name in a book; DX won't be able to differentiate between them. But in at about 95% of cases the matches shown will be correct.
+* All interface texts can be translated by the user.
 
 ## Table of contents in this readme
 - [Use cases](#use-cases)
