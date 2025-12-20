@@ -2,7 +2,7 @@
 This is part of the Dynamic Xray plugin; it is the model (databases operations etc.) for XrayController. It has several child data handlers.
 
 The Dynamic Xray plugin has kind of a MVC structure:
-M = ((XrayDataSaver)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
+M = ((XrayDataSaver)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData)), ((XrayTranslations))
 V = ((XrayUI)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
 
@@ -32,10 +32,12 @@ local DX = DX
 local G_reader_settings = G_reader_settings
 local has_text = has_text
 local math = math
+local os = os
 local string = string
 local table = table
+local tonumber = tonumber
 
-local DB_SCHEMA_VERSION = 20251027
+local DB_SCHEMA_VERSION = 20251220
 local count
 --- @type XrayModel parent
 local parent
@@ -62,9 +64,8 @@ series_hits is NOT a db field, it is computed dynamically by queries XrayDataLoa
 --* compare ((XrayDataLoader)) for loading data:
 --- @class XrayDataSaver
 local XrayDataSaver = WidgetContainer:new{
-    create_db = true,
     queries = {
-        create_db = [[
+        create_items_table = [[
             CREATE TABLE IF NOT EXISTS "xray_items" (
                 "id" INTEGER NOT NULL,
                 "ebook",
@@ -87,6 +88,16 @@ local XrayDataSaver = WidgetContainer:new{
                 "ebook"	ASC
             );
         ]]
+
+        create_translations_table = [[
+            CREATE TABLE IF NOT EXISTS xray_translations
+            (
+                msgid  TEXT not null
+                    constraint xray_translations_unique_key
+                    unique,
+                msgstr TEXT not null,
+                md5    TEXT not null
+            );]],
 
         delete_item_book =
             "DELETE FROM xray_items WHERE id = ?;",
@@ -441,8 +452,9 @@ function XrayDataSaver:setSeriesHitsForImportedItems(conn, current_ebook_basenam
 end
 
 --- @private
-function XrayDataSaver:createDB()
-    if not self.create_db or G_reader_settings:isTrue("xray_items_db_created") then
+function XrayDataSaver:createTables()
+    local now = tonumber(os.date("%Y%m%d"))
+    if now > DB_SCHEMA_VERSION and G_reader_settings:isTrue("xray_items_db_created") then
         return
     end
 
@@ -450,8 +462,11 @@ function XrayDataSaver:createDB()
     --* make it WAL, if possible
     local pragma = Device:canUseWAL() and "WAL" or "TRUNCATE"
     db_conn:exec(string.format("PRAGMA journal_mode=%s;", pragma))
-    --* create db
-    db_conn:exec(self.queries.create_db)
+
+    --* create tables:
+    db_conn:exec(self.queries.create_items_table)
+    db_conn:exec(self.queries.create_translations_table)
+
     --* check version; user_version is unique to sqlite and cannot be changed to another name:
     local db_version = db_conn:rowexec("PRAGMA user_version;")
     --* Update version

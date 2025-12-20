@@ -2,7 +2,6 @@
 local require = require
 
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
-local translator = require("extensions/translations/getmoduletext")
 
 --* initialization of extensions, plugins etc. below is done through ((ExtensionsInit)), called from reader.lua or the init methods of plugins
 --- @class KOR
@@ -213,17 +212,16 @@ function KOR:registerWidget(KOR_name, widget)
 end
 
 function KOR:initCustomTranslations()
-	if self.translations_source then
-		return translator
+	local DX = DX
+	--* this prop will only be set in ((XrayTranslations#loadAllTranslations)):
+	if DX.t then
+		return DX.t.get
 	end
 
-	self.translations_source = KOR.registry:get("module_translations_source", function()
-		local lfs = require("libs/libkoreader-lfs")
-		return lfs.currentdir() .. "/frontend/extensions/translations/xray-translations.po"
-	end)
-	translator.openTranslationsSource(self.translations_source)
-
-	return translator
+	--* if DX.t not initialized yet, return a temporary function that simply returns the key as "translation":
+	return function(key)
+		return key
+	end
 end
 
 return KOR

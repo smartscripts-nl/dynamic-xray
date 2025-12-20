@@ -6,7 +6,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 * This DX plugin was inspired by the X-ray system on Kindles (see explanation on [Amazon X-Ray on Kindle | All you need to know - YouTube](https://youtu.be/mreow-OrGsU?si=c_3NhHKBDa1BFEvI)).
 * DX differs from the Kindle system in that the user can define items dynamically, while on Kindles these items are "baked into" the ebook.
 * The advantage of the DX approach is that the user can dynamically add and modify items; the advantage of the Kindle approach is that it isn't error-prone.
-* DX can produce false hits, because it uses matching of the words in ebook texts to determine whether Xray items are present. For example: DX will be in trouble if there are two or more persons with the same first name in a book; DX won't be able to differentiate between them. But in at about 95% of cases the matches shown will be correct.
+* DX can produce false hits, because it uses matching of the words in ebook texts to determine whether Xray items are present. For example: DX will be in trouble if there are two or more persons with the same first name in a book; DX won't be able to differentiate between them. But in at about 95% of cases, the matches shown will be correct.
 * All interface texts can be translated by the user.
 
 ## Table of contents in this readme
@@ -48,25 +48,26 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
    * **⚠️ NB: Don't overwrite your entire plugins folder!**
 4. Copy the svg icons under resources/icons/mdlight to the corresponding folder under your KOReader installation dir.
    * **⚠️ NB: Don't overwrite your original folders and files here!**
-5. The "koreader-settings-and-patches" folder in this repository represents the settings folder of your koreader installation. In most cases this target folder will be named "koreader". In its root you should find settings.reader.lua.
-6. In that target folder create a folder patches if it doesn't exist yet and copy koreader-settings-and-patches/patches/2-xray-patches.lua to that target patches folder.
+5. The "koreader-settings-and-patches" folder in this repository represents the settings folder of your koreader installation. In most cases, this target folder will be named "koreader". In its root you should find settings.reader.lua.
+6. In that target folder, create a folder patches if it doesn't exist yet and copy koreader-settings-and-patches/patches/2-xray-patches.lua to that target patches folder.
 7. Copy koreader-settings-and-patches/settings/settings_manager.lua to the settings subfolder of the koreader settings folder of your current installation (this folder should already be present and should contain many files, e.g. sqlite3-files for KOReader's databases).
 8. **⚠️ Check whether the database filename in your KOReader settings folder is "bookinfo_cache.sqlite3".** If not, go through the additional steps listed in [User has a database filename other than "bookinfo_cache.sqlite3"](#user-has-a-database-filename-other-than-bookinfo_cachesqlite3)
 
 ### Entering your own translations for the DX interface
 
-1. If you want to translate messages in the Dynamic Xray system, you can do that in
-   frontend/extensions/translations/xray-translations.po. In that file add your translations after "msgstr" entries, but
-   take care that you adhere to the instructions at the start of that file.
-2. You could also choose to **💡disable these translations** (and therefor see all DX button labels etc. in English) by adding
-   one character to the msgid blocks in the transations file. E.g. change msgid "Short names" to msgid "aShort names".
-3. **💡When you clone a new version of DX**, generate a diff of extensions/translations/xray-translations.po in that cloned version with your personal version of this file in your KOReader settings folder. And then only add the new entries to your personal translations in the latter file.
+As of 2025-12-25 translations are now stored in the table xray_translations in the database. This table will be automatically created upon KOReader start. The translations are lazily stored in that table, only when requested.
+
+This will make the code much easier to maintain for me _and_ for cloners...
+
+**⚠️ The old folder frontend/extensions/translations with in it a .po-file has therefore been removed.**
+
+A module with which users can enter their own translations will soon follow...
 
 ## Usage tips
 
 ### Adding Xray items
 
-* The patch file adds a button "+ Xray" to the popup dialog for text selections. With this button you can add new Xray items from the text selection.
+* The patch file adds a button "+ Xray" to the popup dialog for text selections. With this button, you can add new Xray items from the text selection.
 * From the list of Xray items (to which you can assign a gesture, for quickly showing it), you can view and edit items, or add new items, by tapping on the plus-icon in the dialog footer.
 * When you select a longer text in the ebook and tap on "+ Xray", DX will set this text as the description of the new Xray item. You then only have to type its name in the field below the description.
 * By clicking on lightning or star icons in the margins of ebook pages, you can call up an overview of Xray items in resp. the current page or the paragraph with the star icon.

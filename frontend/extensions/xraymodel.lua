@@ -2,7 +2,7 @@
 This is part of the Dynamic Xray plugin; it is the model (databases operations etc.) for XrayController. It has several child data handlers.
 
 The Dynamic Xray plugin has kind of a MVC structure:
-M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
+M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData)), ((XrayTranslations))
 V = ((XrayUI)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
 
@@ -41,6 +41,8 @@ local data_loader
 local data_saver
 --- @type XrayTappedWords tapped_words
 local tapped_words
+--- @type XrayTranslations translations
+local translations
 --- @type XrayFormsData forms_data
 local forms_data
 --- @type XrayViewsData views_data
@@ -72,7 +74,6 @@ function XrayModel:init()
     self:setDatabaseFile()
     --* if we would use this and consequently would reference DX.c.model instead of DX.m in the other DX modules, data would be reloaded from database onReaderReady for each new book:
     self:initDataHandlers()
-    data_saver:createDB()
 end
 
 --- @private
@@ -94,6 +95,11 @@ function XrayModel:initDataHandlers()
     data_saver = require("extensions/xraydatasaver")
     data_saver:initDataHandlers(self)
     DX.setProp("ds", data_saver)
+    --* since XrayTranslations needs table xrays_translations to be created, we run this here:
+    data_saver:createTables()
+
+    translations = require("extensions/xraytranslations")
+    DX.setProp("t", translations)
 
     views_data = require("extensions/xrayviewsdata")
     views_data:initDataHandlers(self)

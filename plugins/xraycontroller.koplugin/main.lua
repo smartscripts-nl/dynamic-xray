@@ -1,7 +1,7 @@
 -- #((Dynamic Xray: module info))
 --[[--
 This is the controller for the Dynamic Xray plugin. It has been structured in kind of a MVC structure:
-M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
+M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData)), ((XrayTranslations))
 V = ((XrayUI)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
 --]]--
@@ -35,7 +35,7 @@ E.g. ((ReaderDictionary#onShowDictionaryLookup)) > ((XrayController#saveNewItem)
 
 --* SAVING ITEMS
 
-((XrayButtons#forItemAddOrEditForm)) and then:
+((XrayButtons#forItemEditor)) and then:
 
 for existing items: ((XrayController#saveUpdatedItem)) > ((XrayFormsData#getAndStoreEditedItem)) > ((XrayFormsData#storeItemUpdates)) > ((XrayDataSaver#storeUpdatedItem))
 
