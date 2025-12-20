@@ -59,11 +59,11 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
 
 As of 2025-12-25 translations are now stored in the table xray_translations in the database. This table will be automatically created upon KOReader start. The translations are lazily stored in that table, only when requested.
 
-This will make the code much easier to maintain for me _and_ for cloners...
+This will make the code and updates much easier to maintain for me _and_ for cloners...
 
-**⚠️ The old folder frontend/extensions/translations with in it a .po-file has therefore been removed.**
+**⚠️ The folder frontend/extensions/translations with in it a .po-file has therefore now been removed.**
 
-A module with which users can enter their own translations will soon follow...
+A module with which users can enter their own translations will soon follow... Until then, you can enter your translations directly in the database, in the msgstr fields.
 
 ## Usage tips
 
