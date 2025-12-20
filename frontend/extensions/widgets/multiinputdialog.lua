@@ -370,64 +370,73 @@ function MultiInputDialog:insertFieldIntoDataGroup(DataGroup, field)
 end
 
 --- @private
-function MultiInputDialog:insertFieldIntoRow(DataGroup, i)
-
-    local field_height = self.input_fields[self.current_field]:getSize().h
-
+--- @param field_side number 1 if left side, 2 if right side
+function MultiInputDialog:insertFieldIntoRow(DataGroup, field_side)
     --* for one field rows immediately insert the input field:
     if not self.has_field_rows or self.fields_count == 1 then
-        local group = CenterContainer:new{
-            dimen = Geom:new{
-                w = self.full_width,
-                h = field_height,
-            },
-        self.input_fields[self.current_field],
-        }
-        table.insert(DataGroup, group)
+        self:insertSingleFieldInRow(DataGroup)
 
     --* handle rows with multipe fields:
     elseif self.has_field_rows and self.fields_count > 1 then
+        self:insertDuoFieldsInRow(field_side)
+    end
+end
 
-        local tile_width = self.full_width / self.fields_count
+--- @private
+function MultiInputDialog:insertSingleFieldInRow(DataGroup)
+    local field_height = self.input_fields[self.current_field]:getSize().h
+    local group = CenterContainer:new{
+        dimen = Geom:new{
+            w = self.full_width,
+            h = field_height,
+        },
+        self.input_fields[self.current_field],
+    }
+    table.insert(DataGroup, group)
+end
 
-        local has_description = self.input_fields[self.current_field].description
-        local description_label = has_description and self:getDescription(self.input_fields[self.current_field], tile_width) or nil
-        if i == 1 then
-            if has_description then
+--- @private
+--- @param field_side number 1 if left side, 2 if right side
+function MultiInputDialog:insertDuoFieldsInRow(field_side)
+    local tile_width = self.full_width / self.fields_count
+
+    local has_description = self.input_fields[self.current_field].description
+    local description_label = has_description and self:getDescription(self.input_fields[self.current_field], tile_width) or nil
+    if field_side == 1 then
+        if has_description then
 
             self.input_description[self.current_field] = FrameContainer:new{
-                    padding = self.description_padding,
-                    margin = 0,
-                    bordersize = 0,
-                    --* description in a multiple field row:
-                    description_label,
-                }
-            table.insert(self.halved_descriptions, LeftContainer:new{
-                    dimen = Geom:new{
-                        w = tile_width,
-                    h = self.input_description[self.current_field]:getSize().h,
-                    },
-                self.input_description[self.current_field],
-                })
-            end
-        end
-
-        --* insert right side field:
-        if i == 2 and has_description then
-            self.input_description[self.current_field] = FrameContainer:new{
-                    padding = self.description_padding,
-                    margin = 0,
-                    bordersize = 0,
-                    description_label,
-                }
+                padding = self.description_padding,
+                margin = 0,
+                bordersize = 0,
+                --* description in a multiple field row:
+                description_label,
+            }
             table.insert(self.halved_descriptions, LeftContainer:new{
                 dimen = Geom:new{
                     w = tile_width,
-                h = self.input_description[self.current_field]:getSize().h,
+                    h = self.input_description[self.current_field]:getSize().h,
                 },
-            self.input_description[self.current_field],
+                self.input_description[self.current_field],
             })
         end
+    end
+
+    --* insert right side field:
+    if field_side == 2 and has_description then
+        self.input_description[self.current_field] = FrameContainer:new{
+            padding = self.description_padding,
+            margin = 0,
+            bordersize = 0,
+            description_label,
+        }
+        table.insert(self.halved_descriptions, LeftContainer:new{
+            dimen = Geom:new{
+                w = tile_width,
+                h = self.input_description[self.current_field]:getSize().h,
+            },
+            self.input_description[self.current_field],
+        })
     end
 end
 
