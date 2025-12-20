@@ -98,7 +98,6 @@ local Screen = Device.screen
 local DX = DX
 local math = math
 local table = table
-local unpack = unpack
 
 --* if we extend FocusManager here, then crash because of ((MultiInputDialog#init)) > InputDialog.init(self)
 --- @class MultiInputDialog
@@ -171,11 +170,7 @@ function MultiInputDialog:getValues()
     return values
 end
 
---- BEWARE: Live ref to an internal component!
-function MultiInputDialog:getRawFields()
-    return self.input_fields
-end
-
+--- @private
 function MultiInputDialog:onSwitchFocus(inputbox)
     --* unfocus current inputbox
     self._input_widget:unfocus()
@@ -438,6 +433,7 @@ function MultiInputDialog:insertFieldIntoRow(DataGroup, i)
     end
 end
 
+--- @private
 function MultiInputDialog:getDescription(field, width)
     local text = field.info_popup_text and
     Button:new{
@@ -485,6 +481,7 @@ function MultiInputDialog:getDescription(field, width)
     return label, label_height
 end
 
+--- @private
 function MultiInputDialog:editField(input, input_type, field_hint, allow_newline, callback)
     local title = "Bewerk veldinhoud"
     if field_hint then
@@ -500,7 +497,6 @@ function MultiInputDialog:editField(input, input_type, field_hint, allow_newline
         input_hint = field_hint,
         input_type = input_type or "text",
         scroll = allow_newline,
-        --* allow_newline was computed in ((MultiInputDialog#setAllowNewline)):
         allow_newline = allow_newline,
         cursor_at_end = true,
         fullscreen = true,
@@ -536,74 +532,7 @@ function MultiInputDialog:editField(input, input_type, field_hint, allow_newline
     edit_dialog:onShowKeyboard()
 end
 
-function MultiInputDialog:setAllowNewline(field, force_one_line)
-    if field.allow_newline then
-        return true
-    end
-    if field.allow_newline == false or field.input_type == "number" or force_one_line then
-        return false
-    end
-    return true
-end
-
-function MultiInputDialog:getFieldConfig(field, props)
-    local width, height, force_one_line, allow_newline, input_face, is_focus_field = unpack(props)
-    return {
-        value_index = self.field_nr,
-
-        text = field.text or "",
-        hint = field.hint or "",
-        description = field.description,
-        info_popup_text = field.info_popup_text,
-        --* this can be used to give the field with the dscription focus upon clicking on its info_popup_text label; see ((focus field upon click on info label)):
-        info_icon_field_no = #self.input_fields + 1,
-        tab = field.tab,
-        disable_paste = field.disable_paste,
-        left_side = field.left_side,
-        right_side = field.right_side,
-        width = width,
-        -- #((force one line field height))
-        height = height,
-        force_one_line = force_one_line,
-        cursor_at_end = field.cursor_at_end == true,
-        allow_newline = allow_newline,
-        is_enter_default = field.is_enter_default,
-        top_line_num = field.top_line_num or 1,
-        is_adaptable = field.is_adaptable,
-
-        input_type = field.input_type or "string",
-        text_type = field.text_type,
-        face = field.input_face or input_face,
-        focused = is_focus_field,
-        scroll = field.scroll,
-        scroll_by_pan = field.scroll_by_pan,
-        parent = self,
-        padding = field.padding,
-        margin = field.info_popup_text and 0 or field.margin,
-
-        --* allow these to be specified per field if needed:
-        alignment = field.alignment or self.alignment,
-        justified = field.justified or self.justified,
-        lang = field.lang or self.lang,
-        para_direction_rtl = field.para_direction_rtl or self.para_direction_rtl,
-        auto_para_direction = field.auto_para_direction or self.auto_para_direction,
-        alignment_strict = field.alignment_strict or self.alignment_strict,
-    }
-end
-
-function MultiInputDialog:getEditButton(field_nr, input_type, field_hint, allow_newline)
-    return Button:new{
-        icon = "edit",
-        bordersize = 0,
-        callback = function()
-            local input = self.input_fields[field_nr]:getText()
-            self:editField(input, input_type, field_hint, allow_newline, function(edited_text)
-                self.input_fields[field_nr]:setText(edited_text)
-            end)
-        end,
-    }
-end
-
+--- @private
 function MultiInputDialog:insertButtonGroup()
 
     --* in case of a tab with a field with auto height, the computed height of that field will push the button_table down to just above the keyboard; if no such field is present, we need this spacer to get the same effect:
@@ -628,6 +557,7 @@ function MultiInputDialog:insertButtonGroup()
     table.insert(self.VerticalGroupData, self.button_group)
 end
 
+--- @private
 function MultiInputDialog:storeInputFieldsInRegistry()
     if self.input_registry then
         KOR.registry:set(self.input_registry, self.input_fields)
