@@ -260,8 +260,11 @@ msgstr "Voer het regelnummer in van een hoofdstuk in het hoofdstukoverzicht in t
 msgid "please enter a valid page number..."
 msgstr "voer een geldig paginanummer in..."
 
-msgid "start page information for chapters was not found..."
-msgstr "eerste pagina-informatie voor hoofdstukken werd niet gevonden..."
+msgid "this item has no chapter information..."
+msgstr "dit item heeft geen hoofdstuk informatie..."
+
+msgid "page of chapter could not be determined..."
+msgstr "pagina van hoofdstuk kon niet worden bepaald..."
 
 msgid ""
 "\n"
@@ -942,7 +945,6 @@ msgstr " zoek"
 
 msgid "text copied to clipboard..."
 msgstr "tekst naar klembord gekopieerd..."
-
 
 
 ## ================= 2-xray-patches.lua ================

@@ -45,11 +45,11 @@ local T = require("ffi/util").template
 local DX = DX
 local has_items = has_items
 local has_no_items = has_no_items
+local has_no_text = has_no_text
 local has_text = has_text
 local math = math
 local select = select
 local table = table
-local tonumber = tonumber
 local tostring = tostring
 
 local count
@@ -680,20 +680,28 @@ function XrayDialogs:showJumpToChapterDialog()
                 KOR.messages:notify(_("please enter a valid page number..."))
                 return
             end
-
-            if has_no_items(DX.vd.chapters_start_pages_ordered) then
-                KOR.messages:notify((_ "start page information for chapters was not found..."))
+            local chapter_html = DX.vd.current_item.chapter_hits
+            if has_no_text(chapter_html) then
+                KOR.messages:notify(_("this item has no chapter information..."))
                 return
             end
 
-            --* this table is populated by ((XrayViewsData#setChapterHits)):
-            local start_page = DX.vd.chapters_start_pages_ordered[tonumber(chapter_no)]
-            if start_page then
-                self:closeViewer()
-                KOR.ui.link:addCurrentLocationToStack()
-                KOR.ui:handleEvent(Event:new("GotoPage", start_page))
+            local chapter_title = DX.vd:findChapterTitleByChapterNo(chapter_html, chapter_no)
+            if not chapter_title then
+                KOR.messages:notify(_("page of chapter could not be determined..."))
                 return
             end
+
+            --* this method is defined in 2-xray-patches.lua:
+            local page = KOR.toc:getPageFromItemTitle(chapter_title)
+            if not page then
+                KOR.messages:notify(_("page of chapter could not be determined..."))
+                return
+            end
+
+            self:closeViewer()
+            KOR.ui.link:addCurrentLocationToStack()
+            KOR.ui:handleEvent(Event:new("GotoPage", page))
         end,
     })
 end

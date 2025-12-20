@@ -1132,6 +1132,18 @@ function XrayViewsData:applyFilters()
     end
 end
 
+function XrayViewsData:findChapterTitleByChapterNo(chapter_html, chapter_no)
+    local td = chapter_html:match(T("<td>%1%..-</td>", chapter_no))
+    if not td then
+        return
+    end
+    --* extract title, enclosed in i elements:
+    local chapter_title = td:match("<i>(.-)</i>")
+    if chapter_title then
+        return chapter_title
+    end
+end
+
 -- #((XrayViewsData#prepareData))
 function XrayViewsData.prepareData(new_item)
     local self = DX.vd

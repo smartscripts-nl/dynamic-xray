@@ -246,6 +246,15 @@ function ReaderToc:getTocPathInfoForText(pos0, context_info, has_own_title)
     return context_info .. indent .. last, title
 end
 
+function ReaderToc:getPageFromItemTitle(title)
+    count = #self.toc
+    for i = 1, count do
+        if self.toc[i].title == title then
+            return self.toc[i].page
+        end
+    end
+end
+
 
 --- PATCH READERHIGHLIGHT
 -- #((PATCH READERHIGHLIGHT))
