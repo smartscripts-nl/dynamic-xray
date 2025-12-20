@@ -108,10 +108,13 @@ local MultiInputDialog = InputDialog:extend{
     description_padding = Size.padding.small,
     description_prefix = "  ",
     description_margin = Size.margin.small,
+    field_values = {},
     fields = nil, --* array, mandatory
     has_field_rows = false,
+    initial_auto_field_height = 10,
     input_face = Font:getDefaultDialogFontFace(),
     input_fields = nil, --* array
+    input_registry = nil,
     keyboard_height = nil,
     mobile_auto_height_correction = 15,
     --! leave the props below alone, because consumed by inputdialog:
@@ -190,192 +193,23 @@ end
 --* ==================== SMARTSCRIPTS =====================
 
 --* DataGroup can be MeasureData or VerticalGroupData; MeasureData can be used to compute height of auto-height fields to be inserted in VerticalGroupData:
-function MultiInputDialog:injectFieldRow(DataGroup, field_source, is_field_row, input_face, loop_round)
+--- @private
+function MultiInputDialog:injectFieldRow(DataGroup, field_source, is_field_row)
 
-    local force_one_line_field = is_field_row
-    local halved_descriptions = {}
-    local halved_fields = {}
+    self.halved_descriptions = {}
+    self.halved_fields = {}
 
-    local fields = is_field_row and #field_source or 1
-    for i = 1, fields do
-        local field = is_field_row and field_source[i] or field_source
-        if force_one_line_field then
-            field.scroll = true
-        end
-        if i == 2 then
-            --* self.field_nr counts ALL fields, even those in different tabs:
-            self.field_nr = self.field_nr + 1
-        end
-        local width = math.floor(self.width * 0.9)
-        if fields > 1 then
-            --! don't make this factor bigger, because then in some situations fields don't fit and jump to next row:
-            width = math.floor(width * 0.47)
-
-            --* make single row long field align with halved fields:
-        elseif self.has_field_rows then
-            width = math.floor(width * 1.045)
-        end
-
-        local force_one_line = force_one_line_field or field.force_one_line_height
-        local height = not field.height and force_one_line and self.one_line_height or field.height
-        if height == "auto" and self.auto_field_height then
-            height = self.auto_field_height
-        elseif height == "auto" then
-            height = self.initial_auto_field_height
-            self.auto_height_field_present = true
-        end
-
-        local is_focus_field = false
-        if i == 1 and not self.a_field_was_focussed and loop_round == 2 then
-            self.a_field_was_focussed = true
-            is_focus_field = true
-        end
-        local field_config = {
-            value_index = self.field_nr,
-
-            text = field.text or "",
-            hint = field.hint or "",
-            description = field.description,
-            info_popup_title = field.info_popup_title,
-            info_popup_text = field.info_popup_text,
-            --* this can be used to give the field with the dscription focus upon clicking on its info_popup_text label; see ((focus field upon click on info label)):
-            info_icon_field_no = #self.input_fields + 1,
-            tab = field.tab,
-            disable_paste = field.disable_paste or false,
-            left_side = field.left_side or false,
-            right_side = field.right_side or false,
-            width = field.width or width,
-            -- #((force one line field height))
-            height = height,
-            force_one_line = force_one_line,
-            allow_newline = field.allow_newline or false,
-            cursor_at_end = field.cursor_at_end == true,
-            top_line_num = field.top_line_num or 1,
-            is_adaptable = field.is_adaptable or false,
-
-            input_type = field.input_type or "string",
-            text_type = field.text_type,
-            face = field.input_face or input_face,
-            focused = is_focus_field,
-            scroll = field.scroll or false,
-            scroll_by_pan = field.scroll_by_pan or false,
-            parent = self,
-            padding = field.padding,
-            margin = field.info_popup_text and 0 or field.margin,
-            --* allow these to be specified per field if needed
-            alignment = field.alignment or self.alignment,
-            justified = field.justified or self.justified,
-            lang = field.lang or self.lang,
-            para_direction_rtl = field.para_direction_rtl or self.para_direction_rtl,
-            auto_para_direction = field.auto_para_direction or self.auto_para_direction,
-            alignment_strict = field.alignment_strict or self.alignment_strict,
-        }
-        table.insert(self.input_fields, InputText:new(field_config))
-
-        --! must be a local var here:
-        local active_field = #self.input_fields
-
-        if fields > 1 then
-            table.insert(halved_fields, self.input_fields[active_field])
-        end
-        if field.is_edit_button_target then
-            KOR.registry:set("edit_button_target", self.input_fields[active_field])
-        end
-        if not self._input_widget then
-            --* sets the field to which scollbuttons etc. are coupled:
-            self._input_widget = self.input_fields[active_field]
-        end
-
-        local field_height = self.input_fields[active_field]:getSize().h
-
-        --* for single field rows:
-        if (not self.has_field_rows and field.description) or (fields == 1 and field.description) then
-            local description_height
-            self.input_description[active_field], description_height = self:getDescription(field, math.floor(self.width * 0.9))
-            local group = LeftContainer:new{
-                dimen = Geom:new{
-                    w = self.full_width,
-                    h = description_height,
-                },
-                self.input_description[active_field],
-            }
-            table.insert(DataGroup, group)
-
-            --* for rows with more than one field and no descriptions: when no title bar present, add some extra margin above the fields:
-        elseif not self.title then
-            local group = CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.full_width,
-                    h = 2 * self.description_margin,
-                },
-                VerticalSpan:new{ width = self.description_padding + self.description_margin },
-            }
-            table.insert(DataGroup, group)
-        end
-
-        --* for one field rows immediately insert the input field:
-        if not self.has_field_rows or fields == 1 then
-            local group = CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.full_width,
-                    h = field_height,
-                },
-                self.input_fields[active_field],
-            }
-            table.insert(DataGroup, group)
-
-            --* handle rows with multipe fields:
-        elseif self.has_field_rows and fields > 1 then
-
-            local tile_width = self.full_width / fields
-
-            local has_description = self.input_fields[active_field].description
-            local description_label = has_description and self:getDescription(self.input_fields[active_field], tile_width) or nil
-            if i == 1 then
-                if has_description then
-
-                    self.input_description[active_field] = FrameContainer:new{
-                        padding = self.description_padding,
-                        margin = 0,
-                        bordersize = 0,
-                        --* description in a multiple field row:
-                        description_label,
-                    }
-                    table.insert(halved_descriptions, LeftContainer:new{
-                        dimen = Geom:new{
-                            w = tile_width,
-                            h = self.input_description[active_field]:getSize().h,
-                        },
-                        self.input_description[active_field],
-                    })
-                end
-            end
-
-            --* insert right side field:
-            if i == 2 and has_description then
-                self.input_description[active_field] = FrameContainer:new{
-                    padding = self.description_padding,
-                    margin = 0,
-                    bordersize = 0,
-                    description_label,
-                }
-                table.insert(halved_descriptions, LeftContainer:new{
-                    dimen = Geom:new{
-                        w = tile_width,
-                        h = self.input_description[active_field]:getSize().h,
-                    },
-                    self.input_description[active_field],
-                })
-            end
-        end
+    self.fields_count = is_field_row and #field_source or 1
+    for field_side = 1, self.fields_count do
+        self:injectField(DataGroup, field_side, field_source, is_field_row)
     end
-    if #halved_descriptions > 0 or #halved_fields > 0 then
-        local tile_width = self.full_width / fields
-        local tile_height = halved_fields[1]:getSize().h
+    if #self.halved_descriptions > 0 or #self.halved_fields > 0 then
+        local tile_width = self.full_width / self.fields_count
+        local tile_height = self.halved_fields[1]:getSize().h
 
-        if #halved_descriptions > 0 then
-            halved_descriptions.align = "center"
-            table.insert(DataGroup, HorizontalGroup:new(halved_descriptions))
+        if #self.halved_descriptions > 0 then
+            self.halved_descriptions.align = "center"
+            table.insert(DataGroup, HorizontalGroup:new(self.halved_descriptions))
         end
         local group = HorizontalGroup:new{
             align = "center",
@@ -385,7 +219,7 @@ function MultiInputDialog:injectFieldRow(DataGroup, field_source, is_field_row, 
                     h = tile_height,
                 },
                 --* left side field:
-                halved_fields[1],
+                self.halved_fields[1],
             },
             CenterContainer:new{
                 dimen = Geom:new{
@@ -393,44 +227,248 @@ function MultiInputDialog:injectFieldRow(DataGroup, field_source, is_field_row, 
                     h = tile_height,
                 },
                 --* right_side field:
-                halved_fields[2],
+                self.halved_fields[2],
             },
         }
         table.insert(DataGroup, group)
     end
 end
 
+--- @private
+--- @param field_side number 1 if left side, 2 if right side
+function MultiInputDialog:injectField(DataGroup, field_side, field_source, is_field_row)
+
+    self.force_one_line_field = is_field_row
+    local field = is_field_row and field_source[field_side] or field_source
+    if self.force_one_line_field then
+            field.scroll = true
+        end
+    if field_side == 2 then
+            --* self.field_nr counts ALL fields, even those in different tabs:
+            self.field_nr = self.field_nr + 1
+        end
+    self:fieldAddtoInputs(field, field_side)
+
+    self.current_field = #self.input_fields
+
+    if self.fields_count > 1 then
+        table.insert(self.halved_fields, self.input_fields[self.current_field])
+    end
+    if field.is_edit_button_target then
+        KOR.registry:set("edit_button_target", self.input_fields[self.current_field])
+    end
+    if not self._input_widget then
+        --* sets the field to which scollbuttons etc. are coupled:
+        self._input_widget = self.input_fields[self.current_field]
+    end
+
+    self:insertFieldIntoDataGroup(DataGroup, field)
+    self:insertFieldIntoRow(DataGroup, field_side)
+end
+
+--- @private
+function MultiInputDialog:setFieldWidth()
+    self.field_width = math.floor(self.width * 0.9)
+    if self.fields_count > 1 then
+        --! don't make this factor bigger, because then in some situations fields don't fit and jump to next row:
+        local factor = 0.49
+        self.field_width = math.floor(self.field_width * factor)
+
+        --* make single row long field align with halved fields:
+        elseif self.has_field_rows then
+        self.field_width = math.floor(self.field_width * 1.045)
+        end
+end
+
+--- @private
+--- @param field_side number 1 if left side, 2 if right side
+function MultiInputDialog:fieldAddtoInputs(field, field_side)
+    self:setFieldWidth()
+    self:setFieldProps(field, field_side)
+    table.insert(self.input_fields, InputText:new(self.field_config))
+end
+
+--- @private
+--- @param field_side number 1 if left side, 2 if right side
+function MultiInputDialog:setFieldProps(field, field_side)
+    local force_one_line = self.force_one_line_field or field.force_one_line_height
+    local height = not field.height and force_one_line and self.one_line_height or field.height
+    if height == "auto" and self.auto_field_height then
+        height = self.auto_field_height
+    elseif height == "auto" then
+        height = self.initial_auto_field_height
+        self.auto_height_field_present = true
+    end
+
+    local is_focus_field = false
+    --* target container will be self.MeasureData if target_container == 1, or self.VerticalGroupData if target_container == 2:
+    if field_side == 1 and not self.a_field_was_focussed and self.target_container == 2 then
+            self.a_field_was_focussed = true
+            is_focus_field = true
+    end
+    self.field_config = {
+        value_index = self.field_nr,
+
+        text = field.text or "",
+        hint = field.hint or "",
+        description = field.description,
+        info_popup_title = field.info_popup_title,
+        info_popup_text = field.info_popup_text,
+        --* this can be used to give the field with the dscription focus upon clicking on its info_popup_text label; see ((focus field upon click on info label)):
+        info_icon_field_no = #self.input_fields + 1,
+        tab = field.tab,
+        disable_paste = field.disable_paste or false,
+        left_side = field.left_side or false,
+        right_side = field.right_side or false,
+        width = field.width or self.field_width,
+        -- #((force one line field height))
+        height = height,
+        force_one_line = force_one_line,
+        allow_newline = field.allow_newline or false,
+        cursor_at_end = field.cursor_at_end == true,
+        top_line_num = field.top_line_num or 1,
+        is_adaptable = field.is_adaptable or false,
+
+        input_type = field.input_type or "string",
+        text_type = field.text_type,
+        face = field.input_face or self.input_face,
+        focused = is_focus_field,
+        scroll = field.scroll or false,
+        scroll_by_pan = field.scroll_by_pan or false,
+        parent = self,
+        padding = field.padding,
+        margin = field.info_popup_text and 0 or field.margin,
+        --* allow these to be specified per field if needed
+        alignment = field.alignment or self.alignment,
+        justified = field.justified or self.justified,
+        lang = field.lang or self.lang,
+        para_direction_rtl = field.para_direction_rtl or self.para_direction_rtl,
+        auto_para_direction = field.auto_para_direction or self.auto_para_direction,
+        alignment_strict = field.alignment_strict or self.alignment_strict,
+    }
+end
+
+--- @private
+function MultiInputDialog:insertFieldIntoDataGroup(DataGroup, field)
+    --* for single field rows:
+    if (not self.has_field_rows and field.description) or (self.fields_count == 1 and field.description) then
+        local description_height
+        self.input_description[self.current_field], description_height = self:getDescription(field, math.floor(self.width * 0.9))
+        local group = LeftContainer:new{
+            dimen = Geom:new{
+                w = self.full_width,
+                h = description_height,
+            },
+        self.input_description[self.current_field],
+        }
+        table.insert(DataGroup, group)
+
+        --* for rows with more than one field and no descriptions: when no title bar present, add some extra margin above the fields:
+    elseif not self.title then
+        local group = CenterContainer:new{
+            dimen = Geom:new{
+                w = self.full_width,
+                h = 2 * self.description_margin,
+            },
+            VerticalSpan:new{ width = self.description_padding + self.description_margin },
+        }
+        table.insert(DataGroup, group)
+    end
+end
+
+--- @private
+function MultiInputDialog:insertFieldIntoRow(DataGroup, i)
+
+    local field_height = self.input_fields[self.current_field]:getSize().h
+
+    --* for one field rows immediately insert the input field:
+    if not self.has_field_rows or self.fields_count == 1 then
+        local group = CenterContainer:new{
+            dimen = Geom:new{
+                w = self.full_width,
+                h = field_height,
+            },
+        self.input_fields[self.current_field],
+        }
+        table.insert(DataGroup, group)
+
+    --* handle rows with multipe fields:
+    elseif self.has_field_rows and self.fields_count > 1 then
+
+        local tile_width = self.full_width / self.fields_count
+
+        local has_description = self.input_fields[self.current_field].description
+        local description_label = has_description and self:getDescription(self.input_fields[self.current_field], tile_width) or nil
+        if i == 1 then
+            if has_description then
+
+            self.input_description[self.current_field] = FrameContainer:new{
+                    padding = self.description_padding,
+                    margin = 0,
+                    bordersize = 0,
+                    --* description in a multiple field row:
+                    description_label,
+                }
+            table.insert(self.halved_descriptions, LeftContainer:new{
+                    dimen = Geom:new{
+                        w = tile_width,
+                    h = self.input_description[self.current_field]:getSize().h,
+                    },
+                self.input_description[self.current_field],
+                })
+            end
+        end
+
+        --* insert right side field:
+        if i == 2 and has_description then
+            self.input_description[self.current_field] = FrameContainer:new{
+                    padding = self.description_padding,
+                    margin = 0,
+                    bordersize = 0,
+                    description_label,
+                }
+            table.insert(self.halved_descriptions, LeftContainer:new{
+                dimen = Geom:new{
+                    w = tile_width,
+                h = self.input_description[self.current_field]:getSize().h,
+                },
+            self.input_description[self.current_field],
+            })
+        end
+    end
+end
+
 function MultiInputDialog:getDescription(field, width)
     local text = field.info_popup_text and
-            Button:new{
-                text_icon = {
-                    text = self.description_prefix .. " " .. field.description .. " ",
-                    text_font_bold = false,
-                    text_font_face = "x_smallinfofont",
-                    font_size = 18,
-                    icon = "info",
-                    icon_size_ratio = 0.48,
-                },
-                padding = 0,
-                margin = 0,
-                text_font_face = "x_smallinfofont",
-                text_font_size = 19,
-                text_font_bold = false,
-                align = "left",
-                bordersize = 0,
-                width = width,
-                --* y_pos for the popup dialog - not used now anymore - was detected and set in ((Button#onTapSelectButton)) - look for two statements with self.callback(pos):
-                callback = function() --ypos
-                    -- #((focus field upon click on info label))
-                    --* this prop can be set in ((MultiInputDialog#injectFieldRow)):
-                    if field.info_icon_field_no then
-                        self:onSwitchFocus(self.input_fields[field.info_icon_field_no])
-                    end
-                    --* info_popup_title and info_popup_text e.g. defined in ((XrayDialogs#getFormFields)):
-                    KOR.dialogs:niceAlert(field.info_popup_title, field.info_popup_text)
-                end,
-            }
-            or TextBoxWidget:new{
+    Button:new{
+        text_icon = {
+            text = self.description_prefix .. " " .. field.description .. " ",
+            text_font_bold = false,
+            text_font_face = "x_smallinfofont",
+            font_size = 18,
+            icon = "info",
+            icon_size_ratio = 0.48,
+        },
+        padding = 0,
+        margin = 0,
+        text_font_face = "x_smallinfofont",
+        text_font_size = 19,
+        text_font_bold = false,
+        align = "left",
+        bordersize = 0,
+        width = width,
+        --* y_pos for the popup dialog - not used now anymore - was detected and set in ((Button#onTapSelectButton)) - look for two statements with self.callback(pos):
+        callback = function() --ypos
+            -- #((focus field upon click on info label))
+            --* this prop can be set in ((MultiInputDialog#injectFieldRow)):
+            if field.info_icon_field_no then
+                self:onSwitchFocus(self.input_fields[field.info_icon_field_no])
+            end
+            --* info_popup_title and info_popup_text e.g. defined in ((XrayDialogs#getFormFields)):
+            KOR.dialogs:niceAlert(field.info_popup_title, field.info_popup_text)
+        end,
+    }
+    or TextBoxWidget:new{
         text = self.description_prefix .. field.description,
         face = self.description_face or Font:getFace("x_smallinfofont"),
         width = width,
@@ -682,14 +720,17 @@ end
 function MultiInputDialog:insertFields()
     self.a_field_was_focussed = false
     for x = 1, 2 do
-        self:insertFieldsPerContainer(x)
+        --* target container will be self.MeasureData if target_container == 1, or self.VerticalGroupData if target_container == 2:
+        self.target_container = x
+        self:insertFieldsPerContainer()
     end
 end
 
 --- @private
-function MultiInputDialog:insertFieldsPerContainer(x)
+function MultiInputDialog:insertFieldsPerContainer()
+    --* target container will be self.MeasureData if target_container == 1, or self.VerticalGroupData if target_container == 2:
     --* MeasureData can be used to compute height of auto-height fields to be inserted in VerticalGroupData:
-    local is_resulting_form = x == 2
+    local is_resulting_form = self.target_container == 2
 
     --* very important: for the second loop for the production form reset all props for the actual fields:
     self.field_nr = 0
@@ -711,9 +752,10 @@ function MultiInputDialog:insertFieldsPerContainer(x)
 
     local count = #self.fields
     for row_nr = 1, count do
-        self:insertFieldRow(row_nr, x)
+        self:insertFieldRow(row_nr)
     end
-    if x == 1 then
+    --* target container will be self.MeasureData if target_container == 1, or self.VerticalGroupData if target_container == 2:
+    if self.target_container == 1 then
         table.insert(self.MeasureData, self.bottom_group)
         if self.auto_height_field_present then
             table.insert(self.MeasureData, self.button_group)
@@ -722,9 +764,9 @@ function MultiInputDialog:insertFieldsPerContainer(x)
 end
 
 --- @private
-function MultiInputDialog:insertFieldRow(row_nr, x)
+function MultiInputDialog:insertFieldRow(row_nr)
     local target_tab
-    local data_group = x == 1 and self.MeasureData or self.VerticalGroupData
+    local data_group = self.target_container == 1 and self.MeasureData or self.VerticalGroupData
 
     local row = self.fields[row_nr]
     local is_field_set = not row.text
@@ -739,15 +781,14 @@ function MultiInputDialog:insertFieldRow(row_nr, x)
 
     elseif not target_tab or target_tab == self.active_tab then
         self.field_nr = self.field_nr + 1
-        self:injectFieldRow(data_group, row, is_field_set, self.input_face, x)
+        self:injectFieldRow(data_group, row, is_field_set)
     end
 end
 
 --- @private
 function MultiInputDialog:insertFieldValues(row, is_field_set)
-    local count2
     if self.has_field_rows and is_field_set then
-        count2 = #row
+        local count2 = #row
         for field = 1, count2 do
             table.insert(self.field_values, row[field].text)
         end
