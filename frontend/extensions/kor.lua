@@ -215,7 +215,7 @@ function KOR:initCustomTranslations()
 	return self.getTranslation
 end
 
---* this method is available for outside modules by ((KOR#initCustomTranslations)):
+--* this method is made available for outside modules by ((KOR#initCustomTranslations)):
 --- @private
 function KOR.getTranslation(key)
 	local DX = DX
