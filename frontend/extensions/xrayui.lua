@@ -724,10 +724,10 @@ end
 function XrayUI:setParagraphsFromDocument()
 
     --! hotfix: ui_page not updated anymore after visiting a page two or more times:
-    local ui_page = KOR.document.start_page_no or 1
+    local ui_page = KOR.document and KOR.document.start_page_no or 1
 
     --* KOR.document.getPageXPointer not available in pdf's and paragraphs not determined in that case:
-    if not KOR.document.getPageXPointer then
+    if not KOR.document or not KOR.document.getPageXPointer then
         self.paragraphs = {}
         return ui_page
     end

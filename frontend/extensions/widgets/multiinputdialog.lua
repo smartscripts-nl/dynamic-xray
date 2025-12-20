@@ -269,7 +269,7 @@ function MultiInputDialog:setFieldWidth()
 
         --* make single row long field align with halved fields:
         elseif self.has_field_rows then
-        self.field_width = math.floor(self.field_width * 1.045)
+            self.field_width = math.floor(self.field_width * 1.045)
         end
 end
 
