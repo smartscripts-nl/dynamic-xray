@@ -99,6 +99,8 @@ local DX = DX
 local math = math
 local table = table
 
+local count
+
 --* if we extend FocusManager here, then crash because of ((MultiInputDialog#init)) > InputDialog.init(self)
 --- @class MultiInputDialog
 local MultiInputDialog = InputDialog:extend{
@@ -134,7 +136,7 @@ function MultiInputDialog:init()
     self:insertFields()
     self:storeInputFieldsInRegistry()
     self:addButtons()
-    self:finalizeWidgetMI()
+    self:finalizeWidgetMID()
     KOR.dialogs:registerWidget(self)
 end
 
@@ -142,7 +144,7 @@ end
 function MultiInputDialog:getFields()
     local field_values = {}
     local field
-    local count = #self.input_fields
+    count = #self.input_fields
     for i = 1, count do
         field = self.input_fields[i]
         table.insert(field_values, field:getText())
@@ -152,20 +154,16 @@ end
 
 function MultiInputDialog:getValues()
     local field
-    local count = #self.input_fields
+    count = #self.input_fields
     for i = 1, count do
         field = self.input_fields[i]
         local value_index = field.value_index
         self.field_values[value_index] = field:getText()
-        self.garbage = i
     end
     local values = {}
-    local value
     count = #self.field_values
     for i = 1, count do
-        value = self.field_values[i]
-        table.insert(values, value)
-        self.garbage = i
+        table.insert(values, self.field_values[i])
     end
     return values
 end
@@ -236,12 +234,12 @@ function MultiInputDialog:injectField(DataGroup, field_side, field_source, is_fi
     self.force_one_line_field = is_field_row
     local field = is_field_row and field_source[field_side] or field_source
     if self.force_one_line_field then
-            field.scroll = true
-        end
+        field.scroll = true
+    end
     if field_side == 2 then
-            --* self.field_nr counts ALL fields, even those in different tabs:
-            self.field_nr = self.field_nr + 1
-        end
+        --* self.field_nr counts ALL fields, even those in different tabs:
+        self.field_nr = self.field_nr + 1
+    end
     self:fieldAddtoInputs(field, field_side)
 
     self.current_field = #self.input_fields
@@ -680,7 +678,7 @@ function MultiInputDialog:insertFieldsPerContainer()
         end
     end
 
-    local count = #self.fields
+    count = #self.fields
     for row_nr = 1, count do
         self:insertFieldRow(row_nr)
     end
@@ -737,9 +735,9 @@ function MultiInputDialog:addButtons()
     self:insertButtonGroup()
 end
 
---* MI suffix to prevent future name clashes, should we also add InputDialog#finalizeWidget:
+--* MID suffix to prevent future name clashes, should we also add InputDialog#finalizeWidget:
 --- @private
-function MultiInputDialog:finalizeWidgetMI()
+function MultiInputDialog:finalizeWidgetMID()
     local config = {
         radius = self.fullscreen and 0 or Size.radius.window,
         bordersize = self.fullscreen and 0 or Size.border.window,
