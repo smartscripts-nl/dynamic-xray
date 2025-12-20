@@ -145,7 +145,7 @@ PT_bookinfo_cache.sqlite3". In that case:
 
 ## Todos / issues to fix
 
-* In the item viewer: when toggling the item type with a button from person to term or from standard to important, items are afterward sometimes seemingly duplicated in the list of items. This is not really the case, but annoying. So a todo for me.
+* Currently none...?
 
 ## About the code
 

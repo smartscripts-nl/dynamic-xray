@@ -734,7 +734,8 @@ function XrayUI:setParagraphsFromDocument()
 
     --* before drawing sideline icons, first expand them with clickable xray item marks (lightning)....
     --* populated in ((CreDocument#storeCurrentPageParagraphs)):
-    --! it's essential to reload this info from KOR.document; otherwise after tap on xray marker line and going back to the reader, the paragraphs info is lost and no sideline icon drawn (because information only generated on first page load?):
+    --! it's essential to reload this info from KOR.document; otherwise after tap on xray marker line and going back to the reader, the paragraphs info is lost and no sideline icon drawn:
+    --? because information only generated on first page load?:
     self.paragraphs = KOR.document.paragraphs or {}
 
     local check_page = KOR.document.info.has_pages and self.ui.paging.current_page or self.ui:getCurrentPage()
