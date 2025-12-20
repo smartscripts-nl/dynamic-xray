@@ -300,44 +300,76 @@ function MultiInputDialog:setFieldProps(field, field_side)
             is_focus_field = true
     end
     self.field_config = {
-        value_index = self.field_nr,
-
-        text = field.text or "",
-        hint = field.hint or "",
-        description = field.description,
-        info_popup_title = field.info_popup_title,
-        info_popup_text = field.info_popup_text,
+        value_index =
+            self.field_nr,
+        text =
+            self:setFieldProp(field.text, ""),
+        hint =
+            self:setFieldProp(field.hint, ""),
+        description =
+            field.description,
+        info_popup_title =
+            field.info_popup_title,
+        info_popup_text =
+            field.info_popup_text,
         --* this can be used to give the field with the dscription focus upon clicking on its info_popup_text label; see ((focus field upon click on info label)):
-        info_icon_field_no = #self.input_fields + 1,
-        tab = field.tab,
-        disable_paste = field.disable_paste or false,
-        left_side = field.left_side or false,
-        right_side = field.right_side or false,
-        width = field.width or self.field_width,
+        info_icon_field_no =
+            #self.input_fields + 1,
+        tab =
+            field.tab,
+        disable_paste =
+            self:setFieldProp(field.disable_paste, false),
+        left_side =
+            self:setFieldProp(field.left_side, false),
+        right_side =
+            self:setFieldProp(field.right_side, false),
+        width =
+            self:setFieldProp(field.width, self.field_width),
+        height =
+            height,
         -- #((force one line field height))
-        height = height,
-        force_one_line = force_one_line,
-        allow_newline = field.allow_newline or false,
-        cursor_at_end = field.cursor_at_end == true,
-        top_line_num = field.top_line_num or 1,
-        is_adaptable = field.is_adaptable or false,
+        force_one_line =
+            force_one_line,
+        allow_newline =
+            self:setFieldProp(field.allow_newline, false),
+        cursor_at_end =
+            field.cursor_at_end == true,
+        top_line_num =
+            self:setFieldProp(field.top_line_num, 1),
+        is_adaptable =
+            self:setFieldProp(field.is_adaptable, false),
+        input_type =
+            self:setFieldProp(field.input_type, "string"),
+        text_type =
+            field.text_type,
+        face =
+            self:setFieldProp(field.input_face, self.input_face),
+        focused =
+            is_focus_field,
+        scroll =
+            self:setFieldProp(field.scroll, false),
+        scroll_by_pan =
+            self:setFieldProp(field.scroll_by_pan, false),
+        parent =
+            self,
+        padding =
+            field.padding,
+        margin =
+            field.info_popup_text and 0 or field.margin,
 
-        input_type = field.input_type or "string",
-        text_type = field.text_type,
-        face = field.input_face or self.input_face,
-        focused = is_focus_field,
-        scroll = field.scroll or false,
-        scroll_by_pan = field.scroll_by_pan or false,
-        parent = self,
-        padding = field.padding,
-        margin = field.info_popup_text and 0 or field.margin,
         --* allow these to be specified per field if needed
-        alignment = field.alignment or self.alignment,
-        justified = field.justified or self.justified,
-        lang = field.lang or self.lang,
-        para_direction_rtl = field.para_direction_rtl or self.para_direction_rtl,
-        auto_para_direction = field.auto_para_direction or self.auto_para_direction,
-        alignment_strict = field.alignment_strict or self.alignment_strict,
+        alignment =
+            self:setFieldProp(field.alignment, self.alignment),
+        justified =
+            self:setFieldProp(field.justified, self.justified),
+        lang =
+            self:setFieldProp(field.lang, self.lang),
+        para_direction_rtl =
+            self:setFieldProp(field.para_direction_rtl, self.para_direction_rtl),
+        auto_para_direction =
+            self:setFieldProp(field.auto_para_direction, self.auto_para_direction),
+        alignment_strict =
+            self:setFieldProp(field.alignment_strict, self.alignment_strict),
     }
 end
 
@@ -420,6 +452,7 @@ function MultiInputDialog:insertDuoFieldsInRow(field_side)
                 self.input_description[self.current_field],
             })
         end
+        return
     end
 
     --* insert right side field:
@@ -780,6 +813,11 @@ function MultiInputDialog:finalizeWidgetMID()
     UIManager:setDirty(self, function()
         return "ui", self.dialog_frame.dimen
     end)
+end
+
+--- @private
+function MultiInputDialog:setFieldProp(prop, default_value)
+    return prop or default_value
 end
 
 return MultiInputDialog
