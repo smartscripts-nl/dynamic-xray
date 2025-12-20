@@ -1,15 +1,17 @@
--- Zoek karakters op in Lettertypecatalogus op Mac, voor font NotoSans Nerd Font. Wijs gewenste karakter aan => code
 
 --* small nbsp:
 local spacer = "\u{202F}"
 
+--* this table provides a named list of glyph icons in NotoSans Nerd font, with some additional glyphs from other sources:
 --- @class Icons
 return {
-    --* these are svg icons:
+    --* these first 4 entries are svg icons:
     chevron_left = "chevron.left",
     chevron_right = "chevron.right",
     chevron_first = "chevron.first",
     chevron_last = "chevron.last",
+
+    --* glyph icons:
 
     --- specials:
     normal_spacer = "\u{2002}",
