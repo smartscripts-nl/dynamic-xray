@@ -2,8 +2,10 @@
 # Kindle-like functionality for KOReader
 
 A KOReader plugin to view "xray items", i.e. user defined explanations of persons and terms in single books or even entire series:
+
+* This DX plugin was inspired by the X-ray system on Kindles (see explanation
+  on [Amazon X-Ray on Kindle | All you need to know - YouTube](https://youtu.be/mreow-OrGsU?si=c_3NhHKBDa1BFEvI)).
 * "Terms" in Dynamic Xray (DX) can be names of things, entities, concepts, definitions, places, named events, names of literary or philosophical movements, and much more. It's all up to the imagination of the user...
-* This DX plugin was inspired by the X-ray system on Kindles (see explanation on [Amazon X-Ray on Kindle | All you need to know - YouTube](https://youtu.be/mreow-OrGsU?si=c_3NhHKBDa1BFEvI)).
 * DX differs from the Kindle system in that the user can define items dynamically, while on Kindles these items are "baked into" the ebook.
 * The advantage of the DX approach is that the user can dynamically add and modify items; the advantage of the Kindle approach is that it isn't error-prone.
 * DX can produce false hits, because it uses matching of the words in ebook texts to determine whether Xray items are present. For example: DX will be in trouble if there are two or more persons with the same first name in a book; DX won't be able to differentiate between them. But in at about 95% of cases, the matches shown will be correct.
