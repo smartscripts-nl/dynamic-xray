@@ -67,6 +67,13 @@ local XrayViewsData = WidgetContainer:new {
     terms = {},
     type_matched = false,
     xray_type_description = "1 " .. KOR.icons.arrow_bare .. " " .. KOR.icons.xray_person_bare .. "  2 " .. KOR.icons.arrow_bare .. " " .. KOR.icons.xray_person_important_bare .. "  3 " .. KOR.icons.arrow_bare .. " " .. KOR.icons.xray_term_bare .. "  4 " .. KOR.icons.arrow_bare .. " " .. KOR.icons.xray_term_important_bare,
+    --* for usage in ((XrayButtons#forItemEditorTypeSwitch)):
+    xray_type_choice_labels = {
+        T(_(" 1: %1 person"), KOR.icons.xray_person_bare),
+        T(_(" 2: %1 important person"), KOR.icons.xray_person_important_bare),
+        T(_(" 3: %1 term"), KOR.icons.xray_term_bare),
+        T(_(" 4: %1 important term"), KOR.icons.xray_term_important_bare),
+    },
     xray_type_icons = {
         KOR.icons.xray_person_bare .. " ",
         KOR.icons.xray_person_important_bare .. " ",

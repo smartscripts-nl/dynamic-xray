@@ -739,13 +739,14 @@ function XrayButtons:forItemEditorTypeSwitch(item_copy)
         callback = function()
             --* input fields were stored in Registry in ((MultiInputDialog#init)) > ((MultiInputDialog#storeInputFieldsInRegistry)):
             local input_fields = KOR.registry:get("xray_item")
-            -- local parent_form = DX.fd.active_form_mode == "add" and DX.d.add_item_input or DX.d.edit_item_input
             local current_field_values = {}
             for i = 1, 4 do
                 --* these values will be restored in ((XrayDialogs#switchFocus)):
                 table.insert(current_field_values, input_fields[i]:getText())
             end
             local buttons = {
+                {},
+                {},
                 {},
                 {},
                 {
@@ -760,18 +761,18 @@ function XrayButtons:forItemEditorTypeSwitch(item_copy)
                     }
                 }
             }
-            local order = { 1, 3, 2, 4 }
             local row, active_marker
             -- #((xray choose type dialog))
             --* item_copy can be nil in case of adding a new item:
             local active_type = item_copy and item_copy.xray_type or 1
-            for i = 4, 1, -1 do
-                row = i <= 2 and 1 or 2
+            for i = 1, 4 do
+                row = i
                 --! this MUST be a local var, for changeType to work as expected:
-                local itype = order[i]
+                local itype = i
                 active_marker = itype == active_type and KOR.icons.active_tab_bare .. " " or ""
-                table.insert(buttons[row], 1, {
-                    text = active_marker .. itype .. " " .. DX.vd.xray_type_icons[itype],
+                table.insert(buttons[row], {
+                    text = active_marker .. DX.vd.xray_type_choice_labels[itype],
+                    align = "left",
                     callback = function()
                         DX.d:modifyXrayTypeFieldValue(itype)
                     end,
@@ -783,7 +784,7 @@ function XrayButtons:forItemEditorTypeSwitch(item_copy)
                 title_align = "center",
                 no_overlay = true,
                 modal = true,
-                width = Screen:scaleBySize(270),
+                width = Screen:scaleBySize(280),
                 buttons = buttons,
             }
             UIManager:show(self.xray_type_chooser)
@@ -961,7 +962,7 @@ Sneltoets %1 H]]), KOR.icons.arrow_bare),
 end
 
 --- @param mode string either "add" or "edit"
-function XrayButtons:forItemAddOrEditForm(mode, active_form_tab, reload_manager, item_copy)
+function XrayButtons:forItemEditor(mode, active_form_tab, reload_manager, item_copy)
     local edit_or_type_change_button = active_form_tab == 1 and
         self:forItemEditorEditButton()
         or

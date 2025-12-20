@@ -386,8 +386,13 @@ function ButtonInfoPopup:forXrayToggleSortingMode(props)
 end
 
 function ButtonInfoPopup:forXrayTypeSet(props)
+	local show_all_icons = true
+	local label = show_all_icons
+		and KOR.icons.xray_person_bare .. KOR.icons.xray_person_important_bare .. KOR.icons.xray_term_bare .. KOR.icons.xray_term_important_bare
+		or
+		KOR.icons.xray_person_bare .. "/" .. KOR.icons.xray_term_bare
 	return KOR.buttonprops:set({
-		text = KOR.icons.xray_person_bare .. "/" .. KOR.icons.xray_term_bare,
+		text = label,
 		fgcolor = Blitbuffer.COLOR_GRAY_3,
 		font_bold = false,
 		info = _("user/bulb icon | Set Xray type."),

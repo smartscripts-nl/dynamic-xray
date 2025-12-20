@@ -2,6 +2,25 @@
 ## translate items by modifying the texts after msgstr
 ### DON'T REMOVE \n CODES AND QUOTES FROM THE LINES BELOW!! ###
 
+# from 2025-12-20 on new entries will be placed at the top of this file, for easier updates of target translation file:
+
+# ============= 2025-12-20 ================
+
+# XrayViewsData:
+msgid " 1: %1 person"
+msgstr " 1: %1 persoon"
+
+msgid " 2: %1 important person"
+msgstr " 2: %1 belangrijke persoon"
+
+msgid " 3: %1 term"
+msgstr " 3: %1 term"
+
+msgid " 4: %1 important term"
+msgstr " 4: %1 belangrijke term"
+
+
+
 ## ============= XrayController ==============
 
 msgid "Show xray-items in this book/series"

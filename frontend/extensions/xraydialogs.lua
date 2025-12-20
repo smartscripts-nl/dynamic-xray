@@ -335,7 +335,7 @@ function XrayDialogs:showNewItemForm(args)
         is_popout = false,
         input = "",
         condensed = true,
-        buttons = DX.b:forItemAddOrEditForm("add", self.active_form_tab, item_copy),
+        buttons = DX.b:forItemEditor("add", self.active_form_tab, item_copy),
     }
 
     if active_form_tab == 1 then
@@ -427,7 +427,7 @@ function XrayDialogs:showEditItemForm(args)
         is_popout = false,
         condensed = true,
         --* saving edits: ((XrayController#saveUpdatedItem)) > ((XrayFormsData#getAndStoreEditedItem))
-        buttons = DX.b:forItemAddOrEditForm("edit", active_form_tab, args.reload_manager, item_copy),
+        buttons = DX.b:forItemEditor("edit", active_form_tab, args.reload_manager, item_copy),
     }
 
     if active_form_tab == 1 then
