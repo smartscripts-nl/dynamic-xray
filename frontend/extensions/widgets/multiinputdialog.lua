@@ -264,7 +264,7 @@ function MultiInputDialog:setFieldWidth()
     self.field_width = math.floor(self.width * 0.9)
     if self.fields_count > 1 then
         --! don't make this factor bigger, because then in some situations fields don't fit and jump to next row:
-        local factor = 0.49
+        local factor = 0.47
         self.field_width = math.floor(self.field_width * factor)
 
         --* make single row long field align with halved fields:
