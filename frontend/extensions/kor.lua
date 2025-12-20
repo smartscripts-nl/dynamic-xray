@@ -212,16 +212,21 @@ function KOR:registerWidget(KOR_name, widget)
 end
 
 function KOR:initCustomTranslations()
+	return self.getTranslation
+end
+
+--* this method is available for outside modules by ((KOR#initCustomTranslations)):
+--- @private
+function KOR.getTranslation(key)
 	local DX = DX
 	--* this prop will only be set in ((XrayTranslations#loadAllTranslations)):
-	if DX.t then
-		return DX.t.get
-	end
-
-	--* if DX.t not initialized yet, return a temporary function that simply returns the key as "translation":
-	return function(key)
+	if not DX.t then
+		--* if DX.t not initialized yet, return simply the key as "translation":
 		return key
 	end
+
+	--* in this method the translations will be instantiated, if that hasn't happened yet:
+	return DX.t.get(key)
 end
 
 return KOR
