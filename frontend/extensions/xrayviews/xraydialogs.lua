@@ -2,7 +2,7 @@
 This extension is part of the Dynamic Xray plugin; it has all dialogs and forms (including their callbacks) which are used in XrayController and its other extensions.
 
 The Dynamic Xray plugin has kind of a MVC structure:
-M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData)), ((XrayTranslations))
+M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
 V = ((XrayUI)), ((XrayTranslations)), ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
 
@@ -52,6 +52,9 @@ local select = select
 local table = table
 local tostring = tostring
 
+--- @type XrayTranslations translations
+local translations
+
 local count
 
 --- @class XrayDialogs
@@ -83,6 +86,11 @@ local XrayDialogs = WidgetContainer:new{
     xray_items_chooser_dialog = nil,
     xray_ui_info_dialog = nil,
 }
+
+function XrayDialogs:initViewHelpers()
+    translations = require("extensions/xrayviews/xraytranslations")
+    DX.setProp("t", translations)
+end
 
 --- @return boolean signalling whether the user was redirected to the viewer (true), or not (false)
 function XrayDialogs:closeForm(mode)

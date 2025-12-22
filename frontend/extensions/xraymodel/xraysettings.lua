@@ -2,7 +2,7 @@
 This extension is part of the Dynamic Xray plugin; it has buttons which are generated for dialogs and forms in XrayController and its other extensions.
 
 The Dynamic Xray plugin has kind of a MVC structure:
-M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData)), ((XrayTranslations))
+M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
 V = ((XrayUI)), ((XrayTranslations)), ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
 
@@ -86,7 +86,7 @@ local XraySettings = WidgetContainer:new{
     },
 }
 
---! don't call this method "init", because then ((KOR#initExtensions)) could call this method prematurely; we want ((KOR#registerXrayModules)) to call this method:
+--! don't call this method "init", because then ((KOR#initExtensions)) could call this method prematurely; we want ((KOR#registerXrayModulesToDX)) to call this method:
 function XraySettings:setUp()
     self.settings_manager = KOR.settingsmanager:new({
         list_title = _("Dynamic Xray"),

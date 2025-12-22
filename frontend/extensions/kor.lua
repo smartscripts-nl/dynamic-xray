@@ -134,8 +134,8 @@ function KOR:initEarlyExtensions()
 	KOR.colors = require("extensions/colors")
 	KOR.icons = require("extensions/icons")
 	KOR.settingsmanager = require("extensions/settingsmanager")
-	KOR.xraysettings = require("extensions/xraysettings")
-	KOR.xraytranslationsmanager = require("extensions/xraytranslationsmanager")
+	KOR.xraysettings = require("extensions/xraymodel/xraysettings")
+	KOR.xraytranslationsmanager = require("extensions/xrayviews/xraytranslationsmanager")
 	DX.tm = KOR.xraytranslationsmanager
 	KOR.xraysettings:setUp()
 	DX.s = KOR.xraysettings
@@ -148,9 +148,10 @@ function KOR:initExtensions()
 	for i = 1, count do
 		name = self.extensions_list[i]
 		if not self[name] then
-			--* PageJumper will later on be initialized as plugin:
-			if name == "pagejumper" then
-				extension = require("extensions/plugins/" .. name)
+			if name == "xraymodel" then
+				extension = require("extensions/xraymodel/" .. name)
+			elseif name:match("xray") then
+				extension = require("extensions/xrayviews/" .. name)
 			else
 				extension = name ~= "readcollection" and
 				require("extensions/" .. name)
@@ -173,7 +174,7 @@ function KOR:initExtensions()
 end
 
 --* see ((SYNTACTIC SUGAR)):
-function KOR:registerXrayModules()
+function KOR:registerXrayModulesToDX()
 	--* XrayController will register itself to DX from ((XrayController#init)):
 	local DX = DX
 

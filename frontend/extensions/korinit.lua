@@ -23,7 +23,7 @@ local KOR = require("extensions/kor")
 KOR:initBaseExtensions()
 
 -- #((initialize Xray modules))
---* helper class for shortened notation for Dynamic Xray modules; DX.b, DX.d (but indices DX.xraybuttons, DX.xraydialogs etc. are NOT available, because the very short notation is the point of table DX) instead of KOR.xraybuttons, KOR.xraydialogs etc.; will be populated from ((KOR#registerXrayModules)), ((XrayModel#initDataHandlers)) and ((XrayController#init)):
+--* helper class for shortened notation for Dynamic Xray modules; DX.b, DX.d (but indices DX.xraybuttons, DX.xraydialogs etc. are NOT available, because the very short notation is the point of table DX) instead of KOR.xraybuttons, KOR.xraydialogs etc.; will be populated from ((KOR#registerXrayModulesToDX)), ((XrayModel#initDataHandlers)) and ((XrayController#init)):
 --- @class DX
 --- @field b XrayButtons
 --- @field c XrayController
@@ -133,7 +133,10 @@ end
 
 --- @class ExtensionsInit
 KOR:initEarlyExtensions()
+--* XrayModel will also load its data handlers here:
 KOR:initExtensions()
-KOR:registerXrayModules()
+KOR:registerXrayModulesToDX()
+--* for now loads only extension Translations:
+DX.d:initViewHelpers()
 
 return KOR

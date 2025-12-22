@@ -162,7 +162,6 @@ function ScreenHelpers:restoreNightOrDayModeAfterResume()
         Screen:toggleNightMode(main_night_mode)
         G_reader_settings:saveSetting("night_mode", main_night_mode)
         --* to get rid of white footer in case night mode was enabled and has just been restored:
-        KOR.pagejumper:refreshPage()
     end
 end
 

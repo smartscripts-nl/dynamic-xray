@@ -2,7 +2,7 @@
 This is part of the Dynamic Xray plugin; it is the model (databases operations etc.) for XrayController. It has several child data handlers.
 
 The Dynamic Xray plugin has kind of a MVC structure:
-M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData)), ((XrayTranslations))
+M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
 V = ((XrayUI)), ((XrayTranslations)), ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
 
@@ -41,8 +41,6 @@ local data_loader
 local data_saver
 --- @type XrayTappedWords tapped_words
 local tapped_words
---- @type XrayTranslations translations
-local translations
 --- @type XrayFormsData forms_data
 local forms_data
 --- @type XrayViewsData views_data
@@ -84,30 +82,27 @@ end
 --* using di to inject these data handlers resulted sometimes in crashes, so therefor loading them hardcoded in this method:
 --- @private
 function XrayModel:initDataHandlers()
-    --* XraySettings must always be registered, so it was registered in ((KOR#initExtensions)) > ((KOR#registerXrayModules))...
+    --* XraySettings must always be registered, so it was registered in ((KOR#initExtensions)) > ((KOR#registerXrayModulesToDX))...
 
-    data_loader = require("extensions/xraydataloader")
+    data_loader = require("extensions/xraymodel/xraydataloader")
     data_loader:initDataHandlers(self)
     DX.setProp("dl", data_loader)
 
-    data_saver = require("extensions/xraydatasaver")
+    data_saver = require("extensions/xraymodel/xraydatasaver")
     data_saver:initDataHandlers(self)
     DX.setProp("ds", data_saver)
     --* since XrayTranslations needs table xrays_translations to be created, we run this here:
     data_saver.createAndModifyTables()
 
-    translations = require("extensions/xraytranslations")
-    DX.setProp("t", translations)
-
-    views_data = require("extensions/xrayviewsdata")
+    views_data = require("extensions/xraymodel/xrayviewsdata")
     views_data:initDataHandlers(self)
     DX.setProp("vd", views_data)
 
-    forms_data = require("extensions/xrayformsdata")
+    forms_data = require("extensions/xraymodel/xrayformsdata")
     forms_data:initDataHandlers(self)
     DX.setProp("fd", forms_data)
 
-    tapped_words = require("extensions/xraytappedwords")
+    tapped_words = require("extensions/xraymodel/xraytappedwords")
     tapped_words:initDataHandlers(self)
     DX.setProp("tw", tapped_words)
 end

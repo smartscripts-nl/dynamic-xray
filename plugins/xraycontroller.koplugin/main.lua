@@ -1,7 +1,7 @@
 -- #((Dynamic Xray: module info))
 --[[--
 This is the controller for the Dynamic Xray plugin. It has been structured in kind of a MVC structure:
-M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData)), ((XrayTranslations))
+M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
 V = ((XrayUI)), ((XrayTranslations)), ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
 --]]--
@@ -27,7 +27,7 @@ The Dynamic Xray module/plugin has two streams:
 --* SYNTACTIC SUGAR
 -- #((SYNTACTIC SUGAR))
 
-Calls like KOR.xraybuttons:[method](), KOR.xraymodel:[method]() etc. can now be replace by local, shortened vars: DX.b:[method](), DX.m:[method](), etc. This functionality was realised using ((KOR#registerXrayModules)), which populates the ((DX)) helper class. The same goes for XrayController, which registers itself to DX via ((XrayController#init)), setting DX.c to self.
+Calls like KOR.xraybuttons:[method](), KOR.xraymodel:[method]() etc. can now be replace by local, shortened vars: DX.b:[method](), DX.m:[method](), etc. This functionality was realised using ((KOR#registerXrayModulesToDX)), which populates the ((DX)) helper class. The same goes for XrayController, which registers itself to DX via ((XrayController#init)), setting DX.c to self.
 
 --* ADDING ITEMS FROM SELECTED TEXT
 
