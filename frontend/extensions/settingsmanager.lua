@@ -24,6 +24,7 @@ local _ = KOR:initCustomTranslations()
 local Screen = Device.screen
 local T = require("ffi/util").template
 
+local DX = DX
 local G_reader_settings = G_reader_settings
 local has_text = has_text
 local pairs = pairs
@@ -298,8 +299,12 @@ function SettingsManager:saveSetting(key, value)
     self.parent[key] = value
     self.settings[key].value = value
     self:saveSettings()
+
     if key == "database_filename" then
-        G_reader_settings:makeFalse("xray_items_db_created")
+        local index = DX.ds.version_index_name
+        self.parent[index] = 0
+        self.settings[index].value = 0
+        self:saveSettings()
         KOR.messages:notify(_("KOReader will be reloaded now..."))
         UIManager:scheduleIn(2, function()
             if KOR.ui.document then
@@ -308,6 +313,7 @@ function SettingsManager:saveSetting(key, value)
         end)
         return
     end
+
     --* this method can be called externally, so we need to re-setup:
     self.settings_for_menu = {}
     self:setUp()

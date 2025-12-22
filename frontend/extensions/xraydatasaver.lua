@@ -29,17 +29,14 @@ local _ = KOR:initCustomTranslations()
 local T = require("ffi/util").template
 
 local DX = DX
-local G_reader_settings = G_reader_settings
+local has_items = has_items
 local has_text = has_text
 local math = math
-local os = os
 local string = string
 local table = table
-local tonumber = tonumber
 local type = type
 local unpack = unpack
 
-local DB_SCHEMA_VERSION = 20251222
 local count
 --- @type XrayModel parent
 local parent
@@ -66,6 +63,8 @@ series_hits is NOT a db field, it is computed dynamically by queries XrayDataLoa
 --* compare ((XrayDataLoader)) for loading data:
 --- @class XrayDataSaver
 local XrayDataSaver = WidgetContainer:new{
+    --* these updates are run and depending on the setting "database_version" in ((XraySettings)):
+    database_updates = {},
     queries = {
         create_items_table = [[
             CREATE TABLE IF NOT EXISTS "xray_items" (
@@ -144,9 +143,6 @@ local XrayDataSaver = WidgetContainer:new{
         insert_item =
             "INSERT INTO xray_items (ebook, name, short_names, description, xray_type, aliases, linkwords) VALUES (?, ?, ?, ?, ?, ?, ?);",
 
-        set_db_version =
-            "PRAGMA user_version=%1;",
-
         update_hits =
             [[UPDATE xray_items
             SET
@@ -204,6 +200,7 @@ local XrayDataSaver = WidgetContainer:new{
         update_translation =
             "UPDATE xray_translations SET msgstr = ? WHERE md5 = ?;",
     },
+    version_index_name = "database_version",
 }
 
 --- @param xray_model XrayModel
@@ -511,46 +508,34 @@ function XrayDataSaver:setSeriesHitsForImportedItems(conn, current_ebook_basenam
     KOR.databases:closeStmts(stmt)
 end
 
+-- #((XrayDataSaver#createAndUpdateTables))
 --- @private
-function XrayDataSaver:createTables()
-    local now = tonumber(os.date("%Y%m%d"))
-    if now > DB_SCHEMA_VERSION and G_reader_settings:isTrue("xray_items_db_created") then
+function XrayDataSaver.createAndUpdateTables()
+
+    local self = DX.ds
+
+    local version_index = has_items(DX.s[self.version_index_name]) and DX.s[self.version_index_name]
+    local updates_count = #self.database_updates
+    if version_index == updates_count then
         return
     end
 
-    local db_conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver:createDB")
-    --* make it WAL, if possible
-    local pragma = Device:canUseWAL() and "WAL" or "TRUNCATE"
-    db_conn:exec(string.format("PRAGMA journal_mode=%s;", pragma))
-
-    --* create tables:
-    db_conn:exec(self.queries.create_items_table)
-    db_conn:exec(self.queries.create_translations_table)
-
-    --* check version; user_version is unique to sqlite and cannot be changed to another name:
-    local db_version = db_conn:rowexec("PRAGMA user_version;")
-    --* Update version
-    if db_version == 0 then
-        db_conn:exec(T(self.queries.set_db_version, DB_SCHEMA_VERSION))
-    elseif db_version < DB_SCHEMA_VERSION then
-        --[[local ok, re
-        local log = function(msg)
-            logger.warn("[vocab builder db migration]", msg)
-        end
-        if db_version < 20220608 then
-            ok, re = pcall(db_conn.exec, db_conn, "ALTER TABLE vocabulary ADD prev_context TEXT;")
-            if not ok then
-                log(re)
-            end
-        end
-
-        db_conn:exec("CREATE INDEX IF NOT EXISTS title_id_index ON vocabulary(title_id);")]]
-        --* update version
-        db_conn:exec(T(self.queries.set_db_version, DB_SCHEMA_VERSION))
+    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver:createDB")
+    if version_index == 0 then
+        --* make it WAL, if possible
+        local pragma = Device:canUseWAL() and "WAL" or "TRUNCATE"
+        conn:exec(string.format("PRAGMA journal_mode=%s;", pragma))
+        --* create tables:
+        conn:exec(self.queries.create_items_table)
+        conn:exec(self.queries.create_translations_table)
     end
-    db_conn:close()
 
-    G_reader_settings:saveSetting("xray_items_db_created", true)
+    --* Update version
+    if updates_count > 0 then
+        self.updateTables(conn, updates_count, version_index)
+        DX.s:saveSetting(self.version_index_name, updates_count)
+    end
+    conn = KOR.databases:closeInfoConnections(conn)
 end
 
 -- #((XrayDataSaver#deleteItem))
@@ -578,6 +563,18 @@ function XrayDataSaver.deleteItem(delete_item, remove_all_instances_in_series)
         return 1
     end
     return position
+end
+
+-- #((XrayDataSaver#updateTables))
+function XrayDataSaver.updateTables(conn, updates_count, version_index)
+    local self = DX.ds
+    if version_index and updates_count > 0 and version_index < updates_count then
+        local sql
+        for i = version_index + 1, updates_count do
+            sql = self.database_updates[i]
+            conn:exec(sql)
+        end
+    end
 end
 
 return XrayDataSaver

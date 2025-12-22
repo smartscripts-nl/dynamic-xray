@@ -71,6 +71,12 @@ local XraySettings = WidgetContainer:new{
             explanation = locked_xray_setting_message,
             locked = 1,
         },
+        --* this setting controls database updates via ((XrayDataSaver#createAndUpdateTables)) > ((XrayDataSaver#updateTables)) > XrayDataSaver.database_updates
+        database_version = {
+            value = 0,
+            explanation = locked_xray_setting_message,
+            locked = 1,
+        },
         ui_mode = {
             value = "page",
             options = { "page", "paragraph" },
