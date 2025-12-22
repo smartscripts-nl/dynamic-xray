@@ -79,7 +79,6 @@ local Dispatcher = require("dispatcher")
 local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
-local _ = KOR:initCustomTranslations()
 
 local DX = DX
 local has_no_text = has_no_text
@@ -102,8 +101,8 @@ end
 
 --- @private
 function XrayController:onDispatcherRegisterActions()
-    Dispatcher:registerAction("show_items", { category = "none", event = "ShowList", title = _("Show xray-items in this book/series"), reader = true })
-    Dispatcher:registerAction("add_xray_item", { category = "none", event = "AddNewXrayItem", title = _("Add an Xray item"), reader = true })
+    Dispatcher:registerAction("show_items", { category = "none", event = "ShowList", title = DX.d:getControllerEntryName("Show xray-items in this book/series"), reader = true })
+    Dispatcher:registerAction("add_xray_item", { category = "none", event = "AddNewXrayItem", title = DX.d:getControllerEntryName("Add an Xray item"), reader = true })
 end
 
 function XrayController:doBatchImport(count, callback)
@@ -320,7 +319,7 @@ function XrayController:guardIsExistingItem(needle_name)
 
     local already_existing_item = DX.tw:itemExists(needle_name, nil, "is_exists_check")
     if already_existing_item then
-        DX.d:setActionResultMessage(_("an xray item with this name already exists..."))
+        DX.d:setActionResultMessage(DX.d:getControllerEntryName("an xray item with this name already exists..."))
         DX.d:viewItem(already_existing_item)
         return true
     end
@@ -337,30 +336,30 @@ end
 function XrayController:addToMainMenu(menu_items)
     local icon = KOR.icons.lightning_bare
     menu_items.dynamic_xray = {
-        text = icon .. _(" Dynamic Xray"),
+        text = icon .. DX.d:getControllerEntryName(" Dynamic Xray"),
         sorting_hint = "navi",
         sub_item_table = {
             {
-                text = icon .. _(" Show list"),
+                text = icon .. DX.d:getControllerEntryName(" Show list"),
                 callback = function()
                     DX.d:showList()
                 end
             },
             {
-                text = icon .. _(" Add item"),
+                text = icon .. DX.d:getControllerEntryName(" Add item"),
                 callback = function()
                     self:resetFilteredItems()
                     self:onAddNewXrayItem()
                 end
             },
             {
-                text = icon .. _(" Translate interface"),
+                text = icon .. DX.d:getControllerEntryName(" Translate interface"),
                 callback = function()
                     DX.tm:manageTranslations()
                 end
             },
             {
-                text = KOR.icons.xray_settings_bare .. _(" Settings"),
+                text = KOR.icons.xray_settings_bare .. DX.d:getControllerEntryName(" Settings"),
                 callback = function()
                     DX.s:showSettingsManager()
                 end

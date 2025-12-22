@@ -1345,6 +1345,10 @@ Shift+S = Show all hits in book
     })
 end
 
+function XrayDialogs:getControllerEntryName(entry)
+    return _(entry)
+end
+
 function XrayDialogs:setProp(prop, value)
     self[prop] = value
 end
