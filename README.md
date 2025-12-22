@@ -26,6 +26,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 - [DX Settings menu](#dx-settings-menu)
 - [Problem solving](#problem-solving)
     - [Buttons in editor not visible](#buttons-in-editor-not-visible)
+    - [Notification: DX couldn't be initialized](#notification-that-dx-couldnt-be-initiated)
     - [User has a database filename other than "bookinfo_cache.sqlite3"](#user-has-a-database-filename-other-than-bookinfo_cachesqlite3)
 - [Todos / issues to fix](#todos--issues-to-fix)
 - [About the code](#about-the-code)
@@ -59,11 +60,13 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
 
 As of 2025-12-25 translations are now stored in the table xray_translations in the database. This table will be automatically created upon KOReader start. The translations are lazily stored in that table, only when requested.
 
-This will make the code and updates much easier to maintain for me _and_ for cloners...
+This will make the code and updates much easier to maintain for me _and_ for cloners... Users can translate texts in the TranslationsManager, which is reachable from the bubbles icon in the:
+* top left corner of the list of Xray items
+* top left corner of the information popup called with a tap on an Xray marker (lightning or star) in the ebook text
+* top left corner of the Xray item viewer dialog
+* the most left main menu item → Dynamic Xray → Translate interface
 
 **⚠️ The folder frontend/extensions/translations with in it a .po-file has therefore now been removed.**
-
-A module with which users can enter their own translations will soon follow... Until then, you can enter your translations directly in the database, in the msgstr fields.
 
 ## Usage tips
 
@@ -135,6 +138,10 @@ In the add/edit Xray item dialog, under the first tab "xray-item", some users do
 * Go to the [DX Settings menu](#dx-settings-menu)
 * Tap on editor_vertical_align_buttontable and set this value to false
 * Now re-open the Xray add or edit form
+
+### Notification that DX couldn't be initiated
+
+This lets the user know that somewhere in KOReader (maybe DX, maybe another plugin) an error occurred, which prevented DX from initializing. Alas, these error conditions are very hard to debug for me from a distance...
 
 ### User has a database filename other than "bookinfo_cache.sqlite3"
 

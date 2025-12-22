@@ -3,7 +3,7 @@ This extension is part of the Dynamic Xray plugin; it has all dialogs and forms 
 
 The Dynamic Xray plugin has kind of a MVC structure:
 M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData)), ((XrayTranslations))
-V = ((XrayUI)), and ((XrayDialogs)) and ((XrayButtons))
+V = ((XrayUI)), ((XrayTranslations)), ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
 
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
@@ -160,76 +160,76 @@ function XrayDialogs:getFormFields(item_copy, target_field, name_from_selected_t
     local linkwords = DX.fd:getLinkwordsText(item_copy)
     local icon = DX.vd:getItemTypeIcon(item_copy, "bare")
     local aliases_field = {
-                text = item_copy.aliases,
-                input_type = "text",
-                description = "Aliassen:",
-                info_popup_title = _("field: Aliases"),
-                --* splitting of items done by ((XrayModel#splitByCommaOrSpace)):
-                info_popup_text = _([[This field has space or comma separated terms, as aliases (of the main item name in the first tab). Can e.g. be a title or a nickname of a person.
+        text = item_copy.aliases,
+        input_type = "text",
+        description = "Aliassen:",
+        info_popup_title = _("field: Aliases"),
+        --* splitting of items done by ((XrayModel#splitByCommaOrSpace)):
+        info_popup_text = _([[This field has space or comma separated terms, as aliases (of the main item name in the first tab). Can e.g. be a title or a nickname of a person.
 
 Through aliases:
 1) main names will be found in the Xray overview of items in paragraphs on the current page;
 2) the main item will be shown if the user longpresses an alias in the ebook text.]]),
-                tab = 2,
-                cursor_at_end = true,
-                input_face = self.other_fields_face,
-                scroll = true,
-                allow_newline = false,
-                force_one_line_height = true,
-                margin = Size.margin.small,
+        tab = 2,
+        cursor_at_end = true,
+        input_face = self.other_fields_face,
+        scroll = true,
+        allow_newline = false,
+        force_one_line_height = true,
+        margin = Size.margin.small,
     }
     local linkwords_field = {
-                text = item_copy.linkwords,
-                input_type = "text",
-                description = _("Link terms:"),
-                info_popup_title = _("field: Link terms"),
-                --* splitting of items done by ((XrayModel#splitByCommaOrSpace)):
-                info_popup_text = _([[This field has space or comma separated (partial) names of other Xray items, to link the current item to those other items.
+        text = item_copy.linkwords,
+        input_type = "text",
+        description = _("Link terms") .. ":",
+        info_popup_title = _("field") .. ": " .. _("Link terms"),
+        --* splitting of items done by ((XrayModel#splitByCommaOrSpace)):
+        info_popup_text = _([[This field has space or comma separated (partial) names of other Xray items, to link the current item to those other items.
 
 If such an other item is longpressed in the book, the linked items will be shown as extra buttons in the popup dialog.]]),
-                tab = 2,
-                cursor_at_end = true,
-                input_face = self.other_fields_face,
-                scroll = true,
-                allow_newline = false,
-                force_one_line_height = true,
-                margin = Size.margin.small,
+        tab = 2,
+        cursor_at_end = true,
+        input_face = self.other_fields_face,
+        scroll = true,
+        allow_newline = false,
+        force_one_line_height = true,
+        margin = Size.margin.small,
     }
     local xray_type_field = {
-                text = tostring(item_copy.xray_type) or "1",
-                input_type = "number",
-                description = DX.fd:getTypeLabel(item_copy) .. "\n  " .. DX.vd.xray_type_description,
-                tab = 2,
-                input_face = self.other_fields_face,
-                cursor_at_end = true,
-                scroll = false,
-                allow_newline = false,
-                force_one_line_height = true,
-                disable_paste = true,
-                margin = Size.margin.small,
+        text = tostring(item_copy.xray_type) or "1",
+        input_type = "number",
+        description = DX.fd:getTypeLabel(item_copy) .. "\n  " .. DX.vd.xray_type_description,
+        tab = 2,
+        input_face = self.other_fields_face,
+        cursor_at_end = true,
+        scroll = false,
+        allow_newline = false,
+        force_one_line_height = true,
+        disable_paste = true,
+        margin = Size.margin.small,
     }
     local short_names_field = {
-                text = item_copy.short_names,
-                input_type = "text",
-                description = _("Short names:"),
-                info_popup_title = _("field: Short names"),
-                info_popup_text = _([[Comparable with aliases, but in this case comma separated short variants of the main item name in the first tab. Handy when those shorter names are sometimes used in the book instead of the longer main name.
+        text = item_copy.short_names,
+        input_type = "text",
+        description = _("Short names") .. ":",
+        info_popup_title = _("field") .. ": " .. _("Short names"),
+        info_popup_text = _([[Comparable with aliases, but in this case comma separated short variants of the main item name in the first tab. Handy when those shorter names are sometimes used in the book instead of the longer main name.
 
 For Xray overviews of (paragraphs in) the current page the scripts initially will firstly search for whole instances of these short names, or otherwise for first and surnames derived from these.]]),
-                tab = 2,
-                input_face = self.other_fields_face,
-                cursor_at_end = true,
-                scroll = true,
-                allow_newline = false,
-                force_one_line_height = true,
-                margin = Size.margin.small,
+        tab = 2,
+        input_face = self.other_fields_face,
+        cursor_at_end = true,
+        scroll = true,
+        allow_newline = false,
+        force_one_line_height = true,
+        margin = Size.margin.small,
     }
     local fields = {
         {
             text = target_field == "description" and name_from_selected_text or item_copy.description or "",
             input_type = "text",
-            description = linkwords and T(_("Description (%1):"), linkwords) or _("Description:"),
-            info_popup_title = _("field: Description"),
+            description = linkwords and _("Description") .. T(" (%1):", linkwords) or _("Description"),
+            info_popup_title = _("field") .. ": " .. _("Description"),
             info_popup_text = T(_([[If it is your intention that a Xray item should be filterable with a term in its description, you should ensure that that term in case of:
 
 NAMES OF PERSONS %1
@@ -250,8 +250,8 @@ only has lower case characters in the description.]]), KOR.icons.xray_person_imp
         {
             text = target_field == "name" and name_from_selected_text or item_copy.name or "",
             input_type = "text",
-            description = aliases and _("Name (") .. aliases .. "):  " .. icon or _("Name: ") .. icon,
-            info_popup_title = _("field: Name"),
+            description = aliases and _("Name") .. " (" .. aliases .. "):  " .. icon or _("Name") .. ": " .. icon,
+            info_popup_title = _("field") .. ": " .. _("Name"),
             info_popup_text = _([[PERSONS
 Enter person names including uppercase starting characters [A-Za-z]. Because in that case the search for Xray items in the book will be done CASE SENSITIVE. By default when searching for Xray items, Dynamic Xray will search for first names in the text. If you want the plugin to search for occurrences/hits for the surname instead (because these references are more frequent in the text), use this format: "surname, first name".
 
@@ -764,8 +764,6 @@ function XrayDialogs:showList(focus_item, dont_show)
     self:showActionResultMessage()
 
     KOR.dialogs:registerWidget(self.xray_items_chooser_dialog)
-
-    DX.m:showMethodsTrace("XrayDialogs:showList")
 end
 
 --* information about available hotkeys in list shown in ((XrayButtons#forListTopLeft)) > ((XrayDialogs#showHelp)):
@@ -1139,7 +1137,6 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
     })
     self:addHotkeysForItemViewer()
     self:showActionResultMessage()
-    DX.m:showMethodsTrace("XrayDialogs:viewItem")
 end
 
 function XrayDialogs:closeItemViewer()
@@ -1203,7 +1200,6 @@ function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_wo
     })
     self:addHotkeysForItemViewer()
     self:showActionResultMessage()
-    DX.m:showMethodsTrace("XrayDialogs:viewTappedWordItem")
 end
 
 function XrayDialogs:viewLinkedItem(item, tapped_word)
@@ -1251,8 +1247,6 @@ function XrayDialogs:showTappedWordCollectionPopup(buttons, buttons_count, tappe
         modal = false,
     }
     UIManager:show(self.xray_item_chooser)
-
-    DX.m:showMethodsTrace("XrayDialogs:showRelatedItemsPopup")
 end
 
 --- @private

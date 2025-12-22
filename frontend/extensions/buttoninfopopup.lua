@@ -22,6 +22,26 @@ local ButtonInfoPopup = WidgetContainer:new{
 
 --* these methods return ALL PROPS for a button as a button definition table, to be used as argument for creating a button table
 
+function ButtonInfoPopup:forInputDialogSearchFirst(props)
+	return KOR.buttonprops:set({
+		text = KOR.icons.first,
+		font_bold = true,
+		info = _("first-icon | Search first location with this search term."),
+		callback_label = _("to first"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forInputDialogSearchNext(props)
+	return KOR.buttonprops:set({
+		text = KOR.icons.next,
+		font_bold = true,
+		info = _("next-icon | Search next location with this search term."),
+		callback_label = ("next"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forMenuFilterButton(props)
 	return KOR.buttonprops:set({
 		--! all props defined by caller
@@ -381,6 +401,33 @@ function ButtonInfoPopup:forXrayToggleSortingMode(props)
 	return KOR.buttonprops:set({
 		icon = "sort",
 		--* info and callback_label props will be defined by caller
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forTranslationEditorResetText(props)
+	return KOR.buttonprops:set({
+		icon = "reset",
+		info = _("reset icon | Reset the text in the text editor to the untranslated, English text."),
+		callback_label = _("reset"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forTranslationsResetAll(props)
+	return KOR.buttonprops:set({
+		icon = "reset",
+		info = _("reset icon | Reset ALL(!) translations to the untranslated, English texts."),
+		callback_label = _("reset"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forXrayTranslations(props)
+	return KOR.buttonprops:set({
+		icon = "translate",
+		info = _("translation icon | Translate texts in the DX interface."),
+		callback_label = _("translate"),
 		--! callback defined by calling module
 	}, props)
 end

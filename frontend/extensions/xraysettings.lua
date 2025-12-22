@@ -3,7 +3,7 @@ This extension is part of the Dynamic Xray plugin; it has buttons which are gene
 
 The Dynamic Xray plugin has kind of a MVC structure:
 M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData)), ((XrayTranslations))
-V = ((XrayUI)), and ((XrayDialogs)) and ((XrayButtons))
+V = ((XrayUI)), ((XrayTranslations)), ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
 
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
@@ -22,7 +22,7 @@ local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 
---local locked_xray_setting_message = _("This setting will be automatically computed by Dynamic Xray and therefor the user cannot modify it.")
+local locked_xray_setting_message = _("This setting will be automatically computed by Dynamic Xray and therefor the user cannot modify it.")
 
 --- @class XraySettings
 --- @field settings_manager SettingsManager
@@ -66,6 +66,11 @@ local XraySettings = WidgetContainer:new{
             explanation = "This variables enables a number of default settings for KOReader onder Ubuntu, e.g. that the user can close some dialogs with ESC.",
             locked = 0,
         },
+        prune_orphan_translations_version = {
+            value = 1,
+            explanation = locked_xray_setting_message,
+            locked = 1,
+        },
         ui_mode = {
             value = "page",
             options = { "page", "paragraph" },
@@ -99,6 +104,10 @@ function XraySettings:toggleSetting(key, alternatives)
             break
         end
     end
+end
+
+function XraySettings:saveSetting(key, value)
+    self.settings_manager:saveSetting(key, value)
 end
 
 return XraySettings

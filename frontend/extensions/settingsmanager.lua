@@ -3,7 +3,7 @@ This extension is part of the Dynamic Xray plugin; it has buttons which are gene
 
 The Dynamic Xray plugin has kind of a MVC structure:
 M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayFormsData)), ((SettingsManager)), ((XrayTappedWords)) and ((XrayViewsData)), ((XrayTranslations))
-V = ((XrayUI)), and ((XrayDialogs)) and ((SettingsManager))
+V = ((XrayUI)), ((XrayTranslations)), ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
 
 These modules are initialized in ((initialize Xray modules)) and ((XrayController#init)).
@@ -127,7 +127,7 @@ If you longpress a setting, you'll see an explanation of that setting.]]), self.
         UIManager:close(self.settings_dialog)
     end
     self:updateItemTable()
-    self.settings_menu:switchItemTable(self.list_title .. _(": settings"), self.item_table)
+    self.settings_menu:switchItemTable(self.list_title .. ": " .. _("settings"), self.item_table)
     UIManager:show(self.settings_dialog)
 end
 

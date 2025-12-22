@@ -2,8 +2,8 @@
 This extension is part of the Dynamic Xray plugin; it handles the data required for the forms to manage the Xray items.
 
 The Dynamic Xray plugin has kind of a MVC structure:
-M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
-V = ((XrayUI)), and ((XrayDialogs)) and ((XrayButtons))
+M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData)), ((XrayTranslations))
+V = ((XrayUI)), ((XrayTranslations)), ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
 
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
@@ -152,7 +152,7 @@ end
 
 function XrayFormsData:getAndStoreEditedItem(item_copy, field_values)
     if not self.edit_item_index then
-        KOR.dialogs:alertError(_("XrayDialogs.edit_item_index has not been set for this item."))
+        KOR.messages:notify(_("edit_item_index has not been set for this item..."))
         return
     end
     --* current method is called from ((XrayController#saveUpdatedItem)); book_hits count was added to the edited item there:

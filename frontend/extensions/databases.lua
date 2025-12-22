@@ -91,6 +91,13 @@ function Databases:escape(parameter)
     return parameter:gsub("'", "''")
 end
 
+function Databases:unescape(field_content)
+    if type(field_content) ~= "string" then
+        return field_content
+    end
+    return field_content:gsub("''+", "'")
+end
+
 --* inject filename with apostrophs escaped. Presupposes a query in this format: UPDATE ... WHERE path = 'safe_path'
 --* to prevent errors because of
 --* Wallabag filenames with apostrophs:

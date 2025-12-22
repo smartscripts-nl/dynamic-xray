@@ -3,7 +3,7 @@ This is part of the Dynamic Xray plugin; it is the model (databases operations e
 
 The Dynamic Xray plugin has kind of a MVC structure:
 M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData)), ((XrayTranslations))
-V = ((XrayUI)), and ((XrayDialogs)) and ((XrayButtons))
+V = ((XrayUI)), ((XrayTranslations)), ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
 
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
@@ -55,8 +55,6 @@ local XrayModel = WidgetContainer:new{
     current_ebook_full_path = nil,
     current_series = nil,
     current_title = nil,
-    debug_methods_trace = {},
-    debug_status = false,
     ebooks = {},
     items_prepared_for_basename = nil,
     min_match_word_length = 4,
@@ -381,18 +379,6 @@ function XrayModel:setTabDisplayCounts()
     end
 
     return self.tab_display_counts
-end
-
---* This method can be called at the end of methods in XrayDialog, or ((XrayController#onReaderReady)):
-function XrayModel:showMethodsTrace(caller)
-    if not self.debug_status or not DX.s.is_ubuntu then
-        return
-    end
-
-    table.insert(self.debug_methods_trace, caller)
-
-    --* reset the trace for new method calls:
-    self.debug_methods_trace = {}
 end
 
 --* called from ((TextViewer#findCallback)):

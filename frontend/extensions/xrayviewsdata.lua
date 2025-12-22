@@ -3,7 +3,7 @@ This extension is part of the Dynamic Xray plugin; its task is the management of
 
 The Dynamic Xray plugin has kind of a MVC structure:
 M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData)), ((XrayTranslations))
-V = ((XrayUI)), and ((XrayDialogs)) and ((XrayButtons))
+V = ((XrayUI)), ((XrayTranslations)), ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
 
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
@@ -69,10 +69,10 @@ local XrayViewsData = WidgetContainer:new {
     xray_type_description = "1 " .. KOR.icons.arrow_bare .. " " .. KOR.icons.xray_person_bare .. "  2 " .. KOR.icons.arrow_bare .. " " .. KOR.icons.xray_person_important_bare .. "  3 " .. KOR.icons.arrow_bare .. " " .. KOR.icons.xray_term_bare .. "  4 " .. KOR.icons.arrow_bare .. " " .. KOR.icons.xray_term_important_bare,
     --* for usage in ((XrayButtons#forItemEditorTypeSwitch)):
     xray_type_choice_labels = {
-        T(_(" 1: %1 person"), KOR.icons.xray_person_bare),
-        T(_(" 2: %1 important person"), KOR.icons.xray_person_important_bare),
-        T(_(" 3: %1 term"), KOR.icons.xray_term_bare),
-        T(_(" 4: %1 important term"), KOR.icons.xray_term_important_bare),
+        T(" 1: %1 ", KOR.icons.xray_person_bare) .. _("person"),
+        T(" 2: %1 ", KOR.icons.xray_person_important_bare) .. _("important person"),
+        T(" 3: %1 ", KOR.icons.xray_term_bare) .. _("term"),
+        T(" 4: %1 ", KOR.icons.xray_term_important_bare) .. _("important term"),
     },
     xray_type_icons = {
         KOR.icons.xray_person_bare .. " ",
@@ -883,7 +883,7 @@ function XrayViewsData:addHitsHtml(meta_info_html, item)
         table.insert(meta_info_html, T(self.item_meta_info_template, _("Hits in series:"), tonumber(item.series_hits)))
     end
     if item.book_hits then
-        table.insert(meta_info_html, T(self.item_meta_info_template, _("Hits in book:"), tonumber(item.book_hits)))
+        table.insert(meta_info_html, T(self.item_meta_info_template, _("Hits in book") .. ":", tonumber(item.book_hits)))
     end
 end
 

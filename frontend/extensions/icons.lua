@@ -5,7 +5,7 @@ local spacer = "\u{202F}"
 --* this table provides a named list of glyph icons in NotoSans Nerd font, with some additional glyphs from other sources:
 --- @class Icons
 return {
-    --* these first 4 entries are svg icons:
+    --* these first 4 entries are svg icons, thin lined:
     chevron_left = "chevron.left",
     chevron_right = "chevron.right",
     chevron_first = "chevron.first",

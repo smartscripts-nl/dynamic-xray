@@ -3,7 +3,7 @@ This is part of the Dynamic Xray plugin; it is the model (databases operations e
 
 The Dynamic Xray plugin has kind of a MVC structure:
 M = ((XrayDataSaver)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData)), ((XrayTranslations))
-V = ((XrayUI)), and ((XrayDialogs)) and ((XrayButtons))
+V = ((XrayUI)), ((XrayTranslations)), ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
 
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
@@ -36,8 +36,10 @@ local os = os
 local string = string
 local table = table
 local tonumber = tonumber
+local type = type
+local unpack = unpack
 
-local DB_SCHEMA_VERSION = 20251220
+local DB_SCHEMA_VERSION = 20251222
 local count
 --- @type XrayModel parent
 local parent
@@ -185,12 +187,70 @@ local XrayDataSaver = WidgetContainer:new{
         update_item_type =
             "UPDATE xray_items SET xray_type = ? WHERE id = ?;",
     },
+    queries_external = {
+        --* called from ((XrayTranslations#get)):
+        add_translation_item =
+            "INSERT OR IGNORE INTO xray_translations(msgid, msgstr, md5) VALUES(?, ?, ?);",
+
+        --* called from ((XrayTranslations#get)):
+        prune_orphan_translations =
+            "DELETE FROM xray_translations WHERE WHERE_CONDITIONS;",
+
+        --* called from ((XrayTranslationsManager#manageTranslations)):
+        remove_all_translations =
+            "DELETE FROM xray_translations WHERE msgid = msgstr;",
+
+        --* called from ((XrayTranslations#updateTranslation)):
+        update_translation =
+            "UPDATE xray_translations SET msgstr = ? WHERE md5 = ?;",
+    },
 }
 
 --- @param xray_model XrayModel
 function XrayDataSaver:initDataHandlers(xray_model)
     parent = xray_model
     views_data = DX.vd
+end
+
+function XrayDataSaver:execExternalQuery(context, query_index)
+    local conn = KOR.databases:getDBconnForBookInfo(context)
+    local result = conn:exec(self.queries_external[query_index])
+    conn = KOR.databases:closeInfoConnections(conn)
+    return result
+end
+
+function XrayDataSaver:runExternalStmt(context, stmt_index, params)
+    local conn
+    local sql = self.queries_external[stmt_index]
+
+    if sql:match("WHERE_CONDITIONS") and type(params) == "string" then
+
+        --* run removals only once:
+        local previous_version = DX.s.prune_orphan_translations_version
+        if previous_version == DX.t.prune_orphan_translations_version then
+            conn = KOR.databases:closeInfoConnections(conn)
+            return
+        end
+
+        conn = KOR.databases:getDBconnForBookInfo(context)
+        sql = sql:gsub("WHERE_CONDITIONS", params)
+        conn:exec(sql)
+        conn = KOR.databases:closeInfoConnections(conn)
+        --* mark the translations table as pruned:
+        DX.s:saveSetting("prune_orphan_translations_version", DX.t.prune_orphan_translations_version)
+        return
+    end
+
+    conn = KOR.databases:getDBconnForBookInfo(context)
+    local stmt = conn:prepare(sql)
+    count = #params
+    for i = 1, count do
+        if type(params[i]) == "string" then
+            params[i] = KOR.databases:escape(params[i])
+        end
+    end
+    stmt:reset():bind(unpack(params)):step()
+    conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 end
 
 -- #((XrayDataSaver#storeDeletedItem))

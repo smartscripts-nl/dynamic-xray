@@ -589,7 +589,7 @@ function HtmlBox:computeHeights()
         self.height = self.avail_height
         self.content_height = self.height - others_height
         local nb_lines = math.floor(self.content_height / self.content_line_height)
-        self.content_height = math.floor(nb_lines * self.content_line_height * 0.35)
+        self.content_height = math.floor(nb_lines * self.content_line_height * 0.38)
     else
         --* Definition height was previously computed as 0.5*0.7*screen_height, so keep
         --* it that way. Components will add themselves to that.

@@ -145,6 +145,7 @@ function ReaderView:resetIconPositionsRegistry()
 end
 
 local orig_paintTo = ReaderView.paintTo
+-- #((ReaderView#paintTo))
 ReaderView.paintTo = function(self, bb, x, y)
     --! this statement is crucial, to make sure icons are not shifted below their original y position upon redraws:
     self:resetIconPositionsRegistry()
@@ -173,6 +174,7 @@ end
 -- #((PATCH READERDICTIONARY))
 
 local orig_onLookupWord = ReaderDictionary.onLookupWord
+-- #((ReaderDictionary#onLookupWord))
 ReaderDictionary.onLookupWord = function(self, word, is_sane, boxes, highlight, link, dict_close_callback)
     --* if an Xray item was recognized, show its info instead of the Dictionary dialog:
     if DX.tw:getXrayItemAsDictionaryEntry(word) then

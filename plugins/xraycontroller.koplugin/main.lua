@@ -2,7 +2,7 @@
 --[[--
 This is the controller for the Dynamic Xray plugin. It has been structured in kind of a MVC structure:
 M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData)), ((XrayTranslations))
-V = ((XrayUI)), and ((XrayDialogs)) and ((XrayButtons))
+V = ((XrayUI)), ((XrayTranslations)), ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
 --]]--
 
@@ -31,7 +31,7 @@ Calls like KOR.xraybuttons:[method](), KOR.xraymodel:[method]() etc. can now be 
 
 --* ADDING ITEMS FROM SELECTED TEXT
 
-E.g. ((ReaderDictionary#onShowDictionaryLookup)) > ((XrayController#saveNewItem)) > ((XrayController#guardIsExistingItem)) > ((XrayController#onAddNewXrayItem))
+E.g. ((ReaderDictionary#onLookupWord)) > ((XrayController#saveNewItem)) > ((XrayController#guardIsExistingItem)) > ((XrayController#onAddNewXrayItem))
 
 --* SAVING ITEMS
 
@@ -158,9 +158,9 @@ function XrayController:onReaderReady()
     KOR:registerUI(self.ui)
     KOR.registry.current_ebook = self.view.document.file
 
-    --! hotfix, should not be necessary:
     if not DX.m then
-        KOR:registerXrayModules()
+        KOR.messages:notify("dynamic xray could not be initiated...")
+        return
     end
 
     DX.m:setTitleAndSeries(self.view.document.file) -- local series_has_changed, is_non_series_book =
@@ -172,8 +172,6 @@ function XrayController:onReaderReady()
     DX.vd.initData(true, false, self.view.document.file)
     DX.vd.prepareData()
     --end
-
-    DX.m:showMethodsTrace("XrayController:onReaderReady")
 end
 
 function XrayController:filterItemsByImportantTypes()
@@ -353,6 +351,12 @@ function XrayController:addToMainMenu(menu_items)
                 callback = function()
                     self:resetFilteredItems()
                     self:onAddNewXrayItem()
+                end
+            },
+            {
+                text = icon .. _(" Translate interface"),
+                callback = function()
+                    DX.tm:manageTranslations()
                 end
             },
             {

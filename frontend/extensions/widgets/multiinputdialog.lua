@@ -183,8 +183,6 @@ function MultiInputDialog:onSwitchFocus(inputbox)
     self._input_widget:onShowKeyboard()
 end
 
---* ==================== SMARTSCRIPTS =====================
-
 --* DataGroup can be MeasureData or VerticalGroupData; MeasureData can be used to compute height of auto-height fields to be inserted in VerticalGroupData:
 --- @private
 function MultiInputDialog:injectFieldRow(DataGroup, field_source, is_field_row)
@@ -296,8 +294,8 @@ function MultiInputDialog:setFieldProps(field, field_side)
     local is_focus_field = false
     --* target container will be self.MeasureData if target_container == 1, or self.VerticalGroupData if target_container == 2:
     if field_side == 1 and not self.a_field_was_focussed and self.target_container == 2 then
-            self.a_field_was_focussed = true
-            is_focus_field = true
+        self.a_field_was_focussed = true
+        is_focus_field = true
     end
     self.field_config = {
         value_index =
@@ -375,30 +373,30 @@ end
 
 --- @private
 function MultiInputDialog:insertFieldIntoDataGroup(DataGroup, field)
-    --* for single field rows:
+        --* for single field rows:
     if (not self.has_field_rows and field.description) or (self.fields_count == 1 and field.description) then
-        local description_height
+            local description_height
         self.input_description[self.current_field], description_height = self:getDescription(field, math.floor(self.width * 0.9))
-        local group = LeftContainer:new{
-            dimen = Geom:new{
-                w = self.full_width,
-                h = description_height,
-            },
-        self.input_description[self.current_field],
-        }
-        table.insert(DataGroup, group)
+            local group = LeftContainer:new{
+                dimen = Geom:new{
+                    w = self.full_width,
+                    h = description_height,
+                },
+            self.input_description[self.current_field],
+            }
+            table.insert(DataGroup, group)
 
-        --* for rows with more than one field and no descriptions: when no title bar present, add some extra margin above the fields:
-    elseif not self.title then
-        local group = CenterContainer:new{
-            dimen = Geom:new{
-                w = self.full_width,
-                h = 2 * self.description_margin,
-            },
-            VerticalSpan:new{ width = self.description_padding + self.description_margin },
-        }
-        table.insert(DataGroup, group)
-    end
+            --* for rows with more than one field and no descriptions: when no title bar present, add some extra margin above the fields:
+        elseif not self.title then
+            local group = CenterContainer:new{
+                dimen = Geom:new{
+                    w = self.full_width,
+                    h = 2 * self.description_margin,
+                },
+                VerticalSpan:new{ width = self.description_padding + self.description_margin },
+            }
+            table.insert(DataGroup, group)
+        end
 end
 
 --- @private
@@ -476,35 +474,35 @@ end
 --- @private
 function MultiInputDialog:getDescription(field, width)
     local text = field.info_popup_text and
-    Button:new{
-        text_icon = {
-            text = self.description_prefix .. " " .. field.description .. " ",
-            text_font_bold = false,
-            text_font_face = "x_smallinfofont",
-            font_size = 18,
-            icon = "info",
-            icon_size_ratio = 0.48,
-        },
-        padding = 0,
-        margin = 0,
-        text_font_face = "x_smallinfofont",
-        text_font_size = 19,
-        text_font_bold = false,
-        align = "left",
-        bordersize = 0,
-        width = width,
-        --* y_pos for the popup dialog - not used now anymore - was detected and set in ((Button#onTapSelectButton)) - look for two statements with self.callback(pos):
-        callback = function() --ypos
-            -- #((focus field upon click on info label))
-            --* this prop can be set in ((MultiInputDialog#injectFieldRow)):
-            if field.info_icon_field_no then
-                self:onSwitchFocus(self.input_fields[field.info_icon_field_no])
-            end
-            --* info_popup_title and info_popup_text e.g. defined in ((XrayDialogs#getFormFields)):
-            KOR.dialogs:niceAlert(field.info_popup_title, field.info_popup_text)
-        end,
-    }
-    or TextBoxWidget:new{
+            Button:new{
+                text_icon = {
+                    text = self.description_prefix .. " " .. field.description .. " ",
+                    text_font_bold = false,
+                    text_font_face = "x_smallinfofont",
+                    font_size = 18,
+                    icon = "info",
+                    icon_size_ratio = 0.48,
+                },
+                padding = 0,
+                margin = 0,
+                text_font_face = "x_smallinfofont",
+                text_font_size = 19,
+                text_font_bold = false,
+                align = "left",
+                bordersize = 0,
+                width = width,
+                --* y_pos for the popup dialog - not used now anymore - was detected and set in ((Button#onTapSelectButton)) - look for two statements with self.callback(pos):
+                callback = function() --ypos
+                    -- #((focus field upon click on info label))
+                    --* this prop can be set in ((MultiInputDialog#injectFieldRow)):
+                    if field.info_icon_field_no then
+                        self:onSwitchFocus(self.input_fields[field.info_icon_field_no])
+                    end
+                    --* info_popup_title and info_popup_text e.g. defined in ((XrayDialogs#getFormFields)):
+                    KOR.dialogs:niceAlert(field.info_popup_title, field.info_popup_text)
+                end,
+            }
+            or TextBoxWidget:new{
         text = self.description_prefix .. field.description,
         face = self.description_face or Font:getFace("x_smallinfofont"),
         width = width,
@@ -591,7 +589,7 @@ function MultiInputDialog:insertButtonGroup()
                 VerticalSpan:new{ width = self.full_width },
             })
         end
-        end
+    end
     --* add some padding above the button_group:
     table.insert(self.VerticalGroupData, VerticalSpan:new{ width = 10 })
     table.insert(self.VerticalGroupData, self.button_group)

@@ -3,7 +3,7 @@ This extension is part of the Dynamic Xray plugin; it has buttons which are gene
 
 The Dynamic Xray plugin has kind of a MVC structure:
 M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData)), ((XrayTranslations))
-V = ((XrayUI)), and ((XrayDialogs)) and ((XrayButtons))
+V = ((XrayUI)), ((XrayTranslations)), ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
 
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
@@ -221,6 +221,11 @@ function XrayButtons:forXrayUiInfoTopLeft(target, new_trigger, parent)
                     UIManager:setDirty(nil, "full")
                 end)
             end,
+        }),
+        KOR.buttoninfopopup:forXrayTranslations({
+            callback = function()
+                DX.tm:manageTranslations()
+            end
         }),
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
@@ -482,6 +487,136 @@ function XrayButtons:forTappedWordItemViewer(needle_item, called_from_list, tapp
     return buttons
 end
 
+--- @param parent XrayTranslationsManager
+function XrayButtons:forTranslationsContextDialog(parent, item)
+    return {
+        {
+            {
+                icon = "edit",
+                callback = function()
+                    UIManager:close(parent.translations_manipulate_dialog)
+                    --- @type XrayTranslationsManager manager
+                    local manager = parent._manager
+                    manager:editTranslation(item)
+                end
+            },
+        },
+    }
+end
+
+--- @param parent XrayTranslationsManager
+function XrayButtons:forTranslationsEditor(parent, item)
+    return {
+        {
+            {
+                icon = "back",
+                callback = function()
+                    UIManager:close(parent.edit_translation_input)
+                    parent.edit_translation_input = nil
+                end,
+            },
+            {
+                icon = "list",
+                callback = function()
+                    UIManager:close(parent.edit_translation_input)
+                    parent.edit_translation_input = nil
+                    parent:manageTranslations()
+                end,
+            },
+            {
+                text = KOR.icons.previous,
+                callback = function()
+                    UIManager:close(parent.edit_translation_input)
+                    parent:closeListDialog()
+                    parent:editPreviousTranslation()
+                end,
+            },
+            {
+                text = KOR.icons.next,
+                callback = function()
+                    UIManager:close(parent.edit_translation_input)
+                    parent:closeListDialog()
+                    parent:editNextTranslation()
+                end,
+            },
+            {
+                icon = "save",
+                is_enter_default = false,
+                callback = function()
+                    parent:saveUpdatedTranslation(item)
+                end,
+            },
+        }
+    }
+end
+
+
+
+--- @param parent XrayTranslationsManager
+function XrayButtons:forTranslationsFilter(parent)
+    return {
+        {
+            {
+                icon = "back",
+                callback = function()
+                    UIManager:close(parent.filter_translations_input)
+                    parent.filter_string = ""
+                    parent:manageTranslations()
+                end,
+            },
+            {
+                icon = "yes",
+                is_enter_default = true,
+                callback = function()
+                    parent.previous_filter = parent.filter_string
+                    parent.filter_string = parent.filter_translations_input:getInputText():lower()
+                    if parent.filter_string == "" then
+                        parent:reset()
+                    end
+                    UIManager:close(parent.filter_translations_input)
+                    parent:manageTranslations()
+                end,
+            },
+        }
+    }
+end
+
+function XrayButtons:forTranslationViewer(parent, translation)
+    return {
+        {
+            {
+                icon = "list",
+                callback = function()
+                    UIManager:close(parent.translation_viewer)
+                    --* go to the subpage in the manager containing the currently displayed note:
+                    parent:manageTranslations(translation, true)
+                end,
+            },
+            {
+                text = KOR.icons.previous,
+                callback = function()
+                    UIManager:close(parent.translation_viewer)
+                    parent:showPreviousTranslation(translation)
+                end,
+            },
+            {
+                text = KOR.icons.next,
+                callback = function()
+                    UIManager:close(parent.translation_viewer)
+                    parent:showNextTranslation(translation)
+                end,
+            },
+            {
+                icon = "edit",
+                callback = function()
+                    UIManager:close(parent.translation_viewer)
+                    parent:editTranslation(translation)
+                end,
+            },
+        }
+    }
+end
+
 function XrayButtons:forItemViewerTabs(main_info, hits_info)
     local has_chapter_info = hits_info ~= ""
     local hits_tab_enabled, hits_tab_color = KOR.buttonprops:getButtonState(has_chapter_info)
@@ -510,6 +645,11 @@ function XrayButtons:forItemViewerTopLeft(parent)
                 parent:showHelp(2)
             end
         },
+        KOR.buttoninfopopup:forXrayTranslations({
+            callback = function()
+                DX.tm:manageTranslations()
+            end
+        }),
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
                 UIManager:close(parent.item_viewer)
@@ -677,9 +817,9 @@ function XrayButtons:getListSubmenuButton(tab_no)
     local counts = DX.m.tab_display_counts
 
     local active_marker = KOR.icons.active_tab_bare
-    local label = tab_no == 1 and _("everything (") or _("persons (")
+    local label = tab_no == 1 and _("everything") .. " (" or _("persons") .. " ("
     if tab_no == 3 then
-        label = _("terms (")
+        label = _("terms") .. " ("
     end
     local active_tab = DX.m:getActiveListTab()
     return {
@@ -784,6 +924,7 @@ function XrayButtons:forItemEditorTypeSwitch(item_copy)
                 title_align = "center",
                 no_overlay = true,
                 modal = true,
+                font_weight = "normal",
                 width = Screen:scaleBySize(280),
                 buttons = buttons,
             }
@@ -1052,6 +1193,11 @@ function XrayButtons:forListTopLeft(parent)
                 DX.d:showHelp(1)
             end
         },
+        KOR.buttoninfopopup:forXrayTranslations({
+            callback = function()
+                DX.tm:manageTranslations()
+            end
+        }),
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
                 UIManager:close(parent.xray_items_chooser_dialog)

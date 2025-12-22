@@ -43,6 +43,19 @@ function Dialogs:closeAllWidgets()
     self.widgets = {}
 end
 
+function Dialogs:computePagePosition(dialogOrPage)
+    if not dialogOrPage then
+        return 1
+    end
+    local select_number = 1
+    if type(dialogOrPage) == "table" and dialogOrPage.page and dialogOrPage.perpage then
+        select_number = (dialogOrPage.page - 1) * dialogOrPage.perpage + 1
+    elseif type(dialogOrPage) == "number" then
+        select_number = (dialogOrPage - 1) * 16 + 1
+    end
+    return select_number
+end
+
 function Dialogs:registerWidget(widget)
     table.insert(self.widgets, widget)
 end

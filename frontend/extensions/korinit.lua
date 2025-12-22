@@ -34,6 +34,7 @@ KOR:initBaseExtensions()
 --- @field m XrayModel
 --- @field s XraySettings
 --- @field t XrayTranslations
+--- @field tm XrayTranslationsManager
 --- @field tw XrayTappedWords
 --- @field vd XrayViewsData
 --- @field u XrayUI
@@ -52,11 +53,13 @@ DX = {
     fd = nil,
     --* shorthand notation for Model:
     m = nil,
-    --* shorthand notation for Settings:
+    --* shorthand notation for Settings; this module will be initialized in ((KOR#initEarlyExtensions)):
     s = nil,
-    --* shorthand notation for TappedWords; this module will be initialized in ((XrayModel#initDataHandlers)):
-    t = nil,
     --* shorthand notation for Translations; this module will be initialized in ((XrayModel#initDataHandlers)):
+    t = nil,
+    --* shorthand notation for TranslationsManager; this module will be initialized in ((KOR#initEarlyExtensions)):
+    tm = nil,
+    --* shorthand notation for TappedWords; this module will be initialized in ((XrayModel#initDataHandlers)):
     tw = nil,
     --* shorthand notation for ViewsData; this module will be initialized in ((XrayModel#initDataHandlers)):
     vd = nil,

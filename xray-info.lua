@@ -45,7 +45,7 @@ function XrayInfo:XRAY_ITEMS()
     -- adding match reliability indicators for the page/paragraph info popup: ((XrayUI#matchNameInPageOrParagraph))
     -- using these indicators: ((XrayUI#generateParagraphInformation)) > ((xray items dialog add match reliability explanations)) & ((use xray match reliability indicators))
 
-    -- show paragraph matches: ((ReaderView#paintTo)) > ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#getParaMarker)) and ((CreDocument#storeCurrentPageParagraphs)) > ((XrayUI#getXrayItemsFoundInText)): here matches on page or paragraphs evaluated > ((XrayUI#drawMarker)) > ((set xray page info rects)) KOR.registry:set("xray_page_info_rects") > ((ReaderHighlight#onTapXPointerSavedHighlight)) > here the information in the popup gets combined: ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)) > ((XrayDialogs#showItemsInfo))
+    -- show paragraph matches: ((ReaderView#paintTo)) > ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#getParaMarker)) and ((CreDocument#storeCurrentPageParagraphs)) > ((XrayUI#getXrayItemsFoundInText)): here matches on page or paragraphs evaluated > ((XrayUI#drawMarker)) > ((set xray page info rects)) KOR.registry:set("xray_page_info_rects") > here the information in the popup gets combined: ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)) > ((XrayDialogs#showItemsInfo))
 
     -- max line length in popup info for xray items on page: XrayModel.max_line_length
 

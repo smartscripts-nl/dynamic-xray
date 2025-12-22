@@ -57,4 +57,11 @@ function Files:openFile(full_path, next_tick, skip_close_all_widgets)
     return false
 end
 
+function Files:exists(full_path)
+    if not (full_path) then
+        return false
+    end
+    return lfs.attributes(full_path) or false
+end
+
 return Files

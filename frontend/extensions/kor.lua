@@ -12,6 +12,7 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 --- @field colors Colors
 --- @field databases Databases
 --- @field dialogs Dialogs
+--- @field document CreDocument
 --- @field filedirnames FileDirNames
 --- @field files Files
 --- @field html Html
@@ -31,6 +32,7 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 --- @field xraydialogs XrayDialogs
 --- @field xraymodel XrayModel
 --- @field xraysettings XraySettings
+--- @field xraytranslationsmanager XrayTranslationsManager
 --- @field xrayui XrayUI
 local KOR = WidgetContainer:new{
 
@@ -85,6 +87,7 @@ local KOR = WidgetContainer:new{
 	xraydialogs = nil,
 	xraymodel = nil,
 	xraysettings = nil,
+	xraytranslationsmanager = nil,
 	xrayui = nil,
 
 	--- PLUGINS
@@ -127,10 +130,13 @@ function KOR:initBaseExtensions()
 end
 
 function KOR:initEarlyExtensions()
+	local DX = DX
 	KOR.colors = require("extensions/colors")
 	KOR.icons = require("extensions/icons")
 	KOR.settingsmanager = require("extensions/settingsmanager")
 	KOR.xraysettings = require("extensions/xraysettings")
+	KOR.xraytranslationsmanager = require("extensions/xraytranslationsmanager")
+	DX.tm = KOR.xraytranslationsmanager
 	KOR.xraysettings:setUp()
 	DX.s = KOR.xraysettings
 end

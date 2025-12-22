@@ -2,8 +2,8 @@
 This extension is part of the Dynamic Xray plugin; its task is the loading of data for the Dynamic Xray module.
 
 The Dynamic Xray plugin has kind of a MVC structure:
-M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
-V = ((XrayUI)), and ((XrayDialogs)) and ((XrayButtons))
+M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData)), ((XrayTranslations))
+V = ((XrayUI)), ((XrayTranslations)), ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
 
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
@@ -120,12 +120,24 @@ local XrayDataLoader = WidgetContainer:new{
         get_series_name =
             "SELECT series FROM bookinfo WHERE directory || filename = 'safe_path' LIMIT 1;",
     },
+    queries_external = {
+        --* used in ((XrayTranslations#loadAllTranslations)):
+        get_all_translations =
+            "SELECT CASE WHEN msgid != msgstr THEN 1 ELSE 0 END AS is_translated, msgid, msgstr, md5 FROM xray_translations ORDER BY msgid;",
+    },
 }
 
 --- @param xray_model XrayModel
 function XrayDataLoader:initDataHandlers(xray_model)
     parent = xray_model
     views_data = DX.vd
+end
+
+function XrayDataLoader:execExternalQuery(context, query_index)
+    local conn = KOR.databases:getDBconnForBookInfo(context)
+    local result = conn:exec(self.queries_external[query_index])
+    conn = KOR.databases:closeInfoConnections(conn)
+    return result
 end
 
 --* current_ebook_basename always given, but current_series only set when book is part of a series; this series name will be stored in table field xray_items.ebook:
