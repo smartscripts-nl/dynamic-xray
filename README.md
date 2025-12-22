@@ -118,6 +118,18 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 ![08 Help info for buttons](images/08-help-info-for-buttons.png)
 08 Help info for buttons
 
+![09 Interface translations list](images/09-interface-translations-list.png)
+09 Interface translations list
+
+![10 Translations navigator](images/10-translations-navigator.png)
+10 Translations navigator
+
+![11 Editing a translation](images/11-editing-a-translation.png)
+11 Editing a translation
+
+![12 Help info for translations editor](images/12-help-info-for-translations-editor.png)
+12 Help info for translations editor
+
 ## DX Settings menu
 
 * Open the KOReader main menu
