@@ -41,6 +41,12 @@ local XraySettings = WidgetContainer:new{
             explanation = _("Only change this setting if your database file not is called \"bookinfo_cache.sqlite3\". E.g. because it has a language code at the front, like \"PT_bookinfo_cache.sqlite3\"."),
             locked = 0,
         },
+        --* this setting controls database updates via ((XrayDataSaver#createAndModifyTables)) > ((XrayDataSaver#modifyTables)) > XrayDataSaver.table_modifications
+        database_scheme_version = {
+            value = 0,
+            explanation = locked_xray_setting_message,
+            locked = 1,
+        },
         editor_vertical_align_buttontable = {
             value = false,
             explanation = "If set to true, DX tries to vertically align the buttontable in the Xray item editor, so that it is shown just above the keyboard. On some e-readers this can lead to the problem that the buttons aren't visible anymore! In that case set this setting to false.",
@@ -68,12 +74,6 @@ local XraySettings = WidgetContainer:new{
         },
         prune_orphan_translations_version = {
             value = 1,
-            explanation = locked_xray_setting_message,
-            locked = 1,
-        },
-        --* this setting controls database updates via ((XrayDataSaver#createAndUpdateTables)) > ((XrayDataSaver#updateTables)) > XrayDataSaver.database_updates
-        database_version = {
-            value = 0,
             explanation = locked_xray_setting_message,
             locked = 1,
         },

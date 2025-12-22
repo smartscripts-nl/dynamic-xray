@@ -94,7 +94,7 @@ function XrayModel:initDataHandlers()
     data_saver:initDataHandlers(self)
     DX.setProp("ds", data_saver)
     --* since XrayTranslations needs table xrays_translations to be created, we run this here:
-    data_saver.createAndUpdateTables()
+    data_saver.createAndModifyTables()
 
     translations = require("extensions/xraytranslations")
     DX.setProp("t", translations)

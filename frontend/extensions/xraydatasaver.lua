@@ -63,8 +63,8 @@ series_hits is NOT a db field, it is computed dynamically by queries XrayDataLoa
 --* compare ((XrayDataLoader)) for loading data:
 --- @class XrayDataSaver
 local XrayDataSaver = WidgetContainer:new{
-    --* these updates are run and depending on the setting "database_version" in ((XraySettings)):
-    database_updates = {},
+    --* these table modifications are run and depending on the setting "database_scheme_version" in ((XraySettings)):
+    table_modifications = {},
     queries = {
         create_items_table = [[
             CREATE TABLE IF NOT EXISTS "xray_items" (
@@ -200,7 +200,7 @@ local XrayDataSaver = WidgetContainer:new{
         update_translation =
             "UPDATE xray_translations SET msgstr = ? WHERE md5 = ?;",
     },
-    version_index_name = "database_version",
+    version_index_name = "database_scheme_version",
 }
 
 --- @param xray_model XrayModel
@@ -508,14 +508,14 @@ function XrayDataSaver:setSeriesHitsForImportedItems(conn, current_ebook_basenam
     KOR.databases:closeStmts(stmt)
 end
 
--- #((XrayDataSaver#createAndUpdateTables))
+-- #((XrayDataSaver#createAndModifyTables))
 --- @private
-function XrayDataSaver.createAndUpdateTables()
+function XrayDataSaver.createAndModifyTables()
 
     local self = DX.ds
 
     local version_index = has_items(DX.s[self.version_index_name]) and DX.s[self.version_index_name]
-    local updates_count = #self.database_updates
+    local updates_count = #self.table_modifications
     if version_index == updates_count then
         return
     end
@@ -532,7 +532,7 @@ function XrayDataSaver.createAndUpdateTables()
 
     --* Update version
     if updates_count > 0 then
-        self.updateTables(conn, updates_count, version_index)
+        self.modifyTables(conn, updates_count, version_index)
         DX.s:saveSetting(self.version_index_name, updates_count)
     end
     conn = KOR.databases:closeInfoConnections(conn)
@@ -565,13 +565,13 @@ function XrayDataSaver.deleteItem(delete_item, remove_all_instances_in_series)
     return position
 end
 
--- #((XrayDataSaver#updateTables))
-function XrayDataSaver.updateTables(conn, updates_count, version_index)
+-- #((XrayDataSaver#modifyTables))
+function XrayDataSaver.modifyTables(conn, updates_count, version_index)
     local self = DX.ds
     if version_index and updates_count > 0 and version_index < updates_count then
         local sql
         for i = version_index + 1, updates_count do
-            sql = self.database_updates[i]
+            sql = self.table_modifications[i]
             conn:exec(sql)
         end
     end
