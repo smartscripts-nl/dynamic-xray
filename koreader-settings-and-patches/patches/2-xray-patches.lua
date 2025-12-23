@@ -463,7 +463,7 @@ function ReaderSearch:onShowFindAllResults(not_cached)
                 callback = function()
                     UIManager:close(self.result_menu)
                     self.last_search_text = ""
-                    KOR.xraycontroller:onAddNewXrayItem(last_search)
+                    DX.c:onAddNewXrayItem(last_search)
                 end,
             })),
         },

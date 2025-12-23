@@ -284,7 +284,7 @@ function ButtonInfoPopup:forXrayList(props)
 Hotkey %1 L]], KOR.icons.arrow_bare),
 		callback_label = _("list"),
 		callback = function()
-			KOR.xraycontroller:onShowList()
+			DX.c:onShowList()
 		end,
 	}, props)
 end

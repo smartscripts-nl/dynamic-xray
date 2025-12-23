@@ -28,7 +28,6 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 --- @field tabnavigator TabNavigator
 --- @field tables Tables
 --- @field xraybuttons XrayButtons
---- @field xraycontroller XrayController
 --- @field xraydialogs XrayDialogs
 --- @field xraymodel XrayModel
 --- @field xraysettings XraySettings
@@ -83,7 +82,6 @@ local KOR = WidgetContainer:new{
 	tabnavigator = nil,
 	tables = nil,
 	xraybuttons = nil,
-	--* xraycontroller farther below, in plugins list...
 	xraydialogs = nil,
 	xraymodel = nil,
 	xraysettings = nil,
@@ -94,7 +92,6 @@ local KOR = WidgetContainer:new{
 
 	--! register extensions which are also loaded as plugin (in folder extensions/plugins) as such, so not as extension;
 	readersearch = nil,
-	xraycontroller = nil,
 
 	extensions_list = {
 		--! this first block contains extensions which are needed by other extensions and therefor must be initialized first:
@@ -175,7 +172,7 @@ end
 
 --* see ((SYNTACTIC SUGAR)):
 function KOR:registerXrayModulesToDX()
-	--* XrayController will register itself to DX from ((XrayController#init)):
+	--* XrayController will register itself to DX from ((XrayController#initKORandDynamicXray)):
 	local DX = DX
 
 	DX.b = KOR.xraybuttons

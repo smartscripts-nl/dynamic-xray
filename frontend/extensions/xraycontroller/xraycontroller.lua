@@ -76,10 +76,10 @@ For a key event e.g.: ((next related item via hotkey))
 local require = require
 
 local Dispatcher = require("dispatcher")
+local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 require("extensions/helperfunctions")
-local KOR = require("extensions/kor")
 
 KOR:initBaseExtensions()
 
@@ -166,7 +166,6 @@ XrayController:initKORandDynamicXray()
 function XrayController:init()
     self:onDispatcherRegisterActions()
     self.ui.menu:registerToMainMenu(self)
-    KOR:registerPlugin("xraycontroller", self)
 end
 
 --- @private
