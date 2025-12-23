@@ -16,6 +16,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
   - [Fiction books](#fiction-books)
   - [Non-fiction books](#non-fiction-books)
 - [Installation](#installation)
+  - [Updating to new versions](#updating-to-new-versions)
   - [Entering your own translations for the DX interface](#entering-your-own-translations-for-the-dx-interface)
 - [Usage tips](#usage-tips)
   - [Adding Xray items](#adding-xray-items)
@@ -58,7 +59,7 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
 
 ### Updating to new versions
 
-When you clone new versions of DX, make sure you also update the patch file on your device. Otherwise, you might be confronted with crashes...
+When you clone new versions of DX, make sure you also **⚠️ update the patch file** on your device. Otherwise, you might be confronted with crashes...
 
 ### Entering your own translations for the DX interface
 
