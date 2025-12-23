@@ -167,7 +167,7 @@ PT_bookinfo_cache.sqlite3". In that case:
 
 ## Todos / issues to fix
 
-* Currently none...?
+* Maybe occurences in chapters are not indexed when DX is run in book mode (not for an entire series). I have to investigate...
 
 ## About the code
 

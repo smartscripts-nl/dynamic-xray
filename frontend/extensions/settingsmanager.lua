@@ -59,7 +59,6 @@ local SettingsManager = WidgetContainer:new {
     ]]
 }
 
---! don't call this method "init", because then ((KOR#initExtensions)) could call this method prematurely:
 function SettingsManager:setUp()
     self.settings_db = LuaSettings:open(DataStorage:getSettingsDir() .. "/settings_manager.lua")
     if self.settings_db then
