@@ -86,7 +86,6 @@ local XraySettings = WidgetContainer:new{
     },
 }
 
---! don't call this method "init", because then ((KOR#initExtensions)) could call this method prematurely; we want ((KOR#registerXrayModulesToDX)) to call this method:
 function XraySettings:setUp()
     self.settings_manager = KOR.settingsmanager:new({
         list_title = _("Dynamic Xray"),

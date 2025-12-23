@@ -288,7 +288,7 @@ ReaderHighlight.onTap = function(self, _, ges)
         return false
     end
     local pos = self.view:screenToPageTransform(ges.pos)
-    if KOR.xrayui:ReaderHighlightGenerateXrayInformation(pos) then
+    if DX.u:ReaderHighlightGenerateXrayInformation(pos) then
         return true
     end
     return orig_onTap(self, _, ges)
@@ -444,7 +444,7 @@ function ReaderSearch:onShowFindAllResults(not_cached)
             {
                 icon = "plus",
                 callback = function()
-                    KOR.xraymodel.saveNewItem(last_search)
+                    DX.m.saveNewItem(last_search)
                 end,
             }
         },

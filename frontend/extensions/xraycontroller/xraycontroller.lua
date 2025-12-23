@@ -27,7 +27,7 @@ The Dynamic Xray module/plugin has two streams:
 --* SYNTACTIC SUGAR
 -- #((SYNTACTIC SUGAR))
 
-Calls like KOR.xraybuttons:[method](), KOR.xraymodel:[method]() etc. can now be replace by local, shortened vars: DX.b:[method](), DX.m:[method](), etc. This functionality was realised using ((KOR#registerXrayModulesToDX)), which populates the ((DX)) helper class. The same goes for XrayController, which registers itself to DX via ((XrayController#init)), setting DX.c to self.
+Calling DX modules: DX.b:[method](), DX.m:[method](), etc. This functionality was realised using ((KOR#initDX)), which populates the ((DX)) helper class. The same goes for XrayController, which registers itself to DX via ((XrayController#init)), setting DX.c to self.
 
 --* ADDING ITEMS FROM SELECTED TEXT
 
@@ -81,10 +81,13 @@ local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 require("extensions/helperfunctions")
 
+local has_no_text = has_no_text
+local pairs = pairs
+
 KOR:initBaseExtensions()
 
 -- #((initialize Xray modules))
---* helper class for shortened notation for Dynamic Xray modules; DX.b, DX.d (but indices DX.xraybuttons, DX.xraydialogs etc. are NOT available, because the very short notation is the point of table DX) instead of KOR.xraybuttons, KOR.xraydialogs etc.; will be populated from ((KOR#registerXrayModulesToDX)), ((XrayModel#initDataHandlers)) and ((XrayController#init)):
+--* helper class for shortened notation for Dynamic Xray modules; DX.b, DX.d; they will be populated from ((KOR#initDX)), ((XrayModel#initDataHandlers)) and ((XrayController#init)):
 --- @class DX
 --- @field b XrayButtons
 --- @field c XrayController
@@ -136,9 +139,6 @@ end
 
 --! Watch out: extensions which are loaded here MUST also be typed in ((KOR)) and have a @class declaration themselves, to have them available for code hinting!
 
-local has_no_text = has_no_text
-local pairs = pairs
-
 --! this class will be loaded in 2 locations: in the DX patch (for early initialisation of the KOR and DX systems - via ((XrayController#initKORandDynamicXray)) - AND in plugins/xraycontroller.koplugin/main.lua:
 --- @class XrayController
 local XrayController = WidgetContainer:new{
@@ -151,9 +151,9 @@ local XrayController = WidgetContainer:new{
 function XrayController:initKORandDynamicXray()
     --- @class ExtensionsInit
     KOR:initEarlyExtensions()
+    KOR:initDX()
     --* XrayModel will also load its data handlers here:
     KOR:initExtensions()
-    KOR:registerXrayModulesToDX()
     --* for now loads only extension XrayTranslations:
     DX.d:initViewHelpers()
     --* see ((SYNTACTIC SUGAR)):
@@ -199,7 +199,7 @@ function XrayController:doBatchImport(count, callback)
     --* by forcing refresh, we reload items from the database:
     DX.vd.initData("force_refresh")
     DX.vd.prepareData()
-    KOR.xraydialogs:showList()
+    DX.d:showList()
 end
 
 function XrayController:listHasReloadOrDontShowRequest(focus_item, dont_show)

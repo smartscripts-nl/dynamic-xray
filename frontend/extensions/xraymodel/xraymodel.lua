@@ -19,7 +19,7 @@ These modules are initialized in ((initialize Xray modules)) and ((XrayControlle
 --! important info
 --* onReaderReady hits per item in the book are stored in self.hits_per_series_title. This prop can be updated in memory after updating, deleting or adding items, so we don't have to reload the data from the database.
 
---! since I ran into some weird "bad self" error messages when trying to store data in the database, I changed the format of methods involved in this from colon methods to dot functions; and in those I set a local self to KOR.xraymodel
+--! since I ran into some weird "bad self" error messages when trying to store data in the database, I changed the format of methods involved in this from colon methods to dot functions; and in those I set a local self to DX.m
 
 local require = require
 
@@ -65,14 +65,6 @@ local XrayModel = WidgetContainer:new{
     use_tapped_word_data = false,
 }
 
---* this method will be called from ((KOR#initExtensions)):
-function XrayModel:init()
-    self:setDatabaseFile()
-    --* if we would use this and consequently would reference DX.c.model instead of DX.m in the other DX modules, data would be reloaded from database onReaderReady for each new book:
-    self:initDataHandlers()
-end
-
---- @private
 function XrayModel:setDatabaseFile()
     if has_text(DX.s.database_file) and DX.s.database_file ~= "bookinfo_cache.sqlite3" then
         KOR.databases:setDatabaseFileName(DX.s.database_file ~= "bookinfo_cache.sqlite3")
@@ -80,31 +72,29 @@ function XrayModel:setDatabaseFile()
 end
 
 --* using di to inject these data handlers resulted sometimes in crashes, so therefor loading them hardcoded in this method:
---- @private
 function XrayModel:initDataHandlers()
-    --* XraySettings must always be registered, so it was registered in ((KOR#initExtensions)) > ((KOR#registerXrayModulesToDX))...
+    --* XraySettings must always be registered, so it was registered in ((KOR#initExtensions)) > ((KOR#initDX))...
 
+    views_data = require("extensions/xraymodel/xrayviewsdata")
     data_loader = require("extensions/xraymodel/xraydataloader")
-    data_loader:initDataHandlers(self)
-    DX.setProp("dl", data_loader)
-
     data_saver = require("extensions/xraymodel/xraydatasaver")
-    data_saver:initDataHandlers(self)
+    forms_data = require("extensions/xraymodel/xrayformsdata")
+    tapped_words = require("extensions/xraymodel/xraytappedwords")
+    DX.setProp("vd", views_data)
+    DX.setProp("dl", data_loader)
     DX.setProp("ds", data_saver)
+    DX.setProp("fd", forms_data)
+    DX.setProp("tw", tapped_words)
+
+    views_data:initDataHandlers(self)
+    data_loader:initDataHandlers(self)
+    data_saver:initDataHandlers(self)
+
     --* since XrayTranslations needs table xrays_translations to be created, we run this here:
     data_saver.createAndModifyTables()
 
-    views_data = require("extensions/xraymodel/xrayviewsdata")
-    views_data:initDataHandlers(self)
-    DX.setProp("vd", views_data)
-
-    forms_data = require("extensions/xraymodel/xrayformsdata")
     forms_data:initDataHandlers(self)
-    DX.setProp("fd", forms_data)
-
-    tapped_words = require("extensions/xraymodel/xraytappedwords")
     tapped_words:initDataHandlers(self)
-    DX.setProp("tw", tapped_words)
 end
 
 --* lower case needles must be at least 4 characters long, but for names with upper case characters in them no such condition is required:
@@ -283,7 +273,7 @@ end
 
 -- #((XrayModel#activateListTabCallback))
 function XrayModel.activateListTabCallback(tab_no)
-    local self = KOR.xraymodel
+    local self = DX.m
 
     if self:getActiveListTab() == tab_no then
         return false

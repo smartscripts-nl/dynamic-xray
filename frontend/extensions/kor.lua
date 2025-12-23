@@ -12,7 +12,6 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 --- @field colors Colors
 --- @field databases Databases
 --- @field dialogs Dialogs
---- @field document CreDocument
 --- @field filedirnames FileDirNames
 --- @field files Files
 --- @field html Html
@@ -27,12 +26,6 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 --- @field tabfactory TabFactory
 --- @field tabnavigator TabNavigator
 --- @field tables Tables
---- @field xraybuttons XrayButtons
---- @field xraydialogs XrayDialogs
---- @field xraymodel XrayModel
---- @field xraysettings XraySettings
---- @field xraytranslationsmanager XrayTranslationsManager
---- @field xrayui XrayUI
 local KOR = WidgetContainer:new{
 
 	--- NATIVE KOREADER UI MODULES
@@ -63,7 +56,6 @@ local KOR = WidgetContainer:new{
 	buttonchoicepopup = nil,
 	clipboard = nil,
 	colors = nil,
-	databases = nil,
 	dialogs = nil,
 	filedirnames = nil,
 	files = nil,
@@ -81,12 +73,6 @@ local KOR = WidgetContainer:new{
 	tabfactory = nil,
 	tabnavigator = nil,
 	tables = nil,
-	xraybuttons = nil,
-	xraydialogs = nil,
-	xraymodel = nil,
-	xraysettings = nil,
-	xraytranslationsmanager = nil,
-	xrayui = nil,
 
 	--- PLUGINS
 
@@ -95,7 +81,6 @@ local KOR = WidgetContainer:new{
 
 	extensions_list = {
 		--! this first block contains extensions which are needed by other extensions and therefor must be initialized first:
-		"databases",
 		"dialogs",
 		"files",
 		"tables",
@@ -113,29 +98,37 @@ local KOR = WidgetContainer:new{
 		"system",
 		"tabfactory",
 		"tabnavigator",
-		"xraybuttons",
-		"xraydialogs",
-		"xraymodel",
-		"xrayui",
 	},
 
 	translations_source = nil,
 }
+
+--* see ((SYNTACTIC SUGAR)):
+function KOR:initDX()
+	local DX = DX
+
+	DX.s = require("extensions/xraymodel/xraysettings")
+	DX.s:setUp()
+	DX.m = require("extensions/xraymodel/xraymodel")
+	DX.m:setDatabaseFile()
+	--* if we would use this and consequently would reference DX.c.model instead of DX.m in the other DX modules, data would be reloaded from database onReaderReady for each new book:
+	DX.m:initDataHandlers()
+
+	DX.b = require("extensions/xrayviews/xraybuttons")
+	DX.d = require("extensions/xrayviews/xraydialogs")
+	DX.u = require("extensions/xrayviews/xrayui")
+	DX.tm = require("extensions/xrayviews/xraytranslationsmanager")
+end
 
 function KOR:initBaseExtensions()
 	self.registry = require("extensions/registry")
 end
 
 function KOR:initEarlyExtensions()
-	local DX = DX
 	KOR.colors = require("extensions/colors")
+	KOR.databases = require("extensions/databases")
 	KOR.icons = require("extensions/icons")
 	KOR.settingsmanager = require("extensions/settingsmanager")
-	KOR.xraysettings = require("extensions/xraymodel/xraysettings")
-	KOR.xraytranslationsmanager = require("extensions/xrayviews/xraytranslationsmanager")
-	DX.tm = KOR.xraytranslationsmanager
-	KOR.xraysettings:setUp()
-	DX.s = KOR.xraysettings
 end
 
 function KOR:initExtensions()
@@ -145,16 +138,10 @@ function KOR:initExtensions()
 	for i = 1, count do
 		name = self.extensions_list[i]
 		if not self[name] then
-			if name == "xraymodel" then
-				extension = require("extensions/xraymodel/" .. name)
-			elseif name:match("xray") then
-				extension = require("extensions/xrayviews/" .. name)
-			else
-				extension = name ~= "readcollection" and
-				require("extensions/" .. name)
-				or
-				require("frontend/" .. name)
-			end
+			extension = name ~= "readcollection" and
+			require("extensions/" .. name)
+			or
+			require("frontend/" .. name)
 			if extension.new then
 				instance = extension:new{}
 			else
@@ -168,17 +155,6 @@ function KOR:initExtensions()
 			end
 		end
 	end
-end
-
---* see ((SYNTACTIC SUGAR)):
-function KOR:registerXrayModulesToDX()
-	--* XrayController will register itself to DX from ((XrayController#initKORandDynamicXray)):
-	local DX = DX
-
-	DX.b = KOR.xraybuttons
-	DX.d = KOR.xraydialogs
-	DX.m = KOR.xraymodel
-	DX.u = KOR.xrayui
 end
 
 function KOR:registerUI(ui)
