@@ -139,7 +139,7 @@ end
 local has_no_text = has_no_text
 local pairs = pairs
 
---! this class will be loaded in 2 locations: in the DX patch (for early initialisation of the KOR and DX systems - via ((XrayController#initDynamicXray)) - AND in plugins/xraycontroller.koplugin/main.lua:
+--! this class will be loaded in 2 locations: in the DX patch (for early initialisation of the KOR and DX systems - via ((XrayController#initKORandDynamicXray)) - AND in plugins/xraycontroller.koplugin/main.lua:
 --- @class XrayController
 local XrayController = WidgetContainer:new{
     name = "xraycontroller",
@@ -148,7 +148,7 @@ local XrayController = WidgetContainer:new{
 }
 
 --* called in a earlier phase then ((XrayController#init)), from ((patch: add Dynamic Xray to KOReader)) > current method:
-function XrayController:initDynamicXray()
+function XrayController:initKORandDynamicXray()
     --- @class ExtensionsInit
     KOR:initEarlyExtensions()
     --* XrayModel will also load its data handlers here:
@@ -156,17 +156,17 @@ function XrayController:initDynamicXray()
     KOR:registerXrayModulesToDX()
     --* for now loads only extension XrayTranslations:
     DX.d:initViewHelpers()
+    --* see ((SYNTACTIC SUGAR)):
+    DX:registerController(self)
 end
---! init DX:
-XrayController:initDynamicXray()
+--! init KOR and DX:
+XrayController:initKORandDynamicXray()
 
 --* normal init in plugin mode:
 function XrayController:init()
     self:onDispatcherRegisterActions()
     self.ui.menu:registerToMainMenu(self)
     KOR:registerPlugin("xraycontroller", self)
-    --* see ((SYNTACTIC SUGAR)):
-    DX:registerController(self)
 end
 
 --- @private
