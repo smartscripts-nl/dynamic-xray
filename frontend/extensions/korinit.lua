@@ -131,12 +131,9 @@ end
 
 --! Watch out: extensions which are loaded here MUST also be typed in ((KOR)) and have a @class declaration themselves, to have them available for code hinting!
 
---- @class ExtensionsInit
-KOR:initEarlyExtensions()
---* XrayModel will also load its data handlers here:
-KOR:initExtensions()
-KOR:registerXrayModulesToDX()
---* for now loads only extension Translations:
-DX.d:initViewHelpers()
+-- #((init Dynamic Xray))
+--* let the controller handle the loading of the DX system:
+local XrayController = require("extensions/xraycontroller/xraycontroller")
+XrayController:initDynamicXray()
 
 return KOR
