@@ -56,6 +56,10 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
 7. Copy koreader-settings-and-patches/settings/settings_manager.lua to the settings subfolder of the koreader settings folder of your current installation (this folder should already be present and should contain many files, e.g. sqlite3-files for KOReader's databases).
 8. **⚠️ Check whether the database filename in your KOReader settings folder is "bookinfo_cache.sqlite3".** If not, go through the additional steps listed in [User has a database filename other than "bookinfo_cache.sqlite3"](#user-has-a-database-filename-other-than-bookinfo_cachesqlite3)
 
+### Updating to new versions
+
+When you clone new versions of DX, make sure you also update the patch file on your device. Otherwise, you might be confronted with crashes...
+
 ### Entering your own translations for the DX interface
 
 As of 2025-12-25 translations are now stored in the table xray_translations in the database. This table will be automatically created upon KOReader start. The translations are lazily stored in that table, only when requested.
@@ -99,6 +103,9 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 
 ![02 Xray info dialog after click on marker](images/02-xray-info-dialog-after-click-on-marker.png)
 02 Xray info dialog after click on marker
+
+![02b Tappable popup with linked items](images/02b-info-popup-with-linked-items.png)
+02b Tappable popup with linked items after longpressing a name in the ebook
 
 ![03 List of Xray items](images/03-list-of-xray-items.png)
 03 List of Xray items
