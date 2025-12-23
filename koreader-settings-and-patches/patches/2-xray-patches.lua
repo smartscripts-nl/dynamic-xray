@@ -21,8 +21,9 @@ local require = require
 --! VERY IMPORTANT: extend package.path and load the KOR system first!:
 --* ============ LOAD EXTENSIONS SYSTEM ===============
 
+-- #((patch: add Dynamic Xray to KOReader))
 package.path = "frontend/extensions/?.lua;" .. package.path
-require("extensions/korinit")
+require("extensions/xraycontroller/xraycontroller")
 
 --* =====================================================
 
