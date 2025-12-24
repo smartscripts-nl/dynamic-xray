@@ -205,8 +205,6 @@ function MultiInputDialog:insertFieldRow(DataGroup, field_source, is_field_row)
     end
     --* self.halved_fields and self.halved_descriptions are reset to empty table after each row; see ((MultiInputDialog#insertFieldRow)):
     if #self.halved_descriptions > 0 or #self.halved_fields > 0 then
-        local tile_width = self.full_width / self.fields_count
-        local tile_height = self.halved_fields[1]:getSize().h
 
         if #self.halved_descriptions > 0 then
             self.halved_descriptions.align = "center"
@@ -214,58 +212,14 @@ function MultiInputDialog:insertFieldRow(DataGroup, field_source, is_field_row)
         end
         local field_1 = self.halved_fields[1]
         local field_2 = self.halved_fields[2]
-        local add_halved_field_edit_buttons = true
-        local group
+        local field1_container = self:getFieldContainer(field_1)
+        local field2_container = self:getFieldContainer(field_2)
 
-        if add_halved_field_edit_buttons then
-            group = HorizontalGroup:new{
-                align = "center",
-                CenterContainer:new{
-                    dimen = Geom:new{
-                        w = tile_width,
-                        h = tile_height,
-                    },
-                    --* left side field + button:
-                    HorizontalGroup:new{
-                        align = "center",
-                        field_1,
-                        self:getEditFieldButton(field_1),
-                    }
-                },
-                CenterContainer:new{
-                    dimen = Geom:new{
-                        w = tile_width,
-                        h = tile_height,
-                    },
-                    --* right_side field + button:
-                    HorizontalGroup:new{
-                        field_2,
-                        self:getEditFieldButton(field_2),
-                    }
-                },
-            }
-        --* halved fields without edit buttons:
-        else
-            group = HorizontalGroup:new{
+        local group = HorizontalGroup:new{
             align = "center",
-            CenterContainer:new{
-                dimen = Geom:new{
-                    w = tile_width,
-                    h = tile_height,
-                },
-                --* left side field:
-                    field_1,
-            },
-            CenterContainer:new{
-                dimen = Geom:new{
-                    w = tile_width,
-                    h = tile_height,
-                },
-                --* right_side field:
-                    field_2,
-                },
-            }
-        end
+            field1_container,
+            field2_container,
+        }
         table.insert(DataGroup, group)
     end
 end
@@ -304,12 +258,15 @@ function MultiInputDialog:insertFieldController(DataGroup, field_side, field_sou
 end
 
 --- @private
-function MultiInputDialog:setFieldWidth()
+function MultiInputDialog:setFieldWidth(field)
     self.field_width = math.floor(self.width * 0.9)
     if self.fields_count > 1 then
         --! don't make this factor bigger, because then in some situations fields don't fit and jump to next row:
-        local factor = 0.47
-        self.field_width = math.floor(self.field_width * factor) - self.edit_button_width
+        local factor = 0.49
+        self.field_width = math.floor(self.field_width * factor)
+        if field.input_type ~= "number" then
+            self.field_width = self.field_width - self.edit_button_width
+        end
 
         --* make single row long field align with halved fields:
         elseif self.has_field_rows then
@@ -320,7 +277,7 @@ end
 --- @private
 --- @param field_side number 1 if left side, 2 if right side
 function MultiInputDialog:fieldAddToInputs(field, field_side)
-    self:setFieldWidth()
+    self:setFieldWidth(field)
     self:setFieldProps(field, field_side)
     table.insert(self.input_fields, InputText:new(self.field_config))
 end
@@ -614,6 +571,33 @@ function MultiInputDialog:editField(input, input_type, field_hint, allow_newline
     }
     UIManager:show(edit_dialog)
     edit_dialog:onShowKeyboard()
+end
+
+--- @private
+function MultiInputDialog:getFieldContainer(field)
+    local tile_width = self.full_width / self.fields_count
+    local tile_height = self.halved_fields[1]:getSize().h
+
+    --* don't add edit field buttons for number fields:
+    return field.input_type == "number" and CenterContainer:new{
+        dimen = Geom:new{
+            w = tile_width,
+            h = tile_height,
+        },
+        field,
+    }
+    or
+    CenterContainer:new{
+        dimen = Geom:new{
+            w = tile_width,
+            h = tile_height,
+        },
+        HorizontalGroup:new{
+            align = "center",
+            field,
+            self:getEditFieldButton(field),
+        }
+    }
 end
 
 --- @private
