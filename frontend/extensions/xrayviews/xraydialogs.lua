@@ -22,24 +22,23 @@ These modules are initialized in ((initialize Xray modules)) and ((XrayControlle
 local require = require
 
 local Blitbuffer = require("ffi/blitbuffer")
-local Button = require("extensions/widgets/button")
-local ButtonDialogTitle = require("extensions/widgets/buttondialogtitle")
+local Button = require("ui/widget/button")
+local ButtonDialogTitle = require("ui/widget/buttondialogtitle")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local CheckButton = require("ui/widget/checkbutton")
 local Event = require("ui/event")
-local Font = require("extensions/modules/font")
+local Font = require("ui/font")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local HorizontalSpan = require("ui/widget/horizontalspan")
-local InputDialog = require("extensions/widgets/inputdialog")
+local InputDialog = require("ui/widget/inputdialog")
 local KOR = require("extensions/kor")
-local Menu = require("extensions/widgets/menu")
-local MultiInputDialog = require("extensions/widgets/multiinputdialog")
+local Menu = require("ui/widget/menu")
+local MultiInputDialog = require("ui/widget/multiinputdialog")
 local UIManager = require("ui/uimanager")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local Screen = require("device").screen
 local Size = require("ui/size")
-local _ = KOR:initCustomTranslations()
 local T = require("ffi/util").template
 
 local DX = DX
@@ -52,9 +51,6 @@ local select = select
 local table = table
 local tostring = tostring
 
---- @type XrayTranslations translations
-local translations
-
 local count
 
 --- @class XrayDialogs
@@ -64,35 +60,31 @@ local XrayDialogs = WidgetContainer:new{
     called_from_list = false,
     change_xray_type = nil,
     current_tab_items = nil,
-    description_field_face = Font:getFace("x_smallinfofont", 19),
-    description_field_height = DX.s.is_ubuntu and 180 or 420,
+    debug_filter = false,
+    description_field_face = Font:getFontFamily("Red Hat Text", 19),
+    description_field_height = KOR.devicebrand.is_ubuntu and 180 or 420,
     edit_item_description_dialog = nil,
     edit_item_input = nil,
     filter_icon = nil,
     filter_xray_items_input = nil,
     form_was_cancelled = false,
     help_texts = {},
-    items_per_page = G_reader_settings:readSetting("items_per_page") or 14,
+    items_per_page = G_reader_settings:readSetting("items_per_page") or KOR.devicebrand.items_per_page,
     item_requested = nil,
     item_viewer = nil,
     list_args = nil,
     list_is_opened = false,
     list_title = nil,
     needle_name_for_list_page = "",
-    other_fields_face = Font:getFace("x_smallinfofont", 19),
+    other_fields_face = Font:getFontFamily("Red Hat Text", 19),
     -- #((Xray-item edit dialog: tab buttons in TitleBar))
-    title_tab_buttons_left = { _(" xray-item "), _(" metadata ") },
+    title_tab_buttons_left = { " xray-item ", " metadata " },
     xray_item_chooser = nil,
     xray_items_chooser_dialog = nil,
     --! self.xray_type_field_nr has to correspond to the index used to get the xray_type in ((XrayFormsData#convertFieldValuesToItemProps)); see also ((XrayDialogs#switchFocusForXrayType)):
     xray_type_field_nr = 4,
     xray_ui_info_dialog = nil,
 }
-
-function XrayDialogs:initViewHelpers()
-    translations = require("extensions/xrayviews/xraytranslations")
-    DX.setProp("t", translations)
-end
 
 --- @return boolean signalling whether the user was redirected to the viewer (true), or not (false)
 function XrayDialogs:closeForm(mode)
@@ -135,10 +127,10 @@ function XrayDialogs:closeForm(mode)
 end
 
 function XrayDialogs:showRefreshHitsForCurrentEbookConfirmation()
-    self.import_items_dialog = KOR.dialogs:confirm(_("Do you want to import Xray items from the other books in the series and compute their occurrence in the current book?\n\nNB: this is a heavy, computation-intensive function; the import therefor will take some time (you will be notified about the progress)..."), function()
+    self.import_items_dialog = KOR.dialogs:confirm("Wil je de items en hun hits in dit boek updaten (evt. items in andere boeken in serie worden ook gecontroleerd)?\n\nLET OP: dit is een zware functie, het bijwerken kan langer duren (maar je krijgt berichten over de voortgang)...", function()
         UIManager:close(self.import_items_dialog)
         UIManager:close(self.xray_items_chooser_dialog)
-        local import_notification = KOR.messages:notify("import started: 0% imported...")
+        local import_notification = KOR.messages:notify("import gestart: 0% geïmporteerd...")
         UIManager:forceRePaint()
         KOR.registry:set("import_notification", import_notification)
         --* the import will be processed and the user notified about the progress in ((XrayDataSaver#setSeriesHitsForImportedItems)) > ((XrayController#doBatchImport)):
@@ -148,7 +140,7 @@ end
 
 function XrayDialogs:showEditDescriptionDialog(description_field, callback, cancel_callback)
     self.edit_item_description_dialog = InputDialog:new{
-        title = _("Edit description"),
+        title = "Bewerk beschrijving",
         input = description_field:getText() or "",
         input_hint = "",
         input_type = "text",
@@ -174,13 +166,9 @@ function XrayDialogs:getFormFields(item_copy, target_field, name_from_selected_t
         text = item_copy.aliases,
         input_type = "text",
         description = "Aliassen:",
-        info_popup_title = _("field: Aliases"),
+        info_popup_title = "veld: Aliassen",
         --* splitting of items done by ((XrayModel#splitByCommaOrSpace)):
-        info_popup_text = _([[This field has space or comma separated terms, as aliases (of the main item name in the first tab). Can e.g. be a title or a nickname of a person.
-
-Through aliases:
-1) main names will be found in the Xray overview of items in paragraphs on the current page;
-2) the main item will be shown if the user longpresses an alias in the ebook text.]]),
+        info_popup_text = "Voor spatie- of kommagescheiden losse termen, als alias (van de hoofdnaam in het 1e tabblad). Bijv. een titel of koosnaam van een persoon.\n\nVia aliassen:\n1) worden hoofdnamen gevonden in het Xray overzicht van alinea’s;\n2) wordt het hoofd-item getoond indien de alias wordt aangeklikt in de tekst.",
         tab = 2,
         cursor_at_end = true,
         input_face = self.other_fields_face,
@@ -192,12 +180,10 @@ Through aliases:
     local linkwords_field = {
         text = item_copy.linkwords,
         input_type = "text",
-        description = _("Link terms") .. ":",
-        info_popup_title = _("field") .. ": " .. _("Link terms"),
+        description = "Link-termen:",
+        info_popup_title = "veld: Link-termen",
         --* splitting of items done by ((XrayModel#splitByCommaOrSpace)):
-        info_popup_text = _([[This field has space or comma separated (partial) names of other Xray items, to link the current item to those other items.
-
-If such an other item is longpressed in the book, the linked items will be shown as extra buttons in the popup dialog.]]),
+        info_popup_text = "Spatie- of kommagescheiden losse namen van andere Xray items, waarmee het huidige item aan die andere items wordt gekoppeld.\n\nWordt dat andere item aangeklikt in de tekst van het ebook, dan worden aangekoppelde items als extra buttons getoond in het dialoogvenster dat verschijnt.",
         tab = 2,
         cursor_at_end = true,
         input_face = self.other_fields_face,
@@ -212,7 +198,7 @@ If such an other item is longpressed in the book, the linked items will be shown
         --description = DX.fd:getTypeLabel(item_copy) .. "\n  " .. DX.vd.xray_type_description,
         description = "Xray-type:",
         --* splitting of items done by ((XrayModel#splitByCommaOrSpace)):
-        info_popup_text = _("Set Xray type with numbers 1 through 4. If you use the button at the right side of the field for this, you'll see an explanation of these types."),
+        info_popup_text = "Stel Xray-type in met de cijfers 1 t/m 4. Als je de button naast het veld gebruikt om dit in te stellen, krijg je uitleg over de verschillende types in het popup dialoogvenster.",
         tab = 2,
         input_face = self.other_fields_face,
         cursor_at_end = true,
@@ -231,11 +217,9 @@ If such an other item is longpressed in the book, the linked items will be shown
     local short_names_field = {
         text = item_copy.short_names,
         input_type = "text",
-        description = _("Short names") .. ":",
-        info_popup_title = _("field") .. ": " .. _("Short names"),
-        info_popup_text = _([[Comparable with aliases, but in this case comma separated short variants of the main item name in the first tab. Handy when those shorter names are sometimes used in the book instead of the longer main name.
-
-For Xray overviews of (paragraphs in) the current page the scripts initially will firstly search for whole instances of these short names, or otherwise for first and surnames derived from these.]]),
+        description = "Korte namen:",
+        info_popup_title = "veld: Korte namen",
+        info_popup_text = "Vergelijkbaar met aliassen, maar nu kommagescheiden korte varianten van de hoofdnaam in het 1e tabblad, wanneer die uit vele titels/termen bestaat.\n\nIn Xray overzichten voor pagina’s of alinea’s wordt in eerste instantie gezocht naar deze korte namen in hun geheel, of anders naar de daarvan afgeleide voor- en achternaam.",
         tab = 2,
         input_face = self.other_fields_face,
         cursor_at_end = true,
@@ -244,19 +228,21 @@ For Xray overviews of (paragraphs in) the current page the scripts initially wil
         force_one_line_height = true,
         margin = Size.margin.small,
     }
+
     local fields = {
         {
             text = target_field == "description" and name_from_selected_text or item_copy.description or "",
             input_type = "text",
-            description = linkwords and _("Description") .. T(" (%1):", linkwords) or _("Description"),
-            info_popup_title = _("field") .. ": " .. _("Description"),
-            info_popup_text = T(_([[If it is your intention that a Xray item should be filterable with a term in its description, you should ensure that that term in case of:
+            description = linkwords and T("Beschrijving (%1):", linkwords) or "Beschrijving:",
+            --* title and info_popup_text will be used for informational niceAlerts in ((MultiInputDialog#getDescription)):
+            info_popup_title = "veld: Beschrijving",
+            info_popup_text = T([[Wil je dat een Xray item filterbaar is op een zoekterm uit de bijbehorende beschrijving, zorg dan dat die zoekterm in geval van:
 
-NAMES OF PERSONS %1
-is mentioned with uppercase characters at start of first and surname in the description;
+PERSOONSNAMEN %1
+met hoofdletters aan het begin van voor- en achternaam daarin voorkomt;
 
-TERMS %2
-only has lower case characters in the description.]]), KOR.icons.xray_person_important_bare .. "/" .. KOR.icons.xray_person_bare, KOR.icons.xray_term_important_bare .. "/" .. KOR.icons.xray_term_bare),
+BEGRIPPEN %2
+enkel met kleine letters in de beschrijving staat.]], KOR.icons.xray_person_important_bare .. "/" .. KOR.icons.xray_person_bare, KOR.icons.xray_term_important_bare .. "/" .. KOR.icons.xray_term_bare),
             tab = 1,
             height = "auto",
             input_face = self.description_field_face,
@@ -270,13 +256,9 @@ only has lower case characters in the description.]]), KOR.icons.xray_person_imp
         {
             text = target_field == "name" and name_from_selected_text or item_copy.name or "",
             input_type = "text",
-            description = aliases and _("Name") .. " (" .. aliases .. "):  " .. icon or _("Name") .. ": " .. icon,
-            info_popup_title = _("field") .. ": " .. _("Name"),
-            info_popup_text = _([[PERSONS
-Enter person names including uppercase starting characters [A-Za-z]. Because in that case the search for Xray items in the book will be done CASE SENSITIVE. By default when searching for Xray items, Dynamic Xray will search for first names in the text. If you want the plugin to search for occurrences/hits for the surname instead (because these references are more frequent in the text), use this format: "surname, first name".
-
-TERMS
-Enter with only lowercase characters [a-z], because then searches for these items will be executed CASE INSENSITIVE. So as to find hits in format "term" as well as "Term".]]),
+            description = aliases and "Naam (" .. aliases .. "):  " .. icon or "Naam:  " .. icon,
+            info_popup_title = "veld: Naam",
+            info_popup_text = "PERSONEN\nGeef persoonsnamen inclusief hoofdletters op [A-Za-z], want dan wordt er HOOFDLETTER-GEVOELIG naar gezocht naar aantal keren voorkomen. In principe wordt gezocht naar de voornaam. Moet er gezocht worden naar de achternaam, gebruik dan hier formaat \"familienaam, voornaam\".\n\nBEGRIPPEN\nVoer in met enkel kleine letters [a-z], want dan wordt er HOOFDLETTER-ONGEVOELIG naar gezocht. Zodat varianten voor zowel \"begrip\" als \"Begrip\" gevonden worden.",
             tab = 1,
             input_face = self.other_fields_face,
             cursor_at_end = true,
@@ -288,8 +270,8 @@ Enter with only lowercase characters [a-z], because then searches for these item
         },
     }
 
-    --* on mobile devices we don't want two field rows (not enough space):
-    if DX.s.is_mobile_device then
+    --* on Bigme we don't want two field rows (not enough space):
+    if KOR.devicebrand.is_bigme then
         table.insert(fields, aliases_field)
         table.insert(fields, linkwords_field)
         table.insert(fields, xray_type_field)
@@ -313,8 +295,8 @@ end
 function XrayDialogs:showImportFromOtherSeriesDialog()
     local question
     question = KOR.dialogs:prompt({
-        title = _("Import from another series"),
-        input_hint = _("name series..."),
+        title = "Importeer uit andere serie",
+        input_hint = "naam serie...",
         callback = function(series)
             UIManager:close(question)
             DX.ds.storeImportedItems(series)
@@ -327,6 +309,7 @@ function XrayDialogs:showNewItemForm(args)
     local active_form_tab = args.active_form_tab or self.active_form_tab
     local item_copy = args.item_copy
 
+    --KOR.debug:alertTable("XrayDialogs:showNewItemForm", "item_copy", item_copy)
     --* to be able to re-attach the book_hits etc. to the item if the user DOES save it:
     --* consumed in ((XrayController#saveNewItem)):
     DX.vd:setProp("new_item_hits", {
@@ -383,6 +366,7 @@ function XrayDialogs:adaptTextAreaHeight(dialog)
     else
         self.description_field_height = self.description_field_height - total_height + screen_height
     end
+    --KOR.debug:helaasNoAlert("XrayDialogs:textAreaHeightWasResized", "keyboard: " .. keyboard_height .. "\n" .."description_field ORG: " .. self.description_field_height .. "\n" .."description_field: " .. self.description_field_height .. "\n" .."total height: " .. total_height .. "\n" .."screen_height: " .. screen_height)
 end
 
 function XrayDialogs:showDeleteItemConfirmation(delete_item, dialog, remove_all_instances_in_series)
@@ -390,15 +374,15 @@ function XrayDialogs:showDeleteItemConfirmation(delete_item, dialog, remove_all_
         dialog = self.item_viewer
     end
 
-    local target = remove_all_instances_in_series and _("for the entire series?") or _("for the current book?")
-    KOR.dialogs:confirm(T(_([[Do you indeed want to delete
+    local target = remove_all_instances_in_series and "voor de hele serie?" or "voor het huidige boek?"
+    KOR.dialogs:confirm(T([[Wil je dit item inderdaad verwijderen:
 
 %1
 
- ]]), delete_item.name) .. target, function()
+ ]], delete_item.name) .. target, function()
         UIManager:close(dialog)
         DX.ds.deleteItem(delete_item, remove_all_instances_in_series)
-        local message = remove_all_instances_in_series and _(" deleted for the entire series...") or _(" deleted for the current book...")
+        local message = remove_all_instances_in_series and " verwijderd uit de hele serie..." or " verwijderd uit het huidige boek..."
         self:refreshItemsList(delete_item.name .. message)
         self:showListWithRestoredArguments()
     end,
@@ -463,17 +447,13 @@ function XrayDialogs:showFilterDialog()
     --KOR.dialogs:showOverlayReloaded()
     KOR.dialogs:showOverlay()
     self.filter_xray_items_input = InputDialog:new{
-        title = _("Filter xray items"),
-        description = _("Text filters are case insensitive (except for items which contain uppercase characters):"),
+        title = "Filter Xray items",
+        description = "Text filters are case sensitive (except for items which contain uppercase characters):",
         top_buttons_left = {
             Button:new({
-                icon = "info",
+                icon = "info-slender",
                 callback = function()
-                    KOR.dialogs:niceAlert(_("Filter dialog"), _([[checkbox checked:
-search only for whole word hits in the name, aliases or short names or descriptions of items.
-
-checkbox not checked:
-search for hits in the name, aliases or short names and show linked items for those hits.]]))
+                    KOR.dialogs:niceAlert("Filter-venster", "checkbox aangevinkt:\nzoek enkel naar treffers op hele woorden in de naam, aliassen, korte namen of beschrijving van items.\n\ncheckbox niet aangevinkt:\nzoek naar treffers in de naam, aliassen of korte namen en toon gelinkte items voor die treffers.")
                 end
             })
         },
@@ -488,7 +468,7 @@ search for hits in the name, aliases or short names and show linked items for th
         buttons = DX.b:forFilterDialog(),
     }
     self.check_button_descriptions = CheckButton:new{
-        text = _("Simple search: name and description"),
+        text = "Zoek simpel: naam en beschrijving",
         checked = DX.vd.search_simple,
         parent = self.filter_xray_items_input,
         max_width = self.filter_xray_items_input._input_widget.width,
@@ -515,7 +495,7 @@ end
 function XrayDialogs:notifyFilterResult(filter_active, filtered_count)
     self.filter_state = filtered_count == 0 and "unfiltered" or "filtered"
     if filter_active and filtered_count == 0 then
-        local message = has_text(DX.m.filter_string) and T(_("geen items gevonden met filter \"%1\"..."), DX.m.filter_string) or _("no items found with this filter...")
+        local message = has_text(DX.m.filter_string) and "geen items gevonden met filter \"" .. DX.m.filter_string .. "\"..." or "geen items gevonden met dit filter..."
         self:setActionResultMessage(message)
     end
 end
@@ -531,10 +511,10 @@ function XrayDialogs:showItemsInfo(hits_info, headings, matches_count, extra_but
         if debug and haystack_text then
             info = haystack_text .. "\n\n" .. info
         end
-        local matches_count_info = matches_count == 1 and _("1 Xray item") or matches_count .. " " .. _("Xray items")
-        local subject = DX.s.ui_mode == "paragraph" and _(" in this paragraph") or _(" on this page")
-        local target = DX.s.ui_mode == "paragraph" and _("the ENTIRE PAGE") or _("PARAGRAPHS")
-        local new_trigger = DX.s.ui_mode == "paragraph" and _("the first line marked with a lightning icon") or _("a paragraph marked with a star")
+        local matches_count_info = matches_count == 1 and "1 Xray item" or matches_count .. " " .. "Xray items"
+        local subject = DX.s.ui_mode == "paragraph" and " in deze alinea" or " op deze pagina"
+        local target = DX.s.ui_mode == "paragraph" and "de HELE PAGINA" or "ALINEA’S"
+        local new_trigger = DX.s.ui_mode == "paragraph" and "de met een bliksem-icoon gemarkeerde eerste regel" or "een met sterretje gemarkeerde alinea"
         --* the data below was populated in ((XrayUI#ReaderViewGenerateXrayInformation)):
         self.xray_ui_info_dialog = KOR.dialogs:textBox({
             title = matches_count_info .. subject,
@@ -543,7 +523,7 @@ function XrayDialogs:showItemsInfo(hits_info, headings, matches_count, extra_but
             covers_fullscreen = true,
             top_buttons_left = DX.b:forXrayUiInfoTopLeft(target, new_trigger, self),
             paragraph_headings = headings,
-            fixed_face = Font:getFace("x_smallinfofont", 19),
+            fixed_face = Font:getFontFamily("Red Hat Text", 19),
             close_callback = function()
                 self.xray_ui_info_dialog = nil
                 KOR.dialogs:closeOverlay()
@@ -608,10 +588,14 @@ function XrayDialogs:_prepareItemsForList(current_tab_items)
     end
 
     DX.vd:setProp("current_tab_items", current_tab_items)
+    --KOR.debug:alertTable("XrayDialogs:_prepareItemsForList", "current_tab_items", current_tab_items)
 end
 
 --- @private
 function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items)
+
+    DX.m:debugStatus("XrayDialogs:initListDialog")
+
     local select_number = focus_item and focus_item.index or 1
 
     --* optionally items are filtered here also:
@@ -681,6 +665,8 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items)
     elseif select_number then
         self.xray_items_inner_menu:switchItemTable(title, current_tab_items, select_number)
     end
+
+    --KOR.debug:alertTable("XrayDialogs:initListDialog", "current_tab_items", current_tab_items)
 end
 
 function XrayDialogs:showListWithRestoredArguments()
@@ -692,30 +678,31 @@ end
 function XrayDialogs:showJumpToChapterDialog()
     KOR.dialogs:prompt({
         title = "Jump to chapter",
-        description = _("Enter number as seen at the front of the items in the chapter list in tab 2 (current location will be added to location stack):"),
+        description = "Enter number as seen at the front of the items in the chapter list in tab 2 (current location will be added to location stack):",
         input_type = "number",
         width = math.floor(Screen:getWidth() * 2.3 / 5),
         callback = function(chapter_no)
             if not chapter_no then
-                KOR.messages:notify(_("please enter a valid page number..."))
+                KOR.messages:notify("voer een geldig paginanummer in...")
                 return
             end
+
+            --KOR.debug:alertTable("XrayDialogs:showJumpToChapterDialog", "current_item", DX.vd.current_item)
             local chapter_html = DX.vd.current_item.chapter_hits
             if has_no_text(chapter_html) then
-                KOR.messages:notify(_("this item has no chapter information..."))
+                KOR.messages:notify("dit item heeft geen hoofdstuk informatie...")
                 return
             end
 
             local chapter_title = DX.vd:findChapterTitleByChapterNo(chapter_html, chapter_no)
             if not chapter_title then
-                KOR.messages:notify(_("page of chapter could not be determined..."))
+                KOR.messages:notify("pagina van hoofdstuk kon niet worden bepaald...")
                 return
             end
 
-            --* this method is defined in 2-xray-patches.lua:
             local page = KOR.toc:getPageFromItemTitle(chapter_title)
             if not page then
-                KOR.messages:notify(_("page of chapter could not be determined..."))
+                KOR.messages:notify("pagina van hoofdstuk kon niet worden bepaald...")
                 return
             end
 
@@ -739,51 +726,67 @@ end
 
 function XrayDialogs:showList(focus_item, dont_show)
 
-    --! important for generating texts of xray items in this list: ((XrayViewsData#generateListItemText))
+    KOR.debug:guard("showList", function()
+        --! important for generating texts of xray items in this list: ((XrayViewsData#generateListItemText))
 
-    DX.fd:resetViewerItemId()
+        if DX.m:isNoXrayBook() then
+            KOR.messages:notify("dit boek ondersteunt geen Xray items...")
+            return
+        end
 
-    --* this var will be set in ((XrayController#saveNewItem)) upon adding a new item; when set, we force update of the data and setting of correct new item index, so the list will display the subpage with the new item:
-    local new_item = KOR.registry:getOnce("new_item")
+        DX.fd:resetViewerItemId()
 
-    --! this condition is needed to prevent this call from triggering ((XrayViewsData#prepareData)) > ((XrayViewsData#indexItems)), because that last call will be done at the proper time via ((XrayDialogs#showList)) > ((XrayModel#getCurrentItemsForView)) > ((XrayViewsData#getCurrentListTabItems)) > ((XrayViewsData#prepareData)) > ((XrayViewsData#indexItems)):
-    local current_tab_items = not new_item and DX.m:getCurrentItemsForView()
-    --* this will occur after a filter reset from ((XrayController#resetFilteredItems)) and sometimes when we first call up a definition through ReaderHighlight:
-    if new_item or has_no_items(current_tab_items) then
-        --* if items were already retrieved from the database, that will not be done again: XrayViewsData.items etc. will be reset from XrayViewsData.item_table, in ((XrayViewsData#getCurrentListTabItems))
-        DX.vd.initData("force_refresh")
-        current_tab_items = DX.m:getCurrentItemsForView()
-    end
-    if new_item then
-        --* this should enforce that focus_item has the correct index, so the list will initally show to the subpage with this item:
-        focus_item = DX.vd.prepareData(new_item)
+        --* this var will be set in ((XrayController#saveNewItem)) upon adding a new item; when set, we force update of the data and setting of correct new item index, so the list will display the subpage with the new item:
+        local new_item = KOR.registry:getOnce("new_item")
 
-        self.needle_name_for_list_page = focus_item.name
-    end
-    self.list_args = {
-        focus_item = focus_item,
-        dont_show = dont_show,
-    }
+        --! this condition is needed to prevent this call from triggering ((XrayViewsData#prepareData)) > ((XrayViewsData#indexItems)), because that last call will be done at the proper time via ((XrayDialogs#showList)) > ((XrayModel#getCurrentItemsForView)) > ((XrayViewsData#getCurrentListTabItems)) > ((XrayViewsData#prepareData)) > ((XrayViewsData#indexItems)):
+        --KOR.debug:alertTable("XrayDialogs:showList", "current_tab_items pre", DX.vd.current_tab_items)
+        local current_tab_items = not new_item and DX.m:getCurrentItemsForView()
+        --KOR.debug:alertTable("XrayDialogs:showList", "current_tab_items after", current_tab_items)
+        --* this will occur after a filter reset from ((XrayController#resetFilteredItems)) and sometimes when we first call up a definition through ReaderHighlight:
+        --KOR.debug:alertTable("sssg", "current_tab_items", current_tab_items)
+        if new_item or has_no_items(current_tab_items) then
+            --* if items were already retrieved from the database, that will not be done again: XrayViewsData.items etc. will be reset from XrayViewsData.item_table, in ((XrayViewsData#getCurrentListTabItems))
+            DX.vd.initData("force_refresh")
+            current_tab_items = DX.m:getCurrentItemsForView()
+        end
+        if new_item then
+            --* this should enforce that focus_item has the correct index, so the list will initally show to the subpage with this item:
+            focus_item = DX.vd.prepareData(new_item)
 
-    self.item_requested = focus_item
-    self.called_from_list = false
-    if self.xray_items_chooser_dialog then
-        UIManager:close(self.xray_items_chooser_dialog)
-        self.xray_items_chooser_dialog = nil
-    end
+            self.needle_name_for_list_page = focus_item.name
+        end
+        self.list_args = {
+            focus_item = focus_item,
+            dont_show = dont_show,
+        }
 
-    if DX.c:listHasReloadOrDontShowRequest(focus_item, dont_show) then
-        return
-    end
+        self.item_requested = focus_item
+        self.called_from_list = false
+        if self.xray_items_chooser_dialog then
+            UIManager:close(self.xray_items_chooser_dialog)
+            self.xray_items_chooser_dialog = nil
+        end
 
-    self:initListDialog(focus_item, dont_show, current_tab_items)
-    self.list_is_opened = true
+        if self.debug_filter then
+            KOR.debug:hoera("XrayDialogs#showList called...")
+        end
 
-    self:addHotkeysForList()
-    UIManager:show(self.xray_items_chooser_dialog)
-    self:showActionResultMessage()
+        if DX.c:listHasReloadOrDontShowRequest(focus_item, dont_show) then
+            return
+        end
 
-    KOR.dialogs:registerWidget(self.xray_items_chooser_dialog)
+        self:initListDialog(focus_item, dont_show, current_tab_items)
+        self.list_is_opened = true
+
+        self:addHotkeysForList()
+        UIManager:show(self.xray_items_chooser_dialog)
+        self:showActionResultMessage()
+
+        KOR.dialogs:registerWidget(self.xray_items_chooser_dialog)
+
+        DX.m:showMethodsTrace("XrayDialogs:showList")
+    end) --* end guard
 end
 
 --* information about available hotkeys in list shown in ((XrayButtons#forListTopLeft)) > ((XrayDialogs#showHelp)):
@@ -931,17 +934,9 @@ end
 --- @private
 function XrayDialogs:showToggleBookOrSeriesModeDialog()
     local question = DX.vd.list_display_mode == "series" and
-    T(_([[
-Switch from series mode %1
-
-TO BOOK MODE %2?
-]]), KOR.icons.xray_series_mode_bare, KOR.icons.xray_book_mode_bare)
+    T("\nOmschakelen van serie-modus %1\n\nNAAR BOEK-MODUS %2?\n", KOR.icons.xray_series_mode_bare, KOR.icons.xray_book_mode_bare)
     or
-    T(_([[
-Switch from book mode %1
-
-TO SERIES MODE %2?
-]]), KOR.icons.xray_book_mode_bare, KOR.icons.xray_series_mode_bare)
+    T("\nOmschakelen van boek-modus %1\n\nNAAR SERIE-MODUS %2?\n", KOR.icons.xray_book_mode_bare, KOR.icons.xray_series_mode_bare)
 
     KOR.dialogs:confirm(question, function(focus_item, dont_show)
         local mode = DX.vd.list_display_mode == "series" and "book" or "series"
@@ -1096,6 +1091,10 @@ end
 
 function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_item_search)
 
+    --KOR.debug:trace("XrayController:onShowXrayItem")
+
+    --KOR.debug:alertTable("viewItem", "items pre", DX.vd.items)
+
     if tapped_word then
         called_from_list = false
     end
@@ -1106,13 +1105,17 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
         self:_prepareViewerData(needle_item)
     end
     if not needle_item then
-        KOR.messages:notify(_("item could not be loaded..."))
+        KOR.messages:notify("item kon niet worden geladen...")
         return
     end
+
     book_hits = needle_item.book_hits
     local current_items_count = #DX.vd.current_tab_items
 
     self:_closeListDialog()
+
+    --KOR.debug:alertTable("viewItem", "needle_item", needle_item)
+    --KOR.debug:alertTable("viewItem", "items after", DX.vd.items)
 
     --! if you want to show additional or specific props in the info, those props have to be added in ((XrayDataLoader#_loadAllData)) > ((set xray item props)), AND you have to add them to the menu_item props in ((XrayViewsData#filterAndPopulateItemTables))! Search for "mentioned_in" to see an example of this...
     local main_info, hits_info = DX.vd:getItemInfoHtml(needle_item, "ucfirst")
@@ -1120,6 +1123,7 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
         hits_info = ""
     end
 
+    --KOR.debug:infoTable("XrayDialogs:viewItem", "needle_item", needle_item)
     local name = needle_item.name
     local icon = DX.vd:getItemTypeIcon(needle_item)
 
@@ -1131,6 +1135,8 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
 
     self.needle_name_for_list_page = needle_item.name
 
+    --[[KOR.dialogs:closeAllOverlays("skip_show_footer")
+    KOR.dialogs:showOverlay()]]
     local tabs = DX.b:forItemViewerTabs(main_info, hits_info)
     self.item_viewer = KOR.dialogs:htmlBoxTabbed(1, {
         title = title,
@@ -1157,6 +1163,7 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
     })
     self:addHotkeysForItemViewer()
     self:showActionResultMessage()
+    DX.m:showMethodsTrace("XrayDialogs:viewItem")
 end
 
 function XrayDialogs:closeItemViewer()
@@ -1164,6 +1171,8 @@ function XrayDialogs:closeItemViewer()
 end
 
 function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_word)
+
+    --KOR.debug:trace("XrayController:onShowXrayItem")
 
     self.called_from_list = called_from_list
     local current_tab_items = DX.tw:getCurrentListTabItems()
@@ -1195,6 +1204,8 @@ function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_wo
 
     self.needle_name_for_list_page = needle_item.name
 
+    --[[KOR.dialogs:closeAllOverlays("skip_show_footer")
+    KOR.dialogs:showOverlay()]]
     local tabs = DX.b:forItemViewerTabs(main_info, hits_info)
     self.item_viewer = KOR.dialogs:htmlBoxTabbed(1, {
         title = title,
@@ -1220,6 +1231,7 @@ function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_wo
     })
     self:addHotkeysForItemViewer()
     self:showActionResultMessage()
+    DX.m:showMethodsTrace("XrayDialogs:viewTappedWordItem")
 end
 
 function XrayDialogs:viewLinkedItem(item, tapped_word)
@@ -1230,6 +1242,7 @@ end
 function XrayDialogs:viewNextItem(item)
     self:closeViewer()
     local next_item = DX.vd:getNextItem(item)
+    --KOR.debug:alertTable("XrayDialogs:viewNextItem", "next_item", next_item)
     self:viewItem(next_item, nil, nil, "skip_item_search")
 end
 
@@ -1252,7 +1265,7 @@ end
 function XrayDialogs:showTappedWordCollectionPopup(buttons, buttons_count, tapped_word)
     -- #((multiple related xray items found))
     self.xray_item_chooser = ButtonDialogTitle:new{
-        title = tapped_word .. KOR.icons.arrow .. buttons_count .. _(" xray items found:"),
+        title = tapped_word .. KOR.icons.arrow .. buttons_count .. " xray-items gevonden:",
         title_align = "center",
         use_low_title = true,
         --no_overlay = true,
@@ -1267,6 +1280,8 @@ function XrayDialogs:showTappedWordCollectionPopup(buttons, buttons_count, tappe
         modal = false,
     }
     UIManager:show(self.xray_item_chooser)
+
+    DX.m:showMethodsTrace("XrayDialogs:showRelatedItemsPopup")
 end
 
 --- @private
@@ -1293,6 +1308,7 @@ function XrayDialogs:switchFocusForDescriptionField()
     end
 
     self:showEditDescriptionDialog(description_field, function(updated_description)
+        --* saving updated review to sidecar has been handled in ((Sidecar#editReview))...
         description_field:setText(updated_description)
         description_field:onFocus()
     end,
@@ -1311,6 +1327,12 @@ function XrayDialogs:switchFocusForXrayType(for_button_tap)
     self:switchFocusFieldLoop(input_fields, 4, self.xray_type_field_nr)
 
     --! self.xray_type_field_nr has to correspond to the index used to get the xray_type in ((XrayFormsData#convertFieldValuesToItemProps)):
+
+    --* e.g. when user tapped on the choose xray type button:
+    if not self.change_xray_type then
+        return
+    end
+
     input_fields[self.xray_type_field_nr]:setText(tostring(self.change_xray_type))
     self.change_xray_type = nil
 end
@@ -1337,64 +1359,63 @@ end
 
 function XrayDialogs:showHelp(initial_tab)
     --* these hotkeys are mostly defined in ((XrayDialogs#addHotkeysForList)):
-    local list_info = self.help_texts["list"] or T(_([[Titlebar %1/%2 = items displayed in series/book mode
-Titlebar %3 = only linked items, from longpressed word
-Browse to next/previous page: Space/Shift+Space
-Longpress item: quick access to actions.
+    local list_info = self.help_texts["list"] or T([[⬆➡⬇⬅ = toon lijst van xray-items - (P)ersonen
+Shift+X = toon lijst Xray-items
 
-A, P, B = activate tab starting with that character
-1 through 9 = open corresponding item in list
+Titelbalk %1/%2: items weergegeven in serie/boek modus.
+Titelbalk %3 = gelinkte items, afgeleid van ingedrukt woord
+Bladeren naar volgende/vorige pagina: Spatie/Shift+Spatie
+Item ingedruk houden: snelle toegang tot bewerkingsopties.
+
+A, P, B = activeer tabblad met die letter
+1 t/m 9 = open corresponderende item in lijst
 F = Filter list
-I = Import items and update hits
-Shift+I = show this Information dialog
-M = toggle book or series Mode
-O = toggle sOrt by alphabet or hits count
-S = show books in Series
-V = add item
-X = import items from eXternal series
-]]), KOR.icons.xray_series_mode_bare, KOR.icons.xray_book_mode_bare, KOR.icons.xray_tapped_collection_bare)
+I = Importeer items, werk aantallen bij
+Shift+I = toon dit Informatievenster
+M = schakel boek/serie-Modus
+O = schakel sOrtering
+S = toon boeken uit Serie
+V = Voeg item toe
+X = importeer items uit eXterne serie
+]], KOR.icons.xray_series_mode_bare, KOR.icons.xray_book_mode_bare, KOR.icons.xray_tapped_collection_bare)
     self.help_texts["list"] = list_info
 
     --* these hotkeys are mostly defined in ((XrayDialogs#addHotkeysForItemViewer)):
-    local viewer_info = self.help_texts["viewer"] or T(_([[
+    local viewer_info = self.help_texts["viewer"] or T([[
 
 You can also navigate through items by tapping near to the left or right border of the viewer dialog.
 Browse to next/previous info screen: Space/Shift+Space
 
-1, 2 = activate first or second tab
+1, 2 = activeer 1e of 2e tabblad
 
-A = Add item
-D = Delete current item for current book
-Shift+D = Delete current item for entire series
-E = Edit current item
-Shift+I = show this Information dialog
-L = go back to List
-N = go to Next item (when Right doesn't work)
-O = Open chapter no...
-P = go to Previous item (when Left doesn't work)
-S = show Series manager
-Shift+S = Show all hits in book
-]]), KOR.icons.series_mode_bare, KOR.icons.book_bare)
+A = voeg item toe
+D = Delete huidige item voor huidige boek
+Shift+D = Delete huidige item voor hele serie
+E = Edit huidige item
+Shift+I = toon dit Informatie-dialoogvenster
+L = ga terug naar Lijst
+N = ga naar Next item (wanneer pijl rechts niet werkt)
+O = Open hoofdstuk no...
+P = ga naar Previous item (wanneer pijl links niet werkt)
+S = toon Series manager
+Shift+S = Show alle locaties van item in boek
+]], KOR.icons.series_mode_bare, KOR.icons.book_bare)
     self.help_texts["viewer"] = viewer_info
 
     KOR.dialogs:textBoxTabbed(initial_tab, {
-        title = _("(BT) Hotkeys and more"),
+        title = "(BT) Hotkeys and more",
         is_standard_tabbed_dialog = true,
         tabs = {
             {
-                tab = _("In list of items"),
+                tab = "In items list",
                 info = list_info,
             },
             {
-                tab = _("In item viewer"),
+                tab = "In item viewer",
                 info = viewer_info,
             },
         }
     })
-end
-
-function XrayDialogs:getControllerEntryName(entry)
-    return _(entry)
 end
 
 function XrayDialogs:setProp(prop, value)
