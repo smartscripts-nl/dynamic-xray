@@ -208,7 +208,10 @@ If such an other item is longpressed in the book, the linked items will be shown
     local xray_type_field = {
         text = tostring(item_copy.xray_type) or "1",
         input_type = "number",
-        description = DX.fd:getTypeLabel(item_copy) .. "\n  " .. DX.vd.xray_type_description,
+        --description = DX.fd:getTypeLabel(item_copy) .. "\n  " .. DX.vd.xray_type_description,
+        description = "Xray-type:",
+        --* splitting of items done by ((XrayModel#splitByCommaOrSpace)):
+        info_popup_text = _("Set Xray type with numbers 1 through 4. If you use the button at the right side of the field for this, you'll see an explanation of these types."),
         tab = 2,
         input_face = self.other_fields_face,
         cursor_at_end = true,

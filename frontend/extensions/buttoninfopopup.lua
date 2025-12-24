@@ -454,8 +454,8 @@ function ButtonInfoPopup:forXrayTypeSet(props, add_horizontal_button_padding)
 		text = label,
 		fgcolor = Blitbuffer.COLOR_GRAY_3,
 		font_bold = false,
-		info = "user/lamp-ikonen | Stel het Xray type in.",
-		callback_label = "stel in",
+		info = _("user/bulb icons | Set Xray type."),
+		callback_label = ("set"),
 		--! callback defined by calling module
 	}, props)
 end
