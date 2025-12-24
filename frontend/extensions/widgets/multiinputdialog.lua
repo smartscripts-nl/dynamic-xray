@@ -201,7 +201,7 @@ function MultiInputDialog:insertFieldRow(DataGroup, field_source, is_field_row)
         measure_edit_button:free()
     end
     for field_side = 1, self.fields_count do
-        self:insertField(DataGroup, field_side, field_source, is_field_row)
+        self:insertFieldController(DataGroup, field_side, field_source, is_field_row)
     end
     --* self.halved_fields and self.halved_descriptions are reset to empty table after each row; see ((MultiInputDialog#insertFieldRow)):
     if #self.halved_descriptions > 0 or #self.halved_fields > 0 then
@@ -272,7 +272,7 @@ end
 
 --- @private
 --- @param field_side number 1 if left side, 2 if right side
-function MultiInputDialog:insertField(DataGroup, field_side, field_source, is_field_row)
+function MultiInputDialog:insertFieldController(DataGroup, field_side, field_source, is_field_row)
 
     self.force_one_line_field = is_field_row
     local field = is_field_row and field_source[field_side] or field_source
