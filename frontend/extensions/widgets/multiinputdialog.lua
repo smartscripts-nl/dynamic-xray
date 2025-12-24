@@ -131,25 +131,26 @@ function MultiInputDialog:insertFieldRow(DataGroup, field_source, is_field_row)
     for field_side = 1, self.fields_count do
         self:insertFieldController(DataGroup, field_side, field_source, is_field_row)
     end
+
     --* self.halved_fields and self.halved_descriptions are reset to empty table after each row; see ((MultiInputDialog#insertFieldRow)):
-    if #self.halved_descriptions > 0 or #self.halved_fields > 0 then
-
-        if #self.halved_descriptions > 0 then
-            self.halved_descriptions.align = "center"
-            table.insert(DataGroup, HorizontalGroup:new(self.halved_descriptions))
-        end
-        local field_1 = self.halved_fields[1]
-        local field_2 = self.halved_fields[2]
-        local field1_container = self:getFieldContainer(field_1)
-        local field2_container = self:getFieldContainer(field_2)
-
-        local group = HorizontalGroup:new{
-            align = "center",
-            field1_container,
-            field2_container,
-        }
-        table.insert(DataGroup, group)
+    if #self.halved_descriptions == 0 and #self.halved_fields == 0 then
+        return
     end
+    if #self.halved_descriptions > 0 then
+        self.halved_descriptions.align = "center"
+        table.insert(DataGroup, HorizontalGroup:new(self.halved_descriptions))
+    end
+    local field_1 = self.halved_fields[1]
+    local field_2 = self.halved_fields[2]
+    local field1_container = self:getFieldContainer(field_1)
+    local field2_container = self:getFieldContainer(field_2)
+
+    local group = HorizontalGroup:new{
+        align = "center",
+        field1_container,
+        field2_container,
+    }
+    table.insert(DataGroup, group)
 end
 
 --- @private
@@ -727,6 +728,7 @@ function MultiInputDialog:insertFieldRowController(row_nr)
     local is_field_set = not row.text
     self:insertFieldValues(row, is_field_set)
     target_tab = self.active_tab and ((is_field_set and row[1] and row[1].tab) or row.tab)
+
     --* administration for inactive tabs:
     if self.active_tab and target_tab < self.active_tab then
         if is_field_set then

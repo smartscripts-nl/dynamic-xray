@@ -202,21 +202,23 @@ function XrayFormsData:getAndStoreEditedItem(item_copy, field_values)
         edited_item
 end
 
-function XrayFormsData:convertFieldValuesToItemProps(field_values)
-    local xray_type = tonumber(field_values[5])
+function XrayFormsData:convertFieldValuesToItemProps(values)
+    --! xray_type field is last field and has therefore index 6 (2 fields in tab one + 4 fields in tab two):
+    --* see also ((XrayDialogs#switchFocusForXrayType)):
+    local xray_type = tonumber(values[DX.d.xray_type_field_nr + 2])
     if not xray_type or xray_type == 0 then
         xray_type = 1
     elseif xray_type > 4 then
         xray_type = 4
     end
     return {
-        description = has_text(field_values[1]) or "",
-        name = field_values[2],
+        description = has_text(values[1]) or "",
+        name = values[2],
         --* compare usage of sortKeywords here to ((XrayModel#splitByCommaOrSpace)) for getting needles for searching linked items:
-        aliases = has_text(field_values[3]) and KOR.strings:sortKeywords(field_values[3]) or "",
-        linkwords = has_text(field_values[4]) and KOR.strings:sortKeywords(field_values[4]) or "",
+        aliases = has_text(values[3]) and KOR.strings:sortKeywords(values[3]) or "",
+        linkwords = has_text(values[4]) and KOR.strings:sortKeywords(values[4]) or "",
         xray_type = xray_type,
-        short_names = has_text(field_values[6]) and KOR.strings:sortKeywords(field_values[6]) or "",
+        short_names = has_text(values[5]) and KOR.strings:sortKeywords(values[5]) or "",
     }
 end
 

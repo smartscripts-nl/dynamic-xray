@@ -867,7 +867,7 @@ end
 function XrayButtons:forItemEditorEditButton()
     return KOR.buttoninfopopup:forXrayItemEdit({
         callback = function()
-            DX.d:switchFocus()
+            DX.d:switchFocusController()
         end,
     })
 end
@@ -875,11 +875,15 @@ end
 --- @private
 function XrayButtons:forItemEditorTypeSwitch(item_copy, button_props)
     local callback = function()
+
+        --* make xray_type field focussed:
+        DX.d:switchFocusForXrayType("for_button_tap")
+
         --* input fields were stored in Registry in ((MultiInputDialog#init)) > ((MultiInputDialog#storeInputFieldsInRegistry)):
         local input_fields = KOR.registry:get("xray_item")
         local current_field_values = {}
         for i = 1, 4 do
-            --* these values will be restored in ((XrayDialogs#switchFocus)):
+            --* these values will be restored in ((XrayDialogs#switchFocusController)):
             table.insert(current_field_values, input_fields[i]:getText())
         end
         local buttons = {
@@ -903,30 +907,29 @@ function XrayButtons:forItemEditorTypeSwitch(item_copy, button_props)
         -- #((xray choose type dialog))
         --* item_copy can be nil in case of adding a new item:
         local active_type = KOR.registry:getOnce("xray_item_type_chosen") or item_copy and item_copy.xray_type or 1
-            for i = 1, 4 do
-                row = i
-                --! this MUST be a local var, for changeType to work as expected:
-                local itype = i
-                active_marker = itype == active_type and KOR.icons.active_tab_bare .. " " or ""
-                table.insert(buttons[row], {
-                    text = active_marker .. DX.vd.xray_type_choice_labels[itype],
-                    align = "left",
-                    callback = function()
-                        DX.d:modifyXrayTypeFieldValue(itype)
-                    end,
-                })
-
-            end
-            self.xray_type_chooser = ButtonDialogTitle:new{
-                title = _("Choose xray type"),
-                title_align = "center",
-                no_overlay = true,
-                modal = true,
-                font_weight = "normal",
-                width = Screen:scaleBySize(280),
-                buttons = buttons,
-            }
-            UIManager:show(self.xray_type_chooser)
+        for i = 1, 4 do
+            row = i
+            --! this MUST be a local var, for changeType to work as expected:
+            local itype = i
+            active_marker = itype == active_type and KOR.icons.active_tab_bare .. " " or ""
+            table.insert(buttons[row], {
+                text = active_marker .. DX.vd.xray_type_choice_labels[itype],
+                align = "left",
+                callback = function()
+                    DX.d:modifyXrayTypeFieldValue(itype)
+                end,
+            })
+        end
+        self.xray_type_chooser = ButtonDialogTitle:new{
+            title = "Kies Xray type",
+            title_align = "center",
+            no_overlay = true,
+            modal = true,
+            font_weight = "normal",
+            width = Screen:scaleBySize(250),
+            buttons = buttons,
+        }
+        UIManager:show(self.xray_type_chooser)
     end
     if button_props then
         button_props.callback = callback

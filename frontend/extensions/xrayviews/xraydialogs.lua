@@ -84,6 +84,7 @@ local XrayDialogs = WidgetContainer:new{
     title_tab_buttons_left = { _(" xray-item "), _(" metadata ") },
     xray_item_chooser = nil,
     xray_items_chooser_dialog = nil,
+    --! self.xray_type_field_nr has to correspond to the index used to get the xray_type in ((XrayFormsData#convertFieldValuesToItemProps)); see also ((XrayDialogs#switchFocusForXrayType)):
     xray_type_field_nr = 4,
     xray_ui_info_dialog = nil,
 }
@@ -1270,41 +1271,68 @@ end
 
 --- @private
 function XrayDialogs:modifyXrayTypeFieldValue(new_type)
-    --* to be consumed in ((XrayDialogs#switchFocus)):
+    --* to be consumed in ((XrayDialogs#switchFocusController)):
     self.change_xray_type = new_type
     KOR.registry:set("xray_item_type_chosen", self.change_xray_type)
     --* this dialog instance was set in ((XrayButtons#forItemEditorTypeSwitch)):
     UIManager:close(DX.b.xray_type_chooser)
-    self:switchFocus()
+    self:switchFocusController()
 end
 
 --- @private
-function XrayDialogs:switchFocus()
-    local description_field = KOR.registry:get("edit_button_target")
-    if description_field then
-        self:showEditDescriptionDialog(description_field, function(updated_description)
-            description_field:setText(updated_description)
-            description_field:onFocus()
-        end,
-        function()
-            description_field:onFocus()
-        end)
-    end
-    --* this set of fields values can be set in ((XrayButtons#forItemEditorTypeSwitch)) > ((xray choose type dialog)) > ((XrayDialogs#modifyXrayTypeFieldValue)):
-    if self.change_xray_type then
-        --* input fields were stored in Registry in ((MultiInputDialog#init)) > ((MultiInputDialog#storeInputFieldsInRegistry)):
-        local input_fields = KOR.registry:get("xray_item")
+function XrayDialogs:switchFocusController()
+    self:switchFocusForDescriptionField()
+    self:switchFocusForXrayType()
+end
 
-        --* unfocus all fields, except the xray type field:
-        for i = 1, 4 do
-            if i ~= self.xray_type_field_nr then
-                input_fields[i]:onUnfocus()
-            end
-        end
-        input_fields[self.xray_type_field_nr]:onFocus()
-        input_fields[self.xray_type_field_nr]:setText(tostring(self.change_xray_type))
-        self.change_xray_type = nil
+--- @private
+function XrayDialogs:switchFocusForDescriptionField()
+    local description_field = KOR.registry:get("edit_button_target")
+    if not description_field then
+        return
     end
+
+    self:showEditDescriptionDialog(description_field, function(updated_description)
+        description_field:setText(updated_description)
+        description_field:onFocus()
+    end,
+    function()
+        description_field:onFocus()
+    end)
+end
+
+--* this method will also be called when the user taps the button for choosing an xray type; see ((XrayButtons#forItemEditorTypeSwitch)):
+function XrayDialogs:switchFocusForXrayType(for_button_tap)
+    if not for_button_tap and not self.change_xray_type then
+        return
+    end
+    local input_fields = KOR.registry:get("xray_item")
+    --* unfocus all fields, except the xray type field:
+    self:switchFocusFieldLoop(input_fields, 4, self.xray_type_field_nr)
+
+    --! self.xray_type_field_nr has to correspond to the index used to get the xray_type in ((XrayFormsData#convertFieldValuesToItemProps)):
+    input_fields[self.xray_type_field_nr]:setText(tostring(self.change_xray_type))
+    self.change_xray_type = nil
+end
+
+--- @private
+function XrayDialogs:switchFocusFieldLoop(input_fields, last_field_no, focus_field_no)
+    --* this set of fields values can be set in ((XrayButtons#forItemEditorTypeSwitch)) > ((xray choose type dialog)) > ((XrayDialogs#modifyXrayTypeFieldValue)):
+    --* input fields were stored in Registry in ((MultiInputDialog#init)) > ((MultiInputDialog#storeInputFieldsInRegistry)):
+    if not input_fields then
+        input_fields = KOR.registry:get("xray_item")
+    end
+    if not input_fields then
+        return
+    end
+
+    --* unfocus all fields, except the focus_field_no field:
+    for i = 1, last_field_no do
+        if i ~= focus_field_no then
+            input_fields[i]:onUnfocus()
+        end
+    end
+    input_fields[focus_field_no]:onFocus()
 end
 
 function XrayDialogs:showHelp(initial_tab)
