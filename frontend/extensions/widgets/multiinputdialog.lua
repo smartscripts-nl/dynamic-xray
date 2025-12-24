@@ -196,7 +196,7 @@ function MultiInputDialog:insertFieldRow(DataGroup, field_source, is_field_row)
     self.edit_button_width = 0
     --* insert a edit button at the right side of each field in a two field row:
     if has_two_fields_per_row then
-        local measure_edit_button = self:getEditButton(0)
+        local measure_edit_button = self:getEditFieldButton(0)
         self.edit_button_width = measure_edit_button:getSize().w
         measure_edit_button:free()
     end
@@ -229,7 +229,7 @@ function MultiInputDialog:insertFieldRow(DataGroup, field_source, is_field_row)
                     HorizontalGroup:new{
                         align = "center",
                         field_1,
-                        self:getEditButton(field_1),
+                        self:getEditFieldButton(field_1),
                     }
                 },
                 CenterContainer:new{
@@ -240,7 +240,7 @@ function MultiInputDialog:insertFieldRow(DataGroup, field_source, is_field_row)
                     --* right_side field + button:
                     HorizontalGroup:new{
                         field_2,
-                        self:getEditButton(field_2),
+                        self:getEditFieldButton(field_2),
                     }
                 },
             }
@@ -617,7 +617,7 @@ function MultiInputDialog:editField(input, input_type, field_hint, allow_newline
 end
 
 --- @private
-function MultiInputDialog:getEditButton(field)
+function MultiInputDialog:getEditFieldButton(field)
     return Button:new{
         icon = "edit",
         bordersize = 0,
