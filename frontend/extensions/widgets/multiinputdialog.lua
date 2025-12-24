@@ -1,77 +1,5 @@
 --[[--
 Widget for taking multiple user inputs.
-
-Example for input of two strings and a number:
-
-    local MultiInputDialog = require("ui/widget/multiinputdialog")
-    local @{ui.uimanager|UIManager} = require("ui/uimanager")
-    local @{gettext|_} = require("gettext")
-
-    local sample_input
-    sample_input = MultiInputDialog:new{
-        title = _("Title to show"),
-        fields = {
-            {
-                description = _("Describe this field"),
-                -- input_type = nil, --* default for text
-                text = _("First input"),
-                hint = _("Name"),
-            },
-            {
-                text = "",
-                hint = _("Address"),
-            },
-            {
-                description = _("Enter a number"),
-                input_type = "number",
-                text = 666,
-                hint = 123,
-            },
-        },
-        buttons = {
-            {
-                {
-                    text = _("Cancel"),
-                    id = "close",
-                    callback = function()
-                        UIManager:close(sample_input)
-                    end
-                },
-                {
-                    text = _("Info"),
-                    callback = function()
-                        --* do something
-                    end
-                },
-                {
-                    text = _("Use settings"),
-                    callback = function(touchmenu_instance)
-                        local fields = sample_input:getFields()
-                        --* check for user input
-                        if fields[1] ~= "" and fields[2] ~= ""
-                            and fields[3] ~= 0 then
-                            --* insert code here
-                            UIManager:close(sample_input)
-                            --* If we have a touch menu: Update menu entries,
-                            --* when called from a menu
-                            if touchmenu_instance then
-                                touchmenu_instance:updateItems()
-                            end
-                        else
-                            --* not all fields where entered
-                        end
-                    end
-                },
-            },
-        },
-    }
-    UIManager:show(sample_input)
-    sample_input:onShowKeyboard()
-
-
-It is strongly recommended to use a text describing the action to be
-executed, as demonstrated in the example above. If the resulting phrase would be
-longer than three words it should just read "OK".
 --]]--
 
 local require = require
@@ -264,7 +192,10 @@ function MultiInputDialog:setFieldWidth(field)
         --! don't make this factor bigger, because then in some situations fields don't fit and jump to next row:
         local factor = 0.49
         self.field_width = math.floor(self.field_width * factor)
-        if field.input_type ~= "number" then
+        field.custom_edit_button = field.custom_edit_button and Button:new(field.custom_edit_button)
+        if field.custom_edit_button then
+            self.field_width = self.field_width - field.custom_edit_button:getSize().w
+        elseif field.input_type ~= "number" then
             self.field_width = self.field_width - self.edit_button_width
         end
 
@@ -318,6 +249,9 @@ function MultiInputDialog:setFieldProps(field, field_side)
             #self.input_fields + 1,
         tab =
             field.tab,
+        --* e.g. used to insert a button for setting xray_type of an Xray item in ((XrayDialogs#getFormFields)):
+        custom_edit_button =
+            field.custom_edit_button,
         disable_paste =
             self:setFieldProp(field.disable_paste, false),
         left_side =
@@ -578,8 +512,10 @@ function MultiInputDialog:getFieldContainer(field)
     local tile_width = self.full_width / self.fields_count
     local tile_height = self.halved_fields[1]:getSize().h
 
-    --* don't add edit field buttons for number fields:
-    return field.input_type == "number" and CenterContainer:new{
+    local has_no_button = field.input_type == "number" and not field.custom_edit_button
+
+    --* don't add edit field buttons for regular number fields without a custom edit button:
+    return has_no_button and CenterContainer:new{
         dimen = Geom:new{
             w = tile_width,
             h = tile_height,
@@ -602,6 +538,11 @@ end
 
 --- @private
 function MultiInputDialog:getEditFieldButton(field)
+    --* first condition: for measurement field:
+    --* self.custom_edit_button was generated (or not) in ((MultiInputDialog#setFieldWidth)):
+    if field ~= 0 and field.custom_edit_button then
+        return field.custom_edit_button
+    end
     return Button:new{
         icon = "edit",
         bordersize = 0,
@@ -748,12 +689,12 @@ end
 function MultiInputDialog:insertMeasurementOrProductionFields()
     --* target container will be self.MeasureData if target_container == 1, or self.VerticalGroupData if target_container == 2:
     --* MeasureData can be used to compute height of auto-height fields to be inserted in VerticalGroupData:
-    local is_resulting_form = self.target_container == 2
+    local is_production_form = self.target_container == 2
 
     --* to make the FocusManager work correctly, even under Ubuntu; this prop will be initially set by ((MultiInputDialog#insertFieldRow)) and will upon switching between fields be dynamically updated to the active field by ((MultiInputDialog#onSwitchFocus)):
     self._input_widget = nil
 
-    if is_resulting_form and self.auto_height_field_present then
+    if is_production_form and self.auto_height_field_present then
         local current_height = self.MeasureData:getSize().h
         local difference = self.max_dialog_height - current_height
         --? don't know why we need this correction:

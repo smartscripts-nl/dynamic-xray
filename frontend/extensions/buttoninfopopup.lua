@@ -441,18 +441,21 @@ function ButtonInfoPopup:forXrayTranslations(props)
 	}, props)
 end
 
-function ButtonInfoPopup:forXrayTypeSet(props)
+function ButtonInfoPopup:forXrayTypeSet(props, add_horizontal_button_padding)
 	local show_all_icons = true
 	local label = show_all_icons
 		and KOR.icons.xray_person_bare .. KOR.icons.xray_person_important_bare .. KOR.icons.xray_term_bare .. KOR.icons.xray_term_important_bare
 		or
 		KOR.icons.xray_person_bare .. "/" .. KOR.icons.xray_term_bare
+	if add_horizontal_button_padding then
+		label = "  " .. label .. "  "
+	end
 	return KOR.buttonprops:set({
 		text = label,
 		fgcolor = Blitbuffer.COLOR_GRAY_3,
 		font_bold = false,
-		info = _("user/bulb icon | Set Xray type."),
-		callback_label = _("set"),
+		info = "user/lamp-ikonen | Stel het Xray type in.",
+		callback_label = "stel in",
 		--! callback defined by calling module
 	}, props)
 end

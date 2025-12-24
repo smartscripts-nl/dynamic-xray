@@ -3,7 +3,7 @@ This extension is part of the Dynamic Xray plugin; it has all dialogs and forms 
 
 The Dynamic Xray plugin has kind of a MVC structure:
 M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
-V = ((XrayUI)), ((XrayTranslations)), ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
+V = ((XrayUI)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
 
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
@@ -84,6 +84,7 @@ local XrayDialogs = WidgetContainer:new{
     title_tab_buttons_left = { _(" xray-item "), _(" metadata ") },
     xray_item_chooser = nil,
     xray_items_chooser_dialog = nil,
+    xray_type_field_nr = 4,
     xray_ui_info_dialog = nil,
 }
 
@@ -95,6 +96,7 @@ end
 --- @return boolean signalling whether the user was redirected to the viewer (true), or not (false)
 function XrayDialogs:closeForm(mode)
     KOR.dialogs:closeAllOverlays()
+    KOR.registry:unset("xray_item_type_chosen")
     if mode == "add" then
         UIManager:close(self.add_item_input)
         self.add_item_input = nil
@@ -214,6 +216,12 @@ If such an other item is longpressed in the book, the linked items will be shown
         allow_newline = false,
         force_one_line_height = true,
         disable_paste = true,
+        custom_edit_button = DX.b:forItemEditorTypeSwitch(item_copy, {
+            fgcolor = KOR.colors.button_label,
+            radius = Size.radius.button,
+            bordersize = Size.border.button,
+            padding = Size.padding.buttonvertical,
+        }),
         margin = Size.margin.small,
     }
     local short_names_field = {
@@ -289,8 +297,8 @@ Enter with only lowercase characters [a-z], because then searches for these item
             linkwords_field,
         })
         table.insert(fields, {
-            xray_type_field,
             short_names_field,
+            xray_type_field,
         })
     end
 
@@ -1261,6 +1269,7 @@ end
 function XrayDialogs:modifyXrayTypeFieldValue(new_type)
     --* to be consumed in ((XrayDialogs#switchFocus)):
     self.change_xray_type = new_type
+    KOR.registry:set("xray_item_type_chosen", self.change_xray_type)
     --* this dialog instance was set in ((XrayButtons#forItemEditorTypeSwitch)):
     UIManager:close(DX.b.xray_type_chooser)
     self:switchFocus()
@@ -1285,12 +1294,12 @@ function XrayDialogs:switchFocus()
 
         --* unfocus all fields, except the xray type field:
         for i = 1, 4 do
-            if i ~= 3 then
+            if i ~= self.xray_type_field_nr then
                 input_fields[i]:onUnfocus()
             end
         end
-        input_fields[3]:onFocus()
-        input_fields[3]:setText(tostring(self.change_xray_type))
+        input_fields[self.xray_type_field_nr]:onFocus()
+        input_fields[self.xray_type_field_nr]:setText(tostring(self.change_xray_type))
         self.change_xray_type = nil
     end
 end

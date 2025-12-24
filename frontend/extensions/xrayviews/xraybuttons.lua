@@ -873,38 +873,36 @@ function XrayButtons:forItemEditorEditButton()
 end
 
 --- @private
-function XrayButtons:forItemEditorTypeSwitch(item_copy)
-    return KOR.buttoninfopopup:forXrayTypeSet({
-
-        callback = function()
-            --* input fields were stored in Registry in ((MultiInputDialog#init)) > ((MultiInputDialog#storeInputFieldsInRegistry)):
-            local input_fields = KOR.registry:get("xray_item")
-            local current_field_values = {}
-            for i = 1, 4 do
-                --* these values will be restored in ((XrayDialogs#switchFocus)):
-                table.insert(current_field_values, input_fields[i]:getText())
-            end
-            local buttons = {
-                {},
-                {},
-                {},
-                {},
+function XrayButtons:forItemEditorTypeSwitch(item_copy, button_props)
+    local callback = function()
+        --* input fields were stored in Registry in ((MultiInputDialog#init)) > ((MultiInputDialog#storeInputFieldsInRegistry)):
+        local input_fields = KOR.registry:get("xray_item")
+        local current_field_values = {}
+        for i = 1, 4 do
+            --* these values will be restored in ((XrayDialogs#switchFocus)):
+            table.insert(current_field_values, input_fields[i]:getText())
+        end
+        local buttons = {
+            {},
+            {},
+            {},
+            {},
+            {
                 {
-                    {
-                        icon = "back",
-                        icon_size_ratio = 0.5,
-                        callback = function()
-                            --* this dialog instance was set in ((XrayButtons#forItemEditorTypeSwitch)):
-                            UIManager:close(self.xray_type_chooser)
-                            KOR.screenhelpers:refreshDialog()
-                        end,
-                    }
+                    icon = "back",
+                    icon_size_ratio = 0.5,
+                    callback = function()
+                        --* this dialog instance was set in ((XrayButtons#forItemEditorTypeSwitch)):
+                        UIManager:close(self.xray_type_chooser)
+                        KOR.screenhelpers:refreshDialog()
+                    end,
                 }
             }
-            local row, active_marker
-            -- #((xray choose type dialog))
-            --* item_copy can be nil in case of adding a new item:
-            local active_type = item_copy and item_copy.xray_type or 1
+        }
+        local row, active_marker
+        -- #((xray choose type dialog))
+        --* item_copy can be nil in case of adding a new item:
+        local active_type = KOR.registry:getOnce("xray_item_type_chosen") or item_copy and item_copy.xray_type or 1
             for i = 1, 4 do
                 row = i
                 --! this MUST be a local var, for changeType to work as expected:
@@ -929,7 +927,13 @@ function XrayButtons:forItemEditorTypeSwitch(item_copy)
                 buttons = buttons,
             }
             UIManager:show(self.xray_type_chooser)
-        end,
+    end
+    if button_props then
+        button_props.callback = callback
+        return KOR.buttoninfopopup:forXrayTypeSet(button_props, "add_horizontal_button_padding")
+    end
+    return KOR.buttoninfopopup:forXrayTypeSet({
+        callback = callback,
     })
 end
 
@@ -1107,7 +1111,12 @@ function XrayButtons:forItemEditor(mode, active_form_tab, reload_manager, item_c
     local edit_or_type_change_button = active_form_tab == 1 and
         self:forItemEditorEditButton()
         or
-        self:forItemEditorTypeSwitch(item_copy)
+        {
+            icon = "info",
+            callback = function()
+                KOR.dialogs:niceAlert(_("Tips"), _("Tips about how to get best results with Xray items will soon follow..."))
+            end
+        }
     local dialog_will_be_closed_message = _([[This will close the add dialog.
 
 Continue?]])
