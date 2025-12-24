@@ -123,6 +123,9 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 ![07 Xray item editor tab 2](images/07-xray-item-editor-tab-2.png)
 07 Xray item editor tab 2
 
+![07b Larger field editor](images/07b-larger-field-editor.png)
+07b Larger field editor, called with edit button next to field. Handy for fields with longer content.
+
 ![08 Help info for buttons](images/08-help-info-for-buttons.png)
 08 Help info for buttons
 

@@ -848,7 +848,7 @@ function XrayButtons:forEditDescription(callback, cancel_callback)
                 end,
             },
             {
-                text = KOR.icons.save_bare,
+                icon = "save",
                 is_enter_default = true,
                 callback = function()
                     local description = DX.d.edit_item_description_dialog:getInputText()

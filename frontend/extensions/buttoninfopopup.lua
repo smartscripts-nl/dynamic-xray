@@ -97,6 +97,15 @@ function ButtonInfoPopup:forMenuToLetter(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forResetField(props)
+	return KOR.buttonprops:set({
+		icon = "reset",
+		info = _("reset icon | Reset above field, remove its contents."),
+		callback_label = "reset",
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forSaveToXray(props)
 	return KOR.buttonprops:set({
 		text = KOR.icons.xray_person_bare .. "/" .. KOR.icons.xray_term_bare,

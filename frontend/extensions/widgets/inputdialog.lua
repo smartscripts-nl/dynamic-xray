@@ -818,7 +818,7 @@ function InputDialog:_addSaveCloseButtons()
         })
     end
     table.insert(row, {
-        text = KOR.icons.save_bare,
+        icon = "save",
         id = "save",
         enabled = self._text_modified or self.force_save_enabled,
         callback = function()

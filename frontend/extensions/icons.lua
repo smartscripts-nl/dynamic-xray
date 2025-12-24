@@ -82,8 +82,6 @@ return {
     mark_current_bare = "\u{F140}",
     reset = "\u{EB58}" .. spacer, -- EB59 undo
     reset_bare = "\u{EB58}",
-    save = "\u{F0C7}" .. spacer,
-    save_bare = "\u{F0C7}",
     search = "\u{EA48}" .. spacer,
     search_bare = "\u{EA48}",
     spacer = "\u{2002}",
