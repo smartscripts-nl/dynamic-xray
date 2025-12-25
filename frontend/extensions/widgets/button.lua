@@ -710,7 +710,6 @@ function Button:onTapSelectButton(irr, pos)
                 local is_translucent = self.show_parent and self.show_parent.movable and self.show_parent.movable.alpha
 
                 --* Highlight
-
                 self:_doFeedbackHighlight()
 
                 --* Force the refresh by draining the refresh queue *now*, so we have a chance to see the highlight on its own, before whatever the callback will do.

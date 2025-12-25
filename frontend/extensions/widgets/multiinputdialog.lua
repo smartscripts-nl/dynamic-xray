@@ -546,6 +546,9 @@ function MultiInputDialog:getFieldContainer(field)
     --* for custom edit button add spacer between field and button:
     --* see ((MultiInputDialog#generateCustomEditButton)) for custom edit button generation:
     if field.custom_edit_button then
+        self.custom_edit_button = field.custom_edit_button
+        KOR.registry:set("xray_type_button", self.custom_edit_button)
+
         return CenterContainer:new{
             dimen = Geom:new{
                 w = tile_width,
@@ -555,7 +558,7 @@ function MultiInputDialog:getFieldContainer(field)
                 align = "center",
                 field,
                 self.custom_edit_button_spacer,
-                self:getEditFieldButton(field),
+                self.custom_edit_button,
             }
         }
     end
@@ -575,11 +578,6 @@ end
 
 --- @private
 function MultiInputDialog:getEditFieldButton(field)
-    --* first condition: for measurement field:
-    --* self.custom_edit_button was generated (or not) in ((MultiInputDialog#setFieldWidth)):
-    if field ~= 0 and field.custom_edit_button then
-        return field.custom_edit_button
-    end
     return Button:new{
         icon = "edit",
         bordersize = 0,

@@ -24,8 +24,9 @@ local ButtonTable = require("extensions/widgets/buttontable")
 local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
-local Screen = require("device").screen
 local _ = KOR:initCustomTranslations()
+local Screen = require("device").screen
+local Size = require("ui/size")
 local T = require("ffi/util").template
 
 local DX = DX
@@ -878,6 +879,7 @@ function XrayButtons:forItemEditorTypeSwitch(item_copy, button_props)
 
         --* make xray_type field focussed:
         DX.d:switchFocusForXrayType("for_button_tap")
+        self:unfocusXrayButton()
 
         --* input fields were stored in Registry in ((MultiInputDialog#init)) > ((MultiInputDialog#registerInputFields)):
         local input_fields = KOR.registry:get("xray_item")
@@ -1218,6 +1220,21 @@ function XrayButtons:forListTopLeft(parent)
             end
         }),
     }
+end
+
+function XrayButtons:unfocusXrayButton()
+    --* this registry var was set in ((MultiInputDialog#generateCustomEditButton)):
+    local xray_type_button = KOR.registry:get("xray_type_button")
+    xray_type_button.frame.fgcolor = KOR.colors.button
+    xray_type_button.frame.radius = Size.radius.button
+    if xray_type_button[1].background == KOR.colors.black then
+        xray_type_button.frame.invert = false
+        xray_type_button.frame.fgcolor = KOR.colors.black
+        xray_type_button.frame.color = KOR.colors.black
+        --* this also ensures the button border countours stay well defined:
+        xray_type_button[1].background = xray_type_button[1].background:invert()
+    end
+    xray_type_button:refresh()
 end
 
 return XrayButtons
