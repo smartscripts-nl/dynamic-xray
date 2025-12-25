@@ -867,7 +867,7 @@ end
 function XrayButtons:forItemEditorEditButton()
     return KOR.buttoninfopopup:forXrayItemEdit({
         callback = function()
-            DX.d:switchFocusController()
+            DX.d:dispatchFocusSwitch()
         end,
     })
 end
@@ -879,11 +879,11 @@ function XrayButtons:forItemEditorTypeSwitch(item_copy, button_props)
         --* make xray_type field focussed:
         DX.d:switchFocusForXrayType("for_button_tap")
 
-        --* input fields were stored in Registry in ((MultiInputDialog#init)) > ((MultiInputDialog#storeInputFieldsInRegistry)):
+        --* input fields were stored in Registry in ((MultiInputDialog#init)) > ((MultiInputDialog#registerInputFields)):
         local input_fields = KOR.registry:get("xray_item")
         local current_field_values = {}
         for i = 1, 4 do
-            --* these values will be restored in ((XrayDialogs#switchFocusController)):
+            --* these values will be restored in ((XrayDialogs#dispatchFocusSwitch)):
             table.insert(current_field_values, input_fields[i]:getText())
         end
         local buttons = {

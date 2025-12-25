@@ -12,6 +12,7 @@ local Font = require("extensions/modules/font")
 local FrameContainer = require("ui/widget/container/framecontainer")
 local Geom = require("ui/geometry")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
+local HorizontalSpan = require("ui/widget/horizontalspan")
 local InputDialog = require("extensions/widgets/inputdialog")
 local InputText = require("extensions/widgets/inputtext")
 local KOR = require("extensions/kor")
@@ -28,6 +29,10 @@ local math = math
 local table = table
 
 local count
+local LEFT_SIDE = 1
+local RIGHT_SIDE = 2
+local MEASURE_CONTAINER = 1
+local PRODUCTION_CONTAINER = 2
 
 --* if we extend FocusManager here, then crash because of ((MultiInputDialog#init)) > InputDialog.init(self)
 --- @class MultiInputDialog
@@ -62,8 +67,8 @@ function MultiInputDialog:init()
     self:initContainers()
     self:initWidgetProps()
     self:initBottomGroup()
-    self:insertFieldsController()
-    self:storeInputFieldsInRegistry()
+    self:generateMainContainers()
+    self:registerInputFields()
     self:addButtons()
     self:finalizeWidgetMID()
     KOR.dialogs:registerWidget(self)
@@ -114,7 +119,7 @@ end
 
 --* DataGroup can be MeasureData or VerticalGroupData; MeasureData can be used to compute height of auto-height fields to be inserted in VerticalGroupData:
 --- @private
-function MultiInputDialog:insertFieldRow(DataGroup, field_source, is_field_row)
+function MultiInputDialog:insertFieldContainers(DataGroup, field_source, is_field_row)
 
     self.halved_descriptions = {}
     self.halved_fields = {}
@@ -129,10 +134,10 @@ function MultiInputDialog:insertFieldRow(DataGroup, field_source, is_field_row)
         measure_edit_button:free()
     end
     for field_side = 1, self.fields_count do
-        self:insertFieldController(DataGroup, field_side, field_source, is_field_row)
+        self:generateRows(DataGroup, field_side, field_source, is_field_row)
     end
 
-    --* self.halved_fields and self.halved_descriptions are reset to empty table after each row; see ((MultiInputDialog#insertFieldRow)):
+    --* self.halved_fields and self.halved_descriptions are reset to empty table after each row; see ((MultiInputDialog#insertFieldContainers)):
     if #self.halved_descriptions == 0 and #self.halved_fields == 0 then
         return
     end
@@ -155,14 +160,14 @@ end
 
 --- @private
 --- @param field_side number 1 if left side, 2 if right side
-function MultiInputDialog:insertFieldController(DataGroup, field_side, field_source, is_field_row)
+function MultiInputDialog:generateRows(DataGroup, field_side, field_source, is_field_row)
 
     self.force_one_line_field = is_field_row
     local field = is_field_row and field_source[field_side] or field_source
     if self.force_one_line_field then
         field.scroll = true
     end
-    if field_side == 2 then
+    if field_side == RIGHT_SIDE then
         --* self.field_nr counts ALL fields, even those in different tabs:
         self.field_nr = self.field_nr + 1
     end
@@ -182,8 +187,24 @@ function MultiInputDialog:insertFieldController(DataGroup, field_side, field_sou
         self._input_widget = self.input_fields[self.current_field]
     end
 
-    self:insertFieldIntoDataGroup(DataGroup, field)
-    self:insertFieldIntoRow(DataGroup, field_side)
+    self:insertFieldDescription(DataGroup, field)
+    self:insertFieldByRowType(DataGroup, field_side)
+end
+
+--- @private
+function MultiInputDialog:generateCustomEditButton(field)
+    if not field.custom_edit_button then
+        return false
+    end
+    field.custom_edit_button = Button:new(field.custom_edit_button)
+    self.custom_edit_button_spacer = HorizontalSpan:new{
+        width = Screen:scaleBySize(4),
+    }
+
+    local custom_edit_button_spacer_width = self.custom_edit_button_spacer:getSize().w
+    self.field_width = self.field_width - field.custom_edit_button:getSize().w - custom_edit_button_spacer_width
+
+    return true
 end
 
 --- @private
@@ -193,10 +214,7 @@ function MultiInputDialog:setFieldWidth(field)
         --! don't make this factor bigger, because then in some situations fields don't fit and jump to next row:
         local factor = 0.49
         self.field_width = math.floor(self.field_width * factor)
-        field.custom_edit_button = field.custom_edit_button and Button:new(field.custom_edit_button)
-        if field.custom_edit_button then
-            self.field_width = self.field_width - field.custom_edit_button:getSize().w
-        elseif field.input_type ~= "number" then
+        if not self:generateCustomEditButton(field) and field.input_type ~= "number" then
             self.field_width = self.field_width - self.edit_button_width
         end
 
@@ -227,8 +245,7 @@ function MultiInputDialog:setFieldProps(field, field_side)
     end
 
     local is_focus_field = false
-    --* target container will be self.MeasureData if target_container == 1, or self.VerticalGroupData if target_container == 2:
-    if field_side == 1 and not self.a_field_was_focussed and self.target_container == 2 then
+    if field_side == LEFT_SIDE and not self.a_field_was_focussed and self.target_container == PRODUCTION_CONTAINER then
         self.a_field_was_focussed = true
         is_focus_field = true
     end
@@ -310,7 +327,7 @@ function MultiInputDialog:setFieldProps(field, field_side)
 end
 
 --- @private
-function MultiInputDialog:insertFieldIntoDataGroup(DataGroup, field)
+function MultiInputDialog:insertFieldDescription(DataGroup, field)
         --* for single field rows:
     if (not self.has_field_rows and field.description) or (self.fields_count == 1 and field.description) then
             local description_height
@@ -339,15 +356,15 @@ end
 
 --- @private
 --- @param field_side number 1 if left side, 2 if right side
-function MultiInputDialog:insertFieldIntoRow(DataGroup, field_side)
+function MultiInputDialog:insertFieldByRowType(DataGroup, field_side)
     --* for one field rows immediately insert the input field:
     if not self.has_field_rows or self.fields_count == 1 then
         self:insertSingleFieldInRow(DataGroup)
+        return
+    end
 
     --* handle rows with multipe fields:
-    elseif self.has_field_rows and self.fields_count > 1 then
-        self:insertDuoFieldsInRow(field_side)
-    end
+    self:insertDuoFieldsIntoRow(field_side)
 end
 
 --- @private
@@ -365,12 +382,12 @@ end
 
 --- @private
 --- @param field_side number 1 if left side, 2 if right side
-function MultiInputDialog:insertDuoFieldsInRow(field_side)
+function MultiInputDialog:insertDuoFieldsIntoRow(field_side)
     local tile_width = self.full_width / self.fields_count
 
     local has_description = self.input_fields[self.current_field].description
     local description_label = has_description and self:getDescription(self.input_fields[self.current_field], tile_width) or nil
-    if field_side == 1 then
+    if field_side == LEFT_SIDE then
         if has_description then
 
             self.input_description[self.current_field] = FrameContainer:new{
@@ -391,8 +408,8 @@ function MultiInputDialog:insertDuoFieldsInRow(field_side)
         return
     end
 
-    --* insert right side field:
-    if field_side == 2 and has_description then
+    --* insert right side field (field_side == RIGHT_SIDE here):
+    if has_description then
         self.input_description[self.current_field] = FrameContainer:new{
             padding = self.description_padding,
             margin = 0,
@@ -432,7 +449,7 @@ function MultiInputDialog:getDescription(field, width)
                 --* y_pos for the popup dialog - not used now anymore - was detected and set in ((Button#onTapSelectButton)) - look for two statements with self.callback(pos):
                 callback = function() --ypos
                     -- #((focus field upon click on info label))
-                    --* this prop can be set in ((MultiInputDialog#insertFieldRow)):
+                    --* this prop can be set in ((MultiInputDialog#insertFieldContainers)):
                     if field.info_icon_field_no then
                         self:onSwitchFocus(self.input_fields[field.info_icon_field_no])
                     end
@@ -516,15 +533,34 @@ function MultiInputDialog:getFieldContainer(field)
     local has_no_button = field.input_type == "number" and not field.custom_edit_button
 
     --* don't add edit field buttons for regular number fields without a custom edit button:
-    return has_no_button and CenterContainer:new{
+    if has_no_button then
+        return CenterContainer:new{
         dimen = Geom:new{
             w = tile_width,
             h = tile_height,
         },
         field,
     }
-    or
-    CenterContainer:new{
+    end
+
+    --* for custom edit button add spacer between field and button:
+    --* see ((MultiInputDialog#generateCustomEditButton)) for custom edit button generation:
+    if field.custom_edit_button then
+        return CenterContainer:new{
+            dimen = Geom:new{
+                w = tile_width,
+                h = tile_height,
+            },
+            HorizontalGroup:new{
+                align = "center",
+                field,
+                self.custom_edit_button_spacer,
+                self:getEditFieldButton(field),
+            }
+        }
+    end
+
+    return CenterContainer:new{
         dimen = Geom:new{
             w = tile_width,
             h = tile_height,
@@ -582,7 +618,7 @@ function MultiInputDialog:insertButtonGroup()
 end
 
 --- @private
-function MultiInputDialog:storeInputFieldsInRegistry()
+function MultiInputDialog:registerInputFields()
     if self.input_registry then
         --* input_fields were populated in ((MultiInputDialog#fieldAddToInputs)):
         KOR.registry:set(self.input_registry, self.input_fields)
@@ -672,27 +708,26 @@ function MultiInputDialog:initBottomGroup()
 end
 
 --- @private
-function MultiInputDialog:insertFieldsController()
+function MultiInputDialog:generateMainContainers()
     self.a_field_was_focussed = false
     for x = 1, 2 do
         --* target container will be self.MeasureData if target_container == 1, or self.VerticalGroupData if target_container == 2:
         self.target_container = x
 
-        --* very important: for the second loop for the production form reset all props for the actual fields:
+        --! very important: for the second loop for the production form reset all props for the actual fields:
         self.field_nr = 0
         self.field_values = {}
         self.input_fields = {}
-        self:insertMeasurementOrProductionFields()
+        self:insertMeasurementOrProductionRows()
     end
 end
 
 --- @private
-function MultiInputDialog:insertMeasurementOrProductionFields()
-    --* target container will be self.MeasureData if target_container == 1, or self.VerticalGroupData if target_container == 2:
+function MultiInputDialog:insertMeasurementOrProductionRows()
     --* MeasureData can be used to compute height of auto-height fields to be inserted in VerticalGroupData:
-    local is_production_form = self.target_container == 2
+    local is_production_form = self.target_container == PRODUCTION_CONTAINER
 
-    --* to make the FocusManager work correctly, even under Ubuntu; this prop will be initially set by ((MultiInputDialog#insertFieldRow)) and will upon switching between fields be dynamically updated to the active field by ((MultiInputDialog#onSwitchFocus)):
+    --* to make the FocusManager work correctly, even under Ubuntu; this prop will be initially set by ((MultiInputDialog#insertFieldContainers)) and will upon switching between fields be dynamically updated to the active field by ((MultiInputDialog#onSwitchFocus)):
     self._input_widget = nil
 
     if is_production_form and self.auto_height_field_present then
@@ -708,10 +743,9 @@ function MultiInputDialog:insertMeasurementOrProductionFields()
 
     count = #self.fields
     for row_nr = 1, count do
-        self:insertFieldRowController(row_nr)
+        self:insertFieldRowIfActiveTab(row_nr)
     end
-    --* target container will be self.MeasureData if target_container == 1, or self.VerticalGroupData if target_container == 2:
-    if self.target_container == 1 then
+    if self.target_container == MEASURE_CONTAINER then
         table.insert(self.MeasureData, self.bottom_group)
         if self.auto_height_field_present then
             table.insert(self.MeasureData, self.button_group)
@@ -720,13 +754,13 @@ function MultiInputDialog:insertMeasurementOrProductionFields()
 end
 
 --- @private
-function MultiInputDialog:insertFieldRowController(row_nr)
+function MultiInputDialog:insertFieldRowIfActiveTab(row_nr)
     local target_tab
-    local data_group = self.target_container == 1 and self.MeasureData or self.VerticalGroupData
+    local data_group = self.target_container == MEASURE_CONTAINER and self.MeasureData or self.VerticalGroupData
 
     local row = self.fields[row_nr]
     local is_field_set = not row.text
-    self:insertFieldValues(row, is_field_set)
+    self:registerFieldValues(row, is_field_set)
     target_tab = self.active_tab and ((is_field_set and row[1] and row[1].tab) or row.tab)
 
     --* administration for inactive tabs:
@@ -740,12 +774,12 @@ function MultiInputDialog:insertFieldRowController(row_nr)
     --* only insert fields for when they are in a non tabbed dialog or are in the active tab:
     elseif not target_tab or target_tab == self.active_tab then
         self.field_nr = self.field_nr + 1
-        self:insertFieldRow(data_group, row, is_field_set)
+        self:insertFieldContainers(data_group, row, is_field_set)
     end
 end
 
 --- @private
-function MultiInputDialog:insertFieldValues(row, is_field_set)
+function MultiInputDialog:registerFieldValues(row, is_field_set)
     if self.has_field_rows and is_field_set then
         local count2 = #row
         for field = 1, count2 do
