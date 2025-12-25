@@ -151,8 +151,8 @@ local XrayController = WidgetContainer:new{
 function XrayController:initKORandDynamicXray()
     --- @class ExtensionsInit
     KOR:initEarlyExtensions()
-    KOR:initDX()
     --* XrayModel will also load its data handlers here:
+    KOR:initDX()
     KOR:initExtensions()
     --* for now loads only extension XrayTranslations:
     DX.d:initViewHelpers()
@@ -406,7 +406,8 @@ function XrayController:addToMainMenu(menu_items)
     local icon = KOR.icons.lightning_bare
     menu_items.dynamic_xray = {
         text = icon .. DX.d:getControllerEntryName(" Dynamic Xray"),
-        sorting_hint = "navi",
+        --! set no sorting_hint here, because otherwise crash when returning from FileManager:
+        --sorting_hint = "navi",
         sub_item_table = {
             {
                 text = icon .. DX.d:getControllerEntryName(" Show list"),

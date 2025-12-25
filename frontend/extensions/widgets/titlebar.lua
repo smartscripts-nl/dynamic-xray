@@ -56,7 +56,7 @@ local TitleBar = OverlapGroup:extend{
     --* by default: single line, truncated if overflow
     --* the default could be made dependant on self.fullscreen
     title_multilines = false, --* multilines if overflow
-    title_shrink_font_to_fit = true, --* reduce font size so that single line text fits
+    title_shrink_font_to_fit = false, --* reduce font size so that single line text fits
 
     subtitle = nil,
     subtitle_face = Font:getFace("xx_smallinfofont"),
@@ -1013,10 +1013,6 @@ function TitleBar:addVerticalSpacers()
         end
     end
 
-    if KOR.registry:get("history_active") then
-        return
-    end
-
     if self.has_top_buttons_right then
         difference = self.desired_height - top_right_buttons_height
         spacer_height = math.floor(difference / 2)
@@ -1046,7 +1042,7 @@ function TitleBar:addVerticalSpacers()
             overlap_align = "left",
             self.right_buttons_container,
         }
-        end
+    end
 
     --* when the title was shrunk, make the title filler less high in ((TitleBar#injectBottomLineAndOrSubmenuButtonTable)):
     if self.title_width_was_adapted then

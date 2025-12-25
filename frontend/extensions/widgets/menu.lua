@@ -1967,7 +1967,7 @@ end
 function Menu:addHotkeyForFilterButton(filter_active, callback, reset_callback)
 
     --* because in FileManagerHistory "F" hotkey has been used for activation of Fiction tab, only there use Shift+F:
-    local hotkey = KOR.registry:get("history_active") and { { "Shift", { "F" } } } or { { "F" } }
+    local hotkey = { { "F" } }
     self:registerCustomKeyEvent(hotkey, "FilterMenu", function()
         self:resetAllBoldItems()
         if filter_active then
