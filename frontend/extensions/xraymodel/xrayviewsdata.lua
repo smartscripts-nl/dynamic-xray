@@ -33,7 +33,7 @@ local table = table
 local tonumber = tonumber
 local type = type
 
-local count, count2
+local count
 --- @type XrayDataLoader data_loader
 local data_loader
 --- @type XrayModel parent
@@ -518,31 +518,17 @@ function XrayViewsData:_doStrongMatchCheck(needle_item, matcher, args, t, for_re
 end
 
 --- @private
-function XrayViewsData:_doWeakMatchCheck(t, matcher, partial_matches, for_relations)
+function XrayViewsData:_doWeakMatchCheck(t, needle, partial_matches, for_relations)
     local item = self.items[t]
-    local haystack_name = item.name
-    local uc, is_lower_needle = getNameVariants(haystack_name)
 
-    local cases = {
-        { haystack_name:match("^" .. matcher), tapped_words.match_reliability_indicators.first_name },
-        { is_lower_needle and uc:match("^" .. matcher), tapped_words.match_reliability_indicators.first_name },
-
-        { haystack_name:match(matcher .. "s?$"), tapped_words.match_reliability_indicators.last_name },
-        { is_lower_needle and uc:match(matcher .. "s?$"), tapped_words.match_reliability_indicators.last_name },
-
-        { haystack_name:match(matcher), tapped_words.match_reliability_indicators.partial_match },
-        { is_lower_needle and uc:match(matcher), tapped_words.match_reliability_indicators.partial_match },
-
-        { item.aliases and item.aliases:match(matcher), tapped_words.match_reliability_indicators.alias },
-    }
-
-    local case
-    count2 = #cases
-    for i = 1, count2 do
-        case = cases[i]
-        if case[1] then
+    local haystack, uc_haystack, is_lower_haystack, indicator
+    for i = 1, 2 do
+        haystack = i == 1 and item.name or item.aliases
+        uc_haystack, is_lower_haystack = getNameVariants(haystack)
+        indicator = self:haystackItemPartlyMatches(needle, haystack, uc_haystack, is_lower_haystack)
+        if indicator then
             if for_relations then
-                item.reliability_indicator = case[2]
+                item.reliability_indicator = indicator
             end
             table.insert(partial_matches, item)
             --* item_was_upgraded:
@@ -572,7 +558,7 @@ function XrayViewsData:upgradeNeedleItem(needle_item, args)
     end
 
     for t = 1, count do
-        item_was_upgraded = self:_doWeakMatchCheck(t, matcher, partial_matches, for_relations)
+        item_was_upgraded = self:_doWeakMatchCheck(t, needle_item.name, partial_matches, for_relations)
         if item_was_upgraded then
             break
         end
@@ -1195,6 +1181,30 @@ function XrayViewsData:registerUpdatedItem(updated_item)
     self.items[updated_item.index] = updated_item
 
     self:updateAndSortAllItemTables(updated_item)
+end
+
+function XrayViewsData:isSingularOrPluralMatch(needle, haystack_name)
+    return needle == haystack_name or needle == haystack_name .. "s"
+end
+
+function XrayViewsData:haystackItemPartlyMatches(needle, haystack, uc_haystack, is_lower_haystack)
+    local parts = KOR.strings:split(haystack, " +")
+    local uc_parts
+    if is_lower_haystack then
+        uc_parts = KOR.strings:split(uc_haystack, " +")
+    end
+    count = #parts
+    for i = 1, count do
+        if self:isSingularOrPluralMatch(needle, parts[i]) or (is_lower_haystack and self:isSingularOrPluralMatch(needle, uc_parts[i])) then
+            if i == 1 then
+                return tapped_words.match_reliability_indicators.first_name
+            elseif i == count then
+                return tapped_words.match_reliability_indicators.last_name
+            end
+            return tapped_words.match_reliability_indicators.partial_match
+        end
+    end
+    return false
 end
 
 function XrayViewsData:setItems(items)
