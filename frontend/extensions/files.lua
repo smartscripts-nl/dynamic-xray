@@ -17,10 +17,10 @@ local Files = WidgetContainer:extend{
 function Files:init()
     local home_dir = G_reader_settings:readSetting("home_dir")
     if not home_dir then
-        KOR.dialogs:alertError("Files kon instelling voor \"home_dir\" in settings.reader.lua niet lezen.\n\nWellicht is dit bestand beschadigd geraakt na een reset?")
-    else
-        self.home_dir_with_end_slash = home_dir .. "/"
+        local Device = require("device")
+        home_dir = Device.home_dir or lfs.currentdir() or "."
     end
+    self.home_dir_with_end_slash = home_dir .. "/"
 end
 
 Files:init()
