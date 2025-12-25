@@ -406,8 +406,6 @@ function XrayController:addToMainMenu(menu_items)
     local icon = KOR.icons.lightning_bare
     menu_items.dynamic_xray = {
         text = icon .. DX.d:getControllerEntryName(" Dynamic Xray"),
-        --! set no sorting_hint here, because otherwise crash when returning from FileManager:
-        --sorting_hint = "navi",
         sub_item_table = {
             {
                 text = icon .. DX.d:getControllerEntryName(" Show list"),

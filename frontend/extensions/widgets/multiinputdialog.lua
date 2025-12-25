@@ -64,7 +64,7 @@ local MultiInputDialog = InputDialog:extend{
 
 function MultiInputDialog:init()
     --* NB: title and buttons are initialized in base class
-    self:initContainers()
+    self:initMainContainers()
     self:initWidgetProps()
     self:initBottomGroup()
     self:generateMainContainers()
@@ -624,7 +624,7 @@ function MultiInputDialog:registerInputFields()
 end
 
 --- @private
-function MultiInputDialog:initContainers()
+function MultiInputDialog:initMainContainers()
     --! don't call free() on self.MeasureData, because otherwise no title bar text!:
     InputDialog.init(self)
     if self.title and self.title_bar then
