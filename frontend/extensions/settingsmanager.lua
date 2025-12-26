@@ -191,20 +191,18 @@ function SettingsManager:chooseSetting(key, current_nr, current_value, options, 
     end
     count = #options
     local buttons = { {} }
-    local marker, text, text_modified
+    local marker
     for i = 1, count do
         marker = options[i] == current_value and KOR.icons.active_tab_bare or ""
         local current = i
-        text = _(options[current])
         table.insert(buttons[1], {
-            text = marker .. tostring(text),
+            text = marker .. tostring(options[current]),
             font_bold = false,
             callback = function()
                 UIManager:close(self.option_chooser)
                 self:saveSetting(key, options[current])
                 self:changeMenuSetting(key, options[current], current_nr)
-                text_modified = _(options[current])
-                KOR.messages:notify(_("setting ") .. key .. _(" modified to ") .. tostring(text_modified), 4)
+                KOR.messages:notify(_("setting ") .. key .. _(" modified to ") .. tostring(options[current]), 4)
             end
         })
     end

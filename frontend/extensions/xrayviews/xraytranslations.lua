@@ -23,6 +23,7 @@ local require = require
 local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
+--local logger = require("logger")
 local md5 = require("ffi/sha2").md5
 local T = require("ffi/util").template
 
@@ -132,6 +133,7 @@ end
 
 -- #((XrayTranslations#get))
 function XrayTranslations.get(key)
+    --logger.warn(tostring(key))
     local self = DX.t
     if not self.translations then
         self:pruneOrphanTranslations()
