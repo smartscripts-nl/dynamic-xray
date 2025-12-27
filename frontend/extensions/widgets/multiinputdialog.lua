@@ -31,27 +31,26 @@ local table = table
 local count
 local LEFT_SIDE = 1
 local RIGHT_SIDE = 2
-local MEASURE_CONTAINER = 1
-local PRODUCTION_CONTAINER = 2
 
 --* if we extend FocusManager here, then crash because of ((MultiInputDialog#init)) > InputDialog.init(self)
 --- @class MultiInputDialog
 local MultiInputDialog = InputDialog:extend{
+    --* to make the FocusManager work correctly, even under Ubuntu; this prop will be initially set by ((MultiInputDialog#insertFieldContainers)) and will upon switching between fields be dynamically updated to the active field by ((MultiInputDialog#onSwitchFocus)):
+    _input_widget = nil,
+    a_field_was_focussed = false,
+    auto_height_elem = nil,
     bottom_v_padding = Size.padding.small,
     description_face = Font:getDefaultDialogFontFace(),
     description_padding = Size.padding.small,
     description_prefix = "  ",
     description_margin = Size.margin.small,
+    field_spacer = VerticalSpan:new{ width = Screen:scaleBySize(10) },
     field_nr = 0,
     fields = nil, --* array, mandatory
-    field_values = {},
     has_field_rows = false,
-    initial_auto_field_height = 10,
     input_face = Font:getDefaultDialogFontFace(),
-    input_fields = nil, --* array
-    input_registry = nil,
+    input_fields = {}, --* array
     keyboard_height = nil,
-    mobile_auto_height_correction = 15,
     --! leave the props below alone, because consumed by inputdialog:
     field_values = {},
     input_registry = nil,
@@ -66,16 +65,13 @@ function MultiInputDialog:init()
     --* NB: title and buttons are initialized in base class
     self:initMainContainers()
     self:initWidgetProps()
-    self:initBottomSpacerAndButtons()
-    self:generateMainContainers()
+    self:insertRows()
     self:registerInputFields()
-    self:insertBottomSpacer()
     self:insertButtonGroup()
-
-    if self.target_container == PRODUCTION_CONTAINER then
-        self:finalizeWidgetMID()
-        KOR.dialogs:registerWidget(self)
-    end
+    --* adapt content of MiddleContainer: either a field with auto field height, or a spacer, to push the buttons to just above the keyboard:
+    self:adaptMiddleContainerHeight()
+    self:finalizeWidgetMID()
+    KOR.dialogs:registerWidget(self)
 end
 
 --- Returns an array of our input field's *text* field.
@@ -114,20 +110,16 @@ function MultiInputDialog:onSwitchFocus(inputbox)
     UIManager:setDirty(nil, function()
         return "ui", self.dialog_frame.dimen
     end)
-
     --* focus new inputbox
     self._input_widget = inputbox
     self._input_widget:focus()
     self._input_widget:onShowKeyboard()
 end
 
---* DataGroup can be MeasureData or VerticalGroupData; MeasureData can be used to compute height of auto-height fields to be inserted in VerticalGroupData:
 --- @private
-function MultiInputDialog:insertFieldContainers(DataGroup, field_source, is_field_row)
-
+function MultiInputDialog:insertFieldContainers(field_source, is_field_row)
     self.halved_descriptions = {}
     self.halved_fields = {}
-
     self.fields_count = is_field_row and #field_source or 1
     local has_two_fields_per_row = is_field_row and self.fields_count > 1
     self.edit_button_width = 0
@@ -138,7 +130,7 @@ function MultiInputDialog:insertFieldContainers(DataGroup, field_source, is_fiel
         measure_edit_button:free()
     end
     for field_side = 1, self.fields_count do
-        self:generateRows(DataGroup, field_side, field_source, is_field_row)
+        self:generateRows(field_side, field_source, is_field_row)
     end
 
     --* self.halved_fields and self.halved_descriptions are reset to empty table after each row; see ((MultiInputDialog#insertFieldContainers)):
@@ -147,7 +139,7 @@ function MultiInputDialog:insertFieldContainers(DataGroup, field_source, is_fiel
     end
     if #self.halved_descriptions > 0 then
         self.halved_descriptions.align = "center"
-        table.insert(DataGroup, HorizontalGroup:new(self.halved_descriptions))
+        self:insertIntoTopOrBottomContainer(HorizontalGroup:new(self.halved_descriptions))
     end
     local field_1 = self.halved_fields[1]
     local field_2 = self.halved_fields[2]
@@ -159,13 +151,12 @@ function MultiInputDialog:insertFieldContainers(DataGroup, field_source, is_fiel
         field1_container,
         field2_container,
     }
-    table.insert(DataGroup, group)
+    self:insertIntoTopOrBottomContainer(group)
 end
 
 --- @private
 --- @param field_side number 1 if left side, 2 if right side
-function MultiInputDialog:generateRows(DataGroup, field_side, field_source, is_field_row)
-
+function MultiInputDialog:generateRows(field_side, field_source, is_field_row)
     self.force_one_line_field = is_field_row
     local field = is_field_row and field_source[field_side] or field_source
     if self.force_one_line_field then
@@ -176,7 +167,6 @@ function MultiInputDialog:generateRows(DataGroup, field_side, field_source, is_f
         self.field_nr = self.field_nr + 1
     end
     self:fieldAddToInputs(field, field_side)
-
     self.current_field = #self.input_fields
 
     --* self.fields_count is either 1 or 2 (for two field row):
@@ -190,9 +180,8 @@ function MultiInputDialog:generateRows(DataGroup, field_side, field_source, is_f
         --* sets the field to which scollbuttons etc. are coupled:
         self._input_widget = self.input_fields[self.current_field]
     end
-
-    self:insertFieldDescription(DataGroup, field)
-    self:insertFieldByRowType(DataGroup, field_side)
+    self:insertFieldDescription(field)
+    self:insertFieldByRowType(field_side)
 end
 
 --- @private
@@ -233,6 +222,12 @@ end
 function MultiInputDialog:fieldAddToInputs(field, field_side)
     self:setFieldWidth(field)
     self:setFieldProps(field, field_side)
+    if self.field_config.height == "auto" then
+        self.auto_height_elem = KOR.tables:shallowCopy(self.field_config)
+        self.field_config.height = self.initial_auto_field_height
+        table.insert(self.input_fields, InputText:new(self.field_config))
+        return
+    end
     table.insert(self.input_fields, InputText:new(self.field_config))
 end
 
@@ -244,12 +239,10 @@ function MultiInputDialog:setFieldProps(field, field_side)
     if height == "auto" and self.auto_field_height then
         height = self.auto_field_height
     elseif height == "auto" then
-        height = self.initial_auto_field_height
         self.auto_height_field_present = true
     end
-
     local is_focus_field = false
-    if field_side == LEFT_SIDE and not self.a_field_was_focussed and self.target_container == PRODUCTION_CONTAINER then
+    if field_side == LEFT_SIDE and not self.a_field_was_focussed then
         self.a_field_was_focussed = true
         is_focus_field = true
     end
@@ -331,7 +324,7 @@ function MultiInputDialog:setFieldProps(field, field_side)
 end
 
 --- @private
-function MultiInputDialog:insertFieldDescription(DataGroup, field)
+function MultiInputDialog:insertFieldDescription(field)
         --* for single field rows:
     if (not self.has_field_rows and field.description) or (self.fields_count == 1 and field.description) then
             local description_height
@@ -343,9 +336,9 @@ function MultiInputDialog:insertFieldDescription(DataGroup, field)
                 },
             self.input_description[self.current_field],
             }
-            table.insert(DataGroup, group)
+            self:insertIntoTopOrBottomContainer(group)
 
-            --* for rows with more than one field and no descriptions: when no title bar present, add some extra margin above the fields:
+        --* for rows with more than one field and no descriptions: when no title bar present, add some extra margin above the fields:
         elseif not self.title then
             local group = CenterContainer:new{
                 dimen = Geom:new{
@@ -354,25 +347,38 @@ function MultiInputDialog:insertFieldDescription(DataGroup, field)
                 },
                 VerticalSpan:new{ width = self.description_padding + self.description_margin },
             }
-            table.insert(DataGroup, group)
-        end
+        self:insertIntoTopOrBottomContainer(group)
+    end
+end
+
+--- @private
+function MultiInputDialog:insertIntoTopOrBottomContainer(group, is_field)
+    if is_field and self.auto_height_field_present and not self.auto_height_field_injected then
+        self.auto_height_field_injected = true
+        return
+    end
+    if self.auto_height_elem and self.auto_height_field_injected then
+        table.insert(self.BottomContainer, group)
+    else
+        table.insert(self.TopContainer, group)
+    end
 end
 
 --- @private
 --- @param field_side number 1 if left side, 2 if right side
-function MultiInputDialog:insertFieldByRowType(DataGroup, field_side)
+function MultiInputDialog:insertFieldByRowType(field_side)
     --* for one field rows immediately insert the input field:
     if not self.has_field_rows or self.fields_count == 1 then
-        self:insertSingleFieldInRow(DataGroup)
+        self:insertSingleFieldInRow()
         return
     end
 
     --* handle rows with multipe fields:
-    self:insertDuoFieldsIntoRow(field_side)
+    self:generateDuoFieldsData(field_side)
 end
 
 --- @private
-function MultiInputDialog:insertSingleFieldInRow(DataGroup)
+function MultiInputDialog:insertSingleFieldInRow()
     local field_height = self.input_fields[self.current_field]:getSize().h
     local group = CenterContainer:new{
         dimen = Geom:new{
@@ -381,19 +387,17 @@ function MultiInputDialog:insertSingleFieldInRow(DataGroup)
         },
         self.input_fields[self.current_field],
     }
-    table.insert(DataGroup, group)
+    self:insertIntoTopOrBottomContainer(group, "is_field")
 end
 
 --- @private
 --- @param field_side number 1 if left side, 2 if right side
-function MultiInputDialog:insertDuoFieldsIntoRow(field_side)
+function MultiInputDialog:generateDuoFieldsData(field_side)
     local tile_width = self.full_width / self.fields_count
-
     local has_description = self.input_fields[self.current_field].description
     local description_label = has_description and self:getDescription(self.input_fields[self.current_field], tile_width) or nil
     if field_side == LEFT_SIDE then
         if has_description then
-
             self.input_description[self.current_field] = FrameContainer:new{
                 padding = self.description_padding,
                 margin = 0,
@@ -533,7 +537,6 @@ end
 function MultiInputDialog:getFieldContainer(field)
     local tile_width = self.full_width / self.fields_count
     local tile_height = self.halved_fields[1]:getSize().h
-
     local has_no_button = field.input_type == "number" and not field.custom_edit_button
 
     --* don't add edit field buttons for regular number fields without a custom edit button:
@@ -552,7 +555,6 @@ function MultiInputDialog:getFieldContainer(field)
     if field.custom_edit_button then
         self.custom_edit_button = field.custom_edit_button
         KOR.registry:set("xray_type_button", self.custom_edit_button)
-
         return CenterContainer:new{
             dimen = Geom:new{
                 w = tile_width,
@@ -596,26 +598,17 @@ end
 
 --- @private
 function MultiInputDialog:insertButtonGroup()
-    --* in case of a tab with a field with auto height, the computed height of that field will push the button_table down to just above the keyboard; if no such field is present, we need this spacer to get the same effect:
-    if DX.s.editor_vertical_align_buttontable and not self.auto_height_field_present then
-        table.insert(self.MeasureData, self.button_group)
-        --* apply height correction if needed:
-        local difference = self.max_dialog_height - self.MeasureData:getSize().h
-        --* free memory (don't use MeasureData:free() for that, because then no titlebar text!):
-        self.MeasureData = self.VerticalGroupData
-        if difference > 0 then
-            table.insert(self.VerticalGroupData, CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.full_width,
-                    h = difference,
-                },
-                VerticalSpan:new{ width = difference },
-            })
-        end
-    end
-    --* add some padding above the button_group:
-    table.insert(self.VerticalGroupData, VerticalSpan:new{ width = 10 })
-    table.insert(self.VerticalGroupData, self.button_group)
+
+    table.insert(self.BottomContainer, self.field_spacer)
+    self.button_table_height = self.button_table:getSize().h
+    self.button_group = CenterContainer:new{
+        dimen = Geom:new{
+            w = self.full_width,
+            h = self.button_table_height,
+        },
+        self.button_table,
+    }
+    table.insert(self.BottomContainer, self.button_group)
 end
 
 --- @private
@@ -628,24 +621,22 @@ end
 
 --- @private
 function MultiInputDialog:initMainContainers()
-    --! don't call free() on self.MeasureData, because otherwise no title bar text!:
     InputDialog.init(self)
     if self.title and self.title_bar then
-        self.VerticalGroupData = VerticalGroup:new{
+        self.TopContainer = VerticalGroup:new{
             align = "left",
             self.title_bar,
         }
-        self.MeasureData = VerticalGroup:new{
+    else
+        self.TopContainer = VerticalGroup:new{
             align = "left",
             self.title_bar,
         }
-        return
     end
-
-    self.VerticalGroupData = VerticalGroup:new{
+    self.MiddleContainer = VerticalGroup:new{
         align = "left",
     }
-    self.MeasureData = VerticalGroup:new{
+    self.BottomContainer = VerticalGroup:new{
         align = "left",
     }
 end
@@ -656,26 +647,9 @@ function MultiInputDialog:initWidgetProps()
     if KOR.screenhelpers:isPortraitScreen() then
         self.has_field_rows = false
     end
-
     self.input_description = {}
     --* Alex: for some reason (maybe because of InputDialog.init above?) we have to force the font here:
     self.input_face = self.input_face or Font:getDefaultDialogFontFace()
-    --[[if self.fullscreen then
-        local vertical_elements = 0
-        if self.description then
-            vertical_elements = vertical_elements + 1
-        end
-        if self.has_field_rows then
-            vertical_elements = vertical_elements + #self.fields / 2
-        else
-            vertical_elements = vertical_elements + #self.fields
-        end
-        vertical_elements = math.ceil(vertical_elements)
-        input_face = vertical_elements == 5 and Registry.default_dialog_font or Font:getDefaultDialogFontFace() or Font:getDefaultDialogFontFace(4)
-    else
-        input_face = Font:getDefaultDialogFontFace(4)
-    end]]
-
     KOR.registry:unset("edit_button_target")
     self.full_width = self.title_bar and self.title_bar:getSize().w or self.width
     self.auto_height_field_present = false
@@ -689,83 +663,42 @@ function MultiInputDialog:initWidgetProps()
 end
 
 --- @private
-function MultiInputDialog:initBottomSpacerAndButtons()
-    self.button_table_height = self.button_table:getSize().h
-    self.button_group = CenterContainer:new{
-        dimen = Geom:new{
-            w = self.full_width,
-            h = self.button_table_height,
-        },
-        self.button_table,
-    }
-    --* Add same vertical space after as before InputText
-    local bottom_spacer_height = self.description_padding + self.description_margin
-    self.bottom_spacer_group = CenterContainer:new{
-        dimen = Geom:new{
-            w = self.full_width,
-            h = bottom_spacer_height,
-        },
-        VerticalSpan:new{ width = bottom_spacer_height },
-    }
-end
+function MultiInputDialog:adaptMiddleContainerHeight()
+    local difference = self.screen_height - self.TopContainer:getSize().h - self.BottomContainer:getSize().h - self.keyboard_height
 
---- @private
-function MultiInputDialog:generateMainContainers()
-    self.a_field_was_focussed = false
-    for x = 1, 2 do
-        --* target container will be self.MeasureData if target_container == 1, or self.VerticalGroupData if target_container == 2:
-        self.target_container = x
-
-        --! very important: for the second loop for the production form reset all props for the actual fields:
-        self.field_nr = 0
-        self.field_values = {}
-        self.input_fields = {}
-        --* to make the FocusManager work correctly, even under Ubuntu; this prop will be initially set by ((MultiInputDialog#insertFieldContainers)) and will upon switching between fields be dynamically updated to the active field by ((MultiInputDialog#onSwitchFocus)):
-        self._input_widget = nil
-
-        self:computeAutoFieldHeight()
-        self:insertMeasurementOrProductionRows()
-    end
-end
-
---- @private
-function MultiInputDialog:computeAutoFieldHeight()
-    --* MeasureData can be used to compute height of auto-height fields to be inserted in VerticalGroupData:
-    if self.target_container == MEASURE_CONTAINER or not self.auto_height_field_present then
+    if self.auto_height_elem then
+        --* for margin above and below auto height field:
+        difference = difference - 2 * self.field_spacer:getSize().h
+        self.auto_height_elem.height = difference
+        --* insert a field with dynamically adjusted height, to push the buttons to just above the keyboard:
+        local group = CenterContainer:new{
+            dimen = Geom:new{
+                w = self.full_width,
+                h = difference,
+            },
+            InputText:new(self.auto_height_elem),
+        }
+        table.insert(self.MiddleContainer, self.field_spacer)
+        table.insert(self.MiddleContainer, group)
+        table.insert(self.MiddleContainer, self.field_spacer)
         return
     end
 
-    --* generation of self.MeasureData was done in the previous loop:
-    local current_height = self.MeasureData:getSize().h
-    local difference = self.max_dialog_height - current_height
-    self.auto_field_height = self.initial_auto_field_height + difference
-    if DX.s.is_mobile_device then
-        self.auto_field_height = self.auto_field_height - self.mobile_auto_height_correction
-    end
+    --* insert simple spacer to push the buttons to just above the keyboard:
+    table.insert(self.MiddleContainer, VerticalSpan:new{ width = difference })
 end
 
 --- @private
-function MultiInputDialog:insertMeasurementOrProductionRows()
+function MultiInputDialog:insertRows()
     count = #self.fields
     for row_nr = 1, count do
         self:insertFieldRowIfActiveTab(row_nr)
-    end
-    if self.target_container == PRODUCTION_CONTAINER then
-        return
-    end
-
-    if self.auto_height_field_present then
-        table.insert(self.MeasureData, self.button_group)
-    else
-        table.insert(self.MeasureData, self.bottom_spacer_group)
     end
 end
 
 --- @private
 function MultiInputDialog:insertFieldRowIfActiveTab(row_nr)
     local target_tab
-    local DataGroup = self.target_container == MEASURE_CONTAINER and self.MeasureData or self.VerticalGroupData
-
     local row = self.fields[row_nr]
     local is_field_set = not row.text
     self:registerFieldValues(row, is_field_set)
@@ -782,7 +715,7 @@ function MultiInputDialog:insertFieldRowIfActiveTab(row_nr)
     --* only insert fields for when they are in a non tabbed dialog or are in the active tab:
     elseif not target_tab or target_tab == self.active_tab then
         self.field_nr = self.field_nr + 1
-        self:insertFieldContainers(DataGroup, row, is_field_set)
+        self:insertFieldContainers(row, is_field_set)
     end
 end
 
@@ -795,16 +728,7 @@ function MultiInputDialog:registerFieldValues(row, is_field_set)
         end
         return
     end
-
     table.insert(self.field_values, row.text)
-end
-
---- @private
-function MultiInputDialog:insertBottomSpacer()
-    if not self.auto_height_field_present then
-        table.insert(self.MeasureData, self.bottom_spacer_group)
-    end
-    table.insert(self.VerticalGroupData, self.bottom_spacer_group)
 end
 
 --* MID suffix to prevent future name clashes, should we also add InputDialog#finalizeWidget:
@@ -816,7 +740,12 @@ function MultiInputDialog:finalizeWidgetMID()
         padding = 0,
         margin = 0,
         background = Blitbuffer.COLOR_WHITE,
-        self.VerticalGroupData,
+        VerticalGroup:new{
+            align = "left",
+            self.TopContainer,
+            self.MiddleContainer,
+            self.BottomContainer,
+        }
     }
     if self.fullscreen then
         config.width = self.screen_width
