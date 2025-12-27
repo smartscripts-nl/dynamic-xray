@@ -636,6 +636,8 @@ function MultiInputDialog:initMainContainers()
     self.MiddleContainer = VerticalGroup:new{
         align = "left",
     }
+    -- if a auto height field was provided, then this container will receive the fields that came after that field:
+    -- and this container will always receive the button_table:
     self.BottomContainer = VerticalGroup:new{
         align = "left",
     }

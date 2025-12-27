@@ -96,7 +96,7 @@ function SettingsManager:addNewSettingsFromTemplate()
     for key, props in pairs(self.parent.settings_template) do
         if not self.settings[key] then
             self.settings[key] = props
-        settings_were_added = true
+            settings_were_added = true
         end
     end
     return settings_were_added
