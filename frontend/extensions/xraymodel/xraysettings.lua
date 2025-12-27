@@ -47,11 +47,6 @@ local XraySettings = WidgetContainer:new{
             explanation = locked_xray_setting_message,
             locked = 1,
         },
-        editor_vertical_align_buttontable = {
-            value = false,
-            explanation = "If set to true, DX tries to vertically align the buttontable in the Xray item editor, so that it is shown just above the keyboard. On some e-readers this can lead to the problem that the buttons aren't visible anymore! In that case set this setting to false.",
-            locked = 0,
-        },
         is_android = {
             value = false,
             explanation = "This variabele triggers a number of default settings for Android devices.",

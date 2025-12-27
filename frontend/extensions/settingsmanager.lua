@@ -1,13 +1,3 @@
---[[--
-This extension is part of the Dynamic Xray plugin; it has buttons which are generated for dialogs and forms in XrayController and its other extensions.
-
-The Dynamic Xray plugin has kind of a MVC structure:
-M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
-V = ((XrayUI)), ((XrayTranslations)), ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
-C = ((XrayController))
-
-These modules are initialized in ((initialize Xray modules)) and ((XrayController#init)).
---]]--
 
 local require = require
 
@@ -36,7 +26,7 @@ local type = type
 local count
 
 --- @class SettingsManager
-local SettingsManager = WidgetContainer:new {
+local SettingsManager = WidgetContainer:new{
     items_per_page = G_reader_settings:readSetting("items_per_page") or 14,
     item_table = nil,
     list_title = nil,
@@ -59,12 +49,26 @@ local SettingsManager = WidgetContainer:new {
     ]]
 }
 
+--! don't call this method "init", because then ((KOR#initExtensions)) could call this method prematurely:
 function SettingsManager:setUp()
     self.settings_db = LuaSettings:open(DataStorage:getSettingsDir() .. "/settings_manager.lua")
     if self.settings_db then
         self.settings = self.settings_db:readSetting(self.settings_index)
     end
 
+    self:updateSettingsFromTemplate()
+
+    local locked_indicator
+    for key, props in pairs(self.settings) do
+        self.parent[key] = props.value
+        locked_indicator = props.locked == 1 and " " .. KOR.icons.lock_bare or ""
+        table.insert(self.settings_for_menu, { key = key, value = props.value, explanation = props.explanation, locked = props.locked, options = props.options, text = key .. ": " .. tostring(props.value) .. locked_indicator })
+    end
+end
+
+--- @private
+function SettingsManager:updateSettingsFromTemplate()
+    --* if var set for overruling or settings don't exist yet, generate them (anew):
     if self.settings_db:isTrue(self.settings_index .. "_overrule") or not self.settings then
         if not KOR.tables then
             KOR.tables = require("extensions/tables")
@@ -72,33 +76,50 @@ function SettingsManager:setUp()
         self.settings = KOR.tables:shallowCopy(self.parent.settings_template)
         self.settings_db:makeFalse(self.settings_index .. "_overrule")
         self:saveSettings()
-    else
-        local setting_was_added = false
-        for key, props in pairs(self.parent.settings_template) do
-            if not self.settings[key] then
-                self.settings[key] = props
-                setting_was_added = true
-            end
-        end
-        if setting_was_added then
-            self:saveSettings()
-        end
+
+        return
     end
 
-    local locked_indicator
-    for key, props in pairs(self.settings) do
-        self.parent[key] = props.value
-        locked_indicator = props.locked == 1 and " " .. KOR.icons.lock_bare or ""
-        table.insert(self.settings_for_menu, { key = key, value = props.value, explanation = _(props.explanation), locked = props.locked, options = props.options, text = key .. ": " .. tostring(props.value) .. locked_indicator })
+    --* following the parent's settings template, add settings that were added there, or remove settings that were deleted there:
+    if
+        self:addNewSettingsFromTemplate()
+        or
+        self:removeSettingsFromTemplate()
+    then
+        self:saveSettings()
     end
 end
 
+--- @private
+function SettingsManager:addNewSettingsFromTemplate()
+    local settings_were_added = false
+    for key, props in pairs(self.parent.settings_template) do
+        if not self.settings[key] then
+            self.settings[key] = props
+        settings_were_added = true
+        end
+    end
+    return settings_were_added
+end
+
+--- @private
+function SettingsManager:removeSettingsFromTemplate()
+    local settings_were_deleted = false
+    for key in pairs(self.settings) do
+        if not self.parent.settings_template[key] then
+            self.settings[key] = nil
+            settings_were_deleted = true
+        end
+    end
+    return settings_were_deleted
+end
+
 function SettingsManager:show()
-    self.settings_dialog = CenterContainer:new {
+    self.settings_dialog = CenterContainer:new{
         dimen = Screen:getSize(),
         modal = true,
     }
-    self.settings_menu = Menu:new {
+    self.settings_menu = Menu:new{
         show_parent = self.ui,
         fullscreen = true,
         covers_fullscreen = true,
