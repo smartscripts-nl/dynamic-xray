@@ -29,7 +29,8 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
     - [Buttons in editor not visible](#buttons-in-editor-not-visible)
     - [Notification: DX couldn't be initialized](#notification-that-dx-couldnt-be-initiated)
     - [User has a database filename other than "bookinfo_cache.sqlite3"](#user-has-a-database-filename-other-than-bookinfo_cachesqlite3)
-- [Todos / issues to fix](#todos--issues-to-fix)
+- [Issues to fix](#issues-to-fix)
+- [Todos](#todos)
 - [About the code](#about-the-code)
 - [Development history and usage](#development-history-and-usage)
 - [Icons](#icons)
@@ -179,9 +180,14 @@ PT_bookinfo_cache.sqlite3". In that case:
 2. Enter and save the correct database file name for your installation in the setting "database_filename".
 3. KOReader will automatically be reloaded and then create the xray_items table in your database.
 
-## Todos / issues to fix
-
+## Issues to fix
 * Maybe occurences in chapters are not indexed when DX is run in book mode (not for an entire series). I have to investigate...
+
+## Todos
+* Build a dialog with an HTML box on the left side containing the page text, and buttons on the right side for each of the Xray items that were found in the page text:
+  * All occurrences of the selected button item will be marked with bold in the text.
+  * At the bottom, the dialog has a page navigator, for navigating to the previous/next page (text) where that Xray item occurs. Occurrences will be marked bold here also.
+  * I don't know if I can pull this off, but it seems interesting to me.
 
 ## About the code
 
