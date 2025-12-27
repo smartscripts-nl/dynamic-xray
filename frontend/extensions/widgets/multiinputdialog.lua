@@ -66,12 +66,16 @@ function MultiInputDialog:init()
     --* NB: title and buttons are initialized in base class
     self:initMainContainers()
     self:initWidgetProps()
-    self:initBottomGroup()
+    self:initBottomSpacerAndButtons()
     self:generateMainContainers()
     self:registerInputFields()
-    self:addButtons()
-    self:finalizeWidgetMID()
-    KOR.dialogs:registerWidget(self)
+    self:insertBottomSpacer()
+    self:insertButtonGroup()
+
+    if self.target_container == PRODUCTION_CONTAINER then
+        self:finalizeWidgetMID()
+        KOR.dialogs:registerWidget(self)
+    end
 end
 
 --- Returns an array of our input field's *text* field.
@@ -592,7 +596,6 @@ end
 
 --- @private
 function MultiInputDialog:insertButtonGroup()
-
     --* in case of a tab with a field with auto height, the computed height of that field will push the button_table down to just above the keyboard; if no such field is present, we need this spacer to get the same effect:
     if DX.s.editor_vertical_align_buttontable and not self.auto_height_field_present then
         table.insert(self.MeasureData, self.button_group)
@@ -606,7 +609,7 @@ function MultiInputDialog:insertButtonGroup()
                     w = self.full_width,
                     h = difference,
                 },
-                VerticalSpan:new{ width = self.full_width },
+                VerticalSpan:new{ width = difference },
             })
         end
     end
@@ -686,7 +689,7 @@ function MultiInputDialog:initWidgetProps()
 end
 
 --- @private
-function MultiInputDialog:initBottomGroup()
+function MultiInputDialog:initBottomSpacerAndButtons()
     self.button_table_height = self.button_table:getSize().h
     self.button_group = CenterContainer:new{
         dimen = Geom:new{
@@ -696,12 +699,13 @@ function MultiInputDialog:initBottomGroup()
         self.button_table,
     }
     --* Add same vertical space after as before InputText
-    self.bottom_group = CenterContainer:new{
+    local bottom_spacer_height = self.description_padding + self.description_margin
+    self.bottom_spacer_group = CenterContainer:new{
         dimen = Geom:new{
             w = self.full_width,
-            h = self.description_padding + self.description_margin,
+            h = bottom_spacer_height,
         },
-        VerticalSpan:new{ width = self.description_padding + self.description_margin },
+        VerticalSpan:new{ width = bottom_spacer_height },
     }
 end
 
@@ -716,45 +720,51 @@ function MultiInputDialog:generateMainContainers()
         self.field_nr = 0
         self.field_values = {}
         self.input_fields = {}
+        --* to make the FocusManager work correctly, even under Ubuntu; this prop will be initially set by ((MultiInputDialog#insertFieldContainers)) and will upon switching between fields be dynamically updated to the active field by ((MultiInputDialog#onSwitchFocus)):
+        self._input_widget = nil
+
+        self:computeAutoFieldHeight()
         self:insertMeasurementOrProductionRows()
     end
 end
 
 --- @private
-function MultiInputDialog:insertMeasurementOrProductionRows()
+function MultiInputDialog:computeAutoFieldHeight()
     --* MeasureData can be used to compute height of auto-height fields to be inserted in VerticalGroupData:
-    local is_production_form = self.target_container == PRODUCTION_CONTAINER
-
-    --* to make the FocusManager work correctly, even under Ubuntu; this prop will be initially set by ((MultiInputDialog#insertFieldContainers)) and will upon switching between fields be dynamically updated to the active field by ((MultiInputDialog#onSwitchFocus)):
-    self._input_widget = nil
-
-    if is_production_form and self.auto_height_field_present then
-        local current_height = self.MeasureData:getSize().h
-        local difference = self.max_dialog_height - current_height
-        --? don't know why we need this correction:
-        local correction = DX.s.is_ubuntu and 0 or 42
-        self.auto_field_height = self.initial_auto_field_height + difference + correction
-        if DX.s.is_mobile_device then
-            self.auto_field_height = self.auto_field_height - self.mobile_auto_height_correction
-        end
+    if self.target_container == MEASURE_CONTAINER or not self.auto_height_field_present then
+        return
     end
 
+    --* generation of self.MeasureData was done in the previous loop:
+    local current_height = self.MeasureData:getSize().h
+    local difference = self.max_dialog_height - current_height
+    self.auto_field_height = self.initial_auto_field_height + difference
+    if DX.s.is_mobile_device then
+        self.auto_field_height = self.auto_field_height - self.mobile_auto_height_correction
+    end
+end
+
+--- @private
+function MultiInputDialog:insertMeasurementOrProductionRows()
     count = #self.fields
     for row_nr = 1, count do
         self:insertFieldRowIfActiveTab(row_nr)
     end
-    if self.target_container == MEASURE_CONTAINER then
-        table.insert(self.MeasureData, self.bottom_group)
-        if self.auto_height_field_present then
-            table.insert(self.MeasureData, self.button_group)
-        end
+    if self.target_container == PRODUCTION_CONTAINER then
+        return
+    end
+
+    if self.auto_height_field_present then
+        table.insert(self.MeasureData, self.button_group)
+    else
+        table.insert(self.MeasureData, self.bottom_spacer_group)
     end
 end
 
 --- @private
 function MultiInputDialog:insertFieldRowIfActiveTab(row_nr)
     local target_tab
-    local data_group = self.target_container == MEASURE_CONTAINER and self.MeasureData or self.VerticalGroupData
+    local DataGroup = self.target_container == MEASURE_CONTAINER and self.MeasureData or self.VerticalGroupData
 
     local row = self.fields[row_nr]
     local is_field_set = not row.text
@@ -772,7 +782,7 @@ function MultiInputDialog:insertFieldRowIfActiveTab(row_nr)
     --* only insert fields for when they are in a non tabbed dialog or are in the active tab:
     elseif not target_tab or target_tab == self.active_tab then
         self.field_nr = self.field_nr + 1
-        self:insertFieldContainers(data_group, row, is_field_set)
+        self:insertFieldContainers(DataGroup, row, is_field_set)
     end
 end
 
@@ -790,12 +800,11 @@ function MultiInputDialog:registerFieldValues(row, is_field_set)
 end
 
 --- @private
-function MultiInputDialog:addButtons()
+function MultiInputDialog:insertBottomSpacer()
     if not self.auto_height_field_present then
-        table.insert(self.MeasureData, self.bottom_group)
+        table.insert(self.MeasureData, self.bottom_spacer_group)
     end
-    table.insert(self.VerticalGroupData, self.bottom_group)
-    self:insertButtonGroup()
+    table.insert(self.VerticalGroupData, self.bottom_spacer_group)
 end
 
 --* MID suffix to prevent future name clashes, should we also add InputDialog#finalizeWidget:
