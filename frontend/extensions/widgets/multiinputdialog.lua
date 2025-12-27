@@ -131,6 +131,10 @@ function MultiInputDialog:insertFieldContainers(field_source, is_field_row)
     end
     for field_side = 1, self.fields_count do
         self:generateRows(field_side, field_source, is_field_row)
+        --* handle rows with multipe fields:
+        if self.fields_count > 1 then
+            self:generateDescriptionContainers(field_side)
+        end
     end
 
     --* self.halved_fields and self.halved_descriptions are reset to empty table after each row; see ((MultiInputDialog#insertFieldContainers)):
@@ -139,7 +143,7 @@ function MultiInputDialog:insertFieldContainers(field_source, is_field_row)
     end
     if #self.halved_descriptions > 0 then
         self.halved_descriptions.align = "center"
-        self:insertIntoTopOrBottomContainer(HorizontalGroup:new(self.halved_descriptions))
+        self:insertIntoTargetContainer(HorizontalGroup:new(self.halved_descriptions))
     end
     local field_1 = self.halved_fields[1]
     local field_2 = self.halved_fields[2]
@@ -151,7 +155,7 @@ function MultiInputDialog:insertFieldContainers(field_source, is_field_row)
         field1_container,
         field2_container,
     }
-    self:insertIntoTopOrBottomContainer(group)
+    self:insertIntoTargetContainer(group)
 end
 
 --- @private
@@ -211,10 +215,10 @@ function MultiInputDialog:setFieldWidth(field)
             self.field_width = self.field_width - self.edit_button_width
         end
 
-        --* make single row long field align with halved fields:
-        elseif self.has_field_rows then
-            self.field_width = math.floor(self.field_width * 1.045)
-        end
+    --* make single row long field align with halved fields:
+    elseif self.has_field_rows then
+        self.field_width = math.floor(self.field_width * 1.045)
+    end
 end
 
 --- @private
@@ -325,34 +329,34 @@ end
 
 --- @private
 function MultiInputDialog:insertFieldDescription(field)
-        --* for single field rows:
+    --* for single field rows:
     if (not self.has_field_rows and field.description) or (self.fields_count == 1 and field.description) then
-            local description_height
+        local description_height
         self.input_description[self.current_field], description_height = self:getDescription(field, math.floor(self.width * 0.9))
-            local group = LeftContainer:new{
-                dimen = Geom:new{
-                    w = self.full_width,
-                    h = description_height,
-                },
-            self.input_description[self.current_field],
-            }
-            self:insertIntoTopOrBottomContainer(group)
+        local group = LeftContainer:new{
+            dimen = Geom:new{
+                w = self.full_width,
+                h = description_height,
+            },
+        self.input_description[self.current_field],
+        }
+        self:insertIntoTargetContainer(group)
 
-        --* for rows with more than one field and no descriptions: when no title bar present, add some extra margin above the fields:
-        elseif not self.title then
-            local group = CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.full_width,
-                    h = 2 * self.description_margin,
-                },
-                VerticalSpan:new{ width = self.description_padding + self.description_margin },
-            }
-        self:insertIntoTopOrBottomContainer(group)
+    --* for rows with more than one field and no descriptions: when no title bar present, add some extra margin above the fields:
+    elseif not self.title then
+        local group = CenterContainer:new{
+            dimen = Geom:new{
+                w = self.full_width,
+                h = 2 * self.description_margin,
+            },
+            VerticalSpan:new{ width = self.description_padding + self.description_margin },
+        }
+        self:insertIntoTargetContainer(group)
     end
 end
 
 --- @private
-function MultiInputDialog:insertIntoTopOrBottomContainer(group, is_field)
+function MultiInputDialog:insertIntoTargetContainer(group, is_field)
     if is_field and self.auto_height_field_present and not self.auto_height_field_injected then
         self.auto_height_field_injected = true
         return
@@ -366,15 +370,12 @@ end
 
 --- @private
 --- @param field_side number 1 if left side, 2 if right side
-function MultiInputDialog:insertFieldByRowType(field_side)
+function MultiInputDialog:insertFieldByRowType()
     --* for one field rows immediately insert the input field:
     if not self.has_field_rows or self.fields_count == 1 then
         self:insertSingleFieldInRow()
         return
     end
-
-    --* handle rows with multipe fields:
-    self:generateDuoFieldsData(field_side)
 end
 
 --- @private
@@ -387,12 +388,12 @@ function MultiInputDialog:insertSingleFieldInRow()
         },
         self.input_fields[self.current_field],
     }
-    self:insertIntoTopOrBottomContainer(group, "is_field")
+    self:insertIntoTargetContainer(group, "is_field")
 end
 
 --- @private
 --- @param field_side number 1 if left side, 2 if right side
-function MultiInputDialog:generateDuoFieldsData(field_side)
+function MultiInputDialog:generateDescriptionContainers(field_side)
     local tile_width = self.full_width / self.fields_count
     local has_description = self.input_fields[self.current_field].description
     local description_label = has_description and self:getDescription(self.input_fields[self.current_field], tile_width) or nil
@@ -415,62 +416,64 @@ function MultiInputDialog:generateDuoFieldsData(field_side)
         end
         return
     end
+    --* this means that the right side field doesn't have a description:
+    if not has_description then
+        return
+    end
 
     --* insert right side field (field_side == RIGHT_SIDE here):
-    if has_description then
-        self.input_description[self.current_field] = FrameContainer:new{
-            padding = self.description_padding,
-            margin = 0,
-            bordersize = 0,
-            description_label,
-        }
-        table.insert(self.halved_descriptions, LeftContainer:new{
-            dimen = Geom:new{
-                w = tile_width,
-                h = self.input_description[self.current_field]:getSize().h,
-            },
-            self.input_description[self.current_field],
-        })
-    end
+    self.input_description[self.current_field] = FrameContainer:new{
+        padding = self.description_padding,
+        margin = 0,
+        bordersize = 0,
+        description_label,
+    }
+    table.insert(self.halved_descriptions, LeftContainer:new{
+        dimen = Geom:new{
+            w = tile_width,
+            h = self.input_description[self.current_field]:getSize().h,
+        },
+        self.input_description[self.current_field],
+    })
 end
 
 --- @private
 function MultiInputDialog:getDescription(field, width)
     local text = field.info_popup_text and
-            Button:new{
-                text_icon = {
-                    text = self.description_prefix .. " " .. field.description .. " ",
-                    text_font_bold = false,
-                    text_font_face = "x_smallinfofont",
-                    font_size = 18,
-                    icon = "info",
-                    icon_size_ratio = 0.48,
-                },
-                padding = 0,
-                margin = 0,
-                text_font_face = "x_smallinfofont",
-                text_font_size = 19,
+        Button:new{
+            text_icon = {
+                text = self.description_prefix .. " " .. field.description .. " ",
                 text_font_bold = false,
-                align = "left",
-                bordersize = 0,
-                width = width,
-                --* y_pos for the popup dialog - not used now anymore - was detected and set in ((Button#onTapSelectButton)) - look for two statements with self.callback(pos):
-                callback = function() --ypos
-                    -- #((focus field upon click on info label))
-                    --* this prop can be set in ((MultiInputDialog#insertFieldContainers)):
-                    if field.info_icon_field_no then
-                        self:onSwitchFocus(self.input_fields[field.info_icon_field_no])
-                    end
-                    --* info_popup_title and info_popup_text e.g. defined in ((XrayDialogs#getFormFields)):
-                    KOR.dialogs:niceAlert(field.info_popup_title, field.info_popup_text)
-                end,
-            }
-            or TextBoxWidget:new{
-        text = self.description_prefix .. field.description,
-        face = self.description_face or Font:getFace("x_smallinfofont"),
-        width = width,
-        padding = 0,
-    }
+                text_font_face = "x_smallinfofont",
+                font_size = 18,
+                icon = "info",
+                icon_size_ratio = 0.48,
+            },
+            padding = 0,
+            margin = 0,
+            text_font_face = "x_smallinfofont",
+            text_font_size = 19,
+            text_font_bold = false,
+            align = "left",
+            bordersize = 0,
+            width = width,
+            --* y_pos for the popup dialog - not used now anymore - was detected and set in ((Button#onTapSelectButton)) - look for two statements with self.callback(pos):
+            callback = function() --ypos
+                -- #((focus field upon click on info label))
+                --* this prop can be set in ((MultiInputDialog#insertFieldContainers)):
+                if field.info_icon_field_no then
+                    self:onSwitchFocus(self.input_fields[field.info_icon_field_no])
+                end
+                --* info_popup_title and info_popup_text e.g. defined in ((XrayDialogs#getFormFields)):
+                KOR.dialogs:niceAlert(field.info_popup_title, field.info_popup_text)
+            end,
+        }
+        or TextBoxWidget:new{
+            text = self.description_prefix .. field.description,
+            face = self.description_face or Font:getFace("x_smallinfofont"),
+            width = width,
+            padding = 0,
+        }
     local label = FrameContainer:new{
         padding = self.description_padding,
         margin = self.description_margin,
@@ -598,7 +601,6 @@ end
 
 --- @private
 function MultiInputDialog:insertButtonGroup()
-
     table.insert(self.BottomContainer, self.field_spacer)
     self.button_table_height = self.button_table:getSize().h
     self.button_group = CenterContainer:new{
