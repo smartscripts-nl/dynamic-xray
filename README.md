@@ -26,7 +26,6 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
     - [Images](#images)
 - [DX Settings menu](#dx-settings-menu)
 - [Problem solving](#problem-solving)
-    - [Buttons in editor not visible](#buttons-in-editor-not-visible)
     - [Notification: DX couldn't be initialized](#notification-that-dx-couldnt-be-initiated)
     - [User has a database filename other than "bookinfo_cache.sqlite3"](#user-has-a-database-filename-other-than-bookinfo_cachesqlite3)
 - [Issues to fix](#issues-to-fix)
@@ -157,18 +156,9 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 
 ## Problem solving
 
-### Buttons in editor not visible
-
-In the add/edit Xray item dialog, under the first tab "xray-item", some users don't see buttons, because they are hidden under the keyboard. You can rectify this by:
-
-* Closing the dialog
-* Go to the [DX Settings menu](#dx-settings-menu)
-* Tap on editor_vertical_align_buttontable and set this value to false
-* Now re-open the Xray add or edit form
-
 ### Notification that DX couldn't be initiated
 
-This lets the user know that somewhere in KOReader (maybe DX, maybe another plugin) an error occurred, which prevented DX from initializing. Alas, these error conditions are very hard to debug for me from a distance...
+This lets the user know that somewhere in KOReader (maybe in DX, maybe in another plugin) an error occurred, which prevented DX from initializing. Alas, these error conditions are very hard to debug for me from a distance...
 
 ### User has a database filename other than "bookinfo_cache.sqlite3"
 
