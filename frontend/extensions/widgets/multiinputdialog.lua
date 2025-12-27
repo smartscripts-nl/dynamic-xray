@@ -630,9 +630,9 @@ function MultiInputDialog:initMainContainers()
     else
         self.TopContainer = VerticalGroup:new{
             align = "left",
-            self.title_bar,
         }
     end
+    --* this MiddleContainer will either receive a field with computed height to push the buttons to just above the keyboard, or a spacer with computed height to do the same:
     self.MiddleContainer = VerticalGroup:new{
         align = "left",
     }
