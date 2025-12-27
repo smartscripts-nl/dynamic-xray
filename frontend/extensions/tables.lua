@@ -88,6 +88,25 @@ function Tables:shallowCopy(orig)
     return copy
 end
 
+--- @return table
+function Tables:slice(subject, startpos, icount)
+    local sliced = {}
+    if icount > 0 then
+        for _, value in pairs({ unpack(subject, startpos, icount) }) do
+            table.insert(sliced, value)
+        end
+        return sliced
+    end
+
+    --* "negative" slice, from end of table:
+    local endpos = #subject
+    startpos = endpos - (-icount) + 1
+    for x = startpos, endpos do
+        table.insert(sliced, subject[x])
+    end
+    return sliced
+end
+
 function Tables:sortByPropAscending(subject, prop)
     table.sort(subject, function(v1, v2)
         if v1[prop] == nil and v2[prop] == nil then
@@ -132,25 +151,6 @@ function Tables:sortByPropDescendingAndSetTopItems(subject, sorting_prop, top_it
     self:sortByPropDescending(other_subjects, sorting_prop)
 
     return self:merge(top_subjects, other_subjects, "add_indices")
-end
-
---- @return table
-function Tables:slice(subject, startpos, icount)
-    local sliced = {}
-    if icount > 0 then
-        for _, value in pairs({ unpack(subject, startpos, icount) }) do
-            table.insert(sliced, value)
-        end
-        return sliced
-    end
-
-    --* "negative" slice, from end of table:
-    local endpos = #subject
-    startpos = endpos - (-icount) + 1
-    for x = startpos, endpos do
-        table.insert(sliced, subject[x])
-    end
-    return sliced
 end
 
 --- @return table

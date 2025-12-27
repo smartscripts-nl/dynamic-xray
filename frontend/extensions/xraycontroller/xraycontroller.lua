@@ -31,7 +31,7 @@ Calling DX modules: DX.b:[method](), DX.m:[method](), etc. This functionality wa
 
 --* ADDING ITEMS FROM SELECTED TEXT
 
-E.g. ((ReaderDictionary#onLookupWord)) > ((XrayController#saveNewItem)) > ((XrayController#guardIsExistingItem)) > ((XrayController#onAddNewXrayItem))
+E.g. ((ReaderDictionary#onLookupWord)) > ((XrayController#saveNewItem)) > ((XrayController#guardIsExistingItem)) > ((XrayController#onShowNewItemForm))
 
 --* SAVING ITEMS
 
@@ -321,9 +321,9 @@ function XrayController:saveUpdatedItem(item_copy, return_to_list, reload_manage
     self:showListConditionally(updated_item, reload_manager or return_to_list)
 end
 
---* compare form for editing Xray items: ((XrayController#initAndShowEditItemForm)):
+--* compare form for editing Xray items: ((XrayController#onShowEditItemForm)):
 --* see also method ((XrayController#guardIsExistingItem)), through which current method is called and which ensures no duplicated items are created:
-function XrayController:onAddNewXrayItem(name_from_selected_text, active_form_tab, item)
+function XrayController:onShowNewItemForm(name_from_selected_text, active_form_tab, item)
     local title, item_copy, target_field = DX.fd:initNewItemFormProps(name_from_selected_text, active_form_tab, item)
     DX.d:showNewItemForm({
         title = title,
@@ -334,8 +334,8 @@ function XrayController:onAddNewXrayItem(name_from_selected_text, active_form_ta
     })
 end
 
---*compare ((XrayController#onAddNewXrayItem)):
-function XrayController:initAndShowEditItemForm(needle_item, reload_manager, active_form_tab)
+--*compare ((XrayController#onShowNewItemForm)):
+function XrayController:onShowEditItemForm(needle_item, reload_manager, active_form_tab)
 
     local m_item, item_copy = DX.fd:initEditFormProps(needle_item, reload_manager, active_form_tab)
 
@@ -417,7 +417,7 @@ function XrayController:addToMainMenu(menu_items)
                 text = icon .. DX.d:getControllerEntryName(" Add item"),
                 callback = function()
                     self:resetFilteredItems()
-                    self:onAddNewXrayItem()
+                    self:onShowNewItemForm()
                 end
             },
             {

@@ -18,7 +18,7 @@ function ScreenHelpers:isPortraitScreen()
 end
 
 function ScreenHelpers:refreshDialog()
-    -- refresh dialog, so e.g. no shadows of dialog lines remain:
+    --* refresh dialog, so e.g. no shadows of dialog lines remain:
     UIManager:setDirty(nil, "ui")
 end
 

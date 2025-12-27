@@ -154,6 +154,7 @@ ReaderView.paintTo = function(self, bb, x, y)
     orig_paintTo(self, bb, x, y)
 
     if not KOR.registry:get("ReaderSearch_active") then
+        -- #((init xray sideline markers))
         DX.u:ReaderViewGenerateXrayInformation(self.ui, bb, x, y)
     end
 end
@@ -463,7 +464,7 @@ function ReaderSearch:onShowFindAllResults(not_cached)
                 callback = function()
                     UIManager:close(self.result_menu)
                     self.last_search_text = ""
-                    DX.c:onAddNewXrayItem(last_search)
+                    DX.c:onShowNewItemForm(last_search)
                 end,
             })),
         },

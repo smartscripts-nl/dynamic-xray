@@ -430,7 +430,7 @@ function XrayDialogs:showEditItemForm(args)
         tabs_count = 2,
         activate_tab_callback = function(tab_no)
             self:closeForm("edit")
-            DX.c:initAndShowEditItemForm(self.edit_args.xray_item, self.edit_args.reload_manager, tab_no)
+            DX.c:onShowEditItemForm(self.edit_args.xray_item, self.edit_args.reload_manager, tab_no)
         end,
         has_field_rows = true,
         fields = self:getFormFields(item_copy),
@@ -826,7 +826,7 @@ function XrayDialogs:addHotkeysForList()
             label = "add",
             hotkey = { { "V" } },
             callback = function()
-                DX.c:onAddNewXrayItem()
+                DX.c:onShowNewItemForm()
                 return true
             end,
         },
@@ -985,7 +985,7 @@ function XrayDialogs:addHotkeysForItemViewer()
             hotkey = { { "E" } },
             callback = function()
                 self:closeViewer()
-                DX.c:initAndShowEditItemForm(DX.vd.current_item, false, 1)
+                DX.c:onShowEditItemForm(DX.vd.current_item, false, 1)
                 return true
             end,
         },

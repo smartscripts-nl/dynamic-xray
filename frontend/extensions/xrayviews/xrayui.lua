@@ -266,10 +266,10 @@ function XrayUI:generateParagraphInformation(xray_rects, nr)
                 max_buttons_per_row = DX.b.max_buttons_per_row,
                 source_items = items,
                 callback = function()
-                    DX.c:initAndShowEditItemForm(items[i])
+                    DX.c:onShowEditItemForm(items[i])
                 end,
                 extra_item_callback = function(citem)
-                    DX.c:initAndShowEditItemForm(citem)
+                    DX.c:onShowEditItemForm(citem)
                 end,
             })
             if more_button_added then

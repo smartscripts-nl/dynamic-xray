@@ -1372,7 +1372,7 @@ function TextViewer:getTocIndexButton(i)
             --* source: see ((headings for use in TextViewer)):
             --* paragraph headings were defined in((XrayUI#ReaderHighlightGenerateXrayInformation)):
             -- #((edit xray item from toc popup))
-            DX.c:initAndShowEditItemForm(needle_item)
+            DX.c:onShowEditItemForm(needle_item)
         end,
         extra_callbacks = self:addLinkedItemsToTocButton(needle_item),
     }

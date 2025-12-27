@@ -332,14 +332,14 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
                     -- #((enable return to viewer))
                     DX.c:setProp("return_to_viewer", true)
                     DX.c:resetFilteredItems()
-                    DX.c:onAddNewXrayItem()
+                    DX.c:onShowNewItemForm()
                 end,
             }),
             KOR.buttoninfopopup:forXrayItemEdit({
                 callback = function()
                     DX.d:closeViewer()
                     DX.c:setProp("return_to_viewer", true)
-                    DX.c:initAndShowEditItemForm(needle_item, false, 1)
+                    DX.c:onShowEditItemForm(needle_item, false, 1)
                 end,
             }),
             KOR.buttoninfopopup:forXrayToggleImportantItem({
@@ -428,13 +428,13 @@ function XrayButtons:forTappedWordItemViewer(needle_item, called_from_list, tapp
                 callback = function()
                     DX.d:closeViewer()
                     DX.c:resetFilteredItems()
-                    DX.c:onAddNewXrayItem()
+                    DX.c:onShowNewItemForm()
                 end,
             }),
             KOR.buttoninfopopup:forXrayItemEdit({
                 callback = function()
                     DX.d:closeViewer()
-                    DX.c:initAndShowEditItemForm(needle_item, false, 1)
+                    DX.c:onShowEditItemForm(needle_item, false, 1)
                 end,
             }),
             KOR.buttoninfopopup:forXrayToggleImportantItem({
@@ -675,7 +675,7 @@ function XrayButtons:forListContext(manager, item)
                     if exists_already then
                         return false
                     end
-                    DX.c:onAddNewXrayItem(item.name)
+                    DX.c:onShowNewItemForm(item.name)
                 end,
                 hold_callback = function()
                     KOR.dialogs:alertInfo(manager.button_info.add_item)
@@ -685,7 +685,7 @@ function XrayButtons:forListContext(manager, item)
                 icon_text = KOR.labels.edit,
                 callback = function()
                     UIManager:close(manager.item_context_dialog)
-                    DX.c:initAndShowEditItemForm(item, "reload_manager")
+                    DX.c:onShowEditItemForm(item, "reload_manager")
                 end,
                 hold_callback = function()
                     KOR.dialogs:alertInfo(manager.button_info.edit_item)
@@ -795,7 +795,7 @@ function XrayButtons:forListFooterRight(base_icon_size)
         KOR.buttoninfopopup:forXrayItemAdd({
             callback = function()
                 DX.d.called_from_list = true
-                DX.c:onAddNewXrayItem("")
+                DX.c:onShowNewItemForm("")
             end,
         }),
     }
@@ -1104,7 +1104,7 @@ Sneltoets %1 H]]), KOR.icons.arrow_bare),
         KOR.buttoninfopopup:forXrayItemAdd({
             callback = function()
                 UIManager:close(DX.d.xray_item_chooser)
-                DX.c:onAddNewXrayItem("")
+                DX.c:onShowNewItemForm("")
             end,
         }),
     })
