@@ -174,6 +174,7 @@ PT_bookinfo_cache.sqlite3". In that case:
 * Maybe occurences in chapters are not indexed when DX is run in book mode (not for an entire series). I have to investigate...
 
 ## Todos
+* Base custom translations on indices instead on the texts they translate → continued usability of translations by the user much better protected, even when the actual text to be translated changes.
 * Build a dialog with an HTML box on the left side containing the page text, and buttons on the right side for each of the Xray items that were found in the page text:
   * All occurrences of the selected button item will be marked with bold in the text.
   * At the bottom, the dialog has a page navigator, for navigating to the previous/next page (text) where that Xray item occurs. Occurrences will be marked bold here also.
