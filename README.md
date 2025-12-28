@@ -105,8 +105,11 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 ![02 Xray info dialog after click on marker](images/02-xray-info-dialog-after-click-on-marker.png)
 02 Xray info dialog after click on marker
 
-![02b Tappable popup with linked items](images/02b-info-popup-with-linked-items.png)
-02b Tappable popup with linked items after longpressing a name in the ebook
+![02b Page navigator](images/02b-page-navigator.png)
+02b Page Navigator, with info panel with explanations of Xray items in the page. Soon to follow...
+
+![02c Tappable popup with linked items](images/02c-info-popup-with-linked-items.png)
+02c Tappable popup with linked items after longpressing a name in the ebook
 
 ![03 List of Xray items](images/03-list-of-xray-items.png)
 03 List of Xray items
@@ -178,7 +181,10 @@ PT_bookinfo_cache.sqlite3". In that case:
 * Build a dialog with an HTML box on the left side containing the page text, and buttons on the right side for each of the Xray items that were found in the page text:
   * All occurrences of the selected button item will be marked with bold in the text.
   * At the bottom, the dialog has a page navigator, for navigating to the previous/next page (text) where that Xray item occurs. Occurrences will be marked bold here also.
-  * I don't know if I can pull this off, but it seems interesting to me.
+  * I already have realized this for my personal installation; but now I'll have to port it to the public version:
+    ![02b Page navigator](images/02b-page-navigator.png)
+    02b Page Navigator
+  * The next improvement on this might be - if possible to build - that the user can set a filter for 1 Xray item. The Navigator will then only jump between pages on which that item occurs...
 
 ## About the code
 
