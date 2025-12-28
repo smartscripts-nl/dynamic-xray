@@ -27,7 +27,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 - [DX Settings menu](#dx-settings-menu)
 - [Problem solving](#problem-solving)
     - [Notification: DX couldn't be initialized](#notification-that-dx-couldnt-be-initiated)
-    - [User has a database filename other than "bookinfo_cache.sqlite3"](#user-has-a-database-filename-other-than-bookinfo_cachesqlite3)
+    - [User uses a database file other than "bookinfo_cache.sqlite3"](#user-uses-a-database-file-other-than-bookinfo_cachesqlite3)
 - [Issues to fix](#issues-to-fix)
 - [Todos](#todos)
 - [About the code](#about-the-code)
@@ -160,7 +160,7 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 
 This lets the user know that somewhere in KOReader (maybe in DX, maybe in another plugin) an error occurred, which prevented DX from initializing. Alas, these error conditions are very hard to debug for me from a distance...
 
-### User has a database filename other than "bookinfo_cache.sqlite3"
+### User uses a database file other than "bookinfo_cache.sqlite3"
 
 The default database filename in the KOReader settings dir will almost always be "bookinfo_cache.sqlite3". But apparently **⚠️ some
 users have a different database filename**, with a prefix string attached by some other plugin at the front, e.g. "
