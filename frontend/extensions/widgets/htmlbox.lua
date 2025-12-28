@@ -526,7 +526,7 @@ end
 
 function HtmlBox:computeHeights()
     local tabs_table_height = self.tabs_table_buttons and self.tabs_table:getSize().h or 0
-    local buttons_height = self.buttons_table and self.button_table:getSize().h or 0
+    local buttons_height = self.button_table and self.button_table:getSize().h or 0
     local others_height = self.frame_bordersize * 2 --* HtmlBox border
             + self.box_title:getHeight()
             + Size.line.thick
@@ -562,15 +562,10 @@ function HtmlBox:computeHeights()
     elseif self.is_fullscreen or self.window_size == "max" then
         --* Available height for definition + components
         self.height = self.avail_height
-
-        --* for fullscreen window on Boox Go 10.3 status bar of reader was still visible:
-        if self.is_fullscreen and DX.s.is_tablet_device then
-            self.height = self.height + Screen:scaleBySize(self.boox_go_10_height_correction)
-        end
-
         self.content_height = self.height - others_height
         local nb_lines = math.floor(self.content_height / self.content_line_height)
         self.content_height = nb_lines * self.content_line_height
+
     elseif self.window_size == "large" then
         self.content_height = math.floor(self.avail_height * 0.7)
         --* But we want it to fit to the lines that will show, to avoid
@@ -578,18 +573,21 @@ function HtmlBox:computeHeights()
         local nb_lines = Math.round(self.content_height / self.content_line_height)
         self.content_height = nb_lines * self.content_line_height
         self.height = self.content_height + others_height
+
     elseif self.window_size == "highcenter" then
         --* Available height for definition + components
         self.height = self.avail_height
         self.content_height = self.height - others_height
         local nb_lines = math.floor(self.content_height / self.content_line_height)
         self.content_height = math.floor(nb_lines * self.content_line_height * 0.95)
+
     elseif self.window_size == "medium" then
         --* Available height for definition + components
         self.height = self.avail_height
         self.content_height = self.height - others_height
         local nb_lines = math.floor(self.content_height / self.content_line_height)
         self.content_height = math.floor(nb_lines * self.content_line_height * 0.38)
+
     else
         --* Definition height was previously computed as 0.5*0.7*screen_height, so keep
         --* it that way. Components will add themselves to that.
