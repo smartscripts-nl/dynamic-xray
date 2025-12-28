@@ -39,6 +39,47 @@ local type = type
 
 local count, count2
 
+-- Inject scroll page method for ScrollHtmlWidget
+ScrollHtmlWidget.scrollToPage = function(self, page_num)
+    if page_num > self.htmlbox_widget.page_count then
+        page_num = self.htmlbox_widget.page_count
+    end
+    self.htmlbox_widget:setPageNumber(page_num)
+    self:_updateScrollBar()
+    self.htmlbox_widget:freeBb()
+    self.htmlbox_widget:_render()
+    if self.dialog.movable and self.dialog.movable.alpha then
+        self.dialog.movable.alpha = nil
+        UIManager:setDirty(self.dialog, function()
+            return "partial", self.dialog.movable.dimen
+        end)
+    else
+        UIManager:setDirty(self.dialog, function()
+            return "partial", self.dimen
+        end)
+    end
+end
+
+ScrollHtmlWidget.scrollToPage = function(self, page_num)
+    if page_num > self.htmlbox_widget.page_count then
+        page_num = self.htmlbox_widget.page_count
+    end
+    self.htmlbox_widget:setPageNumber(page_num)
+    self:_updateScrollBar()
+    self.htmlbox_widget:freeBb()
+    self.htmlbox_widget:_render()
+    if self.dialog.movable and self.dialog.movable.alpha then
+        self.dialog.movable.alpha = nil
+        UIManager:setDirty(self.dialog, function()
+            return "partial", self.dialog.movable.dimen
+        end)
+    else
+        UIManager:setDirty(self.dialog, function()
+            return "partial", self.dimen
+        end)
+    end
+end
+
 --- @class HtmlBox
 local HtmlBox = InputContainer:extend{
     height = nil,
@@ -53,6 +94,7 @@ local HtmlBox = InputContainer:extend{
     align = "center",
     boox_go_10_height_correction = 5,
     buttons_table = nil,
+    buttons_table_side = nil,
     content_padding = nil,
     html = nil,
     next_item_callback = nil,
@@ -74,35 +116,27 @@ local HtmlBox = InputContainer:extend{
 }
 
 function HtmlBox:init()
-
-    if self.window_size == "middlebox" then
-        self.window_size = {
-            w = Screen:getWidth() / 2,
-            h = Screen:getHeight() / 2 + Screen:scaleBySize(20),
-        }
-    end
-
     self:setModuleProps()
     self:initKeyEvents()
     self:initTouch()
     self:hideFooter()
     self:setWidth()
     --* height will be computed below, after we build top and bottom components, when we know how much height they are taking
-    self:setTitleBar()
+    self:generateTitleBar()
     self:setPaddingAndSpacing()
     self:computeLineHeight()
-    self:defineButtons()
+    self:generateButtonTables()
     self:setMargins()
     self:computeAvailableHeight()
     self:generateTabsTable()
     self:setSeparator()
     self:computeHeights()
-    --* instantiate self.text_widget:
-    self:_instantiateScrollWidget()
-    self:initWidgetFrame()
+    self:generateScrollWidget()
+    self:generateWidget()
     self:finalizeWidget()
 end
 
+--- @private
 function HtmlBox:initKeyEvents()
     if Device:hasKeys() then
         if self.active_tab and self.tabs_table_buttons then
@@ -153,6 +187,7 @@ function HtmlBox:initKeyEvents()
     end
 end
 
+--- @private
 function HtmlBox:initTouch()
 
     if Device:isTouchDevice() then
@@ -218,6 +253,7 @@ function HtmlBox:initTouch()
     end
 end
 
+--- @private
 function HtmlBox:getHtmlBoxCss()
     --* Using Noto Sans because Nimbus doesn't contain the IPA symbols.
     --* 'line-height: 1.3' to have it similar to textboxwidget,
@@ -292,16 +328,20 @@ function HtmlBox:getHtmlBoxCss()
 end
 
 --* Used in init & update to instantiate the Scroll*Widget that self.text_widget points to
-function HtmlBox:_instantiateScrollWidget()
-    self.shw_widget = ScrollHtmlWidget:new{
+--- @private
+function HtmlBox:generateScrollWidget()
+    local width = self.content_width
+    if self.buttons_table_side then
+        width = width - self.button_table_side:getSize().w
+    end
+    self.text_widget = ScrollHtmlWidget:new{
         html_body = self.html,
         css = self:getHtmlBoxCss(),
         default_font_size = Screen:scaleBySize(self.box_font_size),
-        width = self.content_width,
+        width = width,
         height = self.content_height,
         dialog = self,
     }
-    self.text_widget = self.shw_widget
 end
 
 function HtmlBox:onCloseWidget()
@@ -453,7 +493,7 @@ function HtmlBox:onForwardingPanRelease(arg, ges)
     return self.movable:onMovablePanRelease(arg, ges)
 end
 
---* ==================== SMARTSCRIPTS =====================
+--* ================= SMARTSCRIPTS ===================
 
 function HtmlBox:onReadNextItem()
     if not self.next_item_callback then
@@ -494,6 +534,7 @@ function HtmlBox:onForcePrevItem()
 end
 
 --* compare ((TextViewer#generateTabsTable)):
+--- @private
 function HtmlBox:generateTabsTable()
     if not self.tabs_table_buttons then
         return
@@ -524,6 +565,7 @@ function HtmlBox:onForceNextTab()
     return KOR.tabnavigator:onForceNextTab()
 end
 
+--- @private
 function HtmlBox:computeHeights()
     local tabs_table_height = self.tabs_table_buttons and self.tabs_table:getSize().h or 0
     local buttons_height = self.button_table and self.button_table:getSize().h or 0
@@ -600,6 +642,7 @@ function HtmlBox:computeHeights()
     end
 end
 
+--- @private
 function HtmlBox:computeLineHeight()
     --* Lookup word
     local word_font_face = "tfont"
@@ -616,7 +659,8 @@ function HtmlBox:computeLineHeight()
     end
 end
 
-function HtmlBox:defineButtons()
+--- @private
+function HtmlBox:generateButtonTables()
 
     if self.no_buttons_row then
         return
@@ -625,6 +669,22 @@ function HtmlBox:defineButtons()
     --* Different sets of buttons whether fullpage or not
     local buttons = self.buttons_table or {
         {
+            {
+                text = "⇱",
+                id = "top",
+                vsync = true,
+                callback = function()
+                    self.text_widget:scrollToTop()
+                end,
+            },
+            {
+                text = "⇲",
+                id = "bottom",
+                vsync = true,
+                callback = function()
+                    self.text_widget:scrollToBottom()
+                end,
+            },
             {
                 id = "close",
                 icon = "back",
@@ -654,9 +714,35 @@ function HtmlBox:defineButtons()
         show_parent = self,
         button_font_weight = "normal",
     }
+
+    if self.buttons_table_side then
+        self.button_table_side = ButtonTable:new{
+            width = Screen:scaleBySize(80),
+            button_font_face = "redhat",
+            button_font_size = 14,
+            buttons = self.buttons_table_side,
+            show_parent = self,
+            button_font_weight = "normal",
+        }
+    end
 end
 
+--- @private
 function HtmlBox:finalizeWidget()
+    --* self.region was set in ((HtmlBox#computeAvailableHeight)):
+    self[1] = self.is_fullscreen and
+        WidgetContainer:new{
+            align = self.align,
+            dimen = self.region,
+            self.box_frame,
+        }
+        or
+        WidgetContainer:new{
+            align = self.align,
+            dimen = self.region,
+            self.movable,
+        }
+
     --* we're a new window:
     table.insert(HtmlBox.window_list, self)
 
@@ -668,13 +754,45 @@ function HtmlBox:finalizeWidget()
     KOR.dialogs:registerWidget(self)
 end
 
+--- @private
 function HtmlBox:hideFooter()
     if self.is_fullscreen then
         KOR.screenhelpers:refreshScreen()
     end
 end
 
-function HtmlBox:initWidgetFrame()
+--- @private
+function HtmlBox:addFrameToContentWidget()
+    if self.button_table_side then
+
+        local bottom_padding = VerticalSpan:new{
+            width = self.avail_height - self.button_table_side:getSize().h - self.box_title:getSize().h - self.button_table:getSize().h - 2 * self.content_padding_v
+        }
+        self.content_widget = FrameContainer:new{
+            padding = 0,
+            padding_left = self.content_padding_h,
+            padding_right = 0,
+            margin = 0,
+            bordersize = 0,
+            CenterContainer:new{
+                dimen = Geom:new{
+                    w = self.content_width,
+                    h = self.content_height,
+                },
+                HorizontalGroup:new{
+                    align = "center",
+                    self.text_widget,
+                    VerticalGroup:new{
+                        align = "left",
+                        self.button_table_side,
+                        bottom_padding,
+                    }
+                }
+            },
+        }
+        return
+    end
+
     self.content_widget = FrameContainer:new{
         padding = 0,
         padding_left = self.content_padding_h,
@@ -683,9 +801,10 @@ function HtmlBox:initWidgetFrame()
         bordersize = 0,
         self.text_widget,
     }
+end
 
-    if self.is_fullscreen then
-
+--- @private
+function HtmlBox:generateFullScreenWidget()
         if self.no_buttons_row then
             self.box_frame = self.tabs_table and FrameContainer:new{
                 radius = 0,
@@ -737,194 +856,198 @@ function HtmlBox:initWidgetFrame()
                     self.definition_to_bottom_span,
                 }
             }
-        else
-            self.box_frame = self.tabs_table and FrameContainer:new{
-                radius = 0,
-                bordersize = self.frame_bordersize,
-                fullscreen = true,
-                covers_fullscreen = true,
-                padding = 0,
-                margin = 0,
-                background = Blitbuffer.COLOR_WHITE,
-                VerticalGroup:new{
-                    align = "left",
-                    self.box_title,
-                    self.tabs_table,
-                    self.separator,
-                    self.top_to_word_span,
-                    --* content
-                    CenterContainer:new{
-                        dimen = Geom:new{
-                            w = self.inner_width,
-                            h = self.content_widget:getSize().h,
-                        },
-                        self.content_widget,
-                    },
-                    self.definition_to_bottom_span,
-                    --* buttons
-                    CenterContainer:new{
-                        dimen = Geom:new{
-                            w = self.inner_width,
-                            h = self.button_table:getSize().h,
-                        },
-                        self.button_table,
-                    }
-                }
-            }
-            or
-            FrameContainer:new{
-                radius = 0,
-                bordersize = self.frame_bordersize,
-                fullscreen = true,
-                covers_fullscreen = true,
-                padding = 0,
-                margin = 0,
-                background = Blitbuffer.COLOR_WHITE,
-                VerticalGroup:new{
-                    align = "left",
-                    self.box_title,
-                    self.separator,
-                    self.top_to_word_span,
-                    --* content
-                    CenterContainer:new{
-                        dimen = Geom:new{
-                            w = self.inner_width,
-                            h = self.content_widget:getSize().h,
-                        },
-                        self.content_widget,
-                    },
-                    self.definition_to_bottom_span,
-                    --* buttons
-                    CenterContainer:new{
-                        dimen = Geom:new{
-                            w = self.inner_width,
-                            h = self.button_table:getSize().h,
-                        },
-                        self.button_table,
-                    }
-                }
-            }
-        end
-
-    --* not fullscreen:
-    else
-        if self.no_buttons_row then
-            self.box_frame = self.tabs_table and FrameContainer:new{
-                radius = Size.radius.window,
-                bordersize = self.frame_bordersize,
-                padding = 0,
-                margin = 0,
-                background = Blitbuffer.COLOR_WHITE,
-                VerticalGroup:new{
-                    align = "left",
-                    self.box_title,
-                    self.tabs_table,
-                    self.separator,
-                    self.top_to_word_span,
-                    --* content
-                    CenterContainer:new{
-                        dimen = Geom:new{
-                            w = self.inner_width,
-                            h = self.content_widget:getSize().h,
-                        },
-                        self.content_widget,
-                    },
-                    self.definition_to_bottom_span,
-                }
-            }
-            or
-            --* without tabs_table
-            FrameContainer:new{
-                radius = Size.radius.window,
-                bordersize = self.frame_bordersize,
-                padding = 0,
-                margin = 0,
-                background = Blitbuffer.COLOR_WHITE,
-                VerticalGroup:new{
-                    align = "left",
-                    self.box_title,
-                    self.separator,
-                    self.top_to_word_span,
-                    --* content
-                    CenterContainer:new{
-                        dimen = Geom:new{
-                            w = self.inner_width,
-                            h = self.content_widget:getSize().h,
-                        },
-                        self.content_widget,
-                    },
-                    self.definition_to_bottom_span,
-                }
-            }
-
-        --* fullscreen:
-        else
-            self.box_frame = self.tabs_table and FrameContainer:new{
-                radius = Size.radius.window,
-                bordersize = self.frame_bordersize,
-                padding = 0,
-                margin = 0,
-                background = Blitbuffer.COLOR_WHITE,
-                VerticalGroup:new{
-                    align = "left",
-                    self.box_title,
-                    self.tabs_table,
-                    self.separator,
-                    self.top_to_word_span,
-                    --* content
-                    CenterContainer:new{
-                        dimen = Geom:new{
-                            w = self.inner_width,
-                            h = self.content_widget:getSize().h,
-                        },
-                        self.content_widget,
-                    },
-                    self.definition_to_bottom_span,
-                    --* buttons
-                    CenterContainer:new{
-                        dimen = Geom:new{
-                            w = self.inner_width,
-                            h = self.button_table:getSize().h,
-                        },
-                        self.button_table,
-                    }
-                }
-            }
-            or
-            --* without tabs_table:
-            FrameContainer:new{
-                radius = Size.radius.window,
-                bordersize = self.frame_bordersize,
-                padding = 0,
-                margin = 0,
-                background = Blitbuffer.COLOR_WHITE,
-                VerticalGroup:new{
-                    align = "left",
-                    self.box_title,
-                    self.separator,
-                    self.top_to_word_span,
-                    --* content
-                    CenterContainer:new{
-                        dimen = Geom:new{
-                            w = self.inner_width,
-                            h = self.content_widget:getSize().h,
-                        },
-                        self.content_widget,
-                    },
-                    self.definition_to_bottom_span,
-                    --* buttons
-                    CenterContainer:new{
-                        dimen = Geom:new{
-                            w = self.inner_width,
-                            h = self.button_table:getSize().h,
-                        },
-                        self.button_table,
-                    }
-                }
-            }
-        end
+        return
     end
 
+    --* WITH buttons row:
+    self.box_frame = self.tabs_table and FrameContainer:new{
+        radius = 0,
+        bordersize = self.frame_bordersize,
+        fullscreen = true,
+        covers_fullscreen = true,
+        padding = 0,
+        margin = 0,
+        background = Blitbuffer.COLOR_WHITE,
+        VerticalGroup:new{
+            align = "left",
+            self.box_title,
+            self.tabs_table,
+            self.separator,
+            self.top_to_word_span,
+            --* content
+            CenterContainer:new{
+                dimen = Geom:new{
+                    w = self.inner_width,
+                    h = self.content_widget:getSize().h,
+                },
+                self.content_widget,
+            },
+            self.definition_to_bottom_span,
+            --* buttons
+            CenterContainer:new{
+                dimen = Geom:new{
+                    w = self.inner_width,
+                    h = self.button_table:getSize().h,
+                },
+                self.button_table,
+            }
+        }
+    }
+    or
+    FrameContainer:new{
+        radius = 0,
+        bordersize = self.frame_bordersize,
+        fullscreen = true,
+        covers_fullscreen = true,
+        padding = 0,
+        margin = 0,
+        background = Blitbuffer.COLOR_WHITE,
+        VerticalGroup:new{
+            align = "left",
+            self.box_title,
+            self.separator,
+            self.top_to_word_span,
+            --* content
+            CenterContainer:new{
+                dimen = Geom:new{
+                    w = self.inner_width,
+                    h = self.content_widget:getSize().h,
+                },
+                self.content_widget,
+            },
+            self.definition_to_bottom_span,
+            --* buttons
+            CenterContainer:new{
+                dimen = Geom:new{
+                    w = self.inner_width,
+                    h = self.button_table:getSize().h,
+                },
+                self.button_table,
+            }
+        }
+    }
+end
+
+--- @private
+function HtmlBox:generateNoButtonsRowWidget()
+    self.box_frame = self.tabs_table and FrameContainer:new{
+        radius = Size.radius.window,
+        bordersize = self.frame_bordersize,
+        padding = 0,
+        margin = 0,
+        background = Blitbuffer.COLOR_WHITE,
+        VerticalGroup:new{
+            align = "left",
+            self.box_title,
+            self.tabs_table,
+            self.separator,
+            self.top_to_word_span,
+            --* content
+            CenterContainer:new{
+                dimen = Geom:new{
+                    w = self.inner_width,
+                    h = self.content_widget:getSize().h,
+                },
+                self.content_widget,
+            },
+            self.definition_to_bottom_span,
+        }
+    }
+    or
+    --* without tabs_table
+    FrameContainer:new{
+        radius = Size.radius.window,
+        bordersize = self.frame_bordersize,
+        padding = 0,
+        margin = 0,
+        background = Blitbuffer.COLOR_WHITE,
+        VerticalGroup:new{
+            align = "left",
+            self.box_title,
+            self.separator,
+            self.top_to_word_span,
+            --* content
+            CenterContainer:new{
+                dimen = Geom:new{
+                    w = self.inner_width,
+                    h = self.content_widget:getSize().h,
+                },
+                self.content_widget,
+            },
+            self.definition_to_bottom_span,
+        }
+    }
+end
+
+--- @private
+function HtmlBox:generateButtonsRowWidget()
+    self.box_frame = self.tabs_table and FrameContainer:new{
+        radius = Size.radius.window,
+        bordersize = self.frame_bordersize,
+        padding = 0,
+        margin = 0,
+        background = Blitbuffer.COLOR_WHITE,
+        VerticalGroup:new{
+            align = "left",
+            self.box_title,
+            self.tabs_table,
+            self.separator,
+            self.top_to_word_span,
+            --* content
+            CenterContainer:new{
+                dimen = Geom:new{
+                    w = self.inner_width,
+                    h = self.content_widget:getSize().h,
+                },
+                self.content_widget,
+            },
+            self.definition_to_bottom_span,
+            --* buttons
+            CenterContainer:new{
+                dimen = Geom:new{
+                    w = self.inner_width,
+                    h = self.button_table:getSize().h,
+                },
+                self.button_table,
+            }
+        }
+    }
+    or
+    --* without tabs_table:
+    FrameContainer:new{
+        radius = Size.radius.window,
+        bordersize = self.frame_bordersize,
+        padding = 0,
+        margin = 0,
+        background = Blitbuffer.COLOR_WHITE,
+        VerticalGroup:new{
+            align = "left",
+            self.box_title,
+            self.separator,
+            self.top_to_word_span,
+            --* content
+            CenterContainer:new{
+                dimen = Geom:new{
+                    w = self.inner_width,
+                    h = self.content_widget:getSize().h,
+                },
+                self.content_widget,
+            },
+            self.definition_to_bottom_span,
+            --* buttons
+            CenterContainer:new{
+                dimen = Geom:new{
+                    w = self.inner_width,
+                    h = self.button_table:getSize().h,
+                },
+                self.button_table,
+            }
+        }
+    }
+end
+
+--- @private
+function HtmlBox:generateMovableContainer()
     self.movable = MovableContainer:new{
         --* We'll handle these events ourselves, and call appropriate
         --* MovableContainer's methods when we didn't process the event
@@ -939,22 +1062,24 @@ function HtmlBox:initWidgetFrame()
         },
         self.box_frame,
     }
-
-    --* self.region was set in ((HtmlBox#computeAvailableHeight)):
-    self[1] = self.is_fullscreen and
-        WidgetContainer:new{
-            align = self.align,
-            dimen = self.region,
-            self.box_frame,
-        }
-        or
-        WidgetContainer:new{
-            align = self.align,
-            dimen = self.region,
-            self.movable,
-        }
 end
 
+--- @private
+function HtmlBox:generateWidget()
+    self:addFrameToContentWidget()
+    if self.is_fullscreen then
+        self:generateFullScreenWidget()
+    else
+        if self.no_buttons_row then
+            self:generateNoButtonsRowWidget()
+        else
+            self:generateButtonsRowWidget()
+        end
+    end
+    self:generateMovableContainer()
+end
+
+--- @private
 function HtmlBox:computeAvailableHeight()
     self.avail_height = Screen:getHeight() - self.margin_top - self.margin_bottom
     if DX.s.is_tablet_device and self.is_fullscreen then
@@ -971,6 +1096,7 @@ function HtmlBox:computeAvailableHeight()
     }
 end
 
+--- @private
 function HtmlBox:setMargins()
     --* Margin from screen edges
     self.margin_top = not self.is_fullscreen and Size.margin.default or 0
@@ -985,7 +1111,14 @@ function HtmlBox:setMargins()
     end
 end
 
+--- @private
 function HtmlBox:setModuleProps()
+    if self.window_size == "middlebox" then
+        self.window_size = {
+            w = Screen:getWidth() / 2,
+            h = Screen:getHeight() / 2 + Screen:scaleBySize(20),
+        }
+    end
     if self.tabs_table_buttons then
         self.title_alignment = "center"
     end
@@ -1009,6 +1142,7 @@ function HtmlBox:setModuleProps()
     self.menu_opened = {}
 end
 
+--- @private
 function HtmlBox:setPaddingAndSpacing()
     --* This padding and the resulting width apply to the content
     --* below the title:  lookup word and definition
@@ -1016,11 +1150,14 @@ function HtmlBox:setPaddingAndSpacing()
     local content_padding_v = Size.padding.fullscreen --* added via VerticalSpan
     self.content_width = self.inner_width - 2 * self.content_padding_h
 
+    self.content_padding_v =  content_padding_v
+
     --* Spans between components
     self.top_to_word_span = VerticalSpan:new{ width = content_padding_v }
     self.definition_to_bottom_span = VerticalSpan:new{ width = content_padding_v }
 end
 
+--- @private
 function HtmlBox:setSeparator()
     self.separator = LineWidget:new{
         background = self.tabs_table and KOR.colors.tabs_table_separators or KOR.colors.line_separator,
@@ -1031,7 +1168,8 @@ function HtmlBox:setSeparator()
     }
 end
 
-function HtmlBox:setTitleBar()
+--- @private
+function HtmlBox:generateTitleBar()
     local config = {
         width = self.inner_width,
         title = self.title,
@@ -1058,6 +1196,7 @@ function HtmlBox:setTitleBar()
     self.box_title = TitleBar:new(config)
 end
 
+--- @private
 function HtmlBox:setWidth()
     -- #((set HtmlBox dialog width))
     --* compare ((set HtmlBox dialog height))
@@ -1083,6 +1222,7 @@ function HtmlBox:setWidth()
     self.inner_width = self.width - 2 * self.frame_bordersize
 end
 
+--- @private
 function HtmlBox:addCustomHotkeyEvents()
     if self.additional_key_events then
         for label, hk_data in pairs(self.additional_key_events) do
