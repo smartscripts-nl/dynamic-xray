@@ -191,7 +191,7 @@ PT_bookinfo_cache.sqlite3". In that case:
 3. KOReader will automatically be reloaded and then create the xray_items table in your database.
 
 ## Issues to fix
-* Maybe occurences in chapters are not indexed when DX is run in book mode (not for an entire series). I have to investigate...
+* Tabbed dialogs (text and HTML) don't show tabs, only show the contents of the first tab.
 
 ## Todos
 * Load plugin and extensions from KOReader settings folder, so Android users can use DX too...
