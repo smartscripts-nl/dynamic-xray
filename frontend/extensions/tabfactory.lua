@@ -26,9 +26,16 @@ function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
     local content_prop = tab_method == "htmlBoxTabbed" and "html" or "info"
     local tab_content --* can be html or plain text
 
+    if args.tabs_as_table == nil then
+        args.tabs_as_table = true
+        args.tab_buttons_font = "x_smallinfofont"
+        args.tab_buttons_font_size = 14
+        args.tab_buttons_bold = false
+    end
+
     local count
     --* tabs in button table row:
-    if self.tabs_as_table then
+    if args.tabs_as_table or self.tabs_as_table then
         local buttons = { {} }
         local tab_is_enabled
         count = #args.tabs
@@ -52,6 +59,9 @@ function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
                 --* to force non bold prop for not active tabs (for which is_active_tab is not true):
                 is_tab_button = true,
                 is_target_tab = args.tabs[current].is_target_tab,
+                text_font_face = args.tab_buttons_font,
+                text_font_size = args.tab_buttons_font_size,
+                button_font_weight = args.tab_buttons_bold,
 
                 --* these two props can be set using ((ButtonProps#getButtonState)):
                 --* see also ((TabNavigator)) > ((generate tab navigation event handlers)), where the key event for activating a disabled tab is also disabled:

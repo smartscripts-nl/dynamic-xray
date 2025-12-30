@@ -200,6 +200,22 @@ function Tables:sortByPropDescending(subject, prop)
     end)
 end
 
+function Tables:tableHas(itable, needle)
+    if not needle or not itable or #itable == 0 then
+        return false
+    end
+    for nr = 1, #itable do
+        if itable[nr] == needle then
+            return nr
+        end
+    end
+    return false
+end
+
+function Tables:tableHasNot(itable, needle)
+    return not self:tableHas(itable, needle)
+end
+
 function Tables:tableToMd5(subject)
     local text = self:tableToText(subject, false, "get_unclipped_table")
     return md5(text)
