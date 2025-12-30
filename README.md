@@ -10,6 +10,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 * The advantage of the DX approach is that the user can dynamically add and modify items or link them to other items; the advantage of the Kindle approach is that it isn't error-prone.
 * DX can produce false hits, because it uses matching of the words in ebook texts to determine whether Xray items are present. For example: DX will be in trouble if there are two or more persons with the same first name in a book; DX won't be able to differentiate between them. But in at about 95% of cases, the matches shown will be correct.
 * All interface texts can be translated by the user.
+* For now, this module doesn't work with Android, because the plugin and extensions would have to be contained in the KOReader apk file. But I am working on a patch to fix this.
 
 ## Table of contents in this readme
 - [Use cases](#use-cases)
@@ -193,6 +194,7 @@ PT_bookinfo_cache.sqlite3". In that case:
 * Maybe occurences in chapters are not indexed when DX is run in book mode (not for an entire series). I have to investigate...
 
 ## Todos
+* Load plugin and extensions from KOReader settings folder, so Android users can use DX too...
 * Base custom translations on indices instead on the texts they translate → continued usability of translations by the user much better protected, even when the actual text to be translated changes.
 * Page Navigator: restore tabs in Page Navigator help dialog (for some reason tabs are not shown now). 
 
