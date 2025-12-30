@@ -196,7 +196,6 @@ PT_bookinfo_cache.sqlite3". In that case:
 ## Todos
 * Load plugin and extensions from KOReader settings folder, so Android users can use DX too...
 * Base custom translations on indices instead on the texts they translate → continued usability of translations by the user much better protected, even when the actual text to be translated changes.
-* Page Navigator: restore tabs in Page Navigator help dialog (for some reason tabs are not shown now). 
 
 ## About the code
 
