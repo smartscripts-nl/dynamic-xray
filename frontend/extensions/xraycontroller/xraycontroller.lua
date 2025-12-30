@@ -12,6 +12,8 @@ The views layer has two main streams:
 2) XrayDialogs and XrayButtons, which are responsible for displaying dialogs and interaction with the user.
 When the ebook text is displayed, XrayUI has done its work and finishes. Only after actions by the user (e.g. tapping on an xray item in the book), XrayDialogs will be activated.
 
+The user will have the most Kindle-like experience when he/she opens the Page Navigator - see ((XrayController#onShowPageNavigator)). In this navigator all Xray items in a page will be marked bold and they will be mentioned in a side panel. Tapping on items in the side panel will put an explanation of that item in the bottom panel. You can even filter the content of the Navigator for a specific Xray item, so it will only show pages which contain that item.
+
 These modules are initialized in ((initialize Xray modules)) and ((XrayController#init)).
 --]]--
 
