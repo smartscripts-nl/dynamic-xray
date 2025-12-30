@@ -15,14 +15,14 @@ local type = type
 --- @class Databases
 local Databases = WidgetContainer:extend{
     --* this will be the default database filename for most users, but in case of a differing name, e.g. PT_bookinfo_cache.sqlite3, that name can be made known to DX via the XraySettings setting database_filename and ((XrayModel#setDatabaseFile)) > ((Databases#setDatabaseFileName)):
-    database_file = "bookinfo_cache.sqlite3",
+    database_filename = "bookinfo_cache.sqlite3",
     database_folder = nil,
     home_dir = nil,
     home_dir_needle = nil,
 }
 
-function Databases:setDatabaseFileName(database_file)
-    self.database_file = database_file
+function Databases:setDatabaseFileName(database_filename)
+    self.database_filename = database_filename
 end
 
 function Databases:closeConnAndStmt(conn, stmt)
@@ -58,7 +58,7 @@ end
 
 function Databases:_getConn()
     self.database_folder = self.database_folder or DataStorage:getSettingsDir()
-    return SQ3.open(self.database_folder .. "/" .. self.database_file)
+    return SQ3.open(self.database_folder .. "/" .. self.database_filename)
 end
 
 function Databases:getDBconnForBookInfo()

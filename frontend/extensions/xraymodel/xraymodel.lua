@@ -66,8 +66,8 @@ local XrayModel = WidgetContainer:new{
 }
 
 function XrayModel:setDatabaseFile()
-    if has_text(DX.s.database_file) and DX.s.database_file ~= "bookinfo_cache.sqlite3" then
-        KOR.databases:setDatabaseFileName(DX.s.database_file ~= "bookinfo_cache.sqlite3")
+    if has_text(DX.s.database_filename) and DX.s.database_filename ~= "bookinfo_cache.sqlite3" then
+        KOR.databases:setDatabaseFileName(DX.s.database_filename ~= "bookinfo_cache.sqlite3")
     end
 end
 
