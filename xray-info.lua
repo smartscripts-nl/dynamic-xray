@@ -40,14 +40,14 @@ function XrayInfo:XRAY_ITEMS()
 
     --! linchpin method: ((XrayUI#ReaderViewGenerateXrayInformation))
 
-    -- drawing rects for xray info: ((ReaderView#paintTo)) > ((XrayUI#setParagraphsFromDocument)) > ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#ReaderViewInitParaOrPageData)) > ((XrayUI#ReaderViewLoopThroughParagraphOrPage)) > ((xray page marker set target line for icon)) in page mode
+    -- drawing rects for xray info: ((ReaderView#paintTo)) > ((XrayUI#setParagraphsFromDocument)) > ((XrayUI#ReaderViewGenerateXrayInformation)) > here callbacks are attached to the info rects > ((XrayUI#ReaderViewInitParaOrPageData)) > ((XrayUI#ReaderViewLoopThroughParagraphOrPage)) > ((xray page marker set target line for icon)) in page mode
 
     -- adding match reliability indicators for the page/paragraph info popup: ((XrayUI#matchNameInPageOrParagraph))
-    -- using these indicators: ((XrayUI#generateParagraphInformation)) > ((xray items dialog add match reliability explanations)) & ((use xray match reliability indicators))
+    -- using these indicators: ((XrayUI#showParagraphInformation)) > ((xray items dialog add match reliability explanations)) & ((use xray match reliability indicators))
 
-    -- show paragraph matches: ((ReaderView#paintTo)) > ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#getParaMarker)) and ((CreDocument#storeCurrentPageParagraphs)) > ((XrayUI#getXrayItemsFoundInText)): here matches on page or paragraphs evaluated > ((XrayUI#drawMarker)) > ((set xray page info rects)) KOR.registry:set("xray_page_info_rects") > here the information in the popup gets combined: ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)) > ((XrayDialogs#showItemsInfo))
+    -- show paragraph matches: ((ReaderView#paintTo)) > ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#getParaMarker)) and ((CreDocument#storeCurrentPageParagraphs)) > ((XrayUI#getXrayItemsFoundInText)): here matches on page or paragraphs evaluated > ((XrayUI#drawMarker)) > ((set xray page info rects)) KOR.registry:set("xray_page_info_rects") > ((ReaderHighlight#onTapXPointerSavedHighlight)) > here the information in the popup gets combined: ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)) > ((XrayDialogs#showItemsInfo))
 
-    -- max line length in popup info for xray items on page: XrayModel.max_line_length
+    -- max line length in popup info for xray items on page: XrayViewsData.max_line_length
 
     -- determining valid needles for matching on page: ((XrayModel#isValidNeedle)) > needle >= 4 characters, OR contains an uppercase character
 
@@ -55,6 +55,15 @@ function XrayInfo:XRAY_ITEMS()
 
     -- automatic toc upon loading of dialog: definition of after_load_callback in ((xray paragraph info: after load callback)) > ((TextViewer execute after load callback)) > ((XrayUI#onInfoPopupLoadShowToc)) > ((TextViewer#showToc))
     -- adding toc buttons: ((TextViewer#getTocIndexButton))
+
+    --- PAGE NAVIGATOR
+
+    -- ((XrayDialogs#showPageXrayItemsNavigator)) > ((CreDocument#getPageHtml)) > ((XrayViewsData#markItemsFoundInPageHtml)) for html and buttons > ((XrayUI#getXrayItemsFoundInText)) > ((XrayViewsData#markItemsInHtml)) > ((XrayViewsData#markItem)) > ((XrayViewsData#markedItemRegister)) here callback and hold_callback are attached > ((XrayViewsData#getItemInfoText)) > ((Dialogs#htmlBox)) > ((HtmlBox#generateSideButtonTables)) > ((HtmlBox#generateInfoPanel))
+
+    --- FILTERING
+
+    -- applying filters: ((XrayButtons#forFilterDialog)) > ((XrayController#filterItemsByImportantTypes)) or ((XrayController#filterItemsByText))
+    -- resetting filters: ((XrayDialogs#initListDialog)) > ((XrayDialogs#getListFilter)) supplies filter callback and reset_callback to Menu > ((XrayController#resetFilteredItems))
 
     --- SVG icons
     -- most svg icons downloaded from https://www.onlinewebfonts.com/icon: icons here are licensed by CC BY 4.0
