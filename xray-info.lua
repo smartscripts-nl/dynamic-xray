@@ -81,7 +81,7 @@ function XrayInfo:XRAY_INFO_TOC_ADD_LINKED_ITEM_BUTTONS()
 
     -- list: ((XrayController#onShowList)) > ((XrayDialogs#showList))
 
-    -- showing list conditionally after saving an item: ((XrayController#saveNewItem)) or ((XrayController#initAndShowEditItemForm)) > ((XrayController#showListConditionally))
+    -- showing list conditionally after saving an item: ((XrayController#saveNewItem)) or ((XrayController#onShowEditItemForm)) > ((XrayController#showListConditionally))
 
     -- viewer, show item: ((XrayDialogs#viewItem))
 end
@@ -92,7 +92,7 @@ function XrayInfo:XRAY_VIEWER_CONTEXT_BUTTONS()
 
     -- button for creating new xray items: ((XrayButtons#addTappedWordCollectionButton))
 
-    -- edit item: ((XrayController#initAndShowEditItemForm)) > ((XrayDialogs#showEditItemForm))
+    -- edit item: ((XrayController#onShowEditItemForm)) > ((XrayDialogs#showEditItemForm))
 
     -- generating linked items button rows for item viewer: ((XrayButtons#forItemViewerBottomContextButtons))
 
@@ -109,7 +109,7 @@ function XrayInfo:XRAY_VIEWER_CONTEXT_BUTTONS()
 
     -- button for creating new xray items: ((XrayButtons#addTappedWordCollectionButton))
 
-    -- edit item: ((XrayController#initAndShowEditItemForm)) > ((XrayDialogs#showEditItemForm))
+    -- edit item: ((XrayController#onShowEditItemForm)) > ((XrayDialogs#showEditItemForm))
 
     -- generating linked items button rows for item viewer: ((XrayButtons#forItemViewerBottomContextButtons))
 
