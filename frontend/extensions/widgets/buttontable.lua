@@ -259,6 +259,7 @@ function ButtonTable:generateButton(btn_entry, max_button_height, default_button
         config.width = default_button_width
     end
     config.text_font_face = btn_entry.text_font_face or self.button_font_face
+    config.align = btn_entry.align or "center"
     config.button_lines = self.button_lines
     config.text_font_size = btn_entry.font_size or self.button_font_size
     config.decrease_top_padding = self.decrease_top_padding

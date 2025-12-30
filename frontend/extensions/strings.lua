@@ -356,7 +356,17 @@ function Strings:splitLinesToMaxLength(text, max_length, indent, first_word)
     return table.concat(lined_text, "\n")
 end
 
+--* remove trailing and leading whitespace from string.
+--* @param s String
+function Strings:trim(s)
+    --* from PiL2 20.4
+    return (s:gsub("^%s*(.-)%s*$", "%1"))
+end
+
 function Strings:hasWholeWordMatch(haystack, haystack_lower, needle)
+    if not needle then
+        return false
+    end
 
     --* case sensitive search, mostly for Xray persons:
     if needle:match("[A-Z]") then

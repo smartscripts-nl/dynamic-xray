@@ -128,7 +128,7 @@ function SettingsManager:show()
         perpage = self.items_per_page,
         top_buttons_left = {
             {
-                icon = "info",
+                icon = "info-slender",
                 callback = function()
                     KOR.dialogs:niceAlert(_("Settings management"), T(_([[Here you can modify settings for %1.
 

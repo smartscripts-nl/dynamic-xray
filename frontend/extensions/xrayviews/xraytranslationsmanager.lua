@@ -326,7 +326,7 @@ function XrayTranslationsManager:editTranslation(item)
         force_no_navbar = true,
         top_buttons_left = {
             Button:new({
-                icon = "info",
+                icon = "info-slender",
                 icon_size_ratio = 0.5,
                 callback = function()
                     KOR.dialogs:htmlBox({

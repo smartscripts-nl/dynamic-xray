@@ -4,6 +4,15 @@ This is the controller for the Dynamic Xray plugin. It has been structured in ki
 M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
 V = ((XrayUI)), ((XrayTranslations)), ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
+
+XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
+
+The views layer has two main streams:
+1) XrayUI, which is only responsible for displaying tappable xray markers (lightning or star icons) in the ebook text;
+2) XrayDialogs and XrayButtons, which are responsible for displaying dialogs and interaction with the user.
+When the ebook text is displayed, XrayUI has done its work and finishes. Only after actions by the user (e.g. tapping on an xray item in the book), XrayDialogs will be activated.
+
+These modules are initialized in ((initialize Xray modules)) and ((XrayController#init)).
 --]]--
 
 --! important info for programmers
@@ -171,6 +180,7 @@ end
 --- @private
 function XrayController:onDispatcherRegisterActions()
     Dispatcher:registerAction("show_items", { category = "none", event = "ShowList", title = DX.d:getControllerEntryName("Show xray-items in this book/series"), reader = true })
+    Dispatcher:registerAction("show_xray_page_navigator", { category = "none", event = "ShowPageNavigator", title = DX.d:getControllerEntryName("Show Xray Page Navigator"), rolling = true })
     Dispatcher:registerAction("add_xray_item", { category = "none", event = "AddNewXrayItem", title = DX.d:getControllerEntryName("Add an Xray item"), reader = true })
 end
 
@@ -189,7 +199,7 @@ function XrayController:doBatchImport(count, callback)
         if initial_notification then
             UIManager:close(initial_notification)
         end
-        notification = KOR.messages:notify(percentage .. " imported...", 4)
+        notification = KOR.messages:notify(percentage .. " " .. DX.d:getControllerEntryName("imported") .. "...", 4)
         UIManager:forceRePaint()
         loops = loops + 1
         if percentage:match("100") or loops > limit then
@@ -219,6 +229,11 @@ end
 --* in event name format because of gesture:
 function XrayController:onShowList(focus_item, dont_show)
     DX.d:showList(focus_item, dont_show)
+end
+
+--* in event name format because of gesture:
+function XrayController:onShowPageNavigator()
+    self:showPageNavigator()
 end
 
 function XrayController:onReaderReady()
@@ -364,6 +379,11 @@ function XrayController:showListConditionally(focus_item, show_list)
     end
 end
 
+function XrayController:showPageNavigator()
+    local current_epage = DX.u:getCurrentPage()
+    DX.d:showPageXrayItemsNavigator(current_epage)
+end
+
 --- @param mode string "series" or "book"
 function XrayController:toggleBookOrSeriesMode(mode, focus_item, dont_show)
     DX.vd.initData("force_refresh", mode)
@@ -411,6 +431,18 @@ function XrayController:addToMainMenu(menu_items)
                 text = icon .. DX.d:getControllerEntryName(" Show list"),
                 callback = function()
                     DX.d:showList()
+                end
+            },
+            {
+                text = icon .. DX.d:getControllerEntryName(" Show Page Navigator"),
+                enabled_func = function()
+                    if self.ui.paging then
+                        return false
+                    end
+                    return true
+                end,
+                callback = function()
+                    self:showPageNavigator()
                 end
             },
             {

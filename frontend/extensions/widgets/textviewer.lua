@@ -368,7 +368,7 @@ function TextViewer:findDialog()
     input_dialog:onShowKeyboard(true)
 end
 
---* when argument external_search_string not nil: called via ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((XrayUI#generateParagraphInformation)) >
+--* when argument external_search_string not nil: called via ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((XrayUI#showParagraphInformation)) >
 --* click on line with xray marker > ((XrayDialogs#showItemsInfo)) - here reliability icons and xray type icons injected for buttons > ((Dialogs#textBox)) > ((send external searchstring for xray info)) > ((TextViewer#showToc)) > ((TextViewer#getTocIndexButton)) >
 --* click on button > ((TextViewer#blockUp)) or ((TextViewer#blockDown)):
 --- @private
@@ -914,10 +914,110 @@ function TextViewer:showToc()
         }
     )
 
-    local title = DX.s.ui_mode == "paragraph" and "Xray items in deze alinea" or "Xray items op deze pagina"
+    local xray_ui_mode = DX.s.ui_mode
+    local title = xray_ui_mode == "paragraph" and "Xray items in deze alinea" or "Xray items op deze pagina"
     self.toc_dialog = KOR.dialogs:showButtonDialog(buttons_count .. " " .. title, button_table)
 
     KOR.registry:set("xray_toc_dialog_shown", true)
+end
+
+--- @private
+function TextViewer:returnWithTabsTable(text_section, radius, padding)
+    return {
+            radius = radius,
+            padding = padding,
+            margin = self.add_margin and Size.margin.default or 0,
+            background = Blitbuffer.COLOR_WHITE,
+            VerticalGroup:new {
+                align = "left",
+                self.titlebar,
+                CenterContainer:new {
+                    dimen = Geom:new {
+                        w = self.frame_width,
+                        h = self.tabs_table_height,
+                    },
+                    self.tabs_table,
+                },
+                self.separator,
+                self.top_spacer,
+                text_section,
+            CenterContainer:new{
+                dimen = Geom:new{
+                    w = self.frame_width,
+                    h = self.button_table_height,
+                },
+                self.button_table,
+            }
+        }
+    }
+end
+
+--- @private
+function TextViewer:returnWithTabsTableWithoutButtons(text_section, radius, padding)
+    --[[KOR.debug:hoera("width", self.frame_width)
+    KOR.debug:hoera("height", self.tabs_table_height)
+    KOR.debug:hoeraIfTruthy(self.tabs_table, "table")]]
+    return {
+        radius = radius,
+        padding = padding,
+        margin = self.add_margin and Size.margin.default or 0,
+        background = Blitbuffer.COLOR_WHITE,
+        VerticalGroup:new {
+            align = "left",
+            self.titlebar,
+        CenterContainer:new{
+            dimen = Geom:new{
+                w = self.frame_width,
+                h = self.tabs_table_height,
+            },
+            self.tabs_table,
+        },
+        self.separator,
+            self.top_spacer,
+            text_section,
+        }
+    }
+end
+
+--- @private
+function TextViewer:returnWithButtons(text_section, radius, padding)
+    return {
+        radius = radius,
+        padding = padding,
+        margin = self.add_margin and Size.margin.default or 0,
+        background = Blitbuffer.COLOR_WHITE,
+        VerticalGroup:new{
+            align = "left",
+            self.titlebar,
+            self.separator,
+            self.top_spacer,
+            text_section,
+            CenterContainer:new{
+                dimen = Geom:new{
+                    w = self.frame_width,
+                    h = self.button_table_height,
+                },
+                self.button_table,
+            }
+        }
+    }
+end
+
+--- @private
+function TextViewer:returnWithoutButtons(text_section, radius, padding)
+    return {
+        radius = radius,
+        padding = padding,
+        margin = self.add_margin and Size.margin.default or 0,
+        background = Blitbuffer.COLOR_WHITE,
+        VerticalGroup:new{
+            align = "left",
+            self.titlebar,
+            self.separator,
+            self.top_spacer,
+            text_section,
+        }
+    }
 end
 
 --- @private
@@ -945,91 +1045,15 @@ function TextViewer:setConfigForContainersWithTitlebar(radius, padding)
         self.textw,
     }
 
-    if not self.button_table then
-        return self.tabs_table and
-        {
-            radius = radius,
-            padding = padding,
-            margin = self.add_margin and Size.margin.default or 0,
-            background = Blitbuffer.COLOR_WHITE,
-            VerticalGroup:new {
-                align = "left",
-                self.titlebar,
-                CenterContainer:new {
-                    dimen = Geom:new {
-                        w = self.frame_width,
-                        h = self.tabs_table_height,
-                    },
-                    self.tabs_table,
-                },
-                self.separator,
-                self.top_spacer,
-                text_section,
-            }
-        }
-        or
-        {
-            radius = radius,
-            padding = padding,
-            margin = self.add_margin and Size.margin.default or 0,
-            background = Blitbuffer.COLOR_WHITE,
-            VerticalGroup:new {
-                align = "left",
-                self.titlebar,
-                self.top_spacer,
-                text_section,
-            }
-        }
+    if self.tabs_table and self.no_buttons_row then
+        return self:returnWithTabsTableWithoutButtons(text_section, radius, padding)
+    elseif self.tabs_table then
+        return self:returnWithTabsTable(text_section, radius, padding)
+    elseif self.no_buttons_row then
+        return self:returnWithoutButtons(text_section, radius, padding)
+    else
+        return self:returnWithButtons(text_section, radius, padding)
     end
-
-    return self.tabs_table and
-    {
-        radius = radius,
-        padding = padding,
-        margin = self.add_margin and Size.margin.default or 0,
-        background = Blitbuffer.COLOR_WHITE,
-        VerticalGroup:new{
-            align = "left",
-            self.titlebar,
-            CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.frame_width,
-                    h = self.tabs_table_height,
-                },
-                self.tabs_table,
-            },
-            self.separator,
-            self.top_spacer,
-            text_section,
-            CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.frame_width,
-                    h = self.button_table_height,
-                },
-                self.button_table,
-            }
-        }
-    }
-    or
-    {
-        radius = radius,
-        padding = padding,
-        margin = self.add_margin and Size.margin.default or 0,
-        background = Blitbuffer.COLOR_WHITE,
-        VerticalGroup:new{
-            align = "left",
-            self.titlebar,
-            self.top_spacer,
-            text_section,
-            CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.frame_width,
-                    h = self.button_table_height,
-                },
-                self.button_table,
-            }
-        }
-    }
 end
 
 --- @private
@@ -1151,29 +1175,7 @@ function TextViewer:getDefaultButtons()
         },
     }
     if self.paragraph_headings then
-        -- #((TextViewer toc button))
-        --* the items for this and the next two buttons were generated in ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)):
-        --* compare the buttons for Xray items list as injected in ((inject xray list buttons)):
-
-        --! upon a tap on a button these routines are executed: ((Xray page hits TOC search routine)) > ((TextViewer#findCallback)) > ((XrayModel#removeMatchReliabilityIndicators))
-
-        table.insert(default_buttons, 1, KOR.buttoninfopopup:forXrayItemsIndex({
-            callback = function()
-                self:showToc()
-            end,
-        }))
-        table.insert(default_buttons, 2, KOR.buttoninfopopup:forXrayPreviousItem({
-            id = "previ",
-            callback = function()
-                self:blockUp()
-            end,
-        }))
-        table.insert(default_buttons, 3, KOR.buttoninfopopup:forXrayNextItem({
-            id = "nexti",
-            callback = function()
-                self:blockDown()
-            end,
-        }))
+        DX.b:forXrayUiInfo(default_buttons)
     end
 
     return default_buttons
@@ -1352,7 +1354,7 @@ function TextViewer:getTocIndexButton(i)
     local needle_item = self.paragraph_headings[i].xray_item
     --* calls ((ButtonChoicePopup#forXrayTocItemEdit)):
     local args = {
-        --* self.paragraph_headings were generated in ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((XrayUI#generateParagraphInformation)):
+        --* self.paragraph_headings were generated in ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((XrayUI#showParagraphInformation)):
         text = i .. ". " .. self.paragraph_headings[i].label,
         font_bold = false,
         text_font_face = "x_smallinfofont",
@@ -1772,7 +1774,7 @@ function TextViewer:addLinkedItemsToTocButton(needle_item)
     count = #linked_items
     for l = 1, count do
         local item = linked_items[l]
-        local icon = DX.m:getItemTypeIcon(item)
+        local icon = DX.vd:getItemTypeIcon(item)
         local linked_item_matches = item.matches and item.matches > 0 and " (" .. item.matches .. ")" or ""
         table.insert(extra_callbacks, {
             overrule_callback_label = KOR.icons.xray_link_bare .. icon .. " " .. item.name:lower() .. linked_item_matches,
@@ -1781,7 +1783,7 @@ function TextViewer:addLinkedItemsToTocButton(needle_item)
                 KOR.dialogs:textBox({
                     title = icon .. " " .. item.name,
                     title_shrink_font_to_fit = true,
-                    info = DX.m:getItemInfo(item),
+                    info = DX.vd:getItemInfo(item),
                     use_computed_height = true,
                     modal = true,
                 })

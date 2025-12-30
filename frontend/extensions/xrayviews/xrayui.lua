@@ -192,7 +192,13 @@ function XrayUI:getParaMarker(bb)
 end
 
 --- @private
-function XrayUI:generateParagraphInformation(xray_rects, nr)
+function XrayUI:showParagraphInformation(xray_rects, nr, mode)
+    if mode == "hold" then
+        local current_epage = self:getCurrentPage()
+        DX.d:showPageXrayItemsNavigator(current_epage)
+        return
+    end
+
     local paragraph_text = self.paragraph_texts[nr]
     local paragraph_hits_info = ""
     local paragraph_headings = {}
@@ -203,80 +209,29 @@ function XrayUI:generateParagraphInformation(xray_rects, nr)
     -- #((skip partial name hits if familiy member with full name also found))
     --* xray items with partial family name hits that must be removed, because a family member with full name has been found:
     local skip_xray_items = xray_rects.skip_xray_items[nr]
-    local extra_indent = self.info_extra_indent
 
     --* hotfix for doubled names, as retrieved by ((XrayUI#getXrayItemsFoundInText)):
     local injected_names = {}
     local injected_nr = 0
-    local name, prefix, first_line, match_block, description, noun, xray_type_icon, aliases, linkwords, explanation, more_button_added
+    local more_button_added
+    local item
     count = #items
     for i = 1, count do
-        name = items[i].name
-        if not injected_names[name] and (not skip_xray_items or not skip_xray_items[name]) then
-            injected_names[name] = name
-            injected_nr = injected_nr + 1
-            prefix = injected_nr == 1 and "" or "\n"
-            if self.info_use_upper_case_names then
-                name = KOR.strings:upper(name)
-            end
-            description = KOR.strings:splitLinesToMaxLength(items[i].description, DX.vd.max_line_length, self.info_indent)
-            aliases, linkwords, explanation = "", "", ""
-            if has_text(items[i].aliases) then
-                noun = items[i].aliases:match(" ") and _("aliases: ") or _("alias: ")
-                noun = KOR.strings:ucfirst(noun, "force_only_first")
-                aliases = KOR.strings:splitLinesToMaxLength(items[i].aliases, DX.vd.max_line_length, self.info_indent .. extra_indent, noun) .. "\n"
-            end
-            if has_text(items[i].linkwords) then
-                noun = items[i].linkwords:match(" ") and _("link terms: ") or _("link term: ")
-                noun = KOR.strings:ucfirst(noun, "force_only_first")
-                linkwords = KOR.strings:splitLinesToMaxLength(items[i].linkwords, DX.vd.max_line_length, self.info_indent .. extra_indent, noun) .. "\n"
-            end
-            -- #((use xray match reliability indicators))
-            local xray_match_reliability_icon = DX.tw.match_reliability_indicators.full_name
-            --! don't use has_text here, because for full name hits we don't add a text (i.e. the full name) after the reliability weight icon)! Under Ubuntu this is not a problem, but using has_text under Android causes explanation not to be shown:
-            if has_content(xray_explanations[i]) then
-                explanation = xray_explanations[i]
-                xray_match_reliability_icon = explanation:match(self.separator .. "([^ ]+)")
-            end
-
-            xray_type_icon = DX.vd:getItemTypeIcon(items[i])
-
-            --* here the info gets combined:
-            -- #((xray items dialog add match reliability explanations))
-            first_line = prefix .. xray_type_icon .. name .. explanation
-            first_line = KOR.strings:splitLinesToMaxLength(first_line, DX.vd.max_line_length, self.info_indent) .. "\n"
-            match_block = first_line .. description .. "\n" .. aliases .. linkwords
-            paragraph_hits_info = paragraph_hits_info .. match_block
-
-            -- #((headings for use in TextViewer))
-            --* needles will be used in ((TextViewer#blockDown)) and  ((TextViewer#blockUp)):
-            table.insert(paragraph_headings, {
-                name = name,
-                --* in paragraph/page info popup first show icon for type of item and importance thereof, and only after that the match reliability indicator icon:
-                needle = xray_type_icon .. xray_match_reliability_icon .. " " .. name,
-                --* this label will be the button text; by using name:sub we ensure that the text will not be too long:
-                label = xray_type_icon .. xray_match_reliability_icon .. " " .. name:sub(1, 14),
-                length = match_block:len(),
-                xray_item = items[i],
-            })
-
-            more_button_added = DX.b:addTappedWordCollectionButton(self.info_extra_button_rows, nil, nil, items[i], {
-                nr = injected_nr,
-                max_total_buttons = DX.b.info_max_total_buttons,
-                max_buttons_per_row = DX.b.max_buttons_per_row,
-                source_items = items,
-                callback = function()
-                    DX.c:onShowEditItemForm(items[i])
-                end,
-                extra_item_callback = function(citem)
-                    DX.c:onShowEditItemForm(citem)
-                end,
-            })
-            if more_button_added then
-                break
-            end
+        item = items[i]
+        injected_nr, paragraph_hits_info, more_button_added = self:addParagraphInfoItems(
+            items,
+            i,
+            injected_names,
+            xray_explanations,
+            skip_xray_items,
+            paragraph_headings,
+            injected_nr,
+            paragraph_hits_info
+        )
+        if more_button_added then
+            break
         end
-    end --* end for items
+    end
     paragraph_matches_count = injected_nr
     --* correction for indentation of first line in dialog; this should not be necessary:
     paragraph_hits_info = paragraph_hits_info:gsub("^ +", "")
@@ -284,6 +239,78 @@ function XrayUI:generateParagraphInformation(xray_rects, nr)
     -- #((xray paragraph info callback))
     --* callback defined in ((set xray info for paragraphs)) and calls ((XrayDialogs#showItemsInfo)):
     xray_rects.callback(paragraph_hits_info, paragraph_headings, paragraph_matches_count, self.info_extra_button_rows, paragraph_text)
+end
+
+function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanations, skip_xray_items, paragraph_headings, injected_nr, paragraph_hits_info)
+    local prefix, first_line, match_block, description, noun, xray_type_icon, aliases, linkwords, explanation, more_button_added
+
+    local name = items[i].name
+    if injected_names[name] or (skip_xray_items and skip_xray_items[name]) then
+        return injected_nr, paragraph_hits_info
+    end
+
+    injected_names[name] = name
+    injected_nr = injected_nr + 1
+    prefix = injected_nr == 1 and "" or "\n"
+    if self.info_use_upper_case_names then
+        name = KOR.strings:upper(name)
+    end
+    description = KOR.strings:splitLinesToMaxLength(items[i].description, DX.vd.max_line_length, self.info_indent)
+    aliases, linkwords, explanation = "", "", ""
+    if has_text(items[i].aliases) then
+        noun = items[i].aliases:match(" ") and _("aliases: ") or _("alias: ")
+        noun = KOR.strings:ucfirst(noun, "force_only_first")
+        aliases = KOR.strings:splitLinesToMaxLength(items[i].aliases, DX.vd.max_line_length, self.info_indent, noun) .. "\n"
+    end
+    if has_text(items[i].linkwords) then
+        noun = items[i].linkwords:match(" ") and _("link terms: ") or _("link term: ")
+        noun = KOR.strings:ucfirst(noun, "force_only_first")
+        linkwords = KOR.strings:splitLinesToMaxLength(items[i].linkwords, DX.vd.max_line_length, self.info_indent, noun) .. "\n"
+    end
+    -- #((use xray match reliability indicators))
+    local xray_match_reliability_icon = DX.tw.match_reliability_indicators.full_name
+    --! don't use has_text here, because for full name hits we don't add a text (i.e. the full name) after the reliability weight icon)! Under Ubuntu this is not a problem, but using has_text under Android causes explanation not to be shown:
+    if has_content(xray_explanations[i]) then
+        explanation = xray_explanations[i]
+        xray_match_reliability_icon = explanation:match(self.separator .. "([^ ]+)")
+    end
+
+    xray_type_icon = DX.vd:getItemTypeIcon(items[i])
+    local hits = DX.vd.list_display_mode == "series" and items[i].series_hits or items[i].book_hits
+
+    --* here the info gets combined:
+    -- #((xray items dialog add match reliability explanations))
+    first_line = prefix .. xray_type_icon .. name .. " " .. hits .. explanation
+    first_line = KOR.strings:splitLinesToMaxLength(first_line, DX.vd.max_line_length, self.info_indent) .. "\n"
+    match_block = first_line .. description .. "\n" .. aliases .. linkwords
+    paragraph_hits_info = paragraph_hits_info .. match_block
+
+    -- #((headings for use in TextViewer))
+    --* needles will be used in ((TextViewer#blockDown)) and  ((TextViewer#blockUp)):
+    table.insert(paragraph_headings, {
+        name = name,
+        --* in paragraph/page info popup first show icon for type of item and importance thereof, and only after that the match reliability indicator icon:
+        needle = xray_type_icon .. xray_match_reliability_icon .. " " .. name,
+        --* this label will be the button text; by using name:sub we ensure that the text will not be too long:
+        label = xray_type_icon .. xray_match_reliability_icon .. " " .. name:sub(1, 14),
+        length = match_block:len(),
+        xray_item = items[i],
+    })
+
+    more_button_added = DX.b:addTappedWordCollectionButton(self.info_extra_button_rows, nil, nil, items[i], {
+        nr = injected_nr,
+        max_total_buttons = DX.b.info_max_total_buttons,
+        max_buttons_per_row = DX.b.max_buttons_per_row,
+        source_items = items,
+        callback = function()
+            DX.c:onShowEditItemForm(items[i])
+        end,
+        extra_item_callback = function(citem)
+            DX.c:onShowEditItemForm(citem)
+        end,
+    })
+
+    return injected_nr, paragraph_hits_info, more_button_added
 end
 
 --* called from ReaderView:
@@ -421,13 +448,14 @@ end
 --- @private
 function XrayUI:ReaderViewPopulateInfoRects()
     -- #((set xray page info rects))
-    --* to be consumed in ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((XrayUI#generateParagraphInformation)):
+    --* to be consumed in ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((XrayUI#showParagraphInformation)):
     self.xray_page_info_rects = {
         paragraph_texts = self.paragraphs_with_matches,
         hits = self.paragraph_hits,
         skip_xray_items = self.skip_xray_items,
         explanations = self.paragraph_explanations,
         rects = self.rects_with_matches,
+        --* the buttons in extra_button_rows were generated in ((TextViewer#getDefaultButtons)) > ((XrayButtons#forXrayUiInfo)):
         callback = function(paragraph_hits_info, extra_button_rows, paragraph_text)
             --* paragraph_text only needed for debugging purposes, to ascertain we are looking at the correct paragraph:
             DX.d:showItemsInfo(paragraph_hits_info, extra_button_rows, paragraph_text)
@@ -440,7 +468,7 @@ function XrayUI:getCurrentColumn(x)
     return KOR.ui.document:getVisiblePageCount() > 1 and x > KOR.registry.half_screen_width and 2 or 1
 end
 
---* content of self.paragraphs was generated in ((Html#getAllHtmlContainersInCurrentPage)):
+--* content of self.paragraphs was generated in ((Html#getAllHtmlContainersInPage)):
 --- @private
 function XrayUI:getFullPageText()
     if not self.paragraphs then
@@ -511,6 +539,7 @@ function XrayUI:matchAliasesToParagraph(paragraph, book_hits, explanations, item
         alias = alias_table[i]
         if paragraph:match(alias) then
             self:registerParagraphMatch(book_hits, explanations, item, self.separator .. DX.tw.match_reliability_indicators.alias .. " " .. alias)
+            item.reliability_indicator = DX.tw.match_reliability_indicators.alias
             return true
         end
     end
@@ -541,6 +570,7 @@ function XrayUI:matchNameInPageOrParagraph(text, lower_text, needle, hits, parti
     then
         --* for full name hits don't add the xray_needle to the explanation, that would lead to stupid repetion of the full name:
         self:registerParagraphMatch(hits, explanations, item, self.separator .. DX.tw.match_reliability_indicators.full_name)
+        item.reliability_indicator = DX.tw.match_reliability_indicators.full_name
 
         -- #((log family name))
         if has_family_name and not is_lower_case then
@@ -556,7 +586,12 @@ function XrayUI:matchNameInPageOrParagraph(text, lower_text, needle, hits, parti
         return false, 0
     end
 
-    local mparts = matcher and KOR.strings:split(matcher, " ") or KOR.strings:split(needle, " ")
+    local subject = matcher or needle
+    --* when items have uppercase characters, remove lowercase words from them; e.g. remove "of" from "Constitorial Court of Discpline", which gives many false positives in texts:
+    if subject:match("[A-Z]") then
+        subject = subject:gsub(" [a-z]+ ", " ")
+    end
+    local mparts = matcher and KOR.strings:split(subject, " ")
     local match_found, left_side_match_found, right_side_match_found = false, false, false
     local matching_parts = ""
     local part
@@ -597,6 +632,7 @@ function XrayUI:matchNameInPageOrParagraph(text, lower_text, needle, hits, parti
             match_reliability_indicator = DX.tw.match_reliability_indicators.last_name
         end
         self:registerParagraphMatch(hits, explanations, item, self.separator .. match_reliability_indicator .. " " .. matching_parts)
+        item.reliability_indicator = match_reliability_indicator
     end
     return match_found, multiple_parts_count
 end
@@ -613,7 +649,7 @@ function XrayUI:onInfoPopupLoadShowToc(textviewer, headings)
     end
 end
 
-function XrayUI:ReaderHighlightGenerateXrayInformation(pos)
+function XrayUI:ReaderHighlightGenerateXrayInformation(pos, mode)
 
     --* this var, containing texts and hits info, was defined above in ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#getXrayItemsFoundInText)) > ((set xray info for paragraphs)):
     local xray_rects = self.xray_page_info_rects
@@ -626,7 +662,7 @@ function XrayUI:ReaderHighlightGenerateXrayInformation(pos)
         for nr = 1, count do
             rect = rects[nr]
             if inside_box(pos, rect) then
-                self:generateParagraphInformation(xray_rects, nr)
+                self:showParagraphInformation(xray_rects, nr, mode)
                 return true
             end
         end
@@ -761,6 +797,14 @@ function XrayUI:setParagraphsFromDocument()
     end
 
     return ui_page
+end
+
+function XrayUI:getCurrentPage()
+    if KOR.document.info.has_pages and KOR.view.paging then
+        return KOR.view.paging.current_page
+    elseif not KOR.document.info.has_pages then
+        return KOR.document:getCurrentPage()
+    end
 end
 
 return XrayUI

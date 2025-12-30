@@ -62,8 +62,8 @@ nr add_more_button max_total_buttons source_items callback extra_item_callback i
 
 When a more button has been added, this method returns true, so the caller knows it has to break its loop through the source items.
 ]]
---* called from ((XrayButtons#handleMoreButtonClick)), ((XrayButtons#forItemsCollectionPopup)) and ((XrayUI#generateParagraphInformation)):
---! indicator_button_table will be nil when called from ((XrayUI#generateParagraphInformation)):
+--* called from ((XrayButtons#handleMoreButtonClick)), ((XrayButtons#forItemsCollectionPopup)) and ((XrayUI#showParagraphInformation)):
+--! indicator_button_table will be nil when called from ((XrayUI#showParagraphInformation)):
 function XrayButtons:addTappedWordCollectionButton(button_table, indicator_button_table, status_icons, item, data)
     local callback = data.callback
     local extra_item_callback = data.extra_item_callback
@@ -73,7 +73,7 @@ function XrayButtons:addTappedWordCollectionButton(button_table, indicator_butto
 
     if nr == 1 or (nr - 1) % max_buttons_per_row == 0 then
         table.insert(button_table, {})
-        --* indicator_button_table will be nil when called from ((XrayUI#generateParagraphInformation)):
+        --* indicator_button_table will be nil when called from ((XrayUI#showParagraphInformation)):
         if indicator_button_table then
             table.insert(indicator_button_table, {})
         end
@@ -129,7 +129,7 @@ function XrayButtons:addTappedWordCollectionButton(button_table, indicator_butto
             })
         end,
     })
-    --* indicator_button_table will be nil when called from ((XrayUI#generateParagraphInformation)):
+    --* indicator_button_table will be nil when called from ((XrayUI#showParagraphInformation)):
     if not indicator_button_table then
         return
     end
@@ -144,7 +144,6 @@ function XrayButtons:addTappedWordCollectionButton(button_table, indicator_butto
         font_bold = item.is_bold,
         text_font_face = "x_smallinfofont",
         fgcolor = status_indicator_color,
-
         font_size = self.related_item_icons_font_size,
         callback = function()
             callback()
@@ -206,6 +205,60 @@ function XrayButtons:addMoreButton(buttons, indicator_buttons, props)
             self:handleMoreButtonClick(props, extra_buttons_count)
         end,
     })
+end
+
+--- @param parent XrayDialogs
+function XrayButtons:forXrayPageNavigator(parent)
+    return {{
+     {
+         text = KOR.icons.previous,
+         callback = function()
+             parent:toPrevNavigatorPage()
+         end,
+     },
+     KOR.buttoninfopopup:forXrayPageNavigatorToCurrentPage({
+         callback = function()
+             parent:toCurrentNavigatorPage()
+         end,
+     }),
+     {
+         text = KOR.icons.next,
+         callback = function()
+             parent:toNextNavigatorPage()
+         end,
+     },
+ }}
+end
+
+function XrayButtons:forXrayUiInfo(buttons)
+    -- #((TextViewer toc button))
+    --* the items for this and the next two buttons were generated in ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)):
+    --* compare the buttons for Xray items list as injected in ((inject xray list buttons)):
+
+    --! upon a tap on a button these routines are executed: ((Xray page hits TOC search routine)) > ((TextViewer#findCallback)) > ((XrayModel#removeMatchReliabilityIndicators))
+
+    table.insert(buttons, 1, KOR.buttoninfopopup:forXrayItemsIndex({
+        callback = function()
+            self:showToc()
+        end,
+    }))
+    table.insert(buttons, 2, KOR.buttoninfopopup:forXrayPreviousItem({
+        id = "previ",
+        callback = function()
+            self:blockUp()
+        end,
+    }))
+    table.insert(buttons, 3, KOR.buttoninfopopup:forXrayNextItem({
+        id = "nexti",
+        callback = function()
+            self:blockDown()
+        end,
+    }))
+    table.insert(buttons, 1, KOR.buttoninfopopup:forXrayPageNavigator({
+        callback = function()
+            DX.d:showPageXrayItemsNavigator()
+        end,
+    }))
 end
 
 --- @param parent XrayDialogs
@@ -641,7 +694,7 @@ end
 function XrayButtons:forItemViewerTopLeft(parent)
     return {
         {
-            icon = "info",
+            icon = "info-slender",
             callback = function()
                 parent:showHelp(2)
             end
@@ -1046,8 +1099,8 @@ function XrayButtons:forItemsCollectionPopup(items_found, tapped_word)
     DX.tw:setPopupResult(copies, status_icons)
 
     local combined_rows = {}
-    local rows_count = #buttons
-    for i = 1, rows_count do
+    count = #buttons
+    for i = 1, count do
         --* insert separator row at start of rows:
         if i == 1 then
             table.insert(combined_rows, {})
@@ -1055,7 +1108,7 @@ function XrayButtons:forItemsCollectionPopup(items_found, tapped_word)
         table.insert(combined_rows, indicator_buttons[i])
         table.insert(combined_rows, buttons[i])
         --* insert separator row between and at end of rows:
-        if i <= rows_count then
+        if i <= count then
             table.insert(combined_rows, {})
         end
     end
@@ -1063,7 +1116,7 @@ function XrayButtons:forItemsCollectionPopup(items_found, tapped_word)
     table.insert(buttons, {
         KOR.buttoninfopopup:forXrayList(),
         {
-            icon = "info",
+            icon = "info-slender",
             icon_size_ratio = 0.53,
             callback = function()
                 KOR.dialogs:textBoxTabbed(1, {
@@ -1117,7 +1170,7 @@ function XrayButtons:forItemEditor(mode, active_form_tab, reload_manager, item_c
         self:forItemEditorEditButton()
         or
         {
-            icon = "info",
+            icon = "info-slender",
             callback = function()
                 KOR.dialogs:niceAlert(_("Tips"), _("Tips about how to get best results with Xray items will soon follow..."))
             end
@@ -1202,7 +1255,7 @@ end
 function XrayButtons:forListTopLeft(parent)
     return {
         {
-            icon = "info",
+            icon = "info-slender",
             callback = function()
                 DX.d:showHelp(1)
             end
@@ -1235,6 +1288,21 @@ function XrayButtons:unfocusXrayButton()
         xray_type_button[1].background = xray_type_button[1].background:invert()
     end
     xray_type_button:refresh()
+end
+
+function XrayButtons:pruneDuplicatedNavigatorButtons(side_buttons)
+    local label
+    local labels = {}
+    local pruned_buttons = {}
+    count = #side_buttons
+    for r = 1, count do
+        label = side_buttons[r][1].text
+        if not labels[label] then
+            table.insert(pruned_buttons, side_buttons[r])
+            labels[label] = true
+        end
+    end
+    return pruned_buttons
 end
 
 return XrayButtons

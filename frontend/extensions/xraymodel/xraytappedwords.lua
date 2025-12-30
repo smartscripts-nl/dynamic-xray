@@ -45,7 +45,7 @@ local XrayTappedWords = WidgetContainer:new{
     items_collection = {},
     match_reliability_explanations = nil,
     -- #((xray match reliability indicators))
-    --* these match reliability indicators will be injected in the dialog with page or paragraphs information in ((XrayUI#generateParagraphInformation)) > ((xray items dialog add match reliability explanations)):
+    --* these match reliability indicators will be injected in the dialog with page or paragraphs information in ((XrayUI#showParagraphInformation)) > ((xray items dialog add match reliability explanations)):
     match_reliability_indicators = {
         full_name = KOR.icons.xray_full_bare,
         alias = KOR.icons.xray_alias_bare,

@@ -63,6 +63,7 @@ local has_text = has_text
 local math = math
 local next = next
 local pcall = pcall
+local select = select
 local table = table
 local tonumber = tonumber
 local tostring = tostring
@@ -120,7 +121,7 @@ function CreDocument:storeCurrentPageParagraphs(page_xp, starting_page)
 
     self.start_page_no = starting_page or self:getPageFromXPointer(page_xp)
 
-    self.paragraphs = KOR.html:getAllHtmlContainersInCurrentPage(page_xp, self.start_page_no)
+    self.paragraphs = KOR.html:getAllHtmlContainersInPage(page_xp, self.start_page_no)
 end
 
 --* pattern %f[%w_] ... %f[^%w_] in normal matches emulates word boundaries, but this doesn't work in CreDocument context:
@@ -133,6 +134,34 @@ function CreDocument:findAllTextWholeWords(pattern, case_insensitive, nb_context
     end
     pattern = self.word_boundary_start .. pattern .. self.word_boundary_end
     return self._document:findAllText(pattern, case_insensitive, regex, max_hits, true, nb_context_words)
+end
+
+function CreDocument:getPageText(page_no)
+    local xp = self:getPageXPointer(page_no)
+    if has_no_text(xp) then
+        return ""
+    end
+    local texts = select(2, KOR.html:getAllHtmlContainersInPage(xp, page_no))
+    if has_no_items(texts) then
+        return ""
+    end
+    return table.concat(texts, "\n   ")
+end
+
+function CreDocument:getPageHtml(page_no, mark_text)
+    local xp = self:getPageXPointer(page_no)
+    if has_no_text(xp) then
+        return ""
+    end
+    local texts = select(2, KOR.html:getAllHtmlContainersInPage(xp, page_no, "include_punctuation"))
+    if has_no_items(texts) then
+        return ""
+    end
+    local html = table.concat(texts, "<br/>   ")
+    if mark_text then
+        html = html:gsub(mark_text, "<strong>" .. mark_text .. "</strong>")
+    end
+    return html
 end
 
 
@@ -289,10 +318,32 @@ ReaderHighlight.onTap = function(self, _, ges)
         return false
     end
     local pos = self.view:screenToPageTransform(ges.pos)
-    if DX.u:ReaderHighlightGenerateXrayInformation(pos) then
+    if DX.u:ReaderHighlightGenerateXrayInformation(pos, "tap") then
         return true
     end
     return orig_onTap(self, _, ges)
+end
+
+local orig_onHold = ReaderHighlight.onHold
+ReaderHighlight.onHold = function(self, arg, ges)
+    if self.document.info.has_pages and self.panel_zoom_enabled then
+        local res = self:onPanelZoom(arg, ges)
+        if res or not self.panel_zoom_fallback_to_text_selection then
+            return res
+        end
+    end
+
+    self:clear() --* clear previous highlight (delayed clear may not have done it yet)
+    self.hold_ges_pos = ges.pos --* remember hold original gesture position
+    self.hold_pos = KOR.view:screenToPageTransform(ges.pos)
+    if not self.hold_pos then
+        return false
+    end
+
+    if DX.u:ReaderHighlightGenerateXrayInformation(self.hold_pos, "hold") then
+        return true
+    end
+    return orig_onHold(self, arg, ges)
 end
 
 
@@ -657,13 +708,6 @@ function ReaderSearch:toPrevHit()
         self.all_hits_current_item = #self.all_hits
     end
     self:showHitWithContext(self.all_hits[self.all_hits_current_item])
-end
-
-function ReaderSearch:showHitsHighlighted(current_page, valid_link)
-    local other_page = current_page > 1 and current_page - 1 or current_page + 1
-    local other_link = KOR.document:getPageXPointer(other_page)
-    self.ui.link:onGotoLink({ xpointer = other_link }, "neglect_current_location")
-    self.ui.link:onGotoLink({ xpointer = valid_link }, "neglect_current_location")
 end
 
 --* called from Labels.context button in ((XrayDialogs#onMenuHold)):

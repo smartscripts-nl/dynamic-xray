@@ -19,7 +19,8 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
   - [Updating to new versions](#updating-to-new-versions)
   - [Entering your own translations for the DX interface](#entering-your-own-translations-for-the-dx-interface)
 - [Usage tips](#usage-tips)
-  - [Adding Xray items](#adding-xray-items)
+  - [Browsing with the Page Navigator (most Kindle-like)](#adding-xray-items)
+  - [Adding Xray items](#browsing-with-the-page-navigator-most-kindle-like)
   - [Displaying help information about the function of buttons](#displaying-help-information-about-the-function-of-buttons)
 - [DX in action](#dx-in-action)
     - [Videos](#videos)
@@ -75,6 +76,21 @@ This will make the code and updates much easier to maintain for me _and_ for clo
 
 ## Usage tips
 
+### Browsing with the Page Navigator (most Kindle-like)
+
+With the Page Navigator, you can browse through pages and see all known Xray items marked bold there. In the side panel you can tap on items to show their explanation in the bottom panel.
+
+You can show this navigator by:
+* longpressing the lightning Xray marker in pages
+* tapping in KOReader's main menu: most left icon > Dynamic Xray > Show Page Navigator
+* assigning a gesture for "Show Xray Page Navigator" (in the Gestures menu under "Reflowable documents...") and then use this gesture.
+
+#### Browsing by a specific item in the Page Navigator
+
+When you longpress an item in the side panel, a filter icon will appear on the left side of that item. From now on, while browsing forward or backwards, the Navigator will only show pages which contain that filtered item. Very handy for study purposes!
+
+If you want to undo the filter, longpress the filtered item in the side panel once again.
+
 ### Adding Xray items
 
 * The patch file adds a button "+ Xray" to the popup dialog for text selections. With this button, you can add new Xray items from the text selection.
@@ -106,7 +122,7 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 02 Xray info dialog after click on marker
 
 ![02b Page navigator](images/02b-page-navigator.png)
-02b Page Navigator, with info panel with explanations of Xray items in the page. Soon to follow...
+02b Page Navigator, with info panel with explanations of Xray items in the page.
 
 ![02c Tappable popup with linked items](images/02c-info-popup-with-linked-items.png)
 02c Tappable popup with linked items after longpressing a name in the ebook
@@ -178,13 +194,7 @@ PT_bookinfo_cache.sqlite3". In that case:
 
 ## Todos
 * Base custom translations on indices instead on the texts they translate → continued usability of translations by the user much better protected, even when the actual text to be translated changes.
-* Build a dialog with an HTML box on the left side containing the page text, and buttons on the right side for each of the Xray items that were found in the page text:
-  * All occurrences of the selected button item will be marked with bold in the text.
-  * At the bottom, the dialog has a page navigator, for navigating to the previous/next page (text) where that Xray item occurs. Occurrences will be marked bold here also.
-  * I already have realized this for my personal installation; but now I'll have to port it to the public version:
-    ![02b Page navigator](images/02b-page-navigator.png)
-    02b Page Navigator
-  * The next improvement on this might be - if possible to build - that the user can set a filter for 1 Xray item. The Navigator will then only jump between pages on which that item occurs...
+* Page Navigator: restore tabs in Page Navigator help dialog (for some reason tabs are not shown now). 
 
 ## About the code
 

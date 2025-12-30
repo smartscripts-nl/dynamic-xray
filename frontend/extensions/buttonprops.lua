@@ -177,7 +177,7 @@ function ButtonProps:popupChoice(choice_props)
 	local callback_label = choice_props.overrule_callback_label or choice_props.callback_label:lower()
 	local hold_callback = choice_props.hold_callback
 	local hold_callback_label = choice_props.overrule_hold_callback_label or choice_props.hold_callback_label and choice_props.hold_callback_label:lower()
-	local font_face = choice_props.font_face or choice_props.text_font_face or "redhat"
+	local font_face = choice_props.font_face or choice_props.text_font_face or "x_smallinfofont"
 	local font_size = choice_props.font_size or choice_props.text_font_size or 14
 	local font_bold = true
 	if choice_props.font_bold == false or choice_props.text_font_bold == false then

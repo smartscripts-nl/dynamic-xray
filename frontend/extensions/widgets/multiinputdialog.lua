@@ -369,7 +369,6 @@ function MultiInputDialog:insertIntoTargetContainer(group, is_field)
 end
 
 --- @private
---- @param field_side number 1 if left side, 2 if right side
 function MultiInputDialog:insertFieldByRowType()
     --* for one field rows immediately insert the input field:
     if not self.has_field_rows or self.fields_count == 1 then
@@ -446,7 +445,7 @@ function MultiInputDialog:getDescription(field, width)
                 text_font_bold = false,
                 text_font_face = "x_smallinfofont",
                 font_size = 18,
-                icon = "info",
+                icon = "info-slender",
                 icon_size_ratio = 0.48,
             },
             padding = 0,

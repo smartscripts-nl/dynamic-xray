@@ -309,6 +309,25 @@ Alternate hotkey %1 N]]), KOR.icons.arrow_bare),
 	}, props)
 end
 
+function ButtonInfoPopup:forXrayPageNavigator(props)
+	return KOR.buttonprops:set({
+		icon = "navigator_wheel",
+		icon_size_ratio = 0.53,
+		info = "navigator-ikoon | Navigeer in een popup venster doorheen de pagina's met Xray items.",
+		callback_label = "navigeer",
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forXrayPageNavigatorToCurrentPage(props)
+	return KOR.buttonprops:set({
+		icon = "goto-location",
+		info = "doelschijf-ikoon | Geef hier de tekst weer van de pagina die je nu aan het lezen bent in je e-reader.",
+		callback_label = "toon",
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forXrayPreviousItem(props)
 	return KOR.buttonprops:set({
 		text = KOR.icons.previous_bare,
@@ -331,7 +350,7 @@ end
 
 function ButtonInfoPopup:forXrayShowMatchReliabilityExplanation(props)
 	return KOR.buttonprops:set({
-		icon = "info",
+		icon = "info-slender",
 		icon_size_ratio = 0.5,
 		info = _("information icon | Show explanation of reliability icons for hits found."),
 		callback_label = _("show"),

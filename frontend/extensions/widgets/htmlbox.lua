@@ -12,6 +12,7 @@ local Font = require("extensions/modules/font")
 local FrameContainer = require("ui/widget/container/framecontainer")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
+local HorizontalGroup = require("ui/widget/horizontalgroup")
 local Input = require("extensions/modules/input")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local KOR = require("extensions/kor")
@@ -32,6 +33,7 @@ local Screen = Device.screen
 
 local DX = DX
 local G_reader_settings = G_reader_settings
+local has_no_items = has_no_items
 local math = math
 local pairs = pairs
 local table = table
@@ -94,9 +96,9 @@ local HtmlBox = InputContainer:extend{
     align = "center",
     boox_go_10_height_correction = 5,
     buttons_table = nil,
-    buttons_table_side = nil,
     content_padding = nil,
     html = nil,
+    info_panel_text = nil,
     next_item_callback = nil,
     no_buttons_row = false,
     --* to inform the parent about a newly activated tab, via ((TabNavigator#broadcastActivatedTab)):
@@ -104,6 +106,9 @@ local HtmlBox = InputContainer:extend{
     --* optional list of full_paths, to open books retrieved on base of the current html content of the box:
     paths = nil,
     prev_item_callback = nil,
+    side_buttons = nil,
+    side_buttons_navigator = nil,
+    side_buttons_width = Screen:scaleBySize(135),
     tabs_table_buttons = nil,
     title = nil,
     title_alignment = "left",
@@ -125,12 +130,14 @@ function HtmlBox:init()
     self:generateTitleBar()
     self:setPaddingAndSpacing()
     self:computeLineHeight()
+    self:generateSideButtonTables()
     self:generateButtonTables()
     self:setMargins()
     self:computeAvailableHeight()
     self:generateTabsTable()
     self:setSeparator()
     self:computeHeights()
+    self:generateInfoPanel()
     self:generateScrollWidget()
     self:generateWidget()
     self:finalizeWidget()
@@ -327,19 +334,51 @@ function HtmlBox:getHtmlBoxCss()
     return css
 end
 
---* Used in init & update to instantiate the Scroll*Widget that self.text_widget points to
+--- @private
+function HtmlBox:generateInfoPanel()
+    if not self.button_table_side then
+        --* for consumption in ((HtmlBox#generateScrollWidget)):
+        self.swidth = self.content_width
+        self.sheight = self.content_height
+        return
+    end
+
+    local width = self.content_width - self.button_table_side:getSize().w
+    local height = self.content_height
+    --* info_text was generated in ((XrayDialogs#showPageXrayItemsNavigator)) > ((XrayViewsData#markItemsFoundInPageHtml)) > ((XrayViewsData#markItem)) > ((XrayViewsData#getItemInfoText)):
+    local info_text = self.info_panel_text or " "
+    self.info_panel = ScrollTextWidget:new{
+        text = info_text,
+        face = Font:getFace("x_smallinfofont", 14),
+        line_height = 0.16,
+        alignment = "left",
+        justified = false,
+        dialog = self,
+        width = width,
+        height = math.floor(Screen:getHeight() * 0.18),
+    }
+    self.info_panel_separator = LineWidget:new{
+        background = KOR.colors.line_separator,
+        dimen = Geom:new{
+            w = width,
+            h = Size.line.thick,
+        }
+    }
+    height = height - self.info_panel:getSize().h - self.info_panel_separator:getSize().h
+    --* for consumption in ((HtmlBox#generateScrollWidget)):
+    self.swidth = width
+    self.sheight = height
+end
+
+--* Used in init & update to instantiate the Scroll*Widget that self.html_widget points to
 --- @private
 function HtmlBox:generateScrollWidget()
-    local width = self.content_width
-    if self.buttons_table_side then
-        width = width - self.button_table_side:getSize().w
-    end
-    self.text_widget = ScrollHtmlWidget:new{
+    self.html_widget = ScrollHtmlWidget:new{
         html_body = self.html,
         css = self:getHtmlBoxCss(),
         default_font_size = Screen:scaleBySize(self.box_font_size),
-        width = width,
-        height = self.content_height,
+        width = self.swidth,
+        height = self.sheight,
         dialog = self,
     }
 end
@@ -659,6 +698,47 @@ function HtmlBox:computeLineHeight()
     end
 end
 
+function HtmlBox:generateSideButtonTables()
+    if not self.side_buttons then
+        return
+    end
+    self.button_table_side_navigator = ButtonTable:new{
+        width = self.side_buttons_width,
+        buttons = self.side_buttons_navigator,
+        show_parent = self,
+        button_font_weight = "normal",
+    }
+    self.button_table_side_separator = LineWidget:new{
+        background = KOR.colors.line_separator,
+        dimen = Geom:new{
+            w = self.side_buttons_width,
+            h = Size.line.medium,
+        }
+    }
+    if has_no_items(self.side_buttons) then
+        self.button_table_side = ScrollTextWidget:new{
+            text = " ",
+            face = Font:getFace("x_smallinfofont", 14),
+            line_height = 0.16,
+            alignment = "left",
+            justified = false,
+            dialog = self,
+            width = self.side_buttons_width,
+            height = math.floor(Screen:getHeight() * 0.18),
+        }
+
+        return
+    end
+    self.button_table_side = ButtonTable:new{
+        width = self.side_buttons_width,
+        button_font_face = "x_smallinfofont",
+        button_font_size = 14,
+        buttons = self.side_buttons,
+        show_parent = self,
+        button_font_weight = "normal",
+    }
+end
+
 --- @private
 function HtmlBox:generateButtonTables()
 
@@ -674,7 +754,7 @@ function HtmlBox:generateButtonTables()
                 id = "top",
                 vsync = true,
                 callback = function()
-                    self.text_widget:scrollToTop()
+                    self.html_widget:scrollToTop()
                 end,
             },
             {
@@ -682,7 +762,7 @@ function HtmlBox:generateButtonTables()
                 id = "bottom",
                 vsync = true,
                 callback = function()
-                    self.text_widget:scrollToBottom()
+                    self.html_widget:scrollToBottom()
                 end,
             },
             {
@@ -714,17 +794,6 @@ function HtmlBox:generateButtonTables()
         show_parent = self,
         button_font_weight = "normal",
     }
-
-    if self.buttons_table_side then
-        self.button_table_side = ButtonTable:new{
-            width = Screen:scaleBySize(80),
-            button_font_face = "redhat",
-            button_font_size = 14,
-            buttons = self.buttons_table_side,
-            show_parent = self,
-            button_font_weight = "normal",
-        }
-    end
 end
 
 --- @private
@@ -764,9 +833,27 @@ end
 --- @private
 function HtmlBox:addFrameToContentWidget()
     if self.button_table_side then
-
+        local spacer_width = self.avail_height - self.button_table_side:getSize().h - self.button_table_side_navigator:getSize().h - self.box_title:getSize().h - 2 * self.content_padding_v
+        local has_side_buttons = #self.side_buttons > 0
+        if has_side_buttons then
+            spacer_width = spacer_width - self.button_table_side_separator:getSize().h
+        end
         local bottom_padding = VerticalSpan:new{
-            width = self.avail_height - self.button_table_side:getSize().h - self.box_title:getSize().h - self.button_table:getSize().h - 2 * self.content_padding_v
+            width = spacer_width
+        }
+        local side_panel = has_side_buttons and VerticalGroup:new{
+            align = "left",
+            self.button_table_side,
+            self.button_table_side_separator,
+            bottom_padding,
+            self.button_table_side_navigator,
+        }
+        or
+        VerticalGroup:new{
+            align = "left",
+            self.button_table_side,
+            bottom_padding,
+            self.button_table_side_navigator,
         }
         self.content_widget = FrameContainer:new{
             padding = 0,
@@ -781,11 +868,18 @@ function HtmlBox:addFrameToContentWidget()
                 },
                 HorizontalGroup:new{
                     align = "center",
-                    self.text_widget,
                     VerticalGroup:new{
                         align = "left",
-                        self.button_table_side,
-                        bottom_padding,
+                        self.html_widget,
+                        self.info_panel_separator,
+                        self.info_panel,
+                    },
+                    FrameContainer:new{
+                        padding = 0,
+                        margin = 0,
+                        color = KOR.colors.line_separator,
+                        bordersize = Size.line.medium,
+                        side_panel,
                     }
                 }
             },
@@ -799,7 +893,7 @@ function HtmlBox:addFrameToContentWidget()
         padding_right = self.content_padding_h,
         margin = 0,
         bordersize = 0,
-        self.text_widget,
+        self.html_widget,
     }
 end
 
@@ -1069,12 +1163,14 @@ function HtmlBox:generateWidget()
     self:addFrameToContentWidget()
     if self.is_fullscreen then
         self:generateFullScreenWidget()
+        self:generateMovableContainer()
+        return
+    end
+
+    if self.no_buttons_row then
+        self:generateNoButtonsRowWidget()
     else
-        if self.no_buttons_row then
-            self:generateNoButtonsRowWidget()
-        else
-            self:generateButtonsRowWidget()
-        end
+        self:generateButtonsRowWidget()
     end
     self:generateMovableContainer()
 end

@@ -45,6 +45,7 @@ local tapped_words
 local XrayViewsData = WidgetContainer:new {
     active_list_tab = 1,
     alias_indent = "  ",
+    cached_hits = {},
     chapter_page_number_format = "<span style='font-size: 80%; color: #888888;'> [p.%1]</span>",
     chapter_props = {},
     chapters_start_pages_ordered = {},
@@ -61,7 +62,9 @@ local XrayViewsData = WidgetContainer:new {
     list_display_mode = "series", --* or "book"
     max_line_length = 64,
     new_item_hits = nil,
+    page_navigator_filter_item = nil,
     persons = {},
+    prev_marked_item = nil,
     --* this prop can be modified with the checkbox in ((XrayDialogs#showFilterDialog)):
     search_simple = false,
     terms = {},
@@ -239,6 +242,7 @@ function XrayViewsData:_returnCachedHits(item, for_display_mode)
     return item.book_hits, item.chapter_hits, item.series_hits
 end
 
+--- @private
 function XrayViewsData:addItemToPersonsOrTerms(item)
     local item_copy = KOR.tables:shallowCopy(item)
     if item.xray_type <= 2 then
@@ -260,9 +264,9 @@ function XrayViewsData:repopulateItemsPersonsTerms(item)
 
     for i = 1, count do
         --! watch out: this table MIGHT be filtered and in that have less items then self.item_table:
-        --* item is not given when updating the tables after importing items via ((XrayController#doBatchImport)):
-        if item and self.items[i].id == item.id then
-            if self.items[i].id == item.id then
+        if self.items[i] and self.items[i].id then
+            --* item is not given when updating the tables after importing items via ((XrayController#doBatchImport)):
+            if item and self.items[i].id == item.id then
                 self.items[i] = item
                 self.current_item = item
                 self.items[i].callback = function()
@@ -859,14 +863,14 @@ function XrayViewsData:addMentionedInHtml(meta_info_html, item)
     --* "|" was used for GROUP_CONCAT in query:
     local list = KOR.strings:split(item.mentioned_in, "|")
     list = table.concat(list, "<br>")
-    table.insert(meta_info_html, T(self.item_meta_info_template, "Mentioned in:", list))
+    table.insert(meta_info_html, T(self.item_meta_info_template, _("Mentioned in") .. ":", list))
 end
 
 --- @private
 --- @param meta_info_html table
 function XrayViewsData:addHitsHtml(meta_info_html, item)
     if parent.current_series and item.series_hits then
-        table.insert(meta_info_html, T(self.item_meta_info_template, _("Hits in series:"), tonumber(item.series_hits)))
+        table.insert(meta_info_html, T(self.item_meta_info_template, _("Hits in series") .. ":", tonumber(item.series_hits)))
     end
     if item.book_hits then
         table.insert(meta_info_html, T(self.item_meta_info_template, _("Hits in book") .. ":", tonumber(item.book_hits)))
@@ -899,6 +903,36 @@ function XrayViewsData:getItemInfoHtml(item, ucfirst)
     return info, T(_("<span style='font-size: 90%'>An %1 marks the highest number of hits in the current book...</span>"), KOR.icons.arrow_left_bare) .. item.chapter_hits
 end
 
+--* this info will be consumed for the info panel in ((HtmlBox#generateScrollWidget)):
+--- @private
+function XrayViewsData:getItemInfoText(item)
+    --* the reliability_indicators were added in ((XrayUI#getXrayItemsFoundInText)) > ((XrayUI#matchNameInPageOrParagraph)) and ((XrayUI#matchAliasesToParagraph)):
+    local reliability_indicator = item.reliability_indicator and item.reliability_indicator .. " " or ""
+    local info = "\n" .. reliability_indicator .. item.name .. ": " .. item.description .. "\n"
+    if has_text(item.aliases) then
+        info = info .. "\n " .. KOR.icons.xray_alias_bare .. " " .. item.aliases
+    end
+    if has_text(item.linkwords) then
+        return info .. "\n " .. KOR.icons.xray_link_bare .. " " .. item.linkwords
+    end
+    return info
+end
+
+function XrayViewsData:generateInfoPanelTextIfMissing(side_buttons, info_panel_text)
+    if info_panel_text or not side_buttons or not side_buttons[1] then
+        return info_panel_text
+    end
+
+    local first_item = side_buttons[1][1]
+    --* this prop was set in ((XrayViewsData#markItem)):
+    info_panel_text = self.first_info_panel_text or self:getItemInfoText(first_item)
+    self.first_info_panel_text = info_panel_text
+    self.first_info_panel_item_name = first_item.name
+    side_buttons[1][1].text = KOR.icons.active_tab_bare .. side_buttons[1][1].text
+
+    return info_panel_text
+end
+
 function XrayViewsData:getItemTypeIcon(item, bare)
     item.xray_type = tonumber(item.xray_type)
     if not item.xray_type or item.xray_type < 1 or item.xray_type > 4 then
@@ -917,13 +951,7 @@ function XrayViewsData:generateListItemText(item, reliability_indicator)
 
     --* in series mode we want the list to show the total count of items for the whole series, instead of only for the current book:
     local hits = self.list_display_mode == "series" and item.series_hits or item.book_hits
-    local hits_info = has_items(hits)
-            --* self.current_title was set in ((XrayViewsData#initData)) > ((XrayModel#setTitleAndSeries)) > ((XrayDataLoader#loadAllItems)):
-            --[[and has_content(item.mentioned_in)
-            and self.current_title
-            and item.mentioned_in:match(self.current_title)]]
-            and " (" .. hits .. ")"
-            or ""
+    local hits_info = has_items(hits) and " (" .. hits .. ")" or ""
 
     if not reliability_indicator then
         reliability_indicator = ""
@@ -1057,6 +1085,94 @@ function XrayViewsData:getChapterHitsPerTerm(term, chapter_stats, chapters_order
     return total_count
 end
 
+function XrayViewsData:resultsPageGreaterThan(results, current_page, next_page)
+    local page_no
+    if has_items(results) then
+        count = #results
+        local last_occurrence = KOR.document:getPageFromXPointer(results[count].start)
+        if current_page == last_occurrence then
+            return
+        end
+        for i = 1, count do
+            page_no = KOR.document:getPageFromXPointer(results[i].start)
+            if page_no > current_page and (not next_page or page_no < next_page) then
+                return page_no
+            end
+        end
+    end
+end
+
+function XrayViewsData:resultsPageSmallerThan(results, current_page, prev_page)
+    local page_no
+    if has_items(results) then
+        count = #results
+        local first_occurrence = KOR.document:getPageFromXPointer(results[1].start)
+        if current_page == first_occurrence then
+            return
+        end
+        for i = count, 1, -1 do
+            page_no = KOR.document:getPageFromXPointer(results[i].start)
+            if page_no < current_page and (not prev_page or page_no > prev_page) then
+                return page_no
+            end
+        end
+    end
+end
+
+function XrayViewsData:getNextPageHitForTerm(item, current_page)
+    --- @type CreDocument document
+    local document = KOR.ui.document
+    local results, needle, case_insensitive
+    --* if applicable, we only search for first names (then probably more accurate hits count):
+    needle = parent:getRealFirstOrSurName(item)
+    --* for lowercase needles (terms instead of persons), we search case insensitive:
+    case_insensitive = not needle:match("[A-Z]")
+
+    --! using document:findAllTextWholeWords instead of document:findAllText here crucial to get exact hits count:
+    results = self.cached_hits[needle] or document:findAllTextWholeWords(needle, case_insensitive, 0, 3000, false)
+    self.cached_hits[needle] = results
+    local next_page = self:resultsPageGreaterThan(results, current_page)
+
+    local search_for_aliases = has_text(item.aliases)
+    if search_for_aliases then
+        local aliases = parent:splitByCommaOrSpace(item.aliases)
+        local aliases_count = #aliases
+        for a = 1, aliases_count do
+            results = document:findAllTextWholeWords(aliases[a], case_insensitive, 0, 3000, false)
+            next_page = self:resultsPageGreaterThan(results, current_page, next_page)
+        end
+    end
+
+    return next_page
+end
+
+function XrayViewsData:getPreviousPageHitForTerm(item, current_page)
+    --- @type CreDocument document
+    local document = KOR.ui.document
+    local results, needle, case_insensitive
+    --* if applicable, we only search for first names (then probably more accurate hits count):
+    needle = parent:getRealFirstOrSurName(item)
+    --* for lowercase needles (terms instead of persons), we search case insensitive:
+    case_insensitive = not needle:match("[A-Z]")
+
+    --! using document:findAllTextWholeWords instead of document:findAllText here crucial to get exact hits count:
+    results = self.cached_hits[needle] or document:findAllTextWholeWords(needle, case_insensitive, 0, 3000, false)
+    self.cached_hits[needle] = results
+    local prev_page = self:resultsPageSmallerThan(results, current_page)
+
+    local search_for_aliases = has_text(item.aliases)
+    if search_for_aliases then
+        local aliases = parent:splitByCommaOrSpace(item.aliases)
+        local aliases_count = #aliases
+        for a = 1, aliases_count do
+            results = document:findAllTextWholeWords(aliases[a], case_insensitive, 0, 3000, false)
+            prev_page = self:resultsPageSmallerThan(results, current_page, prev_page)
+        end
+    end
+
+    return prev_page
+end
+
 --* called from ((XrayViewsData#prepareData)):
 --- @private
 function XrayViewsData:indexItems(new_item)
@@ -1183,10 +1299,16 @@ function XrayViewsData:registerUpdatedItem(updated_item)
     self:updateAndSortAllItemTables(updated_item)
 end
 
+function XrayViewsData:setItems(items)
+    self.items = items
+end
+
+--- @private
 function XrayViewsData:isSingularOrPluralMatch(needle, haystack_name)
     return needle == haystack_name or needle == haystack_name .. "s"
 end
 
+--- @private
 function XrayViewsData:haystackItemPartlyMatches(needle, haystack, uc_haystack, is_lower_haystack)
     local parts = KOR.strings:split(haystack, " +")
     local uc_parts
@@ -1207,8 +1329,116 @@ function XrayViewsData:haystackItemPartlyMatches(needle, haystack, uc_haystack, 
     return false
 end
 
-function XrayViewsData:setItems(items)
-    self.items = items
+function XrayViewsData:markItemsFoundInPageHtml(html, navigator_page_no, marker_name)
+    local buttons = {}
+    self.navigator_page_no = navigator_page_no
+    self.first_info_panel_text = nil
+    self.marker_name = marker_name
+
+    local hits = DX.u:getXrayItemsFoundInText(html)
+    if not hits then
+        return html, buttons
+    end
+    count = #hits
+
+    self.prev_marked_item = nil
+    for i = 1, count do
+        html = self:markItemsInHtml(html, buttons, hits[i])
+    end
+    return html, buttons
+end
+
+function XrayViewsData:markItemsInHtml(html, buttons, item)
+    if item.name == self.prev_marked_item then
+        return html
+    end
+    self.prev_marked_item = item.name
+
+    local subject
+    for l = 1, 2 do
+        if l == 2 and not has_text(item.aliases) then
+            return html
+        end
+        subject = l == 1 and item.name or item.aliases
+        html = self:markItem(item, subject, html, buttons)
+    end
+    return html
+end
+
+--- @private
+function XrayViewsData:markItem(item, subject, html, buttons)
+    local is_term, lc, uc, matcher, matcher_esc
+    local parts, parts_count, item_name
+
+    subject = KOR.strings:trim(subject)
+    item_name = KOR.strings:trim(item.name)
+    if item.reliability_indicator == DX.tw.match_reliability_indicators.full_name then
+        matcher_esc = item.name:gsub("%-", "%%-")
+        html = html:gsub(matcher_esc, "<strong>" .. item.name .. "</strong>")
+    end
+
+    parts = KOR.strings:split(subject, ",? ")
+    parts_count = #parts
+    for i = 1, parts_count do
+        uc = parts[i]
+        is_term = item.xray_type > 2
+        if is_term and i == 1 then
+            uc = KOR.strings:ucfirst(parts[i])
+        end
+
+        matcher_esc = uc:gsub("%-", "%%-")
+        matcher = "%f[%w_]" .. matcher_esc .. "%f[^%w_]"
+        if html:match(matcher) then
+            --* return html and add item to buttons:
+            return self:markedItemRegister(item, html, buttons, matcher_esc)
+
+            --* for terms we also try to find lowercase variants of their names:
+        elseif is_term then
+            lc = KOR.strings:lower(parts[i])
+            matcher_esc = lc:gsub("%-", "%%-")
+            matcher = "%f[%w_]" .. matcher_esc .. "%f[^%w_]"
+            if html:match(matcher) then
+                --* return html and add item to buttons:
+                return self:markedItemRegister(item, html, buttons, matcher_esc)
+            end
+        end
+    end
+    return html
+end
+
+--- @private
+function XrayViewsData:markedItemRegister(item, html, buttons, matcher_esc)
+    local marker = KOR.icons.active_tab_bare
+    local replacer = "%f[%w_](" .. matcher_esc .. ")%f[^%w_]"
+    html = html:gsub(replacer, "<strong>%1</strong>")
+    local info_text = self:getItemInfoText(item)
+    if info_text and not self.first_info_panel_text then
+        self.first_info_panel_text = info_text
+        self.first_info_panel_item_name = item.name
+    end
+    table.insert(buttons, {{
+        text = (self.page_navigator_filter_item and item.name == self.page_navigator_filter_item.name and KOR.icons.filter .. item.name) or (item.name == self.marker_name and marker .. item.name) or item.name,
+        align = "left",
+        callback = function()
+            self:reloadPageNavigator(item, info_text)
+        end,
+        --* for marking or unmarking an item as filter criterium:
+        hold_callback = function()
+            if self.page_navigator_filter_item and self.page_navigator_filter_item.name == item.name then
+                self.page_navigator_filter_item = nil
+                self:reloadPageNavigator(item, info_text)
+                return
+            end
+            self.page_navigator_filter_item = item
+            self:reloadPageNavigator(item, info_text)
+        end,
+    }})
+    return html
+end
+
+--- @private
+function XrayViewsData:reloadPageNavigator(item, info_text)
+    DX.d:showPageXrayItemsNavigator(self.navigator_page_no, info_text, item.name)
 end
 
 function XrayViewsData:setFilterTypes(filter_types)
