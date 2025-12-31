@@ -856,12 +856,12 @@ function Button:generateTextLabel(label)
 
     -- #((mark active tab bold))
     --* ((TabFactory#setTabButtonAndContent)) can set this prop:
-    if self.is_active_tab then
+    if self.is_active_tab or (label.text and label.text:match(KOR.icons.active_tab_bare)) then
         font_size = font_size * 1.1
         is_bold = true
 
     --* force non active tab button to not be bold; this prop also set by ((TabFactory#setTabButtonAndContent)):
-    elseif self.is_tab_button then
+    elseif self.is_tab_button and not self.is_active_tab then
         is_bold = false
     end
 
