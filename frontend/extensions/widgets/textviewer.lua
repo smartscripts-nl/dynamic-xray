@@ -1175,7 +1175,7 @@ function TextViewer:getDefaultButtons()
         },
     }
     if self.paragraph_headings then
-        DX.b:forXrayUiInfo(default_buttons)
+        DX.b:forXrayUiInfo(self, default_buttons)
     end
 
     return default_buttons

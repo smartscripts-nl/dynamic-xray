@@ -230,7 +230,7 @@ function XrayButtons:forXrayPageNavigator(parent)
  }}
 end
 
-function XrayButtons:forXrayUiInfo(buttons)
+function XrayButtons:forXrayUiInfo(parent, buttons)
     -- #((TextViewer toc button))
     --* the items for this and the next two buttons were generated in ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)):
     --* compare the buttons for Xray items list as injected in ((inject xray list buttons)):
@@ -239,19 +239,19 @@ function XrayButtons:forXrayUiInfo(buttons)
 
     table.insert(buttons, 1, KOR.buttoninfopopup:forXrayItemsIndex({
         callback = function()
-            self:showToc()
+            parent:showToc()
         end,
     }))
     table.insert(buttons, 2, KOR.buttoninfopopup:forXrayPreviousItem({
         id = "previ",
         callback = function()
-            self:blockUp()
+            parent:blockUp()
         end,
     }))
     table.insert(buttons, 3, KOR.buttoninfopopup:forXrayNextItem({
         id = "nexti",
         callback = function()
-            self:blockDown()
+            parent:blockDown()
         end,
     }))
     table.insert(buttons, 1, KOR.buttoninfopopup:forXrayPageNavigator({
