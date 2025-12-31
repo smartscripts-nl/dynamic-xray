@@ -106,7 +106,7 @@ end
 function SettingsManager:removeSettingsFromTemplate()
     local settings_were_deleted = false
     for key in pairs(self.settings) do
-        if not self.parent.settings_template[key] then
+        if not self.parent.settings_template[key] and key ~= "database_filename" then
             self.settings[key] = nil
             settings_were_deleted = true
         end
