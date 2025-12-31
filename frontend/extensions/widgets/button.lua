@@ -860,14 +860,14 @@ function Button:generateTextLabel(label)
         font_size = font_size * 1.1
         is_bold = true
 
-        --* force non active tab button to not be bold; this prop also set by ((TabFactory#setTabButtonAndContent)):
+    --* force non active tab button to not be bold; this prop also set by ((TabFactory#setTabButtonAndContent)):
     elseif self.is_tab_button then
         is_bold = false
     end
 
-    local index = self.text_font_size .. font_size
-    local face = self.font_cache[index] or Font:getFace(self.text_font_face, font_size)
-    self.font_cache[index] = face
+    --local index = self.text_font_face .. font_size
+    local face = Font:getFace(self.text_font_face, font_size) --self.font_cache[index] or
+    --self.font_cache[index] = face
 
     local label_widget = TextWidget:new{
         text = label.text,

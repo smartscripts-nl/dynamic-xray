@@ -522,6 +522,10 @@ function Font:getDefaultDialogFontFace(add_size)
 end
 
 function Font:getFontFamily(family, fontsize)
+    --* alas, this font cannot be loaded under Ubuntu, freezes KOReader:
+    if family == "redhat" then
+        family = "x_smallinfofont"
+    end
     local fontfamily
     local profiles_file = DataStorage:getSettingsDir() .. "/profiles.lua"
     local profiles = LuaSettings:open(profiles_file)

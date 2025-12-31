@@ -866,8 +866,6 @@ end
 
 --- @private
 function XrayButtons:getListSubmenuButton(tab_no)
-
-
     local counts = DX.m.tab_display_counts
 
     local active_marker = KOR.icons.active_tab_bare
@@ -1245,10 +1243,10 @@ function XrayButtons:forListSubmenu()
         width = Screen:getWidth(),
         button_font_face = "x_smallinfofont",
         button_font_size = 17,
+        button_font_weight = "normal",
         buttons = buttons,
         zero_sep = true,
         show_parent = DX.c,
-        button_font_weight = "normal",
     }
 end
 

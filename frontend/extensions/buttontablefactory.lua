@@ -166,7 +166,7 @@ function ButtonTableFactory:getTabsTable(parent)
 		width = parent.width,
 		buttons = parent.tabs_table_buttons,
 		button_font_face = "x_smallinfofont",
-		button_font_size = 13,
+		button_font_size = 17,
 		button_font_weight = "normal",
 		decrease_top_padding = 0,
 		padding = 0,

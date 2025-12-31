@@ -258,13 +258,18 @@ function ButtonTable:generateButton(btn_entry, max_button_height, default_button
     if not btn_entry.width then
         config.width = default_button_width
     end
-    config.text_font_face = btn_entry.text_font_face or self.button_font_face
     config.align = btn_entry.align or "center"
     config.button_lines = self.button_lines
     config.text_font_size = btn_entry.font_size or self.button_font_size
     config.decrease_top_padding = self.decrease_top_padding
     config.increase_top_padding = self.increase_top_padding
+
+    config.text_font_face = btn_entry.text_font_face or self.button_font_face
+    config.is_active_tab = btn_entry.is_active_tab
+    config.is_tab_button = btn_entry.is_tab_button
+    config.text_font_size = btn_entry.text_font_size
     config.text_font_bold = is_bold
+
     config.bordersize = 0
     config.margin = 0
     config.padding = Size.padding.buttontable --* a bit taller than standalone buttons, for easier tap

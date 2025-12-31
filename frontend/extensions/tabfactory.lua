@@ -1,7 +1,7 @@
 
 --local require = require
 
---local KOR = require("extensions/kor")
+local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 
 local table = table
@@ -29,8 +29,8 @@ function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
     if args.tabs_as_table == nil then
         args.tabs_as_table = true
         args.tab_buttons_font = "x_smallinfofont"
-        args.tab_buttons_font_size = 14
-        args.tab_buttons_bold = false
+        args.tab_buttons_font_size = 12
+        args.tab_buttons_font_bold = false
     end
 
     local count
@@ -61,7 +61,9 @@ function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
                 is_target_tab = args.tabs[current].is_target_tab,
                 text_font_face = args.tab_buttons_font,
                 text_font_size = args.tab_buttons_font_size,
-                button_font_weight = args.tab_buttons_bold,
+                text_font_bold = args.tab_buttons_font_bold,
+                font_bold = args.tab_buttons_font_bold,
+                fgcolor = active_tab == current and KOR.colors.active_tab or KOR.colors.inactive_tab,
 
                 --* these two props can be set using ((ButtonProps#getButtonState)):
                 --* see also ((TabNavigator)) > ((generate tab navigation event handlers)), where the key event for activating a disabled tab is also disabled:
