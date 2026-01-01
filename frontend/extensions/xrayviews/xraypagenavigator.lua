@@ -61,7 +61,7 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text,
     if not self.navigator_page_no then
         self.navigator_page_no = DX.u:getCurrentPage()
         if not self.navigator_page_no then
-            KOR.messages:notify("pagina kon niet worden bepaald")
+            KOR.messages:notify(_("page could not be determined..."))
             return
         end
     end
@@ -147,7 +147,7 @@ function XrayPageNavigator:toNextNavigatorPage()
         local next_page = self:getNextPageHitForTerm(self.page_navigator_filter_item, self.navigator_page_no)
         if not next_page or next_page == self.navigator_page_no then
             self.no_navigator_page_found = true
-            KOR.messages:notify("geen volgende vermelding van dit item meer gevonden...")
+            KOR.messages:notify(_("no next mention of this item found..."))
             return
         end
         self.navigator_page_no = next_page
@@ -173,7 +173,7 @@ function XrayPageNavigator:toPrevNavigatorPage()
         local previous_page = self:getPreviousPageHitForTerm(self.page_navigator_filter_item, self.navigator_page_no)
         if not previous_page or previous_page == self.navigator_page_no then
             self.no_navigator_page_found = true
-            KOR.messages:notify("geen vorige vermelding van dit item meer gevonden...")
+            KOR.messages:notify(_("no previous mention of this item found..."))
             return
         end
         self.navigator_page_no = previous_page
@@ -375,7 +375,6 @@ end
 
 --- @private
 function XrayPageNavigator:getNextPageHitForTerm(item, current_page)
-    --- @type CreDocument document
     local document = KOR.ui.document
     local results, needle, case_insensitive
     --* if applicable, we only search for first names (then probably more accurate hits count):
@@ -403,7 +402,6 @@ end
 
 --- @private
 function XrayPageNavigator:getPreviousPageHitForTerm(item, current_page)
-    --- @type CreDocument document
     local document = KOR.ui.document
     local results, needle, case_insensitive
     --* if applicable, we only search for first names (then probably more accurate hits count):
