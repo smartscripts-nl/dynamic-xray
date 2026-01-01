@@ -2,14 +2,15 @@
 --[[--
 This is the controller for the Dynamic Xray plugin. It has been structured in kind of a MVC structure:
 M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
-V = ((XrayUI)), ((XrayTranslations)), ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
+V = ((XrayUI)), ((XrayPageNavigator)), ((XrayTranslations)) and ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
 
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
 
-The views layer has two main streams:
+The views layer has three main streams:
 1) XrayUI, which is only responsible for displaying tappable xray markers (lightning or star icons) in the ebook text;
 2) XrayDialogs and XrayButtons, which are responsible for displaying dialogs and interaction with the user.
+3) Worthy to be specially mentioned is XrayPageNavigator, which offers the user the most Kindle-like experience: navigating through pages, with Xray items marked bold and button with which to show explanations of the items in the bottom panel.
 When the ebook text is displayed, XrayUI has done its work and finishes. Only after actions by the user (e.g. tapping on an xray item in the book), XrayDialogs will be activated.
 
 The user will have the most Kindle-like experience when he/she opens the Page Navigator - see ((XrayController#onShowPageNavigator)). In this navigator all Xray items in a page will be marked bold and they will be mentioned in a side panel. Tapping on items in the side panel will put an explanation of that item in the bottom panel. You can even filter the content of the Navigator for a specific Xray item, so it will only show pages which contain that item.
@@ -107,6 +108,7 @@ KOR:initBaseExtensions()
 --- @field ds XrayDataSaver
 --- @field fd XrayFormsData
 --- @field m XrayModel
+--- @field pn XrayPageNavigator
 --- @field s XraySettings
 --- @field t XrayTranslations
 --- @field tm XrayTranslationsManager
@@ -128,6 +130,8 @@ DX = {
     fd = nil,
     --* shorthand notation for Model:
     m = nil,
+    --* shorthand notation for PageNavigator:
+    pn = nil,
     --* shorthand notation for Settings; this module will be initialized in ((KOR#initEarlyExtensions)):
     s = nil,
     --* shorthand notation for Translations; this module will be initialized in ((XrayModel#initDataHandlers)):
@@ -383,7 +387,7 @@ end
 
 function XrayController:showPageNavigator()
     local current_epage = DX.u:getCurrentPage()
-    DX.d:showPageXrayItemsNavigator(current_epage)
+    DX.pn:showNavigator(current_epage)
 end
 
 --- @param mode string "series" or "book"

@@ -10,7 +10,7 @@ XrayDataLoader is mainly concerned with retrieving data FROM the database, while
 
 The views layer has two main streams:
 1) XrayUI, which is only responsible for displaying tappable xray markers (lightning or star icons) in the ebook text;
-2) XrayDialogs and XrayButtons, which are responsible for displaying dialogs and interaction with the user.
+2) XrayPageNavigator, XrayDialogs and XrayButtons, which are responsible for displaying dialogs and interaction with the user.
 When the ebook text is displayed, XrayUI has done its work and finishes. Only after actions by the user (e.g. tapping on an xray item in the book), XrayDialogs will be activated.
 
 These modules are initialized in ((initialize Xray modules)) and ((XrayController#init)).
@@ -79,7 +79,6 @@ local XrayDialogs = WidgetContainer:new{
     list_is_opened = false,
     list_title = nil,
     needle_name_for_list_page = "",
-    no_navigator_page_found = false,
     other_fields_face = Font:getFace("x_smallinfofont", 19),
     -- #((Xray-item edit dialog: tab buttons in TitleBar))
     title_tab_buttons_left = { _(" xray-item "), _(" metadata ") },
@@ -133,99 +132,6 @@ function XrayDialogs:closeForm(mode)
         return true
     end
     return false
-end
-
-function XrayDialogs:showPageXrayItemsNavigator(initial_browsing_page, info_panel_text, marker_name)
-
-    if KOR.ui and KOR.ui.paging then
-        KOR.messages:notify("de pagina navigator is enkel beschikbaar in epubs etc...")
-        return
-    end
-
-    --! watch out: this is another var than navigator_page_no on the next line; if you make their names identical, then browsing to next or previous page is not possible anymore:
-    --* initial_browsing_page is the page on which you started using the Navigator, while self.navigator_page_no is the actual page you are viewing in the Navigator after browsing to other pages:
-    self.initial_browsing_page = initial_browsing_page
-    if not self.navigator_page_no then
-        self.navigator_page_no = DX.u:getCurrentPage()
-        if not self.navigator_page_no then
-            KOR.messages:notify("pagina kon niet worden bepaald")
-            return
-        end
-    end
-    --* this prop can be set in ((XrayDialogs#toNextNavigatorPage)) and ((XrayDialogs#toPrevNavigatorPage)):
-    if self.no_navigator_page_found then
-        self.no_navigator_page_found = false
-    else
-        self:closePageNavigator()
-    end
-    local side_buttons
-    local html = KOR.document:getPageHtml(self.navigator_page_no)
-    html, side_buttons = DX.vd:markItemsFoundInPageHtml(html, self.navigator_page_no, marker_name)
-
-    info_panel_text = DX.vd:generateInfoPanelTextIfMissing(side_buttons, info_panel_text)
-    --? for some reason sometimes buttons with same labels are duplicated; here we prune the duplications:
-    side_buttons = DX.b:pruneDuplicatedNavigatorButtons(side_buttons)
-
-    local screen_dims = Screen:getSize()
-    self.page_navigator = KOR.dialogs:htmlBox({
-        title = DX.m.current_title .. " - p." .. self.navigator_page_no,
-        html = html,
-        info_panel_text = info_panel_text,
-        window_size = "fullscreen",
-        no_buttons_row = true,
-        top_buttons_left = {
-            {
-                icon = "info-slender",
-                callback = function()
-                    KOR.dialogs:textBoxTabbed(1, {
-                        parent = self,
-                        modal = true,
-                        block_height_adaptation = true,
-                        height = screen_dims.h * 0.8,
-                        width = screen_dims.w * 0.7,
-                        --no_buttons_row = true,
-                        tabs = {
-                            {
-                                tab = _("Browsing"),
-                                info = _([[With the arrows in the right bottom corner you can browse through pages.
-
-If you have a (BT) keyboard, you can also browse with Space and Shift+Space. If you reach the end of a page, the viewer will jump to the next page if you press Space. If you reach the top of a page, then Shift+Space will take you to the previous page.
-
-With the target icon you can jump back to the page on which you started navigating through the pages.]])
-                            },
-                            {
-                                tab = _("Filtering"),
-                                info = _([[Tap on items in the side panel to see explantions of those items.
-
-FILTERED BROWSING
-
-If you longpress on an item in the side panel, that will be used as a filter criterium (a filter icon appears on the right side of it). After this the Navigator will only jump to the next or previous page where the filtered item is mentioned.
-
-RESETTING THE FILTER
-
-Longpress on the filtered item in the side panel.]])
-                            }
-                        },
-                    })
-                end
-            }
-        },
-        side_buttons = side_buttons,
-        side_buttons_navigator = DX.b:forXrayPageNavigator(self),
-        next_item_callback = function()
-            self:toNextNavigatorPage()
-        end,
-        prev_item_callback = function()
-            self:toPrevNavigatorPage()
-        end,
-    })
-end
-
-function XrayDialogs:closePageNavigator()
-    if self.page_navigator then
-        UIManager:close(self.page_navigator)
-        self.page_navigator = nil
-    end
 end
 
 function XrayDialogs:showRefreshHitsForCurrentEbookConfirmation()
@@ -1188,10 +1094,6 @@ end
 
 function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_item_search)
 
-    --KOR.debug:trace("XrayController:onShowXrayItem")
-
-    --KOR.debug:alertTable("viewItem", "items pre", DX.vd.items)
-
     if tapped_word then
         called_from_list = false
     end
@@ -1435,63 +1337,6 @@ function XrayDialogs:switchFocusFieldLoop(input_fields, last_field_no, focus_fie
         end
     end
     input_fields[focus_field_no]:onFocus()
-end
-
-function XrayDialogs:toCurrentNavigatorPage()
-    self.navigator_page_no = self.initial_browsing_page
-    self.no_navigator_page_found = false
-    self:showPageXrayItemsNavigator()
-end
-
-function XrayDialogs:toNextNavigatorPage()
-    local first_info_panel_text
-    --* navigation to next filtered item hit:
-    if DX.vd.page_navigator_filter_item then
-        local next_page = DX.vd:getNextPageHitForTerm(DX.vd.page_navigator_filter_item, self.navigator_page_no)
-        if not next_page or next_page == self.navigator_page_no then
-            self.no_navigator_page_found = true
-            KOR.messages:notify("geen volgende vermelding van dit item meer gevonden...")
-            return
-        end
-        self.navigator_page_no = next_page
-        first_info_panel_text = DX.vd:getItemInfoText(DX.vd.page_navigator_filter_item)
-
-    --* regular navigation:
-    else
-        self.navigator_page_no = self.navigator_page_no + 1
-        local epages = KOR.document:getPageCount()
-        if self.navigator_page_no >= epages then
-            self.navigator_page_no = epages
-            self.no_navigator_page_found = true
-            return
-        end
-    end
-    self:showPageXrayItemsNavigator(self.initial_browsing_page, first_info_panel_text)
-end
-
-function XrayDialogs:toPrevNavigatorPage()
-    local first_info_panel_text
-    --* navigation to previous filtered item hit:
-    if DX.vd.page_navigator_filter_item then
-        local previous_page = DX.vd:getPreviousPageHitForTerm(DX.vd.page_navigator_filter_item, self.navigator_page_no)
-        if not previous_page then
-            self.no_navigator_page_found = true
-            KOR.messages:notify("geen vorige vermelding van dit item meer gevonden...")
-            return
-        end
-        self.navigator_page_no = previous_page
-        first_info_panel_text = DX.vd:getItemInfoText(DX.vd.page_navigator_filter_item)
-
-    --* regular navigation:
-    else
-        self.navigator_page_no = self.navigator_page_no - 1
-        if self.navigator_page_no < 1 then
-            self.navigator_page_no = 1
-            self.no_navigator_page_found = true
-            return
-        end
-    end
-    self:showPageXrayItemsNavigator(self.initial_browsing_page, first_info_panel_text)
 end
 
 function XrayDialogs:showHelp(initial_tab)

@@ -58,6 +58,7 @@ local cre --* Delayed loading
 local DX = DX
 local error = error
 local G_reader_settings = G_reader_settings
+local has_no_items = has_no_items
 local has_no_text = has_no_text
 local has_text = has_text
 local math = math
@@ -755,7 +756,7 @@ function ReaderSearch:searchCallback(reverse, xray_item_or_highlight_text, case_
         end
         UIManager:show(InfoMessage:new{ text = error_message })
 
-        --* no regex error:
+    --* no regex error:
     else
         --* when searchAllText triggered from XrayController plugin context menu, there is no input menu to be closed:
         if not xray_item_or_highlight_text then

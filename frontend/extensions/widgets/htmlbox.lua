@@ -345,7 +345,7 @@ function HtmlBox:generateInfoPanel()
 
     local width = self.content_width - self.button_table_side:getSize().w
     local height = self.content_height
-    --* info_text was generated in ((XrayDialogs#showPageXrayItemsNavigator)) > ((XrayViewsData#markItemsFoundInPageHtml)) > ((XrayViewsData#markItem)) > ((XrayViewsData#getItemInfoText)):
+    --* info_text was generated in ((((XrayPageNavigator#showNavigator)))) > ((XrayViewsData#markItemsFoundInPageHtml)) > ((XrayViewsData#markItem)) > ((XrayViewsData#getItemInfoText)):
     local info_text = self.info_panel_text or " "
     self.info_panel = ScrollTextWidget:new{
         text = info_text,

@@ -3,14 +3,14 @@ This extension is part of the Dynamic Xray plugin; its task is the management of
 
 The Dynamic Xray plugin has kind of a MVC structure:
 M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
-V = ((XrayUI)), ((XrayTranslations)), ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
+V = ((XrayUI)), ((XrayPageNavigator)), ((XrayTranslations)) and ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
 
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
 
 The views layer has two main streams:
 1) XrayUI, which is only responsible for displaying tappable xray markers (lightning or star icons) in the ebook text;
-2) XrayDialogs and XrayButtons, which are responsible for displaying dialogs and interaction with the user.
+2) XrayPageNavigator, XrayDialogs and XrayButtons, which are responsible for displaying dialogs and interaction with the user.
 When the ebook text is displayed, XrayUI has done its work and finishes. Only after actions by the user (e.g. tapping on an xray item in the book), XrayDialogs will be activated.
 
 These modules are initialized in ((initialize Xray modules)) and ((XrayController#init)).
@@ -62,9 +62,7 @@ local XrayViewsData = WidgetContainer:new {
     list_display_mode = "series", --* or "book"
     max_line_length = 64,
     new_item_hits = nil,
-    page_navigator_filter_item = nil,
     persons = {},
-    prev_marked_item = nil,
     --* this prop can be modified with the checkbox in ((XrayDialogs#showFilterDialog)):
     search_simple = false,
     terms = {},
@@ -908,12 +906,13 @@ end
 function XrayViewsData:getItemInfoText(item)
     --* the reliability_indicators were added in ((XrayUI#getXrayItemsFoundInText)) > ((XrayUI#matchNameInPageOrParagraph)) and ((XrayUI#matchAliasesToParagraph)):
     local reliability_indicator = item.reliability_indicator and item.reliability_indicator .. " " or ""
+    local sub_info_separator = "\n     "
     local info = "\n" .. reliability_indicator .. item.name .. ": " .. item.description .. "\n"
     if has_text(item.aliases) then
-        info = info .. "\n " .. KOR.icons.xray_alias_bare .. " " .. item.aliases
+        info = info .. sub_info_separator .. KOR.icons.xray_alias_bare .. " " .. item.aliases
     end
     if has_text(item.linkwords) then
-        return info .. "\n " .. KOR.icons.xray_link_bare .. " " .. item.linkwords
+        return info .. sub_info_separator .. KOR.icons.xray_link_bare .. " " .. item.linkwords
     end
     return info
 end
@@ -1327,118 +1326,6 @@ function XrayViewsData:haystackItemPartlyMatches(needle, haystack, uc_haystack, 
         end
     end
     return false
-end
-
-function XrayViewsData:markItemsFoundInPageHtml(html, navigator_page_no, marker_name)
-    local buttons = {}
-    self.navigator_page_no = navigator_page_no
-    self.first_info_panel_text = nil
-    self.marker_name = marker_name
-
-    local hits = DX.u:getXrayItemsFoundInText(html)
-    if not hits then
-        return html, buttons
-    end
-    count = #hits
-
-    self.prev_marked_item = nil
-    for i = 1, count do
-        html = self:markItemsInHtml(html, buttons, hits[i])
-    end
-    return html, buttons
-end
-
-function XrayViewsData:markItemsInHtml(html, buttons, item)
-    if item.name == self.prev_marked_item then
-        return html
-    end
-    self.prev_marked_item = item.name
-
-    local subject
-    for l = 1, 2 do
-        if l == 2 and not has_text(item.aliases) then
-            return html
-        end
-        subject = l == 1 and item.name or item.aliases
-        html = self:markItem(item, subject, html, buttons)
-    end
-    return html
-end
-
---- @private
-function XrayViewsData:markItem(item, subject, html, buttons)
-    local is_term, lc, uc, matcher, matcher_esc
-    local parts, parts_count, item_name
-
-    subject = KOR.strings:trim(subject)
-    item_name = KOR.strings:trim(item.name)
-    if item.reliability_indicator == DX.tw.match_reliability_indicators.full_name then
-        matcher_esc = item.name:gsub("%-", "%%-")
-        html = html:gsub(matcher_esc, "<strong>" .. item.name .. "</strong>")
-    end
-
-    parts = KOR.strings:split(subject, ",? ")
-    parts_count = #parts
-    for i = 1, parts_count do
-        uc = parts[i]
-        is_term = item.xray_type > 2
-        if is_term and i == 1 then
-            uc = KOR.strings:ucfirst(parts[i])
-        end
-
-        matcher_esc = uc:gsub("%-", "%%-")
-        matcher = "%f[%w_]" .. matcher_esc .. "%f[^%w_]"
-        if html:match(matcher) then
-            --* return html and add item to buttons:
-            return self:markedItemRegister(item, html, buttons, matcher_esc)
-
-            --* for terms we also try to find lowercase variants of their names:
-        elseif is_term then
-            lc = KOR.strings:lower(parts[i])
-            matcher_esc = lc:gsub("%-", "%%-")
-            matcher = "%f[%w_]" .. matcher_esc .. "%f[^%w_]"
-            if html:match(matcher) then
-                --* return html and add item to buttons:
-                return self:markedItemRegister(item, html, buttons, matcher_esc)
-            end
-        end
-    end
-    return html
-end
-
---- @private
-function XrayViewsData:markedItemRegister(item, html, buttons, matcher_esc)
-    local marker = KOR.icons.active_tab_bare
-    local replacer = "%f[%w_](" .. matcher_esc .. ")%f[^%w_]"
-    html = html:gsub(replacer, "<strong>%1</strong>")
-    local info_text = self:getItemInfoText(item)
-    if info_text and not self.first_info_panel_text then
-        self.first_info_panel_text = info_text
-        self.first_info_panel_item_name = item.name
-    end
-    table.insert(buttons, {{
-        text = (self.page_navigator_filter_item and item.name == self.page_navigator_filter_item.name and KOR.icons.filter .. item.name) or (item.name == self.marker_name and marker .. item.name) or item.name,
-        align = "left",
-        callback = function()
-            self:reloadPageNavigator(item, info_text)
-        end,
-        --* for marking or unmarking an item as filter criterium:
-        hold_callback = function()
-            if self.page_navigator_filter_item and self.page_navigator_filter_item.name == item.name then
-                self.page_navigator_filter_item = nil
-                self:reloadPageNavigator(item, info_text)
-                return
-            end
-            self.page_navigator_filter_item = item
-            self:reloadPageNavigator(item, info_text)
-        end,
-    }})
-    return html
-end
-
---- @private
-function XrayViewsData:reloadPageNavigator(item, info_text)
-    DX.d:showPageXrayItemsNavigator(self.navigator_page_no, info_text, item.name)
 end
 
 function XrayViewsData:setFilterTypes(filter_types)

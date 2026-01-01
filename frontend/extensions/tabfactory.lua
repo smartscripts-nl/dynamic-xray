@@ -29,7 +29,7 @@ function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
     if args.tabs_as_table == nil then
         args.tabs_as_table = true
         args.tab_buttons_font = "x_smallinfofont"
-        args.tab_buttons_font_size = 12
+        args.tab_buttons_font_size = 14
         args.tab_buttons_font_bold = false
     end
 

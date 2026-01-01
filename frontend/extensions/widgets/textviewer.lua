@@ -954,9 +954,6 @@ end
 
 --- @private
 function TextViewer:returnWithTabsTableWithoutButtons(text_section, radius, padding)
-    --[[KOR.debug:hoera("width", self.frame_width)
-    KOR.debug:hoera("height", self.tabs_table_height)
-    KOR.debug:hoeraIfTruthy(self.tabs_table, "table")]]
     return {
         radius = radius,
         padding = padding,

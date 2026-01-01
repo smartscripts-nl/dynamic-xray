@@ -54,6 +54,10 @@ function TabNavigator:onToPreviousTab()
 end
 
 function TabNavigator:onForcePreviousTab()
+    --! fix a crash in the Xray Page Navigator, upon a gesture:
+    if not tn.tabs_table_buttons or not tn.active_tab then
+        return false
+    end
     tn.active_tab = tn.active_tab - 1
     if tn.active_tab < 1 then
         tn.active_tab = #tn.tabs_table_buttons[1]
