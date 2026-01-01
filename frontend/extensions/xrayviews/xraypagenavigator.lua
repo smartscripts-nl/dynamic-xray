@@ -50,7 +50,7 @@ end
 function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text, marker_name)
 
     if KOR.ui and KOR.ui.paging then
-        KOR.messages:notify("de pagina navigator is enkel beschikbaar in epubs etc...")
+        KOR.messages:notify(_("the page navigator is only available in epubs etc..."))
         return
     end
 
