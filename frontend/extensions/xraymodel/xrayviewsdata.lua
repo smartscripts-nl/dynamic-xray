@@ -923,7 +923,7 @@ function XrayViewsData:generateInfoPanelTextIfMissing(side_buttons, info_panel_t
     end
 
     local first_item = side_buttons[1][1]
-    --* this prop was set in ((XrayViewsData#markItem)):
+    --* this prop was set in ((XrayPageNavigator#markItem)):
     info_panel_text = self.first_info_panel_text or self:getItemInfoText(first_item)
     self.first_info_panel_text = info_panel_text
     self.first_info_panel_item_name = first_item.name
@@ -1119,7 +1119,6 @@ function XrayViewsData:resultsPageSmallerThan(results, current_page, prev_page)
 end
 
 function XrayViewsData:getNextPageHitForTerm(item, current_page)
-    --- @type CreDocument document
     local document = KOR.ui.document
     local results, needle, case_insensitive
     --* if applicable, we only search for first names (then probably more accurate hits count):
@@ -1146,7 +1145,6 @@ function XrayViewsData:getNextPageHitForTerm(item, current_page)
 end
 
 function XrayViewsData:getPreviousPageHitForTerm(item, current_page)
-    --- @type CreDocument document
     local document = KOR.ui.document
     local results, needle, case_insensitive
     --* if applicable, we only search for first names (then probably more accurate hits count):

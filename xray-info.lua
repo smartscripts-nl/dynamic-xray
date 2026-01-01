@@ -58,7 +58,7 @@ function XrayInfo:XRAY_ITEMS()
 
     --- PAGE NAVIGATOR
 
-    -- ((XrayDialogs#showPageXrayItemsNavigator)) > ((CreDocument#getPageHtml)) > ((XrayViewsData#markItemsFoundInPageHtml)) for html and buttons > ((XrayUI#getXrayItemsFoundInText)) > ((XrayViewsData#markItemsInHtml)) > ((XrayViewsData#markItem)) > ((XrayViewsData#markedItemRegister)) here callback and hold_callback are attached > ((XrayViewsData#getItemInfoText)) > ((Dialogs#htmlBox)) > ((HtmlBox#generateSideButtonTables)) > ((HtmlBox#generateInfoPanel))
+    -- ((XrayDialogs#showPageXrayItemsNavigator)) > ((CreDocument#getPageHtml)) > ((XrayPageNavigator#markItemsFoundInPageHtml)) for html and buttons > ((XrayUI#getXrayItemsFoundInText)) > ((XrayPageNavigator#markItemsInHtml)) > ((XrayPageNavigator#markItem)) > ((XrayPageNavigator#markedItemRegister)) here callback and hold_callback are attached > ((XrayViewsData#getItemInfoText)) > ((Dialogs#htmlBox)) > ((HtmlBox#generateSideButtonTables)) > ((HtmlBox#generateInfoPanel))
 
     --- FILTERING
 
