@@ -230,6 +230,56 @@ function XrayButtons:forXrayPageNavigator(parent)
  }}
 end
 
+function XrayButtons:forPageNavigatorTopLeft(parent)
+    local screen_dims = Screen:getSize()
+    return {
+        {
+            icon = "info-slender",
+            callback = function()
+                KOR.dialogs:textBoxTabbed(1, {
+                    parent = self,
+                    modal = true,
+                    block_height_adaptation = true,
+                    height = screen_dims.h * 0.8,
+                    width = screen_dims.w * 0.7,
+                    --no_buttons_row = true,
+                    tabs = {
+                        {
+                            tab = _("Browsing"),
+                            info = _([[With the arrows in the right bottom corner you can browse through pages.
+
+If you have a (BT) keyboard, you can also browse with Space and Shift+Space. If you reach the end of a page, the viewer will jump to the next page if you press Space. If you reach the top of a page, then Shift+Space will take you to the previous page.
+
+With the target icon you can jump back to the page on which you started navigating through the pages.
+
+With the XraySetting "page_navigator_panels_font_size" (see cog icon in top left corner) you can change the font size of the side and bottom panels.]])
+                        },
+                        {
+                            tab = _("Filtering"),
+                            info = _([[Tap on items in the side panel to see explantions of those items.
+
+FILTERED BROWSING
+
+If you longpress on an item in the side panel, that will be used as a filter criterium (a filter icon appears on the right side of it). After this the Navigator will only jump to the next or previous page where the filtered item is mentioned.
+
+RESETTING THE FILTER
+
+Longpress on the filtered item in the side panel.]])
+                        }
+                    },
+                })
+            end,
+        },
+        KOR.buttoninfopopup:forXraySettings({
+            callback = function()
+                UIManager:close(parent.page_navigator)
+                parent.page_navigator = nil
+                DX.s:showSettingsManager()
+            end
+        }),
+    }
+end
+
 function XrayButtons:forXrayUiInfo(parent, buttons)
     -- #((TextViewer toc button))
     --* the items for this and the next two buttons were generated in ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)):

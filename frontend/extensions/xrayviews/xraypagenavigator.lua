@@ -22,7 +22,6 @@ local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
-local Screen = require("device").screen
 
 local DX = DX
 local has_items = has_items
@@ -76,54 +75,15 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text,
     html, side_buttons = self:markItemsFoundInPageHtml(html, self.navigator_page_no, marker_name)
 
     info_panel_text = self:generateInfoPanelTextIfMissing(side_buttons, info_panel_text)
-    --? for some reason sometimes buttons with same labels are duplicated; here we prune the duplications:
-    side_buttons = DX.b:pruneDuplicatedNavigatorButtons(side_buttons)
-
-    local screen_dims = Screen:getSize()
     self.page_navigator = KOR.dialogs:htmlBox({
         title = DX.m.current_title .. " - p." .. self.navigator_page_no,
         html = html,
         info_panel_text = info_panel_text,
         window_size = "fullscreen",
         no_buttons_row = true,
-        top_buttons_left = {
-            {
-                icon = "info-slender",
-                callback = function()
-                    KOR.dialogs:textBoxTabbed(1, {
-                        parent = self,
-                        modal = true,
-                        block_height_adaptation = true,
-                        height = screen_dims.h * 0.8,
-                        width = screen_dims.w * 0.7,
-                        --no_buttons_row = true,
-                        tabs = {
-                            {
-                                tab = _("Browsing"),
-                                info = _([[With the arrows in the right bottom corner you can browse through pages.
-
-If you have a (BT) keyboard, you can also browse with Space and Shift+Space. If you reach the end of a page, the viewer will jump to the next page if you press Space. If you reach the top of a page, then Shift+Space will take you to the previous page.
-
-With the target icon you can jump back to the page on which you started navigating through the pages.]])
-                            },
-                            {
-                                tab = _("Filtering"),
-                                info = _([[Tap on items in the side panel to see explantions of those items.
-
-FILTERED BROWSING
-
-If you longpress on an item in the side panel, that will be used as a filter criterium (a filter icon appears on the right side of it). After this the Navigator will only jump to the next or previous page where the filtered item is mentioned.
-
-RESETTING THE FILTER
-
-Longpress on the filtered item in the side panel.]])
-                            }
-                        },
-                    })
-                end
-            }
-        },
-        side_buttons = side_buttons,
+        top_buttons_left = DX.b:forPageNavigatorTopLeft(self),
+        --? for some reason sometimes buttons with same labels are duplicated; here we prune the duplications:
+        side_buttons = DX.b:pruneDuplicatedNavigatorButtons(side_buttons),
         side_buttons_navigator = DX.b:forXrayPageNavigator(self),
         next_item_callback = function()
             self:toNextNavigatorPage()

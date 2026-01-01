@@ -33,7 +33,7 @@ local XraySettings = WidgetContainer:new{
     settings_template = {
         batch_count_for_import = {
             value = 5,
-            explanation = "This number determines in how many batches Xray items from other books will be imported. In case of very many items, a higher number here is probably prudent.",
+            explanation = _("This number determines in how many batches Xray items from other books will be imported. In case of very many items, a higher number here is probably prudent."),
             locked = 0,
         },
         database_filename = {
@@ -49,22 +49,27 @@ local XraySettings = WidgetContainer:new{
         },
         is_android = {
             value = false,
-            explanation = "This variabele triggers a number of default settings for Android devices.",
+            explanation = _("This variabele triggers a number of default settings for Android devices."),
             locked = 0,
         },
         is_mobile_device = {
             value = false,
-            explanation = "This variabele triggers a number of default settings for mobile devices (narrow screens).",
+            explanation = _("This variabele triggers a number of default settings for mobile devices (narrow screens)."),
             locked = 0,
         },
         is_tablet_device = {
             value = false,
-            explanation = "This variabele enables a number of default settings for (horizontally) wide devices, e.g. the Boox Go 10.3.",
+            explanation = _("This variabele enables a number of default settings for (horizontally) wide devices, e.g. the Boox Go 10.3."),
             locked = 0,
         },
         is_ubuntu = {
             value = false,
-            explanation = "This variables enables a number of default settings for KOReader onder Ubuntu, e.g. that the user can close some dialogs with ESC.",
+            explanation = _("This variables enables a number of default settings for KOReader onder Ubuntu, e.g. that the user can close some dialogs with ESC."),
+            locked = 0,
+        },
+        page_navigator_panels_font_size = {
+            value = 14,
+            explanation = _("With this setting you can determine the font size of the side and bottom panels in the Page Navigator (used in HtmlBox)."),
             locked = 0,
         },
         prune_orphan_translations_version = {
@@ -75,7 +80,7 @@ local XraySettings = WidgetContainer:new{
         ui_mode = {
             value = "page",
             options = { "page", "paragraph" },
-            explanation = "This setting determines whether Xray items in a page are shown with one lightning marker for the entire page or star markers for each of the paragraphs with items.",
+            explanation = _("This setting determines whether Xray items in a page are shown with one lightning marker for the entire page or star markers for each of the paragraphs with items."),
             locked = 0,
         },
     },

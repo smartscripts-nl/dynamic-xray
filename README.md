@@ -169,9 +169,10 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 * Open the KOReader main menu
 * Go to most left main item → Dynamic Xray (NB: this item is positioned at the bottom of the items, so you might have
   to navigate to the next subpage) → Settings
-* This same settings menu is also reachable through the cog icon at the top left of these three dialogs:
+* This same settings menu is also reachable through the cog icon at the top left of these four dialogs:
     * the Xray items list
     * the Xray item viewer
+    * the Xray Page Navigator
     * the popup dialog after you clicked upon a lightning or a star marker in the text of the e-book
 
 ## Problem solving
