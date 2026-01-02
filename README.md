@@ -8,9 +8,8 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 * "Terms" in Dynamic Xray (DX) can be names of things, entities, concepts, definitions, places, named events, names of literary or philosophical movements, and much more. It's all up to the imagination of the user...
 * DX differs from the Kindle system in that the user can define items dynamically, while on Kindles these items are "baked into" the ebook.
 * The advantage of the DX approach is that the user can dynamically add and modify items or link them to other items; the advantage of the Kindle approach is that it isn't error-prone.
-* DX can produce false hits, because it uses matching of the words in ebook texts to determine whether Xray items are present. For example: DX will be in trouble if there are two or more persons with the same first name in a book; DX won't be able to differentiate between them. But in at about 95% of cases, the matches shown will be correct.
+* DX can produce false hits, because it uses matching of the words in ebook texts to determine whether Xray items are present. For example, DX will be in trouble if there are two or more persons with the same first name in a book; DX won't be able to differentiate between them. But in about 95% of cases, the matches shown will be correct.
 * All interface texts can be translated by the user.
-* For now, this module doesn't work with Android, because the plugin and extensions would have to be contained in the KOReader apk file. But I am working on a patch to fix this.
 
 ## Table of contents in this readme
 - [Use cases](#use-cases)
@@ -48,10 +47,10 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
 ## Installation
 
 1. Clone this repo somewhere. From there:
-2. Copy the folder "extensions" under frontend to the frontend folder of your KOReader installation.
-   * **⚠️ NB: Don't overwrite your KOReader frontend folder with the frontend folder from the repository!**
-3. Copy xraycontroller.koplugin under the plugins folder to your KOReader plugins folder.
-   * **⚠️ NB: Don't overwrite your entire plugins folder!**
+2. Copy _the contents of_ all folders under "koreader-settings-folder" to the corresponding folders under the settings folder (
+   almost always named "koreader") of your KOReader installation.
+   * **⚠️ NB: Don't overwrite entire folders in this target folder with the folders from the repository! The only folder which you can safely overwrite is "extensions".**
+3. **⚠️ It's especially important that you copy koreader-settings-folder/patches/2-xray-patches.lua to a subfolder "patches" in your KOReader settings folder!** Without this, DX won't be available in your installation.
 4. Copy the svg icons under resources/icons/mdlight to the corresponding folder under your KOReader installation dir.
    * **⚠️ NB: Don't overwrite your original folders and files here!**
 5. The "koreader-settings-and-patches" folder in this repository represents the settings folder of your koreader installation. In most cases, this target folder will be named "koreader". In its root you should find settings.reader.lua.
@@ -195,7 +194,6 @@ PT_bookinfo_cache.sqlite3". In that case:
 * Tab buttons of tabbed dialogs ugly: big and bold.
 
 ## Todos
-* Load plugin and extensions from KOReader settings folder, so Android users can use DX too...
 * Base custom translations on indices instead on the texts they translate → continued usability of translations by the user much better protected, even when the actual text to be translated changes.
 
 ## About the code

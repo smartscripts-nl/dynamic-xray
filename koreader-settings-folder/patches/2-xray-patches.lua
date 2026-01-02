@@ -14,6 +14,7 @@
 --* ((PATCH READERSEARCH)) some methods completely replaced...
 -- ((PATCH LUASETTINGS))
 -- ((PATCH MOVABLECONTAINER))
+-- ((PATCH PLUGINLOADER))
 
 
 local require = require
@@ -21,8 +22,12 @@ local require = require
 --! VERY IMPORTANT: extend package.path and load the KOR system first!:
 --* ============ LOAD EXTENSIONS SYSTEM ===============
 
+local DataStorage = require("datastorage")
+
+local package = package
+
 -- #((patch: add Dynamic Xray to KOReader))
-package.path = "frontend/extensions/?.lua;" .. package.path
+package.path = DataStorage:getDataDir() .. "/extensions/?.lua;" .. package.path
 require("extensions/xraycontroller/xraycontroller")
 
 --* =====================================================
@@ -39,6 +44,7 @@ local KOR = require("extensions/kor")
 local LuaSettings = require("luasettings")
 local Menu = require("extensions/widgets/menu")
 local MovableContainer = require("ui/widget/container/movablecontainer")
+local PluginLoader = require("pluginloader")
 local ReaderDictionary = require("apps/reader/modules/readerdictionary")
 local ReaderHighlight = require("apps/reader/modules/readerhighlight")
 local ReaderSearch = require("apps/reader/modules/readersearch")
@@ -47,6 +53,7 @@ local ReaderView = require("apps/reader/modules/readerview")
 local TextBoxWidget = require("ui/widget/textboxwidget")
 local UIManager = require("ui/uimanager")
 local _ = require("gettext")
+local lfs = require("libs/libkoreader-lfs")
 local logger = require("logger")
 local tr = KOR:initCustomTranslations()
 local util = require("util")
@@ -61,6 +68,7 @@ local G_reader_settings = G_reader_settings
 local has_no_items = has_no_items
 local has_no_text = has_no_text
 local has_text = has_text
+local ipairs = ipairs
 local math = math
 local next = next
 local pcall = pcall
@@ -68,6 +76,7 @@ local select = select
 local table = table
 local tonumber = tonumber
 local tostring = tostring
+local type = type
 
 local count
 
@@ -907,4 +916,90 @@ function MovableContainer:moveToYPos(target_y_pos)
 
     local move_by = 0 - self._orig_y + target_y_pos
     self:_moveBy(0, move_by, "restrict_to_screen")
+end
+
+
+--- PATCH PLUGINLOADER
+-- #((PATCH PLUGINLOADER))
+
+local DEFAULT_PLUGIN_PATH = "plugins"
+function PluginLoader:_addXrayPluginFolder(data_dir, extra_paths, lookup_path_list)
+    local extra_path = data_dir .. "/plugins"
+    local extra_path_mode = lfs.attributes(extra_path, "mode")
+    if extra_path_mode ~= "directory" or extra_path == DEFAULT_PLUGIN_PATH then
+        return
+    end
+
+    extra_paths = extra_paths or {}
+    if KOR.tables:tableHasNot(extra_paths, extra_path) then
+        table.insert(lookup_path_list, extra_path)
+        table.insert(extra_paths, extra_path)
+        G_reader_settings:saveSetting("extra_plugin_paths", extra_paths)
+    end
+end
+
+--! here we overwrite the original 2025.10 loader:
+function PluginLoader:_discover()
+    local plugins_disabled = G_reader_settings:readSetting("plugins_disabled")
+    if type(plugins_disabled) ~= "table" then
+        plugins_disabled = {}
+    end
+
+    local discovered = {}
+    local lookup_path_list = { DEFAULT_PLUGIN_PATH }
+    local extra_paths = G_reader_settings:readSetting("extra_plugin_paths")
+    local data_dir = DataStorage:getDataDir()
+    if extra_paths then
+        if type(extra_paths) == "string" then
+            extra_paths = { extra_paths }
+        end
+        if type(extra_paths) == "table" then
+            for _, extra_path in ipairs(extra_paths) do
+                local extra_path_mode = lfs.attributes(extra_path, "mode")
+                if extra_path_mode == "directory" and extra_path ~= DEFAULT_PLUGIN_PATH then
+                    table.insert(lookup_path_list, extra_path)
+                end
+            end
+        else
+            logger.err("extra_plugin_paths config only accepts string or table value")
+        end
+    else
+        if data_dir ~= "." then
+            local extra_path = data_dir .. "/plugins"
+            extra_paths = { extra_path }
+            G_reader_settings:saveSetting("extra_plugin_paths", extra_paths)
+            table.insert(lookup_path_list, extra_path)
+        end
+    end
+
+    --! addition for Dynamic Xray:
+    self:_addXrayPluginFolder(data_dir, extra_paths, lookup_path_list)
+
+    for _, lookup_path in ipairs(lookup_path_list) do
+        logger.info("Looking for plugins in directory:", lookup_path)
+        for entry in lfs.dir(lookup_path) do
+            local plugin_root = lookup_path .. "/" .. entry
+            local mode = lfs.attributes(plugin_root, "mode")
+            -- A valid KOReader plugin directory ends with .koplugin
+            if mode == "directory" and entry:sub(-9) == ".koplugin" then
+                local mainfile = plugin_root .. "/main.lua"
+                local metafile = plugin_root .. "/_meta.lua"
+                local disabled = false
+                if plugins_disabled and plugins_disabled[entry:sub(1, -10)] then
+                    mainfile = metafile
+                    disabled = true
+                end
+                local name = select(2, util.splitFilePathName(plugin_root))
+
+                table.insert(discovered, {
+                    ["main"] = mainfile,
+                    ["meta"] = metafile,
+                    ["path"] = plugin_root,
+                    ["disabled"] = disabled,
+                    ["name"] = name,
+                })
+            end
+        end
+    end
+    return discovered
 end
