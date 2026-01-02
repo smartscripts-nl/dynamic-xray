@@ -36,12 +36,14 @@ local parent
 local XrayPageNavigator = WidgetContainer:new{
     alias_indent = "   ",
     cached_hits = {},
+    current_item = nil,
     initial_browsing_page = nil,
     max_line_length = 80,
     navigator_page_no = nil,
     no_navigator_page_found = false,
     page_navigator_filter_item = nil,
     prev_marked_item = nil,
+    scroll_to_page = nil,
 }
 
 --- @param xray_model XrayModel
@@ -227,7 +229,6 @@ function XrayPageNavigator:markItem(item, subject, html, buttons)
         if is_term and i == 1 then
             uc = KOR.strings:ucfirst(parts[i])
         end
-
         --* e.g. don't mark "of" in "Consistorial Court of Discipline":
         local is_markable_part_of_name = (is_term or uc:match("[A-Z]")) and uc:len() > 2
 
@@ -297,15 +298,22 @@ function XrayPageNavigator:markedItemRegister(item, html, buttons, matcher_esc)
         text = (self.page_navigator_filter_item and item.name == self.page_navigator_filter_item.name and KOR.icons.filter .. item.name) or (item.name == self.marker_name and marker .. item.name) or item.name,
         align = "left",
         callback = function()
+            if self.current_item and item.name == self.current_item.name then
+                return true
+            end
+            self.current_item = item
+            self:setActiveScrollPage()
             self:reloadPageNavigator(item, info_text)
         end,
         --* for marking or unmarking an item as filter criterium:
         hold_callback = function()
             if self.page_navigator_filter_item and self.page_navigator_filter_item.name == item.name then
+                self:setActiveScrollPage()
                 self.page_navigator_filter_item = nil
                 self:reloadPageNavigator(item, info_text)
                 return
             end
+            self:setActiveScrollPage()
             self.page_navigator_filter_item = item
             self:reloadPageNavigator(item, info_text)
         end,
@@ -316,6 +324,22 @@ end
 --- @private
 function XrayPageNavigator:reloadPageNavigator(item, info_text)
     self:showNavigator(self.navigator_page_no, info_text, item.name)
+    self:restoreActiveScrollPage()
+end
+
+--* this page will be consumed by ((XrayPageNavigator#reloadPageNavigator)) > ((XrayPageNavigator#restoreActiveScrollPage)):
+function XrayPageNavigator:setActiveScrollPage()
+    self.scroll_to_page = self.page_navigator.html_widget.htmlbox_widget.page_number
+end
+
+--* the active scroll page was set in ((XrayPageNavigator#setActiveScrollPage)):
+--- @private
+function XrayPageNavigator:restoreActiveScrollPage()
+    if self.scroll_to_page and self.scroll_to_page > 1 then
+        for i = 1, self.scroll_to_page - 1 do
+            self.page_navigator.html_widget:onScrollDown(i)
+        end
+    end
 end
 
 --- @private
