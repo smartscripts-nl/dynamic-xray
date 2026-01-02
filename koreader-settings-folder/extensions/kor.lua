@@ -12,7 +12,6 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 --- @field colors Colors
 --- @field databases Databases
 --- @field dialogs Dialogs
---- @field document CreDocument
 --- @field filedirnames FileDirNames
 --- @field files Files
 --- @field html Html
@@ -180,8 +179,8 @@ function KOR:registerUI(ui)
 	self.view = ui.view
 end
 
-function KOR:registerModule(KOR_name, plugin)
-	self[KOR_name] = plugin
+function KOR:registerModule(KOR_name, module)
+	self[KOR_name] = module
 end
 
 function KOR:registerPlugin(KOR_name, plugin)
