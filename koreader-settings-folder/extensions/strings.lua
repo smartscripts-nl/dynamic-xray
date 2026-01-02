@@ -7,8 +7,9 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local util = require("util")
 
 local DX = DX
+local has_content = has_content
+local has_no_content = has_no_content
 local has_no_text = has_no_text
-local has_text = has_text
 local select = select
 local string = string
 local table = table
@@ -300,15 +301,15 @@ function Strings:removeNotes(text)
     return text:gsub(" ?%*", ""):gsub(" ?%†", ""):gsub(" ?%‡", "")
 end
 
-function Strings:splitLinesToMaxLength(text, max_length, indent, first_word)
-    if has_no_text(text) then
+function Strings:splitLinesToMaxLength(text, max_length, indent, first_word, dont_indent_first_line)
+    if has_no_content(text) then
         return ""
     end
-    if has_text(first_word) then
+    if has_content(first_word) then
         text = first_word .. text
     end
     local test = text
-    if indent then
+    if indent and not dont_indent_first_line then
         test = indent .. text
     end
     if test:len() <= max_length then
@@ -348,7 +349,7 @@ function Strings:splitLinesToMaxLength(text, max_length, indent, first_word)
 
     count = #lined_text
     for i = 1, count do
-        if indent then
+        if indent and (not dont_indent_first_line or i > 1) then
             lined_text[i] = indent .. lined_text[i]
         end
         lined_text[i] = lined_text[i]:gsub(" $", "")

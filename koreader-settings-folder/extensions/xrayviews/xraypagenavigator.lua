@@ -34,8 +34,10 @@ local parent
 
 --- @class XrayPageNavigator
 local XrayPageNavigator = WidgetContainer:new{
+    alias_indent = "   ",
     cached_hits = {},
     initial_browsing_page = nil,
+    max_line_length = 80,
     navigator_page_no = nil,
     no_navigator_page_found = false,
     page_navigator_filter_item = nil,
@@ -254,15 +256,31 @@ end
 function XrayPageNavigator:getItemInfoText(item)
     --* the reliability_indicators were added in ((XrayUI#getXrayItemsFoundInText)) > ((XrayUI#matchNameInPageOrParagraph)) and ((XrayUI#matchAliasesToParagraph)):
     local reliability_indicator = item.reliability_indicator and item.reliability_indicator .. " " or ""
-    local sub_info_separator = "\n     "
-    local info = "\n" .. reliability_indicator .. item.name .. ": " .. item.description .. "\n"
-    if has_text(item.aliases) then
-        info = info .. sub_info_separator .. KOR.icons.xray_alias_bare .. " " .. item.aliases
-    end
-    if has_text(item.linkwords) then
-        return info .. sub_info_separator .. KOR.icons.xray_link_bare .. " " .. item.linkwords
-    end
+
+    self.alias_indent_corrected = DX.s.is_mobile_device and self.alias_indent .. self.alias_indent .. self.alias_indent .. self.alias_indent or self.alias_indent
+    self.max_line_length = DX.s.is_mobile_device and 40 or self.max_line_length
+
+    self.sub_info_separator = ""
+    local description = KOR.strings:splitLinesToMaxLength(reliability_indicator .. item.name .. ": " .. item.description, self.max_line_length, self.alias_indent, nil, "dont_indent_first_line")
+    local info = "\n" .. description .. "\n"
+
+    self.sub_info_separator = "     "
+    info = self:splitLinesToMaxLength(info, item.aliases, KOR.icons.xray_alias_bare .. " " .. item.aliases)
+    info = self:splitLinesToMaxLength(info, item.linkwords, KOR.icons.xray_link_bare .. " " .. item.linkwords)
     return info
+end
+
+--- @private
+function XrayPageNavigator:splitLinesToMaxLength(info, prop, text)
+    if not has_text(prop) then
+        return info
+    end
+    local separator = self.sub_info_separator ~= "" and self.sub_info_separator or ""
+    text = KOR.strings:splitLinesToMaxLength(separator .. text, self.max_line_length, self.alias_indent_corrected, nil, "dont_indent_first_line")
+    if separator ~= "" then
+        separator = "\n"
+    end
+    return info .. separator .. text
 end
 
 --- @private
