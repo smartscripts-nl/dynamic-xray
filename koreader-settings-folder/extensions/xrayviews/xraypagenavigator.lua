@@ -226,14 +226,17 @@ function XrayPageNavigator:markItem(item, subject, html, buttons)
             uc = KOR.strings:ucfirst(parts[i])
         end
 
+        --* e.g. don't mark "of" in "Consistorial Court of Discipline":
+        local is_markable_part_of_name = (is_term or uc:match("[A-Z]")) and uc:len() > 2
+
         matcher_esc = uc:gsub("%-", "%%-")
         matcher = "%f[%w_]" .. matcher_esc .. "%f[^%w_]"
-        if html:match(matcher) then
+        if is_markable_part_of_name and html:match(matcher) then
             --* return html and add item to buttons:
             return self:markedItemRegister(item, html, buttons, matcher_esc)
 
-            --* for terms we also try to find lowercase variants of their names:
-        elseif is_term then
+        --* for terms we also try to find lowercase variants of their names:
+        elseif is_term and is_markable_part_of_name then
             lc = KOR.strings:lower(parts[i])
             matcher_esc = lc:gsub("%-", "%%-")
             matcher = "%f[%w_]" .. matcher_esc .. "%f[^%w_]"
