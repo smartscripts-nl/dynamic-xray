@@ -1338,19 +1338,4 @@ function XrayButtons:unfocusXrayButton()
     xray_type_button:refresh()
 end
 
-function XrayButtons:pruneDuplicatedNavigatorButtons(side_buttons)
-    local label
-    local labels = {}
-    local pruned_buttons = {}
-    count = #side_buttons
-    for r = 1, count do
-        label = side_buttons[r][1].text
-        if not labels[label] then
-            table.insert(pruned_buttons, side_buttons[r])
-            labels[label] = true
-        end
-    end
-    return pruned_buttons
-end
-
 return XrayButtons

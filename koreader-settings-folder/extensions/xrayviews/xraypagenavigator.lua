@@ -35,6 +35,7 @@ local parent
 --- @class XrayPageNavigator
 local XrayPageNavigator = WidgetContainer:new{
     alias_indent = "   ",
+    button_labels_injected = "",
     cached_hits = {},
     current_item = nil,
     initial_browsing_page = nil,
@@ -45,6 +46,8 @@ local XrayPageNavigator = WidgetContainer:new{
     page_navigator_filter_item = nil,
     prev_marked_item = nil,
     scroll_to_page = nil,
+    word_end = "%f[%A]",
+    word_start = "%f[%a]",
 }
 
 --- @param xray_model XrayModel
@@ -89,7 +92,7 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text,
         no_buttons_row = true,
         top_buttons_left = DX.b:forPageNavigatorTopLeft(self),
         --? for some reason sometimes buttons with same labels are duplicated; here we prune the duplications:
-        side_buttons = DX.b:pruneDuplicatedNavigatorButtons(side_buttons),
+        side_buttons = side_buttons,
         side_buttons_navigator = DX.b:forXrayPageNavigator(self),
         next_item_callback = function()
             self:toNextNavigatorPage()
@@ -176,6 +179,7 @@ end
 --- @private
 function XrayPageNavigator:markItemsFoundInPageHtml(html, navigator_page_no, marker_name)
     local buttons = {}
+    self.button_labels_injected = ""
     self.navigator_page_no = navigator_page_no
     self.first_info_panel_text = nil
     self.marker_name = marker_name
@@ -200,53 +204,78 @@ function XrayPageNavigator:markItemsInHtml(html, buttons, item)
     end
     self.prev_marked_item = item.name
 
-    local subject
-    for l = 1, 2 do
-        if l == 2 and not has_text(item.aliases) then
-            return html
+    local subjects = {
+        "name",
+        "aliases",
+        "short_names",
+    }
+    for l = 1, 3 do
+        if has_text(item[subjects[l]]) then
+            html = self:markItem(item, item[subjects[l]], html, buttons, l)
         end
-        subject = l == 1 and item.name or item.aliases
-        html = self:markItem(item, subject, html, buttons)
     end
     return html
 end
 
 --- @private
-function XrayPageNavigator:markItem(item, subject, html, buttons)
+function XrayPageNavigator:markItem(item, subject, html, buttons, loop_no)
     local parts, parts_count, uc
 
+    --* subject can be the name or the alias of an Xray item:
     subject = KOR.strings:trim(subject)
-    html = self:markFullNameHit(html, item, subject)
+    html = self:markFullNameHit(html, item, subject, loop_no)
+    html = self:markAliasHit(html, item, subject)
 
     parts = KOR.strings:split(subject, ",? ")
     parts_count = #parts
     for i = 1, parts_count do
         uc = parts[i]
         --* only here side panel buttons are populated:
-        self:markPartialHits(html, buttons, item, uc, i)
+        html = self:markPartialHits(html, buttons, item, uc, i)
     end
     return html
 end
 
 --- @private
-function XrayPageNavigator:markFullNameHit(html, item, subject)
+function XrayPageNavigator:markAliasHit(html, item)
+
+    local alias_matchers = KOR.strings:getKeywordsForMatchingFrom(item.aliases)
+    local word
+    count = #alias_matchers
+    for i = 1, count do
+        word = self:getMatchString(alias_matchers[i], "for_substitution")
+        html = html:gsub(word, "<strong>" .. item.aliases .. "</strong>")
+    end
+
+    return html
+end
+
+--- @private
+function XrayPageNavigator:markFullNameHit(html, item, subject, loop_no)
     if item.reliability_indicator ~= DX.tw.match_reliability_indicators.full_name then
         return html
     end
 
-    local matcher_esc = subject:gsub("%-", "%%-")
-    html = html:gsub(matcher_esc, "<strong>" .. subject .. "</strong>")
-    local xray_name_swapped = KOR.strings:getNameSwapped(matcher_esc)
-    if not xray_name_swapped then
+    local replacer = self:getMatchString(subject, "for_substitution")
+    html = html:gsub(replacer, "<strong>" .. subject .. "</strong>")
+
+    --* only replace swapped name for loop_no 1, because that's the full name:
+    if loop_no > 1 then
         return html
     end
 
-    return html:gsub(xray_name_swapped, "<strong>" .. xray_name_swapped .. "</strong>")
+    local xray_name_swapped = KOR.strings:getNameSwapped(subject)
+    if not xray_name_swapped then
+        return html
+    end
+    replacer = self:getMatchString(xray_name_swapped)
+
+    return html:gsub(replacer, "<strong>" .. xray_name_swapped .. "</strong>")
 end
 
 --- @private
 function XrayPageNavigator:markPartialHits(html, buttons, item, uc, i)
-    local is_term, lc, matcher, matcher_esc
+    local is_term, lc, matcher
 
     local is_lowercase_person = item.xray_type < 3 and not uc:match("[A-Z]")
         is_term = item.xray_type > 2
@@ -256,22 +285,22 @@ function XrayPageNavigator:markPartialHits(html, buttons, item, uc, i)
     --* e.g. don't mark "of" in "Consistorial Court of Discipline":
     local is_markable_part_of_name = (is_term or is_lowercase_person or uc:match("[A-Z]")) and uc:len() > 2 and true or false
 
-    matcher_esc = uc:gsub("%-", "%%-")
-    matcher = "%f[%w_]" .. matcher_esc .. "%f[^%w_]"
+    matcher = self:getMatchString(uc)
     if is_markable_part_of_name and html:match(matcher) then
         --* return html and add item to buttons:
-        return self:markedItemRegister(item, html, buttons, matcher_esc)
+        return self:markedItemRegister(item, html, buttons, uc)
 
     --* for terms we also try to find lowercase variants of their names:
     elseif (is_term or is_lowercase_person) and is_markable_part_of_name then
         lc = KOR.strings:lower(uc)
-        matcher_esc = lc:gsub("%-", "%%-")
-        matcher = "%f[%w_]" .. matcher_esc .. "%f[^%w_]"
+        matcher = self:getMatchString(lc)
         if html:match(matcher) then
             --* return html and add item to buttons:
-            return self:markedItemRegister(item, html, buttons, matcher_esc)
+            return self:markedItemRegister(item, html, buttons, lc)
         end
     end
+
+    return html
 end
 
 --* this info will be consumed for the info panel in ((HtmlBox#generateScrollWidget)):
@@ -307,14 +336,19 @@ function XrayPageNavigator:splitLinesToMaxLength(info, prop, text)
 end
 
 --- @private
-function XrayPageNavigator:markedItemRegister(item, html, buttons, matcher_esc)
-    local replacer = "%f[%w_](" .. matcher_esc .. ")%f[^%w_]"
+function XrayPageNavigator:markedItemRegister(item, html, buttons, word)
+    local replacer = self:getMatchString(word, "for_substitution")
     html = html:gsub(replacer, "<strong>%1</strong>")
     local info_text = self:getItemInfoText(item)
     if info_text and not self.first_info_panel_text then
         self.first_info_panel_text = info_text
         self.first_info_panel_item_name = item.name
     end
+    if self.button_labels_injected:match(item.name) then
+        return html
+    end
+
+    self.button_labels_injected = self.button_labels_injected .. " " .. item.name
     table.insert(buttons, {{
         text = (self.page_navigator_filter_item and item.name == self.page_navigator_filter_item.name and KOR.icons.filter .. item.name) or (item.name == self.marker_name and self.marker .. item.name) or item.name,
         align = "left",
@@ -452,6 +486,15 @@ function XrayPageNavigator:getPreviousPageHitForTerm(item, current_page)
     end
 
     return prev_page
+end
+
+--- @private
+function XrayPageNavigator:getMatchString(word, for_substitution)
+    local matcher_esc = word:gsub("%-", "%%-")
+    if for_substitution then
+        return self.word_start .. "(" .. matcher_esc .. self.word_end .. ")"
+    end
+    return self.word_start .. matcher_esc .. self.word_end
 end
 
 --- @private
