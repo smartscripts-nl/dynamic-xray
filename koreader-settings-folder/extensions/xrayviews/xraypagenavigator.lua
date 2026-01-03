@@ -91,7 +91,6 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text,
         window_size = "fullscreen",
         no_buttons_row = true,
         top_buttons_left = DX.b:forPageNavigatorTopLeft(self),
-        --? for some reason sometimes buttons with same labels are duplicated; here we prune the duplications:
         side_buttons = side_buttons,
         side_buttons_navigator = DX.b:forXrayPageNavigator(self),
         next_item_callback = function()
@@ -219,11 +218,11 @@ end
 
 --- @private
 function XrayPageNavigator:markItem(item, subject, html, buttons, loop_no)
-    local parts, parts_count, uc
+    local parts, parts_count, uc, was_marked_for_full
 
     --* subject can be the name or the alias of an Xray item:
     subject = KOR.strings:trim(subject)
-    html = self:markFullNameHit(html, item, subject, loop_no)
+    html, was_marked_for_full = self:markFullNameHit(html, item, subject, loop_no)
     html = self:markAliasHit(html, item, subject)
 
     parts = KOR.strings:split(subject, ",? ")
@@ -231,7 +230,7 @@ function XrayPageNavigator:markItem(item, subject, html, buttons, loop_no)
     for i = 1, parts_count do
         uc = parts[i]
         --* only here side panel buttons are populated:
-        html = self:markPartialHits(html, buttons, item, uc, i)
+        html = self:markPartialHits(html, buttons, item, uc, i, was_marked_for_full)
     end
     return html
 end
@@ -253,28 +252,32 @@ end
 --- @private
 function XrayPageNavigator:markFullNameHit(html, item, subject, loop_no)
     if item.reliability_indicator ~= DX.tw.match_reliability_indicators.full_name then
-        return html
+        return html, false
     end
 
+    local org_html = html
     local replacer = self:getMatchString(subject, "for_substitution")
     html = html:gsub(replacer, "<strong>" .. subject .. "</strong>")
+    local subject_plural
+    replacer, subject_plural = self:getMatchStringPlural(subject, "for_substitution")
+    html = html:gsub(replacer, "<strong>" .. subject_plural .. "</strong>")
 
     --* only replace swapped name for loop_no 1, because that's the full name:
     if loop_no > 1 then
-        return html
+        return html, org_html ~= html
     end
 
     local xray_name_swapped = KOR.strings:getNameSwapped(subject)
     if not xray_name_swapped then
-        return html
+        return html, org_html ~= html
     end
     replacer = self:getMatchString(xray_name_swapped)
 
-    return html:gsub(replacer, "<strong>" .. xray_name_swapped .. "</strong>")
+    return html:gsub(replacer, "<strong>" .. xray_name_swapped .. "</strong>"), org_html ~= html
 end
 
 --- @private
-function XrayPageNavigator:markPartialHits(html, buttons, item, uc, i)
+function XrayPageNavigator:markPartialHits(html, buttons, item, uc, i, was_marked_for_full)
     local is_term, lc, matcher
 
     local is_lowercase_person = item.xray_type < 3 and not uc:match("[A-Z]")
@@ -286,7 +289,8 @@ function XrayPageNavigator:markPartialHits(html, buttons, item, uc, i)
     local is_markable_part_of_name = (is_term or is_lowercase_person or uc:match("[A-Z]")) and uc:len() > 2 and true or false
 
     matcher = self:getMatchString(uc)
-    if is_markable_part_of_name and html:match(matcher) then
+    local uc_matcher_plural = self:getMatchStringPlural(uc)
+    if was_marked_for_full or (is_markable_part_of_name and (html:match(matcher) or html:match(uc_matcher_plural))) then
         --* return html and add item to buttons:
         return self:markedItemRegister(item, html, buttons, uc)
 
@@ -495,6 +499,25 @@ function XrayPageNavigator:getMatchString(word, for_substitution)
         return self.word_start .. "(" .. matcher_esc .. self.word_end .. ")"
     end
     return self.word_start .. matcher_esc .. self.word_end
+end
+
+--- @private
+function XrayPageNavigator:getMatchStringPlural(word, for_substitution)
+    local matcher_esc = word:gsub("%-", "%%-")
+    local plural_matcher
+    if not matcher_esc:match("s$") then
+        plural_matcher = matcher_esc .. "s"
+        word = word .. "s"
+
+    --* if a word already seems to be in plural form, deduce its possible singular form:
+    else
+        plural_matcher = matcher_esc:gsub("s$", "")
+        word = word:gsub("s$", "")
+    end
+    if for_substitution then
+        return self.word_start .. "(" .. plural_matcher .. self.word_end .. ")", word
+    end
+    return self.word_start .. plural_matcher .. self.word_end
 end
 
 --- @private
