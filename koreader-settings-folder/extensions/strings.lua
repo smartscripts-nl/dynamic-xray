@@ -66,7 +66,8 @@ function Strings:getKeywordsForMatchingFrom(subject, no_lower_case, add_singular
     if #subject < 3 then
         return {}
     end
-    local keywords = self:split(subject, " ", false)
+    local splitter = subject:match(",") and ", *" or " +"
+    local keywords = self:split(subject, splitter, false)
     local singulars = {}
     local keyword, singular
     local count = #keywords
