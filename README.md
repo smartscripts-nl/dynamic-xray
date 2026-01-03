@@ -191,7 +191,7 @@ PT_bookinfo_cache.sqlite3". In that case:
 3. KOReader will automatically be reloaded and then create the xray_items table in your database.
 
 ## Issues to fix
-* When opening a new ebook after one with Xray items, those items are somehow retained for the new book, as if associated with that.
+* Currently none?
 
 ## Todos
 * Base custom translations on indices instead on the texts they translate → continued usability of translations by the user much better protected, even when the actual text to be translated changes.

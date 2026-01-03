@@ -175,7 +175,6 @@ function CreDocument:getPageHtml(page_no, mark_text)
 end
 
 
-
 --- PATCH READERVIEW
 -- #((PATCH READERVIEW))
 

@@ -35,6 +35,7 @@ local has_text = has_text
 local math = math
 local pairs = pairs
 local table = table
+local tonumber = tonumber
 
 local count
 
@@ -280,7 +281,7 @@ function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanation
 
     --* here the info gets combined:
     -- #((xray items dialog add match reliability explanations))
-    first_line = prefix .. xray_type_icon .. name .. " " .. hits .. explanation
+    first_line = prefix .. xray_type_icon .. name .. " " .. tonumber(hits) .. explanation
     first_line = KOR.strings:splitLinesToMaxLength(first_line, DX.vd.max_line_length, self.info_indent) .. "\n"
     match_block = first_line .. description .. "\n" .. aliases .. linkwords
     paragraph_hits_info = paragraph_hits_info .. match_block
@@ -778,7 +779,6 @@ function XrayUI:setParagraphsFromDocument()
 
     --* KOR.document.getPageXPointer not available in pdf's and paragraphs not determined in that case:
     if not KOR.document or not KOR.document.getPageXPointer then
-        self.paragraphs = {}
         return ui_page
     end
 
@@ -819,6 +819,22 @@ function XrayUI:getCurrentPage()
     elseif not KOR.document.info.has_pages then
         return KOR.document:getCurrentPage()
     end
+end
+
+function XrayUI:reset()
+    self.paragraphs = {}
+    self.hits = {}
+    self.info_extra_button_rows = {}
+    self.paragraph_hits = nil
+    self.paragraph_texts = nil
+    self.paragraphs_with_matches = nil
+    self.page_text = nil
+    self.rects_with_matches = nil
+    self.xray_page_info_rects = nil
+    self.xray_items = nil
+    self.skip_xray_items = nil
+    self.xray_context_props = nil
+    self.xray_info_found = false
 end
 
 return XrayUI

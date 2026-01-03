@@ -298,7 +298,12 @@ function XrayModel:setTitleAndSeries(full_path)
     local use_doc_props = true
     local current_series
     local current_title
+
+    --! this reset is crucial to reset the data upon opening another ebook, when the previous ebook was part of a series:
+    self.current_series = nil
+
     self.current_ebook_full_path = full_path or KOR.registry.current_ebook
+    KOR.registry.current_ebook = self.current_ebook_full_path
     self.current_ebook_basename = KOR.filedirnames:basename(self.current_ebook_full_path)
 
     if use_doc_props and KOR.ui and KOR.ui.doc_props then
@@ -420,7 +425,7 @@ function XrayModel:hasExactMatch(haystack, needle)
         and not haystack:match(needle .. "%l+"))
 end
 
-function XrayModel:resetData(force_refresh)
+function XrayModel:resetData(force_refresh, full_path)
     --! this one is crucial for when we view tab 2 or 3 in the list in one book and then change to another book; without this, the data for tab 1 of that new book would be set to the data of tab 2 or 3 in the previous book!:
     self.active_list_tab = 1
 
@@ -428,7 +433,7 @@ function XrayModel:resetData(force_refresh)
     tapped_words:resetData(force_refresh)
     views_data:resetData()
     if force_refresh then
-        self.current_ebook_full_path = KOR.registry.current_ebook
+        self.current_ebook_full_path = full_path or KOR.registry.current_ebook
     end
     self.current_ebook_basename = KOR.filedirnames:basename(self.current_ebook_full_path)
     self.ebooks[self.current_ebook_basename] = {}

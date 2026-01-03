@@ -245,22 +245,13 @@ end
 function XrayController:onReaderReady()
 
     KOR:registerUI(self.ui)
-    KOR.registry.current_ebook = self.view.document.file
 
     if not DX.m then
         KOR.messages:notify("dynamic xray could not be initiated...")
         return
     end
 
-    DX.m:setTitleAndSeries(self.view.document.file) -- local series_has_changed, is_non_series_book =
-
-    --if series_has_changed or is_non_series_book then
-    DX.vd:resetAllFilters()
-    DX.m:resetData("force_refresh")
-    --* make data available for display of xray items on page or in paragraphs:
-    DX.vd.initData(true, false, self.view.document.file)
-    DX.vd.prepareData()
-    --end
+    self:ReaderViewInitForBook(self.view.document)
 end
 
 function XrayController:filterItemsByImportantTypes()
@@ -472,6 +463,19 @@ function XrayController:addToMainMenu(menu_items)
             },
         }
     }
+end
+
+--* called from ((ReaderView#paintTo)):
+function XrayController:ReaderViewInitForBook(document)
+    KOR.document = document
+    local full_path = document.file
+    DX.m:setTitleAndSeries(full_path)
+    DX.u:reset()
+    DX.vd:resetAllFilters()
+    DX.m:resetData("force_refresh", full_path)
+    --* make data available for display of xray items on page or in paragraphs:
+    DX.vd.initData(true, false, full_path)
+    DX.vd.prepareData()
 end
 
 function XrayController:setProp(prop, value)

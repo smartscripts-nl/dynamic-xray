@@ -14,7 +14,6 @@ local type = type
 --- @class Registry
 local Registry = WidgetContainer:new {
     current_ebook = nil,
-    current_ebook_db = nil,
     --* will be populated by ((Font#getDefaultDialogFontFace)):
     default_dialog_font = nil,
     half_screen_width = nil,
@@ -28,10 +27,6 @@ local Registry = WidgetContainer:new {
         "dynamische hoogte",
         "vaste hoogte met scroll",
         "vaste hoogte zonder scroll",
-    },
-    --* was used in ((CreDocument#skipParagraphIndexingForNoXrayBooks)), but currently that method is not used anymore:
-    skip_paragraph_indexing_needles = {
-        "Rinkeldekink",
     },
     use_overlay_when_opening_files = true,
     use_scrolling_dialog = 2,
