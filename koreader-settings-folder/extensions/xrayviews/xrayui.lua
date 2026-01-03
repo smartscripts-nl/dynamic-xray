@@ -479,21 +479,25 @@ end
 
 --* these hits are to be consumed in ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((XrayDialogs#showItemsInfo))
 --- @private
-function XrayUI:getXrayItemsFoundInText(page_or_paragraph_text)
+function XrayUI:getXrayItemsFoundInText(page_or_paragraph_text) --, for_navigator
 
     local partial_hits, hits, explanations = {}, {}, {}
     --local multiple_parts_count = 0
     local a_name_matched, an_alias_matched = false, false
     self.families_matched_by_multiple_parts = {}
 
-    local xray_item, xname, hit_found, alias_match_found, names, short_names, xray_name, names_count
+    local xray_item, xname, hit_found, alias_match_found, names, short_names, xray_name, names_count, parts
     count = #DX.vd.items
     for i = 1, count do
         -- #((get xray_item for XrayUI))
         xray_item = DX.vd.items[i]
         short_names = has_text(xray_item.short_names)
         xray_name = xray_item.name
-        names = short_names and KOR.strings:split(short_names, ", *") or { xray_name }
+        names = { xray_name }
+        if short_names then
+            parts = KOR.strings:split(short_names, ", +")
+            KOR.tables:merge(names, parts)
+        end
 
         --* for case insensitive matching:
         local lower_text = KOR.strings:lower(page_or_paragraph_text)
@@ -564,11 +568,21 @@ function XrayUI:matchNameInPageOrParagraph(text, lower_text, needle, hits, parti
     local plural_matcher
     if not matcher:match("s$") then
         plural_matcher = matcher .. "s"
+        --* if a word already seems to be in plural form, deduce its possible singular form:
+    else
+        plural_matcher = matcher
+        matcher = matcher:gsub("s$", "")
     end
+    local xray_name_swapped = KOR.strings:getNameSwapped(xray_name)
 
-    if KOR.strings:hasWholeWordMatch(text, lower_text, matcher) or (plural_matcher and KOR.strings:hasWholeWordMatch(text, lower_text, plural_matcher))
+    if
+        KOR.strings:hasWholeWordMatch(text, lower_text, matcher)
+        or
+        (plural_matcher and KOR.strings:hasWholeWordMatch(text, lower_text, plural_matcher))
+        or
+        (xray_name_swapped and KOR.strings:hasWholeWordMatch(text, lower_text, xray_name_swapped))
     then
-        --* for full name hits don't add the xray_needle to the explanation, that would lead to stupid repetion of the full name:
+        --* for full name hits don't add the xray_needle to the explanation, that would lead to stupid repetition of the full name:
         self:registerParagraphMatch(hits, explanations, item, self.separator .. DX.tw.match_reliability_indicators.full_name)
         item.reliability_indicator = DX.tw.match_reliability_indicators.full_name
 

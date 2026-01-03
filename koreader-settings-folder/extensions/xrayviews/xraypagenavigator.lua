@@ -38,6 +38,7 @@ local XrayPageNavigator = WidgetContainer:new{
     cached_hits = {},
     current_item = nil,
     initial_browsing_page = nil,
+    marker = KOR.icons.active_tab_bare,
     max_line_length = 80,
     navigator_page_no = nil,
     no_navigator_page_found = false,
@@ -60,14 +61,14 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text,
 
     --! watch out: this is another var than navigator_page_no on the next line; if you make their names identical, then browsing to next or previous page is not possible anymore:
     --* initial_browsing_page is the page on which you started using the Navigator, while self.navigator_page_no is the actual page you are viewing in the Navigator after browsing to other pages:
-    self.initial_browsing_page = initial_browsing_page
-    if not self.navigator_page_no then
+    if not self.navigator_page_no or (initial_browsing_page and self.initial_browsing_page ~= initial_browsing_page) then
         self.navigator_page_no = DX.u:getCurrentPage()
         if not self.navigator_page_no then
-            KOR.messages:notify(_("page could not be determined..."))
+            KOR.messages:notify("pagina kon niet worden bepaald")
             return
         end
     end
+    self.initial_browsing_page = initial_browsing_page
     --* this prop can be set in ((XrayPageNavigator#toNextNavigatorPage)) and ((XrayPageNavigator#toPrevNavigatorPage)):
     if self.no_navigator_page_found then
         self.no_navigator_page_found = false
@@ -79,6 +80,7 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text,
     html, side_buttons = self:markItemsFoundInPageHtml(html, self.navigator_page_no, marker_name)
 
     info_panel_text = self:generateInfoPanelTextIfMissing(side_buttons, info_panel_text)
+
     self.page_navigator = KOR.dialogs:htmlBox({
         title = DX.m.current_title .. " - p." .. self.navigator_page_no,
         html = html,
@@ -166,7 +168,7 @@ function XrayPageNavigator:generateInfoPanelTextIfMissing(side_buttons, info_pan
     info_panel_text = self.first_info_panel_text or self:getItemInfoText(first_item)
     self.first_info_panel_text = info_panel_text
     self.first_info_panel_item_name = first_item.name
-    side_buttons[1][1].text = KOR.icons.active_tab_bare .. side_buttons[1][1].text
+    side_buttons[1][1].text = self.marker .. side_buttons[1][1].text
 
     return info_panel_text
 end
@@ -178,7 +180,7 @@ function XrayPageNavigator:markItemsFoundInPageHtml(html, navigator_page_no, mar
     self.first_info_panel_text = nil
     self.marker_name = marker_name
 
-    local hits = DX.u:getXrayItemsFoundInText(html)
+    local hits = DX.u:getXrayItemsFoundInText(html, "for_navigator")
     if not hits then
         return html, buttons
     end
@@ -211,45 +213,64 @@ end
 
 --- @private
 function XrayPageNavigator:markItem(item, subject, html, buttons)
-    local is_term, lc, uc, matcher, matcher_esc
-    local parts, parts_count, item_name
+    local parts, parts_count, uc
 
     subject = KOR.strings:trim(subject)
-    item_name = KOR.strings:trim(item.name)
-    if item.reliability_indicator == DX.tw.match_reliability_indicators.full_name then
-        matcher_esc = item.name:gsub("%-", "%%-")
-        html = html:gsub(matcher_esc, "<strong>" .. item.name .. "</strong>")
-    end
+    html = self:markFullNameHit(html, item, subject)
 
     parts = KOR.strings:split(subject, ",? ")
     parts_count = #parts
     for i = 1, parts_count do
         uc = parts[i]
-        is_term = item.xray_type > 2
-        if is_term and i == 1 then
-            uc = KOR.strings:ucfirst(parts[i])
-        end
-        --* e.g. don't mark "of" in "Consistorial Court of Discipline":
-        local is_markable_part_of_name = (is_term or uc:match("[A-Z]")) and uc:len() > 2
-
-        matcher_esc = uc:gsub("%-", "%%-")
-        matcher = "%f[%w_]" .. matcher_esc .. "%f[^%w_]"
-        if is_markable_part_of_name and html:match(matcher) then
-            --* return html and add item to buttons:
-            return self:markedItemRegister(item, html, buttons, matcher_esc)
-
-        --* for terms we also try to find lowercase variants of their names:
-        elseif is_term and is_markable_part_of_name then
-            lc = KOR.strings:lower(parts[i])
-            matcher_esc = lc:gsub("%-", "%%-")
-            matcher = "%f[%w_]" .. matcher_esc .. "%f[^%w_]"
-            if html:match(matcher) then
-                --* return html and add item to buttons:
-                return self:markedItemRegister(item, html, buttons, matcher_esc)
-            end
-        end
+        --* only here side panel buttons are populated:
+        self:markPartsHits(html, buttons, item, uc, i)
     end
     return html
+end
+
+--- @private
+function XrayPageNavigator:markFullNameHit(html, item, subject)
+    if item.reliability_indicator ~= DX.tw.match_reliability_indicators.full_name then
+        return html
+    end
+
+    local matcher_esc = subject:gsub("%-", "%%-")
+    html = html:gsub(matcher_esc, "<strong>" .. subject .. "</strong>")
+    local xray_name_swapped = KOR.strings:getNameSwapped(matcher_esc)
+    if not xray_name_swapped then
+        return html
+    end
+
+    return html:gsub(xray_name_swapped, "<strong>" .. xray_name_swapped .. "</strong>")
+end
+
+function XrayPageNavigator:markPartsHits(html, buttons, item, uc, i)
+    local is_term, lc, matcher, matcher_esc
+
+    local is_lowercase_person = item.xray_type < 3 and not uc:match("[A-Z]")
+        is_term = item.xray_type > 2
+    if (is_term or is_lowercase_person) and i == 1 then
+    uc = KOR.strings:ucfirst(uc)
+    end
+    --* e.g. don't mark "of" in "Consistorial Court of Discipline":
+    local is_markable_part_of_name = (is_term or is_lowercase_person or uc:match("[A-Z]")) and uc:len() > 2 and true or false
+
+    matcher_esc = uc:gsub("%-", "%%-")
+    matcher = "%f[%w_]" .. matcher_esc .. "%f[^%w_]"
+    if is_markable_part_of_name and html:match(matcher) then
+        --* return html and add item to buttons:
+        return self:markedItemRegister(item, html, buttons, matcher_esc)
+
+    --* for terms we also try to find lowercase variants of their names:
+    elseif (is_term or is_lowercase_person) and is_markable_part_of_name then
+        lc = KOR.strings:lower(uc)
+        matcher_esc = lc:gsub("%-", "%%-")
+        matcher = "%f[%w_]" .. matcher_esc .. "%f[^%w_]"
+        if html:match(matcher) then
+            --* return html and add item to buttons:
+            return self:markedItemRegister(item, html, buttons, matcher_esc)
+        end
+    end
 end
 
 --* this info will be consumed for the info panel in ((HtmlBox#generateScrollWidget)):
@@ -286,7 +307,6 @@ end
 
 --- @private
 function XrayPageNavigator:markedItemRegister(item, html, buttons, matcher_esc)
-    local marker = KOR.icons.active_tab_bare
     local replacer = "%f[%w_](" .. matcher_esc .. ")%f[^%w_]"
     html = html:gsub(replacer, "<strong>%1</strong>")
     local info_text = self:getItemInfoText(item)
@@ -295,7 +315,7 @@ function XrayPageNavigator:markedItemRegister(item, html, buttons, matcher_esc)
         self.first_info_panel_item_name = item.name
     end
     table.insert(buttons, {{
-        text = (self.page_navigator_filter_item and item.name == self.page_navigator_filter_item.name and KOR.icons.filter .. item.name) or (item.name == self.marker_name and marker .. item.name) or item.name,
+        text = (self.page_navigator_filter_item and item.name == self.page_navigator_filter_item.name and KOR.icons.filter .. item.name) or (item.name == self.marker_name and self.marker .. item.name) or item.name,
         align = "left",
         callback = function()
             if self.current_item and item.name == self.current_item.name then

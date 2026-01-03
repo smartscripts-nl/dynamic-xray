@@ -391,4 +391,14 @@ function Strings:hasWholeWordMatch(haystack, haystack_lower, needle)
     return haystack:match("%A" .. needle .. "%A") or haystack:match("^" .. needle .. "%A") or haystack:match("%A" .. needle .. "$")
 end
 
+function Strings:getNameSwapped(name)
+    if not name:match(", ") then
+        return
+    end
+    local parts = self:split(name, ", +")
+    if #parts == 2 then
+        return parts[2] .. " " .. parts[1]
+    end
+end
+
 return Strings
