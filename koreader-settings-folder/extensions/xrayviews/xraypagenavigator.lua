@@ -223,7 +223,7 @@ function XrayPageNavigator:markItem(item, subject, html, buttons)
     for i = 1, parts_count do
         uc = parts[i]
         --* only here side panel buttons are populated:
-        self:markPartsHits(html, buttons, item, uc, i)
+        self:markPartialHits(html, buttons, item, uc, i)
     end
     return html
 end
@@ -244,7 +244,8 @@ function XrayPageNavigator:markFullNameHit(html, item, subject)
     return html:gsub(xray_name_swapped, "<strong>" .. xray_name_swapped .. "</strong>")
 end
 
-function XrayPageNavigator:markPartsHits(html, buttons, item, uc, i)
+--- @private
+function XrayPageNavigator:markPartialHits(html, buttons, item, uc, i)
     local is_term, lc, matcher, matcher_esc
 
     local is_lowercase_person = item.xray_type < 3 and not uc:match("[A-Z]")
@@ -348,6 +349,7 @@ function XrayPageNavigator:reloadPageNavigator(item, info_text)
 end
 
 --* this page will be consumed by ((XrayPageNavigator#reloadPageNavigator)) > ((XrayPageNavigator#restoreActiveScrollPage)):
+--- @private
 function XrayPageNavigator:setActiveScrollPage()
     self.scroll_to_page = self.page_navigator.html_widget.htmlbox_widget.page_number
 end
