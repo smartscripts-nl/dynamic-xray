@@ -202,7 +202,7 @@ PT_bookinfo_cache.sqlite3". In that case:
 * DX is added by patching the stock KOReader code, so you don't have to modify the code of the basic KOReader version.
 * The DX plugin is structured to resemble an MVC structure:
     * M = XrayModel > data handlers: XrayDataLoader, XrayDataSaver, XrayFormsData, XraySettings, XrayTappedWords and XrayViewsData (extensions)
-    * V = XrayUI, XrayTranslations and XrayTranslationsManager, XrayDialogs and XrayButtons (extensions)
+    * V = XrayUI, XrayPageNavigator, XrayTranslations and XrayTranslationsManager, XrayDialogs and XrayButtons (extensions)
     * C = XrayController (plugin)
 * The XrayHelpers extension of DX version 1.0 does not exist anymore, its methods have been redistributed over the above extensions. 
 * In xray-info.lua you can find some explanations for programmers about the inner workings of DX. This file doesn't have a function in the plugin, is meant to be purely informational.
