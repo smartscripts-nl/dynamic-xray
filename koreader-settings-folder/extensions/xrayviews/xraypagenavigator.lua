@@ -364,6 +364,7 @@ function XrayPageNavigator:markedItemRegister(item, html, buttons, word)
                 return true
             end
             self.active_side_button = button_index
+            self:setCurrentItem(item)
             self:setActiveScrollPage()
             self:reloadPageNavigator(item, info_text)
             return true
@@ -387,8 +388,6 @@ end
 --- @private
 function XrayPageNavigator:setCurrentItem(item)
     self.current_item = item
-    --* for consumption in Xray item viewer as loaded via ((XrayButtons#forPageNavigatorTopLeft)):
-    KOR.registry:set("page_navigator_active_item", self.current_item)
 end
 
 --- @private
@@ -554,12 +553,14 @@ end
 function XrayPageNavigator:markActiveSideButton(source_buttons)
     count = #source_buttons
     local button
+    self.current_item = nil
     --* these are rows with one button each:
     for r = 1, count do
         button = source_buttons[r][1]
         button.text = button.text:gsub(self.marker, "")
         if r == self.active_side_button then
             button.text = self.marker .. button.text
+            self:setCurrentItem(button.xray_item)
         end
         self:generateInfoTextForFirstSideButton(r, button)
     end

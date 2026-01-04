@@ -225,14 +225,30 @@ function XrayButtons:forPageNavigator(parent)
              end
          }),
          KOR.buttoninfopopup:forXrayList(),
-         KOR.buttoninfopopup:forXrayViewer({
-             callback = function()
-                 --* this was set in ((XrayPageNavigator#markedItemRegister)) or ((XrayPageNavigator#generateInfoPanelTextIfMissing)) > ((XrayPageNavigator#setCurrentItem)):
-                 local page_navigator_active_item = KOR.registry:get("page_navigator_active_item")
-                 DX.d:viewItem(page_navigator_active_item)
-             end,
-         }),
-         {
+        KOR.buttoninfopopup:forXrayViewer({
+            enabled_function = function()
+                return parent.current_item and true or false
+            end,
+            callback = function()
+                DX.d:viewItem(parent.current_item)
+            end,
+        }),
+        KOR.buttoninfopopup:forXrayItemEdit({
+            enabled_function = function()
+                return parent.current_item and true or false
+            end,
+            info = _("edit icon | Edit the item that is shown in the info panel below."),
+            callback = function()
+                if not parent.current_item then
+                    KOR.messages:notify(_("there was no item to be edited..."))
+                    return true
+                end
+                parent:closePageNavigator()
+                DX.c:setProp("return_to_viewer", false)
+                DX.c:onShowEditItemForm(parent.current_item, false, 1)
+            end,
+        }),
+        {
              text = KOR.icons.previous,
              callback = function()
                  parent:toPrevNavigatorPage()
