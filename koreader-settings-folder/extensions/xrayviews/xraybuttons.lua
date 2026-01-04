@@ -211,7 +211,13 @@ end
 --- @param parent XrayDialogs
 function XrayButtons:forPageNavigator(parent)
     return {{
-         KOR.buttoninfopopup:forXraySettings({
+        {
+            icon = "back",
+            callback = function()
+                parent:closePageNavigator()
+            end
+        },
+        KOR.buttoninfopopup:forXraySettings({
              callback = function()
                  UIManager:close(parent.page_navigator)
                  parent.page_navigator = nil
