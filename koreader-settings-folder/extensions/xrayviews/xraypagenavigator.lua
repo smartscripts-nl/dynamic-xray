@@ -370,9 +370,9 @@ function XrayPageNavigator:markedItemRegister(item, html, buttons, word)
             if self.current_item and item.name == self.current_item.name then
                 return true
             end
-            self.current_item = item
             self:setActiveScrollPage()
             self:reloadPageNavigator(item, info_text)
+            return true
         end,
         --* for marking or unmarking an item as filter criterium:
         hold_callback = function()
@@ -399,7 +399,7 @@ end
 
 --- @private
 function XrayPageNavigator:reloadPageNavigator(item, info_text)
-    self:showNavigator(self.navigator_page_no, info_text, item.name)
+    self:showNavigator(self.initial_browsing_page, info_text, item.name)
     self:restoreActiveScrollPage()
 end
 
