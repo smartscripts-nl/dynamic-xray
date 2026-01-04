@@ -93,7 +93,7 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text,
         no_buttons_row = true,
         top_buttons_left = DX.b:forPageNavigatorTopLeft(self),
         side_buttons = side_buttons,
-        side_buttons_navigator = DX.b:forPageNavigator(self),
+        info_panel_buttons = DX.b:forPageNavigator(self),
         next_item_callback = function()
             self:toNextNavigatorPage()
         end,

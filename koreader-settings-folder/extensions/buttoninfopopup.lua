@@ -313,17 +313,8 @@ function ButtonInfoPopup:forXrayPageNavigator(props)
 	return KOR.buttonprops:set({
 		icon = "navigator_wheel",
 		icon_size_ratio = 0.53,
-		info = "navigator-ikoon | Navigeer in een popup venster doorheen de pagina's met Xray items.",
-		callback_label = "navigeer",
-		--! callback defined by calling module
-	}, props)
-end
-
-function ButtonInfoPopup:forXrayPageNavigatorToCurrentPage(props)
-	return KOR.buttonprops:set({
-		icon = "goto-location",
-		info = "doelschijf-ikoon | Geef hier de tekst weer van de pagina die je nu aan het lezen bent in je e-reader.",
-		callback_label = "toon",
+		info = _("navigator icon | In a popup dialog navigate through the pages of the current ebook and see which Xray items they contain. For each Xray item you can request additional info about them."),
+		callback_label = _("navigate"),
 		--! callback defined by calling module
 	}, props)
 end

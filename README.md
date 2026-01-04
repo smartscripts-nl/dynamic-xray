@@ -194,7 +194,7 @@ PT_bookinfo_cache.sqlite3". In that case:
 * Currently none?
 
 ## Todos
-* Base custom translations on indices instead on the texts they translate → continued usability of translations by the user much better protected, even when the actual text to be translated changes.
+* Base custom translations on indices instead of the texts they translate → continued usability of translations by the user much better protected, even when the actual text to be translated changes.
 
 ## About the code
 

@@ -21,6 +21,7 @@ local require = require
 local Button = require("extensions/widgets/button")
 local ButtonDialogTitle = require("extensions/widgets/buttondialogtitle")
 local ButtonTable = require("extensions/widgets/buttontable")
+local Event = require("ui/event")
 local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
@@ -210,24 +211,44 @@ end
 --- @param parent XrayDialogs
 function XrayButtons:forPageNavigator(parent)
     return {{
-     {
-         text = KOR.icons.previous,
-         callback = function()
-             parent:toPrevNavigatorPage()
-         end,
-     },
-     KOR.buttoninfopopup:forXrayPageNavigatorToCurrentPage({
-         callback = function()
-             parent:toCurrentNavigatorPage()
-         end,
-     }),
-     {
-         text = KOR.icons.next,
-         callback = function()
-             parent:toNextNavigatorPage()
-         end,
-     },
- }}
+         KOR.buttoninfopopup:forXraySettings({
+             callback = function()
+                 UIManager:close(parent.page_navigator)
+                 parent.page_navigator = nil
+                 DX.s:showSettingsManager()
+             end
+         }),
+         KOR.buttoninfopopup:forXrayList(),
+         KOR.buttoninfopopup:forXrayViewer({
+             callback = function()
+                 --* this was set in ((XrayPageNavigator#markedItemRegister)) or ((XrayPageNavigator#generateInfoPanelTextIfMissing)) > ((XrayPageNavigator#setCurrentItem)):
+                 local page_navigator_active_item = KOR.registry:get("page_navigator_active_item")
+                 DX.d:viewItem(page_navigator_active_item)
+             end,
+         }),
+         {
+             text = KOR.icons.previous,
+             callback = function()
+                 parent:toPrevNavigatorPage()
+             end,
+         },
+         KOR.buttonchoicepopup:forXrayPageNavigatorToCurrentPage({
+             callback = function()
+                 parent:toCurrentNavigatorPage()
+             end,
+             hold_callback = function()
+                 parent:closePageNavigator()
+                 KOR.ui.link:addCurrentLocationToStack()
+                 KOR.ui:handleEvent(Event:new("GotoPage", parent.navigator_page_no))
+             end,
+         }),
+         {
+             text = KOR.icons.next,
+             callback = function()
+                 parent:toNextNavigatorPage()
+             end,
+         },
+     }}
 end
 
 function XrayButtons:forPageNavigatorTopLeft(parent)
@@ -237,7 +258,7 @@ function XrayButtons:forPageNavigatorTopLeft(parent)
             icon = "info-slender",
             callback = function()
                 KOR.dialogs:textBoxTabbed(1, {
-                    parent = self,
+                    parent = parent,
                     modal = true,
                     block_height_adaptation = true,
                     height = screen_dims.h * 0.8,
@@ -270,21 +291,6 @@ Longpress on the filtered item in the side panel.]])
                 })
             end,
         },
-        KOR.buttoninfopopup:forXraySettings({
-            callback = function()
-                UIManager:close(parent.page_navigator)
-                parent.page_navigator = nil
-                DX.s:showSettingsManager()
-            end
-        }),
-        KOR.buttoninfopopup:forXrayList(),
-        KOR.buttoninfopopup:forXrayViewer({
-            callback = function()
-                --* this was set in ((XrayPageNavigator#markedItemRegister)) or ((XrayPageNavigator#generateInfoPanelTextIfMissing)) > ((XrayPageNavigator#setCurrentItem)):
-                local page_navigator_active_item = KOR.registry:get("page_navigator_active_item")
-                DX.d:viewItem(page_navigator_active_item)
-            end,
-        }),
     }
 end
 

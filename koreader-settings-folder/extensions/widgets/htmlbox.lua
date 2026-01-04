@@ -98,6 +98,7 @@ local HtmlBox = InputContainer:extend{
     buttons_table = nil,
     content_padding = nil,
     html = nil,
+    info_panel_buttons = nil,
     info_panel_text = nil,
     next_item_callback = nil,
     no_buttons_row = false,
@@ -107,7 +108,6 @@ local HtmlBox = InputContainer:extend{
     paths = nil,
     prev_item_callback = nil,
     side_buttons = nil,
-    side_buttons_navigator = nil,
     side_buttons_width = Screen:scaleBySize(135),
     tabs_table_buttons = nil,
     title = nil,
@@ -137,8 +137,10 @@ function HtmlBox:init()
     self:generateTabsTable()
     self:setSeparator()
     self:computeHeights()
+    self:generateInfoButtons()
     self:generateInfoPanel()
     self:generateScrollWidget()
+    self:addFrameToContentWidget()
     self:generateWidget()
     self:finalizeWidget()
 end
@@ -335,6 +337,27 @@ function HtmlBox:getHtmlBoxCss()
 end
 
 --- @private
+function HtmlBox:generateInfoButtons()
+    --? for some reason self.button_table_side not available when we click on the item viewer button; because then self.side_buttons not set at the start of ((HtmlBox#generateSidePanelButtons)) and the script returns, without generating the side buttons:
+    self.info_panel_width = self.button_table_side and self.content_width - self.button_table_side:getSize().w or self.content_width
+
+    local buttons = ButtonTable:new {
+        width = self.info_panel_width,
+        buttons = self.info_panel_buttons,
+        show_parent = self,
+        button_font_weight = "normal",
+    }
+    local buttons_height = buttons:getSize().h
+    self.info_panel_nav_buttons = CenterContainer:new {
+        dimen = Geom:new {
+            w = self.info_panel_width,
+            h = buttons_height,
+        },
+        buttons,
+    }
+end
+
+--- @private
 function HtmlBox:generateInfoPanel()
     if not self.button_table_side then
         --* for consumption in ((HtmlBox#generateScrollWidget)):
@@ -343,9 +366,8 @@ function HtmlBox:generateInfoPanel()
         return
     end
 
-    local width = self.content_width - self.button_table_side:getSize().w
     local height = self.content_height
-    --* info_text was generated in ((XrayPageNavigator#showNavigator)) > ((XrayPageNavigator#markItemsFoundInPageHtml)) > ((XrayPageNavigator#markItem)) > ((XrayViewsData#getItemInfoText)):
+    --* info_text was generated in ((XrayPageNavigator#showNavigator)) > ((XrayPageNavigator#markItemsFoundInPageHtml)) > ((XrayPageNavigator#markItem)) > ((XrayPageNavigator#getItemInfoText)):
     local info_text = self.info_panel_text or " "
     self.info_panel = ScrollTextWidget:new{
         text = info_text,
@@ -354,19 +376,20 @@ function HtmlBox:generateInfoPanel()
         alignment = "left",
         justified = false,
         dialog = self,
-        width = width,
+        --* info_panel_width was computed in ((HtmlBox#generateInfoButtons)):
+        width = self.info_panel_width,
         height = math.floor(Screen:getHeight() * 0.18),
     }
     self.info_panel_separator = LineWidget:new{
         background = KOR.colors.line_separator,
         dimen = Geom:new{
-            w = width,
+            w = self.info_panel_width,
             h = Size.line.thick,
         }
     }
-    height = height - self.info_panel:getSize().h - self.info_panel_separator:getSize().h
+    height = height - self.info_panel:getSize().h - 2 * self.info_panel_separator:getSize().h - self.info_panel_nav_buttons:getSize().h
     --* for consumption in ((HtmlBox#generateScrollWidget)):
-    self.swidth = width
+    self.swidth = self.info_panel_width
     self.sheight = height
 end
 
@@ -611,8 +634,8 @@ function HtmlBox:computeHeights()
     local others_height = self.frame_bordersize * 2 --* HtmlBox border
             + self.box_title:getHeight()
             + Size.line.thick
-            + self.top_to_word_span:getSize().h
-            + self.definition_to_bottom_span:getSize().h
+            + self.content_top_margin:getSize().h
+            + self.content_bottom_margin:getSize().h
             + buttons_height
             + tabs_table_height
 
@@ -667,7 +690,7 @@ function HtmlBox:computeHeights()
         self.height = self.avail_height
         self.content_height = self.height - others_height
         local nb_lines = math.floor(self.content_height / self.content_line_height)
-        self.content_height = math.floor(nb_lines * self.content_line_height * 0.38)
+        self.content_height = math.floor(nb_lines * self.content_line_height * 0.35)
 
     else
         --* Definition height was previously computed as 0.5*0.7*screen_height, so keep
@@ -703,12 +726,6 @@ function HtmlBox:generateSidePanelButtons()
     if not self.side_buttons then
         return
     end
-    self.button_table_side_navigator = ButtonTable:new{
-        width = self.side_buttons_width,
-        buttons = self.side_buttons_navigator,
-        show_parent = self,
-        button_font_weight = "normal",
-    }
     self.button_table_side_separator = LineWidget:new{
         background = KOR.colors.line_separator,
         dimen = Geom:new{
@@ -727,9 +744,9 @@ function HtmlBox:generateSidePanelButtons()
             width = self.side_buttons_width,
             height = math.floor(Screen:getHeight() * 0.18),
         }
-
         return
     end
+
     self.button_table_side = ButtonTable:new{
         width = self.side_buttons_width,
         button_font_face = "x_smallinfofont",
@@ -834,7 +851,7 @@ end
 --- @private
 function HtmlBox:addFrameToContentWidget()
     if self.button_table_side then
-        local spacer_width = self.avail_height - self.button_table_side:getSize().h - self.button_table_side_navigator:getSize().h - self.box_title:getSize().h - 2 * self.content_padding_v
+        local spacer_width = self.avail_height - self.button_table_side:getSize().h - self.box_title:getSize().h - 2 * self.content_padding_v
         local has_side_buttons = #self.side_buttons > 0
         if has_side_buttons then
             spacer_width = spacer_width - self.button_table_side_separator:getSize().h
@@ -847,14 +864,12 @@ function HtmlBox:addFrameToContentWidget()
             self.button_table_side,
             self.button_table_side_separator,
             bottom_padding,
-            self.button_table_side_navigator,
         }
         or
         VerticalGroup:new{
             align = "left",
             self.button_table_side,
             bottom_padding,
-            self.button_table_side_navigator,
         }
         self.content_widget = FrameContainer:new{
             padding = 0,
@@ -872,6 +887,8 @@ function HtmlBox:addFrameToContentWidget()
                     VerticalGroup:new{
                         align = "left",
                         self.html_widget,
+                        self.info_panel_separator,
+                        self.info_panel_nav_buttons,
                         self.info_panel_separator,
                         self.info_panel,
                     },
@@ -914,7 +931,7 @@ function HtmlBox:generateFullScreenWidget()
                     self.box_title,
                     self.tabs_table,
                     self.separator,
-                    self.top_to_word_span,
+                    self.content_top_margin,
                     --* content
                     CenterContainer:new{
                         dimen = Geom:new{
@@ -923,7 +940,7 @@ function HtmlBox:generateFullScreenWidget()
                         },
                         self.content_widget,
                     },
-                    self.definition_to_bottom_span,
+                    self.content_bottom_margin,
                 }
             }
             or
@@ -939,7 +956,7 @@ function HtmlBox:generateFullScreenWidget()
                     align = "left",
                     self.box_title,
                     self.separator,
-                    self.top_to_word_span,
+                    self.content_top_margin,
                     --* content
                     CenterContainer:new{
                         dimen = Geom:new{
@@ -948,7 +965,7 @@ function HtmlBox:generateFullScreenWidget()
                         },
                         self.content_widget,
                     },
-                    self.definition_to_bottom_span,
+                    self.content_bottom_margin,
                 }
             }
         return
@@ -968,7 +985,7 @@ function HtmlBox:generateFullScreenWidget()
             self.box_title,
             self.tabs_table,
             self.separator,
-            self.top_to_word_span,
+            self.content_top_margin,
             --* content
             CenterContainer:new{
                 dimen = Geom:new{
@@ -977,7 +994,7 @@ function HtmlBox:generateFullScreenWidget()
                 },
                 self.content_widget,
             },
-            self.definition_to_bottom_span,
+            self.content_bottom_margin,
             --* buttons
             CenterContainer:new{
                 dimen = Geom:new{
@@ -1001,7 +1018,7 @@ function HtmlBox:generateFullScreenWidget()
             align = "left",
             self.box_title,
             self.separator,
-            self.top_to_word_span,
+            self.content_top_margin,
             --* content
             CenterContainer:new{
                 dimen = Geom:new{
@@ -1010,7 +1027,7 @@ function HtmlBox:generateFullScreenWidget()
                 },
                 self.content_widget,
             },
-            self.definition_to_bottom_span,
+            self.content_bottom_margin,
             --* buttons
             CenterContainer:new{
                 dimen = Geom:new{
@@ -1036,7 +1053,7 @@ function HtmlBox:generateNoButtonsRowWidget()
             self.box_title,
             self.tabs_table,
             self.separator,
-            self.top_to_word_span,
+            self.content_top_margin,
             --* content
             CenterContainer:new{
                 dimen = Geom:new{
@@ -1045,7 +1062,7 @@ function HtmlBox:generateNoButtonsRowWidget()
                 },
                 self.content_widget,
             },
-            self.definition_to_bottom_span,
+            self.content_bottom_margin,
         }
     }
     or
@@ -1060,7 +1077,7 @@ function HtmlBox:generateNoButtonsRowWidget()
             align = "left",
             self.box_title,
             self.separator,
-            self.top_to_word_span,
+            self.content_top_margin,
             --* content
             CenterContainer:new{
                 dimen = Geom:new{
@@ -1069,7 +1086,7 @@ function HtmlBox:generateNoButtonsRowWidget()
                 },
                 self.content_widget,
             },
-            self.definition_to_bottom_span,
+            self.content_bottom_margin,
         }
     }
 end
@@ -1087,7 +1104,7 @@ function HtmlBox:generateButtonsRowWidget()
             self.box_title,
             self.tabs_table,
             self.separator,
-            self.top_to_word_span,
+            self.content_top_margin,
             --* content
             CenterContainer:new{
                 dimen = Geom:new{
@@ -1096,7 +1113,7 @@ function HtmlBox:generateButtonsRowWidget()
                 },
                 self.content_widget,
             },
-            self.definition_to_bottom_span,
+            self.content_bottom_margin,
             --* buttons
             CenterContainer:new{
                 dimen = Geom:new{
@@ -1119,7 +1136,7 @@ function HtmlBox:generateButtonsRowWidget()
             align = "left",
             self.box_title,
             self.separator,
-            self.top_to_word_span,
+            self.content_top_margin,
             --* content
             CenterContainer:new{
                 dimen = Geom:new{
@@ -1128,7 +1145,7 @@ function HtmlBox:generateButtonsRowWidget()
                 },
                 self.content_widget,
             },
-            self.definition_to_bottom_span,
+            self.content_bottom_margin,
             --* buttons
             CenterContainer:new{
                 dimen = Geom:new{
@@ -1161,7 +1178,6 @@ end
 
 --- @private
 function HtmlBox:generateWidget()
-    self:addFrameToContentWidget()
     if self.is_fullscreen then
         self:generateFullScreenWidget()
         self:generateMovableContainer()
@@ -1250,8 +1266,8 @@ function HtmlBox:setPaddingAndSpacing()
     self.content_padding_v =  content_padding_v
 
     --* Spans between components
-    self.top_to_word_span = VerticalSpan:new{ width = content_padding_v }
-    self.definition_to_bottom_span = VerticalSpan:new{ width = content_padding_v }
+    self.content_top_margin = VerticalSpan:new{ width = content_padding_v }
+    self.content_bottom_margin = VerticalSpan:new{ width = content_padding_v }
 end
 
 --- @private

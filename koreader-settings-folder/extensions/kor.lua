@@ -12,6 +12,7 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 --- @field colors Colors
 --- @field databases Databases
 --- @field dialogs Dialogs
+--- @field document CreDocument
 --- @field filedirnames FileDirNames
 --- @field files Files
 --- @field html Html

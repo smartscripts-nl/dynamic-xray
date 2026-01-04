@@ -718,6 +718,7 @@ function XrayDialogs:showJumpToChapterDialog()
             end
 
             self:closeViewer()
+            DX.pn:closePageNavigator()
             KOR.ui.link:addCurrentLocationToStack()
             KOR.ui:handleEvent(Event:new("GotoPage", page))
         end,

@@ -69,6 +69,17 @@ function ButtonChoicePopup:forXrayItemDelete(props)
 	}, props)
 end
 
+function ButtonChoicePopup:forXrayPageNavigatorToCurrentPage(props)
+	return KOR.buttonprops:set({
+		icon = "goto-location",
+		info = T(_("target icon %1in Page Navigator jump back to current page you are reading in your e-book%2in you e-book jump to the page you are currently viewing in Page Navigator"), "| :", self.separator),
+		callback_label = _("navigator"),
+		--! callback defined by calling module
+		hold_callback_label = _("ebook"),
+		--! hold_callback defined by calling module
+	}, props)
+end
+
 --* see also ((Button#init)) > ((hotfix for bold "edit" and "jump" buttons for xray items in page info TOC popup)):
 function ButtonChoicePopup:forXrayTocItemEdit(props)
 	local args = {
