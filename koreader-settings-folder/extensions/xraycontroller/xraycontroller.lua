@@ -251,7 +251,7 @@ function XrayController:onReaderReady()
         return
     end
 
-    self:ReaderViewInitForBook(self.view.document)
+    self:resetDynamicXray(self.view.document)
 end
 
 function XrayController:filterItemsByImportantTypes()
@@ -465,12 +465,13 @@ function XrayController:addToMainMenu(menu_items)
     }
 end
 
---* called from ((ReaderView#paintTo)):
-function XrayController:ReaderViewInitForBook(document)
+--* called from ((XrayController#onReaderReady)):
+function XrayController:resetDynamicXray(document)
     KOR.document = document
     local full_path = document.file
     DX.m:setTitleAndSeries(full_path)
     DX.u:reset()
+    DX.pn:resetCache()
     DX.vd:resetAllFilters()
     DX.m:resetData("force_refresh", full_path)
     --* make data available for display of xray items on page or in paragraphs:

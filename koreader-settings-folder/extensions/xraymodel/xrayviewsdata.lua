@@ -1066,7 +1066,7 @@ function XrayViewsData:getChapterHitsPerTerm(term, chapter_stats, chapters_order
     for i = 1, result_count do
         last_chapter_title = KOR.toc:getTocLastChapterInfo(results[i].start)
 
-        --* the cached chapter_props will only be reset in ((XrayController#ReaderViewInitForBook)), so when opening another ebook:
+        --* the cached chapter_props will only be reset in ((XrayController#resetDynamicXray)), so when opening another ebook:
         if not self.chapter_props[last_chapter_title] then
             last_chapter_index = KOR.toc:getAccurateTocIndexByXPointer(results[i].start)
 
@@ -1214,7 +1214,7 @@ function XrayViewsData.initData(force_refresh, override_mode, full_path)
     parent:setProp("current_ebook_basename", KOR.filedirnames:basename(full_path or KOR.registry.current_ebook))
 
     --* force book display mode for books which are not part of a series:
-    --* DX.m.current_series should have been set, when list_display_mode is "series", from the doc_props in ((XrayController#ReaderViewInitForBook)) > ((XrayModel#setTitleAndSeries)):
+    --* DX.m.current_series should have been set, when list_display_mode is "series", from the doc_props in ((XrayController#resetDynamicXray)) > ((XrayModel#setTitleAndSeries)):
     if not parent.current_series then
         override_mode = "book"
     end

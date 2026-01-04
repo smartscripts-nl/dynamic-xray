@@ -34,6 +34,7 @@ local parent
 
 --- @class XrayPageNavigator
 local XrayPageNavigator = WidgetContainer:new{
+    active_side_button = 1,
     alias_indent = "   ",
     button_labels_injected = "",
     cached_hits = {},
@@ -43,6 +44,7 @@ local XrayPageNavigator = WidgetContainer:new{
     max_line_length = 80,
     navigator_page_no = nil,
     no_navigator_page_found = false,
+    page_cache = {},
     page_navigator_filter_item = nil,
     prev_marked_item = nil,
     scroll_to_page = nil,
@@ -78,17 +80,13 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text,
     else
         self:closePageNavigator()
     end
-    local side_buttons
-    local html = KOR.document:getPageHtml(self.navigator_page_no)
-    html, side_buttons = self:markItemsFoundInPageHtml(html, self.navigator_page_no, marker_name)
-
-    info_panel_text = self:generateInfoPanelTextIfMissing(side_buttons, info_panel_text)
+    local html, side_buttons = self:loadDataForPage(marker_name)
 
     self.page_navigator = KOR.dialogs:htmlBox({
         title = DX.m.current_title .. " - p." .. self.navigator_page_no,
         html = html,
         modal = false,
-        info_panel_text = info_panel_text,
+        info_panel_text = self:getInfoPanelText(info_panel_text, side_buttons),
         window_size = "fullscreen",
         no_buttons_row = true,
         top_buttons_left = DX.b:forPageNavigatorTopLeft(self),
@@ -161,26 +159,6 @@ function XrayPageNavigator:toPrevNavigatorPage()
 end
 
 --- @private
-function XrayPageNavigator:generateInfoPanelTextIfMissing(side_buttons, info_panel_text)
-    if info_panel_text or not side_buttons or not side_buttons[1] then
-        return info_panel_text
-    end
-
-    local first_item = side_buttons[1][1]
-    --* this prop was set in ((XrayPageNavigator#markedItemRegister)):
-    info_panel_text = self.first_info_panel_text or self:getItemInfoText(first_item)
-    self.first_info_panel_text = info_panel_text
-    --* the xray_item prop of these buttons was set in ((XrayPageNavigator#markedItemRegister)):
-    self.first_info_panel_item_name = first_item.xray_item.name
-    side_buttons[1][1].text = self.marker .. side_buttons[1][1].text
-
-    --* the xray_item prop of these buttons was set in ((XrayPageNavigator#markedItemRegister)):
-    self:setCurrentItem(first_item.xray_item)
-
-    return info_panel_text
-end
-
---- @private
 function XrayPageNavigator:markItemsFoundInPageHtml(html, navigator_page_no, marker_name)
     local buttons = {}
     self.button_labels_injected = ""
@@ -198,6 +176,10 @@ function XrayPageNavigator:markItemsFoundInPageHtml(html, navigator_page_no, mar
     for i = 1, count do
         html = self:markItemsInHtml(html, buttons, hits[i])
     end
+    self.page_cache[self.navigator_page_no] = {
+        html = html,
+        buttons = buttons,
+    }
     return html, buttons
 end
 
@@ -362,6 +344,7 @@ function XrayPageNavigator:markedItemRegister(item, html, buttons, word)
     if item.name == self.marker_name then
         self:setCurrentItem(item)
     end
+    local button_index = #buttons + 1
     table.insert(buttons, {{
         text = label,
         xray_item = item,
@@ -370,6 +353,7 @@ function XrayPageNavigator:markedItemRegister(item, html, buttons, word)
             if self.current_item and item.name == self.current_item.name then
                 return true
             end
+            self.active_side_button = button_index
             self:setActiveScrollPage()
             self:reloadPageNavigator(item, info_text)
             return true
@@ -535,6 +519,66 @@ function XrayPageNavigator:getMatchStringPlural(word, for_substitution)
         return self.word_start .. "(" .. plural_matcher .. self.word_end .. ")", word
     end
     return self.word_start .. plural_matcher .. self.word_end
+end
+
+--- @private
+function XrayPageNavigator:loadDataForPage(marker_name)
+
+    local buttons
+    if self.navigator_page_no and self.page_cache[self.navigator_page_no] then
+        self:markActiveSideButton(self.page_cache[self.navigator_page_no].buttons)
+
+        return self.page_cache[self.navigator_page_no].html, self.page_cache[self.navigator_page_no].buttons
+    end
+
+    self.active_side_button = 1
+    local html = KOR.document:getPageHtml(self.navigator_page_no)
+    --* self.page_cache will be updated here:
+    html, buttons = self:markItemsFoundInPageHtml(html, self.navigator_page_no, marker_name)
+    self:markActiveSideButton(buttons)
+
+    return html, buttons
+end
+
+--- @private
+function XrayPageNavigator:markActiveSideButton(source_buttons)
+    count = #source_buttons
+    local button
+    --* these are rows with one button each:
+    for r = 1, count do
+        button = source_buttons[r][1]
+        button.text = button.text:gsub(self.marker, "")
+        if r == self.active_side_button then
+            button.text = self.marker .. button.text
+        end
+        self:generateInfoTextForFirstSideButton(r, button)
+    end
+end
+
+--- @private
+function XrayPageNavigator:generateInfoTextForFirstSideButton(row, button)
+    if row ~= 1 then
+        return
+    end
+    --* the xray_item prop of these buttons was set in ((XrayPageNavigator#markedItemRegister)):
+    local info_text = self:getItemInfoText(button.xray_item)
+    button.xray_item.info_text = info_text
+    self.first_info_panel_text = info_text
+    self.first_info_panel_item_name = button.xray_item.name
+end
+
+--- @private
+function XrayPageNavigator:getInfoPanelText(info_panel_text, side_buttons)
+    if info_panel_text then
+        return info_panel_text
+    end
+
+    --* xray_item.info_text for first button was generated in ((XrayPageNavigator#markActiveSideButton)) > ((XrayPageNavigator#generateInfoTextForFirstSideButton)):
+    return side_buttons[1] and side_buttons[1][1].xray_item.info_text or ""
+end
+
+function XrayPageNavigator:resetCache()
+    self.page_cache = {}
 end
 
 --- @private
