@@ -297,6 +297,7 @@ function XrayController:saveNewItem(return_to_list)
     DX.d:closeForm("add")
     DX.fd.saveNewItem(new_item)
     DX.vd:prepareData(new_item)
+    self:resetDynamicXray(KOR.document, "is_prepared")
     --* to force an update of the list of items in ((XrayDialogs#showList)):
     KOR.registry:set("new_item", new_item)
     self:showListConditionally(new_item, return_to_list)
@@ -321,6 +322,7 @@ function XrayController:saveUpdatedItem(item_copy, return_to_list, reload_manage
 
     --* item data was updated, so previous item viewer instances must be closed:
     DX.d:closeItemViewer()
+    self:resetDynamicXray(KOR.document, "is_prepared")
 
     if self.return_to_viewer then
         --* return to updated viewer instance via closeForm:
@@ -466,13 +468,16 @@ function XrayController:addToMainMenu(menu_items)
 end
 
 --* called from ((XrayController#onReaderReady)):
-function XrayController:resetDynamicXray(document)
-    KOR.document = document
+function XrayController:resetDynamicXray(document, is_prepared)
     local full_path = document.file
     DX.m:setTitleAndSeries(full_path)
     DX.u:reset()
     DX.pn:resetCache()
     DX.vd:resetAllFilters()
+    --* when current method called after saving an item from a form:
+    if is_prepared then
+        return
+    end
     DX.m:resetData("force_refresh", full_path)
     --* make data available for display of xray items on page or in paragraphs:
     DX.vd.initData(true, false, full_path)

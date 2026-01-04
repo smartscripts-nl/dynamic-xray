@@ -40,6 +40,7 @@ local XrayPageNavigator = WidgetContainer:new{
     cached_hits = {},
     current_item = nil,
     initial_browsing_page = nil,
+    item_cache = {},
     marker = KOR.icons.active_tab_bare,
     max_line_length = 80,
     navigator_page_no = nil,
@@ -300,17 +301,26 @@ function XrayPageNavigator:getItemInfoText(item)
     --* the reliability_indicators were added in ((XrayUI#getXrayItemsFoundInText)) > ((XrayUI#matchNameInPageOrParagraph)) and ((XrayUI#matchAliasesToParagraph)):
     local reliability_indicator = item.reliability_indicator and item.reliability_indicator .. " " or ""
 
+    if self.item_cache[item.name] then
+        return "\n" .. reliability_indicator .. self.item_cache[item.name]
+    end
+
     self.alias_indent_corrected = DX.s.is_mobile_device and self.alias_indent .. self.alias_indent .. self.alias_indent .. self.alias_indent or self.alias_indent
     self.max_line_length = DX.s.is_mobile_device and 40 or self.max_line_length
 
+    local reliability_indicator_placeholder = item.reliability_indicator and "  " or ""
     self.sub_info_separator = ""
-    local description = KOR.strings:splitLinesToMaxLength(reliability_indicator .. item.name .. ": " .. item.description, self.max_line_length, self.alias_indent, nil, "dont_indent_first_line")
-    local info = "\n" .. description .. "\n"
+    local description = KOR.strings:splitLinesToMaxLength(item.name .. ": " .. item.description, self.max_line_length, self.alias_indent, nil, "dont_indent_first_line")
+    local info = "\n" .. reliability_indicator_placeholder .. description .. "\n"
 
     self.sub_info_separator = "     "
     info = self:splitLinesToMaxLength(info, item.aliases, KOR.icons.xray_alias_bare .. " " .. item.aliases)
     info = self:splitLinesToMaxLength(info, item.linkwords, KOR.icons.xray_link_bare .. " " .. item.linkwords)
-    return info
+
+    --* remove reliability_indicator_placeholder:
+    self.item_cache[item.name] = info:gsub("\n  ", "", 1)
+
+    return "\n" .. reliability_indicator .. self.item_cache[item.name]
 end
 
 --- @private
@@ -578,6 +588,7 @@ function XrayPageNavigator:getInfoPanelText(info_panel_text, side_buttons)
 end
 
 function XrayPageNavigator:resetCache()
+    self.item_cache = {}
     self.page_cache = {}
 end
 
