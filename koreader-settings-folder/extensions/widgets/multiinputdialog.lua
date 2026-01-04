@@ -38,7 +38,8 @@ local MultiInputDialog = InputDialog:extend{
     --* to make the FocusManager work correctly, even under Ubuntu; this prop will be initially set by ((MultiInputDialog#insertFieldContainers)) and will upon switching between fields be dynamically updated to the active field by ((MultiInputDialog#onSwitchFocus)):
     _input_widget = nil,
     a_field_was_focussed = false,
-    auto_height_elem = nil,
+    auto_height_field = nil,
+    auto_height_field_index = nil,
     bottom_v_padding = Size.padding.small,
     description_face = Font:getDefaultDialogFontFace(),
     description_padding = Size.padding.small,
@@ -227,11 +228,15 @@ function MultiInputDialog:fieldAddToInputs(field, field_side)
     self:setFieldWidth(field)
     self:setFieldProps(field, field_side)
     if self.field_config.height == "auto" then
-        self.auto_height_elem = KOR.tables:shallowCopy(self.field_config)
+        --! auto_height_field is the field of which the height is to be adapted, in ((MultiInputDialog#adaptMiddleContainerHeight)):
+        self.auto_height_field = KOR.tables:shallowCopy(self.field_config)
+        --! we need this index to replace the temporary input field with the field with computed height:
+        self.auto_height_field_index = #self.input_fields + 1
         self.field_config.height = self.initial_auto_field_height
         table.insert(self.input_fields, InputText:new(self.field_config))
         return
     end
+
     table.insert(self.input_fields, InputText:new(self.field_config))
 end
 
@@ -361,7 +366,7 @@ function MultiInputDialog:insertIntoTargetContainer(group, is_field)
         self.auto_height_field_injected = true
         return
     end
-    if self.auto_height_elem and self.auto_height_field_injected then
+    if self.auto_height_field and self.auto_height_field_injected then
         table.insert(self.BottomContainer, group)
     else
         table.insert(self.TopContainer, group)
@@ -373,7 +378,6 @@ function MultiInputDialog:insertFieldByRowType()
     --* for one field rows immediately insert the input field:
     if not self.has_field_rows or self.fields_count == 1 then
         self:insertSingleFieldInRow()
-        return
     end
 end
 
@@ -557,6 +561,7 @@ function MultiInputDialog:getFieldContainer(field)
     if field.custom_edit_button then
         self.custom_edit_button = field.custom_edit_button
         KOR.registry:set("xray_type_button", self.custom_edit_button)
+
         return CenterContainer:new{
             dimen = Geom:new{
                 w = tile_width,
@@ -669,17 +674,20 @@ end
 function MultiInputDialog:adaptMiddleContainerHeight()
     local difference = self.screen_height - self.TopContainer:getSize().h - self.BottomContainer:getSize().h - self.keyboard_height
 
-    if self.auto_height_elem then
+    if self.auto_height_field then
         --* for margin above and below auto height field:
         difference = difference - 2 * self.field_spacer:getSize().h
-        self.auto_height_elem.height = difference
+        self.auto_height_field.height = difference
         --* insert a field with dynamically adjusted height, to push the buttons to just above the keyboard:
+        --* auto_height_field_index was set in ((MultiInputDialog#fieldAddToInputs)):
+        local field = InputText:new(self.auto_height_field)
+        self.input_fields[self.auto_height_field_index] = field
         local group = CenterContainer:new{
             dimen = Geom:new{
                 w = self.full_width,
                 h = difference,
             },
-            InputText:new(self.auto_height_elem),
+            field,
         }
         table.insert(self.MiddleContainer, self.field_spacer)
         table.insert(self.MiddleContainer, group)
