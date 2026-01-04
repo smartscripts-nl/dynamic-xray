@@ -678,8 +678,9 @@ function MultiInputDialog:adaptMiddleContainerHeight()
         --* for margin above and below auto height field:
         difference = difference - 2 * self.field_spacer:getSize().h
         self.auto_height_field.height = difference
-        --* insert a field with dynamically adjusted height, to push the buttons to just above the keyboard:
         --* auto_height_field_index was set in ((MultiInputDialog#fieldAddToInputs)):
+        self.input_fields[self.auto_height_field_index]:free()
+        --* insert a field with dynamically adjusted height, to push the buttons to just above the keyboard:
         local field = InputText:new(self.auto_height_field)
         self.input_fields[self.auto_height_field_index] = field
         local group = CenterContainer:new{
