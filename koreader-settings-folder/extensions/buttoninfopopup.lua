@@ -479,4 +479,13 @@ function ButtonInfoPopup:forXrayTypeSet(props, add_horizontal_button_padding)
 	}, props)
 end
 
+function ButtonInfoPopup:forXrayViewer(props)
+	return KOR.buttonprops:set({
+		icon = "view",
+		info = _("eye icon | Open Xray item viewer for the item displayed in the bottom panel."),
+		callback_label = _("open"),
+		--! callback defined by calling module
+	}, props)
+end
+
 return ButtonInfoPopup

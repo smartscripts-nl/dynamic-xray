@@ -130,7 +130,7 @@ function HtmlBox:init()
     self:generateTitleBar()
     self:setPaddingAndSpacing()
     self:computeLineHeight()
-    self:generateSideButtonTables()
+    self:generateSidePanelButtons()
     self:generateButtonTables()
     self:setMargins()
     self:computeAvailableHeight()
@@ -698,7 +698,8 @@ function HtmlBox:computeLineHeight()
     end
 end
 
-function HtmlBox:generateSideButtonTables()
+function HtmlBox:generateSidePanelButtons()
+    --* these side panel buttons were generated in ((XrayPageNavigator#markItemsFoundInPageHtml)) > ((XrayPageNavigator#markedItemRegister)):
     if not self.side_buttons then
         return
     end

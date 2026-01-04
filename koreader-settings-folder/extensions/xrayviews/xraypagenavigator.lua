@@ -87,12 +87,13 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text,
     self.page_navigator = KOR.dialogs:htmlBox({
         title = DX.m.current_title .. " - p." .. self.navigator_page_no,
         html = html,
+        modal = false,
         info_panel_text = info_panel_text,
         window_size = "fullscreen",
         no_buttons_row = true,
         top_buttons_left = DX.b:forPageNavigatorTopLeft(self),
         side_buttons = side_buttons,
-        side_buttons_navigator = DX.b:forXrayPageNavigator(self),
+        side_buttons_navigator = DX.b:forPageNavigator(self),
         next_item_callback = function()
             self:toNextNavigatorPage()
         end,
@@ -166,11 +167,15 @@ function XrayPageNavigator:generateInfoPanelTextIfMissing(side_buttons, info_pan
     end
 
     local first_item = side_buttons[1][1]
-    --* this prop was set in ((XrayPageNavigator#markItem)):
+    --* this prop was set in ((XrayPageNavigator#markedItemRegister)):
     info_panel_text = self.first_info_panel_text or self:getItemInfoText(first_item)
     self.first_info_panel_text = info_panel_text
-    self.first_info_panel_item_name = first_item.name
+    --* the xray_item prop of these buttons was set in ((XrayPageNavigator#markedItemRegister)):
+    self.first_info_panel_item_name = first_item.xray_item.name
     side_buttons[1][1].text = self.marker .. side_buttons[1][1].text
+
+    --* the xray_item prop of these buttons was set in ((XrayPageNavigator#markedItemRegister)):
+    self:setCurrentItem(first_item.xray_item)
 
     return info_panel_text
 end
@@ -353,8 +358,13 @@ function XrayPageNavigator:markedItemRegister(item, html, buttons, word)
     end
 
     self.button_labels_injected = self.button_labels_injected .. " " .. item.name
+    local label = (self.page_navigator_filter_item and item.name == self.page_navigator_filter_item.name and KOR.icons.filter .. item.name) or (item.name == self.marker_name and self.marker .. item.name) or item.name
+    if item.name == self.marker_name then
+        self:setCurrentItem(item)
+    end
     table.insert(buttons, {{
-        text = (self.page_navigator_filter_item and item.name == self.page_navigator_filter_item.name and KOR.icons.filter .. item.name) or (item.name == self.marker_name and self.marker .. item.name) or item.name,
+        text = label,
+        xray_item = item,
         align = "left",
         callback = function()
             if self.current_item and item.name == self.current_item.name then
@@ -378,6 +388,13 @@ function XrayPageNavigator:markedItemRegister(item, html, buttons, word)
         end,
     }})
     return html
+end
+
+--- @private
+function XrayPageNavigator:setCurrentItem(item)
+    self.current_item = item
+    --* for consumption in Xray item viewer as loaded via ((XrayButtons#forPageNavigatorTopLeft)):
+    KOR.registry:set("page_navigator_active_item", self.current_item)
 end
 
 --- @private

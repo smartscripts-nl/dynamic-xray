@@ -539,7 +539,7 @@ function XrayDialogs:showItemsInfo(hits_info, headings, matches_count, extra_but
             info = info,
             fullscreen = true,
             covers_fullscreen = true,
-            top_buttons_left = DX.b:forXrayUiInfoTopLeft(target, new_trigger, self),
+            top_buttons_left = DX.b:forUiInfoTopLeft(target, new_trigger, self),
             paragraph_headings = headings,
             fixed_face = Font:getFace("x_smallinfofont", 19),
             close_callback = function()

@@ -208,7 +208,7 @@ function XrayButtons:addMoreButton(buttons, indicator_buttons, props)
 end
 
 --- @param parent XrayDialogs
-function XrayButtons:forXrayPageNavigator(parent)
+function XrayButtons:forPageNavigator(parent)
     return {{
      {
          text = KOR.icons.previous,
@@ -277,10 +277,18 @@ Longpress on the filtered item in the side panel.]])
                 DX.s:showSettingsManager()
             end
         }),
+        KOR.buttoninfopopup:forXrayList(),
+        KOR.buttoninfopopup:forXrayViewer({
+            callback = function()
+                --* this was set in ((XrayPageNavigator#markedItemRegister)) or ((XrayPageNavigator#generateInfoPanelTextIfMissing)) > ((XrayPageNavigator#setCurrentItem)):
+                local page_navigator_active_item = KOR.registry:get("page_navigator_active_item")
+                DX.d:viewItem(page_navigator_active_item)
+            end,
+        }),
     }
 end
 
-function XrayButtons:forXrayUiInfo(parent, buttons)
+function XrayButtons:forUiInfo(parent, buttons)
     -- #((TextViewer toc button))
     --* the items for this and the next two buttons were generated in ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)):
     --* compare the buttons for Xray items list as injected in ((inject xray list buttons)):
@@ -312,7 +320,7 @@ function XrayButtons:forXrayUiInfo(parent, buttons)
 end
 
 --- @param parent XrayDialogs
-function XrayButtons:forXrayUiInfoTopLeft(target, new_trigger, parent)
+function XrayButtons:forUiInfoTopLeft(target, new_trigger, parent)
     return {
         KOR.buttoninfopopup:forXrayTogglePageOrParagraphInfo({
             icon = DX.s.ui_mode == "paragraph" and "paragraph" or "pages",

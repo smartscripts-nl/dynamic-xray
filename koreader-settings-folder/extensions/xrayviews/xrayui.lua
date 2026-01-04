@@ -456,7 +456,7 @@ function XrayUI:ReaderViewPopulateInfoRects()
         skip_xray_items = self.skip_xray_items,
         explanations = self.paragraph_explanations,
         rects = self.rects_with_matches,
-        --* the buttons in extra_button_rows were generated in ((TextViewer#getDefaultButtons)) > ((XrayButtons#forXrayUiInfo)):
+        --* the buttons in extra_button_rows were generated in ((TextViewer#getDefaultButtons)) > ((XrayButtons#forUiInfo)):
         callback = function(paragraph_hits_info, extra_button_rows, paragraph_text)
             --* paragraph_text only needed for debugging purposes, to ascertain we are looking at the correct paragraph:
             DX.d:showItemsInfo(paragraph_hits_info, extra_button_rows, paragraph_text)
