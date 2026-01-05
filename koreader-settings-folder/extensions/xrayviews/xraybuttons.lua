@@ -593,7 +593,7 @@ function XrayButtons:forTranslationsContextDialog(parent, item)
     return {
         {
             {
-                icon = "edit",
+                icon = "edit-light",
                 callback = function()
                     UIManager:close(parent.translations_manipulate_dialog)
                     --- @type XrayTranslationsManager manager
@@ -708,7 +708,7 @@ function XrayButtons:forTranslationViewer(parent, translation)
                 end,
             },
             {
-                icon = "edit",
+                icon = "edit-light",
                 callback = function()
                     UIManager:close(parent.translation_viewer)
                     parent:editTranslation(translation)
