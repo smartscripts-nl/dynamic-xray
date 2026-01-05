@@ -63,6 +63,7 @@ local MultiInputDialog = InputDialog:extend{
 }
 
 function MultiInputDialog:init()
+    self.a_field_was_focussed = false
     --* NB: title and buttons are initialized in base class
     self:initMainContainers()
     self:initWidgetProps()
@@ -75,7 +76,7 @@ function MultiInputDialog:init()
     KOR.dialogs:registerWidget(self)
 end
 
---- Returns an array of our input field's *text* field.
+--* Returns an array of our input field's *text* fields:
 function MultiInputDialog:getFields()
     local field_values = {}
     local field
@@ -108,9 +109,7 @@ function MultiInputDialog:onSwitchFocus(inputbox)
     --* unfocus current inputbox
     self._input_widget:unfocus()
     self._input_widget:onCloseKeyboard()
-    UIManager:setDirty(nil, function()
-        return "ui", self.dialog_frame.dimen
-    end)
+    self:refreshDialog()
     --* focus new inputbox
     self._input_widget = inputbox
     self._input_widget:focus()
@@ -163,29 +162,25 @@ end
 --- @param field_side number 1 if left side, 2 if right side
 function MultiInputDialog:generateRows(field_side, field_source, is_field_row)
     self.force_one_line_field = is_field_row
-    local field = is_field_row and field_source[field_side] or field_source
+    local field_config = is_field_row and field_source[field_side] or field_source
     if self.force_one_line_field then
-        field.scroll = true
+        field_config.scroll = true
     end
     if field_side == RIGHT_SIDE then
         --* self.field_nr counts ALL fields, even those in different tabs:
         self.field_nr = self.field_nr + 1
     end
-    self:fieldAddToInputs(field, field_side)
+    self:fieldAddToInputs(field_config, field_side)
     self.current_field = #self.input_fields
 
     --* self.fields_count is either 1 or 2 (for two field row):
     if self.fields_count > 1 then
         table.insert(self.halved_fields, self.input_fields[self.current_field])
     end
-    if field.is_edit_button_target then
+    if field_config.is_edit_button_target then
         KOR.registry:set("edit_button_target", self.input_fields[self.current_field])
     end
-    if not self._input_widget then
-        --* sets the field to which scollbuttons etc. are coupled:
-        self._input_widget = self.input_fields[self.current_field]
-    end
-    self:insertFieldDescription(field)
+    self:insertFieldDescription(field_config)
     self:insertFieldByRowType(field_side)
 end
 
@@ -224,10 +219,10 @@ end
 
 --- @private
 --- @param field_side number 1 if left side, 2 if right side
-function MultiInputDialog:fieldAddToInputs(field, field_side)
-    self:setFieldWidth(field)
-    self:setFieldProps(field, field_side)
-    if self.field_config.height == "auto" then
+function MultiInputDialog:fieldAddToInputs(field_config, field_side)
+    self:setFieldWidth(field_config)
+    self:setFieldProps(field_config, field_side)
+    if field_config.height == "auto" then
         --! auto_height_field is the field of which the height is to be adapted, in ((MultiInputDialog#adaptMiddleContainerHeight)):
         self.auto_height_field = KOR.tables:shallowCopy(self.field_config)
         --! we need this index to replace the temporary input field with the field with computed height:
@@ -237,7 +232,12 @@ function MultiInputDialog:fieldAddToInputs(field, field_side)
         return
     end
 
-    table.insert(self.input_fields, InputText:new(self.field_config))
+    local field = InputText:new(self.field_config)
+    table.insert(self.input_fields, field)
+    if self.field_config.focused then
+        --* sets the field to which scollbuttons etc. are coupled:
+        self._input_widget = field
+    end
 end
 
 --- @private
@@ -303,6 +303,7 @@ function MultiInputDialog:setFieldProps(field, field_side)
             field.text_type,
         face =
             self:setFieldProp(field.input_face, self.input_face),
+        --* this prop is used by InputText:
         focused =
             is_focus_field,
         scroll =
@@ -483,9 +484,8 @@ function MultiInputDialog:getDescription(field, width)
         bordersize = 0,
         text,
     }
-    local label_height = label:getSize().h
 
-    return label, label_height
+    return label, label:getSize().h
 end
 
 --- @private
@@ -781,6 +781,11 @@ function MultiInputDialog:finalizeWidgetMID()
         }
     end
 
+    self:refreshDialog()
+end
+
+--- @private
+function MultiInputDialog:refreshDialog()
     UIManager:setDirty(self, function()
         return "ui", self.dialog_frame.dimen
     end)
