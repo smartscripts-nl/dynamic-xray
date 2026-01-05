@@ -121,11 +121,14 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 ![02 Xray info dialog after click on marker](images/02-xray-info-dialog-after-click-on-marker.png)
 02 Xray info dialog after click on marker
 
-![02b Page navigator](images/02b-page-navigator.png)
+![02b Page Navigator](images/02b-page-navigator.png)
 02b Page Navigator, with info panel with explanations of Xray items in the page.
 
-![02c Tappable popup with linked items](images/02c-info-popup-with-linked-items.png)
-02c Tappable popup with linked items after longpressing a name in the ebook
+![02c Page Navigator: hotkeys](images/02c-page-navigator-hotkeys.png)
+02c Page Navigator: hotkeys.
+
+![02d Tappable popup with linked items](images/02d-info-popup-with-linked-items.png)
+02d Tappable popup with linked items after longpressing a name in the ebook
 
 ![03 List of Xray items](images/03-list-of-xray-items.png)
 03 List of Xray items

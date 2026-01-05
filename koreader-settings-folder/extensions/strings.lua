@@ -302,7 +302,7 @@ function Strings:removeNotes(text)
     return text:gsub(" ?%*", ""):gsub(" ?%†", ""):gsub(" ?%‡", "")
 end
 
-function Strings:splitLinesToMaxLength(text, max_length, indent, first_word, dont_indent_first_line)
+function Strings:splitLinesToMaxLength(text, max_length, indent, first_word, dont_indent_first_line, after_first_line_indent)
     if has_no_content(text) then
         return ""
     end
@@ -352,6 +352,9 @@ function Strings:splitLinesToMaxLength(text, max_length, indent, first_word, don
     for i = 1, count do
         if indent and (not dont_indent_first_line or i > 1) then
             lined_text[i] = indent .. lined_text[i]
+        end
+        if after_first_line_indent and i > 1 then
+            lined_text[i] = after_first_line_indent .. lined_text[i]
         end
         lined_text[i] = lined_text[i]:gsub(" $", "")
     end

@@ -63,7 +63,6 @@ local MultiInputDialog = InputDialog:extend{
 }
 
 function MultiInputDialog:init()
-    self.a_field_was_focussed = false
     --* NB: title and buttons are initialized in base class
     self:initMainContainers()
     self:initWidgetProps()

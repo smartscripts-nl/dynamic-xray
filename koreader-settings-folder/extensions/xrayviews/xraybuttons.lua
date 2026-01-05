@@ -21,7 +21,6 @@ local require = require
 local Button = require("extensions/widgets/button")
 local ButtonDialogTitle = require("extensions/widgets/buttondialogtitle")
 local ButtonTable = require("extensions/widgets/buttontable")
-local Event = require("ui/event")
 local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
@@ -211,106 +210,68 @@ end
 --- @param parent XrayDialogs
 function XrayButtons:forPageNavigator(parent)
     return {{
-        {
-            icon = "back",
-            callback = function()
-                parent:closePageNavigator()
-            end
-        },
-        KOR.buttoninfopopup:forXraySettings({
+         {
+             icon = "back",
              callback = function()
-                 UIManager:close(parent.page_navigator)
-                 parent.page_navigator = nil
-                 DX.s:showSettingsManager()
+                 parent:closePageNavigator()
+             end
+         },
+         KOR.buttoninfopopup:forXraySettings({
+             callback = function()
+                 parent:execSettingsCallback(parent)
              end
          }),
-         KOR.buttoninfopopup:forXrayList(),
-        KOR.buttoninfopopup:forXrayViewer({
-            enabled_function = function()
-                return parent.current_item and true or false
-            end,
-            callback = function()
-                DX.d:viewItem(parent.current_item)
-            end,
-        }),
-        KOR.buttoninfopopup:forXrayItemEdit({
-            enabled_function = function()
-                return parent.current_item and true or false
-            end,
-            info = _("edit icon | Edit the item that is shown in the info panel below."),
-            callback = function()
-                if not parent.current_item then
-                    KOR.messages:notify(_("there was no item to be edited..."))
-                    return true
-                end
-                parent:closePageNavigator()
-                DX.c:setProp("return_to_viewer", false)
-                DX.c:onShowEditItemForm(parent.current_item, false, 1)
-            end,
-        }),
-        {
+         KOR.buttoninfopopup:forXrayList({
+             callback = function()
+                 return parent:execShowListCallback()
+             end
+         }),
+         KOR.buttoninfopopup:forXrayViewer({
+             enabled_function = function()
+                 return parent.current_item and true or false
+             end,
+             callback = function()
+                 return parent:execViewItemCallback(parent)
+             end,
+         }),
+         KOR.buttoninfopopup:forXrayItemEdit({
+             enabled_function = function()
+                 return parent.current_item and true or false
+             end,
+             info = "edit-ikoon | Bewerk het item dat in het infopaneel hieronder wordt weergegeven.",
+             callback = function()
+                 return parent:execEditCallback(parent)
+             end,
+         }),
+         {
              text = KOR.icons.previous,
              callback = function()
-                 parent:toPrevNavigatorPage()
+                 return parent:execGotoPrevPageCallback(parent)
              end,
          },
          KOR.buttonchoicepopup:forXrayPageNavigatorToCurrentPage({
              callback = function()
-                 parent:toCurrentNavigatorPage()
+                 return parent:execJumpToCurrentPageInNavigatorCallback(parent)
              end,
              hold_callback = function()
-                 parent:closePageNavigator()
-                 KOR.ui.link:addCurrentLocationToStack()
-                 KOR.ui:handleEvent(Event:new("GotoPage", parent.navigator_page_no))
+                 return parent:execJumpToCurrentPageInEbookCallback(parent)
              end,
          }),
          {
              text = KOR.icons.next,
              callback = function()
-                 parent:toNextNavigatorPage()
+                 parent:execGotoNextPageCallback(parent)
              end,
          },
      }}
 end
 
 function XrayButtons:forPageNavigatorTopLeft(parent)
-    local screen_dims = Screen:getSize()
     return {
         {
             icon = "info-slender",
             callback = function()
-                KOR.dialogs:textBoxTabbed(1, {
-                    parent = parent,
-                    modal = true,
-                    block_height_adaptation = true,
-                    height = screen_dims.h * 0.8,
-                    width = screen_dims.w * 0.7,
-                    --no_buttons_row = true,
-                    tabs = {
-                        {
-                            tab = _("Browsing"),
-                            info = _([[With the arrows in the right bottom corner you can browse through pages.
-
-If you have a (BT) keyboard, you can also browse with Space and Shift+Space. If you reach the end of a page, the viewer will jump to the next page if you press Space. If you reach the top of a page, then Shift+Space will take you to the previous page.
-
-With the target icon you can jump back to the page on which you started navigating through the pages.
-
-With the XraySetting "page_navigator_panels_font_size" (see cog icon in top left corner) you can change the font size of the side and bottom panels.]])
-                        },
-                        {
-                            tab = _("Filtering"),
-                            info = _([[Tap on items in the side panel to see explantions of those items.
-
-FILTERED BROWSING
-
-If you longpress on an item in the side panel, that will be used as a filter criterium (a filter icon appears on the right side of it). After this the Navigator will only jump to the next or previous page where the filtered item is mentioned.
-
-RESETTING THE FILTER
-
-Longpress on the filtered item in the side panel.]])
-                        }
-                    },
-                })
+                parent:showHelpInformation()
             end,
         },
     }

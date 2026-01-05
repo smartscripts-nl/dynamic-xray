@@ -18,10 +18,12 @@ These modules are initialized in ((initialize Xray modules)) and ((XrayControlle
 
 local require = require
 
+local Event = require("ui/event")
 local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
+local Screen = require("device").screen
 
 local DX = DX
 local has_items = has_items
@@ -100,6 +102,93 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text,
             self:toPrevNavigatorPage()
         end,
     })
+    self:addHotkeysForPageNavigator()
+end
+
+--- @private
+function XrayPageNavigator:addHotkeysForPageNavigator()
+    local actions = {
+        {
+            label = "edit",
+            hotkey = { { "E" } },
+            callback = function()
+                return self:execEditCallback(self)
+            end,
+        },
+        {
+            label = "show_info",
+            hotkey = { { "I" } },
+            callback = function()
+                return self:execShowHelpInfoCallback(self)
+            end,
+        },
+        {
+            label = "jump_navigator",
+            hotkey = { { "J" } },
+            callback = function()
+                return self:execJumpToCurrentPageInNavigatorCallback(self)
+            end,
+        },
+        {
+            label = "jump_ebook",
+            hotkey = { { "Shift", { "J" } } },
+            callback = function()
+                return self:execJumpToCurrentPageInEbookCallback(self)
+            end,
+        },
+        {
+            label = "goto_list",
+            hotkey = { { "L" } },
+            callback = function()
+                return self:execShowListCallback(self)
+            end,
+        },
+        {
+            label = "goto_next",
+            hotkey = { { "N" } },
+            callback = function()
+                return self:execGotoNextPageCallback(self)
+            end,
+        },
+        {
+            label = "goto_previous",
+            hotkey = { { "P" } },
+            callback = function()
+                return self:execGotoPrevPageCallback(self)
+            end,
+        },
+        {
+            label = "pn_settings",
+            hotkey = { { { "S" } } },
+            callback = function()
+                return self:execSettingsCallback(self)
+            end,
+        },
+        {
+            label = "pn_viewer",
+            hotkey = { { { "V" } } },
+            callback = function()
+                return self:execViewItemCallback(self)
+            end,
+        },
+    }
+
+    --- SET HOTKEYS FOR HTMLBOX INSTANCE
+
+    --! this ensures that hotkeys will even be available when we are in a scrolling html box. These actions will be consumed in ((HtmlBoxWidget#initEventKeys)):
+    KOR.registry:set("scrolling_html_eventkeys", actions)
+
+    count = #actions
+    local hotkey, label
+    local suffix = "XPN"
+    for i = 1, count do
+        hotkey = actions[i].hotkey
+        label = actions[i].label
+        local callback = actions[i].callback
+        self.page_navigator:registerCustomKeyEvent(hotkey, "action_" .. label .. suffix, function()
+            return callback()
+        end)
+    end
 end
 
 function XrayPageNavigator:toCurrentNavigatorPage()
@@ -602,6 +691,169 @@ function XrayPageNavigator:closePageNavigator()
         UIManager:close(self.page_navigator)
         self.page_navigator = nil
     end
+end
+
+function XrayPageNavigator:execEditCallback(iparent)
+    if not iparent.current_item then
+        KOR.messages:notify("er was geen te bewerken item...")
+        return true
+    end
+    iparent:closePageNavigator()
+    DX.c:setProp("return_to_viewer", false)
+    DX.c:onShowEditItemForm(iparent.current_item, false, 1)
+    return true
+end
+
+function XrayPageNavigator:execGotoNextPageCallback(iparent)
+    iparent:toNextNavigatorPage()
+    return true
+end
+
+function XrayPageNavigator:execGotoPrevPageCallback(iparent)
+    iparent:toPrevNavigatorPage()
+    return true
+end
+
+function XrayPageNavigator:execJumpToCurrentPageInNavigatorCallback(iparent)
+    iparent:toCurrentNavigatorPage()
+    return true
+end
+
+function XrayPageNavigator:execJumpToCurrentPageInEbookCallback(iparent)
+    iparent:closePageNavigator()
+    KOR.ui.link:addCurrentLocationToStack()
+    KOR.ui:handleEvent(Event:new("GotoPage", iparent.navigator_page_no))
+    return true
+end
+
+function XrayPageNavigator:execSettingsCallback(iparent)
+    iparent:closePageNavigator()
+    DX.s:showSettingsManager()
+    return true
+end
+
+function XrayPageNavigator:execShowHelpInfoCallback()
+    self:showHelpInformation()
+    return true
+end
+
+function XrayPageNavigator:execShowListCallback()
+    DX.c:onShowList()
+    return true
+end
+
+function XrayPageNavigator:execViewItemCallback(iparent)
+    DX.d:viewItem(iparent.current_item)
+    return true
+end
+
+function XrayPageNavigator:showHelpInformation()
+    local screen_dims = Screen:getSize()
+
+    KOR.dialogs:htmlBoxTabbed(1, {
+        parent = parent,
+        title = "Page Navigator hulp",
+        modal = true,
+        button_font_weight = "normal",
+        --* htmlBox will always have a close_callback and therefor a close button; so no need to define a close_callback here...
+        no_filter_button = true,
+        title_shrink_font_to_fit = true,
+        text_padding_top_bottom = Screen:scaleBySize(10),
+        window_size = {
+            h = screen_dims.h * 0.8,
+            w = screen_dims.w * 0.7,
+        },
+        after_close_callback = function()
+            KOR.registry:unset("scrolling_html_eventkeys")
+        end,
+        no_buttons_row = true,
+        tabs = {
+            {
+                tab = _("Browsing"),
+                html = _([[With the arrows in the right bottom corner you can browse through pages.<br>
+<br>
+If you have a (BT) keyboard, you can also browse with Space and Shift+Space. If you reach the end of a page, the viewer will jump to the next page if you press Space. If you reach the top of a page, then Shift+Space will take you to the previous page.<br>
+<br>
+With the target icon you can jump back to the page on which you started navigating through the pages.<br>
+<br>
+With the XraySetting "page_navigator_panels_font_size" (see cog icon in top left corner) you can change the font size of the side and bottom panels.]])
+            },
+            {
+                tab = _("Filtering"),
+                html = _([[Tap on items in the side panel to see explantions of those items.<br>
+<br>
+<strong>Filtered browsing</strong><br>
+<br>
+If you longpress on an item in the side panel, that will be used as a filter criterium (a filter icon appears on the right side of it). After this the Navigator will only jump to the next or previous page where the filtered item is mentioned.<br>
+<br>
+<strong>Resetting the filter</strong><br>
+<br>
+Longpress on the filtered item in the side panel.]])
+            },
+            {
+                tab = _("Hotkeys"),
+                html = self:getHotkeysInformation(),
+            },
+        },
+    })
+end
+
+--- @private
+function XrayPageNavigator:getHotkeysInformation()
+    if self.hotkeys_information then
+        return self.hotkeys_information
+    end
+    self.hotkeys_information = _("For usage with (BT) keyboards:") .. [[<br>
+                <br>
+<strong>In Page Navigator</strong><br>
+<br>
+<table>
+    <tr><td>E</td><td>  </td><td>]]
+            .. _("Edit Xray item shown in bottom info panel")
+            .. [[</td></tr>
+    <tr><td>I</td><td>  </td><td>]]
+            .. _("show this Information dialog")
+            .. [[</td></tr>
+    <tr><td>J</td><td>  </td><td>]]
+            .. _("Page Navigator: Jump to page currently displayed in e-book")
+            .. [[</td></tr>
+    <tr><td>Shift+J</td><td>  </td><td>]]
+            .. _("e-book: Jump to page currently displayed in Page Navigator")
+            .. [[</td></tr>
+    <tr><td>L</td><td>  </td><td>]]
+            .. _("show List of Xray items")
+            .. [[</td></tr>
+    <tr><td>N</td><td>  </td><td>]]
+            .. _("jump to Next page in Page Navigator")
+            .. [[</td></tr>
+    <tr><td>P</td><td>  </td><td>]]
+            .. _("jump to Previous page in Page Navigator")
+            .. [[</td></tr>
+    <tr><td>S</td><td>  </td><td>]]
+            .. _("open Dynamic Xray Settings")
+            .. [[</td></tr>
+    <tr><td>V</td><td>  </td><td>]]
+            .. _("View details of item currently displayed in bottom info panel")
+            .. [[</td></tr>
+    <tr><td>]] .. _("space") .. [[</td><td>  </td><td>]]
+            .. _("browse to next page in Page Navigator")
+            .. [[</td></tr>
+    <tr><td style='white-space: pre'>]]
+            .. _("Shift+space")
+            .. [[</td><td>  </td><td>]]
+            .. _("browse to previous page in Page Navigator")
+            .. [[</td></tr>
+</table>
+<br>
+<strong>In this help dialog</strong><br>
+<br>
+<table>
+    <tr><td style='white-space: pre'>1, 2, 3</td><td>  </td><td>]]
+            .. _("Jump to the corresponding tab in the dialog")
+            .. [[</td></tr>
+</table>]]
+
+    return self.hotkeys_information
 end
 
 return XrayPageNavigator
