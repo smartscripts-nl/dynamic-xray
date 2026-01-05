@@ -48,8 +48,8 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
 
 1. Clone this repo somewhere. From there:
 2. Copy _the contents of_ all folders under "koreader-settings-folder" to the corresponding folders under the settings folder (almost always named "koreader") of your KOReader installation.
-   * **⚠️ NB: Don't overwrite entire folders in this target folder with the folders from the repository! The only folder which you can safely overwrite is "extensions".**
-   * **⚠️ NB 2: the contents of the subfolder "icons" must be copied to the corresponding folder under the KOReader settings folder, to have custom icons shown in the DX interface.**
+   * **⚠️ NB: Don't overwrite entire folders in this target folder with the folders from the repository!** The only folders which you can safely overwrite are "extensions" and "plugins/xraycontroller.koplugin".
+   * **⚠️ NB 2: the contents of the subfolder "icons" must be copied to the corresponding folder under the KOReader settings folder**, to have custom icons shown in the DX interface.
    * NB 3: thanks to the DX patches of KOReader, the plugin XrayController will also be loaded from KOReader's settings folder...
 3. **⚠️ It's especially important that you copy koreader-settings-folder/patches/2-xray-patches.lua to a subfolder "patches" in your KOReader settings folder!** Without this, DX won't be available in your installation.
 4. The "koreader-settings-and-patches" folder in this repository represents the settings folder of your koreader installation. In most cases, this target folder will be named "koreader". In its root you should find settings.reader.lua.
