@@ -23,6 +23,7 @@ return {
     button_disabled = Blitbuffer.COLOR_GRAY_B,
     button_invisible = Blitbuffer.COLOR_WHITE,
     button_label = Blitbuffer.COLOR_GRAY_3,
+    button_light = Blitbuffer.COLOR_GRAY_7,
 
     label_enabled = Blitbuffer.COLOR_BLACK,
     label_disabled = Blitbuffer.COLOR_DARK_GRAY,

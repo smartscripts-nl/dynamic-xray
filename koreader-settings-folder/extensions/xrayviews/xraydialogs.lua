@@ -79,6 +79,7 @@ local XrayDialogs = WidgetContainer:new{
     list_is_opened = false,
     list_title = nil,
     needle_name_for_list_page = "",
+    no_navigator_page_found = false,
     other_fields_face = Font:getFace("x_smallinfofont", 19),
     -- #((Xray-item edit dialog: tab buttons in TitleBar))
     title_tab_buttons_left = { _(" xray-item "), _(" metadata ") },
@@ -221,7 +222,8 @@ If such an other item is longpressed in the book, the linked items will be shown
         force_one_line_height = true,
         disable_paste = true,
         custom_edit_button = DX.b:forItemEditorTypeSwitch(item_copy, {
-            fgcolor = KOR.colors.button_label,
+            fgcolor = KOR.colors.button_light,
+            bordercolor = KOR.colors.button_light,
             radius = Size.radius.button,
             bordersize = Size.border.button,
             padding = Size.padding.buttonvertical,
@@ -357,31 +359,8 @@ function XrayDialogs:showNewItemForm(args)
         buttons = DX.b:forItemEditor("add", self.active_form_tab, item_copy),
     }
 
-    if active_form_tab == 1 then
-        self:adaptTextAreaHeight(self.add_item_input)
-    end
-
     UIManager:show(self.add_item_input)
     self.add_item_input:onShowKeyboard()
-end
-
---- @private
-function XrayDialogs:adaptTextAreaHeight(dialog)
-    --* this var was set in ((MultiInputDialog#init)):
-    local keyboard_height = KOR.registry:get("keyboard_height")
-    local form_height = dialog:getSize().h
-    local screen_height = Screen:getHeight()
-    local total_height = form_height + keyboard_height
-    if total_height == screen_height then
-        return
-    end
-
-    --local description_field_height
-    if total_height < screen_height then
-        self.description_field_height = self.description_field_height + screen_height - total_height
-    else
-        self.description_field_height = self.description_field_height - total_height + screen_height
-    end
 end
 
 function XrayDialogs:showDeleteItemConfirmation(delete_item, dialog, remove_all_instances_in_series)
@@ -447,10 +426,6 @@ function XrayDialogs:showEditItemForm(args)
         --* saving edits: ((XrayController#saveUpdatedItem)) > ((XrayFormsData#getAndStoreEditedItem))
         buttons = DX.b:forItemEditor("edit", active_form_tab, args.reload_manager, item_copy),
     }
-
-    if active_form_tab == 1 then
-        self:adaptTextAreaHeight(self.edit_item_input)
-    end
 
     UIManager:show(self.edit_item_input)
     self.edit_item_input:onShowKeyboard()

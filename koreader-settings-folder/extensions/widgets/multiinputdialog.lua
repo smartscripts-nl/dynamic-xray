@@ -591,7 +591,7 @@ end
 --- @private
 function MultiInputDialog:getEditFieldButton(field)
     return Button:new{
-        icon = "edit",
+        icon = "edit-light",
         bordersize = 0,
         callback = function()
             local input = field:getText()
