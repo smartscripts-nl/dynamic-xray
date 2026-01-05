@@ -29,6 +29,7 @@ local DX = DX
 local has_items = has_items
 local has_text = has_text
 local table = table
+local tostring = tostring
 
 local count
 --- @type XrayModel parent
@@ -53,6 +54,7 @@ local XrayPageNavigator = WidgetContainer:new{
     page_navigator_filter_item = nil,
     prev_marked_item = nil,
     scroll_to_page = nil,
+    side_buttons = {},
     word_end = "%f[%A]",
     word_start = "%f[%a]",
 }
@@ -85,17 +87,18 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text,
     else
         self:closePageNavigator()
     end
-    local html, side_buttons = self:loadDataForPage(marker_name)
+    local html
+    html, self.side_buttons = self:loadDataForPage(marker_name)
 
     self.page_navigator = KOR.dialogs:htmlBox({
         title = DX.m.current_title .. " - p." .. self.navigator_page_no,
         html = html,
         modal = false,
-        info_panel_text = self:getInfoPanelText(info_panel_text, side_buttons),
+        info_panel_text = self:getInfoPanelText(info_panel_text),
         window_size = "fullscreen",
         no_buttons_row = true,
         top_buttons_left = DX.b:forPageNavigatorTopLeft(self),
-        side_buttons = side_buttons,
+        side_buttons = self.side_buttons,
         info_panel_buttons = DX.b:forPageNavigator(self),
         next_item_callback = function()
             self:toNextNavigatorPage()
@@ -174,6 +177,24 @@ function XrayPageNavigator:addHotkeysForPageNavigator()
             end,
         },
     }
+
+    --* display information of first nine items in side panel in bottom info panel, with hotkeys 1 through 9:
+    for i = 1, 9 do
+        table.insert(actions, {
+            label = "show_item_info_" .. i,
+            hotkey = { { { tostring(i) } } },
+            callback = function()
+                if self.side_buttons and self.side_buttons[i] then
+                    self.side_buttons[i][1].callback()
+                end
+                --* we return false instead of true, so the Xray Page Navigator help dialog can activate tabs with number hotkeys:
+                if i < 4 then
+                    return false
+                end
+                return true
+            end,
+        })
+    end
 
     --- SET HOTKEYS FOR HTMLBOX INSTANCE
 
@@ -449,6 +470,9 @@ function XrayPageNavigator:markedItemRegister(item, html, buttons, word)
         self:setCurrentItem(item)
     end
     local button_index = #buttons + 1
+    if button_index < 10 then
+        label = button_index .. ". " .. label
+    end
     table.insert(buttons, {{
         text = label,
         xray_item = item,
@@ -681,13 +705,13 @@ function XrayPageNavigator:generateInfoTextForFirstSideButton(row, button)
 end
 
 --- @private
-function XrayPageNavigator:getInfoPanelText(info_panel_text, side_buttons)
+function XrayPageNavigator:getInfoPanelText(info_panel_text)
     if info_panel_text then
         return info_panel_text
     end
 
     --* xray_item.info_text for first button was generated in ((XrayPageNavigator#markActiveSideButton)) > ((XrayPageNavigator#generateInfoTextForFirstSideButton)):
-    return side_buttons[1] and side_buttons[1][1].xray_item.info_text or ""
+    return self.side_buttons and self.side_buttons[1] and self.side_buttons[1][1].xray_item.info_text or ""
 end
 
 function XrayPageNavigator:resetCache()
@@ -762,6 +786,9 @@ function XrayPageNavigator:execViewItemCallback(iparent)
     return true
 end
 
+
+--- ================= HELP INFORMATION ==================
+
 function XrayPageNavigator:showHelpInformation()
     local screen_dims = Screen:getSize()
 
@@ -814,7 +841,7 @@ Longpress on the filtered item in the side panel.]])
 end
 
 
---- ================= HELP INFORMATION ==================
+--- ============= HOTKEYS HELP INFORMATION ==============
 
 --- @private
 function XrayPageNavigator:getHotkeysInformation()
@@ -825,40 +852,43 @@ function XrayPageNavigator:getHotkeysInformation()
                 <br>
 <strong>In Page Navigator</strong><br>
 <br>
-<table>
-    <tr><td>E</td><td>  </td><td>]]
+<table style='border-collapse: collapse'>
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>E</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
             .. _("Edit Xray item shown in bottom info panel")
             .. [[</td></tr>
-    <tr><td>I</td><td>  </td><td>]]
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>I</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
             .. _("show this Information dialog")
             .. [[</td></tr>
-    <tr><td>J</td><td>  </td><td>]]
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>J</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
             .. _("Page Navigator: Jump to page currently displayed in e-book")
             .. [[</td></tr>
-    <tr><td>Shift+J</td><td>  </td><td>]]
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+J</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
             .. _("e-book: Jump to page currently displayed in Page Navigator")
             .. [[</td></tr>
-    <tr><td>L</td><td>  </td><td>]]
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>L</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
             .. _("show List of Xray items")
             .. [[</td></tr>
-    <tr><td>N</td><td>  </td><td>]]
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>N</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
             .. _("jump to Next page in Page Navigator")
             .. [[</td></tr>
-    <tr><td>P</td><td>  </td><td>]]
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>P</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
             .. _("jump to Previous page in Page Navigator")
             .. [[</td></tr>
-    <tr><td>S</td><td>  </td><td>]]
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>S</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
             .. _("open Dynamic Xray Settings")
             .. [[</td></tr>
-    <tr><td>V</td><td>  </td><td>]]
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>V</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
             .. _("View details of item currently displayed in bottom info panel")
             .. [[</td></tr>
-    <tr><td>]] .. _("space") .. [[</td><td>  </td><td>]]
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>]] .. _("1 - 9") .. [[</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
+            .. _("Show information of corresponding Xray item in side panel in bottom information panel")
+            .. [[</td></tr>
+    <tr><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]] .. _("space") .. [[</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
             .. _("browse to next page in Page Navigator")
             .. [[</td></tr>
-    <tr><td style='white-space: pre'>]]
+    <tr><td style='white-space: pre; text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
             .. _("Shift+space")
-            .. [[</td><td>  </td><td>]]
+            .. [[</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
             .. _("browse to previous page in Page Navigator")
             .. [[</td></tr>
 </table>
@@ -866,7 +896,7 @@ function XrayPageNavigator:getHotkeysInformation()
 <strong>In this help dialog</strong><br>
 <br>
 <table>
-    <tr><td style='white-space: pre'>1, 2, 3</td><td>  </td><td>]]
+    <tr><td style='white-space: pre; padding: 8px 22px; border: 1px solid #444444'>1, 2, 3</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
             .. _("Jump to the corresponding tab in the dialog")
             .. [[</td></tr>
 </table>]]
