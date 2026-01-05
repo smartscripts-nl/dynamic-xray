@@ -80,6 +80,7 @@ This will make the code and updates much easier to maintain for me _and_ for clo
 With the Page Navigator, you can browse through pages and see all known Xray items marked bold there. In the side panel you can tap on items to show their explanation in the bottom panel.
 
 You can show this navigator by:
+* pressing Shift+X on your (BT) keyboard; I'm not sure if this'll work on all KOReader installations
 * longpressing the lightning or star Xray markers in pages
 * tapping in KOReader's main menu: most left icon > Dynamic Xray > Show Page Navigator
 * assigning a gesture for "Show Xray Page Navigator" (in the Gestures menu under "Reflowable documents...") and then use this gesture.

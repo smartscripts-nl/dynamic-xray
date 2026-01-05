@@ -87,6 +87,7 @@ For a key event e.g.: ((next related item via hotkey))
 
 local require = require
 
+local Device = require("device")
 local Dispatcher = require("dispatcher")
 local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
@@ -244,6 +245,7 @@ end
 
 function XrayController:onReaderReady()
 
+    self:registerKeyEvents()
     KOR:registerUI(self.ui)
 
     if not DX.m then
@@ -252,6 +254,20 @@ function XrayController:onReaderReady()
     end
 
     self:resetDynamicXray(self.view.document)
+end
+
+--- @private
+function XrayController:registerKeyEvents()
+    self.is_docless = self.ui == nil or self.ui.document == nil
+    if self.is_docless or not Device:hasKeys() then
+        return
+    end
+
+    local readerui = self.ui
+    readerui.key_events.ShowPageNavigator = { { "Shift", { "X" } } }
+
+    --? for some reason this hotkey refuses to function: whichever key-combo I assign to it, it does not do anything:
+    --readerui.key_events.ShowList = { { "Shift", { "Z" } } }
 end
 
 function XrayController:filterItemsByImportantTypes()
