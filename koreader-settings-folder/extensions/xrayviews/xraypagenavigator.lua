@@ -681,12 +681,12 @@ function XrayPageNavigator:markActiveSideButton(source_buttons)
         button.text = button.text
             :gsub(self.marker, "")
             :gsub(self.filter_marker, "")
-        if r == self.active_side_button and r ~= self.active_filter_button then
-            button.text = self.marker .. button.text
-            self:setCurrentItem(button.xray_item)
-        end
         if r == self.active_filter_button then
             button.text = self.filter_marker .. button.text
+        end
+        if r == self.active_side_button then
+            button.text = self.marker .. button.text
+            self:setCurrentItem(button.xray_item)
         end
         self:generateInfoTextForFirstSideButton(r, button)
     end
