@@ -103,12 +103,14 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text,
 end
 
 function XrayPageNavigator:toCurrentNavigatorPage()
+    self.active_side_button = 1
     self.navigator_page_no = self.initial_browsing_page
     self.no_navigator_page_found = false
     self:showNavigator()
 end
 
 function XrayPageNavigator:toNextNavigatorPage()
+    self.active_side_button = 1
     local first_info_panel_text
     --* navigation to next filtered item hit:
     if self.page_navigator_filter_item then
@@ -135,6 +137,7 @@ function XrayPageNavigator:toNextNavigatorPage()
 end
 
 function XrayPageNavigator:toPrevNavigatorPage()
+    self.active_side_button = 1
     local first_info_panel_text
     --* navigation to previous filtered item hit:
     if self.page_navigator_filter_item then
