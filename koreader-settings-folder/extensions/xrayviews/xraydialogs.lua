@@ -885,8 +885,7 @@ function XrayDialogs:onMenuHold(item)
     return true
 end
 
---- @private
-function XrayDialogs:_closeListDialog()
+function XrayDialogs:closeListDialog()
     if self.xray_items_chooser_dialog then
         UIManager:close(self.xray_items_chooser_dialog)
         self.xray_items_chooser_dialog = nil
@@ -1086,7 +1085,7 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
     book_hits = needle_item.book_hits
     local current_items_count = #DX.vd.current_tab_items
 
-    self:_closeListDialog()
+    self:closeListDialog()
 
     --! if you want to show additional or specific props in the info, those props have to be added in ((XrayDataLoader#_loadAllData)) > ((set xray item props)), AND you have to add them to the menu_item props in ((XrayViewsData#filterAndPopulateItemTables))! Search for "mentioned_in" to see an example of this...
     local main_info, hits_info = DX.vd:getItemInfoHtml(needle_item, "ucfirst")

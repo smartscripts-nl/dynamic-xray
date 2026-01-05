@@ -884,6 +884,12 @@ end
 --* compare ((XrayButtons#forListFooterLeft)):
 function XrayButtons:forListFooterRight(base_icon_size)
     local buttons = {
+        KOR.buttoninfopopup:forXrayPageNavigator({
+            callback = function()
+                DX.d:closeListDialog()
+                DX.c:showPageNavigator()
+            end,
+        }),
         KOR.buttonchoicepopup:forXrayItemsImport({
             callback = function()
                 DX.d:showRefreshHitsForCurrentEbookConfirmation()
@@ -901,7 +907,7 @@ function XrayButtons:forListFooterRight(base_icon_size)
     }
 
     if DX.m.current_series then
-        table.insert(buttons, 1, Button:new(KOR.buttoninfopopup:forSeriesCurrentBook({
+        table.insert(buttons, 2, Button:new(KOR.buttoninfopopup:forSeriesCurrentBook({
             icon_size_ratio = base_icon_size + 0.1,
             callback = function()
                 KOR.descriptiondialog:showSeriesForEbookPath(KOR.registry.current_ebook)
@@ -1220,7 +1226,7 @@ function XrayButtons:forItemEditor(mode, active_form_tab, reload_manager, item_c
                 KOR.dialogs:niceAlert(_("Tips"), _("Tips about how to get best results with Xray items will soon follow..."))
             end
         }
-    local dialog_will_be_closed_message = _([[This will close the add dialog.
+    local dialog_will_be_closed_message = _([[This will close the form.
 
 Continue?]])
     local buttons = {
@@ -1247,6 +1253,16 @@ Continue?]])
                     end)
                 end,
                 info = _("Close form and go to list of Xray items."),
+            }),
+            KOR.buttoninfopopup:forXrayPageNavigator({
+                callback = function()
+                    KOR.dialogs:confirm(dialog_will_be_closed_message, function()
+                        DX.c:setProp("return_to_viewer", false)
+                        DX.d:closeForm(mode)
+                        DX.c:showPageNavigator(DX.d.item_requested)
+                    end)
+                end,
+                info = _("Close form and show Page Navigator."),
             }),
             edit_or_type_change_button,
             --* button to save and then force redirection to the list of items (opened if it wasn't open already):
