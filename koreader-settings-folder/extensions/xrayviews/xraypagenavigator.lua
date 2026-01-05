@@ -36,11 +36,13 @@ local parent
 
 --- @class XrayPageNavigator
 local XrayPageNavigator = WidgetContainer:new{
+    active_filter_button = nil,
     active_side_button = 1,
     alias_indent = "   ",
     button_labels_injected = "",
     cached_hits = {},
     current_item = nil,
+    filter_marker = KOR.icons.filter,
     initial_browsing_page = nil,
     item_cache = {},
     marker = KOR.icons.active_tab_bare,
@@ -442,7 +444,7 @@ function XrayPageNavigator:markedItemRegister(item, html, buttons, word)
     end
 
     self.button_labels_injected = self.button_labels_injected .. " " .. item.name
-    local label = (self.page_navigator_filter_item and item.name == self.page_navigator_filter_item.name and KOR.icons.filter .. item.name) or (item.name == self.marker_name and self.marker .. item.name) or item.name
+    local label = (self.page_navigator_filter_item and item.name == self.page_navigator_filter_item.name and self.filter_marker .. item.name) or (item.name == self.marker_name and self.marker .. item.name) or item.name
     if item.name == self.marker_name then
         self:setCurrentItem(item)
     end
@@ -461,15 +463,18 @@ function XrayPageNavigator:markedItemRegister(item, html, buttons, word)
             self:reloadPageNavigator(item, info_text)
             return true
         end,
+
         --* for marking or unmarking an item as filter criterium:
         hold_callback = function()
             if self.page_navigator_filter_item and self.page_navigator_filter_item.name == item.name then
                 self:setActiveScrollPage()
                 self.page_navigator_filter_item = nil
+                self.active_filter_button = nil
                 self:reloadPageNavigator(item, info_text)
                 return
             end
             self:setActiveScrollPage()
+            self.active_filter_button = button_index
             self.page_navigator_filter_item = item
             self:reloadPageNavigator(item, info_text)
         end,
@@ -649,10 +654,15 @@ function XrayPageNavigator:markActiveSideButton(source_buttons)
     --* these are rows with one button each:
     for r = 1, count do
         button = source_buttons[r][1]
-        button.text = button.text:gsub(self.marker, "")
-        if r == self.active_side_button then
+        button.text = button.text
+            :gsub(self.marker, "")
+            :gsub(self.filter_marker, "")
+        if r == self.active_side_button and r ~= self.active_filter_button then
             button.text = self.marker .. button.text
             self:setCurrentItem(button.xray_item)
+        end
+        if r == self.active_filter_button then
+            button.text = self.filter_marker .. button.text
         end
         self:generateInfoTextForFirstSideButton(r, button)
     end
@@ -693,9 +703,14 @@ function XrayPageNavigator:closePageNavigator()
     end
 end
 
+
+--- ============== (KEYBOARD) EVENT HANDLERS ============
+--* for calling through hotkeys - ((XrayPageNavigator#addHotkeysForPageNavigator)) - and as callbacks for usage in Xray buttons
+
+
 function XrayPageNavigator:execEditCallback(iparent)
     if not iparent.current_item then
-        KOR.messages:notify("er was geen te bewerken item...")
+        KOR.messages:notify(_("there was no item to be edited..."))
         return true
     end
     iparent:closePageNavigator()
@@ -752,7 +767,7 @@ function XrayPageNavigator:showHelpInformation()
 
     KOR.dialogs:htmlBoxTabbed(1, {
         parent = parent,
-        title = "Page Navigator hulp",
+        title = _("Page Navigator help information"),
         modal = true,
         button_font_weight = "normal",
         --* htmlBox will always have a close_callback and therefor a close button; so no need to define a close_callback here...
@@ -797,6 +812,9 @@ Longpress on the filtered item in the side panel.]])
         },
     })
 end
+
+
+--- ================= HELP INFORMATION ==================
 
 --- @private
 function XrayPageNavigator:getHotkeysInformation()
