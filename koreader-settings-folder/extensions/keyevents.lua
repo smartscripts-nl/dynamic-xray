@@ -21,6 +21,7 @@ local KeyEvents = WidgetContainer:extend{
     shared_hotkey_modules = {},
 }
 
+--* here we add generic hotkeys for HtmlBox, but a caller might already have added specific hotkeys for that module:
 --- @param parent HtmlBox
 function KeyEvents:addHotkeysForHtmlBox(parent)
     if not Device:hasKeys() then
@@ -40,6 +41,7 @@ function KeyEvents:addHotkeysForHtmlBox(parent)
             end
         end
 
+        --! don't use self.key_events = {... here, because that might overwrite key_events already defined by a caller:
         self:addKeyEvents(parent, {
             ReadPrevItem = { { Input.group.PgBack }, doc = "read prev item" },
             ReadPrevItemWithShiftSpace = Input.group.ShiftSpace,
@@ -65,6 +67,7 @@ function KeyEvents:addHotkeysForHtmlBox(parent)
         return
     end
 
+    --! don't use self.key_events = {... here, because that might overwrite key_events already defined by a caller:
     self:addKeyEvents(parent, {
         ReadPrevItem = { { Input.group.PgBack }, doc = "read prev item" },
         ReadPrevItemWithShiftSpace = Input.group.ShiftSpace,
