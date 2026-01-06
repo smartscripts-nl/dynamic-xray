@@ -216,11 +216,6 @@ function XrayButtons:forPageNavigator(parent)
                  parent:closePageNavigator()
              end
          },
-         KOR.buttoninfopopup:forXraySettings({
-             callback = function()
-                 parent:execSettingsCallback(parent)
-             end
-         }),
          KOR.buttoninfopopup:forXrayList({
              callback = function()
                  return parent:execShowListCallback()
@@ -274,6 +269,11 @@ function XrayButtons:forPageNavigatorTopLeft(parent)
                 parent:showHelpInformation()
             end,
         },
+        KOR.buttoninfopopup:forXraySettings({
+            callback = function()
+                parent:execSettingsCallback(parent)
+            end
+        }),
     }
 end
 
