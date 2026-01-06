@@ -27,6 +27,7 @@ local Screen = require("device").screen
 
 local DX = DX
 local has_items = has_items
+local has_no_text = has_no_text
 local has_text = has_text
 local table = table
 
@@ -36,7 +37,7 @@ local parent
 
 --- @class XrayPageNavigator
 local XrayPageNavigator = WidgetContainer:new{
-    active_filter_button = nil,
+    active_filter_name = nil,
     active_side_button = 1,
     alias_indent = "   ",
     button_labels_injected = "",
@@ -127,7 +128,7 @@ function XrayPageNavigator:toNextNavigatorPage()
     local first_info_panel_text
     --* navigation to next filtered item hit:
     if self.page_navigator_filter_item then
-        local next_page = self:getNextPageHitForTerm(self.page_navigator_filter_item, self.navigator_page_no)
+        local next_page = self:getNextPageHitForTerm()
         if not next_page or next_page == self.navigator_page_no then
             self.no_navigator_page_found = true
             KOR.messages:notify(_("no next mention of this item found..."))
@@ -154,7 +155,7 @@ function XrayPageNavigator:toPrevNavigatorPage()
     local first_info_panel_text
     --* navigation to previous filtered item hit:
     if self.page_navigator_filter_item then
-        local previous_page = self:getPreviousPageHitForTerm(self.page_navigator_filter_item, self.navigator_page_no)
+        local previous_page = self:getPreviousPageHitForTerm()
         if not previous_page or previous_page == self.navigator_page_no then
             self.no_navigator_page_found = true
             KOR.messages:notify(_("no previous mention of this item found..."))
@@ -173,6 +174,22 @@ function XrayPageNavigator:toPrevNavigatorPage()
         end
     end
     self:showNavigator(self.initial_browsing_page, first_info_panel_text)
+end
+
+--- @private
+function XrayPageNavigator:pageHasItemName(page)
+    local html = KOR.document:getPageHtml(page)
+    local hits = DX.u:getXrayItemsFoundInText(html, "for_navigator")
+    if not hits then
+        return false
+    end
+    local hcount = #hits
+    for i = 1, hcount do
+        if hits[i].name == self.active_filter_name then
+            return true
+        end
+    end
+    return false
 end
 
 --- @private
@@ -391,15 +408,15 @@ function XrayPageNavigator:markedItemRegister(item, html, buttons, word)
 
         --* for marking or unmarking an item as filter criterium:
         hold_callback = function()
-            if self.page_navigator_filter_item and self.page_navigator_filter_item.name == item.name then
+            if self.active_filter_name == item.name then
                 self:setActiveScrollPage()
                 self.page_navigator_filter_item = nil
-                self.active_filter_button = nil
+                self.active_filter_name = nil
                 self:reloadPageNavigator(item, info_text)
                 return
             end
             self:setActiveScrollPage()
-            self.active_filter_button = button_index
+            self.active_filter_name = item.name
             self.page_navigator_filter_item = item
             self:reloadPageNavigator(item, info_text)
         end,
@@ -435,43 +452,63 @@ function XrayPageNavigator:restoreActiveScrollPage()
 end
 
 --- @private
+function XrayPageNavigator:verifyPageHit(condition, page_no)
+    if
+        condition
+        and
+        --! verify that the filter item is present in this page; if not, then it must be another item of which the name partly(!) matches with the name of the filter item:
+        --* e.g.: if we made "Coram van Texel" the filter item, the script would search for occurrences of "Coram" and - but for this extra condition - yield back a false hit for "Farder Coram":
+        self:pageHasItemName(page_no, self.active_filter_name)
+    then
+        return page_no
+    end
+end
+
+--- @private
 function XrayPageNavigator:resultsPageGreaterThan(results, current_page, next_page)
-    local page_no
-    if has_items(results) then
-        count = #results
-        local last_occurrence = KOR.document:getPageFromXPointer(results[count].start)
-        if current_page == last_occurrence then
-            return
-        end
-        for i = 1, count do
-            page_no = KOR.document:getPageFromXPointer(results[i].start)
-            if page_no > current_page and (not next_page or page_no < next_page) then
-                return page_no
-            end
+    if not has_items(results) then
+        return
+    end
+    count = #results
+    local last_occurrence = KOR.document:getPageFromXPointer(results[count].start)
+    if current_page == last_occurrence then
+        return
+    end
+    local page_no, valid_next_page
+    for i = 1, count do
+        page_no = KOR.document:getPageFromXPointer(results[i].start)
+        valid_next_page = self:verifyPageHit(page_no > current_page and (not next_page or page_no < next_page), page_no)
+        if valid_next_page then
+            return valid_next_page
         end
     end
 end
 
 --- @private
 function XrayPageNavigator:resultsPageSmallerThan(results, current_page, prev_page)
-    local page_no
-    if has_items(results) then
-        count = #results
-        local first_occurrence = KOR.document:getPageFromXPointer(results[1].start)
-        if current_page == first_occurrence then
-            return
-        end
-        for i = count, 1, -1 do
-            page_no = KOR.document:getPageFromXPointer(results[i].start)
-            if page_no < current_page and (not prev_page or page_no > prev_page) then
-                return page_no
-            end
+    if not has_items(results) then
+        return
+    end
+    count = #results
+    local first_occurrence = KOR.document:getPageFromXPointer(results[1].start)
+    if current_page == first_occurrence then
+        return
+    end
+    local page_no, valid_prev_page
+    for i = count, 1, -1 do
+        page_no = KOR.document:getPageFromXPointer(results[i].start)
+        valid_prev_page = self:verifyPageHit(page_no < current_page and (not prev_page or page_no > prev_page), page_no)
+        if valid_prev_page then
+            return valid_prev_page
         end
     end
 end
 
 --- @private
-function XrayPageNavigator:getNextPageHitForTerm(item, current_page)
+function XrayPageNavigator:getNextPageHitForTerm()
+    local item = self.page_navigator_filter_item
+    local current_page = self.navigator_page_no
+    --- @type CreDocument document
     local document = KOR.ui.document
     local results, needle, case_insensitive
     --* if applicable, we only search for first names (then probably more accurate hits count):
@@ -484,21 +521,24 @@ function XrayPageNavigator:getNextPageHitForTerm(item, current_page)
     self.cached_hits[needle] = results
     local next_page = self:resultsPageGreaterThan(results, current_page)
 
-    local search_for_aliases = has_text(item.aliases)
-    if search_for_aliases then
-        local aliases = parent:splitByCommaOrSpace(item.aliases)
-        local aliases_count = #aliases
-        for a = 1, aliases_count do
-            results = document:findAllTextWholeWords(aliases[a], case_insensitive, 0, 3000, false)
-            next_page = self:resultsPageGreaterThan(results, current_page, next_page)
-        end
+    if has_no_text(item.aliases) then
+        return next_page
     end
 
+    local aliases = parent:splitByCommaOrSpace(item.aliases)
+    local aliases_count = #aliases
+    for a = 1, aliases_count do
+        results = document:findAllTextWholeWords(aliases[a], case_insensitive, 0, 3000, false)
+        next_page = self:resultsPageGreaterThan(results, current_page, next_page)
+    end
     return next_page
 end
 
 --- @private
-function XrayPageNavigator:getPreviousPageHitForTerm(item, current_page)
+function XrayPageNavigator:getPreviousPageHitForTerm()
+    local item = self.page_navigator_filter_item
+    local current_page = self.navigator_page_no
+    --- @type CreDocument document
     local document = KOR.ui.document
     local results, needle, case_insensitive
     --* if applicable, we only search for first names (then probably more accurate hits count):
@@ -511,16 +551,16 @@ function XrayPageNavigator:getPreviousPageHitForTerm(item, current_page)
     self.cached_hits[needle] = results
     local prev_page = self:resultsPageSmallerThan(results, current_page)
 
-    local search_for_aliases = has_text(item.aliases)
-    if search_for_aliases then
-        local aliases = parent:splitByCommaOrSpace(item.aliases)
-        local aliases_count = #aliases
-        for a = 1, aliases_count do
-            results = document:findAllTextWholeWords(aliases[a], case_insensitive, 0, 3000, false)
-            prev_page = self:resultsPageSmallerThan(results, current_page, prev_page)
-        end
+    if has_no_text(item.aliases) then
+        return prev_page
     end
 
+    local aliases = parent:splitByCommaOrSpace(item.aliases)
+    local aliases_count = #aliases
+    for a = 1, aliases_count do
+        results = document:findAllTextWholeWords(aliases[a], case_insensitive, 0, 3000, false)
+        prev_page = self:resultsPageSmallerThan(results, current_page, prev_page)
+    end
     return prev_page
 end
 
@@ -582,7 +622,7 @@ function XrayPageNavigator:markActiveSideButton(source_buttons)
         button.text = button.text
             :gsub(self.marker, "")
             :gsub(self.filter_marker, "")
-        if r == self.active_filter_button then
+        if button.xray_item.name == self.active_filter_name then
             button.text = self.filter_marker .. button.text
         end
         if r == self.active_side_button then
