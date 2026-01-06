@@ -140,33 +140,36 @@ end
 --* information about available hotkeys in list shown in ((XrayDialogs#viewItem)) > ((XrayDialogs#showHelp))
 --- @param parent XrayDialogs
 function KeyEvents:addHotkeysForXrayItemViewer(parent, event_keys_module)
-    self:registerSharedHotkey("E", event_keys_module, function()
-        parent:closeViewer()
-        DX.c:onShowEditItemForm(DX.vd.current_item, false, 1)
-        return true
-    end)
-    self:registerSharedHotkey("N", event_keys_module, function()
-        -- #((next related item via hotkey))
-        if DX.m.use_tapped_word_data then
-            parent:viewNextTappedWordItem()
+    self:registerSharedHotkeys(event_keys_module, {
+        ["E"] = function()
+            parent:closeViewer()
+            DX.c:onShowEditItemForm(DX.vd.current_item, false, 1)
             return true
-        end
-        parent:viewNextItem(DX.vd.current_item)
-        return true
-    end)
-    self:registerSharedHotkey("L", event_keys_module, function()
-        parent:closeViewer()
-        parent:showList(DX.vd.current_item)
-        return true
-    end)
-    self:registerSharedHotkey("P", event_keys_module, function()
-        if DX.m.use_tapped_word_data then
-            parent:viewPreviousTappedWordItem()
+        end,
+        ["N"] = function()
+            -- #((next related item via hotkey))
+            if DX.m.use_tapped_word_data then
+                parent:viewNextTappedWordItem()
+                return true
+            end
+            parent:viewNextItem(DX.vd.current_item)
             return true
-        end
-        parent:viewPreviousItem(DX.vd.current_item)
-        return true
-    end)
+        end,
+        ["L"] = function()
+            parent:closeViewer()
+            parent:showList(DX.vd.current_item)
+            return true
+        end,
+        ["P"] = function()
+            if DX.m.use_tapped_word_data then
+                parent:viewPreviousTappedWordItem()
+                return true
+            end
+            parent:viewPreviousItem(DX.vd.current_item)
+            return true
+        end,
+    })
+
     local actions = {
         {
             label = "add",
@@ -388,21 +391,23 @@ end
 
 --- @param parent XrayPageNavigator
 function KeyEvents:addHotkeysForXrayPageNavigator(parent, event_keys_module)
-    self:registerSharedHotkey("E", event_keys_module, function()
-        return parent:execEditCallback(parent)
-    end)
-    self:registerSharedHotkey("L", event_keys_module, function()
-        return parent:execShowListCallback(parent)
-    end)
-    self:registerSharedHotkey("N", event_keys_module, function()
-        return parent:execGotoNextPageCallback(parent)
-    end)
-    self:registerSharedHotkey("P", event_keys_module, function()
-        return parent:execGotoPrevPageCallback(parent)
-    end)
-    self:registerSharedHotkey("S", event_keys_module, function()
-        return parent:execSettingsCallback(parent)
-    end)
+    self:registerSharedHotkeys(event_keys_module, {
+        ["E"] = function()
+            return parent:execEditCallback(parent)
+        end,
+        ["L"] = function()
+            return parent:execShowListCallback(parent)
+        end,
+        ["N"] = function()
+            return parent:execGotoNextPageCallback(parent)
+        end,
+        ["P"] = function()
+            return parent:execGotoPrevPageCallback(parent)
+        end,
+        ["S"] = function()
+            return parent:execSettingsCallback(parent)
+        end,
+    })
     local actions = {
         {
             label = "edit",
@@ -669,6 +674,7 @@ function KeyEvents:execLastSharedHotkey(key, module)
     return module_key[#module_key][2]()
 end
 
+--- @private
 function KeyEvents:registerSharedHotkey(key, module, callback)
     local module_key = self.shared_hotkey_modules[key]
     if not module_key then
@@ -682,6 +688,13 @@ function KeyEvents:registerSharedHotkey(key, module, callback)
 
     table.insert(self.shared_hotkey_modules[key], {module, callback})
     --KOR.messages:notify("registered: " .. key .. " > " .. #self.shared_hotkey_modules[key])
+end
+
+--- @private
+function KeyEvents:registerSharedHotkeys(event_keys_module, shared_hotkeys)
+    for key, callback in pairs(shared_hotkeys) do
+        self:registerSharedHotkey(key, event_keys_module, callback)
+    end
 end
 
 function KeyEvents:unregisterSharedHotkeys(module)
