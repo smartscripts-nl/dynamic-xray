@@ -962,7 +962,6 @@ function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_wo
         after_close_callback = function()
             KOR.registry:unset("scrolling_html_eventkeys")
         end,
-        --* key events are set in ((KeyEvents#addHotkeysForXrayList)), so additional_key_events doesn't have to be set here...
         buttons_table = DX.b:forTappedWordItemViewer(needle_item, false, tapped_word, book_hits),
     })
     KOR.keyevents:addHotkeysForXrayItemViewer(self)

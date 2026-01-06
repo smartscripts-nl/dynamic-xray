@@ -21,60 +21,116 @@ local KeyEvents = WidgetContainer:extend{
     shared_hotkey_modules = {},
 }
 
+--- @param parent HtmlBox
+function KeyEvents:addHotkeysForHtmlBox(parent)
+    if not Device:hasKeys() then
+        return
+    end
+
+    if parent.active_tab and parent.tabs_table_buttons then
+
+        --* see ((TABS)) for more info:
+        --* initialize TabNavigator and callbacks:
+        KOR.tabnavigator:init(parent.tabs_table_buttons, parent.active_tab, parent.parent)
+        for i = 1, 8 do
+            local current = i
+            --* these callbacks were generated dynamically in ((generate tab navigation event handlers)):
+            parent["onActivateTab" .. current] = function()
+                return KOR.tabnavigator["onActivateTab" .. current](parent)
+            end
+        end
+
+        self:addKeyEvents(parent, {
+            ReadPrevItem = { { Input.group.PgBack }, doc = "read prev item" },
+            ReadPrevItemWithShiftSpace = Input.group.ShiftSpace,
+            ReadNextItem = { { Input.group.PgFwd }, doc = "read next item" },
+            ToPreviousTab = { { Input.group.PgBack }, doc = "naar vorige tab" },
+            ToPreviousTabWithShiftSpace = Input.group.ShiftSpace,
+            ToNextTab = { { Input.group.PgFwd }, doc = "naar volgende tab" },
+            ForceNextTab = { { Input.group.TabNext }, doc = "forceer volgende tab" },
+            ForcePreviousTab = { { Input.group.TabPrevious }, doc = "forceer vorige tab" },
+            ActivateTab1 = { { "1" } },
+            ActivateTab2 = { { "2" } },
+            ActivateTab3 = { { "3" } },
+            ActivateTab4 = { { "4" } },
+            ActivateTab5 = { { "5" } },
+            ActivateTab6 = { { "6" } },
+            ActivateTab7 = { { "7" } },
+            ActivateTab8 = { { "8" } },
+            Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } },
+        })
+        -- #((set additional key events))
+        self:addAdditionalHotkeysHtmlBox(parent)
+
+        return
+    end
+
+    self:addKeyEvents(parent, {
+        ReadPrevItem = { { Input.group.PgBack }, doc = "read prev item" },
+        ReadPrevItemWithShiftSpace = Input.group.ShiftSpace,
+        ReadNextItem = { { Input.group.PgFwd }, doc = "read next item" },
+        ForceNextItem = { { Input.group.TabNext }, doc = "forceer volgend item" },
+        ForcePrevItem = { { Input.group.TabPrevious }, doc = "forceer vorige item" },
+        Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } },
+    })
+    self:addAdditionalHotkeysHtmlBox(parent)
+end
+
 --- @param parent TextViewer
 function KeyEvents:addHotkeysForTextViewer(parent)
-    if Device:hasKeys() then
+    if not Device:hasKeys() then
+        return
+    end
 
-        --* TextViewer instance with tabs:
-        if parent.active_tab and parent.tabs_table_buttons then
+    --* TextViewer instance with tabs:
+    if parent.active_tab and parent.tabs_table_buttons then
 
-            --* see ((TABS)) for more info:
-            --* initialize TabNavigator and callbacks:
-            KOR.tabnavigator:init(parent.tabs_table_buttons, parent.active_tab, parent.parent)
-            for i = 1, 8 do
-                local current = i
-                parent["onActivateTab" .. current] = function()
-                    return KOR.tabnavigator["onActivateTab" .. current](parent)
-                end
+        --* see ((TABS)) for more info:
+        --* initialize TabNavigator and callbacks:
+        KOR.tabnavigator:init(parent.tabs_table_buttons, parent.active_tab, parent.parent)
+        for i = 1, 8 do
+            local current = i
+            parent["onActivateTab" .. current] = function()
+                return KOR.tabnavigator["onActivateTab" .. current](parent)
             end
-
-            parent.key_events = {
-                ToPreviousTab = { { Input.group.PgBack }, doc = "naar vorige tab" },
-                ToPreviousTabWithShiftSpace = Input.group.ShiftSpace,
-                ToNextTab = { { Input.group.PgFwd }, doc = "naar volgende tab" },
-                ForceNextTab = { { Input.group.TabNext }, doc = "forceer volgende tab" },
-                ForcePreviousTab = { { Input.group.TabPrevious }, doc = "forceer vorige tab" },
-                ActivateTab1 = { { "1" } },
-                ActivateTab2 = { { "2" } },
-                ActivateTab3 = { { "3" } },
-                ActivateTab4 = { { "4" } },
-                ActivateTab5 = { { "5" } },
-                ActivateTab6 = { { "6" } },
-                ActivateTab7 = { { "7" } },
-                ActivateTab8 = { { "8" } },
-                Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } }
-            }
-            self:setKeyEventsForTabs(parent, 8)
-
-        --* TextViewer instance without tabs:
-        else
-            parent.key_events = {
-                ReadPrevItem = { { Input.group.PgBack }, doc = "read prev item" },
-                ReadPrevItemWithShiftSpace = Input.group.ShiftSpace,
-                ReadNextItem = { { Input.group.PgFwd }, doc = "read next item" },
-                ForceNextItem = { { Input.group.TabNext }, doc = "forceer volgend item" },
-                ForcePrevItem = { { Input.group.TabPrevious }, doc = "forceer vorige item" },
-                Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } }
-            }
         end
 
-        self:addExtraButtonsHotkeys(parent, 1)
-        self:addAdditionalHotkeysTextViewer(parent)
+        parent.key_events = {
+            ToPreviousTab = { { Input.group.PgBack }, doc = "naar vorige tab" },
+            ToPreviousTabWithShiftSpace = Input.group.ShiftSpace,
+            ToNextTab = { { Input.group.PgFwd }, doc = "naar volgende tab" },
+            ForceNextTab = { { Input.group.TabNext }, doc = "forceer volgende tab" },
+            ForcePreviousTab = { { Input.group.TabPrevious }, doc = "forceer vorige tab" },
+            ActivateTab1 = { { "1" } },
+            ActivateTab2 = { { "2" } },
+            ActivateTab3 = { { "3" } },
+            ActivateTab4 = { { "4" } },
+            ActivateTab5 = { { "5" } },
+            ActivateTab6 = { { "6" } },
+            ActivateTab7 = { { "7" } },
+            ActivateTab8 = { { "8" } },
+            Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } }
+        }
+        self:setKeyEventsForTabs(parent, 8)
 
-        --* replace hotkey M for FileManager with M for edit Metadata:
-        if parent.add_metadata_edit_hotkey_callback then
-            self:addMetadataEditHotkey(parent, "TV")
-        end
+    --* TextViewer instance without tabs:
+    else
+        parent.key_events = {
+            ReadPrevItem = { { Input.group.PgBack }, doc = "read prev item" },
+            ReadPrevItemWithShiftSpace = Input.group.ShiftSpace,
+            ReadNextItem = { { Input.group.PgFwd }, doc = "read next item" },
+            ForceNextItem = { { Input.group.TabNext }, doc = "forceer volgend item" },
+            ForcePrevItem = { { Input.group.TabPrevious }, doc = "forceer vorige item" },
+            Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } }
+        }
+    end
+
+    self:addExtraButtonsHotkeys(parent, 1)
+    self:addAdditionalHotkeysTextViewer(parent)
+
+    --* replace hotkey M for FileManager with M for edit Metadata:
+    if parent.add_metadata_edit_hotkey_callback then
+        self:addMetadataEditHotkey(parent, "TV")
     end
 end
 
@@ -476,16 +532,18 @@ function KeyEvents:setKeyEventsForTabs(parent, tab_count)
 end
 
 function KeyEvents:registerHotkeysInputDialog(parent)
-    if Device:hasKeys() then
-        parent.key_events.CloseDialog = { { Input.group.CloseDialog } }
-        --! this one really needed to handle BT keyboard input:
-        --* @see ((onGetHardwareInput)):
-        parent.key_events.GetHardwareInput = { { Input.group.FieldInput } }
-        parent.key_events.IgnoreAltSpace = Input.group.AltSpace
+    if not Device:hasKeys() then
+        return
+    end
 
-        if parent.activate_tab_callback and parent.tabs_count then
-            self:registerTabHotkey(parent)
-        end
+    parent.key_events.CloseDialog = { { Input.group.CloseDialog } }
+    --! this one really needed to handle BT keyboard input:
+    --* @see ((onGetHardwareInput)):
+    parent.key_events.GetHardwareInput = { { Input.group.FieldInput } }
+    parent.key_events.IgnoreAltSpace = Input.group.AltSpace
+
+    if parent.activate_tab_callback and parent.tabs_count then
+        self:registerTabHotkey(parent)
     end
 end
 
@@ -535,6 +593,7 @@ function KeyEvents:addExtraButtonsHotkeys(parent, no)
     end
 end
 
+--* these additional_key_events might have been set by the caller of HtmlBox:
 --- @param parent HtmlBox
 function KeyEvents:addAdditionalHotkeysHtmlBox(parent)
     if parent.additional_key_events then
@@ -632,6 +691,17 @@ function KeyEvents:unregisterSharedHotkeys(module)
             self.shared_hotkey_modules[key][i] = nil
         end
         --KOR.messages:notify("hoera: " .. module .. " > " .. #self.shared_hotkey_modules[key])
+    end
+end
+
+--- @private
+function KeyEvents:addKeyEvents(parent, events)
+    if not parent.key_events then
+        parent.key_events = {}
+    end
+    count = #events
+    for i = 1, count do
+        table.insert(parent.key_events, events[i])
     end
 end
 

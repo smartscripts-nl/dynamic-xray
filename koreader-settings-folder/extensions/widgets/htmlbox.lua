@@ -13,7 +13,6 @@ local FrameContainer = require("ui/widget/container/framecontainer")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
-local Input = require("extensions/modules/input")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")
@@ -123,7 +122,7 @@ local HtmlBox = InputContainer:extend{
 
 function HtmlBox:init()
     self:setModuleProps()
-    self:initKeyEvents()
+    KOR.keyevents:addHotkeysForHtmlBox(self)
     self:initTouch()
     self:hideFooter()
     self:setWidth()
@@ -144,57 +143,6 @@ function HtmlBox:init()
     self:addFrameToContentWidget()
     self:generateWidget()
     self:finalizeWidget()
-end
-
---- @private
-function HtmlBox:initKeyEvents()
-    if Device:hasKeys() then
-        if self.active_tab and self.tabs_table_buttons then
-
-            --* see ((TABS)) for more info:
-            --* initialize TabNavigator and callbacks:
-            KOR.tabnavigator:init(self.tabs_table_buttons, self.active_tab, self.parent)
-            for i = 1, 8 do
-                local current = i
-                --* these callbacks were generated dynamically in ((generate tab navigation event handlers)):
-                self["onActivateTab" .. current] = function()
-                    return KOR.tabnavigator["onActivateTab" .. current](self)
-                end
-            end
-
-            self.key_events = {
-                ReadPrevItem = { { Input.group.PgBack }, doc = "read prev item" },
-                ReadPrevItemWithShiftSpace = Input.group.ShiftSpace,
-                ReadNextItem = { { Input.group.PgFwd }, doc = "read next item" },
-                ToPreviousTab = { { Input.group.PgBack }, doc = "naar vorige tab" },
-                ToPreviousTabWithShiftSpace = Input.group.ShiftSpace,
-                ToNextTab = { { Input.group.PgFwd }, doc = "naar volgende tab" },
-                ForceNextTab = { { Input.group.TabNext }, doc = "forceer volgende tab" },
-                ForcePreviousTab = { { Input.group.TabPrevious }, doc = "forceer vorige tab" },
-                ActivateTab1 = { { "1" } },
-                ActivateTab2 = { { "2" } },
-                ActivateTab3 = { { "3" } },
-                ActivateTab4 = { { "4" } },
-                ActivateTab5 = { { "5" } },
-                ActivateTab6 = { { "6" } },
-                ActivateTab7 = { { "7" } },
-                ActivateTab8 = { { "8" } },
-                Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } },
-            }
-
-        else
-            self.key_events = {
-                ReadPrevItem = { { Input.group.PgBack }, doc = "read prev item" },
-                ReadPrevItemWithShiftSpace = Input.group.ShiftSpace,
-                ReadNextItem = { { Input.group.PgFwd }, doc = "read next item" },
-                ForceNextItem = { { Input.group.TabNext }, doc = "forceer volgend item" },
-                ForcePrevItem = { { Input.group.TabPrevious }, doc = "forceer vorige item" },
-                Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } },
-            }
-        end
-        -- #((set additional key events))
-        KOR.keyevents:addAdditionalHotkeysHtmlBox(self)
-    end
 end
 
 --- @private
@@ -412,6 +360,7 @@ function HtmlBox:onCloseWidget()
     if self.after_close_callback then
         self.after_close_callback()
     end
+    self.additional_key_events = nil
 
     --* Our TextBoxWidget/HtmlBoxWidget/TextWidget/ImageWidget are proper child widgets,
     --* so this event will propagate to 'em, and they'll free their resources.
