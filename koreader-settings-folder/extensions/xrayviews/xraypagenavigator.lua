@@ -41,16 +41,17 @@ local XrayPageNavigator = WidgetContainer:new{
     active_side_button = 1,
     alias_indent = "   ",
     button_labels_injected = "",
-    cached_hits = {},
+    cached_hits_by_needle = {},
+    cached_html_and_buttons_by_page_no = {},
+    cached_html_by_page_no = {},
+    cached_items = {},
     current_item = nil,
     filter_marker = KOR.icons.filter,
     initial_browsing_page = nil,
-    item_cache = {},
     marker = KOR.icons.active_tab_bare,
     max_line_length = 80,
     navigator_page_no = nil,
     no_navigator_page_found = false,
-    page_cache = {},
     page_navigator_filter_item = nil,
     prev_marked_item = nil,
     scroll_to_page = nil,
@@ -177,8 +178,18 @@ function XrayPageNavigator:toPrevNavigatorPage()
 end
 
 --- @private
-function XrayPageNavigator:pageHasItemName(page)
-    local html = KOR.document:getPageHtml(page)
+function XrayPageNavigator:getPageHtmlForPage(page_no)
+    if self.cached_html_by_page_no[page_no] then
+        return self.cached_html_by_page_no[page_no]
+    end
+
+    self.cached_html_by_page_no[page_no] = KOR.document:getPageHtml(page_no)
+    return self.cached_html_by_page_no[page_no]
+end
+
+--- @private
+function XrayPageNavigator:pageHasItemName(page_no)
+    local html = self:getPageHtmlForPage(page_no)
     local hits = DX.u:getXrayItemsFoundInText(html, "for_navigator")
     if not hits then
         return false
@@ -210,7 +221,7 @@ function XrayPageNavigator:markItemsFoundInPageHtml(html, navigator_page_no, mar
     for i = 1, count do
         html = self:markItemsInHtml(html, buttons, hits[i])
     end
-    self.page_cache[self.navigator_page_no] = {
+    self.cached_html_and_buttons_by_page_no[self.navigator_page_no] = {
         html = html,
         buttons = buttons,
     }
@@ -334,8 +345,8 @@ function XrayPageNavigator:getItemInfoText(item)
     --* the reliability_indicators were added in ((XrayUI#getXrayItemsFoundInText)) > ((XrayUI#matchNameInPageOrParagraph)) and ((XrayUI#matchAliasesToParagraph)):
     local reliability_indicator = item.reliability_indicator and item.reliability_indicator .. " " or ""
 
-    if self.item_cache[item.name] then
-        return "\n" .. reliability_indicator .. self.item_cache[item.name]
+    if self.cached_items[item.name] then
+        return "\n" .. reliability_indicator .. self.cached_items[item.name]
     end
 
     self.alias_indent_corrected = DX.s.is_mobile_device and self.alias_indent .. self.alias_indent .. self.alias_indent .. self.alias_indent or self.alias_indent
@@ -351,9 +362,9 @@ function XrayPageNavigator:getItemInfoText(item)
     info = self:splitLinesToMaxLength(info, item.linkwords, KOR.icons.xray_link_bare .. " " .. item.linkwords)
 
     --* remove reliability_indicator_placeholder:
-    self.item_cache[item.name] = info:gsub("\n  ", "", 1)
+    self.cached_items[item.name] = info:gsub("\n  ", "", 1)
 
-    return "\n" .. reliability_indicator .. self.item_cache[item.name]
+    return "\n" .. reliability_indicator .. self.cached_items[item.name]
 end
 
 --- @private
@@ -383,7 +394,7 @@ function XrayPageNavigator:markedItemRegister(item, html, buttons, word)
     end
 
     self.button_labels_injected = self.button_labels_injected .. " " .. item.name
-    local label = (self.page_navigator_filter_item and item.name == self.page_navigator_filter_item.name and self.filter_marker .. item.name) or (item.name == self.marker_name and self.marker .. item.name) or item.name
+    local label = (self.active_filter_name == item.name and self.filter_marker .. item.name) or (item.name == self.marker_name and self.marker .. item.name) or item.name
     if item.name == self.marker_name then
         self:setCurrentItem(item)
     end
@@ -517,8 +528,8 @@ function XrayPageNavigator:getNextPageHitForTerm()
     case_insensitive = not needle:match("[A-Z]")
 
     --! using document:findAllTextWholeWords instead of document:findAllText here crucial to get exact hits count:
-    results = self.cached_hits[needle] or document:findAllTextWholeWords(needle, case_insensitive, 0, 3000, false)
-    self.cached_hits[needle] = results
+    results = self.cached_hits_by_needle[needle] or document:findAllTextWholeWords(needle, case_insensitive, 0, 3000, false)
+    self.cached_hits_by_needle[needle] = results
     local next_page = self:resultsPageGreaterThan(results, current_page)
 
     if has_no_text(item.aliases) then
@@ -547,8 +558,8 @@ function XrayPageNavigator:getPreviousPageHitForTerm()
     case_insensitive = not needle:match("[A-Z]")
 
     --! using document:findAllTextWholeWords instead of document:findAllText here crucial to get exact hits count:
-    results = self.cached_hits[needle] or document:findAllTextWholeWords(needle, case_insensitive, 0, 3000, false)
-    self.cached_hits[needle] = results
+    results = self.cached_hits_by_needle[needle] or document:findAllTextWholeWords(needle, case_insensitive, 0, 3000, false)
+    self.cached_hits_by_needle[needle] = results
     local prev_page = self:resultsPageSmallerThan(results, current_page)
 
     if has_no_text(item.aliases) then
@@ -596,15 +607,15 @@ end
 function XrayPageNavigator:loadDataForPage(marker_name)
 
     local buttons
-    if self.navigator_page_no and self.page_cache[self.navigator_page_no] then
-        self:markActiveSideButton(self.page_cache[self.navigator_page_no].buttons)
+    if self.navigator_page_no and self.cached_html_and_buttons_by_page_no[self.navigator_page_no] then
+        self:markActiveSideButton(self.cached_html_and_buttons_by_page_no[self.navigator_page_no].buttons)
 
-        return self.page_cache[self.navigator_page_no].html, self.page_cache[self.navigator_page_no].buttons
+        return self.cached_html_and_buttons_by_page_no[self.navigator_page_no].html, self.cached_html_and_buttons_by_page_no[self.navigator_page_no].buttons
     end
 
     self.active_side_button = 1
-    local html = KOR.document:getPageHtml(self.navigator_page_no)
-    --* self.page_cache will be updated here:
+    local html = self:getPageHtmlForPage(self.navigator_page_no)
+    --* self.cached_html_and_buttons_by_page_no will be updated here:
     html, buttons = self:markItemsFoundInPageHtml(html, self.navigator_page_no, marker_name)
     self:markActiveSideButton(buttons)
 
@@ -656,8 +667,10 @@ function XrayPageNavigator:getInfoPanelText(info_panel_text)
 end
 
 function XrayPageNavigator:resetCache()
-    self.item_cache = {}
-    self.page_cache = {}
+    self.cached_items = {}
+    self.cached_html_and_buttons_by_page_no = {}
+    self.cached_hits_by_needle = {}
+    self.cached_html_by_page_no = {}
 end
 
 --- @private
