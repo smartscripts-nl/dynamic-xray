@@ -29,7 +29,6 @@ local DX = DX
 local has_items = has_items
 local has_text = has_text
 local table = table
-local tostring = tostring
 
 local count
 --- @type XrayModel parent
@@ -107,111 +106,7 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text,
             self:toPrevNavigatorPage()
         end,
     })
-    self:addHotkeysForPageNavigator()
-end
-
---- @private
-function XrayPageNavigator:addHotkeysForPageNavigator()
-    local actions = {
-        {
-            label = "edit",
-            hotkey = { { "E" } },
-            callback = function()
-                return self:execEditCallback(self)
-            end,
-        },
-        {
-            label = "show_info",
-            hotkey = { { "I" } },
-            callback = function()
-                return self:execShowHelpInfoCallback(self)
-            end,
-        },
-        {
-            label = "jump_navigator",
-            hotkey = { { "J" } },
-            callback = function()
-                return self:execJumpToCurrentPageInNavigatorCallback(self)
-            end,
-        },
-        {
-            label = "jump_ebook",
-            hotkey = { { "Shift", { "J" } } },
-            callback = function()
-                return self:execJumpToCurrentPageInEbookCallback(self)
-            end,
-        },
-        {
-            label = "goto_list",
-            hotkey = { { "L" } },
-            callback = function()
-                return self:execShowListCallback(self)
-            end,
-        },
-        {
-            label = "goto_next",
-            hotkey = { { "N" } },
-            callback = function()
-                return self:execGotoNextPageCallback(self)
-            end,
-        },
-        {
-            label = "goto_previous",
-            hotkey = { { "P" } },
-            callback = function()
-                return self:execGotoPrevPageCallback(self)
-            end,
-        },
-        {
-            label = "pn_settings",
-            hotkey = { { { "S" } } },
-            callback = function()
-                return self:execSettingsCallback(self)
-            end,
-        },
-        {
-            label = "pn_viewer",
-            hotkey = { { { "V" } } },
-            callback = function()
-                return self:execViewItemCallback(self)
-            end,
-        },
-    }
-
-    --* display information of first nine items in side panel in bottom info panel, with hotkeys 1 through 9:
-    for i = 1, 9 do
-        table.insert(actions, {
-            label = "show_item_info_" .. i,
-            hotkey = { { { tostring(i) } } },
-            callback = function()
-                if self.side_buttons and self.side_buttons[i] then
-                    self.side_buttons[i][1].callback()
-                end
-                --* we return false instead of true, so the Xray Page Navigator help dialog can activate tabs with number hotkeys:
-                if i < 4 then
-                    return false
-                end
-                return true
-            end,
-        })
-    end
-
-    --- SET HOTKEYS FOR HTMLBOX INSTANCE
-
-    --! this ensures that hotkeys will even be available when we are in a scrolling html box. These actions will be consumed in ((HtmlBoxWidget#initEventKeys)):
-    KOR.registry:set("scrolling_html_eventkeys", actions)
-
-    count = #actions
-    local hotkey, label
-    local suffix = "XPN"
-    for i = 1, count do
-        hotkey = actions[i].hotkey
-        label = actions[i].label
-        local callback = actions[i].callback
-        self.page_navigator:registerCustomKeyEvent(hotkey, "action_" .. label .. suffix, function()
-            return callback()
-        end)
-    end
+    KOR.keyevents:addHotkeysForXrayPageNavigator(self)
 end
 
 function XrayPageNavigator:toCurrentNavigatorPage()
@@ -711,7 +606,7 @@ function XrayPageNavigator:getInfoPanelText(info_panel_text)
     end
 
     --* xray_item.info_text for first button was generated in ((XrayPageNavigator#markActiveSideButton)) > ((XrayPageNavigator#generateInfoTextForFirstSideButton)):
-    return self.side_buttons and self.side_buttons[1] and self.side_buttons[1][1].xray_item.info_text or ""
+    return self.side_buttons[1] and self.side_buttons[1][1].xray_item.info_text or ""
 end
 
 function XrayPageNavigator:resetCache()
@@ -728,8 +623,8 @@ function XrayPageNavigator:closePageNavigator()
 end
 
 
---- ============== (KEYBOARD) EVENT HANDLERS ============
---* for calling through hotkeys - ((XrayPageNavigator#addHotkeysForPageNavigator)) - and as callbacks for usage in Xray buttons
+--- =========== (KEYBOARD) EVENT HANDLERS ============
+--* for calling through hotkeys - ((KeyEvents#addHotkeysForXrayPageNavigator)) - and as callbacks for usage in Xray buttons
 
 
 function XrayPageNavigator:execEditCallback(iparent)

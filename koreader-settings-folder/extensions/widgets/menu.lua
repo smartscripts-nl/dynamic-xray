@@ -35,7 +35,6 @@ local filemanagerutil = require("apps/filemanager/filemanagerutil")
 local logger = require("logger")
 local util = require("util")
 local _ = require("gettext")
-local Input = require("extensions/modules/input")
 local Screen = Device.screen
 local T = FFIUtil.template
 
@@ -1109,22 +1108,7 @@ function Menu:init(restore_dialog)
     }
     self.ges_events.Close = self.on_close_ges
 
-    if not Device:hasKeyboard() then
-        --* remove menu item shortcut for K4
-        self.is_enable_shortcut = false
-    end
-
-    self:registerHotkeys()
-
-    if Device:hasDPad() then
-        --* we won't catch presses to "Right", leave that to MenuItem.
-        self.key_events.FocusRight = nil
-        --* shortcut icon is not needed for touch device
-        if self.is_enable_shortcut then
-            self.key_events.SelectByShortCut = { {self.item_shortcuts} }
-        end
-        self.key_events.Right = { { "Right" } }
-    end
+    KOR.keyevents:registerHotkeysMenu(self)
 
     if #self.item_table > 0 then
         --* if the table is not yet initialized, this call
@@ -1532,7 +1516,7 @@ function Menu:onNextPage()
     end
     self:storeActivePage()
     self:refreshDialog()
-    self:updateHotkeys()
+    KOR.keyevents:updateHotkeys(self)
     self:registerCollectionSubPage("register_collection_subpage")
     return true
 end
@@ -1546,7 +1530,7 @@ function Menu:onPrevPage()
     self:storeActivePage()
     self:updateItems()
     self:refreshDialog()
-    self:updateHotkeys()
+    KOR.keyevents:updateHotkeys(self)
     self:registerCollectionSubPage("register_collection_subpage")
     return true
 end
@@ -1556,7 +1540,7 @@ function Menu:onFirstPage()
     self:storeActivePage()
     self:updateItems()
     self:refreshDialog()
-    self:updateHotkeys()
+    KOR.keyevents:updateHotkeys(self)
     self:registerCollectionSubPage("register_collection_subpage")
     return true
 end
@@ -1566,7 +1550,7 @@ function Menu:onLastPage()
     self:storeActivePage()
     self:updateItems()
     self:refreshDialog()
-    self:updateHotkeys()
+    KOR.keyevents:updateHotkeys(self)
     self:registerCollectionSubPage("register_collection_subpage")
     return true
 end
@@ -1576,7 +1560,7 @@ function Menu:onGotoPage(page)
     self:storeActivePage()
     self:updateItems()
     self:refreshDialog()
-    self:updateHotkeys()
+    KOR.keyevents:updateHotkeys(self)
     self:registerCollectionSubPage("register_collection_subpage")
     return true
 end
@@ -1737,7 +1721,7 @@ function Menu.itemTableFromTouchMenu(t)
     return item_t
 end
 
---* ==================== SMARTSCRIPTS =====================
+--* ================ SMARTSCRIPTS ==================
 
 --* fix for KOReaders fullscreen Menus not updating when navigating through subpages or closing them:
 --* also now used to register subpages of collection dialogs:
@@ -1780,7 +1764,7 @@ end
 function Menu:getFilterButton(callback, reset_callback, hold_callback)
     local filter_active = self:isFilterActive()
 
-    self:addHotkeyForFilterButton(filter_active, callback, reset_callback)
+    KOR.keyevents:addHotkeyForFilterButton(self, filter_active, callback, reset_callback)
 
     local filter_button_config = {
         icon = not filter_active and "filter" or "filter-reset",
@@ -1913,7 +1897,6 @@ end
 
 --* under Android, text characters and previous subpage covers were showing through the book covers:
 function Menu:refreshDialog()
-
     if (G_reader_settings:isNilOrFalse("fast_menu_display") and self.covers_fullscreen)
     or
     (not self.old_dimen and not self.dimen) then
@@ -1964,21 +1947,6 @@ function Menu:onPrevPageWithShiftSpace()
     self:onPrevPage()
 end
 
-function Menu:addHotkeyForFilterButton(filter_active, callback, reset_callback)
-
-    --* because in FileManagerHistory "F" hotkey has been used for activation of Fiction tab, only there use Shift+F:
-    local hotkey = { { "F" } }
-    self:registerCustomKeyEvent(hotkey, "FilterMenu", function()
-        self:resetAllBoldItems()
-        if filter_active then
-            reset_callback()
-        else
-            callback()
-        end
-        return true
-    end)
-end
-
 function Menu:onLoadCollectionItem(no)
     local item_no = (self.page - 1) * self.perpage + no
 
@@ -1992,48 +1960,6 @@ function Menu:onShowCollectionItemInfo(no)
 
     local full_path = self.item_table[item_no].file
     KOR.descriptiondialog:show(false, full_path)
-end
-
-function Menu:registerHotkeys()
-    if Device:hasKeys() then
-        --* set up keyboard events
-        self.key_events.Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } }
-        self.key_events.NextPage = { { Input.group.PgFwd } }
-        self.key_events.PrevPage = { { Input.group.PgBack } }
-        self.key_events.PrevPageWithShiftSpace = Input.group.ShiftSpace
-
-        if self.tab_labels and self.activate_tab_callback then
-            self:registerTabHotkeys()
-        end
-    end
-end
-
-function Menu:updateHotkeys()
-    if self.hotkey_updater then
-        self.hotkey_updater()
-    end
-end
-
-function Menu:registerCustomKeyEvent(hotkey, handler_label, handler_callback)
-    self["on" .. handler_label] = handler_callback
-    self.key_events[handler_label] = type(hotkey) == "table" and hotkey or { { hotkey } }
-end
-
-function Menu:registerTabHotkeys()
-    local action, hotkey
-    count = #self.tab_labels
-    for i = 1, count do
-        local current = i
-        action = self.tab_labels[current]
-        hotkey = action:sub(1, 1):upper()
-        self:registerCustomKeyEvent(hotkey, "ActivateTab_" .. action, function()
-            return self:activateTab(current)
-        end)
-    end
-end
-
-function Menu:activateTab(tab_no)
-    self.activate_tab_callback(tab_no)
 end
 
 return Menu

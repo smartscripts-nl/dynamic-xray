@@ -192,7 +192,7 @@ function HtmlBox:initKeyEvents()
             }
         end
         -- #((set additional key events))
-        self:addCustomHotkeyEvents()
+        KOR.keyevents:addAdditionalHotkeysHtmlBox(self)
     end
 end
 
@@ -378,7 +378,7 @@ function HtmlBox:generateInfoPanel()
         dialog = self,
         --* info_panel_width was computed in ((HtmlBox#generateInfoButtons)):
         width = self.info_panel_width,
-        height = math.floor(Screen:getHeight() * 0.18),
+        height = math.floor(Screen:getHeight() * 0.17),
     }
     self.info_panel_separator = LineWidget:new{
         background = KOR.colors.line_separator,
@@ -1333,27 +1333,6 @@ function HtmlBox:setWidth()
     end
     self.frame_bordersize = not self.is_fullscreen and Size.border.window or 0
     self.inner_width = self.width - 2 * self.frame_bordersize
-end
-
---- @private
-function HtmlBox:addCustomHotkeyEvents()
-    if self.additional_key_events then
-        for label, hk_data in pairs(self.additional_key_events) do
-            local close_box = hk_data[3] and true or false
-            if close_box then
-                UIManager:close(self)
-            end
-            self["on" .. label .. "HB"] = function()
-                return hk_data[2]()
-            end
-            self.key_events[label] = hk_data[1]
-        end
-    end
-end
-
-function HtmlBox:registerCustomKeyEvent(hotkey, handler_label, handler_callback)
-    self["on" .. handler_label] = handler_callback
-    self.key_events[handler_label] = type(hotkey) == "table" and hotkey or { { hotkey } }
 end
 
 return HtmlBox

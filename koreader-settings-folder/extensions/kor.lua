@@ -17,6 +17,7 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 --- @field files Files
 --- @field html Html
 --- @field icons Icons
+--- @field keyevents KeyEvents
 --- @field labels Labels
 --- @field messages Messages
 --- @field registry Registry
@@ -63,6 +64,7 @@ local KOR = WidgetContainer:new{
 	html = nil,
 	icons = nil,
 	buttoninfopopup = nil,
+	keyevents = nil,
 	labels = nil,
 	messages = nil,
 	registry = nil,
@@ -85,6 +87,7 @@ local KOR = WidgetContainer:new{
 		"dialogs",
 		"files",
 		"tables",
+		"keyevents",
 
 		"buttonprops",
 		"buttontablefactory",

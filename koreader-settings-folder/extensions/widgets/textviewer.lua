@@ -44,7 +44,6 @@ local lfs = require("libs/libkoreader-lfs")
 local util = require("util")
 local _ = require("gettext")
 local tr = KOR:initCustomTranslations()
-local Input = require("extensions/modules/input")
 local Screen = Device.screen
 
 local DX = DX
@@ -69,6 +68,8 @@ local TextViewer = InputContainer:extend{
     --* Bottom row with Close, Find buttons. Also added when no caller's buttons defined.
     add_default_buttons = nil,
     add_fullscreen_padding = false,
+    add_global_hotkeys = false,
+    additional_key_events = nil,
     --* when true, white border margins around dialog borders:
     add_margin = false,
     add_metadata_edit_hotkey_callback = nil,
@@ -169,7 +170,7 @@ function TextViewer:init()
     self:setPadding()
     self:initForDevice()
     self:initTouch()
-    self:initEventKeys()
+    KOR.keyevents:addHotkeysForTextViewer(self)
     self:initTitleBar()
     self:initScrollCallbacks()
     self:setSeparator()
@@ -1558,55 +1559,6 @@ function TextViewer:initTitleBar()
 end
 
 --- @private
-function TextViewer:initEventKeys()
-    if Device:hasKeys() then
-
-        --* TextViewer instance with tabs:
-        if self.active_tab and self.tabs_table_buttons then
-
-            --* see ((TABS)) for more info:
-            --* initialize TabNavigator and callbacks:
-            KOR.tabnavigator:init(self.tabs_table_buttons, self.active_tab, self.parent)
-            for i = 1, 8 do
-                local current = i
-                self["onActivateTab" .. current] = function()
-                    return KOR.tabnavigator["onActivateTab" .. current](self)
-                end
-            end
-
-            self.key_events = {
-                ToPreviousTab = { { Input.group.PgBack }, doc = "naar vorige tab" },
-                ToPreviousTabWithShiftSpace = Input.group.ShiftSpace,
-                ToNextTab = { { Input.group.PgFwd }, doc = "naar volgende tab" },
-                ForceNextTab = { { Input.group.TabNext }, doc = "forceer volgende tab" },
-                ForcePreviousTab = { { Input.group.TabPrevious }, doc = "forceer vorige tab" },
-                ActivateTab1 = { { "1" } },
-                ActivateTab2 = { { "2" } },
-                ActivateTab3 = { { "3" } },
-                ActivateTab4 = { { "4" } },
-                ActivateTab5 = { { "5" } },
-                ActivateTab6 = { { "6" } },
-                ActivateTab7 = { { "7" } },
-                ActivateTab8 = { { "8" } },
-                Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } }
-            }
-            self:setHotKeysForTabs()
-
-        --* TextViewer instance without tabs:
-        else
-            self.key_events = {
-                ReadPrevItem = { { Input.group.PgBack }, doc = "read prev item" },
-                ReadPrevItemWithShiftSpace = Input.group.ShiftSpace,
-                ReadNextItem = { { Input.group.PgFwd }, doc = "read next item" },
-                ForceNextItem = { { Input.group.TabNext }, doc = "forceer volgend item" },
-                ForcePrevItem = { { Input.group.TabPrevious }, doc = "forceer vorige item" },
-                Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } }
-            }
-        end
-    end
-end
-
---- @private
 function TextViewer:initTouch()
     self._find_next = false
     self._find_next_button = false
@@ -1804,23 +1756,13 @@ function TextViewer:setScrollingMode()
 end
 
 --- @private
-function TextViewer:setHotKeysForTabs()
-    --* alternate way of handling tab activations; advantage maybe that we only have one, fixed, event handler - ((TextViewer#onActivateTab)):
-    for i = 1, 8 do
-        --* format for sending args to event handler: self.key_events.YKey = { { "Y" }, event = "FirstRowKeyPress", args = 0.55 }
-        self.key_events["HandleTabActivation" .. i] = { { tostring(i) }, event = "ActivateTab", args = i }
-    end
-end
-
---- @private
 function TextViewer:onActivateTab(tab_no)
     return KOR.tabnavigator:onActivateTab(tab_no)
 end
 
 --- @private
-function TextViewer:onEditMetadataTV()
-    KOR.descriptiondialog:editMetadata()
-    return true
+function TextViewer:onMetadataEditTV()
+    self.add_metadata_edit_hotkey_callback()
 end
 
 --- @private

@@ -109,7 +109,6 @@ local FrameContainer = require("extensions/widgets/container/framecontainer")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
 local InfoMessage = require("ui/widget/infomessage")
-local Input = require("extensions/modules/input")
 local InputText = require("extensions/widgets/inputtext")
 local KOR = require("extensions/kor")
 local MovableContainer = require("ui/widget/container/movablecontainer")
@@ -129,7 +128,6 @@ local has_text = has_text
 local math = math
 local table = table
 local tonumber = tonumber
-local type = type
 
 local count
 
@@ -245,7 +243,7 @@ function InputDialog:init()
         self.is_movable = false
         self.border_size = 0
         self.width = self.screen_width - 2 * self.border_size
-        self.covers_fullscreen = true --* hint for ((UIManager#_repaint))
+        self.covers_fullscreen = true
     else
         self.width = self.width or math.floor(math.min(self.screen_width, self.screen_height) * 0.8)
     end
@@ -563,7 +561,7 @@ function InputDialog:init()
             },
         }
     end
-    self:registerHotkeys()
+    KOR.keyevents:registerHotkeysInputDialog(self)
     if self._added_widgets then
         local widget
         for i = 1, #self._added_widgets do
@@ -624,6 +622,10 @@ function InputDialog:setInputText(text, edited_state)
     if edited_state ~= nil and self._buttons_edit_callback then
         self._buttons_edit_callback(edited_state)
     end
+end
+
+function InputDialog:addTextToInput(text)
+    return self._input_widget:addChars(text)
 end
 
 function InputDialog:isTextEditable()
@@ -1161,7 +1163,7 @@ function InputDialog:findCallback(keyboard_hidden_state, input_dialog, find_firs
     KOR.messages:notify(msg)
 end
 
---* ==================== SMARTSCRIPTS =====================
+--* ================== SMARTSCRIPTS ===================
 
 function InputDialog:scrollToBottom()
     self._input_widget:scrollToBottom()
@@ -1279,25 +1281,6 @@ function InputDialog:onIgnoreAltSpace()
     return false
 end
 
-function InputDialog:registerHotkeys()
-    if Device:hasKeys() then
-        self.key_events.CloseDialog = { { Input.group.CloseDialog } }
-        --! this one really needed to handle BT keyboard input:
-        --* @see ((onGetHardwareInput)):
-        self.key_events.GetHardwareInput = { { Input.group.FieldInput } }
-        self.key_events.IgnoreAltSpace = Input.group.AltSpace
-
-        if self.activate_tab_callback and self.tabs_count then
-            self:registerTabHotkey()
-        end
-    end
-end
-
-function InputDialog:registerCustomKeyEvent(hotkey, handler_label, handler_callback)
-    self["on" .. handler_label] = handler_callback
-    self.key_events[handler_label] = type(hotkey) == "table" and hotkey or { { hotkey } }
-end
-
 function InputDialog:onActivateNextTab()
     if not self.active_tab then
         self.active_tab = 1
@@ -1308,12 +1291,6 @@ function InputDialog:onActivateNextTab()
     end
     self.activate_tab_callback(self.active_tab)
     return true
-end
-
-function InputDialog:registerTabHotkey()
-
-    --* for the input field we filtered Shift+Space hotkeys out, to enable this tab activation; see ((enable tab activation with Shift+Space)) above:
-    self.key_events.ActivateNextTab = Input.group.AltT
 end
 
 return InputDialog

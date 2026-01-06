@@ -3,7 +3,7 @@ This extension is part of the Dynamic Xray plugin; it has all dialogs and forms 
 
 The Dynamic Xray plugin has kind of a MVC structure:
 M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
-V = ((XrayUI)), and ((XrayDialogs)) and ((XrayButtons))
+V = ((XrayUI)), ((XrayPageNavigator)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
 
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
@@ -43,7 +43,6 @@ local _ = KOR:initCustomTranslations()
 local T = require("ffi/util").template
 
 local DX = DX
-local has_items = has_items
 local has_no_items = has_no_items
 local has_no_text = has_no_text
 local has_text = has_text
@@ -753,103 +752,11 @@ function XrayDialogs:showList(focus_item, dont_show)
     self:initListDialog(focus_item, dont_show, current_tab_items)
     self.list_is_opened = true
 
-    self:addHotkeysForList()
+    KOR.keyevents:addHotkeysForXrayList(self)
     UIManager:show(self.xray_items_chooser_dialog)
     self:showActionResultMessage()
 
     KOR.dialogs:registerWidget(self.xray_items_chooser_dialog)
-end
-
---* information about available hotkeys in list shown in ((XrayButtons#forListTopLeft)) > ((XrayDialogs#showHelp)):
---- @private
-function XrayDialogs:addHotkeysForList()
-    local actions = {
-        {
-            label = "import",
-            hotkey = { { "I" } },
-            callback = function()
-                self:showRefreshHitsForCurrentEbookConfirmation()
-                return true
-            end,
-        },
-        {
-            label = "show_info",
-            hotkey = { { "Shift", { "I" } } },
-            callback = function()
-                self:showHelp(1)
-                return true
-            end,
-        },
-        {
-            label = "toggle_book_series",
-            hotkey = { { "M" } },
-            callback = function()
-                self:showToggleBookOrSeriesModeDialog(self.list_args.focus_item, self.list_args.dont_show)
-                return true
-            end,
-        },
-        {
-            label = "sort",
-            hotkey = { { "O" } },
-            callback = function()
-                DX.c:toggleSortingMode()
-                return true
-            end,
-        },
-        {
-            label = "add",
-            hotkey = { { "V" } },
-            callback = function()
-                DX.c:onShowNewItemForm()
-                return true
-            end,
-        },
-        {
-            label = "import_from_other_serie",
-            hotkey = { { "X" } },
-            callback = function()
-                self:showImportFromOtherSeriesDialog()
-                return true
-            end,
-        },
-    }
-    if DX.m.current_series then
-        table.insert(actions, {
-            label = "show_serie",
-            hotkey = { { "S" } },
-            callback = function()
-                KOR.descriptiondialog:showSeriesForEbookPath(KOR.registry.current_ebook)
-                return true
-            end,
-        })
-    end
-
-    --- SET HOTKEYS FOR LIST MENU INSTANCE
-
-    count = #actions
-    local hotkey, label
-    for i = 1, count do
-        hotkey = actions[i].hotkey
-        label = actions[i].label
-        local callback = actions[i].callback
-        self.xray_items_inner_menu:registerCustomKeyEvent(hotkey, "action_" .. label, function()
-            return callback()
-        end)
-    end
-
-    --* for some reason "7" as hotkey doesn't work under Ubuntu, triggers no event:
-    local current_page, per_page
-    for i = 1, 9 do
-        local current = i
-        self.xray_items_inner_menu:registerCustomKeyEvent({ { { tostring(i) } } }, "SelectItemNo" .. current, function()
-            current_page = self.xray_items_inner_menu.page
-            per_page = self.xray_items_inner_menu.perpage
-            local item_no = (current_page - 1) * per_page + current
-            UIManager:close(self.xray_items_chooser_dialog)
-            self:viewItem(DX.vd:getItem(item_no))
-            return true
-        end)
-    end
 end
 
 function XrayDialogs:selectListTab(tab_no, counts)
@@ -923,145 +830,6 @@ TO SERIES MODE %2?
     end)
 end
 
---* information about available hotkeys in list shown in ((XrayDialogs#viewItem)) > ((XrayDialogs#showHelp))
---- @private
-function XrayDialogs:addHotkeysForItemViewer()
-    local actions = {
-        {
-            label = "add",
-            hotkey = { { "A" } },
-            callback = function()
-                self:closeViewer()
-                DX.c:resetFilteredItems()
-                self:initAndShowNewItemForm()
-                return true
-            end,
-        },
-        {
-            label = "delete_for_book",
-            hotkey = { { "D" } },
-            callback = function()
-                self:showDeleteItemConfirmation(DX.vd.current_item, self.item_viewer)
-                return true
-            end,
-        },
-        {
-            label = "delete_for_series",
-            hotkey = { { "Shift", { "D" } } },
-            callback = function()
-                self:showDeleteItemConfirmation(DX.vd.current_item, self.item_viewer, "remove_all_instances_in_series")
-                return true
-            end,
-        },
-        {
-            label = "edit",
-            hotkey = { { "E" } },
-            callback = function()
-                self:closeViewer()
-                DX.c:onShowEditItemForm(DX.vd.current_item, false, 1)
-                return true
-            end,
-        },
-        {
-            label = "hits",
-            hotkey = { { "H" } },
-            callback = function()
-                DX.c:viewItemHits(DX.vd.current_item.name)
-                return true
-            end,
-        },
-        {
-            label = "show_info",
-            hotkey = { { "Shift", { "I" } } },
-            callback = function()
-                self:showHelp(2)
-                return true
-            end,
-        },
-        {
-            label = "goto_list",
-            hotkey = { { "L" } },
-            callback = function()
-                self:closeViewer()
-                self:showList(DX.vd.current_item)
-                return true
-            end,
-        },
-        {
-            label = "goto_next",
-            hotkey = { { "N" } },
-            callback = function()
-                -- #((next related item via hotkey))
-                if DX.m.use_tapped_word_data then
-                    self:viewNextTappedWordItem()
-                    return true
-                end
-                self:viewNextItem(DX.vd.current_item)
-                return true
-            end,
-        },
-        {
-            label = "open_chapter",
-            hotkey = { { "O" } },
-            callback = function()
-                self:showJumpToChapterDialog()
-                return true
-            end,
-        },
-        {
-            label = "goto_previous",
-            hotkey = { { "P" } },
-            callback = function()
-                if DX.m.use_tapped_word_data then
-                    self:viewPreviousTappedWordItem()
-                    return true
-                end
-                self:viewPreviousItem(DX.vd.current_item)
-                return true
-            end,
-        },
-        {
-            label = "search_hits",
-            hotkey = { { "Shift", { "S" } } },
-            callback = function()
-                if DX.vd.current_item and has_items(DX.vd.current_item.book_hits) then
-                    DX.c:viewItemHits(DX.vd.current_item.name)
-                else
-                    self:_showNoHitsNotification(DX.vd.current_item.name)
-                end
-                return true
-            end,
-        },
-    }
-    if DX.m.current_series then
-        table.insert(actions, {
-            label = "show_serie",
-            hotkey = { { "S" } },
-            callback = function()
-                KOR.descriptiondialog:showSeriesForEbookPath(KOR.registry.current_ebook)
-                return true
-            end,
-        })
-    end
-
-    --- SET HOTKEYS FOR HTMLBOX INSTANCE
-
-    --! this ensures that hotkeys will even be available when we are in a scrolling html box. These actions will be consumed in ((HtmlBoxWidget#initEventKeys)):
-    KOR.registry:set("scrolling_html_eventkeys", actions)
-
-    count = #actions
-    local hotkey, label
-    local suffix = "XVC"
-    for i = 1, count do
-        hotkey = actions[i].hotkey
-        label = actions[i].label
-        local callback = actions[i].callback
-        self.item_viewer:registerCustomKeyEvent(hotkey, "action_" .. label .. suffix, function()
-            return callback()
-        end)
-    end
-end
-
 --- @private
 function XrayDialogs:_prepareViewerData(needle_item)
     DX.vd:getCurrentListTabItems(needle_item)
@@ -1127,7 +895,7 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
         end,
         buttons_table = DX.b:forItemViewer(needle_item, called_from_list, tapped_word, book_hits),
     })
-    self:addHotkeysForItemViewer()
+    KOR.keyevents:addHotkeysForXrayItemViewer(self)
     self:showActionResultMessage()
 end
 
@@ -1187,10 +955,10 @@ function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_wo
         after_close_callback = function()
             KOR.registry:unset("scrolling_html_eventkeys")
         end,
-        --* key events are set in ((XrayDialogs#addHotkeysForList)), so additional_key_events doesn't have to be set here...
+        --* key events are set in ((KeyEvents#addHotkeysForXrayList)), so additional_key_events doesn't have to be set here...
         buttons_table = DX.b:forTappedWordItemViewer(needle_item, false, tapped_word, book_hits),
     })
-    self:addHotkeysForItemViewer()
+    KOR.keyevents:addHotkeysForXrayItemViewer(self)
     self:showActionResultMessage()
 end
 
@@ -1314,7 +1082,7 @@ function XrayDialogs:switchFocusFieldLoop(input_fields, last_field_no, focus_fie
 end
 
 function XrayDialogs:showHelp(initial_tab)
-    --* these hotkeys are mostly defined in ((XrayDialogs#addHotkeysForList)):
+    --* these hotkeys are mostly defined in ((KeyEvents#addHotkeysForXrayList)):
     local list_info = self.help_texts["list"] or T(_([[Titlebar %1/%2 = items displayed in series/book mode
 Titlebar %3 = only linked items, from longpressed word
 Browse to next/previous page: Space/Shift+Space
@@ -1333,7 +1101,7 @@ X = import items from eXternal series
 ]]), KOR.icons.xray_series_mode_bare, KOR.icons.xray_book_mode_bare, KOR.icons.xray_tapped_collection_bare)
     self.help_texts["list"] = list_info
 
-    --* these hotkeys are mostly defined in ((XrayDialogs#addHotkeysForItemViewer)):
+    --* these hotkeys are mostly defined in ((KeyEvents#addHotkeysForXrayItemViewer)):
     local viewer_info = self.help_texts["viewer"] or T(_([[
 
 You can also navigate through items by tapping near to the left or right border of the viewer dialog.
