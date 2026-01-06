@@ -18,7 +18,7 @@ local count
 
 --- @class KeyEvents
 local KeyEvents = WidgetContainer:extend{
-    shared_hotkey_modules = {},
+    shared_hotkeys = {},
 }
 
 --* here we add generic hotkeys for HtmlBox, but a caller might already have added specific hotkeys for that module:
@@ -666,7 +666,7 @@ function KeyEvents:updateHotkeys(parent)
 end
 
 function KeyEvents:execLastSharedHotkey(key, module)
-    local module_key = self.shared_hotkey_modules[key]
+    local module_key = self.shared_hotkeys[key]
     if not module_key or #module_key == 0 or module_key[#module_key][1] ~= module then
         return false
     end
@@ -676,18 +676,18 @@ end
 
 --- @private
 function KeyEvents:registerSharedHotkey(key, module, callback)
-    local module_key = self.shared_hotkey_modules[key]
+    local module_key = self.shared_hotkeys[key]
     if not module_key then
-        self.shared_hotkey_modules[key] = {}
-        module_key = self.shared_hotkey_modules[key]
+        self.shared_hotkeys[key] = {}
+        module_key = self.shared_hotkeys[key]
     end
 
     if #module_key > 0 and module_key[#module_key][1] == module then
         return
     end
 
-    table.insert(self.shared_hotkey_modules[key], {module, callback})
-    --KOR.messages:notify("registered: " .. key .. " > " .. #self.shared_hotkey_modules[key])
+    table.insert(self.shared_hotkeys[key], {module, callback})
+    --KOR.messages:notify("registered: " .. key .. " > " .. #self.shared_hotkeys[key])
 end
 
 --- @private
@@ -698,15 +698,15 @@ function KeyEvents:registerSharedHotkeys(event_keys_module, shared_hotkeys)
 end
 
 function KeyEvents:unregisterSharedHotkeys(module)
-    for key, imodule in pairs(self.shared_hotkey_modules) do
+    for key, imodule in pairs(self.shared_hotkeys) do
         count = #imodule
         for i = count, 1, -1 do
             if imodule[i][1] ~= module then
                 break
             end
-            self.shared_hotkey_modules[key][i] = nil
+            self.shared_hotkeys[key][i] = nil
         end
-        --KOR.messages:notify("hoera: " .. module .. " > " .. #self.shared_hotkey_modules[key])
+        --KOR.messages:notify("hoera: " .. module .. " > " .. #self.shared_hotkeys[key])
     end
 end
 
