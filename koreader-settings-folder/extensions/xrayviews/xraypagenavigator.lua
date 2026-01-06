@@ -633,6 +633,7 @@ end
 --* for calling through hotkeys - ((KeyEvents#addHotkeysForXrayPageNavigator)) - and as callbacks for usage in Xray buttons
 
 
+--- @param iparent XrayPageNavigator
 function XrayPageNavigator:execEditCallback(iparent)
     if not iparent.current_item then
         KOR.messages:notify(_("there was no item to be edited..."))
@@ -644,21 +645,25 @@ function XrayPageNavigator:execEditCallback(iparent)
     return true
 end
 
+--- @param iparent XrayPageNavigator
 function XrayPageNavigator:execGotoNextPageCallback(iparent)
     iparent:toNextNavigatorPage()
     return true
 end
 
+--- @param iparent XrayPageNavigator
 function XrayPageNavigator:execGotoPrevPageCallback(iparent)
     iparent:toPrevNavigatorPage()
     return true
 end
 
+--- @param iparent XrayPageNavigator
 function XrayPageNavigator:execJumpToCurrentPageInNavigatorCallback(iparent)
     iparent:toCurrentNavigatorPage()
     return true
 end
 
+--- @param iparent XrayPageNavigator
 function XrayPageNavigator:execJumpToCurrentPageInEbookCallback(iparent)
     iparent:closePageNavigator()
     KOR.ui.link:addCurrentLocationToStack()
@@ -666,6 +671,7 @@ function XrayPageNavigator:execJumpToCurrentPageInEbookCallback(iparent)
     return true
 end
 
+--- @param iparent XrayPageNavigator
 function XrayPageNavigator:execSettingsCallback(iparent)
     iparent:closePageNavigator()
     DX.s:showSettingsManager()
