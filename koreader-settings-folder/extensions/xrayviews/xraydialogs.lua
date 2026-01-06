@@ -583,7 +583,8 @@ function XrayDialogs:_prepareItemsForList(current_tab_items)
 end
 
 --- @private
-function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items)
+function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, event_keys_module)
+
     local select_number = focus_item and focus_item.index or 1
 
     --* optionally items are filtered here also:
@@ -623,6 +624,7 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items)
         activate_tab_callback = DX.m.activateListTabCallback,
         after_close_callback = function()
             self.list_is_opened = false
+            KOR.keyevents:unregisterSharedHotkeys(event_keys_module)
         end,
         is_borderless = true,
         top_buttons_left = DX.b:forListTopLeft(self),
@@ -749,10 +751,12 @@ function XrayDialogs:showList(focus_item, dont_show)
         return
     end
 
-    self:initListDialog(focus_item, dont_show, current_tab_items)
+    local event_keys_module = "XrayItemsList"
+
+    self:initListDialog(focus_item, dont_show, current_tab_items, event_keys_module)
     self.list_is_opened = true
 
-    KOR.keyevents:addHotkeysForXrayList(self)
+    KOR.keyevents:addHotkeysForXrayList(self, event_keys_module)
     UIManager:show(self.xray_items_chooser_dialog)
     self:showActionResultMessage()
 
@@ -872,6 +876,8 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
 
     self.needle_name_for_list_page = needle_item.name
 
+    local event_keys_module = "XrayItemViewer"
+
     local tabs = DX.b:forItemViewerTabs(main_info, hits_info)
     self.item_viewer = KOR.dialogs:htmlBoxTabbed(1, {
         title = title,
@@ -892,10 +898,11 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
         end,
         after_close_callback = function()
             KOR.registry:unset("scrolling_html_eventkeys")
+            KOR.keyevents:unregisterSharedHotkeys(event_keys_module)
         end,
         buttons_table = DX.b:forItemViewer(needle_item, called_from_list, tapped_word, book_hits),
     })
-    KOR.keyevents:addHotkeysForXrayItemViewer(self)
+    KOR.keyevents:addHotkeysForXrayItemViewer(self, event_keys_module)
     self:showActionResultMessage()
 end
 

@@ -92,6 +92,7 @@ local HtmlBox = InputContainer:extend{
     window_list = {},
 
     active_tab = nil,
+    after_close_callback = nil,
     additional_key_events = nil,
     align = "center",
     boox_go_10_height_correction = 5,
@@ -407,6 +408,11 @@ function HtmlBox:generateScrollWidget()
 end
 
 function HtmlBox:onCloseWidget()
+
+    if self.after_close_callback then
+        self.after_close_callback()
+    end
+
     --* Our TextBoxWidget/HtmlBoxWidget/TextWidget/ImageWidget are proper child widgets,
     --* so this event will propagate to 'em, and they'll free their resources.
 

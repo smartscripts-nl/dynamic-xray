@@ -17,7 +17,9 @@ local type = type
 local count
 
 --- @class KeyEvents
-local KeyEvents = WidgetContainer:extend{}
+local KeyEvents = WidgetContainer:extend{
+    shared_hotkey_modules = {},
+}
 
 --- @param parent TextViewer
 function KeyEvents:addHotkeysForTextViewer(parent)
@@ -78,7 +80,34 @@ end
 
 --* information about available hotkeys in list shown in ((XrayDialogs#viewItem)) > ((XrayDialogs#showHelp))
 --- @param parent XrayDialogs
-function KeyEvents:addHotkeysForXrayItemViewer(parent)
+function KeyEvents:addHotkeysForXrayItemViewer(parent, event_keys_module)
+    self:registerSharedHotkey("E", event_keys_module, function()
+        parent:closeViewer()
+        DX.c:onShowEditItemForm(DX.vd.current_item, false, 1)
+        return true
+    end)
+    self:registerSharedHotkey("N", event_keys_module, function()
+        -- #((next related item via hotkey))
+        if DX.m.use_tapped_word_data then
+            parent:viewNextTappedWordItem()
+            return true
+        end
+        parent:viewNextItem(DX.vd.current_item)
+        return true
+    end)
+    self:registerSharedHotkey("L", event_keys_module, function()
+        parent:closeViewer()
+        parent:showList(DX.vd.current_item)
+        return true
+    end)
+    self:registerSharedHotkey("P", event_keys_module, function()
+        if DX.m.use_tapped_word_data then
+            parent:viewPreviousTappedWordItem()
+            return true
+        end
+        parent:viewPreviousItem(DX.vd.current_item)
+        return true
+    end)
     local actions = {
         {
             label = "add",
@@ -110,9 +139,7 @@ function KeyEvents:addHotkeysForXrayItemViewer(parent)
             label = "edit",
             hotkey = { { "E" } },
             callback = function()
-                parent:closeViewer()
-                DX.c:onShowEditItemForm(DX.vd.current_item, false, 1)
-                return true
+                return KOR.keyevents:execLastSharedHotkey("E", event_keys_module)
             end,
         },
         {
@@ -135,22 +162,14 @@ function KeyEvents:addHotkeysForXrayItemViewer(parent)
             label = "goto_list",
             hotkey = { { "L" } },
             callback = function()
-                parent:closeViewer()
-                parent:showList(DX.vd.current_item)
-                return true
+                return KOR.keyevents:execLastSharedHotkey("L", event_keys_module)
             end,
         },
         {
-            label = "goto_next",
+            label = "goto_next_item_viewer",
             hotkey = { { "N" } },
             callback = function()
-                -- #((next related item via hotkey))
-                if DX.m.use_tapped_word_data then
-                    parent:viewNextTappedWordItem()
-                    return true
-                end
-                parent:viewNextItem(DX.vd.current_item)
-                return true
+                return KOR.keyevents:execLastSharedHotkey("N", event_keys_module)
             end,
         },
         {
@@ -162,15 +181,10 @@ function KeyEvents:addHotkeysForXrayItemViewer(parent)
             end,
         },
         {
-            label = "goto_previous",
+            label = "goto_previous_item_viewer",
             hotkey = { { "P" } },
             callback = function()
-                if DX.m.use_tapped_word_data then
-                    parent:viewPreviousTappedWordItem()
-                    return true
-                end
-                parent:viewPreviousItem(DX.vd.current_item)
-                return true
+                return KOR.keyevents:execLastSharedHotkey("P", event_keys_module)
             end,
         },
         {
@@ -187,12 +201,15 @@ function KeyEvents:addHotkeysForXrayItemViewer(parent)
         },
     }
     if DX.m.current_series then
+        self:registerSharedHotkey("S", event_keys_module, function()
+            KOR.descriptiondialog:showSeriesForEbookPath(KOR.registry.current_ebook)
+            return true
+        end)
         table.insert(actions, {
             label = "show_serie",
             hotkey = { { "S" } },
             callback = function()
-                KOR.descriptiondialog:showSeriesForEbookPath(KOR.registry.current_ebook)
-                return true
+                return KOR.keyevents:execLastSharedHotkey("S", event_keys_module)
             end,
         })
     end
@@ -217,7 +234,7 @@ end
 
 --* information about available hotkeys in list shown in ((XrayButtons#forListTopLeft)) > ((XrayDialogs#showHelp)):
 --- @param parent XrayDialogs
-function KeyEvents:addHotkeysForXrayList(parent)
+function KeyEvents:addHotkeysForXrayList(parent, event_keys_module)
     local actions = {
         {
             label = "import",
@@ -269,12 +286,15 @@ function KeyEvents:addHotkeysForXrayList(parent)
         },
     }
     if DX.m.current_series then
+        self:registerSharedHotkey("S", event_keys_module, function()
+            KOR.descriptiondialog:showSeriesForEbookPath(KOR.registry.current_ebook)
+            return true
+        end)
         table.insert(actions, {
             label = "show_serie",
             hotkey = { { "S" } },
             callback = function()
-                KOR.descriptiondialog:showSeriesForEbookPath(KOR.registry.current_ebook)
-                return true
+                return KOR.keyevents:execLastSharedHotkey("S", event_keys_module)
             end,
         })
     end
@@ -308,13 +328,28 @@ function KeyEvents:addHotkeysForXrayList(parent)
 end
 
 --- @param parent XrayPageNavigator
-function KeyEvents:addHotkeysForXrayPageNavigator(parent)
+function KeyEvents:addHotkeysForXrayPageNavigator(parent, event_keys_module)
+    self:registerSharedHotkey("E", event_keys_module, function()
+        return parent:execEditCallback(parent)
+    end)
+    self:registerSharedHotkey("L", event_keys_module, function()
+        return parent:execShowListCallback(parent)
+    end)
+    self:registerSharedHotkey("N", event_keys_module, function()
+        return parent:execGotoNextPageCallback(parent)
+    end)
+    self:registerSharedHotkey("P", event_keys_module, function()
+        return parent:execGotoPrevPageCallback(parent)
+    end)
+    self:registerSharedHotkey("S", event_keys_module, function()
+        return parent:execSettingsCallback(parent)
+    end)
     local actions = {
         {
             label = "edit",
             hotkey = { { "E" } },
             callback = function()
-                return parent:execEditCallback(parent)
+                return KOR.keyevents:execLastSharedHotkey("E", event_keys_module)
             end,
         },
         {
@@ -342,28 +377,28 @@ function KeyEvents:addHotkeysForXrayPageNavigator(parent)
             label = "goto_list",
             hotkey = { { "L" } },
             callback = function()
-                return parent:execShowListCallback(parent)
+                return KOR.keyevents:execLastSharedHotkey("L", event_keys_module)
             end,
         },
         {
-            label = "goto_next",
+            label = "goto_next_page_navigator",
             hotkey = { { "N" } },
             callback = function()
-                return parent:execGotoNextPageCallback(parent)
+                return KOR.keyevents:execLastSharedHotkey("N", event_keys_module)
             end,
         },
         {
-            label = "goto_previous",
+            label = "goto_previous_navigator",
             hotkey = { { "P" } },
             callback = function()
-                return parent:execGotoPrevPageCallback(parent)
+                return KOR.keyevents:execLastSharedHotkey("P", event_keys_module)
             end,
         },
         {
             label = "pn_settings",
             hotkey = { { { "S" } } },
             callback = function()
-                return parent:execSettingsCallback(parent)
+                return KOR.keyevents:execLastSharedHotkey("S", event_keys_module)
             end,
         },
         {
@@ -561,6 +596,148 @@ function KeyEvents:updateHotkeys(parent)
     if parent.hotkey_updater then
         parent.hotkey_updater()
     end
+end
+
+function KeyEvents:execLastSharedHotkey(key, module)
+    local module_key = self.shared_hotkey_modules[key]
+    if not module_key or #module_key == 0 or module_key[#module_key][1] ~= module then
+        return false
+    end
+    --* exec the callback for the hotkey:
+    return module_key[#module_key][2]()
+end
+
+function KeyEvents:registerSharedHotkey(key, module, callback)
+    local module_key = self.shared_hotkey_modules[key]
+    if not module_key then
+        self.shared_hotkey_modules[key] = {}
+        module_key = self.shared_hotkey_modules[key]
+    end
+
+    if #module_key > 0 and module_key[#module_key][1] == module then
+        return
+    end
+
+    table.insert(self.shared_hotkey_modules[key], {module, callback})
+    --KOR.messages:notify("registered: " .. key .. " > " .. #self.shared_hotkey_modules[key])
+end
+
+function KeyEvents:unregisterSharedHotkeys(module)
+    for key, imodule in pairs(self.shared_hotkey_modules) do
+        count = #imodule
+        for i = count, 1, -1 do
+            if imodule[i][1] ~= module then
+                break
+            end
+            self.shared_hotkey_modules[key][i] = nil
+        end
+        --KOR.messages:notify("hoera: " .. module .. " > " .. #self.shared_hotkey_modules[key])
+    end
+end
+
+function KeyEvents:getHotkeysInformation()
+
+    local in_filemanager = KOR.registry:get("infilemanager")
+    if not in_filemanager then
+        return {
+            "Dit venster oproepbaar met sneltoets \"2\"...",
+            "De letter- en de shift-cijfer-sneltoetsen hieronder werken ook vanuit dit dialoogvenster...",
+            "",
+            "/ = naar vorige boek",
+            "Cmd+Del = ESC/Back: terug naar vorige locatie",
+            "Omlaag = sluit dialoogvenster",
+            "Enter = toon ondermenu",
+            "Spatie = blader vooruit",
+            "Shift+Spatie/Del = blader terug",
+            "",
+            "1 = ga naar begin document (eerste cijfer)",
+            "0 = ga naar einde document (laatste cijfer)",
+            "Shift+0 = toon globale lijst van getagde bladwijzers",
+            "2 = toon overzicht gebaren",
+            "3 = toon SeriesManager",
+            "4 = blader",
+            "5 = blader hier",
+            "Shift+5 = toon lijst 5-sterren boeken",
+            "6 = zoek boek",
+            "Shift+6 = toon lijst 6-sterren boeken",
+            "7 = zoek tekst in huidig boek",
+            "8 = spring naar laatst gelezen pagina",
+            "9 = spring naar vorige locatie",
+            "",
+            ". = toon snelle statistieken",
+            "A = toon Aanwinsten getegeld",
+            "Shift+A = toon maandAgenda",
+            "B = toon Bladwijzers",
+            "Shift+B = toon Bladwijzer filterpaneel",
+            "C = toon boek preview",
+            "Shift+C = toon Collecties overzicht",
+            "D = toon Description dialog",
+            "E = toon Eerstvolgend getegeld",
+            "Shift+E = toon mEeste pagina’s gelezen per maand",
+            "F = toon Favorieten / toon Filterdialoog in Menus",
+            "Shift+F = toon keuze-popup voor Finished boeken / toon Filterdialoog in Geschiedenis",
+            "G = toon Gelezen boeken",
+            "Shift+G = toon bookmarksnavigator voor Globale bladwijzers",
+            "H = toon History",
+            "I = toon hIstogram venster voor dagen / discription Indicator uitleg, waar van toepassing",
+            "Shift+I = toon overzicht Inleidingsideeën",
+            "J = Jump naar laatste gelogde pagina",
+            "K = toon leesdagen boeK",
+            "L = toon Leesplan getegeld",
+            "Shift+L = toon geLogde ebook pagina’s voor huidige boek",
+            "M = ga naar fileManager / edit Metadata in dialogen met tag-button",
+            "Shift+M = toon boektitels per Maand",
+            "N = toon impressioNs",
+            "Shift+N = toon bookmarksNavigator voor huidig boek",
+            "O = toon crashlOgviewer",
+            "Shift+O = toon wOorden die je vandaag bekeek",
+            "P = toggle Privacy filter",
+            "Q = Quick screen refresh",
+            "Shift+Q = exit/Quit KOReader",
+            "R = toon Reader progress",
+            "Shift+R = toon pagina’s gelezen per maand",
+            "S = Save all Settings",
+            "Shift+S = boek-impressieS: lijst",
+            "T = toon readinglisTs",
+            "Shift+T = toon Timeline (dag-agenda)",
+            "U = toon leesUren per boek",
+            "Shift+U = toon lijst belangrijke teksten (Uitzonderlijk)",
+            "V = toon ModulesDialog",
+            "Shift+V = toon DeveloperTools",
+            "W = toon Winnaars getegeld",
+            "Shift+W = toon genomineerd getegeld",
+            "X = toon inhoudsopgave/indeX",
+            "Shift+X = toon Xray page navigator",
+            "Z = Toon shortcuts dialog",
+            "Shift+Z = Toon xray items (lijst)",
+            "",
+            "MODULES",
+            "",
+            "Geschiedenis: activeer tab met beginletter",
+            "Menu: filterbutton (reset) = Shift+F",
+        }
+    end
+
+    return {
+        "FILEMANAGER",
+        "Dit venster oproepbaar met sneltoets Shift+2...",
+        "",
+        "1 t/m 9 = open dit boeknummer uit de actieve subpagina",
+        "\"/\" = naar vorige boek",
+        "",
+        "B = Blader hier",
+        "H = geschiedenis (History)",
+        "I = toon uitleg status-Indicatoren",
+        "",
+        "J = ga naar map Jaarboeken",
+        "M = ga naar map Meditatie",
+        "P = ga naar map Programmeren",
+        "R = ga naar map Romans",
+        "S = ga naar map Science Fiction",
+        "T = ga naar map spirtualiTeit",
+        "V = ga naar map samenVattingen",
+        "Y = ga naar map mYstiek",
+    }
 end
 
 return KeyEvents

@@ -89,6 +89,8 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text,
     local html
     html, self.side_buttons = self:loadDataForPage(marker_name)
 
+    local event_keys_module = "XrayPageNavigator"
+
     self.page_navigator = KOR.dialogs:htmlBox({
         title = DX.m.current_title .. " - p." .. self.navigator_page_no,
         html = html,
@@ -99,6 +101,10 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text,
         top_buttons_left = DX.b:forPageNavigatorTopLeft(self),
         side_buttons = self.side_buttons,
         info_panel_buttons = DX.b:forPageNavigator(self),
+        after_close_callback = function()
+            KOR.registry:unset("scrolling_html_eventkeys")
+            KOR.keyevents:unregisterSharedHotkeys(event_keys_module)
+        end,
         next_item_callback = function()
             self:toNextNavigatorPage()
         end,
@@ -106,7 +112,7 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text,
             self:toPrevNavigatorPage()
         end,
     })
-    KOR.keyevents:addHotkeysForXrayPageNavigator(self)
+    KOR.keyevents:addHotkeysForXrayPageNavigator(self, event_keys_module)
 end
 
 function XrayPageNavigator:toCurrentNavigatorPage()
@@ -676,6 +682,7 @@ function XrayPageNavigator:execShowListCallback()
     return true
 end
 
+--- @param iparent XrayPageNavigator
 function XrayPageNavigator:execViewItemCallback(iparent)
     DX.d:viewItem(iparent.current_item)
     return true
