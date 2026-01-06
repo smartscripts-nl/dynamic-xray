@@ -666,23 +666,23 @@ function KeyEvents:updateHotkeys(parent)
 end
 
 function KeyEvents:execLastSharedHotkey(key, module)
-    local module_key = self.shared_hotkeys[key]
-    if not module_key or #module_key == 0 or module_key[#module_key][1] ~= module then
+    local keys_registry = self.shared_hotkeys[key]
+    if not keys_registry or #keys_registry == 0 or keys_registry[#keys_registry][1] ~= module then
         return false
     end
     --* exec the callback for the hotkey:
-    return module_key[#module_key][2]()
+    return keys_registry[#keys_registry][2]()
 end
 
 --- @private
 function KeyEvents:registerSharedHotkey(key, module, callback)
-    local module_key = self.shared_hotkeys[key]
-    if not module_key then
+    local keys_registry = self.shared_hotkeys[key]
+    if not keys_registry then
         self.shared_hotkeys[key] = {}
-        module_key = self.shared_hotkeys[key]
+        keys_registry = self.shared_hotkeys[key]
     end
 
-    if #module_key > 0 and module_key[#module_key][1] == module then
+    if #keys_registry > 0 and keys_registry[#keys_registry][1] == module then
         return
     end
 
@@ -698,10 +698,10 @@ function KeyEvents:registerSharedHotkeys(event_keys_module, shared_hotkeys)
 end
 
 function KeyEvents:unregisterSharedHotkeys(module)
-    for key, imodule in pairs(self.shared_hotkeys) do
-        count = #imodule
+    for key, key_props in pairs(self.shared_hotkeys) do
+        count = #key_props
         for i = count, 1, -1 do
-            if imodule[i][1] ~= module then
+            if key_props[i][1] ~= module then
                 break
             end
             self.shared_hotkeys[key][i] = nil
