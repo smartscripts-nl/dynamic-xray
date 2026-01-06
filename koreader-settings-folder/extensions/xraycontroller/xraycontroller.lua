@@ -256,6 +256,14 @@ function XrayController:onReaderReady()
     self:resetDynamicXray(self.view.document)
 end
 
+function XrayController:onSetRotationMode()
+    self:resetDynamicXray(self.view.document)
+end
+
+function XrayController:onScreenResize()
+    self:resetDynamicXray(self.view.document)
+end
+
 --- @private
 function XrayController:registerKeyEvents()
     self.is_docless = self.ui == nil or self.ui.document == nil
