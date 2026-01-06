@@ -491,7 +491,7 @@ function XrayController:addToMainMenu(menu_items)
     }
 end
 
---* called from ((XrayController#onReaderReady)):
+--- @private
 function XrayController:resetDynamicXray(is_prepared)
     local full_path = self.view.document.file
     DX.m:setTitleAndSeries(full_path)
