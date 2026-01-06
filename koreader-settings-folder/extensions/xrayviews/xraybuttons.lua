@@ -1084,6 +1084,7 @@ function XrayButtons:forFilterDialog()
     }
 end
 
+--- @private
 --- @return boolean true if more_button was added
 function XrayButtons:injectItemsCollectionButton(buttons, indicator_buttons, status_icons, copies, nr, add_more_button)
     local item = copies[nr]
@@ -1336,6 +1337,7 @@ function XrayButtons:forListTopLeft(parent)
     }
 end
 
+--- @private
 function XrayButtons:unfocusXrayButton()
     --* this registry var was set in ((MultiInputDialog#generateCustomEditButton)):
     local xray_type_button = KOR.registry:get("xray_type_button")
