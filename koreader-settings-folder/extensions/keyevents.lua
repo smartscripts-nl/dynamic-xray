@@ -670,9 +670,9 @@ function KeyEvents:updateHotkeys(parent)
     end
 end
 
-function KeyEvents:execTopMostSharedHotkey(key, module)
+function KeyEvents:execTopMostSharedHotkey(key, key_events_module)
     local keys_registry = self.shared_hotkeys[key]
-    if not keys_registry or #keys_registry == 0 or keys_registry[#keys_registry][1] ~= module then
+    if not keys_registry or #keys_registry == 0 or keys_registry[#keys_registry][1] ~= key_events_module then
         return false
     end
     --* exec the callback for the hotkey:
@@ -680,19 +680,18 @@ function KeyEvents:execTopMostSharedHotkey(key, module)
 end
 
 --- @private
-function KeyEvents:registerSharedHotkey(key, module, callback)
+function KeyEvents:registerSharedHotkey(key, key_events_module, callback)
     local keys_registry = self.shared_hotkeys[key]
     if not keys_registry then
         self.shared_hotkeys[key] = {}
         keys_registry = self.shared_hotkeys[key]
     end
 
-    if #keys_registry > 0 and keys_registry[#keys_registry][1] == module then
+    if #keys_registry > 0 and keys_registry[#keys_registry][1] == key_events_module then
         return
     end
 
-    table.insert(self.shared_hotkeys[key], { module, callback })
-    --KOR.messages:notify("registered: " .. key .. " > " .. #self.shared_hotkeys[key])
+    table.insert(self.shared_hotkeys[key], { key_events_module, callback })
 end
 
 --- @private
@@ -702,16 +701,15 @@ function KeyEvents:registerSharedHotkeys(key_events_module, shared_hotkeys)
     end
 end
 
-function KeyEvents:unregisterSharedHotkeys(module)
+function KeyEvents:unregisterSharedHotkeys(key_events_module)
     for key, key_props in pairs(self.shared_hotkeys) do
         count = #key_props
         for i = count, 1, -1 do
-            if key_props[i][1] ~= module then
+            if key_props[i][1] ~= key_events_module then
                 break
             end
             self.shared_hotkeys[key][i] = nil
         end
-        --KOR.messages:notify("hoera: " .. module .. " > " .. #self.shared_hotkeys[key])
     end
 end
 

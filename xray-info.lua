@@ -33,6 +33,35 @@ function XrayInfo:TAPPED_WORD_MATCHES()
     -- called from ReaderHighlight: ((XrayTappedWords#getXrayItemAsDictionaryEntry)); placing exact partial matches in name or linkwords at top and marking them bold: ((XrayTappedWords#collectionPopulateAndSort)); placing exact fullname matches at position 1: ((XrayTappedWords#getCollection)) in case of needle_matches_fullname == true, which was set in ((XrayViewsData#upgradeNeedleItem))
 end
 
+function XrayInfo:XRAY_DIALOGS_SHARED_HOTKEYS()
+
+    -- DX supports shared hotkeys, e.g. like "N" and "P" to navigate to the next/previous page or item in resp. XrayPageNavigator or the Xray item viewer.
+    -- this means that when the XrayPageNavigator is active, N and P will navigate to the next or previous page; but when we load the Xray item viewer from the Navigator, then N and P will navigate to the next and previous item in the viewer.
+    -- also: in the Navigator the hotkey "E" opens the Xray item editor, but when the viewer is loaded from the Navigator, the same hotkey will trigger still the same functionality, but WITHOUT the viewer loosing focus. De facto is now triggered on the viewer instance (or to be precise: its HtmlBoxWidget instance).
+    -- when the user closes the viewer, the Navigator hotkeys take over once again.
+
+    --* setting up this functionality (always in combination with a HtmlBox):
+        -- 1 the caller instantiates HtmlBox, with props hotkeys_configurator and after_close_callback. See ((XrayPageNavigator#showNavigator)) for an example.
+        -- 2 the hotkeys_configurator is called from ((HtmlBox#initHotkeys)).
+        -- 3 e.g. for the Navigator this configuator calls ((KeyEvents#setHotkeyForXrayPageNavigator)), which registers shared hotkeys with ((KeyEvents#registerSharedHotkeys)) and ((KeyEvents#registerSharedHotkey)) > set registry var "add_parent_hotkeys" > read this var in ((HtmlBoxWidget#initHotkeys)), which uses it to add additional hotkeys (of the parent) to the HtmlBoxWidget instance
+        -- 4 the HtmlBox instance calls it's after_close_callback, to unset the registry var "add_parent_hotkeys" and to unset only its own shared hotkeys (but not those same shared hotkeys attached to other modules!) via ((KeyEvents#unregisterSharedHotkeys))
+end
+
+function XrayInfo:XRAY_INFO_TOC_ADD_LINKED_ITEM_BUTTONS()
+    -- adding extra linked xray items buttons if available: ((TextViewer#getTocIndexButton)) (for one specific xray item) > ((ButtonChoicePopup#forXrayTocItemEdit)) > set prop extra_callbacks by calling ((TextViewer#addLinkedItemsToTocButton)); also optionally set extra_wide_dialog to true, when linked items found, for more space to display their buttons > ((ButtonProps#injectAdditionalChoiceCallbacks)) > ((ButtonTableFactory#injectButtonIntoTargetRows)); compare ((XRAY_VIEWER_CONTEXT_BUTTONS)).
+    -- setting extra wide popup width IF indeed linked items were found: set prop: ((TextViewer#getTocIndexButton)) > ((set extra wide popup for xray items with linked items)) > read prop: ((ButtonProps#popupChoice)) > ((linked xray items in popup))
+
+    -- automatic move of toc popup to top of screen: prop "move_to_top" true in ((Dialogs#showButtonDialog)), called from ((TextViewer#showToc)) > ((move ButtonDialogTitle to top))
+
+    -- adding button to popup toc for closing toc AND paragraph info dialog: ((TextViewer toc popup: add close button for popup and info dialog))
+
+    -- list: ((XrayController#onShowList)) > ((XrayDialogs#showList))
+
+    -- showing list conditionally after saving an item: ((XrayController#saveNewItem)) or ((onShowEditItemForm)) > ((XrayController#showListConditionally))
+
+    -- viewer, show item: ((XrayDialogs#showItemViewer))
+end
+
 function XrayInfo:XRAY_ITEMS()
 
     --* see ((Dynamic Xray: module info))
@@ -68,35 +97,6 @@ function XrayInfo:XRAY_ITEMS()
     -- most svg icons downloaded from https://www.onlinewebfonts.com/icon: icons here are licensed by CC BY 4.0
     -- some free svg icons were downloaded from https://www.svgrepo.com
     -- I sometimes have renamed icons, to clarify their function in Dynamic Xray
-end
-
-function XrayInfo:XRAY_DIALOGS_SHARED_HOTKEYS()
-
-    -- DX supports shared hotkeys, e.g. like "N" and "P" to navigate to the next/previous page or item in resp. XrayPageNavigator or the Xray item viewer.
-    -- this means that when the XrayPageNavigator is active, N and P will navigate to the next or previous page; but when we load the Xray item viewer from the Navigator, then N and P will navigate to the next and previous item in the viewer.
-    -- also: in the Navigator the hotkey "E" opens the Xray item editor, but when the viewer is loaded from the Navigator, the same hotkey will trigger still the same functionality, but WITHOUT the viewer loosing focus. De facto is now triggered on the viewer instance (or to be precise: its HtmlBoxWidget instance).
-    -- when the user closes the viewer, the Navigator hotkeys take over once again.
-
-    --* setting up this functionality (always in combination with a HtmlBox:
-    -- 1 the caller instantiates HtmlBox, with props hotkeys_configurator and after_close_callback. See ((XrayPageNavigator#showNavigator)) for an example.
-    -- 2 the hotkeys_configurator is called from ((HtmlBox#initHotkeys)).
-    -- 3 e.g. for the Navigator this configuator calls ((KeyEvents#setHotkeyForXrayPageNavigator)), which registers shared hotkeys with ((KeyEvents#registerSharedHotkeys)) and ((KeyEvents#registerSharedHotkey)) > set registry var "add_parent_hotkeys" > read this var in ((HtmlBoxWidget#initHotkeys)), which uses it to add additional hotkeys (of the parent) to the HtmlBoxWidget instance
-    -- 4 the HtmlBox instance calls it's after_close_callback, to unset the registry var "add_parent_hotkeys" and to unset only its own shared hotkeys (but not those same shared hotkeys attached to other modules!) via ((KeyEvents#unregisterSharedHotkeys))
-end
-
-function XrayInfo:XRAY_INFO_TOC_ADD_LINKED_ITEM_BUTTONS()
-    -- adding extra linked xray items buttons if available: ((TextViewer#getTocIndexButton)) (for one specific xray item) > ((ButtonChoicePopup#forXrayTocItemEdit)) > set prop extra_callbacks by calling ((TextViewer#addLinkedItemsToTocButton)); also optionally set extra_wide_dialog to true, when linked items found, for more space to display their buttons > ((ButtonProps#injectAdditionalChoiceCallbacks)) > ((ButtonTableFactory#injectButtonIntoTargetRows)); compare ((XRAY_VIEWER_CONTEXT_BUTTONS)).
-    -- setting extra wide popup width IF indeed linked items were found: set prop: ((TextViewer#getTocIndexButton)) > ((set extra wide popup for xray items with linked items)) > read prop: ((ButtonProps#popupChoice)) > ((linked xray items in popup))
-
-    -- automatic move of toc popup to top of screen: prop "move_to_top" true in ((Dialogs#showButtonDialog)), called from ((TextViewer#showToc)) > ((move ButtonDialogTitle to top))
-
-    -- adding button to popup toc for closing toc AND paragraph info dialog: ((TextViewer toc popup: add close button for popup and info dialog))
-
-    -- list: ((XrayController#onShowList)) > ((XrayDialogs#showList))
-
-    -- showing list conditionally after saving an item: ((XrayController#saveNewItem)) or ((onShowEditItemForm)) > ((XrayController#showListConditionally))
-
-    -- viewer, show item: ((XrayDialogs#showItemViewer))
 end
 
 function XrayInfo:XRAY_VIEWER_CONTEXT_BUTTONS()
