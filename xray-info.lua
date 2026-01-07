@@ -72,9 +72,9 @@ end
 
 function XrayInfo:XRAY_DIALOGS_SHARED_HOTKEYS()
 
-    -- DX add support for shared hotkeys, e.g. like "N" and "P" to navigate to the next/previous page or item in resp. XrayPageNavigator or the Xray item viewer.
+    -- DX supports shared hotkeys, e.g. like "N" and "P" to navigate to the next/previous page or item in resp. XrayPageNavigator or the Xray item viewer.
     -- this means that when the XrayPageNavigator is active, N and P will navigate to the next or previous page; but when we load the Xray item viewer from the Navigator, then N and P will navigate to the next and previous item in the viewer.
-    -- also: in the Navigator the hotkey "E" opens the Xray item editor, but when the viewer is loaded from the Navigator, the same hotkey will trigger still the same functionality, but WITHOUT the viewer loosing focus. De facto is now triggered on the viewer instance.
+    -- also: in the Navigator the hotkey "E" opens the Xray item editor, but when the viewer is loaded from the Navigator, the same hotkey will trigger still the same functionality, but WITHOUT the viewer loosing focus. De facto is now triggered on the viewer instance (or to be precise: its HtmlBoxWidget instance).
     -- when the user closes the viewer, the Navigator hotkeys take over once again.
 
     --* setting up this functionality (always in combination with a HtmlBox:
