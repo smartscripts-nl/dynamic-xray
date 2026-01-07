@@ -97,6 +97,7 @@ local HtmlBox = InputContainer:extend{
     boox_go_10_height_correction = 5,
     buttons_table = nil,
     content_padding = nil,
+    key_events_module = nil,
     html = nil,
     info_panel_buttons = nil,
     info_panel_text = nil,
@@ -122,7 +123,7 @@ local HtmlBox = InputContainer:extend{
 
 function HtmlBox:init()
     self:setModuleProps()
-    KOR.keyevents:addHotkeysForHtmlBox(self)
+    self:initHotkeys()
     self:initTouch()
     self:hideFooter()
     self:setWidth()
@@ -143,6 +144,17 @@ function HtmlBox:init()
     self:addFrameToContentWidget()
     self:generateWidget()
     self:finalizeWidget()
+end
+
+--- @private
+function HtmlBox:initHotkeys()
+    KOR.keyevents:addHotkeysForHtmlBox(self, self.key_events_module)
+
+    --! we need this call to restore hotkeys for the dialog every time a new tab gets activated (and therefore the dialog reloaded):
+    --* examples of hotkeys configurators: ((KeyEvents#setHotkeyForXrayPageNavigator)) and ((KeyEvents#addHotkeysForXrayItemViewer)):
+    if self.hotkeys_configurator then
+        self.hotkeys_configurator()
+    end
 end
 
 --- @private

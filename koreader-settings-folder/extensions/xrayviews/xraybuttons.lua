@@ -448,7 +448,7 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
                     DX.d:closeViewer()
                     local select_number, toggled_item = DX.fd:toggleIsImportantItem(needle_item)
                     DX.vd:updateItemsTable(select_number)
-                    DX.d:viewItem(toggled_item, called_from_list, tapped_word)
+                    DX.d:showItemViewer(toggled_item, called_from_list, tapped_word)
                 end,
             }),
             KOR.buttoninfopopup:forXrayTogglePersonOrTerm({
@@ -457,7 +457,7 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
                     DX.d:closeViewer()
                     local select_number, toggled_item = DX.fd:toggleIsPersonOrTerm(needle_item)
                     DX.vd:updateItemsTable(select_number)
-                    DX.d:viewItem(toggled_item, called_from_list, tapped_word)
+                    DX.d:showItemViewer(toggled_item, called_from_list, tapped_word)
                 end,
             }),
 
@@ -543,7 +543,7 @@ function XrayButtons:forTappedWordItemViewer(needle_item, called_from_list, tapp
                     DX.d:closeViewer()
                     local select_number, toggled_item = DX.fd:toggleIsImportantItem(needle_item)
                     DX.vd:updateItemsTable(select_number)
-                    DX.d:viewItem(toggled_item, called_from_list, tapped_word)
+                    DX.d:showItemViewer(toggled_item, called_from_list, tapped_word)
                 end,
             }),
             KOR.buttoninfopopup:forXrayTogglePersonOrTerm({
@@ -552,7 +552,7 @@ function XrayButtons:forTappedWordItemViewer(needle_item, called_from_list, tapp
                     DX.d:closeViewer()
                     local select_number, toggled_item = DX.fd:toggleIsPersonOrTerm(needle_item)
                     DX.vd:updateItemsTable(select_number)
-                    DX.d:viewItem(toggled_item, called_from_list, tapped_word)
+                    DX.d:showItemViewer(toggled_item, called_from_list, tapped_word)
                 end,
             }),
 

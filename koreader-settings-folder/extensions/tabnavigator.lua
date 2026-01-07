@@ -100,7 +100,7 @@ end
 
 function TabNavigator:onActivateTab(tab_no)
     if not tn.tabs_table_buttons or not tn.tabs_table_buttons[1] or tn.tabs_table_buttons[1][tab_no].enabled == false or #tn.tabs_table_buttons[1] < tab_no or tn.active_tab == tab_no then
-        return
+        return false
     end
 
     tn.active_tab = tab_no

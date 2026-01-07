@@ -23,26 +23,17 @@ local KeyEvents = WidgetContainer:extend{
 
 --* here we add generic hotkeys for HtmlBox, but a caller might already have added specific hotkeys for that module:
 --- @param parent HtmlBox
-function KeyEvents:addHotkeysForHtmlBox(parent)
+function KeyEvents:addHotkeysForHtmlBox(parent, key_events_module)
     if not Device:hasKeys() then
         return
+    end
+    if not key_events_module then
+        key_events_module = "HtmlBox"
     end
 
     if parent.active_tab and parent.tabs_table_buttons then
 
-        --* see ((TABS)) for more info:
-        --* initialize TabNavigator and callbacks:
-        KOR.tabnavigator:init(parent.tabs_table_buttons, parent.active_tab, parent.parent)
-        for i = 1, 8 do
-            local current = i
-            --* these callbacks were generated dynamically in ((generate tab navigation event handlers)):
-            parent["onActivateTab" .. current] = function()
-                return KOR.tabnavigator["onActivateTab" .. current](parent)
-            end
-        end
-
-        --! don't use self.key_events = {... here, because that might overwrite key_events already defined by a caller:
-        self:addKeyEvents(parent, {
+        parent.key_events = {
             ReadPrevItem = { { Input.group.PgBack }, doc = "read prev item" },
             ReadPrevItemWithShiftSpace = Input.group.ShiftSpace,
             ReadNextItem = { { Input.group.PgFwd }, doc = "read next item" },
@@ -51,52 +42,47 @@ function KeyEvents:addHotkeysForHtmlBox(parent)
             ToNextTab = { { Input.group.PgFwd }, doc = "naar volgende tab" },
             ForceNextTab = { { Input.group.TabNext }, doc = "forceer volgende tab" },
             ForcePreviousTab = { { Input.group.TabPrevious }, doc = "forceer vorige tab" },
-            ActivateTab1 = { { "1" } },
-            ActivateTab2 = { { "2" } },
-            ActivateTab3 = { { "3" } },
-            ActivateTab4 = { { "4" } },
-            ActivateTab5 = { { "5" } },
-            ActivateTab6 = { { "6" } },
-            ActivateTab7 = { { "7" } },
-            ActivateTab8 = { { "8" } },
             Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } },
-        })
+        }
         -- #((set additional key events))
         self:addAdditionalHotkeysHtmlBox(parent)
-
-        return
-    end
-
-    --! don't use self.key_events = {... here, because that might overwrite key_events already defined by a caller:
-    self:addKeyEvents(parent, {
-        ReadPrevItem = { { Input.group.PgBack }, doc = "read prev item" },
-        ReadPrevItemWithShiftSpace = Input.group.ShiftSpace,
-        ReadNextItem = { { Input.group.PgFwd }, doc = "read next item" },
-        ForceNextItem = { { Input.group.TabNext }, doc = "forceer volgend item" },
-        ForcePrevItem = { { Input.group.TabPrevious }, doc = "forceer vorige item" },
-        Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } },
-    })
-    self:addAdditionalHotkeysHtmlBox(parent)
-end
-
---- @param parent TextViewer
-function KeyEvents:addHotkeysForTextViewer(parent)
-    if not Device:hasKeys() then
-        return
-    end
-
-    --* TextViewer instance with tabs:
-    if parent.active_tab and parent.tabs_table_buttons then
 
         --* see ((TABS)) for more info:
         --* initialize TabNavigator and callbacks:
         KOR.tabnavigator:init(parent.tabs_table_buttons, parent.active_tab, parent.parent)
         for i = 1, 8 do
             local current = i
-            parent["onActivateTab" .. current] = function()
+            self:registerCustomKeyEvent(key_events_module, parent, current, "ActivateTab" .. current, function()
+                --* these callbacks were generated dynamically in ((generate tab navigation event handlers)):
                 return KOR.tabnavigator["onActivateTab" .. current](parent)
-            end
+            end)
         end
+
+        return
+    end
+
+    parent.key_events = {
+        ReadPrevItem = { { Input.group.PgBack }, doc = "read prev item" },
+        ReadPrevItemWithShiftSpace = Input.group.ShiftSpace,
+        ReadNextItem = { { Input.group.PgFwd }, doc = "read next item" },
+        ForceNextItem = { { Input.group.TabNext }, doc = "forceer volgend item" },
+        ForcePrevItem = { { Input.group.TabPrevious }, doc = "forceer vorige item" },
+        Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } },
+    }
+    self:addAdditionalHotkeysHtmlBox(parent)
+end
+
+--- @param parent TextViewer
+function KeyEvents:addHotkeysForTextViewer(parent, key_events_module)
+    if not Device:hasKeys() then
+        return
+    end
+    if not key_events_module then
+        key_events_module = "TextViewer"
+    end
+
+    --* TextViewer instance with tabs:
+    if parent.active_tab and parent.tabs_table_buttons then
 
         parent.key_events = {
             ToPreviousTab = { { Input.group.PgBack }, doc = "naar vorige tab" },
@@ -104,17 +90,19 @@ function KeyEvents:addHotkeysForTextViewer(parent)
             ToNextTab = { { Input.group.PgFwd }, doc = "naar volgende tab" },
             ForceNextTab = { { Input.group.TabNext }, doc = "forceer volgende tab" },
             ForcePreviousTab = { { Input.group.TabPrevious }, doc = "forceer vorige tab" },
-            ActivateTab1 = { { "1" } },
-            ActivateTab2 = { { "2" } },
-            ActivateTab3 = { { "3" } },
-            ActivateTab4 = { { "4" } },
-            ActivateTab5 = { { "5" } },
-            ActivateTab6 = { { "6" } },
-            ActivateTab7 = { { "7" } },
-            ActivateTab8 = { { "8" } },
             Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } }
         }
-        self:setKeyEventsForTabs(parent, 8)
+        --self:setKeyEventsForTabs(parent, 8)
+        --* see ((TABS)) for more info:
+        --* initialize TabNavigator and callbacks:
+        KOR.tabnavigator:init(parent.tabs_table_buttons, parent.active_tab, parent.parent)
+        for i = 1, 8 do
+            local current = i
+            self:registerCustomKeyEvent(key_events_module, parent, current, "ActivateTab" .. current, function()
+                --* these callbacks were generated dynamically in ((generate tab navigation event handlers)):
+                return KOR.tabnavigator["onActivateTab" .. current](parent)
+            end)
+        end
 
     --* TextViewer instance without tabs:
     else
@@ -130,17 +118,15 @@ function KeyEvents:addHotkeysForTextViewer(parent)
 
     self:addExtraButtonsHotkeys(parent, 1)
     self:addAdditionalHotkeysTextViewer(parent)
-
-    --* replace hotkey M for FileManager with M for edit Metadata:
-    if parent.add_metadata_edit_hotkey_callback then
-        self:addMetadataEditHotkey(parent, "TV")
-    end
 end
 
---* information about available hotkeys in list shown in ((XrayDialogs#viewItem)) > ((XrayDialogs#showHelp))
---- @param parent XrayDialogs
-function KeyEvents:addHotkeysForXrayItemViewer(parent, event_keys_module)
-    self:registerSharedHotkeys(event_keys_module, {
+--* information about available hotkeys in list shown in ((XrayDialogs#showItemViewer)) > ((XrayDialogs#showHelp)):
+-- #((KeyEvents#addHotkeysForXrayItemViewer))
+--* compare ((KeyEvents#setHotkeyForXrayPageNavigator)):
+function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
+    local self = KOR.keyevents
+    local parent = DX.d
+    self:registerSharedHotkeys(key_events_module, {
         ["E"] = function()
             parent:closeViewer()
             DX.c:onShowEditItemForm(DX.vd.current_item, false, 1)
@@ -201,7 +187,7 @@ function KeyEvents:addHotkeysForXrayItemViewer(parent, event_keys_module)
             label = "edit",
             hotkey = { { "E" } },
             callback = function()
-                return KOR.keyevents:execLastSharedHotkey("E", event_keys_module)
+                return self:execTopMostSharedHotkey("E", key_events_module)
             end,
         },
         {
@@ -224,14 +210,14 @@ function KeyEvents:addHotkeysForXrayItemViewer(parent, event_keys_module)
             label = "goto_list",
             hotkey = { { "L" } },
             callback = function()
-                return KOR.keyevents:execLastSharedHotkey("L", event_keys_module)
+                return self:execTopMostSharedHotkey("L", key_events_module)
             end,
         },
         {
             label = "goto_next_item_viewer",
             hotkey = { { "N" } },
             callback = function()
-                return KOR.keyevents:execLastSharedHotkey("N", event_keys_module)
+                return self:execTopMostSharedHotkey("N", key_events_module)
             end,
         },
         {
@@ -246,7 +232,7 @@ function KeyEvents:addHotkeysForXrayItemViewer(parent, event_keys_module)
             label = "goto_previous_item_viewer",
             hotkey = { { "P" } },
             callback = function()
-                return KOR.keyevents:execLastSharedHotkey("P", event_keys_module)
+                return self:execTopMostSharedHotkey("P", key_events_module)
             end,
         },
         {
@@ -263,7 +249,7 @@ function KeyEvents:addHotkeysForXrayItemViewer(parent, event_keys_module)
         },
     }
     if DX.m.current_series then
-        self:registerSharedHotkey("S", event_keys_module, function()
+        self:registerSharedHotkey("S", key_events_module, function()
             KOR.descriptiondialog:showSeriesForEbookPath(KOR.registry.current_ebook)
             return true
         end)
@@ -271,15 +257,15 @@ function KeyEvents:addHotkeysForXrayItemViewer(parent, event_keys_module)
             label = "show_serie",
             hotkey = { { "S" } },
             callback = function()
-                return KOR.keyevents:execLastSharedHotkey("S", event_keys_module)
+                return self:execTopMostSharedHotkey("S", key_events_module)
             end,
         })
     end
 
-    --- SET HOTKEYS FOR HTMLBOX INSTANCE
+    --- SET HOTKEYS FOR HTMLBOXWIDGET INSTANCE
 
-    --! this ensures that hotkeys will even be available when we are in a scrolling html box. These actions will be consumed in ((HtmlBoxWidget#initEventKeys)):
-    KOR.registry:set("scrolling_html_eventkeys", actions)
+    --! this ensures that hotkeys will even be available when we are in a scrolling html box. These actions will be consumed in ((HtmlBoxWidget#initHotkeys)):
+    KOR.registry:set("add_parent_hotkeys", actions)
 
     count = #actions
     local hotkey, label
@@ -288,7 +274,7 @@ function KeyEvents:addHotkeysForXrayItemViewer(parent, event_keys_module)
         hotkey = actions[i].hotkey
         label = actions[i].label
         local callback = actions[i].callback
-        self:registerCustomKeyEvent(parent.item_viewer, hotkey, "action_" .. label .. suffix, function()
+        self:registerCustomKeyEvent(key_events_module, parent.item_viewer, hotkey, "action_" .. label .. suffix, function()
             return callback()
         end)
     end
@@ -296,7 +282,7 @@ end
 
 --* information about available hotkeys in list shown in ((XrayButtons#forListTopLeft)) > ((XrayDialogs#showHelp)):
 --- @param parent XrayDialogs
-function KeyEvents:addHotkeysForXrayList(parent, event_keys_module)
+function KeyEvents:addHotkeysForXrayList(parent, key_events_module)
     local actions = {
         {
             label = "import",
@@ -348,7 +334,7 @@ function KeyEvents:addHotkeysForXrayList(parent, event_keys_module)
         },
     }
     if DX.m.current_series then
-        self:registerSharedHotkey("S", event_keys_module, function()
+        self:registerSharedHotkey("S", key_events_module, function()
             KOR.descriptiondialog:showSeriesForEbookPath(KOR.registry.current_ebook)
             return true
         end)
@@ -356,7 +342,7 @@ function KeyEvents:addHotkeysForXrayList(parent, event_keys_module)
             label = "show_serie",
             hotkey = { { "S" } },
             callback = function()
-                return KOR.keyevents:execLastSharedHotkey("S", event_keys_module)
+                return self:execTopMostSharedHotkey("S", key_events_module)
             end,
         })
     end
@@ -369,7 +355,7 @@ function KeyEvents:addHotkeysForXrayList(parent, event_keys_module)
         hotkey = actions[i].hotkey
         label = actions[i].label
         local callback = actions[i].callback
-        self:registerCustomKeyEvent(parent.xray_items_inner_menu, hotkey, "action_" .. label, function()
+        self:registerCustomKeyEvent(key_events_module, parent.xray_items_inner_menu, hotkey, "action_" .. label, function()
             return callback()
         end)
     end
@@ -378,20 +364,24 @@ function KeyEvents:addHotkeysForXrayList(parent, event_keys_module)
     local current_page, per_page
     for i = 1, 9 do
         local current = i
-        self:registerCustomKeyEvent(parent.xray_items_inner_menu, { { { tostring(i) } } }, "SelectItemNo" .. current, function()
+        self:registerCustomKeyEvent(key_events_module, parent.xray_items_inner_menu, { { { tostring(i) } } }, "SelectItemNo" .. current, function()
             current_page = parent.xray_items_inner_menu.page
             per_page = parent.xray_items_inner_menu.perpage
             local item_no = (current_page - 1) * per_page + current
             UIManager:close(parent.xray_items_chooser_dialog)
-            parent:viewItem(DX.vd:getItem(item_no))
+            parent:showItemViewer(DX.vd:getItem(item_no))
             return true
         end)
     end
 end
 
---- @param parent XrayPageNavigator
-function KeyEvents:addHotkeysForXrayPageNavigator(parent, event_keys_module)
-    self:registerSharedHotkeys(event_keys_module, {
+-- #((KeyEvents#setHotkeyForXrayPageNavigator))
+--* compare ((KeyEvents#addHotkeysForXrayItemViewer)) and see comment in ((HtmlBox#initHotkeys)):
+function KeyEvents.setHotkeyForXrayPageNavigator(key_events_module)
+    local self = KOR.keyevents
+    local parent = DX.pn
+
+    self:registerSharedHotkeys(key_events_module, {
         ["E"] = function()
             return parent:execEditCallback(parent)
         end,
@@ -408,12 +398,12 @@ function KeyEvents:addHotkeysForXrayPageNavigator(parent, event_keys_module)
             return parent:execSettingsCallback(parent)
         end,
     })
-    local actions = {
+    parent.hotkeys = {
         {
             label = "edit",
             hotkey = { { "E" } },
             callback = function()
-                return KOR.keyevents:execLastSharedHotkey("E", event_keys_module)
+                return self:execTopMostSharedHotkey("E", key_events_module)
             end,
         },
         {
@@ -441,28 +431,28 @@ function KeyEvents:addHotkeysForXrayPageNavigator(parent, event_keys_module)
             label = "goto_list",
             hotkey = { { "L" } },
             callback = function()
-                return KOR.keyevents:execLastSharedHotkey("L", event_keys_module)
+                return self:execTopMostSharedHotkey("L", key_events_module)
             end,
         },
         {
             label = "goto_next_page_navigator",
             hotkey = { { "N" } },
             callback = function()
-                return KOR.keyevents:execLastSharedHotkey("N", event_keys_module)
+                return self:execTopMostSharedHotkey("N", key_events_module)
             end,
         },
         {
             label = "goto_previous_navigator",
             hotkey = { { "P" } },
             callback = function()
-                return KOR.keyevents:execLastSharedHotkey("P", event_keys_module)
+                return self:execTopMostSharedHotkey("P", key_events_module)
             end,
         },
         {
             label = "pn_settings",
             hotkey = { { { "S" } } },
             callback = function()
-                return KOR.keyevents:execLastSharedHotkey("S", event_keys_module)
+                return self:execTopMostSharedHotkey("S", key_events_module)
             end,
         },
         {
@@ -474,51 +464,51 @@ function KeyEvents:addHotkeysForXrayPageNavigator(parent, event_keys_module)
         },
     }
 
-    --* display inforation of first nine items in side panel in bottom info panel, with hotkeys 1 through 9:
+    --! definitions of numerical hotkeys can only be done after PageNavigator dialog has been defined, because only then side_buttons are also defined:
+    --* display information of first nine items in side panel in bottom info panel, with hotkeys 1 through 9:
     for i = 1, 9 do
-        table.insert(actions, {
-            label = "show_item_info_" .. i,
-            hotkey = { { { tostring(i) } } },
+        local nhotkey = tostring(i)
+        local side_button = parent:getSideButton(i)
+        if not side_button then
+            break
+        end
+        self:registerSharedHotkey(nhotkey, key_events_module, function()
+            local nside_button = side_button
+            nside_button[1].callback()
+            return true
+        end)
+        table.insert(parent.hotkeys, {
+            label = "show_item_info_" .. nhotkey,
+            hotkey = { { nhotkey } },
             callback = function()
-                if parent.side_buttons and parent.side_buttons[i] then
-                    parent.side_buttons[i][1].callback()
-                end
-                --* we return false instead of true, so the Xray Page Navigator help dialog can activate tabs with number hotkeys:
-                if i < 4 then
-                    return false
-                end
-                return true
+                return self:execTopMostSharedHotkey(nhotkey, key_events_module)
             end,
         })
     end
 
-    --- SET HOTKEYS FOR HTMLBOX INSTANCE
+    --- SET HOTKEYS FOR HTMLBOXWIDGET INSTANCE
 
-    --! this ensures that hotkeys will even be available when we are in a scrolling html box. These actions will be consumed in ((HtmlBoxWidget#initEventKeys)):
-    KOR.registry:set("scrolling_html_eventkeys", actions)
+    --! this ensures that hotkeys will even be available when we are in a scrolling html box. These actions will be consumed in ((HtmlBoxWidget#initHotkeys)):
+    KOR.registry:set("add_parent_hotkeys", parent.hotkeys)
 
-    count = #actions
+    count = #parent.hotkeys
     local hotkey, label
     local suffix = "XPN"
     for i = 1, count do
-        hotkey = actions[i].hotkey
-        label = actions[i].label
-        local callback = actions[i].callback
-        self:registerCustomKeyEvent(parent.page_navigator, hotkey, "action_" .. label .. suffix, function()
+        hotkey = parent.hotkeys[i].hotkey
+        label = parent.hotkeys[i].label
+        local callback = parent.hotkeys[i].callback
+        self:registerCustomKeyEvent(key_events_module, parent.page_navigator, hotkey, "action_" .. label .. suffix, function()
             return callback()
         end)
     end
-end
-
-function KeyEvents:addMetadataEditHotkey(parent, suffix)
-    parent.key_events["MetadataEdit" .. suffix] = { { "M" } }
 end
 
 function KeyEvents:addHotkeyForFilterButton(parent, filter_active, callback, reset_callback)
 
     --* because in FileManagerHistory "F" hotkey has been used for activation of Fiction tab, only there use Shift+F:
     local hotkey = KOR.registry:get("history_active") and { { "Shift", { "F" } } } or { { "F" } }
-    self:registerCustomKeyEvent(parent, hotkey, "FilterMenu", function()
+    self:registerCustomKeyEvent("Menu", parent, hotkey, "FilterMenu", function()
         parent:resetAllBoldItems()
         if filter_active then
             reset_callback()
@@ -634,9 +624,24 @@ function KeyEvents:addAdditionalHotkeysTextViewer(parent)
     end
 end
 
-function KeyEvents:registerCustomKeyEvent(parent, hotkey, handler_label, handler_callback)
-    parent["on" .. handler_label] = handler_callback
-    parent.key_events[handler_label] = type(hotkey) == "table" and hotkey or { { hotkey } }
+function KeyEvents:registerCustomKeyEvent(key_events_module, parent, hotkey, callback_label, callback)
+    --! hotfix, shouldn't be necessary, but is:
+    if not parent then
+        parent = DX.d
+    end
+    if type(hotkey) == "number" then
+        hotkey = { { tostring(hotkey) } }
+    elseif type(hotkey) ~= "table" then
+        hotkey = { { hotkey } }
+    end
+    self:registerSharedHotkey(hotkey, key_events_module, function()
+        return callback()
+    end)
+
+    parent["on" .. callback_label] = function()
+        return self:execTopMostSharedHotkey(hotkey, key_events_module)
+    end
+    parent.key_events[callback_label] = hotkey
 end
 
 --- @param parent Menu
@@ -647,7 +652,7 @@ function KeyEvents:registerTabHotkeys(parent)
         local current = i
         action = parent.tab_labels[current]
         hotkey = action:sub(1, 1):upper()
-        self:registerCustomKeyEvent(parent, hotkey, "ActivateTab_" .. action, function()
+        self:registerCustomKeyEvent("Menu", parent, hotkey, "ActivateTab_" .. action, function()
             return self:activateTab(parent, current)
         end)
     end
@@ -665,7 +670,7 @@ function KeyEvents:updateHotkeys(parent)
     end
 end
 
-function KeyEvents:execLastSharedHotkey(key, module)
+function KeyEvents:execTopMostSharedHotkey(key, module)
     local keys_registry = self.shared_hotkeys[key]
     if not keys_registry or #keys_registry == 0 or keys_registry[#keys_registry][1] ~= module then
         return false
@@ -686,14 +691,14 @@ function KeyEvents:registerSharedHotkey(key, module, callback)
         return
     end
 
-    table.insert(self.shared_hotkeys[key], {module, callback})
+    table.insert(self.shared_hotkeys[key], { module, callback })
     --KOR.messages:notify("registered: " .. key .. " > " .. #self.shared_hotkeys[key])
 end
 
 --- @private
-function KeyEvents:registerSharedHotkeys(event_keys_module, shared_hotkeys)
+function KeyEvents:registerSharedHotkeys(key_events_module, shared_hotkeys)
     for key, callback in pairs(shared_hotkeys) do
-        self:registerSharedHotkey(key, event_keys_module, callback)
+        self:registerSharedHotkey(key, key_events_module, callback)
     end
 end
 
@@ -707,17 +712,6 @@ function KeyEvents:unregisterSharedHotkeys(module)
             self.shared_hotkeys[key][i] = nil
         end
         --KOR.messages:notify("hoera: " .. module .. " > " .. #self.shared_hotkeys[key])
-    end
-end
-
---- @private
-function KeyEvents:addKeyEvents(parent, events)
-    if not parent.key_events then
-        parent.key_events = {}
-    end
-    count = #events
-    for i = 1, count do
-        table.insert(parent.key_events, events[i])
     end
 end
 

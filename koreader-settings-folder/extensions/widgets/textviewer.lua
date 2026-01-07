@@ -72,7 +72,6 @@ local TextViewer = InputContainer:extend{
     additional_key_events = nil,
     --* when true, white border margins around dialog borders:
     add_margin = false,
-    add_metadata_edit_hotkey_callback = nil,
     add_more_padding = false,
     add_padding = false,
     after_close_callback = nil,
@@ -98,6 +97,7 @@ local TextViewer = InputContainer:extend{
     covers_fullscreen = false,
     default_hold_callback = nil, --* on each default button
     event_after_close = nil,
+    key_events_module = nil,
     extra_button = nil,
     extra_button_position = nil,
     extra_button_callback = nil,
@@ -151,7 +151,7 @@ local TextViewer = InputContainer:extend{
     title_tab_buttons_left = nil,
     --* title_tab_callbacks for title_tab_buttons_left, e.g. populated in ((XrayFormsData#getFormTabCallback)):
     title_tab_callbacks = nil,
-    --* optional icon buttons at left and right side of TitleBar, e.g. defined in ((XrayDialogs#showItemsInfo)):
+    --* optional icon buttons at left and right side of TitleBar, e.g. defined in ((XrayDialogs#showUiPageInfo)):
     top_buttons_left = nil,
     top_buttons_right = nil,
     use_computed_height = false,
@@ -170,7 +170,7 @@ function TextViewer:init()
     self:setPadding()
     self:initForDevice()
     self:initTouch()
-    KOR.keyevents:addHotkeysForTextViewer(self)
+    KOR.keyevents:addHotkeysForTextViewer(self, self.key_events_module)
     self:initTitleBar()
     self:initScrollCallbacks()
     self:setSeparator()
@@ -370,7 +370,7 @@ function TextViewer:findDialog()
 end
 
 --* when argument external_search_string not nil: called via ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((XrayUI#showParagraphInformation)) >
---* click on line with xray marker > ((XrayDialogs#showItemsInfo)) - here reliability icons and xray type icons injected for buttons > ((Dialogs#textBox)) > ((send external searchstring for xray info)) > ((TextViewer#showToc)) > ((TextViewer#getTocIndexButton)) >
+--* click on line with xray marker > ((XrayDialogs#showUiPageInfo)) - here reliability icons and xray type icons injected for buttons > ((Dialogs#textBox)) > ((send external searchstring for xray info)) > ((TextViewer#showToc)) > ((TextViewer#getTocIndexButton)) >
 --* click on button > ((TextViewer#blockUp)) or ((TextViewer#blockDown)):
 --- @private
 function TextViewer:findCallback(input_dialog, external_search_string, overrule_pos)
@@ -891,7 +891,7 @@ function TextViewer:generateTabsTable()
     KOR.tabnavigator:broadcastActivatedTab()
 end
 
---* called automatically with an after_load_callback from ((XrayDialogs#showItemsInfo)) - see ((call TextViewer TOC))
+--* called automatically with an after_load_callback from ((XrayDialogs#showUiPageInfo)) - see ((call TextViewer TOC))
 --* or from a button: ((TextViewer#getDefaultButtons)) > ((TextViewer toc button)) > ((ButtonInfoPopup#forXrayItemsIndex))
 --- @private
 function TextViewer:showToc()
@@ -1755,14 +1755,8 @@ function TextViewer:setScrollingMode()
     end
 end
 
---- @private
 function TextViewer:onActivateTab(tab_no)
     return KOR.tabnavigator:onActivateTab(tab_no)
-end
-
---- @private
-function TextViewer:onMetadataEditTV()
-    self.add_metadata_edit_hotkey_callback()
 end
 
 --- @private

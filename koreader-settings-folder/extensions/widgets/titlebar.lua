@@ -79,7 +79,7 @@ local TitleBar = OverlapGroup:extend{
 
     with_bottom_line = false,
     bottom_line_h_padding = nil, --* default to 0: full width
-    bottom_line_thickness = Size.line.thick,
+    bottom_line_thickness = Size.line.thin,
 
     --* set any of these _callback to false to not handle the event
     --* and let it propagate; otherwise the event is discarded
@@ -146,7 +146,7 @@ function TitleBar:init()
 
     --- we don't want an in-your-face bottom line in case of fullscreen dialogs:
     if self.fullscreen and self.with_bottom_line then
-        self.bottom_line_thickness = Size.line.small
+        self.bottom_line_thickness = Size.line.thin
     end
 
     self.has_top_buttons_left = self.top_buttons_left or self.tab_buttons_left

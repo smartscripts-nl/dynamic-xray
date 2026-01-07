@@ -11,7 +11,8 @@ The views layer has three main streams:
 1) XrayUI, which is only responsible for displaying tappable xray markers (lightning or star icons) in the ebook text;
 2) XrayDialogs and XrayButtons, which are responsible for displaying dialogs and interaction with the user.
 3) Worthy to be specially mentioned is XrayPageNavigator, which offers the user the most Kindle-like experience: navigating through pages, with Xray items marked bold and button with which to show explanations of the items in the bottom panel.
-When the ebook text is displayed, XrayUI has done its work and finishes. Only after actions by the user (e.g. tapping on an xray item in the book), XrayDialogs will be activated.
+4) Also mentionable is the fact that some DX dialogs have shared hotkeys, in which case the hotkeys of the top most dialog will be used, not that same hotkey for an underlying dialog. See ((XrayInfo#XRAY_DIALOGS_SHARED_HOTKEYS)) for an explanation.
+
 
 The user will have the most Kindle-like experience when he/she opens the Page Navigator - see ((XrayController#onShowPageNavigator)). In this navigator all Xray items in a page will be marked bold and they will be mentioned in a side panel. Tapping on items in the side panel will put an explanation of that item in the bottom panel. You can even filter the content of the Navigator for a specific Xray item, so it will only show pages which contain that item.
 
@@ -73,7 +74,7 @@ viewer: ((XrayButtons#forItemViewer))
 
 --* NAVIGATING THROUGH RELATED ITEMS SHOWN IN A POPUP BUTTONDIALOG UPON LONGPRESSING ON A WORD IN THE READER
 
-((XrayButtons#forItemsCollectionPopup)) > ((XrayTappedWords#itemsRegister)) > click on a button in the popup > triggers ((related item button callback)) > ((XrayDialogs#viewTappedWordItem)) (like item viewer ((XrayDialogs#viewItem)) for normal items, but now specifically and only for related items).
+((XrayButtons#forItemsCollectionPopup)) > ((XrayTappedWords#itemsRegister)) > click on a button in the popup > triggers ((related item button callback)) > ((XrayDialogs#viewTappedWordItem)) (like item viewer ((XrayDialogs#showItemViewer)) for normal items, but now specifically and only for related items).
 
 When navigating through the items ((XrayDialogs#viewNextTappedWordItem)) or ((XrayDialogs#viewPreviousTappedWordItem)) are called, either triggered with a button or by a key event.
 
@@ -229,7 +230,7 @@ function XrayController:listHasReloadOrDontShowRequest(focus_item, dont_show)
         return true
     end
 
-    --* dont_show can be set to true via ((XrayDialogs#viewItem)), when looking up an XrayItem from ReaderHighlight, when XrayController list had not been shown yet:
+    --* dont_show can be set to true via ((XrayDialogs#showItemViewer)), when looking up an XrayItem from ReaderHighlight, when XrayController list had not been shown yet:
     return dont_show
 end
 
@@ -393,7 +394,7 @@ function XrayController:showListConditionally(focus_item, show_list)
 
     --* this prop can be set in ((XrayButtons#forItemViewer)) > ((enable return to viewer)), when the user opens an add or edit form:
     if self.return_to_viewer then
-        DX.d:viewItem(focus_item)
+        DX.d:showItemViewer(focus_item)
         return
     end
 
@@ -432,7 +433,7 @@ function XrayController:guardIsExistingItem(needle_name)
     local already_existing_item = DX.tw:itemExists(needle_name, nil, "is_exists_check")
     if already_existing_item then
         DX.d:setActionResultMessage(DX.d:getControllerEntryName("an xray item with this name already exists..."))
-        DX.d:viewItem(already_existing_item)
+        DX.d:showItemViewer(already_existing_item)
         return true
     end
 end

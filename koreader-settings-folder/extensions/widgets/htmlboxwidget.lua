@@ -22,6 +22,7 @@ local G_reader_settings = G_reader_settings
 local ipairs = ipairs
 local math = math
 local pcall = pcall
+local select = select
 local string = string
 local table = table
 local type = type
@@ -52,7 +53,7 @@ local function getLineTextDirection(line)
 end
 
 local function getWordIndices(lines, pos)
-    local last_checked_line_index = nil
+    local last_checked_line_index
     for line_index, line in ipairs(lines) do
         if pos.y >= line.y0 then
             -- check if pos in on or below the line
@@ -132,7 +133,7 @@ local function getSelectedText(lines, start_pos, end_pos)
     local rects = {}
     for line_index = start_line_index, end_line_index do
         local line = lines[line_index]
-        local line_last_rect = nil
+        local line_last_rect
         local line_text_direction = getLineTextDirection(line)
         for word_index, word in ipairs(line) do
             if type(word) == 'table' then
@@ -229,7 +230,7 @@ function HtmlBoxWidget:init()
         }
     end
     if Device:hasKeys() then
-        self:initEventKeys()
+        self:initHotkeys()
     end
     self.highlight_lighten_factor = G_reader_settings:readSetting("highlight_lighten_factor", 0.2)
 end
@@ -290,6 +291,8 @@ function HtmlBoxWidget:setContent(body, css, default_font_size, is_xhtml, no_css
     self.document:layoutDocument(self.dimen.w, self.dimen.h, default_font_size)
 
     self.page_count = self.document:getPages()
+    self.page_boxes = nil
+    self:clearHighlight()
 end
 
 function HtmlBoxWidget:_render()
@@ -320,7 +323,7 @@ end
 function HtmlBoxWidget:getSinglePageHeight()
     if self.page_count == 1 then
         local page = self.document:openPage(1)
-        local x0, y0, x1, y1 = page:getUsedBBox() -- luacheck: no unused
+        local y1 = select(4, page:getUsedBBox()) -- x0, y0, x1,
         page:close()
         return math.ceil(y1) -- no content after y1
     end
@@ -469,6 +472,7 @@ function HtmlBoxWidget:onTapText(arg, ges)
         if pos then
             local link = self:getLinkByPosition(pos)
             if link then
+                self.garbage = arg
                 self.html_link_tapped_callback(link)
                 return true
             end
@@ -572,10 +576,10 @@ end
 
 --* ==================== SMARTSCRIPTS =====================
 
-function HtmlBoxWidget:initEventKeys()
+function HtmlBoxWidget:initHotkeys()
 
-    --* this actions were set in ((XrayDialogs#addHotkeysForItemViewer)):
-    local actions = KOR.registry:get("scrolling_html_eventkeys")
+    --* this actions were set in ((KeyEvents#addHotkeysForXrayItemViewer)) and other Xray modules:
+    local actions = KOR.registry:get("add_parent_hotkeys")
     if not actions then
         return
     end

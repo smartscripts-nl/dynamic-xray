@@ -238,7 +238,7 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
     paragraph_hits_info = paragraph_hits_info:gsub("^ +", "")
 
     -- #((xray paragraph info callback))
-    --* callback defined in ((set xray info for paragraphs)) and calls ((XrayDialogs#showItemsInfo)):
+    --* callback defined in ((set xray info for paragraphs)) and calls ((XrayDialogs#showUiPageInfo)):
     xray_rects.callback(paragraph_hits_info, paragraph_headings, paragraph_matches_count, self.info_extra_button_rows, paragraph_text)
 end
 
@@ -459,7 +459,7 @@ function XrayUI:ReaderViewPopulateInfoRects()
         --* the buttons in extra_button_rows were generated in ((TextViewer#getDefaultButtons)) > ((XrayButtons#forUiInfo)):
         callback = function(paragraph_hits_info, extra_button_rows, paragraph_text)
             --* paragraph_text only needed for debugging purposes, to ascertain we are looking at the correct paragraph:
-            DX.d:showItemsInfo(paragraph_hits_info, extra_button_rows, paragraph_text)
+            DX.d:showUiPageInfo(paragraph_hits_info, extra_button_rows, paragraph_text)
         end
     }
 end
@@ -478,7 +478,7 @@ function XrayUI:getFullPageText()
     return KOR.tables:concatField(self.paragraphs, "text", "\n")
 end
 
---* these hits are to be consumed in ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((XrayDialogs#showItemsInfo))
+--* these hits are to be consumed in ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((XrayDialogs#showUiPageInfo))
 --- @private
 function XrayUI:getXrayItemsFoundInText(page_or_paragraph_text) --, for_navigator
 

@@ -71,6 +71,7 @@ local XrayDialogs = WidgetContainer:new{
     filter_xray_items_input = nil,
     form_was_cancelled = false,
     help_texts = {},
+    key_events = {},
     items_per_page = G_reader_settings:readSetting("items_per_page") or 14,
     item_requested = nil,
     item_viewer = nil,
@@ -113,7 +114,7 @@ function XrayDialogs:closeForm(mode)
             --* reset values and go to item viewer:
             self.form_was_cancelled = false
             DX.vd:setProp("new_item_hits", nil)
-            self:viewItem(DX.vd.current_item, self.called_from_list, nil, "skip_item_search")
+            self:showItemViewer(DX.vd.current_item, self.called_from_list, nil, "skip_item_search")
             --* signal that we were redirected to the item viewer:
             return true
         end
@@ -128,7 +129,7 @@ function XrayDialogs:closeForm(mode)
     self.edit_item_input = nil
     --* this prop can be set in ((XrayButtons#forItemViewer)) > ((enable return to viewer)), when the user opens an edit form:
     if DX.c.return_to_viewer and DX.vd.current_item then
-        self:viewItem(DX.vd.current_item, self.called_from_list, nil, "skip_item_search")
+        self:showItemViewer(DX.vd.current_item, self.called_from_list, nil, "skip_item_search")
         return true
     end
     return false
@@ -386,7 +387,7 @@ function XrayDialogs:showDeleteItemConfirmation(delete_item, dialog, remove_all_
             self:showListWithRestoredArguments()
             return
         end
-        self:viewItem(DX.vd.current_item)
+        self:showItemViewer(DX.vd.current_item)
     end)
 end
 
@@ -495,7 +496,7 @@ end
 --* information for this dialog was generated in ((ReaderView#paintTo)) > ((XrayUI#ReaderViewGenerateXrayInformation))
 --* extra buttons (from xray items) were populated in ((XrayUI#ReaderHighlightGenerateXrayInformation))
 --* current method called from callback in ((xray paragraph info callback)):
-function XrayDialogs:showItemsInfo(hits_info, headings, matches_count, extra_button_rows, haystack_text)
+function XrayDialogs:showUiPageInfo(hits_info, headings, matches_count, extra_button_rows, haystack_text)
     local debug = false
     local info = hits_info
     if not self.xray_ui_info_dialog and has_text(info) then
@@ -575,7 +576,7 @@ function XrayDialogs:_prepareItemsForList(current_tab_items)
         item.callback = function()
             UIManager:close(self.xray_items_chooser_dialog)
             self.needle_name_for_list_page = item.name
-            self:viewItem(item, "called_from_list")
+            self:showItemViewer(item, "called_from_list")
         end
     end
 
@@ -583,7 +584,7 @@ function XrayDialogs:_prepareItemsForList(current_tab_items)
 end
 
 --- @private
-function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, event_keys_module)
+function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, key_events_module)
 
     local select_number = focus_item and focus_item.index or 1
 
@@ -624,7 +625,7 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, ev
         activate_tab_callback = DX.m.activateListTabCallback,
         after_close_callback = function()
             self.list_is_opened = false
-            KOR.keyevents:unregisterSharedHotkeys(event_keys_module)
+            KOR.keyevents:unregisterSharedHotkeys(key_events_module)
         end,
         is_borderless = true,
         top_buttons_left = DX.b:forListTopLeft(self),
@@ -751,12 +752,12 @@ function XrayDialogs:showList(focus_item, dont_show)
         return
     end
 
-    local event_keys_module = "XrayItemsList"
+    local key_events_module = "XrayItemsList"
 
-    self:initListDialog(focus_item, dont_show, current_tab_items, event_keys_module)
+    self:initListDialog(focus_item, dont_show, current_tab_items, key_events_module)
     self.list_is_opened = true
 
-    KOR.keyevents:addHotkeysForXrayList(self, event_keys_module)
+    KOR.keyevents:addHotkeysForXrayList(self, key_events_module)
     UIManager:show(self.xray_items_chooser_dialog)
     self:showActionResultMessage()
 
@@ -839,7 +840,7 @@ function XrayDialogs:_prepareViewerData(needle_item)
     DX.vd:getCurrentListTabItems(needle_item)
 end
 
-function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_item_search)
+function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, skip_item_search)
 
     if tapped_word then
         called_from_list = false
@@ -876,8 +877,7 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
 
     self.needle_name_for_list_page = needle_item.name
 
-    local event_keys_module = "XrayItemViewer"
-
+    local key_events_module = "XrayItemViewer"
     local tabs = DX.b:forItemViewerTabs(main_info, hits_info)
     self.item_viewer = KOR.dialogs:htmlBoxTabbed(1, {
         title = title,
@@ -889,20 +889,23 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
         no_filter_button = true,
         title_shrink_font_to_fit = true,
         modal = false,
+        key_events_module = key_events_module,
         text_padding_top_bottom = Screen:scaleBySize(25),
+        hotkeys_configurator = function()
+            KOR.keyevents.addHotkeysForXrayItemViewer(key_events_module)
+        end,
+        after_close_callback = function()
+            KOR.registry:unset("add_parent_hotkeys")
+            KOR.keyevents:unregisterSharedHotkeys(key_events_module)
+        end,
         next_item_callback = function()
             self:viewNextItem(DX.vd.current_item)
         end,
         prev_item_callback = function()
             self:viewPreviousItem(DX.vd.current_item)
         end,
-        after_close_callback = function()
-            KOR.registry:unset("scrolling_html_eventkeys")
-            KOR.keyevents:unregisterSharedHotkeys(event_keys_module)
-        end,
         buttons_table = DX.b:forItemViewer(needle_item, called_from_list, tapped_word, book_hits),
     })
-    KOR.keyevents:addHotkeysForXrayItemViewer(self, event_keys_module)
     self:showActionResultMessage()
 end
 
@@ -942,6 +945,7 @@ function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_wo
 
     self.needle_name_for_list_page = needle_item.name
 
+    local key_events_module = "TappedWordViewer"
     local tabs = DX.b:forItemViewerTabs(main_info, hits_info)
     self.item_viewer = KOR.dialogs:htmlBoxTabbed(1, {
         title = title,
@@ -953,6 +957,13 @@ function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_wo
         no_filter_button = true,
         title_shrink_font_to_fit = true,
         text_padding_top_bottom = Screen:scaleBySize(25),
+        hotkeys_configurator = function()
+            KOR.keyevents.addHotkeysForXrayItemViewer(key_events_module)
+        end,
+        after_close_callback = function()
+            KOR.registry:unset("add_parent_hotkeys")
+            KOR.keyevents:unregisterSharedHotkeys(key_events_module)
+        end,
         next_item_callback = function()
             self:viewNextTappedWordItem()
         end,
@@ -960,28 +971,27 @@ function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_wo
             self:viewPreviousTappedWordItem()
         end,
         after_close_callback = function()
-            KOR.registry:unset("scrolling_html_eventkeys")
+            KOR.registry:unset("add_parent_hotkeys")
         end,
         buttons_table = DX.b:forTappedWordItemViewer(needle_item, false, tapped_word, book_hits),
     })
-    KOR.keyevents:addHotkeysForXrayItemViewer(self)
     self:showActionResultMessage()
 end
 
 function XrayDialogs:viewLinkedItem(item, tapped_word)
     self:closeViewer()
-    self:viewItem(item, "called_from_list", tapped_word)
+    self:showItemViewer(item, "called_from_list", tapped_word)
 end
 
 function XrayDialogs:viewNextItem(item)
     self:closeViewer()
     local next_item = DX.vd:getNextItem(item)
-    self:viewItem(next_item, nil, nil, "skip_item_search")
+    self:showItemViewer(next_item, nil, nil, "skip_item_search")
 end
 
 function XrayDialogs:viewPreviousItem(item)
     self:closeViewer()
-    self:viewItem(DX.vd:getPreviousItem(item), nil, nil, "skip_item_search")
+    self:showItemViewer(DX.vd:getPreviousItem(item), nil, nil, "skip_item_search")
 end
 
 function XrayDialogs:viewNextTappedWordItem()

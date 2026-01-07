@@ -48,6 +48,7 @@ local XrayPageNavigator = WidgetContainer:new{
     current_item = nil,
     filter_marker = KOR.icons.filter,
     initial_browsing_page = nil,
+    key_events = {},
     marker = KOR.icons.active_tab_bare,
     max_line_length = 80,
     navigator_page_no = nil,
@@ -91,21 +92,24 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text,
     local html
     html, self.side_buttons = self:loadDataForPage(marker_name)
 
-    local event_keys_module = "XrayPageNavigator"
-
+    local key_events_module = "XrayPageNavigator"
     self.page_navigator = KOR.dialogs:htmlBox({
         title = DX.m.current_title .. " - p." .. self.navigator_page_no,
         html = html,
         modal = false,
         info_panel_text = self:getInfoPanelText(info_panel_text),
         window_size = "fullscreen",
+        key_events_module = key_events_module,
         no_buttons_row = true,
         top_buttons_left = DX.b:forPageNavigatorTopLeft(self),
         side_buttons = self.side_buttons,
         info_panel_buttons = DX.b:forPageNavigator(self),
+        hotkeys_configurator = function()
+            KOR.keyevents.setHotkeyForXrayPageNavigator(self, key_events_module)
+        end,
         after_close_callback = function()
-            KOR.registry:unset("scrolling_html_eventkeys")
-            KOR.keyevents:unregisterSharedHotkeys(event_keys_module)
+            KOR.registry:unset("add_parent_hotkeys")
+            KOR.keyevents:unregisterSharedHotkeys(key_events_module)
         end,
         next_item_callback = function()
             self:toNextNavigatorPage()
@@ -114,7 +118,6 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text,
             self:toPrevNavigatorPage()
         end,
     })
-    KOR.keyevents:addHotkeysForXrayPageNavigator(self, event_keys_module)
 end
 
 function XrayPageNavigator:toCurrentNavigatorPage()
@@ -666,6 +669,10 @@ function XrayPageNavigator:getInfoPanelText(info_panel_text)
     return self.side_buttons[1] and self.side_buttons[1][1].xray_item.info_text or ""
 end
 
+function XrayPageNavigator:getSideButton(i)
+    return self.side_buttons and self.side_buttons[i]
+end
+
 function XrayPageNavigator:resetCache()
     self.cached_items = {}
     self.cached_html_and_buttons_by_page_no = {}
@@ -683,7 +690,7 @@ end
 
 
 --- =========== (KEYBOARD) EVENT HANDLERS ============
---* for calling through hotkeys - ((KeyEvents#addHotkeysForXrayPageNavigator)) - and as callbacks for usage in Xray buttons
+--* for calling through hotkeys - ((KeyEvents#setHotkeyForXrayPageNavigator)) and ((KeyEvents#activateHotkeysForPageNavigator)) - and as callbacks for usage in Xray buttons
 
 
 --- @param iparent XrayPageNavigator
@@ -743,7 +750,7 @@ end
 
 --- @param iparent XrayPageNavigator
 function XrayPageNavigator:execViewItemCallback(iparent)
-    DX.d:viewItem(iparent.current_item)
+    DX.d:showItemViewer(iparent.current_item)
     return true
 end
 
@@ -767,7 +774,7 @@ function XrayPageNavigator:showHelpInformation()
             w = screen_dims.w * 0.7,
         },
         after_close_callback = function()
-            KOR.registry:unset("scrolling_html_eventkeys")
+            KOR.registry:unset("add_parent_hotkeys")
         end,
         no_buttons_row = true,
         tabs = {

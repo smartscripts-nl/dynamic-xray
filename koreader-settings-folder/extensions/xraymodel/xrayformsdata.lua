@@ -222,7 +222,7 @@ function XrayFormsData:convertFieldValuesToItemProps(values)
     }
 end
 
---* this id is set upon viewing an item from the list or after tapping an Xray item button in ((XrayDialogs#viewItem)), or upon viewing an item found upon tapping a word in the reader in ((XrayDialogs#viewTappedWordItem)):
+--* this id is set upon viewing an item from the list or after tapping an Xray item button in ((XrayDialogs#showItemViewer)), or upon viewing an item found upon tapping a word in the reader in ((XrayDialogs#viewTappedWordItem)):
 function XrayFormsData:setViewerItemId(item)
     --* "hidden" id, to be re-attached to the updated item in ((XrayFormsData#reAttachViewerItemId)):
     self.form_item_id = item.id

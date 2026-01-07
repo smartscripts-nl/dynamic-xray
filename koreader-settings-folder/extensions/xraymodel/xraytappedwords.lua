@@ -110,7 +110,7 @@ function XrayTappedWords:getXrayItemAsDictionaryEntry(tapped_word)
             --* when only a single item found, show it immediately:
             elseif #items_found > 0 then
                 --* false for called_from_list:
-                DX.d:viewItem(items_found[1], false, tapped_word)
+                DX.d:showItemViewer(items_found[1], false, tapped_word)
                 return true
             end
         end
