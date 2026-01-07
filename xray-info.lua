@@ -115,20 +115,3 @@ function XrayInfo:XRAY_VIEWER_CONTEXT_BUTTONS()
 
     -- storing edited xray items: called from save button generated with ((XrayButtons#forItemEditor)) > ((XrayController#saveUpdatedItem)) > ((XrayFormsData#getAndStoreEditedItem)) > ((XrayFormsData#storeItemUpdates)) > ((XrayDataSaver#storeUpdatedItem)) > ((XrayController#showListConditionally)) > ((XrayViewsData#updateItemsTable))
 end
-
-function XrayInfo:XRAY_VIEWER_CONTEXT_BUTTONS()
-    -- viewer, ((multiple related xray items found)) and adding linked items to that dialog: ((XrayButtons#forItemViewerBottomContextButtons))
-    -- compare ((XRAY_INFO_TOC_ADD_LINKED_ITEM_BUTTONS))
-
-    -- button for creating new xray items: ((XrayButtons#addTappedWordCollectionButton))
-
-    -- edit item: ((onShowEditItemForm)) > ((XrayDialogs#showEditItemForm))
-
-    -- generating linked items button rows for item viewer: ((XrayButtons#forItemViewerBottomContextButtons))
-
-    -- filter xray items: ((XrayController#onShowList)) > ((XrayViewsData#updateItemsTable)) > for text filter ((XrayViewsData#filterAndPopulateItemTables)) > continue with ((XrayController#onShowList)) > ((XrayDialogs#showList))
-
-    -- storing new xray items: called from save button generated with ((XrayButtons#forItemEditor)) > ((XrayController#saveNewItem)) > ((XrayFormsData#saveNewItem)) > ((XrayDataSaver#storeNewItem)) > ((XrayController#showListConditionally)) > ((XrayViewsData#updateItemsTable))
-
-    -- storing edited xray items: called from save button generated with ((XrayButtons#forItemEditor)) > ((XrayController#saveUpdatedItem)) > ((XrayFormsData#getAndStoreEditedItem)) > ((XrayFormsData#storeItemUpdates)) > ((XrayDataSaver#storeUpdatedItem)) > ((XrayController#showListConditionally)) > ((XrayViewsData#updateItemsTable))
-end
