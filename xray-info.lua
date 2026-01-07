@@ -1,4 +1,3 @@
-
 --- @class XrayInfo
 local XrayInfo = {}
 
@@ -45,7 +44,7 @@ function XrayInfo:XRAY_ITEMS()
     -- adding match reliability indicators for the page/paragraph info popup: ((XrayUI#matchNameInPageOrParagraph))
     -- using these indicators: ((XrayUI#showParagraphInformation)) > ((xray items dialog add match reliability explanations)) & ((use xray match reliability indicators))
 
-    -- show paragraph matches: ((ReaderView#paintTo)) > ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#getParaMarker)) and ((CreDocument#storeCurrentPageParagraphs)) > ((XrayUI#getXrayItemsFoundInText)): here matches on page or paragraphs evaluated > ((XrayUI#drawMarker)) > ((set xray page info rects)) KOR.registry:set("xray_page_info_rects") > ((ReaderHighlight#onTapXPointerSavedHighlight)) > here the information in the popup gets combined: ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)) > ((XrayDialogs#showItemsInfo))
+    -- show paragraph matches: ((ReaderView#paintTo)) > ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#getParaMarker)) and ((CreDocument#storeCurrentPageParagraphs)) > ((XrayUI#getXrayItemsFoundInText)): here matches on page or paragraphs evaluated > ((XrayUI#drawMarker)) > ((set xray page info rects)) KOR.registry:set("xray_page_info_rects") > ((ReaderHighlight#onTapXPointerSavedHighlight)) > here the information in the popup gets combined: ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)) > ((XrayDialogs#showUiPageInfo))
 
     -- max line length in popup info for xray items on page: XrayViewsData.max_line_length
 
@@ -58,7 +57,7 @@ function XrayInfo:XRAY_ITEMS()
 
     --- PAGE NAVIGATOR
 
-    -- ((XrayDialogs#showPageXrayItemsNavigator)) > ((CreDocument#getPageHtml)) > ((XrayPageNavigator#markItemsFoundInPageHtml)) for html and buttons > ((XrayUI#getXrayItemsFoundInText)) > ((XrayPageNavigator#markItemsInHtml)) > ((XrayPageNavigator#markItem)) > ((XrayPageNavigator#markedItemRegister)) here callback and hold_callback are attached > ((XrayViewsData#getItemInfoText)) > ((Dialogs#htmlBox)) > ((HtmlBox#generateSideButtonTables)) > ((HtmlBox#generateInfoPanel))
+    -- ((XrayPageNavigator#showNavigator)) > ((CreDocument#getPageHtml)) > ((XrayPageNavigator#markItemsFoundInPageHtml)) for html and buttons > ((XrayUI#getXrayItemsFoundInText)) > ((XrayPageNavigator#markItemsInHtml)) > ((XrayPageNavigator#markItem)) > ((XrayPageNavigator#markedItemRegister)) here callback and hold_callback are attached > ((XrayViewsData#getItemInfoText)) > ((Dialogs#htmlBox)) > ((HtmlBox#generateSidePanelButtons)) > ((HtmlBox#generateInfoPanel))
 
     --- FILTERING
 
@@ -71,6 +70,20 @@ function XrayInfo:XRAY_ITEMS()
     -- I sometimes have renamed icons, to clarify their function in Dynamic Xray
 end
 
+function XrayInfo:XRAY_DIALOGS_SHARED_HOTKEYS()
+
+    -- DX add support for shared hotkeys, e.g. like "N" and "P" to navigate to the next/previous page or item in resp. XrayPageNavigator or the Xray item viewer.
+    -- this means that when the XrayPageNavigator is active, N and P will navigate to the next or previous page; but when we load the Xray item viewer from the Navigator, then N and P will navigate to the next and previous item in the viewer.
+    -- also: in the Navigator the hotkey "E" opens the Xray item editor, but when the viewer is loaded from the Navigator, the same hotkey will trigger still the same functionality, but WITHOUT the viewer loosing focus. De facto is now triggered on the viewer instance.
+    -- when the user closes the viewer, the Navigator hotkeys take over once again.
+
+    --* setting up this functionality (always in combination with a HtmlBox:
+    -- 1 the caller instantiates HtmlBox, with props hotkeys_configurator and after_close_callback. See ((XrayPageNavigator#showNavigator)) for an example.
+    -- 2 the hotkeys_configurator is called from ((HtmlBox#initHotkeys)).
+    -- 3 e.g. for the Navigator this configuator calls ((KeyEvents#setHotkeyForXrayPageNavigator)), which registers shared hotkeys with ((KeyEvents#registerSharedHotkeys)) and ((KeyEvents#registerSharedHotkey)) > set registry var "add_parent_hotkeys" > read this var in ((HtmlBoxWidget#initHotkeys)), which uses it to add additional hotkeys (of the parent) to the HtmlBoxWidget instance
+    -- 4 the HtmlBox instance calls it's after_close_callback, to unset the registry var "add_parent_hotkeys" and to unset only its own shared hotkeys (but not those same shared hotkeys attached to other modules!) via ((KeyEvents#unregisterSharedHotkeys))
+end
+
 function XrayInfo:XRAY_INFO_TOC_ADD_LINKED_ITEM_BUTTONS()
     -- adding extra linked xray items buttons if available: ((TextViewer#getTocIndexButton)) (for one specific xray item) > ((ButtonChoicePopup#forXrayTocItemEdit)) > set prop extra_callbacks by calling ((TextViewer#addLinkedItemsToTocButton)); also optionally set extra_wide_dialog to true, when linked items found, for more space to display their buttons > ((ButtonProps#injectAdditionalChoiceCallbacks)) > ((ButtonTableFactory#injectButtonIntoTargetRows)); compare ((XRAY_VIEWER_CONTEXT_BUTTONS)).
     -- setting extra wide popup width IF indeed linked items were found: set prop: ((TextViewer#getTocIndexButton)) > ((set extra wide popup for xray items with linked items)) > read prop: ((ButtonProps#popupChoice)) > ((linked xray items in popup))
@@ -81,9 +94,9 @@ function XrayInfo:XRAY_INFO_TOC_ADD_LINKED_ITEM_BUTTONS()
 
     -- list: ((XrayController#onShowList)) > ((XrayDialogs#showList))
 
-    -- showing list conditionally after saving an item: ((XrayController#saveNewItem)) or ((XrayController#onShowEditItemForm)) > ((XrayController#showListConditionally))
+    -- showing list conditionally after saving an item: ((XrayController#saveNewItem)) or ((onShowEditItemForm)) > ((XrayController#showListConditionally))
 
-    -- viewer, show item: ((XrayDialogs#viewItem))
+    -- viewer, show item: ((XrayDialogs#showItemViewer))
 end
 
 function XrayInfo:XRAY_VIEWER_CONTEXT_BUTTONS()
@@ -92,7 +105,7 @@ function XrayInfo:XRAY_VIEWER_CONTEXT_BUTTONS()
 
     -- button for creating new xray items: ((XrayButtons#addTappedWordCollectionButton))
 
-    -- edit item: ((XrayController#onShowEditItemForm)) > ((XrayDialogs#showEditItemForm))
+    -- edit item: ((onShowEditItemForm)) > ((XrayDialogs#showEditItemForm))
 
     -- generating linked items button rows for item viewer: ((XrayButtons#forItemViewerBottomContextButtons))
 
@@ -109,7 +122,7 @@ function XrayInfo:XRAY_VIEWER_CONTEXT_BUTTONS()
 
     -- button for creating new xray items: ((XrayButtons#addTappedWordCollectionButton))
 
-    -- edit item: ((XrayController#onShowEditItemForm)) > ((XrayDialogs#showEditItemForm))
+    -- edit item: ((onShowEditItemForm)) > ((XrayDialogs#showEditItemForm))
 
     -- generating linked items button rows for item viewer: ((XrayButtons#forItemViewerBottomContextButtons))
 
