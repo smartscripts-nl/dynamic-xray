@@ -115,7 +115,7 @@ function KOR:initDX()
 	DX.s:setUp()
 	DX.m = require("extensions/xraymodel/xraymodel")
 	--* only for repository version set database_filename (so DON'T set this var yourself!):
-	if DX.m:isPublicDXversion("silent") then
+	if DX.m:isPublicDXversion() then
 		DX.m:setDatabaseFile()
 	end
 	--* if we would use this and consequently would reference DX.c.model instead of DX.m in the other DX modules, data would be reloaded from database onReaderReady for each new book:
@@ -124,7 +124,7 @@ function KOR:initDX()
 	DX.b = require("extensions/xrayviews/xraybuttons")
 	DX.d = require("extensions/xrayviews/xraydialogs")
 	DX.u = require("extensions/xrayviews/xrayui")
-	if DX.m:isPublicDXversion("silent") then
+	if DX.m:isPublicDXversion() then
 		DX.tm = require("extensions/xrayviews/xraytranslationsmanager")
 	end
 end

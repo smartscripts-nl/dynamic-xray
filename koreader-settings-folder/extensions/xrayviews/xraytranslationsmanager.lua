@@ -56,7 +56,7 @@ function XrayTranslationsManager:setTranslations(translations)
     self.translations = translations
 end
 
---* used for backward and forward navigation through ideas:
+--* used for backward and forward navigation through translations:
 --- @private
 function XrayTranslationsManager:populateForNavigation(translation)
     local translations_source = self.translations
@@ -88,9 +88,7 @@ function XrayTranslationsManager:populateFilteredTranslations(translation)
         self:resetFilteredTranslations(true)
         self:reset()
         self:updateTranslationsTable(translation)
-        if DX.m:isPublicDXversion("silent") then
-            self:manageTranslations(translation)
-        end
+        self:manageTranslations(translation)
     end
 end
 

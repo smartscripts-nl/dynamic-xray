@@ -116,13 +116,9 @@ function XrayModel:isPrivateDXversion(silent)
     return false
 end
 
-function XrayModel:isPublicDXversion(silent)
+function XrayModel:isPublicDXversion()
     if IS_AUTHORS_DX_INSTALLATION then
         return false
-    end
-
-    if not silent then
-        KOR.messages:notify("functionality not available in repository version of dx...")
     end
     return true
 end
