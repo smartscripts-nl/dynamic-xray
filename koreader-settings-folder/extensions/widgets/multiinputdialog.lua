@@ -48,6 +48,7 @@ local MultiInputDialog = InputDialog:extend{
     field_spacer = VerticalSpan:new{ width = Screen:scaleBySize(10) },
     field_nr = 0,
     fields = nil, --* array, mandatory
+    focus_field = nil,
     has_field_rows = false,
     input_face = Font:getDefaultDialogFontFace(),
     input_fields = {}, --* array
@@ -72,6 +73,7 @@ function MultiInputDialog:init()
     --* adapt content of MiddleContainer: either a field with auto field height, or a spacer, to push the buttons to just above the keyboard:
     self:adaptMiddleContainerHeight()
     self:finalizeWidgetMID()
+    self:focusFocusField()
     KOR.dialogs:registerWidget(self)
 end
 
@@ -221,6 +223,8 @@ end
 function MultiInputDialog:fieldAddToInputs(field_config, field_side)
     self:setFieldWidth(field_config)
     self:setFieldProps(field_config, field_side)
+
+    --* the field with computed autoheight will be inserted into the form in ((MultiInputDialog#insertComputedHeightField)):
     if field_config.height == "auto" then
         --! auto_height_field is the field of which the height is to be adapted, in ((MultiInputDialog#adaptMiddleContainerHeight)):
         self.auto_height_field = KOR.tables:shallowCopy(self.field_config)
@@ -240,20 +244,52 @@ function MultiInputDialog:fieldAddToInputs(field_config, field_side)
 end
 
 --- @private
+function MultiInputDialog:focusFocusField()
+    if self.active_tab == 2 then
+        return
+    end
+    --* to indeed change the focus to field no 1 under tab no 1, we always have to focus field no 1 and only then focus field no 2:
+    self:onSwitchFocus(self.input_fields[1])
+    if not self.focus_field or self.focus_field == 1 then
+        return
+    end
+    self:onSwitchFocus(self.input_fields[self.focus_field])
+end
+
+--* compare ((MultiInputDialog#insertComputedHeightField)) > ((conditionally give auto height field focus)), where a computed height field might be given focus:
+--* in case of self.focus_field being set, focus will be applied by ((MultiInputDialog#focusFocusField)):
+--- @private
+function MultiInputDialog:isFocusField(height, field_side)
+
+    --* self.focus_field is only set in case of adding a new item:
+    if self.focus_field and self.active_tab == 1 and #self.input_fields + 1 == self.focus_field then
+        self.a_field_was_focussed = true
+        return true
+    end
+
+    --* give focus to first left_side field or to auto height field:
+    if
+        (height == "auto" and (not self.focus_field or self.focus_field == 1))
+        or
+        (self.active_tab > 1 and field_side == LEFT_SIDE and not self.a_field_was_focussed)
+    then
+        self.a_field_was_focussed = true
+        return true
+    end
+
+    return false
+end
+
+--- @private
 --- @param field_side number 1 if left side, 2 if right side
 function MultiInputDialog:setFieldProps(field, field_side)
+
     local force_one_line = self.force_one_line_field or field.force_one_line_height
     local height = not field.height and force_one_line and self.one_line_height or field.height
-    if height == "auto" and self.auto_field_height then
-        height = self.auto_field_height
-    elseif height == "auto" then
+    if height == "auto" then
         self.auto_height_field_present = true
     end
-    local is_focus_field = false
-    if field_side == LEFT_SIDE and not self.a_field_was_focussed then
-        self.a_field_was_focussed = true
-        is_focus_field = true
-    end
+
     self.field_config = {
         value_index =
             self.field_nr,
@@ -304,7 +340,7 @@ function MultiInputDialog:setFieldProps(field, field_side)
             self:setFieldProp(field.input_face, self.input_face),
         --* this prop is used by InputText:
         focused =
-            is_focus_field,
+            self:isFocusField(height, field_side),
         scroll =
             self:setFieldProp(field.scroll, false),
         scroll_by_pan =
@@ -444,39 +480,40 @@ end
 function MultiInputDialog:getDescription(field, width)
     local text = field.info_popup_text and
         Button:new{
-            text_icon = {
-                text = self.description_prefix .. " " .. field.description .. " ",
-                text_font_bold = false,
-                text_font_face = "x_smallinfofont",
-                font_size = 18,
-                icon = "info-slender",
-                icon_size_ratio = 0.48,
-            },
-            padding = 0,
-            margin = 0,
-            text_font_face = "x_smallinfofont",
-            text_font_size = 19,
+        text_icon = {
+            text = self.description_prefix .. " " .. field.description .. " ",
             text_font_bold = false,
-            align = "left",
-            bordersize = 0,
-            width = width,
-            --* y_pos for the popup dialog - not used now anymore - was detected and set in ((Button#onTapSelectButton)) - look for two statements with self.callback(pos):
-            callback = function() --ypos
-                -- #((focus field upon click on info label))
-                --* this prop can be set in ((MultiInputDialog#insertFieldContainers)):
-                if field.info_icon_field_no then
-                    self:onSwitchFocus(self.input_fields[field.info_icon_field_no])
-                end
-                --* info_popup_title and info_popup_text e.g. defined in ((XrayDialogs#getFormFields)):
-                KOR.dialogs:niceAlert(field.info_popup_title, field.info_popup_text)
-            end,
-        }
-        or TextBoxWidget:new{
-            text = self.description_prefix .. field.description,
-            face = self.description_face or Font:getFace("x_smallinfofont"),
-            width = width,
-            padding = 0,
-        }
+            text_font_face = "x_smallinfofont",
+            font_size = 18,
+            icon = "info-slender",
+            icon_size_ratio = 0.48,
+        },
+        padding = 0,
+        margin = 0,
+        text_font_face = "x_smallinfofont",
+        text_font_size = 19,
+        text_font_bold = false,
+        align = "left",
+        bordersize = 0,
+        width = width,
+        --* y_pos for the popup dialog - not used now anymore - was detected and set in ((Button#onTapSelectButton)) - look for two statements with self.callback(pos):
+        callback = function() --ypos
+            -- #((focus field upon click on info label))
+            --* this prop can be set in ((MultiInputDialog#insertFieldContainers)):
+            if field.info_icon_field_no then
+                self:onSwitchFocus(self.input_fields[field.info_icon_field_no])
+            end
+            --* info_popup_title and info_popup_text e.g. defined in ((XrayDialogs#getFormFields)):
+            KOR.dialogs:niceAlert(field.info_popup_title, field.info_popup_text)
+        end,
+    }
+    or
+    TextBoxWidget:new{
+        text = self.description_prefix .. field.description,
+        face = self.description_face or Font:getFace("x_smallinfofont"),
+        width = width,
+        padding = 0,
+    }
     local label = FrameContainer:new{
         padding = self.description_padding,
         margin = self.description_margin,
@@ -660,7 +697,6 @@ function MultiInputDialog:initWidgetProps()
     KOR.registry:unset("edit_button_target")
     self.full_width = self.title_bar and self.title_bar:getSize().w or self.width
     self.auto_height_field_present = false
-    self.auto_field_height = nil
     self.screen_height = Screen:getHeight()
     self.screen_width = Screen:getWidth()
     --* keyboard was initialised in ((InputText#initKeyboard)):
@@ -673,30 +709,52 @@ end
 function MultiInputDialog:adaptMiddleContainerHeight()
     local difference = self.screen_height - self.TopContainer:getSize().h - self.BottomContainer:getSize().h - self.keyboard_height
 
-    if self.auto_height_field then
-        --* for margin above and below auto height field:
-        difference = difference - 2 * self.field_spacer:getSize().h
-        self.auto_height_field.height = difference
-        --* auto_height_field_index was set in ((MultiInputDialog#fieldAddToInputs)):
-        self.input_fields[self.auto_height_field_index]:free()
-        --* insert a field with dynamically adjusted height, to push the buttons to just above the keyboard:
-        local field = InputText:new(self.auto_height_field)
-        self.input_fields[self.auto_height_field_index] = field
-        local group = CenterContainer:new{
-            dimen = Geom:new{
-                w = self.full_width,
-                h = difference,
-            },
-            field,
-        }
-        table.insert(self.MiddleContainer, self.field_spacer)
-        table.insert(self.MiddleContainer, group)
-        table.insert(self.MiddleContainer, self.field_spacer)
+    if self:insertComputedHeightField(difference) then
         return
     end
 
     --* insert simple spacer to push the buttons to just above the keyboard:
     table.insert(self.MiddleContainer, VerticalSpan:new{ width = difference })
+end
+
+--- @private
+function MultiInputDialog:insertComputedHeightField(difference)
+
+    --* self.auto_height_field will be set in ((MultiInputDialog#fieldAddToInputs)), when a field there has height = "auto":
+    if not self.auto_height_field then
+        return false
+    end
+
+    --* for margin above and below auto height field:
+    difference = difference - 2 * self.field_spacer:getSize().h
+    self.auto_height_field.height = difference
+    --* auto_height_field_index was set in ((MultiInputDialog#fieldAddToInputs)):
+    self.input_fields[self.auto_height_field_index]:free()
+
+    --* force the auto height field to VISUALLY HAVE FOCUS (this prop is used by InputText; but only setting self._input_widget to the field that will now be generated gives it FOCUS BEHAVIOR):
+    self.auto_height_field.focused = true
+    --* insert a field with dynamically adjusted height, to push the buttons to just above the keyboard:
+    local field = InputText:new(self.auto_height_field)
+
+    -- #((conditionally give auto height field focus))
+    if self.focus_field == self.auto_height_field_index then
+        --! force the computed auto field to really have focus behavior):
+        self._input_widget = field
+    end
+
+    self.input_fields[self.auto_height_field_index] = field
+    local group = CenterContainer:new{
+        dimen = Geom:new{
+            w = self.full_width,
+            h = difference,
+        },
+        field,
+    }
+    table.insert(self.MiddleContainer, self.field_spacer)
+    table.insert(self.MiddleContainer, group)
+    table.insert(self.MiddleContainer, self.field_spacer)
+
+    return true
 end
 
 --- @private

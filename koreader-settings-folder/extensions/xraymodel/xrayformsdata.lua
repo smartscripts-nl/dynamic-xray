@@ -54,13 +54,13 @@ function XrayFormsData:initDataHandlers(xray_model)
 end
 
 function XrayFormsData:initNewItemFormProps(name_from_selected_text, active_form_tab, item)
-    local target_field = "name"
+    local prefilled_field = "name"
     self.active_form_mode = "add"
     local is_text_from_selection = has_text(name_from_selected_text)
     --* for consumption in ((XrayDialogs#closeForm)) and to force return to ebook text there, if truthy:
     KOR.registry:set("xray_editor_activated_from_text_selection", is_text_from_selection)
     if is_text_from_selection and KOR.strings:substrCount(name_from_selected_text, " ") > 3 then
-        target_field = "description"
+        prefilled_field = "description"
     end
     --* active_form_tab can be higher than 1 when the tab callback has been called and set this argument to a higher number:
     if not active_form_tab then
@@ -96,9 +96,9 @@ function XrayFormsData:initNewItemFormProps(name_from_selected_text, active_form
     local title = use_search_text and KOR.icons.xray_add_item_bare or no_hits_title
     if use_search_text then
         --! this statement is crucial to get an indicatior of the numerical presence of this item in de current book:
-        item_copy.name = target_field == "name" and search_text or ""
+        item_copy.name = prefilled_field == "name" and search_text or ""
         --* book_hits only retrieved here to give the user an indication how important this item is in the text of the book:
-        if target_field ~= "description" then
+        if prefilled_field ~= "description" then
             views_data:setItemHits(item_copy, { for_display_mode = "book", force_update = true })
         end
         self:resetViewerItemId()
@@ -109,7 +109,7 @@ function XrayFormsData:initNewItemFormProps(name_from_selected_text, active_form
         end
     end
 
-    return title, item_copy, target_field
+    return title, item_copy, prefilled_field
 end
 
 function XrayFormsData:initEditFormProps(item, reload_manager, active_form_tab)

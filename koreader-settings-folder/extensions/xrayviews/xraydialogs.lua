@@ -167,7 +167,7 @@ end
 
 --* compare ((XrayDialogs#showEditItemForm)):
 --- @private
-function XrayDialogs:getFormFields(item_copy, target_field, name_from_selected_text)
+function XrayDialogs:getFormFields(item_copy, prefilled_field, name_from_selected_text)
     local aliases = DX.fd:getAliasesText(item_copy)
     local linkwords = DX.fd:getLinkwordsText(item_copy)
     local icon = DX.vd:getItemTypeIcon(item_copy, "bare")
@@ -248,7 +248,7 @@ For Xray overviews of (paragraphs in) the current page the scripts initially wil
     }
     local fields = {
         {
-            text = target_field == "description" and name_from_selected_text or item_copy.description or "",
+            text = prefilled_field == "description" and name_from_selected_text or item_copy.description or "",
             input_type = "text",
             description = linkwords and _("Description") .. T(" (%1):", linkwords) or _("Description"),
             info_popup_title = _("field") .. ": " .. _("Description"),
@@ -270,7 +270,7 @@ only has lower case characters in the description.]]), KOR.icons.xray_person_imp
             margin = Size.margin.small,
         },
         {
-            text = target_field == "name" and name_from_selected_text or item_copy.name or "",
+            text = prefilled_field == "name" and name_from_selected_text or item_copy.name or "",
             input_type = "text",
             description = aliases and _("Name") .. " (" .. aliases .. "):  " .. icon or _("Name") .. ": " .. icon,
             info_popup_title = _("field") .. ": " .. _("Name"),
@@ -325,6 +325,7 @@ function XrayDialogs:showImportFromOtherSeriesDialog()
 end
 
 --* compare ((XrayDialogs#showEditItemForm)):
+--* props for current form were initialised in ((XrayFormsData#initNewItemFormProps)) > ((XrayController#onShowNewItemForm)):
 function XrayDialogs:showNewItemForm(args)
     local active_form_tab = args.active_form_tab or self.active_form_tab
     local item_copy = args.item_copy
@@ -344,7 +345,8 @@ function XrayDialogs:showNewItemForm(args)
         active_tab = active_form_tab,
         tab_callback = DX.fd:getFormTabCallback("add", active_form_tab, item_copy),
         has_field_rows = true,
-        fields = self:getFormFields(item_copy, args.target_field, args.name_from_selected_text),
+        fields = self:getFormFields(item_copy, args.prefilled_field, args.name_from_selected_text),
+        focus_field = args.focus_field,
         close_callback = function()
             self:closeForm("add")
         end,

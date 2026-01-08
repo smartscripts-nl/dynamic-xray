@@ -374,19 +374,16 @@ function XrayController:onShowNewItemForm(name_from_selected_text, active_form_t
 end
 
 --*compare ((XrayController#onShowNewItemForm)):
-function XrayController:onShowEditItemForm(needle_item, reload_manager, active_form_tab)
-
-    local m_item, item_copy = DX.fd:initEditFormProps(needle_item, reload_manager, active_form_tab)
-
-    --! hotfix to prevent crash when an edit item request was done (after holding an xray item and choosing "edit") from the page/paragraph toc index popup; see ((TextViewer#getTocIndexButton)) > ((edit xray item from toc popup)):
-    if not needle_item.idx then
-        needle_item.idx = needle_item.index
-    end
-    DX.d:showEditItemForm({
+function XrayController:onShowNewItemForm(name_from_selected_text, active_form_tab, item)
+    local title, item_copy, prefilled_field = DX.fd:initNewItemFormProps(name_from_selected_text, active_form_tab, item)
+    DX.d:showNewItemForm({
+        title = title,
         active_form_tab = active_form_tab,
-        item = m_item,
         item_copy = item_copy,
-        reload_manager = reload_manager,
+        name_from_selected_text = name_from_selected_text,
+        prefilled_field = prefilled_field,
+        --* in case of pre-filled content in description field or no pre-filled content was given, make name the focus field; when name prefilled, make description the focus field:
+        focus_field = (prefilled_field == "description" or has_no_text(name_from_selected_text)) and 2 or 1,
     })
 end
 

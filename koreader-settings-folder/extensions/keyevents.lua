@@ -348,7 +348,7 @@ function KeyEvents:addHotkeysForXrayList(parent, key_events_module)
         end)
     end
 
-    --* for some reason "7" as hotkey doesn't work under Ubuntu, triggers no event:
+    --? for some reason "7" as hotkey doesn't work under Ubuntu, triggers no event:
     local current_page, per_page
     for i = 1, 9 do
         local current = i
