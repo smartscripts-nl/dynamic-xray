@@ -119,25 +119,34 @@ end
 --- @private
 function MultiInputDialog:generateRows(field_source, is_field_row)
     self.fields_count = is_field_row and #field_source or 1
-    local has_two_fields_per_row = is_field_row and self.fields_count > 1
-    self.edit_button_width = 0
-
-    --* insert a edit button at the right side of each field in a two field row:
-    self.edit_button_width = KOR.registry:get("edit_button_width")
-    if has_two_fields_per_row and not self.edit_button_width then
-        local measure_edit_button = self:getEditFieldButton(0)
-        self.edit_button_width = measure_edit_button:getSize().w
-        measure_edit_button:free()
-        KOR.registry:set("edit_button_width", self.edit_button_width)
-    end
-
+    local is_two_field_row = is_field_row and self.fields_count > 1
     self.force_one_line_field = is_field_row
 
-    if has_two_fields_per_row then
+    if is_two_field_row then
         self:insertTwoFieldRow(field_source)
     else
         self:insertSingleFieldRow(field_source)
     end
+end
+
+--- @private
+function MultiInputDialog:setFieldEditButtonWidth()
+    --* compute with of edit buttons to be inserted at the right side of each field in a two field row:
+    local index = "field_edit_button_width"
+    self.edit_button_width = KOR.registry:get(index)
+    if not self.edit_button_width then
+        self.edit_button_width = G_reader_settings:readSetting(index)
+    end
+    if self.edit_button_width then
+        return
+    end
+
+    local measure_edit_button = self:getEditFieldButton(0)
+    self.edit_button_width = measure_edit_button:getSize().w
+    measure_edit_button:free()
+
+    KOR.registry:set(index, self.edit_button_width)
+    G_reader_settings:saveSetting(index, self.edit_button_width)
 end
 
 --- @private
@@ -707,6 +716,7 @@ end
 --- @private
 function MultiInputDialog:insertRows()
     count = #self.fields
+    self:setFieldEditButtonWidth()
     for row_nr = 1, count do
         self:insertFieldRowIfActiveTab(row_nr)
     end
