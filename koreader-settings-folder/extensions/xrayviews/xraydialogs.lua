@@ -338,6 +338,8 @@ function XrayDialogs:showNewItemForm(args)
         series_hits = item_copy.series_hits,
     })
 
+    --* make sure we don't retain field values from previous form sessions:
+    DX.fd:resetItemProps(item_copy)
     self.add_item_input = MultiInputDialog:new{
         title = args.title,
         title_shrink_font_to_fit = true,

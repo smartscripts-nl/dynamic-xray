@@ -112,6 +112,16 @@ function XrayFormsData:initNewItemFormProps(name_from_selected_text, active_form
     return title, item_copy, prefilled_field
 end
 
+--* called from ((XrayDialogs#showNewItemForm)):
+function XrayFormsData:resetItemProps(item_copy)
+    --* for a new item reset everything but hits data, xray_type, series name and description:
+    local reset_props = { "short_names", "linkwords", "aliases", "mentioned_in" }
+    count = #reset_props
+    for i = 1, count do
+        item_copy[reset_props[i]] = nil
+    end
+end
+
 function XrayFormsData:initEditFormProps(item, reload_manager, active_form_tab)
     self.active_form_mode = "edit"
 

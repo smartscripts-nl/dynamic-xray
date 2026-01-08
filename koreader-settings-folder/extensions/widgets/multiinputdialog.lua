@@ -243,16 +243,14 @@ function MultiInputDialog:fieldAddToInputs(field_config, field_side)
     end
 end
 
+--* compare ((MultiInputDialog#isFocusField)):
 --- @private
 function MultiInputDialog:focusFocusField()
-    if self.active_tab == 2 then
+    if not self.focus_field or self.focus_field == 1 or (self.active_tab and self.active_tab > 1) then
         return
     end
-    --* to indeed change the focus to field no 1 under tab no 1, we always have to focus field no 1 and only then focus field no 2:
+    --* to indeed change the focus to field no 2 or higher under tab no 1, we always have to focus field no 1 first and then focus the field we want to focus:
     self:onSwitchFocus(self.input_fields[1])
-    if not self.focus_field or self.focus_field == 1 then
-        return
-    end
     self:onSwitchFocus(self.input_fields[self.focus_field])
 end
 
