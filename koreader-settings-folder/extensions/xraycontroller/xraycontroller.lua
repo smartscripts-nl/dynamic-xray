@@ -9,7 +9,7 @@ XrayDataLoader is mainly concerned with retrieving data FROM the database, while
 
 The views layer has three main streams:
 1) XrayUI, which is only responsible for displaying tappable xray markers (lightning or star icons) in the ebook text;
-2) XrayDialogs and XrayButtons, which are responsible for displaying dialogs and interaction with the user.
+2) XrayPageNavigator, XrayDialogs and XrayButtons, which are responsible for displaying dialogs and interaction with the user.
 3) Worthy to be specially mentioned is XrayPageNavigator, which offers the user the most Kindle-like experience: navigating through pages, with Xray items marked bold and button with which to show explanations of the items in the bottom panel.
 4) Also mentionable is the fact that some DX dialogs have shared hotkeys, in which case the hotkeys of the top most dialog will be used, not that same hotkey for an underlying dialog. See ((XrayInfo#XRAY_DIALOGS_SHARED_HOTKEYS)) for an explanation.
 
@@ -25,7 +25,7 @@ DX.vd.list_display_mode == "series" or "book" determines in which mode lists and
 
 book_hits can be determined with ((XrayViewsData#getAllTextHits)) and will be stored in item.book_hits and in the database.
 
-series_hits are retrieved by doing a count of all hits stored in the "matches" field in the database for all books which belong to the same series. This value will be stored in item.series_hits. See ((XrayDataLoader#_loadAllData))
+For retrieving book_hits, chapter_hits and series_hits per item from the database see ((XrayDataLoader#_loadAllData))
 
 local var current_series will also be set for a book which is part of a series when DX.vd.list_display_mode == "book"
 
@@ -44,7 +44,7 @@ Calling DX modules: DX.b:[method](), DX.m:[method](), etc. This functionality wa
 
 --* ADDING ITEMS FROM SELECTED TEXT
 
-E.g. ((ReaderDictionary#onLookupWord)) > ((XrayController#saveNewItem)) > ((XrayController#guardIsExistingItem)) > ((XrayController#onShowNewItemForm))
+E.g. ((ReaderDictionary#onLookupWord)) > ((XrayController#saveNewItem)) > ((XrayDataSaver#storeNewItem)) > ((XrayController#guardIsExistingItem)) > ((XrayController#onShowNewItemForm))
 
 --* SAVING ITEMS
 
@@ -101,7 +101,7 @@ local pairs = pairs
 KOR:initBaseExtensions()
 
 -- #((initialize Xray modules))
---* helper class for shortened notation for Dynamic Xray modules; DX.b, DX.d; they will be populated from ((KOR#initDX)), ((XrayModel#initDataHandlers)) and ((XrayController#init)):
+--* helper class for shortened notation for Dynamic Xray modules; DX.b, DX.d (but indices DX.xraybuttons, DX.xraydialogs etc. are NOT available, because the very short notation is the point of table DX) instead of KOR.xraybuttons, KOR.xraydialogs etc.; will be populated from ((KOR#initDX)), ((XrayModel#initDataHandlers)) and ((XrayController#init)):
 --- @class DX
 --- @field b XrayButtons
 --- @field c XrayController
@@ -134,11 +134,11 @@ DX = {
     m = nil,
     --* shorthand notation for PageNavigator:
     pn = nil,
-    --* shorthand notation for Settings; this module will be initialized in ((KOR#initEarlyExtensions)):
+    --* shorthand notation for Settings; this module will be initialized in ((KOR#initDX)):
     s = nil,
     --* shorthand notation for Translations; this module will be initialized in ((XrayModel#initDataHandlers)):
     t = nil,
-    --* shorthand notation for TranslationsManager; this module will be initialized in ((KOR#initEarlyExtensions)):
+    --* shorthand notation for TranslationsManager; this module will be initialized in ((KOR#initDX)):
     tm = nil,
     --* shorthand notation for TappedWords; this module will be initialized in ((XrayModel#initDataHandlers)):
     tw = nil,
@@ -253,7 +253,6 @@ function XrayController:onReaderReady()
         KOR.messages:notify("dynamic xray could not be initiated...")
         return
     end
-
     self:resetDynamicXray()
 end
 
@@ -344,7 +343,6 @@ function XrayController:saveUpdatedItem(item_copy, return_to_list, reload_manage
     end
 
     DX.vd:updateAndSortAllItemTables(updated_item)
-
     --* item data was updated, so previous item viewer instances must be closed:
     DX.d:closeItemViewer()
     self:resetDynamicXray("is_prepared")
@@ -363,18 +361,6 @@ end
 --* compare form for editing Xray items: ((XrayController#onShowEditItemForm)):
 --* see also method ((XrayController#guardIsExistingItem)), through which current method is called and which ensures no duplicated items are created:
 function XrayController:onShowNewItemForm(name_from_selected_text, active_form_tab, item)
-    local title, item_copy, target_field = DX.fd:initNewItemFormProps(name_from_selected_text, active_form_tab, item)
-    DX.d:showNewItemForm({
-        title = title,
-        active_form_tab = active_form_tab,
-        item_copy = item_copy,
-        name_from_selected_text = name_from_selected_text,
-        target_field = target_field,
-    })
-end
-
---*compare ((XrayController#onShowNewItemForm)):
-function XrayController:onShowNewItemForm(name_from_selected_text, active_form_tab, item)
     local title, item_copy, prefilled_field = DX.fd:initNewItemFormProps(name_from_selected_text, active_form_tab, item)
     DX.d:showNewItemForm({
         title = title,
@@ -384,6 +370,23 @@ function XrayController:onShowNewItemForm(name_from_selected_text, active_form_t
         prefilled_field = prefilled_field,
         --* in case of pre-filled content in description field or no pre-filled content was given, make name the focus field; when name prefilled, make description the focus field:
         focus_field = (prefilled_field == "description" or has_no_text(name_from_selected_text)) and 2 or 1,
+    })
+end
+
+--*compare ((XrayController#onShowNewItemForm)):
+function XrayController:onShowEditItemForm(needle_item, reload_manager, active_form_tab)
+
+    local m_item, item_copy = DX.fd:initEditFormProps(needle_item, reload_manager, active_form_tab)
+
+    --! hotfix to prevent crash when an edit item request was done (after holding an xray item and choosing "edit") from the page/paragraph toc index popup; see ((TextViewer#getTocIndexButton)) > ((edit xray item from toc popup)):
+    if not needle_item.idx then
+        needle_item.idx = needle_item.index
+    end
+    DX.d:showEditItemForm({
+        active_form_tab = active_form_tab,
+        item = m_item,
+        item_copy = item_copy,
+        reload_manager = reload_manager,
     })
 end
 
