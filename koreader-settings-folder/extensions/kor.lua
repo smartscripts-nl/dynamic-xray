@@ -114,14 +114,19 @@ function KOR:initDX()
 	DX.s = require("extensions/xraymodel/xraysettings")
 	DX.s:setUp()
 	DX.m = require("extensions/xraymodel/xraymodel")
-	DX.m:setDatabaseFile()
+	--* only for repository version set database_filename (so DON'T set this var yourself!):
+	if DX.m:isPublicDXversion("silent") then
+		DX.m:setDatabaseFile()
+	end
 	--* if we would use this and consequently would reference DX.c.model instead of DX.m in the other DX modules, data would be reloaded from database onReaderReady for each new book:
 	DX.m:initDataHandlers()
 
 	DX.b = require("extensions/xrayviews/xraybuttons")
 	DX.d = require("extensions/xrayviews/xraydialogs")
 	DX.u = require("extensions/xrayviews/xrayui")
-	DX.tm = require("extensions/xrayviews/xraytranslationsmanager")
+	if DX.m:isPublicDXversion("silent") then
+		DX.tm = require("extensions/xrayviews/xraytranslationsmanager")
+	end
 end
 
 function KOR:initBaseExtensions()
@@ -199,7 +204,8 @@ function KOR:initCustomTranslations()
 	return self.getTranslation
 end
 
---* this method is made available for outside modules by ((KOR#initCustomTranslations)):
+--* this method is made available for outside modules by ((KOR#initCustomTranslations)), in a call like this:
+--* local _ = KOR:initCustomTranslations()
 --- @private
 function KOR.getTranslation(key)
 	local DX = DX

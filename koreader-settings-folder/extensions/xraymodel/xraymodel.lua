@@ -17,7 +17,6 @@ These modules are initialized in ((initialize Xray modules)) and ((XrayControlle
 --]]--
 
 --! important info
---* onReaderReady hits per item in the book are stored in self.hits_per_series_title. This prop can be updated in memory after updating, deleting or adding items, so we don't have to reload the data from the database.
 
 --! since I ran into some weird "bad self" error messages when trying to store data in the database, I changed the format of methods involved in this from colon methods to dot functions; and in those I set a local self to DX.m
 
@@ -68,6 +67,9 @@ local XrayModel = WidgetContainer:new{
 }
 
 function XrayModel:setDatabaseFile()
+    if DX.m:isPrivateDXversion("silent") then
+        return
+    end
     if has_text(DX.s.database_filename) and DX.s.database_filename ~= "bookinfo_cache.sqlite3" then
         KOR.databases:setDatabaseFileName(DX.s.database_filename ~= "bookinfo_cache.sqlite3")
     end
@@ -94,11 +96,35 @@ function XrayModel:initDataHandlers()
     data_loader:initDataHandlers(self)
     data_saver:initDataHandlers(self)
 
-    --* since XrayTranslations needs table xrays_translations to be created, we run this here:
-    data_saver.createAndModifyTables()
+    if self:isPublicDXversion("silent") then
+        --* since XrayTranslations needs table xrays_translations to be created, we run this here:
+        data_saver.createAndModifyTables()
+    end
 
     forms_data:initDataHandlers(self)
-    page_navigator:initDataHandlers(self)    tapped_words:initDataHandlers(self)
+    page_navigator:initDataHandlers(self)
+    tapped_words:initDataHandlers(self)
+end
+
+function XrayModel:isPrivateDXversion(silent)
+    if IS_AUTHORS_DX_INSTALLATION then
+        if not silent then
+            KOR.messages:notify("functionality not available in authors' version of dx...")
+        end
+        return true
+    end
+    return false
+end
+
+function XrayModel:isPublicDXversion(silent)
+    if IS_AUTHORS_DX_INSTALLATION then
+        return false
+    end
+
+    if not silent then
+        KOR.messages:notify("functionality not available in repository version of dx...")
+    end
+    return true
 end
 
 --* lower case needles must be at least 4 characters long, but for names with upper case characters in them no such condition is required:

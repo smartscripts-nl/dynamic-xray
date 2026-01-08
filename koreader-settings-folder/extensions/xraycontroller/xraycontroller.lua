@@ -171,7 +171,7 @@ function XrayController:initKORandDynamicXray()
     --* XrayModel will also load its data handlers here:
     KOR:initDX()
     KOR:initExtensions()
-    --* for now loads only extension XrayTranslations:
+    --* for now loads only extension XrayTranslations for repository version of DX:
     DX.d:initViewHelpers()
     --* see ((SYNTACTIC SUGAR)):
     DX:registerController(self)

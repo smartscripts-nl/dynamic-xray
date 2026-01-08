@@ -88,7 +88,9 @@ function XrayTranslationsManager:populateFilteredTranslations(translation)
         self:resetFilteredTranslations(true)
         self:reset()
         self:updateTranslationsTable(translation)
-        self:manageTranslations(translation)
+        if DX.m:isPublicDXversion("silent") then
+            self:manageTranslations(translation)
+        end
     end
 end
 

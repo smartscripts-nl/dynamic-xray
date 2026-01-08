@@ -91,6 +91,9 @@ local XrayDialogs = WidgetContainer:new{
 }
 
 function XrayDialogs:initViewHelpers()
+    if DX.m:isPrivateDXversion("silent") then
+        return
+    end
     translations = require("extensions/xrayviews/xraytranslations")
     DX.setProp("t", translations)
 end

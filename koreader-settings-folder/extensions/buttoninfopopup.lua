@@ -445,9 +445,14 @@ end
 function ButtonInfoPopup:forXrayTranslations(props)
 	return KOR.buttonprops:set({
 		icon = "translate",
-		info = _("translation icon | Translate texts in the DX interface."),
-		callback_label = _("translate"),
-		--! callback defined by calling module
+		info = "vertaal-ikoon | Vertaal teksten in de DX interface.",
+		callback_label = "vertaal",
+		callback = function()
+			if DX.m:isPrivateDXversion() then
+				return
+			end
+			DX.tm:manageTranslations()
+		end,
 	}, props)
 end
 

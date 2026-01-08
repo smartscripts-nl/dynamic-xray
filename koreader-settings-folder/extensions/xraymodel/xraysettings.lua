@@ -22,7 +22,8 @@ local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 
-local locked_xray_setting_message = _("This setting will be automatically computed by Dynamic Xray and therefor the user cannot modify it.")
+--* DX.m and therefore DX.m:isPrivateDXversion not yet available here:
+local locked_xray_setting_message = IS_AUTHORS_DX_INSTALLATION and "Deze instelling door Dynamic Xray automatisch berekend en kan daarom niet worden aangepast door de gebruiker." or _("This setting will be automatically computed by Dynamic Xray and therefor the user cannot modify it.")
 
 --- @class XraySettings
 --- @field settings_manager SettingsManager
@@ -35,17 +36,6 @@ local XraySettings = WidgetContainer:new{
             value = 5,
             explanation = _("This number determines in how many batches Xray items from other books will be imported. In case of very many items, a higher number here is probably prudent."),
             locked = 0,
-        },
-        database_filename = {
-            value = "bookinfo_cache.sqlite3",
-            explanation = _("Only change this setting if your database file not is called \"bookinfo_cache.sqlite3\". E.g. because it has a language code at the front, like \"PT_bookinfo_cache.sqlite3\"."),
-            locked = 0,
-        },
-        --* this setting controls database updates via ((XrayDataSaver#createAndModifyTables)) > ((XrayDataSaver#modifyTables)) > XrayDataSaver.table_modifications
-        database_scheme_version = {
-            value = 0,
-            explanation = locked_xray_setting_message,
-            locked = 1,
         },
         is_android = {
             value = false,
@@ -72,11 +62,6 @@ local XraySettings = WidgetContainer:new{
             explanation = _("With this setting you can determine the font size of the side and bottom panels in the Page Navigator (used in HtmlBox)."),
             locked = 0,
         },
-        prune_orphan_translations_version = {
-            value = 1,
-            explanation = locked_xray_setting_message,
-            locked = 1,
-        },
         ui_mode = {
             value = "page",
             options = { "page", "paragraph" },
@@ -87,6 +72,30 @@ local XraySettings = WidgetContainer:new{
 }
 
 function XraySettings:setUp()
+
+    --* DX.m and therefore DX.m:isPrivateDXversion not yet available here:
+    if not IS_AUTHORS_DX_INSTALLATION then
+
+        self.settings_template["database_filename"] = {
+            value = "bookinfo_cache.sqlite3",
+            explanation = _("Only change this setting if your database file not is called \"bookinfo_cache.sqlite3\". E.g. because it has a language code at the front, like \"PT_bookinfo_cache.sqlite3\"."),
+            locked = 0,
+        }
+
+        --* this setting controls database updates via ((XrayDataSaver#createAndModifyTables)) > ((XrayDataSaver#modifyTables)) > XrayDataSaver.table_modifications
+        self.settings_template["database_scheme_version"] = {
+            value = 0,
+            explanation = locked_xray_setting_message,
+            locked = 1,
+        }
+
+        self.settings_template["prune_orphan_translations_version"] = {
+            value = 1,
+            explanation = locked_xray_setting_message,
+            locked = 1,
+        }
+    end
+
     self.settings_manager = KOR.settingsmanager:new({
         list_title = _("Dynamic Xray"),
         parent = self,

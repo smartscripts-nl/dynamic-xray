@@ -63,7 +63,7 @@ series_hits is NOT a db field, it is computed dynamically by queries XrayDataLoa
 --* compare ((XrayDataLoader)) for loading data:
 --- @class XrayDataSaver
 local XrayDataSaver = WidgetContainer:new{
-    --* these table modifications are run and depending on the setting "database_scheme_version" in ((XraySettings)):
+    --* these table modifications are run and depending on the setting "database_scheme_version" in ((XraySettings)), for the public version of DX:
     table_modifications = {},
     queries = {
         create_items_table = [[
@@ -520,7 +520,7 @@ function XrayDataSaver.createAndModifyTables()
         return
     end
 
-    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver:createDB")
+    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver:createAndModifyTables")
     if version_index == 0 then
         --* make it WAL, if possible
         local pragma = Device:canUseWAL() and "WAL" or "TRUNCATE"
@@ -567,6 +567,9 @@ end
 
 -- #((XrayDataSaver#modifyTables))
 function XrayDataSaver.modifyTables(conn, updates_count, version_index)
+    if parent:isPrivateDXversion("silent") then
+        return
+    end
     local self = DX.ds
     if version_index and updates_count > 0 and version_index < updates_count then
         local sql

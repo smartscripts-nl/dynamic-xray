@@ -269,6 +269,7 @@ function XrayButtons:forPageNavigatorTopLeft(parent)
                 parent:showHelpInformation()
             end,
         },
+        KOR.buttoninfopopup:forXrayTranslations(),
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
                 parent:execSettingsCallback(parent)
@@ -323,11 +324,7 @@ function XrayButtons:forUiInfoTopLeft(target, new_trigger, parent)
                 end)
             end,
         }),
-        KOR.buttoninfopopup:forXrayTranslations({
-            callback = function()
-                DX.tm:manageTranslations()
-            end
-        }),
+        KOR.buttoninfopopup:forXrayTranslations(),
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
                 UIManager:close(parent.xray_ui_info_dialog)
@@ -746,11 +743,7 @@ function XrayButtons:forItemViewerTopLeft(parent)
                 parent:showHelp(2)
             end
         },
-        KOR.buttoninfopopup:forXrayTranslations({
-            callback = function()
-                DX.tm:manageTranslations()
-            end
-        }),
+        KOR.buttoninfopopup:forXrayTranslations(),
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
                 UIManager:close(parent.item_viewer)
@@ -1322,11 +1315,7 @@ function XrayButtons:forListTopLeft(parent)
                 DX.d:showHelp(1)
             end
         },
-        KOR.buttoninfopopup:forXrayTranslations({
-            callback = function()
-                DX.tm:manageTranslations()
-            end
-        }),
+        KOR.buttoninfopopup:forXrayTranslations(),
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
                 UIManager:close(parent.xray_items_chooser_dialog)
