@@ -68,12 +68,34 @@ function XrayFormsData:initNewItemFormProps(name_from_selected_text, active_form
     end
     DX.d:setProp("active_form_tab", active_form_tab)
     local xray_type = item and item.xray_type
+    if has_text(name_from_selected_text) and not name_from_selected_text:match("[A-Z]") then
+        xray_type = 3
+        if item then
+            item.xray_type = 3
+        end
+    end
+    local xray_type_stored = false
     --* this concerns the active tab of the Xray items list:
     if parent.active_list_tab == 3 or tapped_words.active_tapped_word_tab == 3 then
         xray_type = 3
-    elseif not xray_type then
+        if item then
+            item.xray_type = 3
+        end
+    --* item will only be set after we navigated from tab 1 to tab 2:
+    elseif not item and has_text(name_from_selected_text) then
         --* if onAddItem invoked with text selection and that selection doesn't contain uppercase characters, assume it's an entity, not a person:
         xray_type = is_text_from_selection and not name_from_selected_text:match("[A-Z]") and 3 or 1
+        --* for consumption in the next code block:
+        KOR.registry:set("xray_type", xray_type)
+        xray_type_stored = true
+    end
+
+    --* when we navigate to the second tab, after xray_type has been set in the first tab, based on the text selection the user made:
+    if item and not xray_type_stored then
+        local xray_type_from_previous_tab = KOR.registry:getOnce("xray_type")
+        if xray_type_from_previous_tab then
+            item.xray_type = xray_type_from_previous_tab
+        end
     end
     local item_copy = item and KOR.tables:shallowCopy(item) or {
         description = "",
@@ -114,7 +136,7 @@ end
 
 --* called from ((XrayDialogs#showNewItemForm)):
 function XrayFormsData:resetItemProps(item_copy)
-    --* for a new item reset everything but hits data, xray_type, series name and description:
+    --* for a new item reset everything but hits data, xray_type, series, name and description (which might be computed based on the text selection the user made):
     local reset_props = { "short_names", "linkwords", "aliases", "mentioned_in" }
     count = #reset_props
     for i = 1, count do
