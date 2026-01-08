@@ -266,18 +266,6 @@ function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
 
     --! this ensures that hotkeys will even be available when we are in a scrolling html box. These actions will be consumed in ((HtmlBoxWidget#initHotkeys)):
     KOR.registry:set("add_parent_hotkeys", actions)
-
-    count = #actions
-    local hotkey, label
-    local suffix = "XVC"
-    for i = 1, count do
-        hotkey = actions[i].hotkey
-        label = actions[i].label
-        local callback = actions[i].callback
-        self:registerCustomKeyEvent(key_events_module, parent.item_viewer, hotkey, "action_" .. label .. suffix, function()
-            return callback()
-        end)
-    end
 end
 
 --* information about available hotkeys in list shown in ((XrayButtons#forListTopLeft)) > ((XrayDialogs#showHelp)):
@@ -398,7 +386,7 @@ function KeyEvents.setHotkeyForXrayPageNavigator(key_events_module)
             return parent:execSettingsCallback(parent)
         end,
     })
-    parent.hotkeys = {
+    local actions = {
         {
             label = "edit",
             hotkey = { { "E" } },
@@ -477,7 +465,7 @@ function KeyEvents.setHotkeyForXrayPageNavigator(key_events_module)
             nside_button[1].callback()
             return true
         end)
-        table.insert(parent.hotkeys, {
+        table.insert(actions, {
             label = "show_item_info_" .. nhotkey,
             hotkey = { { nhotkey } },
             callback = function()
@@ -489,19 +477,7 @@ function KeyEvents.setHotkeyForXrayPageNavigator(key_events_module)
     --- SET HOTKEYS FOR HTMLBOXWIDGET INSTANCE
 
     --! this ensures that hotkeys will even be available when we are in a scrolling html box. These actions will be consumed in ((HtmlBoxWidget#initHotkeys)):
-    KOR.registry:set("add_parent_hotkeys", parent.hotkeys)
-
-    count = #parent.hotkeys
-    local hotkey, label
-    local suffix = "XPN"
-    for i = 1, count do
-        hotkey = parent.hotkeys[i].hotkey
-        label = parent.hotkeys[i].label
-        local callback = parent.hotkeys[i].callback
-        self:registerCustomKeyEvent(key_events_module, parent.page_navigator, hotkey, "action_" .. label .. suffix, function()
-            return callback()
-        end)
-    end
+    KOR.registry:set("add_parent_hotkeys", actions)
 end
 
 function KeyEvents:addHotkeyForFilterButton(parent, filter_active, callback, reset_callback)
