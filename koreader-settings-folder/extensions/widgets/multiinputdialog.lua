@@ -30,12 +30,11 @@ local table = table
 
 local count
 local LEFT_SIDE = 1
-local RIGHT_SIDE = 2
 
 --* if we extend FocusManager here, then crash because of ((MultiInputDialog#init)) > InputDialog.init(self)
 --- @class MultiInputDialog
 local MultiInputDialog = InputDialog:extend{
-    --* to make the FocusManager work correctly, even under Ubuntu; this prop will be initially set by ((MultiInputDialog#insertFieldContainers)) and will upon switching between fields be dynamically updated to the active field by ((MultiInputDialog#onSwitchFocus)):
+    --* to make the FocusManager work correctly, even under Ubuntu; this prop will be initially set by ((MultiInputDialog#generateRows)) and will upon switching between fields be dynamically updated to the active field by ((MultiInputDialog#onSwitchFocus)):
     _input_widget = nil,
     a_field_was_focussed = false,
     auto_height_field = nil,
@@ -118,71 +117,27 @@ function MultiInputDialog:onSwitchFocus(inputbox)
 end
 
 --- @private
-function MultiInputDialog:insertFieldContainers(field_source, is_field_row)
-    self.halved_descriptions = {}
-    self.halved_fields = {}
+function MultiInputDialog:generateRows(field_source, is_field_row)
     self.fields_count = is_field_row and #field_source or 1
     local has_two_fields_per_row = is_field_row and self.fields_count > 1
     self.edit_button_width = 0
+
     --* insert a edit button at the right side of each field in a two field row:
-    if has_two_fields_per_row then
+    self.edit_button_width = KOR.registry:get("edit_button_width")
+    if has_two_fields_per_row and not self.edit_button_width then
         local measure_edit_button = self:getEditFieldButton(0)
         self.edit_button_width = measure_edit_button:getSize().w
         measure_edit_button:free()
-    end
-    for field_side = 1, self.fields_count do
-        self:generateRows(field_side, field_source, is_field_row)
-        --* handle rows with multipe fields:
-        if self.fields_count > 1 then
-            self:generateDescriptionContainers(field_side)
-        end
+        KOR.registry:set("edit_button_width", self.edit_button_width)
     end
 
-    --* self.halved_fields and self.halved_descriptions are reset to empty table after each row; see ((MultiInputDialog#insertFieldContainers)):
-    if #self.halved_descriptions == 0 and #self.halved_fields == 0 then
-        return
-    end
-    if #self.halved_descriptions > 0 then
-        self.halved_descriptions.align = "center"
-        self:insertIntoTargetContainer(HorizontalGroup:new(self.halved_descriptions))
-    end
-    local field_1 = self.halved_fields[1]
-    local field_2 = self.halved_fields[2]
-    local field1_container = self:getFieldContainer(field_1)
-    local field2_container = self:getFieldContainer(field_2)
-
-    local group = HorizontalGroup:new{
-        align = "center",
-        field1_container,
-        field2_container,
-    }
-    self:insertIntoTargetContainer(group)
-end
-
---- @private
---- @param field_side number 1 if left side, 2 if right side
-function MultiInputDialog:generateRows(field_side, field_source, is_field_row)
     self.force_one_line_field = is_field_row
-    local field_config = is_field_row and field_source[field_side] or field_source
-    if self.force_one_line_field then
-        field_config.scroll = true
-    end
-    if field_side == RIGHT_SIDE then
-        --* self.field_nr counts ALL fields, even those in different tabs:
-        self.field_nr = self.field_nr + 1
-    end
-    self:fieldAddToInputs(field_config, field_side)
-    self.current_field = #self.input_fields
 
-    --* self.fields_count is either 1 or 2 (for two field row):
-    if self.fields_count > 1 then
-        table.insert(self.halved_fields, self.input_fields[self.current_field])
+    if has_two_fields_per_row then
+        self:insertTwoFieldRow(field_source)
+    else
+        self:insertSingleFieldRow(field_source)
     end
-    if field_config.is_edit_button_target then
-        KOR.registry:set("edit_button_target", self.input_fields[self.current_field])
-    end
-    self:insertFieldDescription(field_config)
-    self:insertFieldByRowType(field_side)
 end
 
 --- @private
@@ -221,8 +176,14 @@ end
 --- @private
 --- @param field_side number 1 if left side, 2 if right side
 function MultiInputDialog:fieldAddToInputs(field_config, field_side)
+
+    --* this prop is needed for self:setFieldProps:
+    self.field_nr = self.field_nr + 1
+
     self:setFieldWidth(field_config)
     self:setFieldProps(field_config, field_side)
+
+    local field
 
     --* the field with computed autoheight will be inserted into the form in ((MultiInputDialog#insertComputedHeightField)):
     if field_config.height == "auto" then
@@ -231,16 +192,20 @@ function MultiInputDialog:fieldAddToInputs(field_config, field_side)
         --! we need this index to replace the temporary input field with the field with computed height:
         self.auto_height_field_index = #self.input_fields + 1
         self.field_config.height = self.initial_auto_field_height
-        table.insert(self.input_fields, InputText:new(self.field_config))
-        return
+        field = InputText:new(self.field_config)
+        table.insert(self.input_fields, field)
+
+        return field
     end
 
-    local field = InputText:new(self.field_config)
+    field = InputText:new(self.field_config)
     table.insert(self.input_fields, field)
     if self.field_config.focused then
         --* sets the field to which scollbuttons etc. are coupled:
         self._input_widget = field
     end
+
+    return field
 end
 
 --* compare ((MultiInputDialog#isFocusField)):
@@ -269,7 +234,7 @@ function MultiInputDialog:isFocusField(height, field_side)
     if
         (height == "auto" and (not self.focus_field or self.focus_field == 1))
         or
-        (self.active_tab > 1 and field_side == LEFT_SIDE and not self.a_field_was_focussed)
+        (self.active_tab and self.active_tab > 1 and field_side == LEFT_SIDE and not self.a_field_was_focussed)
     then
         self.a_field_was_focussed = true
         return true
@@ -367,34 +332,6 @@ function MultiInputDialog:setFieldProps(field, field_side)
 end
 
 --- @private
-function MultiInputDialog:insertFieldDescription(field)
-    --* for single field rows:
-    if (not self.has_field_rows and field.description) or (self.fields_count == 1 and field.description) then
-        local description_height
-        self.input_description[self.current_field], description_height = self:getDescription(field, math.floor(self.width * 0.9))
-        local group = LeftContainer:new{
-            dimen = Geom:new{
-                w = self.full_width,
-                h = description_height,
-            },
-        self.input_description[self.current_field],
-        }
-        self:insertIntoTargetContainer(group)
-
-    --* for rows with more than one field and no descriptions: when no title bar present, add some extra margin above the fields:
-    elseif not self.title then
-        local group = CenterContainer:new{
-            dimen = Geom:new{
-                w = self.full_width,
-                h = 2 * self.description_margin,
-            },
-            VerticalSpan:new{ width = self.description_padding + self.description_margin },
-        }
-        self:insertIntoTargetContainer(group)
-    end
-end
-
---- @private
 function MultiInputDialog:insertIntoTargetContainer(group, is_field)
     if is_field and self.auto_height_field_present and not self.auto_height_field_injected then
         self.auto_height_field_injected = true
@@ -408,80 +345,91 @@ function MultiInputDialog:insertIntoTargetContainer(group, is_field)
 end
 
 --- @private
-function MultiInputDialog:insertFieldByRowType()
-    --* for one field rows immediately insert the input field:
-    if not self.has_field_rows or self.fields_count == 1 then
-        self:insertSingleFieldInRow()
+function MultiInputDialog:insertSingleFieldRow(field_config)
+    if self.force_one_line_field then
+        field_config.scroll = true
     end
+    local field = self:fieldAddToInputs(field_config, LEFT_SIDE)
+
+    if field_config.description then
+        local desc_container = self:getDescriptionContainer(field_config)
+        self:insertIntoTargetContainer(HorizontalGroup:new(desc_container))
 end
 
---- @private
-function MultiInputDialog:insertSingleFieldInRow()
-    local field_height = self.input_fields[self.current_field]:getSize().h
+    local field_height = field:getSize().h
     local group = CenterContainer:new{
         dimen = Geom:new{
             w = self.full_width,
             h = field_height,
         },
-        self.input_fields[self.current_field],
+        field,
     }
     self:insertIntoTargetContainer(group, "is_field")
 end
 
 --- @private
---- @param field_side number 1 if left side, 2 if right side
-function MultiInputDialog:generateDescriptionContainers(field_side)
+function MultiInputDialog:insertTwoFieldRow(row)
+    local desc_containers = {}
+    local field_containers = {}
+    local field_config
+    local has_descriptions = row[1].description
+    local field
+    for field_side = 1, 2 do
+        field_config = row[field_side]
+        if self.force_one_line_field then
+            field_config.scroll = true
+        end
+        field = self:fieldAddToInputs(field_config, field_side)
+        if field_config.is_edit_button_target then
+            KOR.registry:set("edit_button_target", field)
+        end
+        if has_descriptions then
+            desc_containers[field_side] = self:getDescriptionContainer(field_config)
+        end
+        field_containers[field_side] = self:getFieldContainer(field)
+    end
+
+    if has_descriptions then
+        self:insertIntoTargetContainer(HorizontalGroup:new(desc_containers))
+    end
+
+    -- #((field edit buttons for two field rows))
+    local group = HorizontalGroup:new{
+        align = "center",
+        field_containers[1],
+        field_containers[2],
+    }
+    self:insertIntoTargetContainer(group)
+end
+
+--- @private
+function MultiInputDialog:getDescriptionContainer(field_config)
     local tile_width = self.full_width / self.fields_count
-    local has_description = self.input_fields[self.current_field].description
-    local description_label = has_description and self:getDescription(self.input_fields[self.current_field], tile_width) or nil
-    if field_side == LEFT_SIDE then
-        if has_description then
-            self.input_description[self.current_field] = FrameContainer:new{
+    local description_label = self:getDescription(field_config, tile_width)
+    local description = FrameContainer:new{
                 padding = self.description_padding,
                 margin = 0,
                 bordersize = 0,
                 --* description in a multiple field row:
                 description_label,
             }
-            table.insert(self.halved_descriptions, LeftContainer:new{
+    return LeftContainer:new{
                 dimen = Geom:new{
                     w = tile_width,
-                    h = self.input_description[self.current_field]:getSize().h,
+            h = description:getSize().h,
                 },
-                self.input_description[self.current_field],
-            })
-        end
-        return
-    end
-    --* this means that the right side field doesn't have a description:
-    if not has_description then
-        return
-    end
-
-    --* insert right side field (field_side == RIGHT_SIDE here):
-    self.input_description[self.current_field] = FrameContainer:new{
-        padding = self.description_padding,
-        margin = 0,
-        bordersize = 0,
-        description_label,
+        description,
     }
-    table.insert(self.halved_descriptions, LeftContainer:new{
-        dimen = Geom:new{
-            w = tile_width,
-            h = self.input_description[self.current_field]:getSize().h,
-        },
-        self.input_description[self.current_field],
-    })
 end
 
 --- @private
-function MultiInputDialog:getDescription(field, width)
-    local text = field.info_popup_text and
+function MultiInputDialog:getDescription(field_config, width)
+    local text = field_config.info_popup_text and
         Button:new{
         text_icon = {
-            text = self.description_prefix .. " " .. field.description .. " ",
+                text = self.description_prefix .. " " .. field_config.description .. " ",
             text_font_bold = false,
-            text_font_face = "x_smallinfofont",
+                text_font_face = "x_smallinfofont",
             font_size = 18,
             icon = "info-slender",
             icon_size_ratio = 0.48,
@@ -497,17 +445,17 @@ function MultiInputDialog:getDescription(field, width)
         --* y_pos for the popup dialog - not used now anymore - was detected and set in ((Button#onTapSelectButton)) - look for two statements with self.callback(pos):
         callback = function() --ypos
             -- #((focus field upon click on info label))
-            --* this prop can be set in ((MultiInputDialog#insertFieldContainers)):
-            if field.info_icon_field_no then
-                self:onSwitchFocus(self.input_fields[field.info_icon_field_no])
+                --* this prop can be set in ((MultiInputDialog#generateRows)):
+                if field_config.info_icon_field_no then
+                    self:onSwitchFocus(self.input_fields[field_config.info_icon_field_no])
             end
             --* info_popup_title and info_popup_text e.g. defined in ((XrayDialogs#getFormFields)):
-            KOR.dialogs:niceAlert(field.info_popup_title, field.info_popup_text)
+                KOR.dialogs:niceAlert(field_config.info_popup_title, field_config.info_popup_text)
         end,
     }
     or
     TextBoxWidget:new{
-        text = self.description_prefix .. field.description,
+        text = self.description_prefix .. field_config.description,
         face = self.description_face or Font:getFace("x_smallinfofont"),
         width = width,
         padding = 0,
@@ -576,7 +524,7 @@ end
 --- @private
 function MultiInputDialog:getFieldContainer(field)
     local tile_width = self.full_width / self.fields_count
-    local tile_height = self.halved_fields[1]:getSize().h
+    local tile_height = field:getSize().h
     local has_no_button = field.input_type == "number" and not field.custom_edit_button
 
     --* don't add edit field buttons for regular number fields without a custom edit button:
@@ -592,6 +540,7 @@ function MultiInputDialog:getFieldContainer(field)
 
     --* for custom edit button add spacer between field and button:
     --* see ((MultiInputDialog#generateCustomEditButton)) for custom edit button generation:
+    --* handling example: ((XrayButtons#forItemEditorTypeSwitch)) > ((XrayDialogs#modifyXrayTypeFieldValue)) > ((XrayDialogs#switchFocusForXrayType))
     if field.custom_edit_button then
         self.custom_edit_button = field.custom_edit_button
         KOR.registry:set("xray_type_button", self.custom_edit_button)
@@ -771,7 +720,7 @@ function MultiInputDialog:insertFieldRowIfActiveTab(row_nr)
     self:registerFieldValues(row, is_field_set)
     target_tab = self.active_tab and ((is_field_set and row[1] and row[1].tab) or row.tab)
 
-    --* administration for inactive tabs:
+    --* only administrate for fields in inactive tabs, don't generate them:
     if self.active_tab and target_tab < self.active_tab then
         if is_field_set then
             self.field_nr = self.field_nr + #row
@@ -781,8 +730,7 @@ function MultiInputDialog:insertFieldRowIfActiveTab(row_nr)
 
     --* only insert fields for when they are in a non tabbed dialog or are in the active tab:
     elseif not target_tab or target_tab == self.active_tab then
-        self.field_nr = self.field_nr + 1
-        self:insertFieldContainers(row, is_field_set)
+        self:generateRows(row, is_field_set)
     end
 end
 

@@ -1071,16 +1071,29 @@ function XrayDialogs:switchFocusForXrayType(for_button_tap)
     end
     --* this registry var was set in ((MultiInputDialog#registerInputFields)):
     local input_fields = KOR.registry:get("xray_item")
+
+    count = #input_fields
+    local target_field_no
+    for i = count, 1, -1 do
+        if input_fields[i].custom_edit_button then
+            target_field_no = i
+            break
+        end
+    end
+    if not target_field_no then
+        KOR.messages:notify(_("target field could not be determined..."))
+        return
+    end
+
     --* unfocus all fields, except the xray type field:
-    self:switchFocusFieldLoop(input_fields, 4, self.xray_type_field_nr)
+    self:switchFocusFieldLoop(input_fields, 6, target_field_no)
 
     --* e.g. when user tapped on the choose xray type button:
     if not self.change_xray_type then
         return
     end
 
-    --! self.xray_type_field_nr has to correspond to the index used to get the xray_type in ((XrayFormsData#convertFieldValuesToItemProps)):
-    input_fields[self.xray_type_field_nr]:setText(tostring(self.change_xray_type))
+    input_fields[target_field_no]:setText(tostring(self.change_xray_type))
     self.change_xray_type = nil
 end
 
