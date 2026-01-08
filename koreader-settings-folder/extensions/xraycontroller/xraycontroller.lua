@@ -494,7 +494,8 @@ end
 
 --- @private
 function XrayController:resetDynamicXray(is_prepared)
-    local full_path = self.view.document.file
+    --? this method is not always called from a plugin context, but mostly (or even always?) from an extension context; that's the reason to use KOR.document, instead of self.view.document:
+    local full_path = KOR.document.file
     DX.m:setTitleAndSeries(full_path)
     DX.u:reset()
     DX.pn:resetCache()
