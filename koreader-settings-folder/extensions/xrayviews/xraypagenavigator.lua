@@ -529,6 +529,7 @@ end
 function XrayPageNavigator:getNextPageHitForTerm()
     local item = self.page_navigator_filter_item
     local current_page = self.navigator_page_no
+    --- @type CreDocument document
     local document = KOR.ui.document
     local results, needle, case_insensitive
     --* if applicable, we only search for first names (then probably more accurate hits count):
@@ -558,6 +559,7 @@ end
 function XrayPageNavigator:getPreviousPageHitForTerm()
     local item = self.page_navigator_filter_item
     local current_page = self.navigator_page_no
+    --- @type CreDocument document
     local document = KOR.ui.document
     local results, needle, case_insensitive
     --* if applicable, we only search for first names (then probably more accurate hits count):
@@ -797,13 +799,19 @@ function XrayPageNavigator:execShowListCallback()
     return true
 end
 
+--! needed for ((XrayPageNavigator#execShowPageBrowserCallback)) > show PageBrowserWidget > tap on a page > ((PageBrowserWidget#onClose)) > call laucher:onClose():
+function XrayPageNavigator:onClose()
+    self:closePageNavigator()
+end
+
 --- @param iparent XrayPageNavigator
 function XrayPageNavigator:execShowPageBrowserCallback(iparent)
     if not iparent.navigator_page_no then
         return true
     end
     local PageBrowserWidget = require("ui/widget/pagebrowserwidget")
-    local page_browser = PageBrowserWidget:new{
+    local page_browser = PageBrowserWidget:new {
+        --* via this prop PageBrowserWidget can call ((XrayPageNavigator#onClose)):
         launcher = self,
         ui = KOR.ui,
         focus_page = iparent.navigator_page_no,
