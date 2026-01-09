@@ -97,8 +97,8 @@ function XraySettings:setUp()
 
         self.settings_template["tables_created"] = {
             value = false,
-            explanation = locked_xray_setting_message,
-            locked = 1,
+            explanation = _("This settings should be set to true by DX after its tables have been created. You can set it to false to try to recreate the DX tables, in case of problems."),
+            locked = 0,
         }
     end
 
