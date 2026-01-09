@@ -97,8 +97,6 @@ function XrayModel:initDataHandlers()
     data_saver:initDataHandlers(self)
 
     if self:isPublicDXversion("silent") then
-        local logger = require("logger")
-        logger.warn("hoera")
         --* since XrayTranslations needs table xrays_translations to be created, we run this here:
         data_saver.createAndModifyTables()
     end
