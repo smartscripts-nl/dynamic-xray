@@ -688,7 +688,6 @@ function XrayPageNavigator:resetCache()
     self.cached_html_by_page_no = {}
 end
 
---- @private
 function XrayPageNavigator:closePageNavigator()
     if self.page_navigator then
         UIManager:close(self.page_navigator)
@@ -795,6 +794,23 @@ end
 
 function XrayPageNavigator:execShowListCallback()
     DX.c:onShowList()
+    return true
+end
+
+--- @param iparent XrayPageNavigator
+function XrayPageNavigator:execShowPageBrowserCallback(iparent)
+    if not iparent.navigator_page_no then
+        return true
+    end
+    local PageBrowserWidget = require("ui/widget/pagebrowserwidget")
+    local page_browser = PageBrowserWidget:new{
+        launcher = self,
+        ui = KOR.ui,
+        focus_page = iparent.navigator_page_no,
+    }
+    page_browser.cur_page = iparent.navigator_page_no
+    UIManager:show(page_browser)
+    page_browser:update()
     return true
 end
 

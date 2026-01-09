@@ -319,6 +319,16 @@ function ButtonInfoPopup:forXrayPageNavigator(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forXrayPageNavigatorShowPageBrowser(props)
+	return KOR.buttonprops:set({
+		icon = "pages",
+		icon_size_ratio = 0.53,
+		info = _("pages icon | Show page currently shown in Pagina Navigator in a page browser popup."),
+		callback_label = _("show"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forXrayPreviousItem(props)
 	return KOR.buttonprops:set({
 		text = KOR.icons.previous_bare,

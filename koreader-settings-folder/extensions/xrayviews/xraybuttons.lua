@@ -244,6 +244,11 @@ function XrayButtons:forPageNavigator(parent)
                  return parent:execGotoPrevPageCallback(parent)
              end,
          },
+         KOR.buttoninfopopup:forXrayPageNavigatorShowPageBrowser({
+             callback = function()
+                 return parent:execShowPageBrowserCallback(parent)
+             end,
+         }),
          KOR.buttonchoicepopup:forXrayPageNavigatorToCurrentPage({
              callback = function()
                  return parent:execJumpToCurrentPageInNavigatorCallback(parent)
