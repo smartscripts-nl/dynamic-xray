@@ -711,7 +711,7 @@ function XrayUI:reduceParagraphHits(hits, partial_hits, explanations)
                 table.insert(reduced_explanations, explanations[nr])
                 processed_names[xray_name] = 1
 
-                --* when full name and surname found in a paragraph, e.g. Thomas Carlyle), but also found the single name Carlyle, prevent Carlyle Foster to be counted as a hit:
+            --* when full name and surname found in a paragraph, e.g. Thomas Carlyle), but also found the single name Carlyle, prevent Carlyle Foster to be counted as a hit:
             elseif not skip_partial_match and partial_hits_count == 1 and has_family_name then
                 first_name = DX.m:getRealFirstOrSurName(xray_name)
                 if self.families_matched_by_multiple_parts[first_name] then

@@ -82,7 +82,7 @@ function SettingsManager:updateSettingsFromTemplate()
 
     --* following the parent's settings template, add settings that were added there, or remove settings that were deleted there:
     if
-        self:addNewSettingsFromTemplate()
+        self:addNewSettingsOrHelpTextsFromTemplate()
         or
         self:removeSettingsFromTemplate()
     then
@@ -91,11 +91,17 @@ function SettingsManager:updateSettingsFromTemplate()
 end
 
 --- @private
-function SettingsManager:addNewSettingsFromTemplate()
+function SettingsManager:addNewSettingsOrHelpTextsFromTemplate()
     local settings_were_added = false
     for key, props in pairs(self.parent.settings_template) do
+        --* add missing settings from template:
         if not self.settings[key] then
             self.settings[key] = props
+            settings_were_added = true
+
+            --* add updated explanations from template:
+        elseif self.settings[key].explanation ~= props.explanation then
+            self.settings[key].explanation = props.explanation
             settings_were_added = true
         end
     end
