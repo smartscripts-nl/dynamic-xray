@@ -345,7 +345,7 @@ function XrayViewsData:getCurrentListTabItems(needle_item)
         end
         if needle_item and needle_item.name == items[i].name then
             self.current_item = items[i]
-            DX.fd:setFormItemId(items[i])
+            DX.fd:setFormItemId(items[i].id)
         end
     end
     self.current_tab_items = items
@@ -363,7 +363,7 @@ function XrayViewsData:getNextItem(item)
     self.current_item = subject_table[next]
     --? for some reason this index here was always 1, so now we correct that:
     self.current_item.index = next
-    DX.fd:setFormItemId(self.current_item)
+    DX.fd:setFormItemId(self.current_item.id)
     return self.current_item
 end
 
@@ -379,7 +379,7 @@ function XrayViewsData:getPreviousItem(item)
     self.current_item = subject_table[previous]
     --? for some reason this index here was always 1, so now we correct that:
     self.current_item.index = previous
-    DX.fd:setFormItemId(self.current_item)
+    DX.fd:setFormItemId(self.current_item.id)
     return self.current_item
 end
 

@@ -232,7 +232,7 @@ function XrayPageNavigator:markItemsFoundInPageHtml(html, navigator_page_no, mar
     end
     self.cached_html_and_buttons_by_page_no[self.navigator_page_no] = {
         html = html,
-        buttons = self.side_buttons,
+        side_buttons = self.side_buttons,
     }
     return html
 end
@@ -529,7 +529,6 @@ end
 function XrayPageNavigator:getNextPageHitForTerm()
     local item = self.page_navigator_filter_item
     local current_page = self.navigator_page_no
-    --- @type CreDocument document
     local document = KOR.ui.document
     local results, needle, case_insensitive
     --* if applicable, we only search for first names (then probably more accurate hits count):
@@ -559,7 +558,6 @@ end
 function XrayPageNavigator:getPreviousPageHitForTerm()
     local item = self.page_navigator_filter_item
     local current_page = self.navigator_page_no
-    --- @type CreDocument document
     local document = KOR.ui.document
     local results, needle, case_insensitive
     --* if applicable, we only search for first names (then probably more accurate hits count):
@@ -616,9 +614,10 @@ end
 --- @private
 function XrayPageNavigator:loadDataForPage(marker_name)
 
+    --* get html and side_buttons from cache; these were stored in ((XrayPageNavigator#markItemsFoundInPageHtml)):
     if self.navigator_page_no and self.cached_html_and_buttons_by_page_no[self.navigator_page_no] then
 
-        self.side_buttons = self.cached_html_and_buttons_by_page_no[self.navigator_page_no].buttons
+        self.side_buttons = self.cached_html_and_buttons_by_page_no[self.navigator_page_no].side_buttons
         self:markActiveSideButton(self.side_buttons)
 
         return self.cached_html_and_buttons_by_page_no[self.navigator_page_no].html
