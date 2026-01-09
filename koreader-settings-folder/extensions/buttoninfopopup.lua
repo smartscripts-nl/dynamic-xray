@@ -323,7 +323,7 @@ function ButtonInfoPopup:forXrayPageNavigatorShowPageBrowser(props)
 	return KOR.buttonprops:set({
 		icon = "pages",
 		icon_size_ratio = 0.53,
-		info = _("pages icon | Show page currently shown in Pagina Navigator in a page browser popup."),
+		info = _("pages icon | Show page currently shown in Pagina Navigator in a page browser popup.\n\n You can use this to quickly jump many page back or forth in Page Navigator, by tapping on a thumnail in the page browser."),
 		callback_label = _("show"),
 		--! callback defined by calling module
 	}, props)

@@ -529,7 +529,6 @@ end
 function XrayPageNavigator:getNextPageHitForTerm()
     local item = self.page_navigator_filter_item
     local current_page = self.navigator_page_no
-    --- @type CreDocument document
     local document = KOR.ui.document
     local results, needle, case_insensitive
     --* if applicable, we only search for first names (then probably more accurate hits count):
@@ -559,7 +558,6 @@ end
 function XrayPageNavigator:getPreviousPageHitForTerm()
     local item = self.page_navigator_filter_item
     local current_page = self.navigator_page_no
-    --- @type CreDocument document
     local document = KOR.ui.document
     local results, needle, case_insensitive
     --* if applicable, we only search for first names (then probably more accurate hits count):
@@ -802,6 +800,14 @@ end
 --! needed for ((XrayPageNavigator#execShowPageBrowserCallback)) > show PageBrowserWidget > tap on a page > ((PageBrowserWidget#onClose)) > call laucher:onClose():
 function XrayPageNavigator:onClose()
     self:closePageNavigator()
+
+    --* use PageBrowserWidget taps to navigate in Page Navigator, but reset location in reader to previous page:
+    UIManager:nextTick(function()
+        self.navigator_page_no = DX.u:getCurrentPage()
+        KOR.link:onGoBackLink()
+        local initial_page = DX.u:getCurrentPage()
+        self:showNavigator(initial_page)
+    end)
 end
 
 --- @param iparent XrayPageNavigator
@@ -810,15 +816,15 @@ function XrayPageNavigator:execShowPageBrowserCallback(iparent)
         return true
     end
     local PageBrowserWidget = require("ui/widget/pagebrowserwidget")
-    local page_browser = PageBrowserWidget:new {
+    self.page_browser = PageBrowserWidget:new{
         --* via this prop PageBrowserWidget can call ((XrayPageNavigator#onClose)):
         launcher = self,
         ui = KOR.ui,
         focus_page = iparent.navigator_page_no,
+        cur_page = iparent.navigator_page_no,
     }
-    page_browser.cur_page = iparent.navigator_page_no
-    UIManager:show(page_browser)
-    page_browser:update()
+    UIManager:show(self.page_browser)
+    self.page_browser:update()
     return true
 end
 
