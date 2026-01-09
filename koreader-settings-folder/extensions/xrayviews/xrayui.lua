@@ -821,6 +821,7 @@ function XrayUI:getCurrentPage()
     end
 end
 
+--* currently not called, maybe handy upon page updates:
 function XrayUI:reset()
     self.paragraphs = {}
     self.hits = {}

@@ -323,8 +323,7 @@ function XrayController:saveNewItem(return_modus)
     self.return_to_viewer = false
     DX.d:closeForm("add")
     DX.fd.saveNewItem(new_item)
-    DX.vd:prepareData(new_item)
-    self:resetDynamicXray("is_prepared")
+    self:resetDynamicXray()
     --* to force an update of the list of items in ((XrayDialogs#showList)):
     KOR.registry:set("new_item", new_item)
     self:showListConditionally(new_item, return_modus)
@@ -504,7 +503,7 @@ function XrayController:resetDynamicXray(is_prepared)
     --? this method is not always called from a plugin context, but mostly (or even always?) from an extension context; that's the reason to use KOR.document, instead of self.view.document:
     local full_path = KOR.document.file
     DX.m:setTitleAndSeries(full_path)
-    DX.u:reset()
+    --! don't call DX.u:reset() here, because then Xray markers in page would disappear...
     DX.pn:resetCache()
     DX.vd:resetAllFilters()
     --* when current method called after saving an item from a form:
