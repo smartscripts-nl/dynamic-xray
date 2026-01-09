@@ -122,7 +122,7 @@ end
 
 --* information about available hotkeys in list shown in ((XrayDialogs#showItemViewer)) > ((XrayDialogs#showHelp)):
 -- #((KeyEvents#addHotkeysForXrayItemViewer))
---* compare ((KeyEvents#setHotkeyForXrayPageNavigator)):
+--* compare ((KeyEvents#addHotkeysForXrayPageNavigator)):
 function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
     local self = KOR.keyevents
     local parent = DX.d
@@ -363,9 +363,9 @@ function KeyEvents:addHotkeysForXrayList(parent, key_events_module)
     end
 end
 
--- #((KeyEvents#setHotkeyForXrayPageNavigator))
+-- #((KeyEvents#addHotkeysForXrayPageNavigator))
 --* compare ((KeyEvents#addHotkeysForXrayItemViewer)) and see comment in ((HtmlBox#initHotkeys)):
-function KeyEvents.setHotkeyForXrayPageNavigator(key_events_module)
+function KeyEvents.addHotkeysForXrayPageNavigator(key_events_module)
     local self = KOR.keyevents
     local parent = DX.pn
 
@@ -462,6 +462,7 @@ function KeyEvents.setHotkeyForXrayPageNavigator(key_events_module)
         end
         self:registerSharedHotkey(nhotkey, key_events_module, function()
             local nside_button = side_button
+            --* callback defined in ((XrayPageNavigator#markedItemRegister)):
             nside_button[1].callback()
             return true
         end)

@@ -55,6 +55,9 @@ local XrayPageNavigator = WidgetContainer:new{
     no_navigator_page_found = false,
     page_navigator_filter_item = nil,
     prev_marked_item = nil,
+    return_to_current_item = nil,
+    return_to_item_no = nil,
+    return_to_page = nil,
     scroll_to_page = nil,
     side_buttons = {},
     word_end = "%f[%A]",
@@ -105,7 +108,7 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text,
         side_buttons = self.side_buttons,
         info_panel_buttons = DX.b:forPageNavigator(self),
         hotkeys_configurator = function()
-            KOR.keyevents.setHotkeyForXrayPageNavigator(self, key_events_module)
+            KOR.keyevents.addHotkeysForXrayPageNavigator(self, key_events_module)
         end,
         after_close_callback = function()
             KOR.registry:unset("add_parent_hotkeys")
@@ -409,8 +412,9 @@ function XrayPageNavigator:markedItemRegister(item, html, buttons, word)
         text = label,
         xray_item = item,
         align = "left",
-        callback = function()
-            if self.current_item and item.name == self.current_item.name then
+       --* force_item will be set when we return to the Page Navigator from ((XrayPageNavigator#returnToNavigator)):
+        callback = function(force_return_to_item)
+            if not force_return_to_item and self.current_item and item.name == self.current_item.name then
                 return true
             end
             self.active_side_button = button_index
@@ -619,6 +623,7 @@ function XrayPageNavigator:loadDataForPage(marker_name)
     self.active_side_button = 1
     local html = self:getPageHtmlForPage(self.navigator_page_no)
     --* self.cached_html_and_buttons_by_page_no will be updated here:
+    --* buttons de facto generated in ((XrayPageNavigator#markedItemRegister)):
     html, buttons = self:markItemsFoundInPageHtml(html, self.navigator_page_no, marker_name)
     self:markActiveSideButton(buttons)
 
@@ -670,7 +675,7 @@ function XrayPageNavigator:getInfoPanelText(info_panel_text)
 end
 
 function XrayPageNavigator:getSideButton(i)
-    return self.side_buttons and self.side_buttons[i]
+    return self.side_buttons and self.side_buttons[i] and self.side_buttons[i][1]
 end
 
 function XrayPageNavigator:resetCache()
@@ -688,9 +693,38 @@ function XrayPageNavigator:closePageNavigator()
     end
 end
 
+function XrayPageNavigator:returnToNavigator()
+    --* set by ((XrayPageNavigator#execEditCallback)):
+    if self.return_to_page then
+        --* this is needed so we can return to the page we were looking at:
+        self.initial_browsing_page = self.return_to_page
+        self:showNavigator(self.return_to_page);
+        self.return_to_page = nil
+        self.active_side_button = 1
+        --* re-open the last opened item; also set by ((XrayPageNavigator#execEditCallback)):
+        if self.return_to_item_no then
+            self.active_side_button = self.return_to_item_no
+            self.current_item = self.return_to_current_item
+            local side_button = self:getSideButton(self.return_to_item_no)
+            --* callback defined in ((XrayPageNavigator#markedItemRegister)):
+            side_button.callback("force_return_to_item")
+            self.return_to_current_item = nil
+            self.return_to_item_no = nil
+        end
+
+        return true
+    end
+
+    return false
+end
+
+function XrayPageNavigator:setProp(prop, value)
+    self[prop] = value
+end
+
 
 --- =========== (KEYBOARD) EVENT HANDLERS ============
---* for calling through hotkeys - ((KeyEvents#setHotkeyForXrayPageNavigator)) and ((KeyEvents#activateHotkeysForPageNavigator)) - and as callbacks for usage in Xray buttons
+--* for calling through hotkeys - ((KeyEvents#addHotkeysForXrayPageNavigator)) - and as callbacks for usage in Xray buttons
 
 
 --- @param iparent XrayPageNavigator
@@ -701,6 +735,12 @@ function XrayPageNavigator:execEditCallback(iparent)
     end
     iparent:closePageNavigator()
     DX.c:setProp("return_to_viewer", false)
+    --* to to be consumed in ((XrayButtons#forItemEditor)) > ((XrayPageNavigator#returnToNavigator)):
+    iparent:setProp("return_to_page", iparent.navigator_page_no)
+    if #iparent.side_buttons > 0 then
+        iparent:setProp("return_to_item_no", iparent.active_side_button)
+        iparent:setProp("return_to_current_item", iparent.current_item)
+    end
     DX.c:onShowEditItemForm(iparent.current_item, false, 1)
     return true
 end

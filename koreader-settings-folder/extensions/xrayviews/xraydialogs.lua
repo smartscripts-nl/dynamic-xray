@@ -130,6 +130,7 @@ function XrayDialogs:closeForm(mode)
     --* edit mode:
     UIManager:close(self.edit_item_input)
     self.edit_item_input = nil
+
     --* this prop can be set in ((XrayButtons#forItemViewer)) > ((enable return to viewer)), when the user opens an edit form:
     if DX.c.return_to_viewer and DX.vd.current_item then
         self:showItemViewer(DX.vd.current_item, self.called_from_list, nil, "skip_item_search")

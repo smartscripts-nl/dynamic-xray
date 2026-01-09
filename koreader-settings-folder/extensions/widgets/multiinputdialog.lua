@@ -691,6 +691,7 @@ function MultiInputDialog:insertComputedHeightField(difference)
     self.auto_height_field.focused = true
     --* insert a field with dynamically adjusted height, to push the buttons to just above the keyboard:
     local field = InputText:new(self.auto_height_field)
+    KOR.registry:set("edit_button_target", field)
 
     -- #((conditionally give auto height field focus))
     if self.focus_field == self.auto_height_field_index then

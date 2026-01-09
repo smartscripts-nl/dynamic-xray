@@ -301,11 +301,14 @@ function XrayController:resetFilteredItems()
     DX.m:resetData("force_refresh")
 end
 
-function XrayController:saveNewItem(return_to_list)
+function XrayController:saveNewItem(return_modus)
     local fields = DX.d.add_item_input:getValues()
     --* if name is not set:
-    if has_no_text(fields[2]) then
-        self:showListConditionally(nil, return_to_list)
+    if has_no_text(fields[2]) and return_modus == "return_to_list" then
+        self:showListConditionally(nil, return_modus)
+    --* return_modus == "return_to_navigator_page":
+    elseif has_no_text(fields[2]) then
+        return DX.pn:returnToNavigator()
     end
 
     DX.fd:resetViewerItemId()
@@ -324,11 +327,11 @@ function XrayController:saveNewItem(return_to_list)
     self:resetDynamicXray("is_prepared")
     --* to force an update of the list of items in ((XrayDialogs#showList)):
     KOR.registry:set("new_item", new_item)
-    self:showListConditionally(new_item, return_to_list)
+    self:showListConditionally(new_item, return_modus)
 end
 
-function XrayController:saveUpdatedItem(item_copy, return_to_list, reload_manager)
-    if return_to_list then
+function XrayController:saveUpdatedItem(item_copy, return_modus, reload_manager)
+    if return_modus then
         self.return_to_viewer = false
     end
     local field_values = DX.d.edit_item_input:getValues()
@@ -355,7 +358,11 @@ function XrayController:saveUpdatedItem(item_copy, return_to_list, reload_manage
     end
 
     DX.d:closeForm("edit")
-    self:showListConditionally(updated_item, reload_manager or return_to_list)
+    if return_modus == "return_to_list" then
+        self:showListConditionally(updated_item, reload_manager or return_modus)
+    elseif return_modus == "return_to_navigator_page" then
+        DX.pn:returnToNavigator()
+    end
 end
 
 --* compare form for editing Xray items: ((XrayController#onShowEditItemForm)):

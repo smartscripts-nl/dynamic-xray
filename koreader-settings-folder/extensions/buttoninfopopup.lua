@@ -261,15 +261,15 @@ function ButtonInfoPopup:forXrayItemSave(props)
 	}, props)
 end
 
-function ButtonInfoPopup:forXrayItemSaveAndShowList(props)
+function ButtonInfoPopup:forXrayItemSaveAndShowModule(props)
 	return KOR.buttonprops:set({
 		icon_icon = {
 			icon = "save",
 			middle_text = KOR.icons.arrow,
-			icon2 = "list",
+			icon2 = props.icon,
 			icon_size_ratio = 0.6,
 		},
-		info = _("floppy disk + list icon | Save Xray item and show it in the list of items."),
+		info = T(_("floppy disk + %1 icon | Save Xray item and show it in the %2."), props.icon2_name, props.icon2_name),
 		callback_label = _("save"),
 		--! callback defined by calling module
 	}, props)

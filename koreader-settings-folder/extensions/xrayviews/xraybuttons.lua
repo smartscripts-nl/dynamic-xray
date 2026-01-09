@@ -1223,6 +1223,11 @@ function XrayButtons:forItemEditor(mode, active_form_tab, reload_manager, item_c
     local dialog_will_be_closed_message = _([[This will close the form.
 
 Continue?]])
+
+    local return_modus = DX.pn.return_to_page and "return_to_navigator_page" or "return_to_list"
+    local return_icon = DX.pn.return_to_page and "navigator_wheel" or "list"
+    local icon2_name = DX.pn.return_to_page and "navigator" or "lijst"
+
     local buttons = {
         {
             KOR.buttonchoicepopup:forXrayGoBackFromForm({
@@ -1253,20 +1258,22 @@ Continue?]])
                     KOR.dialogs:confirm(dialog_will_be_closed_message, function()
                         DX.c:setProp("return_to_viewer", false)
                         DX.d:closeForm(mode)
-                        DX.c:showPageNavigator(DX.d.item_requested)
+                        DX.pn:returnToNavigator()
                     end)
                 end,
                 info = _("Close form and show Page Navigator."),
             }),
             edit_or_type_change_button,
-            --* button to save and then force redirection to the list of items (opened if it wasn't open already):
-            KOR.buttoninfopopup:forXrayItemSaveAndShowList({
+            --* button to save and then force redirection to either the list of items (opened if it wasn't open already) or the Page Navigator:
+            KOR.buttoninfopopup:forXrayItemSaveAndShowModule({
+                icon = return_icon,
+                icon2_name = icon2_name,
                 callback = function()
                     if mode == "add" then
-                        DX.c:saveNewItem("return_to_list")
+                        DX.c:saveNewItem(return_modus)
                         return
                     end
-                    DX.c:saveUpdatedItem(item_copy, "return_to_list", reload_manager)
+                    DX.c:saveUpdatedItem(item_copy, return_modus, reload_manager)
                 end,
             }),
             KOR.buttoninfopopup:forXrayItemSave({
