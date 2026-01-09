@@ -207,7 +207,7 @@ function XrayButtons:addMoreButton(buttons, indicator_buttons, props)
     })
 end
 
---- @param parent XrayDialogs
+--- @param parent XrayPageNavigator
 function XrayButtons:forPageNavigator(parent)
     return {{
          {

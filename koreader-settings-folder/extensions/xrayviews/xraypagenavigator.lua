@@ -768,6 +768,7 @@ end
 
 --- @param iparent XrayPageNavigator
 function XrayPageNavigator:execJumpToCurrentPageInNavigatorCallback(iparent)
+    KOR.messages:notify(_("jumped back to start page..."))
     iparent:toCurrentNavigatorPage()
     return true
 end
@@ -800,12 +801,13 @@ end
 --! needed for ((XrayPageNavigator#execShowPageBrowserCallback)) > show PageBrowserWidget > tap on a page > ((PageBrowserWidget#onClose)) > call laucher:onClose():
 function XrayPageNavigator:onClose()
     self:closePageNavigator()
+    local initial_page = self.initial_browsing_page
 
     --* use PageBrowserWidget taps to navigate in Page Navigator, but reset location in reader to previous page:
     UIManager:nextTick(function()
         self.navigator_page_no = DX.u:getCurrentPage()
+        --* undo page jump in the e-reader:
         KOR.link:onGoBackLink()
-        local initial_page = DX.u:getCurrentPage()
         self:showNavigator(initial_page)
     end)
 end
