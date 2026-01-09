@@ -105,6 +105,12 @@ function XrayDialogs:closeForm(mode)
     if mode == "add" then
         UIManager:close(self.add_item_input)
         self.add_item_input = nil
+
+        if DX.pn.return_to_page and self.form_was_cancelled then
+            DX.pn:resetReturnToProps()
+            return true
+        end
+
         --* this prop can be set in ((XrayButtons#forItemViewer)) > ((cancel item form)), when the user opens an add or edit form:
         --* current_item could not be set when the user selected a word in the ebook and chose to add that to the xray items:
         if
@@ -725,7 +731,8 @@ function XrayDialogs:showList(focus_item, dont_show)
 
     --! important for generating texts of xray items in this list: ((XrayViewsData#generateListItemText))
 
-    DX.fd:resetViewerItemId()
+    DX.fd:resetFormItemId()
+    DX.pn:resetReturnToProps()
 
     --* this var will be set in ((XrayController#saveNewItem)) upon adding a new item; when set, we force update of the data and setting of correct new item index, so the list will display the subpage with the new item:
     local new_item = KOR.registry:getOnce("new_item")
@@ -938,7 +945,7 @@ function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_wo
     local current_items_count = count
 
     local book_hits = needle_item.book_hits
-    DX.fd:setViewerItemId(needle_item)
+    DX.fd:setFormItemId(needle_item.id)
 
     --! if you want to show additional or specific props in the info, those props have to be added in ((XrayDataLoader#_loadAllData)) > ((set xray item props)), AND you have to add them to the menu_item props in ((XrayViewsData#filterAndPopulateItemTables))! Search for "mentioned_in" to see an example of this...
     local main_info, hits_info = DX.vd:getItemInfoHtml(needle_item, "ucfirst")

@@ -3,7 +3,7 @@ This extension is part of the Dynamic Xray plugin; it has all dialogs and forms 
 
 The Dynamic Xray plugin has kind of a MVC structure:
 M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayPageNavigator))
-V = ((XrayUI)), ((XrayPageNavigator)), and ((XrayPageNavigator)) and ((XrayButtons))
+V = ((XrayUI)), ((XrayPageNavigator)), ((XrayTranslations)) and ((XrayTranslationsManager)), and ((XrayPageNavigator)) and ((XrayButtons))
 C = ((XrayController))
 
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
@@ -92,8 +92,11 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text,
     else
         self:closePageNavigator()
     end
-    local html
-    html, self.side_buttons = self:loadDataForPage(marker_name)
+    local html = self:loadDataForPage(marker_name)
+    if not info_panel_text then
+        --* this text was generated for the first item via ((XrayPageNavigator#markActiveSideButton)) > ((XrayPageNavigator#generateInfoTextForFirstSideButton))
+        info_panel_text = self.first_info_panel_text
+    end
 
     local key_events_module = "XrayPageNavigator"
     self.page_navigator = KOR.dialogs:htmlBox({
@@ -211,7 +214,7 @@ end
 
 --- @private
 function XrayPageNavigator:markItemsFoundInPageHtml(html, navigator_page_no, marker_name)
-    local buttons = {}
+    self.side_buttons = {}
     self.button_labels_injected = ""
     self.navigator_page_no = navigator_page_no
     self.first_info_panel_text = nil
@@ -219,23 +222,23 @@ function XrayPageNavigator:markItemsFoundInPageHtml(html, navigator_page_no, mar
 
     local hits = DX.u:getXrayItemsFoundInText(html, "for_navigator")
     if not hits then
-        return html, buttons
+        return html
     end
     count = #hits
 
     self.prev_marked_item = nil
     for i = 1, count do
-        html = self:markItemsInHtml(html, buttons, hits[i])
+        html = self:markItemsInHtml(html, hits[i])
     end
     self.cached_html_and_buttons_by_page_no[self.navigator_page_no] = {
         html = html,
-        buttons = buttons,
+        buttons = self.side_buttons,
     }
-    return html, buttons
+    return html
 end
 
 --- @private
-function XrayPageNavigator:markItemsInHtml(html, buttons, item)
+function XrayPageNavigator:markItemsInHtml(html, item)
     if item.name == self.prev_marked_item then
         return html
     end
@@ -248,14 +251,14 @@ function XrayPageNavigator:markItemsInHtml(html, buttons, item)
     }
     for l = 1, 3 do
         if has_text(item[subjects[l]]) then
-            html = self:markItem(item, item[subjects[l]], html, buttons, l)
+            html = self:markItem(item, item[subjects[l]], html, l)
         end
     end
     return html
 end
 
 --- @private
-function XrayPageNavigator:markItem(item, subject, html, buttons, loop_no)
+function XrayPageNavigator:markItem(item, subject, html, loop_no)
     local parts, parts_count, uc, was_marked_for_full
 
     --* subject can be the name or the alias of an Xray item:
@@ -268,7 +271,7 @@ function XrayPageNavigator:markItem(item, subject, html, buttons, loop_no)
     for i = 1, parts_count do
         uc = parts[i]
         --* only here side panel buttons are populated:
-        html = self:markPartialHits(html, buttons, item, uc, i, was_marked_for_full)
+        html = self:markPartialHits(html, item, uc, i, was_marked_for_full)
     end
     return html
 end
@@ -315,7 +318,7 @@ function XrayPageNavigator:markFullNameHit(html, item, subject, loop_no)
 end
 
 --- @private
-function XrayPageNavigator:markPartialHits(html, buttons, item, uc, i, was_marked_for_full)
+function XrayPageNavigator:markPartialHits(html, item, uc, i, was_marked_for_full)
     local is_term, lc, matcher
 
     local is_lowercase_person = item.xray_type < 3 and not uc:match("[A-Z]")
@@ -330,7 +333,7 @@ function XrayPageNavigator:markPartialHits(html, buttons, item, uc, i, was_marke
     local uc_matcher_plural = self:getMatchStringPlural(uc)
     if was_marked_for_full or (is_markable_part_of_name and (html:match(matcher) or html:match(uc_matcher_plural))) then
         --* return html and add item to buttons:
-        return self:markedItemRegister(item, html, buttons, uc)
+        return self:markedItemRegister(item, html, uc)
 
     --* for terms we also try to find lowercase variants of their names:
     elseif (is_term or is_lowercase_person) and is_markable_part_of_name then
@@ -338,7 +341,7 @@ function XrayPageNavigator:markPartialHits(html, buttons, item, uc, i, was_marke
         matcher = self:getMatchString(lc)
         if html:match(matcher) then
             --* return html and add item to buttons:
-            return self:markedItemRegister(item, html, buttons, lc)
+            return self:markedItemRegister(item, html, lc)
         end
     end
 
@@ -387,7 +390,7 @@ function XrayPageNavigator:splitLinesToMaxLength(info, prop, text)
 end
 
 --- @private
-function XrayPageNavigator:markedItemRegister(item, html, buttons, word)
+function XrayPageNavigator:markedItemRegister(item, html, word)
     local replacer = self:getMatchString(word, "for_substitution")
     html = html:gsub(replacer, "<strong>%1</strong>")
     local info_text = self:getItemInfoText(item)
@@ -404,11 +407,11 @@ function XrayPageNavigator:markedItemRegister(item, html, buttons, word)
     if item.name == self.marker_name then
         self:setCurrentItem(item)
     end
-    local button_index = #buttons + 1
+    local button_index = #self.side_buttons + 1
     if button_index < 10 then
         label = button_index .. ". " .. label
     end
-    table.insert(buttons, {{
+    table.insert(self.side_buttons, {{
         text = label,
         xray_item = item,
         align = "left",
@@ -613,31 +616,31 @@ end
 --- @private
 function XrayPageNavigator:loadDataForPage(marker_name)
 
-    local buttons
     if self.navigator_page_no and self.cached_html_and_buttons_by_page_no[self.navigator_page_no] then
-        self:markActiveSideButton(self.cached_html_and_buttons_by_page_no[self.navigator_page_no].buttons)
 
-        return self.cached_html_and_buttons_by_page_no[self.navigator_page_no].html, self.cached_html_and_buttons_by_page_no[self.navigator_page_no].buttons
+        self.side_buttons = self.cached_html_and_buttons_by_page_no[self.navigator_page_no].buttons
+        self:markActiveSideButton(self.side_buttons)
+
+        return self.cached_html_and_buttons_by_page_no[self.navigator_page_no].html
     end
 
     self.active_side_button = 1
     local html = self:getPageHtmlForPage(self.navigator_page_no)
     --* self.cached_html_and_buttons_by_page_no will be updated here:
-    --* buttons de facto generated in ((XrayPageNavigator#markedItemRegister)):
-    html, buttons = self:markItemsFoundInPageHtml(html, self.navigator_page_no, marker_name)
-    self:markActiveSideButton(buttons)
+    --* side_buttons de facto populated in ((XrayPageNavigator#markedItemRegister)):
+    html = self:markItemsFoundInPageHtml(html, self.navigator_page_no, marker_name)
+    self:markActiveSideButton()
 
-    return html, buttons
+    return html
 end
 
---- @private
-function XrayPageNavigator:markActiveSideButton(source_buttons)
-    count = #source_buttons
+function XrayPageNavigator:markActiveSideButton()
+    count = #self.side_buttons
     local button
     self.current_item = nil
     --* these are rows with one button each:
     for r = 1, count do
-        button = source_buttons[r][1]
+        button = self:getSideButton(r)
         button.text = button.text
             :gsub(self.marker, "")
             :gsub(self.filter_marker, "")
@@ -670,12 +673,13 @@ function XrayPageNavigator:getInfoPanelText(info_panel_text)
         return info_panel_text
     end
 
+    local side_button = self:getSideButton(1)
     --* xray_item.info_text for first button was generated in ((XrayPageNavigator#markActiveSideButton)) > ((XrayPageNavigator#generateInfoTextForFirstSideButton)):
-    return self.side_buttons[1] and self.side_buttons[1][1].xray_item.info_text or ""
+    return side_button and side_button.info_text or ""
 end
 
 function XrayPageNavigator:getSideButton(i)
-    return self.side_buttons and self.side_buttons[i] and self.side_buttons[i][1]
+    return self.side_buttons[i] and self.side_buttons[i][1]
 end
 
 function XrayPageNavigator:resetCache()
@@ -691,6 +695,12 @@ function XrayPageNavigator:closePageNavigator()
         UIManager:close(self.page_navigator)
         self.page_navigator = nil
     end
+end
+
+function XrayPageNavigator:resetReturnToProps()
+    self.return_to_page = nil
+    self.return_to_item_no = nil
+    self.return_to_current_item = nil
 end
 
 function XrayPageNavigator:returnToNavigator()
@@ -733,6 +743,7 @@ function XrayPageNavigator:execEditCallback(iparent)
         KOR.messages:notify(_("there was no item to be edited..."))
         return true
     end
+    DX.fd:setFormItemId(iparent.current_item.id)
     iparent:closePageNavigator()
     DX.c:setProp("return_to_viewer", false)
     --* to to be consumed in ((XrayButtons#forItemEditor)) > ((XrayPageNavigator#returnToNavigator)):

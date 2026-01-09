@@ -311,7 +311,7 @@ function XrayController:saveNewItem(return_modus)
         return DX.pn:returnToNavigator()
     end
 
-    DX.fd:resetViewerItemId()
+    DX.fd:resetFormItemId()
     local new_item = DX.fd:convertFieldValuesToItemProps(fields)
     --* these hits props (book_hits, chapter_hits, series_hits) were set in ((XrayDialogs#showNewItemForm)):
     if DX.vd.new_item_hits then

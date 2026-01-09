@@ -123,7 +123,7 @@ function XrayFormsData:initNewItemFormProps(name_from_selected_text, active_form
         if prefilled_field ~= "description" then
             views_data:setItemHits(item_copy, { for_display_mode = "book", force_update = true })
         end
-        self:resetViewerItemId()
+        self:resetFormItemId()
         if item_copy.book_hits == 0 then
             title = no_hits_title
         else
@@ -254,22 +254,22 @@ function XrayFormsData:convertFieldValuesToItemProps(values)
     }
 end
 
---* this id is set upon viewing an item from the list or after tapping an Xray item button in ((XrayDialogs#showItemViewer)), or upon viewing an item found upon tapping a word in the reader in ((XrayDialogs#viewTappedWordItem)):
-function XrayFormsData:setViewerItemId(item)
-    --* "hidden" id, to be re-attached to the updated item in ((XrayFormsData#reAttachViewerItemId)):
-    self.form_item_id = item.id
-end
-
---* this id was "remembered" in ((XrayFormsData#setViewerItemId)):
+--* this id was "remembered" in ((XrayFormsData#setFormItemId)):
 function XrayFormsData:reAttachViewerItemId(item)
     if self.form_item_id then
         --! never set this value to nil, because we need it when switching between form tabs in the edit form:
         item.id = self.form_item_id
     end
-    self:resetViewerItemId()
+    self:resetFormItemId()
 end
 
-function XrayFormsData:resetViewerItemId()
+--* this id is set upon viewing an item from the list or after tapping an Xray item button in ((XrayDialogs#showItemViewer)), or upon viewing an item found upon tapping a word in the reader in ((XrayDialogs#viewTappedWordItem)):
+function XrayFormsData:setFormItemId(item_id)
+    --* "hidden" id, to be re-attached to the updated item in ((XrayFormsData#reAttachViewerItemId)):
+    self.form_item_id = item_id
+end
+
+function XrayFormsData:resetFormItemId()
     self.form_item_id = nil
 end
 
@@ -450,7 +450,6 @@ function XrayFormsData:storeItemUpdates(mode, updated_item)
         KOR.messages:notify(_("item could not be updated..."))
         return
     elseif not updated_item.id then
-        KOR.messages:notify(_("item id could not be determined..."))
         return
     end
     self:setProp("last_modified_item_id", updated_item.id)
