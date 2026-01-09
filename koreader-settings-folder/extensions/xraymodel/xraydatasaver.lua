@@ -29,7 +29,6 @@ local _ = KOR:initCustomTranslations()
 local T = require("ffi/util").template
 
 local DX = DX
-local has_items = has_items
 local has_text = has_text
 local math = math
 local string = string
@@ -63,8 +62,6 @@ series_hits is NOT a db field, it is computed dynamically by queries XrayDataLoa
 --* compare ((XrayDataLoader)) for loading data:
 --- @class XrayDataSaver
 local XrayDataSaver = WidgetContainer:new{
-    --* these table modifications are run and depending on the setting "database_scheme_version" in ((XraySettings)), for the public version of DX:
-    table_modifications = {},
     queries = {
         create_items_table = [[
             CREATE TABLE IF NOT EXISTS "xray_items" (
@@ -200,7 +197,9 @@ local XrayDataSaver = WidgetContainer:new{
         update_translation =
             "UPDATE xray_translations SET msgstr = ? WHERE md5 = ?;",
     },
-    version_index_name = "database_scheme_version",
+    --* these table modifications are run and depending on the setting "database_scheme_version" in ((XraySettings)), for the public version of DX:
+    scheme_alter_queries = {},
+    scheme_version_name = "database_scheme_version",
 }
 
 --- @param xray_model XrayModel
@@ -513,28 +512,41 @@ end
 function XrayDataSaver.createAndModifyTables()
 
     local self = DX.ds
+    local tables_created_index = "tables_created"
+    local tables_were_created = DX.s[tables_created_index]
 
-    local version_index = has_items(DX.s[self.version_index_name]) and DX.s[self.version_index_name]
-    local updates_count = #self.table_modifications
-    if version_index == updates_count then
-        return
+    --* set this to true only for debugging purposes:
+    local overrule_tables_creation = false
+    if overrule_tables_creation then
+        tables_were_created = false
     end
-
     local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver:createAndModifyTables")
-    if version_index == 0 then
+
+    if not tables_were_created then
         --* make it WAL, if possible
         local pragma = Device:canUseWAL() and "WAL" or "TRUNCATE"
         conn:exec(string.format("PRAGMA journal_mode=%s;", pragma))
         --* create tables:
         conn:exec(self.queries.create_items_table)
         conn:exec(self.queries.create_translations_table)
+
+        DX.s:saveSetting(tables_created_index, true)
     end
 
-    --* Update version
-    if updates_count > 0 then
-        self.modifyTables(conn, updates_count, version_index)
-        DX.s:saveSetting(self.version_index_name, updates_count)
+    local update_tasks_count = #self.scheme_alter_queries
+    local version_index = DX.s[self.scheme_version_name] or 0
+    if
+        update_tasks_count == 0
+        or version_index >= update_tasks_count
+    then
+        conn = KOR.databases:closeInfoConnections(conn)
+        return
     end
+
+    self.modifyTables(conn, update_tasks_count, version_index)
+    --* update database_scheme_version in XraySettings:
+    DX.s:saveSetting(self.scheme_version_name, update_tasks_count)
+
     conn = KOR.databases:closeInfoConnections(conn)
 end
 
@@ -566,17 +578,15 @@ function XrayDataSaver.deleteItem(delete_item, remove_all_instances_in_series)
 end
 
 -- #((XrayDataSaver#modifyTables))
-function XrayDataSaver.modifyTables(conn, updates_count, version_index)
+function XrayDataSaver.modifyTables(conn, update_tasks_count, version_index)
     if parent:isPrivateDXversion("silent") then
         return
     end
     local self = DX.ds
-    if version_index and updates_count > 0 and version_index < updates_count then
-        local sql
-        for i = version_index + 1, updates_count do
-            sql = self.table_modifications[i]
-            conn:exec(sql)
-        end
+    local sql
+    for i = version_index + 1, update_tasks_count do
+        sql = self.scheme_alter_queries[i]
+        conn:exec(sql)
     end
 end
 

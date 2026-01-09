@@ -94,6 +94,12 @@ function XraySettings:setUp()
             explanation = locked_xray_setting_message,
             locked = 1,
         }
+
+        self.settings_template["tables_created"] = {
+            value = false,
+            explanation = locked_xray_setting_message,
+            locked = 1,
+        }
     end
 
     self.settings_manager = KOR.settingsmanager:new({

@@ -71,7 +71,7 @@ function XrayModel:setDatabaseFile()
         return
     end
     if has_text(DX.s.database_filename) and DX.s.database_filename ~= "bookinfo_cache.sqlite3" then
-        KOR.databases:setDatabaseFileName(DX.s.database_filename ~= "bookinfo_cache.sqlite3")
+        KOR.databases:setDatabaseFileName(DX.s.database_filename)
     end
 end
 
@@ -97,6 +97,8 @@ function XrayModel:initDataHandlers()
     data_saver:initDataHandlers(self)
 
     if self:isPublicDXversion("silent") then
+        local logger = require("logger")
+        logger.warn("hoera")
         --* since XrayTranslations needs table xrays_translations to be created, we run this here:
         data_saver.createAndModifyTables()
     end
