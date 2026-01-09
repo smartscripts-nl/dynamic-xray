@@ -194,7 +194,7 @@ PT_bookinfo_cache.sqlite3". In that case:
 3. KOReader will automatically be reloaded and then create the xray_items table in your database.
 
 ## Issues to fix
-* Currently none?
+* When saving an item, the Xray marker(s) sometimes disappear from the current page. Only after browsing to another page and then back, they re-appear.
 
 ## Todos
 * Base custom translations on indices instead of the texts they translate → continued usability of translations by the user much better protected, even when the actual text to be translated changes.

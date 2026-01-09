@@ -82,7 +82,7 @@ function XraySettings:setUp()
             locked = 0,
         }
 
-        --* this setting controls database updates via ((XrayDataSaver#createAndModifyTables)) > ((XrayDataSaver#modifyTables)) > XrayDataSaver.table_modifications
+        --* this setting controls database updates via ((XrayDataSaver#createAndModifyTables)) > ((XrayDataSaver#modifyTables)) > XrayDataSaver.scheme_alter_queries
         self.settings_template["database_scheme_version"] = {
             value = 0,
             explanation = locked_xray_setting_message,
