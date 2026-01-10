@@ -36,6 +36,7 @@ local LEFT_SIDE = 1
 local MultiInputDialog = InputDialog:extend{
     --* to make the FocusManager work correctly, even under Ubuntu; this prop will be initially set by ((MultiInputDialog#generateRows)) and will upon switching between fields be dynamically updated to the active field by ((MultiInputDialog#onSwitchFocus)):
     _input_widget = nil,
+    active_tab = nil,
     a_field_was_focussed = false,
     auto_height_field = nil,
     auto_height_field_index = nil,
@@ -50,7 +51,8 @@ local MultiInputDialog = InputDialog:extend{
     focus_field = nil,
     has_field_rows = false,
     input_face = Font:getDefaultDialogFontFace(),
-    input_fields = {}, --* array
+    --* ALL fields, even those in inactive tabs:
+    input_fields = {},
     keyboard_height = nil,
     --! leave the props below alone, because consumed by inputdialog:
     field_values = {},
@@ -58,6 +60,8 @@ local MultiInputDialog = InputDialog:extend{
     initial_auto_field_height = 10,
     one_line_height = DX.s.is_ubuntu and 15 or 30,
     submenu_buttontable = nil,
+    --* only the fields in the active tab:
+    tab_fields = {},
     title_tab_buttons_left = nil,
     title_tab_callbacks = nil,
 }
@@ -106,9 +110,24 @@ end
 
 --- @private
 function MultiInputDialog:onSwitchFocus(inputbox)
+    count = #self.tab_fields
+    for i = 1, count do
+        self:onUnfocus(self.tab_fields[i])
+    end
+    self:refreshDialog()
+    --* focus new inputbox
+    self:onFocus(inputbox)
+end
+
+--- @private
+function MultiInputDialog:onUnfocus(inputbox)
     --* unfocus current inputbox
-    self._input_widget:unfocus()
-    self._input_widget:onCloseKeyboard()
+    inputbox:unfocus()
+    inputbox:onCloseKeyboard()
+end
+
+--- @private
+function MultiInputDialog:onFocus(inputbox)
     self:refreshDialog()
     --* focus new inputbox
     self._input_widget = inputbox
@@ -203,12 +222,14 @@ function MultiInputDialog:fieldAddToInputs(field_config, field_side)
         self.field_config.height = self.initial_auto_field_height
         field = InputText:new(self.field_config)
         table.insert(self.input_fields, field)
+        self:fieldAddToCurrentTabFields(field)
 
         return field
     end
 
     field = InputText:new(self.field_config)
     table.insert(self.input_fields, field)
+    self:fieldAddToCurrentTabFields(field)
     if self.field_config.focused then
         --* sets the field to which scollbuttons etc. are coupled:
         self._input_widget = field
@@ -217,39 +238,67 @@ function MultiInputDialog:fieldAddToInputs(field_config, field_side)
     return field
 end
 
+--* these tab_fields are needed for applying focus in ((MultiInputDialog#focusFocusField)):
+--- @private
+function MultiInputDialog:fieldAddToCurrentTabFields(field)
+    if not self.active_tab or (self.active_tab and self.active_tab == field.tab) then
+        table.insert(self.tab_fields, field)
+    end
+end
+
 --* compare ((MultiInputDialog#isFocusField)):
 --- @private
 function MultiInputDialog:focusFocusField()
-    if not self.focus_field or self.focus_field == 1 or (self.active_tab and self.active_tab > 1) then
-        return
+
+    if not self.focus_field then
+        self.focus_field = 1
     end
-    --* to indeed change the focus to field no 2 or higher under tab no 1, we always have to focus field no 1 first and then focus the field we want to focus:
-    self:onSwitchFocus(self.input_fields[1])
-    self:onSwitchFocus(self.input_fields[self.focus_field])
+
+    --* self.focus_field:
+    --* set by the caller and read in ((MultiInputDialog#isFocusField))
+    --* or dynamically set there
+    --* self.tab_fields were populated via ((MultiInputDialog#fieldAddToInputs)) > ((MultiInputDialog#fieldAddToCurrentTabFields)):
+    count = #self.tab_fields
+    for i = 1, count do
+        self:onUnfocus(self.tab_fields[i])
+    end
+    --* for tabs > 1 focus_field set dynamically by ((MultiInputDialog#isFocusField)):
+    self:onFocus(self.input_fields[self.focus_field])
 end
 
 --* compare ((MultiInputDialog#insertComputedHeightField)) > ((conditionally give auto height field focus)), where a computed height field might be given focus:
 --* in case of self.focus_field being set, focus will be applied by ((MultiInputDialog#focusFocusField)):
 --- @private
-function MultiInputDialog:isFocusField(height, field_side)
+function MultiInputDialog:isFocusField(field, height, field_side)
 
-    --* self.focus_field is only set in case of adding a new item:
-    if self.focus_field and self.active_tab == 1 and #self.input_fields + 1 == self.focus_field then
+    local input_field_to_be_added = #self.input_fields + 1
+    local focus_added = false
+
+    --* this param only used for debugging in my personal installation:
+    self.garbage = field
+
+    --* self.focus_field set by caller is only applicable for tab 1 being active:
+    if self.active_tab == 1 and input_field_to_be_added == self.focus_field and not self.a_field_was_focussed then
         self.a_field_was_focussed = true
-        return true
+        focus_added = true
     end
 
     --* give focus to first left_side field or to auto height field:
     if
-        (height == "auto" and (not self.focus_field or self.focus_field == 1))
+        (not self.a_field_was_focussed and height == "auto" and (not self.focus_field or self.focus_field == 1))
         or
         (self.active_tab and self.active_tab > 1 and field_side == LEFT_SIDE and not self.a_field_was_focussed)
     then
         self.a_field_was_focussed = true
-        return true
+        focus_added = true
+        --* dynamically computed focus_field for tabs > 1:
+        self.focus_field = input_field_to_be_added
     end
 
-    return false
+    --* this param only used for debugging in my personal installation:
+    self.garbage = field
+
+    return self.a_field_was_focussed
 end
 
 --- @private
@@ -275,9 +324,6 @@ function MultiInputDialog:setFieldProps(field, field_side)
             field.info_popup_title,
         info_popup_text =
             field.info_popup_text,
-        --* this can be used to give the field with the dscription focus upon clicking on its info_popup_text label; see ((focus field upon click on info label)):
-        info_icon_field_no =
-            #self.input_fields + 1,
         tab =
             field.tab,
         --* e.g. used to insert a button for setting xray_type of an Xray item in ((XrayDialogs#getFormFields)):
@@ -312,7 +358,7 @@ function MultiInputDialog:setFieldProps(field, field_side)
             self:setFieldProp(field.input_face, self.input_face),
         --* this prop is used by InputText:
         focused =
-            self:isFocusField(height, field_side),
+            self:isFocusField(field, height, field_side),
         scroll =
             self:setFieldProp(field.scroll, false),
         scroll_by_pan =
@@ -361,7 +407,7 @@ function MultiInputDialog:insertSingleFieldRow(field_config)
     local field = self:fieldAddToInputs(field_config, LEFT_SIDE)
 
     if field_config.description then
-        local desc_container = self:getDescriptionContainer(field_config)
+        local desc_container = self:getDescriptionContainer(field, field_config)
         self:insertIntoTargetContainer(HorizontalGroup:new(desc_container))
 end
 
@@ -393,7 +439,7 @@ function MultiInputDialog:insertTwoFieldRow(row)
             KOR.registry:set("edit_button_target", field)
         end
         if has_descriptions then
-            desc_containers[field_side] = self:getDescriptionContainer(field_config)
+            desc_containers[field_side] = self:getDescriptionContainer(field, field_config)
         end
         field_containers[field_side] = self:getFieldContainer(field)
     end
@@ -412,9 +458,9 @@ function MultiInputDialog:insertTwoFieldRow(row)
 end
 
 --- @private
-function MultiInputDialog:getDescriptionContainer(field_config)
+function MultiInputDialog:getDescriptionContainer(field, field_config)
     local tile_width = self.full_width / self.fields_count
-    local description_label = self:getDescription(field_config, tile_width)
+    local description_label = self:getDescription(field, field_config, tile_width)
     local description = FrameContainer:new{
                 padding = self.description_padding,
                 margin = 0,
@@ -432,7 +478,7 @@ function MultiInputDialog:getDescriptionContainer(field_config)
 end
 
 --- @private
-function MultiInputDialog:getDescription(field_config, width)
+function MultiInputDialog:getDescription(field, field_config, width)
     local text = field_config.info_popup_text and
         Button:new{
         text_icon = {
@@ -454,12 +500,9 @@ function MultiInputDialog:getDescription(field_config, width)
         --* y_pos for the popup dialog - not used now anymore - was detected and set in ((Button#onTapSelectButton)) - look for two statements with self.callback(pos):
         callback = function() --ypos
             -- #((focus field upon click on info label))
-                --* this prop can be set in ((MultiInputDialog#generateRows)):
-                if field_config.info_icon_field_no then
-                    self:onSwitchFocus(self.input_fields[field_config.info_icon_field_no])
-            end
+            self:onSwitchFocus(field)
             --* info_popup_title and info_popup_text e.g. defined in ((XrayDialogs#getFormFields)):
-                KOR.dialogs:niceAlert(field_config.info_popup_title, field_config.info_popup_text)
+            KOR.dialogs:niceAlert(field_config.info_popup_title, field_config.info_popup_text)
         end,
     }
     or
@@ -549,10 +592,17 @@ function MultiInputDialog:getFieldContainer(field)
 
     --* for custom edit button add spacer between field and button:
     --* see ((MultiInputDialog#generateCustomEditButton)) for custom edit button generation:
-    --* handling example: ((XrayButtons#forItemEditorTypeSwitch)) > ((XrayDialogs#modifyXrayTypeFieldValue)) > ((XrayDialogs#switchFocusForXrayType))
+    --* handling example: ((XrayButtons#forItemEditorTypeSwitch)) > ((XrayDialogs#modifyXrayTypeFieldValue))
+    -- #((configure custom edit button))
     if field.custom_edit_button then
+
         self.custom_edit_button = field.custom_edit_button
         KOR.registry:set("xray_type_button", self.custom_edit_button)
+        -- for focus switch in ((XrayButtons#forItemEditorTypeSwitch)):
+        KOR.registry:set("xray_type_focusser", {
+            parent = self,
+            field = field,
+        })
 
         return CenterContainer:new{
             dimen = Geom:new{
@@ -590,6 +640,7 @@ function MultiInputDialog:getEditFieldButton(field)
             local input = field:getText()
             self:editField(input, field.input_type, field.hint, field.allow_newline, function(edited_text)
                 field:setText(edited_text)
+                self:onSwitchFocus(field)
             end)
         end,
     }

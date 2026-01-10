@@ -982,8 +982,11 @@ function XrayButtons:forItemEditorTypeSwitch(item_copy, button_props)
     local callback = function()
 
         --* make xray_type field focussed:
-        DX.d:switchFocusForXrayType("for_button_tap")
-        self:unfocusXrayButton()
+        --* this prop was set in ((configure custom edit button)):
+        local focusser = KOR.registry:getOnce("xray_type_focusser")
+        --- @type MultiInputDialog parent
+        local parent = focusser.parent
+        parent:onSwitchFocus(focusser.field)
 
         --* input fields were stored in Registry in ((MultiInputDialog#init)) > ((MultiInputDialog#registerInputFields)):
         local input_fields = KOR.registry:get("xray_item")
