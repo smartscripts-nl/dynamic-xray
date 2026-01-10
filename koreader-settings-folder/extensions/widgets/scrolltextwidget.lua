@@ -17,11 +17,9 @@ local Math = require("optmath")
 local TextBoxWidget = require("extensions/widgets/textboxwidget")
 local VerticalScrollBar = require("extensions/widgets/verticalscrollbar")
 local UIManager = require("ui/uimanager")
-local Input = require("extensions/modules/input")
 local Screen = Device.screen
 
 local table = table
-local tostring = tostring
 
 --- @class ScrollTextWidget
 local ScrollTextWidget = InputContainer:extend{
@@ -55,11 +53,10 @@ local ScrollTextWidget = InputContainer:extend{
     for_measurement_only = nil, --* When the widget is a one-off used to compute text height
 
     fullscreen = false,
+    key_events_module = nil,
 }
 
 function ScrollTextWidget:init()
-
-    local method = "ScrollTextWidget:init"
 
     self.text_widget = TextBoxWidget:new{
         text = self.text,
@@ -139,15 +136,29 @@ function ScrollTextWidget:init()
                 }
             end
         end
-        if Device:hasKeys() then
-            --* Menu key is for scrolling down one screen on Bigme:
-            self.key_events = {
-                ScrollDown = { { Input.group.PgFwdScrollText } },
-                ScrollUp = { { Input.group.PgBackScrollText } },
-                -- #((navigate up in ScrollTextWidget with shift+space))
-                ScrollUpWithShiftSpace = Input.group.ShiftSpace,
-            }
+        self:initHotkeys()
+    end
+end
+
+function ScrollTextWidget:initHotkeys()
+    KOR.keyevents:addHotkeysForScrollTextWidget(self, self.key_events_module)
+
+    --* this actions were set in ((KeyEvents#addHotkeysForXrayUIpageInfoViewer)) and other Xray modules:
+    local actions = KOR.registry:get("add_parent_hotkeys")
+    if not actions then
+        return
+    end
+
+    local count = #actions
+    local hotkey, label
+    for i = 1, count do
+        hotkey = actions[i].hotkey
+        label = actions[i].label
+        local callback = actions[i].callback
+        self["onParentActionCallback" .. i] = function()
+            return callback()
         end
+        self.key_events["ParentActionCallback" .. i] = hotkey
     end
 end
 

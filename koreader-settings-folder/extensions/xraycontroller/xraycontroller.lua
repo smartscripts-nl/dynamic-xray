@@ -242,6 +242,7 @@ end
 --* in event name format because of gesture:
 function XrayController:onShowPageNavigator()
     self:showPageNavigator()
+    return true
 end
 
 function XrayController:onReaderReady()

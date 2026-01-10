@@ -92,20 +92,20 @@ end
 
 --- @private
 function SettingsManager:addNewSettingsOrHelpTextsFromTemplate()
-    local settings_were_added = false
+    local settings_were_updated = false
     for key, props in pairs(self.parent.settings_template) do
         --* add missing settings from template:
         if not self.settings[key] then
             self.settings[key] = props
-            settings_were_added = true
+            settings_were_updated = true
 
             --* add updated explanations from template:
         elseif self.settings[key].explanation ~= props.explanation then
             self.settings[key].explanation = props.explanation
-            settings_were_added = true
+            settings_were_updated = true
         end
     end
-    return settings_were_added
+    return settings_were_updated
 end
 
 --- @private

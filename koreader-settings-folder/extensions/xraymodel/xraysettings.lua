@@ -97,7 +97,7 @@ function XraySettings:setUp()
 
         self.settings_template["tables_created"] = {
             value = false,
-            explanation = _("This settings should be set to true by DX after its tables have been created. You can set it to false to try to recreate the DX tables, in case of problems."),
+            explanation = _("This settings should be set to true by DX after its tables have been created.\n\nYou can set it to false to try to recreate the DX tables (after you manually deleted them from the database), in case of problems."),
             locked = 0,
         }
     end

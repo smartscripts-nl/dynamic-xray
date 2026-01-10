@@ -522,6 +522,7 @@ function XrayDialogs:showUiPageInfo(hits_info, headings, matches_count, extra_bu
         local subject = DX.s.ui_mode == "paragraph" and _(" in this paragraph") or _(" on this page")
         local target = DX.s.ui_mode == "paragraph" and _("the ENTIRE PAGE") or _("PARAGRAPHS")
         local new_trigger = DX.s.ui_mode == "paragraph" and _("the first line marked with a lightning icon") or _("a paragraph marked with a star")
+        local key_events_module = "XrayUIpageInfoViewer"
         --* the data below was populated in ((XrayUI#ReaderViewGenerateXrayInformation)):
         self.xray_ui_info_dialog = KOR.dialogs:textBox({
             title = matches_count_info .. subject,
@@ -540,9 +541,16 @@ function XrayDialogs:showUiPageInfo(hits_info, headings, matches_count, extra_bu
             after_load_callback = function(textviewer)
                 DX.u:onInfoPopupLoadShowToc(textviewer, headings)
             end,
+            hotkeys_configurator = function()
+                KOR.keyevents.addHotkeysForXrayUIpageInfoViewer(self, key_events_module)
+            end,
+            after_close_callback = function()
+                KOR.registry:unset("add_parent_hotkeys")
+                KOR.keyevents:unregisterSharedHotkeys(key_events_module)
+            end,
             -- #((inject xray list buttons))
             --* for special buttons like index and navigation arrows see ((TextViewer toc button)):
-            extra_button_position = 1,
+            extra_button_position = 2,
             extra_button = KOR.buttoninfopopup:forXrayList({
                 fgcolor = Blitbuffer.COLOR_GRAY_3,
                 callback = function()
@@ -551,7 +559,7 @@ function XrayDialogs:showUiPageInfo(hits_info, headings, matches_count, extra_bu
                     self:showList()
                 end
             }),
-            extra_button2_position = 2,
+            extra_button2_position = 1,
             extra_button2 = KOR.buttoninfopopup:forXrayShowMatchReliabilityExplanation({
                 icon_size_ratio = 0.58,
             }),
@@ -1123,6 +1131,73 @@ function XrayDialogs:switchFocusFieldLoop(input_fields, last_field_no, focus_fie
         end
     end
     input_fields[focus_field_no]:onFocus()
+end
+
+
+
+
+--- =================== HOTKEY CALLBACKS ================
+--* for usage by hotkeys defined in ((KeyEvents#addHotkeysForXrayUIpageInfoViewer))
+
+
+--- @param iparent XrayDialogs
+function XrayDialogs:execShowHelpInfoCallback(iparent)
+    return iparent:showReliabilityIndicatorsExplanation()
+end
+
+--- @param iparent XrayDialogs
+function XrayDialogs:execShowPageNavigatorCallback(iparent)
+    --? strange: many closings and nextTick needed to ensure the dialogs get closed and the navigator shown ; why don't we need this for XrayDialogs:execShowListCallback?:
+    UIManager:close(iparent.xray_ui_info_dialog)
+    UIManager:close(XrayDialogs.xray_ui_info_dialog)
+    UIManager:nextTick(function()
+        DX.pn:showNavigator()
+    end)
+    return true
+end
+
+--- @param iparent XrayDialogs
+function XrayDialogs:execShowListCallback(iparent)
+    UIManager:close(iparent.xray_ui_info_dialog)
+    iparent:showList()
+    return true
+end
+
+
+
+--- ================= HELP INFORMATION =================
+
+function XrayDialogs:showReliabilityIndicatorsExplanation()
+    KOR.dialogs:textBoxTabbed(1, {
+        title = _("Explanation for this dialog"),
+        is_standard_tabbed_dialog_lower = true,
+        tabs = {
+            {
+                tab = _("reliability icons"),
+                info = DX.tw:getMatchReliabilityExplanation()
+            },
+            {
+                tab = _("viewer buttons"),
+                info = _([[PAGE OR PARAGRAPH ICON TOP LEFT
+
+toggle between xray markers for entire page or per paragraph
+
+FOOTER ICONS
+
+* list: go to list of xray-items in current book
+* signpost: tappable index of items
+]])
+            },
+            {
+                tab = _("index buttons"),
+                info = _([[Tap on an item to jump to that.
+
+For editing an item: longpress the button and choose "Edit".
+]])
+            },
+        }
+    })
+    return true
 end
 
 function XrayDialogs:showHelp(initial_tab)

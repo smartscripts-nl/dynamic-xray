@@ -151,7 +151,7 @@ function HtmlBox:initHotkeys()
     KOR.keyevents:addHotkeysForHtmlBox(self, self.key_events_module)
 
     --! we need this call to restore hotkeys for the dialog every time a new tab gets activated (and therefore the dialog reloaded):
-    --* examples of hotkeys configurators: ((KeyEvents#setHotkeyForXrayPageNavigator)) and ((KeyEvents#addHotkeysForXrayItemViewer)):
+    --* examples of hotkeys configurators: ((KeyEvents#addHotkeysForXrayPageNavigator)) and ((KeyEvents#addHotkeysForXrayItemViewer)):
     if self.hotkeys_configurator then
         self.hotkeys_configurator()
     end

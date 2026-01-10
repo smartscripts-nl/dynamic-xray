@@ -323,8 +323,8 @@ function ButtonInfoPopup:forXrayPageNavigatorShowPageBrowser(props)
 	return KOR.buttonprops:set({
 		icon = "pages",
 		icon_size_ratio = 0.53,
-		info = _("pages icon | Show page currently shown in Pagina Navigator in a page browser popup.\n\n You can use this to quickly jump many page back or forth in Page Navigator, by tapping on a thumnail in the page browser."),
-		callback_label = _("show"),
+		info = T(_("pages icon | Show page currently shown in Pagina Navigator in a page browser popup.\n\n You can use this to quickly jump many page back or forth in Page Navigator, by tapping on a thumnail in the page browser.\n\nHotkey %1 B"), KOR.icons.arrow_bare),
+		callback_label = _("page browser"),
 		--! callback defined by calling module
 	}, props)
 end
@@ -353,38 +353,10 @@ function ButtonInfoPopup:forXrayShowMatchReliabilityExplanation(props)
 	return KOR.buttonprops:set({
 		icon = "info-slender",
 		icon_size_ratio = 0.5,
-		info = _("information icon | Show explanation of reliability icons for hits found."),
+		info = T(_("information icon | Show explanation of reliability icons for hits found.\n\nHotkey %1 I"), KOR.icons.arrow_bare),
 		callback_label = _("show"),
 		callback = function()
-			KOR.dialogs:textBoxTabbed(1, {
-				title = _("Explanation for this dialog"),
-				is_standard_tabbed_dialog_lower = true,
-				tabs = {
-					{
-						tab = _("reliability icons"),
-						info = DX.tw:getMatchReliabilityExplanation()
-					},
-					{
-						tab = _("viewer buttons"),
-						info = _([[PAGE OR PARAGRAPH ICON TOP LEFT
-
-toggle between xray markers for entire page or per paragraph
-
-FOOTER ICONS
-
-* list: go to list of xray-items in current book
-* signpost: tappable index of items
-]])
-					},
-					{
-						tab = _("index buttons"),
-						info = _([[Tap on an item to jump to that.
-
-For editing an item: longpress the button and choose "Edit".
-]])
-					},
-				}
-			})
+			return DX.d:showReliabilityIndicatorsExplanation()
 		end,
 	}, props)
 end

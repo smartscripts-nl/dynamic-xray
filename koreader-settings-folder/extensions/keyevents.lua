@@ -72,6 +72,26 @@ function KeyEvents:addHotkeysForHtmlBox(parent, key_events_module)
     self:addAdditionalHotkeysHtmlBox(parent)
 end
 
+--* here we add generic hotkeys for ScrollTextWidget, but a caller might already have added specific hotkeys for that module:
+--- @param parent ScrollTextWidget
+function KeyEvents:addHotkeysForScrollTextWidget(parent, key_events_module)
+    if not Device:hasKeys() then
+        return
+    end
+    if not key_events_module then
+        key_events_module = "ScrollTextWidget"
+    end
+
+    parent.key_events = {
+        ScrollDown = { { Input.group.PgFwdScrollText } },
+        ScrollUp = { { Input.group.PgBackScrollText } },
+        -- #((navigate up in ScrollTextWidget with shift+space))
+        ScrollUpWithShiftSpace = Input.group.ShiftSpace,
+        Test = { { "T" } },
+        Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } },
+    }
+end
+
 --- @param parent TextViewer
 function KeyEvents:addHotkeysForTextViewer(parent, key_events_module)
     if not Device:hasKeys() then
@@ -118,6 +138,11 @@ function KeyEvents:addHotkeysForTextViewer(parent, key_events_module)
 
     self:addExtraButtonsHotkeys(parent, 1)
     self:addAdditionalHotkeysTextViewer(parent)
+
+    --* examples of hotkeys configurators: ((KeyEvents#addHotkeysForXrayPageNavigator)) and ((KeyEvents#addHotkeysForXrayItemViewer)):
+    if parent.hotkeys_configurator then
+        parent.hotkeys_configurator()
+    end
 end
 
 --* information about available hotkeys in list shown in ((XrayDialogs#showItemViewer)) > ((XrayDialogs#showHelp)):
@@ -388,6 +413,13 @@ function KeyEvents.addHotkeysForXrayPageNavigator(key_events_module)
     })
     local actions = {
         {
+            label = "pagebrowser",
+            hotkey = { { "B" } },
+            callback = function()
+                return parent:execShowPageBrowserCallback(parent)
+            end,
+        },
+        {
             label = "edit",
             hotkey = { { "E" } },
             callback = function()
@@ -478,6 +510,42 @@ function KeyEvents.addHotkeysForXrayPageNavigator(key_events_module)
     --- SET HOTKEYS FOR HTMLBOXWIDGET INSTANCE
 
     --! this ensures that hotkeys will even be available when we are in a scrolling html box. These actions will be consumed in ((HtmlBoxWidget#initHotkeys)):
+    KOR.registry:set("add_parent_hotkeys", actions)
+end
+
+-- #((KeyEvents#addHotkeysForXrayUIpageInfoViewer))
+--* compare ((KeyEvents#addHotkeysForXrayItemViewer)) and see comment in ((HtmlBox#initHotkeys)):
+function KeyEvents.addHotkeysForXrayUIpageInfoViewer()
+    local parent = DX.d
+
+    --* no shared hotkeys here...
+    local actions = {
+        {
+            label = "list",
+            hotkey = { { "L" } },
+            callback = function()
+                return parent:execShowListCallback(parent)
+            end,
+        },
+        {
+            label = "pagenavigator",
+            hotkey = { { "V" } },
+            callback = function()
+                return parent:execShowPageNavigatorCallback(parent)
+            end,
+        },
+        {
+            label = "show_info",
+            hotkey = { { "I" } },
+            callback = function()
+                return parent:execShowHelpInfoCallback(parent)
+            end,
+        },
+    }
+
+    --- SET HOTKEYS FOR SCROLLTEXTWIDGET INSTANCE
+
+    --! this ensures that hotkeys will even be available when we are in a scrolling html box. These actions will be consumed in ((ScrollTextWidget#initHotkeys)):
     KOR.registry:set("add_parent_hotkeys", actions)
 end
 

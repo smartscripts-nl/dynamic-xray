@@ -1173,6 +1173,7 @@ function TextViewer:getDefaultButtons()
         },
     }
     if self.paragraph_headings then
+        --* additional buttons can be inserted via ((TextViewer#initButtons)), when it is configurated with optional props extra_button, extra_button2 and extra_button3:
         DX.b:forUiInfo(self, default_buttons)
     end
 
