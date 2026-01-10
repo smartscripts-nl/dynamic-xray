@@ -22,6 +22,8 @@ local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 
+local pairs = pairs
+
 --* DX.m and therefore DX.m:isPrivateDXversion not yet available here:
 local locked_xray_setting_message = IS_AUTHORS_DX_INSTALLATION and "Deze instelling door Dynamic Xray automatisch berekend en kan daarom niet worden aangepast door de gebruiker." or _("This setting will be automatically computed by Dynamic Xray and therefor the user cannot modify it.")
 
@@ -69,37 +71,38 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
         },
     },
+    settings_template_for_public_DX = {
+        database_filename = {
+            value = "bookinfo_cache.sqlite3",
+            explanation = _("Only change this setting if your database file not is called \"bookinfo_cache.sqlite3\". E.g. because it has a language code at the front, like \"PT_bookinfo_cache.sqlite3\"."),
+            locked = 0,
+        },
+        --* this setting controls database updates via ((XrayDataSaver#createAndModifyTables)) > ((XrayDataSaver#modifyTables)) > XrayDataSaver.scheme_alter_queries:
+        database_scheme_version = {
+            value = 0,
+            explanation = locked_xray_setting_message,
+            locked = 1,
+        },
+        prune_orphan_translations_version = {
+            value = 1,
+            explanation = locked_xray_setting_message,
+            locked = 1,
+        },
+        tables_created = {
+            value = false,
+            explanation = _("This settings should be set to true by DX after its tables have been created.\n\nYou can set it to false to try to recreate the DX tables (after you manually deleted them from the database), in case of problems."),
+            locked = 0,
+        },
+    },
 }
 
 function XraySettings:setUp()
 
     --* DX.m and therefore DX.m:isPrivateDXversion not yet available here:
     if not IS_AUTHORS_DX_INSTALLATION then
-
-        self.settings_template["database_filename"] = {
-            value = "bookinfo_cache.sqlite3",
-            explanation = _("Only change this setting if your database file not is called \"bookinfo_cache.sqlite3\". E.g. because it has a language code at the front, like \"PT_bookinfo_cache.sqlite3\"."),
-            locked = 0,
-        }
-
-        --* this setting controls database updates via ((XrayDataSaver#createAndModifyTables)) > ((XrayDataSaver#modifyTables)) > XrayDataSaver.scheme_alter_queries
-        self.settings_template["database_scheme_version"] = {
-            value = 0,
-            explanation = locked_xray_setting_message,
-            locked = 1,
-        }
-
-        self.settings_template["prune_orphan_translations_version"] = {
-            value = 1,
-            explanation = locked_xray_setting_message,
-            locked = 1,
-        }
-
-        self.settings_template["tables_created"] = {
-            value = false,
-            explanation = _("This settings should be set to true by DX after its tables have been created.\n\nYou can set it to false to try to recreate the DX tables (after you manually deleted them from the database), in case of problems."),
-            locked = 0,
-        }
+        for key, props in pairs(self.settings_template_for_public_DX) do
+            self.settings_template[key] = props
+        end
     end
 
     self.settings_manager = KOR.settingsmanager:new({
