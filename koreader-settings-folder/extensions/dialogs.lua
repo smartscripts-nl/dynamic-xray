@@ -5,7 +5,7 @@ local ButtonDialogTitle = require("extensions/widgets/buttondialogtitle")
 local ConfirmBox = require("extensions/widgets/confirmbox")
 local Font = require("extensions/modules/font")
 local HtmlBox = require("extensions/widgets/htmlbox")
-local InfoMessage = require("ui/widget/infomessage")
+local InfoMessage = require("extensions/widgets/infomessage")
 local InputDialog = require("extensions/widgets/inputdialog")
 local KOR = require("extensions/kor")
 local MultiInputDialog = require("extensions/widgets/multiinputdialog")
@@ -127,6 +127,7 @@ function Dialogs:htmlBoxTabbed(active_tab, args)
         args.window_size = "fullscreen"
     end
 
+    --! in case of "html" factory functions in args.tabs, here now a prop "html" (having generated content!) will have been added to args; also a title_tab_callbacks prop will be added, which is used to display the tab buttons in the TitleBar:
     self.tabbed_htmlbox = self:htmlBox(args)
     self:registerWidget(self.tabbed_htmlbox)
 
@@ -270,37 +271,27 @@ function Dialogs:prompt(args)
 end
 
 function Dialogs:closeOverlay()
-    if KOR.registry:get("fullscreen_dialog_active") then
-        return
-    end
-
     UIManager:close(self.overlay)
 end
 
 function Dialogs:closeAllDialogs()
-    KOR.descriptiondialog:closeAllInstances()
-    KOR.contextdialog:closeContextDialog()
     self:closeAllOverlays()
     self:closeAllWidgets()
     UIManager:closeAllWidgetsExceptMainScreen()
 end
 
 function Dialogs:closeAllOverlays()
-    if not self.overlay then
-        return
-    end
     UIManager:close(self.overlay)
     self.overlay = nil
 end
 
-function Dialogs:showOverlay(caller_hint, modal)
+function Dialogs:showOverlay(modal)
     if self.overlay then
         UIManager:close(self.overlay)
     end
     if modal == nil then
         modal = false
     end
-    local debug_overlay = false
     local config = {
         text = "",
         alignment = "center",
@@ -310,13 +301,6 @@ function Dialogs:showOverlay(caller_hint, modal)
         covers_fullscreen = true,
         modal = modal,
     }
-    if debug_overlay then
-        local text = "overlay"
-        if caller_hint then
-            text = text .. ": " .. caller_hint
-        end
-        config.text = text
-    end
     self.overlay = InfoMessage:new(config)
     UIManager:show(self.overlay)
 
@@ -421,6 +405,7 @@ function Dialogs:textBoxTabbed(active_tab, args)
 
     KOR.tabfactory:setTabButtonAndContent(self, "textBoxTabbed", active_tab, args)
 
+    --! in case of "info" factory functions in args.tabs, here now a prop "info" (having generated content!) will have been added to args; also a title_tab_callbacks prop will be added, which is used to display the tab buttons in the TitleBar:
     self.tabbed_textbox = self:textBox(args)
     self:registerWidget(self.tabbed_textbox)
 

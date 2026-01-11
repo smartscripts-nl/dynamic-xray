@@ -154,17 +154,20 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 ![08 Help info for buttons](images/08-help-info-for-buttons.png)
 08 Help info for buttons
 
-![09 Interface translations list](images/09-interface-translations-list.png)
-09 Interface translations list
+![09 Manage XraySettings in a tabbed interface.](images/09-manage-xray-settings.png)
+09 Manage XraySettings in a tabbed interface.
 
-![10 Translations navigator](images/10-translations-navigator.png)
-10 Translations navigator
+![10 Interface translations list](images/10-interface-translations-list.png)
+09b Interface translations list
 
-![11 Editing a translation](images/11-editing-a-translation.png)
-11 Editing a translation
+![10b Translations navigator](images/10b-translations-navigator.png)
+10b Translations navigator
 
-![12 Help info for translations editor](images/12-help-info-for-translations-editor.png)
-12 Help info for translations editor
+![10c Editing a translation](images/10c-editing-a-translation.png)
+10c Editing a translation
+
+![10d Help info for translations editor](images/10d-help-info-for-translations-editor.png)
+10d Help info for translations editor
 
 ## DX Settings menu
 

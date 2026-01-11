@@ -2,12 +2,14 @@
 local require = require
 
 local ButtonDialogTitle = require("extensions/widgets/buttondialogtitle")
+local ButtonTable = require("extensions/widgets/buttontable")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local DataStorage = require("datastorage")
 local Device = require("device")
 local KOR = require("extensions/kor")
 local LuaSettings = require("luasettings")
-local Menu = require("ui/widget/menu")
+local Menu = require("extensions/widgets/menu")
+local Size = require("extensions/modules/size")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
@@ -17,8 +19,9 @@ local T = require("ffi/util").template
 local DX = DX
 local G_reader_settings = G_reader_settings
 local has_text = has_text
+local math_floor = math.floor
 local pairs = pairs
-local table = table
+local table_insert = table.insert
 local tonumber = tonumber
 local tostring = tostring
 local type = type
@@ -26,7 +29,10 @@ local type = type
 local count
 
 --- @class SettingsManager
+--- @field parent XraySettings
 local SettingsManager = WidgetContainer:new{
+    active_tab = nil,
+    filtered_settings = {},
     items_per_page = G_reader_settings:readSetting("items_per_page") or 14,
     item_table = nil,
     list_title = nil,
@@ -47,22 +53,36 @@ local SettingsManager = WidgetContainer:new{
         },
     }
     ]]
+    --* set by caller:
+    tab_labels = nil,
 }
 
 --! don't call this method "init", because then ((KOR#initExtensions)) could call this method prematurely:
-function SettingsManager:setUp()
-    self.settings_db = LuaSettings:open(DataStorage:getSettingsDir() .. "/settings_manager.lua")
-    if self.settings_db then
-        self.settings = self.settings_db:readSetting(self.settings_index)
+function SettingsManager:setUp(tab_labels)
+    if not self.tab_labels then
+        self.tab_labels = tab_labels
+        self.settings_db = LuaSettings:open(DataStorage:getSettingsDir() .. "/settings_manager.lua")
+        if self.settings_db then
+            if not KOR.tables then
+                KOR.tables = require("extensions/tables")
+            end
+            self.settings = self.settings_db:readSetting(self.settings_index)
+        end
+        self:updateSettingsFromTemplate()
     end
-
-    self:updateSettingsFromTemplate()
 
     local locked_indicator
     for key, props in pairs(self.settings) do
         self.parent[key] = props.value
         locked_indicator = props.locked == 1 and " " .. KOR.icons.lock_bare or ""
-        table.insert(self.settings_for_menu, { key = key, value = props.value, explanation = props.explanation, locked = props.locked, options = props.options, text = key .. ": " .. tostring(props.value) .. locked_indicator })
+        table_insert(self.settings_for_menu, {
+            key = key,
+            value = props.value,
+            explanation = props.explanation,
+            locked = props.locked,
+            options = props.options,
+            text = key .. ": " .. tostring(props.value) .. locked_indicator }
+        )
     end
 end
 
@@ -120,17 +140,29 @@ function SettingsManager:removeSettingsFromTemplate()
     return settings_were_deleted
 end
 
-function SettingsManager:show()
+function SettingsManager:showParentDialog()
+    self.parent.showSettingsManager(self.active_tab, self.tab_labels)
+end
+
+function SettingsManager:getTabContent(caller_method, active_tab)
+    self.active_tab = active_tab
+
+    local dimen = Screen:getSize()
     self.settings_dialog = CenterContainer:new{
-        dimen = Screen:getSize(),
+        dimen = dimen,
         modal = true,
     }
+    self.width = math_floor(dimen.w * 0.8)
     self.settings_menu = Menu:new{
+        title_submenu_buttontable = self:generateTabButtons(caller_method),
         show_parent = self.ui,
-        fullscreen = true,
-        covers_fullscreen = true,
-        is_borderless = true,
-        is_popout = false,
+        height = math_floor(dimen.h * 0.8),
+        width = self.width,
+        is_borderless = false,
+        is_popout = true,
+        fullscreen = false,
+        with_bottom_line = true,
+        --no_overlay = true,
         perpage = self.items_per_page,
         top_buttons_left = {
             {
@@ -149,13 +181,39 @@ If you longpress a setting, you'll see an explanation of that setting.]]), self.
         onMenuHold = self.onMenuHoldSettings,
         _manager = self,
     }
-    table.insert(self.settings_dialog, self.settings_menu)
+    table_insert(self.settings_dialog, self.settings_menu)
     self.settings_menu.close_callback = function()
         UIManager:close(self.settings_dialog)
     end
     self:updateItemTable()
-    self.settings_menu:switchItemTable(self.list_title .. ": " .. _("settings"), self.item_table)
-    UIManager:show(self.settings_dialog)
+    self.settings_menu:switchItemTable(self.list_title .. ": instellingen", self.item_table)
+
+    return self.settings_dialog
+end
+
+--- @private
+function SettingsManager:generateTabButtons(caller_method)
+    local buttons = {{}}
+    for i = 1, #self.tab_labels do
+        table_insert(buttons[1], {
+            text = i == self.active_tab and KOR.icons.active_tab_bare .. self.tab_labels[i] or self.tab_labels[i],
+            callback = function()
+                local current = i
+                --* points to ((XraySettings#showSettingsManager)):
+                caller_method(current, self.tab_labels)
+            end,
+        })
+    end
+
+    return ButtonTable:new{
+        width = self.width - 2 * Size.margin.default,
+        button_font_face = "redhat",
+        button_font_size = 17,
+        buttons = buttons,
+        zero_sep = true,
+        show_parent = self,
+        button_font_weight = "normal",
+    }
 end
 
 --- @private
@@ -178,10 +236,13 @@ function SettingsManager:updateItemTable()
     self:sortMenuItems()
     self.item_table = {}
     count = #self.settings_for_menu
-    if count > 0 then
         local item
         for nr = 1, count do
             local setting = self.settings_for_menu[nr]
+        if
+            (self.active_tab == 1 and setting.locked == 0)
+            or (self.active_tab == 2 and setting.locked == 1)
+        then
             setting.type = type(setting.value)
             local current_nr = nr
             item = {
@@ -192,14 +253,14 @@ function SettingsManager:updateItemTable()
                 deletable = false,
                 callback = function()
                     if setting.locked == 1 then
-                        self:show()
+                        self:showParentDialog()
                         KOR.messages:notify(_("this setting cannot be modified by the user..."))
                         return
                     end
                     self:editSetting(setting, current_nr)
                 end
             }
-            table.insert(self.item_table, item)
+            table_insert(self.item_table, item)
         end
     end
 end
@@ -222,7 +283,7 @@ function SettingsManager:chooseSetting(key, current_nr, current_value, options, 
     for i = 1, count do
         marker = options[i] == current_value and KOR.icons.active_tab_bare or ""
         local current = i
-        table.insert(buttons[1], {
+        table_insert(buttons[1], {
             text = marker .. tostring(options[current]),
             font_bold = false,
             callback = function()
@@ -230,14 +291,15 @@ function SettingsManager:chooseSetting(key, current_nr, current_value, options, 
                 self:saveSetting(key, options[current])
                 self:changeMenuSetting(key, options[current], current_nr)
                 KOR.messages:notify(_("setting ") .. key .. _(" modified to ") .. tostring(options[current]), 4)
+                self:showParentDialog()
             end
         })
     end
-    table.insert(buttons[1], {
+    table_insert(buttons[1], {
         icon = "back",
         callback = function()
             UIManager:close(self.option_chooser)
-            self:show()
+            self:showParentDialog()
         end
     })
     self.option_chooser = ButtonDialogTitle:new{
@@ -276,7 +338,7 @@ function SettingsManager:showPromptForNewSetting(key, value, current_nr, itype, 
             self:handleNewValue(new_value, key, current_nr, itype)
         end,
         cancel_callback = function()
-            self:show()
+            self:showParentDialog()
         end,
     })
 end
@@ -299,13 +361,14 @@ function SettingsManager:handleNewValue(new_value, key, current_nr, itype)
         is_valid = true
     end
     if not is_valid then
-        self:show()
+        self:showParentDialog()
         KOR.messages:notify(_("you entered an invalid value..."), 4)
         return
     end
     self:saveSetting(key, new_value)
     self:changeMenuSetting(key, new_value, current_nr)
     KOR.messages:notify(_("settting ") .. key .. _(" modified to ") .. tostring(new_value), 4)
+    self:showParentDialog()
 end
 
 --- @private

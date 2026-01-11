@@ -44,6 +44,7 @@ local has_text = has_text
 local math = math
 local next = next
 local table = table
+local table_insert = table.insert
 local tonumber = tonumber
 local string = string
 local type = type
@@ -170,7 +171,8 @@ function MenuItem:init()
     if self.infont_size > max_font_size then
         self.infont_size = max_font_size
     end
-    if not self.single_line and not self.multilines_forced and not self.multilines_show_more_text then
+    if not self.single_line and not self.multilines_forced
+            and not self.multilines_show_more_text then
         --* For non single line menus (File browser, Bookmarks), if the
         --* user provided font size is large and would not allow showing
         --* more than one line in our item height, just switch to single
@@ -200,6 +202,7 @@ function MenuItem:init()
     }
 
     --* Font for main text (may have its size decreased to make text fit)
+    --* self.font = smallinfofont
     self.face = Font:getFace(self.font, self.font_size)
     --* Font for "mandatory" on the right
     self.info_face = Font:getFace(self.infont, self.infont_size)
@@ -461,15 +464,15 @@ function MenuItem:init()
         HorizontalSpan:new{ width = self.items_padding or Size.padding.fullscreen },
     }
     if self.shortcut then
-        table.insert(hgroup, ItemShortCutIcon:new{
+        table_insert(hgroup, ItemShortCutIcon:new{
             dimen = shortcut_icon_dimen,
             key = self.shortcut,
             style = self.shortcut_style,
         })
-        table.insert(hgroup, HorizontalSpan:new{ width = Size.span.horizontal_default })
+        table_insert(hgroup, HorizontalSpan:new{ width = Size.span.horizontal_default })
     end
-    table.insert(hgroup, self._underline_container)
-    table.insert(hgroup, HorizontalSpan:new{ width = Size.padding.fullscreen })
+    table_insert(hgroup, self._underline_container)
+    table_insert(hgroup, HorizontalSpan:new{ width = Size.padding.fullscreen })
 
     self[1] = FrameContainer:new{
         bordersize = 0,
@@ -614,6 +617,7 @@ local Menu = FocusManager:extend{
     show_parent = nil,
 
     no_title = false,
+    no_overlay = false,
     title = "Geen titel",
     subtitle = nil,
     show_path = nil, --* path in titlebar subtitle
@@ -674,6 +678,7 @@ local Menu = FocusManager:extend{
     footer_buttons_left = nil,
     --* max right footer buttons is 5:
     footer_buttons_right = nil,
+    use_small_footer_buttons_spacer = false,
 
     --* close_callback is a function, which is executed when menu is closed
     --* it is usually set by the widget which creates the menu
@@ -769,13 +774,14 @@ function Menu:init(restore_dialog)
         if self.no_close_button then
             self.has_close_button = false
         end
+
         local title_bar_config = {
             width = self.dimen.w,
             fullscreen = self.fullscreen,
             align = "center",
-            is_popout_dialog = self.is_popout,
             for_collection = self.collection,
             with_bottom_line = self.with_bottom_line,
+            bottom_line_thickness = self.with_bottom_line and Size.line.thick or Size.line.thin,
             bottom_line_color = self.bottom_line_color,
             bottom_line_h_padding = self.bottom_line_h_padding,
             title = self.title,
@@ -783,6 +789,7 @@ function Menu:init(restore_dialog)
             title_multilines = self.title_multilines,
             title_shrink_font_to_fit = true,
             subtitle = self.show_path and BD.directory(filemanagerutil.abbreviate(self.path)) or self.subtitle,
+            is_popout_dialog = self.is_popout,
             subtitle_truncate_left = self.show_path,
             subtitle_fullwidth = self.show_path or self.subtitle,
             no_close_button = self.no_close_button,
@@ -891,7 +898,7 @@ function Menu:init(restore_dialog)
             --* @translators First group is the standard range for alphabetic searches, second group is a page number range
             return T(_("(a - z) or (1 - %1)"), self.page_num)
         end
-        table.insert(buttons, 1, {
+        table_insert(buttons, 1, {
             KOR.buttoninfopopup:forMenuSearchItem({
                 callback = function()
                     self.page_info_text:closeInputDialog()
@@ -921,28 +928,8 @@ function Menu:init(restore_dialog)
                 end,
             }),
         })
-        table.insert(buttons, {
-            KOR.buttoninfopopup:forRecentAdditions({
-                callback = function()
-                    self.page_info_text:closeInputDialog()
-                    KOR.collection:showTiled("Aanwinsten")
-                end,
-            }),
-            KOR.buttoninfopopup:forLeesplan({
-                callback = function()
-                    self.page_info_text:closeInputDialog()
-                    KOR.collection:showTiled("Leesplan")
-                end,
-            }),
-            KOR.buttoninfopopup:forNextBooksToRead({
-                callback = function()
-                    self.page_info_text:closeInputDialog()
-                    KOR.collection:showTiled("Eerstvolgend")
-                end,
-            }),
-        })
     else
-        table.insert(buttons[1], 2, KOR.buttoninfopopup:forMenuGotoRandomPage({
+        table_insert(buttons[1], 2, KOR.buttoninfopopup:forMenuGotoRandomPage({
             callback = function()
                 local page = math.random(1, self.page_num)
                 self:onGotoPage(page)
@@ -1125,8 +1112,8 @@ function Menu:init(restore_dialog)
     KOR.dialogs:registerWidget(self)
     --* only show overlay for non fullscreen dialogs; this prevents a lot of ghosts of older overlays which we couldn't close:
     -- #((show overlay for non fullscreen menus))
-    if not restore_dialog and not self.fullscreen then
-        KOR.dialogs:showOverlayReloaded()
+    if not restore_dialog and not self.fullscreen and not self.no_overlay then
+        KOR.dialogs:showOverlay()
     end
 end
 
@@ -1291,9 +1278,9 @@ function Menu:updateItems(select_number)
                 items_padding = self.items_padding,
                 handle_hold_on_hold_release = self.handle_hold_on_hold_release,
             }
-            table.insert(self.item_group, item_tmp)
+            table_insert(self.item_group, item_tmp)
             --* this is for focus manager
-            table.insert(self.layout, {item_tmp})
+            table_insert(self.layout, {item_tmp})
         end --* if i <= self.item_table
     end --* for c=1, self.perpage
 
@@ -1302,7 +1289,7 @@ function Menu:updateItems(select_number)
         self.title_bar:setSubTitle(BD.directory(filemanagerutil.abbreviate(self.path)))
     end
     -- #((menu add titlebar))
-    table.insert(self.layout, self.title)
+    table_insert(self.layout, self.title)
     self.old_dimen = old_dimen
     self:refreshDialog()
 end
@@ -1468,7 +1455,7 @@ function Menu:onMenuSelect(item)
     else
         --* save menu title for later resume
         self.item_table.title = self.title
-        table.insert(self.item_table_stack, self.item_table)
+        table_insert(self.item_table_stack, self.item_table)
         self:switchItemTable(item.text, item.sub_item_table)
     end
     return true
@@ -1716,7 +1703,7 @@ function Menu.itemTableFromTouchMenu(t)
         else
             item.sub_item_table = v
         end
-        table.insert(item_t, item)
+        table_insert(item_t, item)
     end
     return item_t
 end
@@ -1794,32 +1781,32 @@ end
 --* insert footer buttons; additionally optionally inserts a filter button at the left end and an inverted page keys indicator at the right end:
 function Menu:injectFooterButtons(footer_nav_elems)
 
-    local nav_spacer = self.page_info_spacer
+    local nav_spacer = self.use_small_footer_buttons_spacer and self.page_info_spacer_small or self.page_info_spacer
     local button, left_padding_arg, right_padding_arg
     if self.footer_buttons_left then
         count = #self.footer_buttons_left
         for i = 1, count do
             left_padding_arg = not self.filter and i == 1 and "is_first_button_left"
             button = self:instantiateButton(self.footer_buttons_left[i], left_padding_arg)
-            table.insert(footer_nav_elems, 1, button)
-            table.insert(footer_nav_elems, 2, nav_spacer)
+            table_insert(footer_nav_elems, 1, button)
+            table_insert(footer_nav_elems, 2, nav_spacer)
         end
     end
     if self.footer_buttons_right then
         count = #self.footer_buttons_right
         for i = 1, count do
             right_padding_arg = i == count and "is_last_button_right"
-            table.insert(footer_nav_elems, nav_spacer)
+            table_insert(footer_nav_elems, nav_spacer)
             button = self:instantiateButton(self.footer_buttons_right[i], nil, right_padding_arg)
-            table.insert(footer_nav_elems, button)
+            table_insert(footer_nav_elems, button)
         end
     end
 
     if self.filter then
         local f = self.filter
         local filter_button = self:getFilterButton(f.callback, f.reset_callback, f.hold_callback)
-        table.insert(footer_nav_elems, 1, nav_spacer)
-        table.insert(footer_nav_elems, 1, filter_button)
+        table_insert(footer_nav_elems, 1, nav_spacer)
+        table_insert(footer_nav_elems, 1, filter_button)
     end
 end
 

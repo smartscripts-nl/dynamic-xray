@@ -1,10 +1,10 @@
 
---local require = require
+local require = require
 
 local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 
-local table = table
+local table_insert = table.insert
 local type = type
 
 --* see ((TABS)) for more info:
@@ -14,7 +14,7 @@ local TabFactory = WidgetContainer:extend{
     tabs_as_table = G_reader_settings:readSetting("tabs_as_table"),
 }
 
---- @param tab_method string "htmlBoxTabbed" or "textBoxTabbed"
+--- @param tab_method string "htmlBoxTabbed" or "textBoxTabbed":
 function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
 
     if not active_tab then
@@ -22,7 +22,7 @@ function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
     end
     args.active_tab = active_tab
 
-    --* for usage in resp. ((Dialogs#htmlBox)) and ((Dialogs#textBox)):
+    --* for usage with resp. ((Dialogs#htmlBox)), ((Dialogs#textBox)):
     local content_prop = tab_method == "htmlBoxTabbed" and "html" or "info"
     local tab_content --* can be html or plain text
 
@@ -30,7 +30,7 @@ function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
         args.tabs_as_table = true
         args.tab_buttons_font = "x_smallinfofont"
         args.tab_buttons_font_size = 14
-        args.tab_buttons_font_bold = false
+        args.tab_buttons_font_weight = "normal"
     end
 
     local count
@@ -52,7 +52,7 @@ function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
                     args.other_factory = nil
                 end
             end
-            table.insert(buttons[1], {
+            table_insert(buttons[1], {
                 text = label,
                 --* active tab will be marked with bold and slightly bigger text in ((Button#generateTextLabel)) > ((mark active tab bold)):
                 is_active_tab = current == active_tab,
@@ -61,6 +61,7 @@ function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
                 is_target_tab = args.tabs[current].is_target_tab,
                 text_font_face = args.tab_buttons_font,
                 text_font_size = args.tab_buttons_font_size,
+                text_font_weight = args.tab_buttons_font_weight,
                 text_font_bold = args.tab_buttons_font_bold,
                 font_bold = args.tab_buttons_font_bold,
                 fgcolor = active_tab == current and KOR.colors.active_tab or KOR.colors.inactive_tab,
@@ -107,11 +108,11 @@ function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
                 tab_label = " •" .. tab_label
             end
 
-            table.insert(title_tab_buttons_left, tab_label)
+            table_insert(title_tab_buttons_left, tab_label)
             if i == active_tab then
                 tab_content = type(args.tabs[i][content_prop]) == "function" and args.tabs[i][content_prop]() or args.tabs[i][content_prop]
             end
-            table.insert(title_tab_callbacks, function()
+            table_insert(title_tab_callbacks, function()
                 if i == active_tab then
                     return
                 end

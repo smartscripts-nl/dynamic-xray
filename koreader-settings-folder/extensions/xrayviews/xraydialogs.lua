@@ -529,6 +529,7 @@ function XrayDialogs:showUiPageInfo(hits_info, headings, matches_count, extra_bu
             info = info,
             fullscreen = true,
             covers_fullscreen = true,
+            modal = false,
             top_buttons_left = DX.b:forUiInfoTopLeft(target, new_trigger, self),
             paragraph_headings = headings,
             fixed_face = Font:getFace("x_smallinfofont", 19),

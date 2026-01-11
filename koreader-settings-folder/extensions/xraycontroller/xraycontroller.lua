@@ -492,7 +492,7 @@ function XrayController:addToMainMenu(menu_items)
             {
                 text = KOR.icons.xray_settings_bare .. DX.d:getControllerEntryName(" Settings"),
                 callback = function()
-                    DX.s:showSettingsManager()
+                    DX.s.showSettingsManager()
                 end
             },
         }

@@ -19,6 +19,7 @@ These modules are initialized in ((initialize Xray modules)) and ((XrayControlle
 local require = require
 
 local KOR = require("extensions/kor")
+local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 
@@ -77,7 +78,7 @@ local XraySettings = WidgetContainer:new{
             explanation = _("Only change this setting if your database file not is called \"bookinfo_cache.sqlite3\". E.g. because it has a language code at the front, like \"PT_bookinfo_cache.sqlite3\"."),
             locked = 0,
         },
-        --* this setting controls database updates via ((XrayDataSaver#createAndModifyTables)) > ((XrayDataSaver#modifyTables)) > XrayDataSaver.scheme_alter_queries:
+        --* this setting controls database scheme modifications via ((XrayDataSaver#createAndModifyTables)) > ((XrayDataSaver#modifyTables)) > XrayDataSaver.scheme_alter_queries:
         database_scheme_version = {
             value = 0,
             explanation = locked_xray_setting_message,
@@ -93,6 +94,11 @@ local XraySettings = WidgetContainer:new{
             explanation = _("This settings should be set to true by DX after its tables have been created.\n\nYou can set it to false to try to recreate the DX tables (after you manually deleted them from the database), in case of problems."),
             locked = 0,
         },
+    },
+    tabbed_interface = nil,
+    tab_labels = {
+        _("general"),
+        _("system"),
     },
 }
 
@@ -110,11 +116,29 @@ function XraySettings:setUp()
         parent = self,
         settings_index = "xray_settings",
     })
-    self.settings_manager:setUp()
+    self.settings_manager:setUp(self.tab_labels)
 end
 
-function XraySettings:showSettingsManager()
-    self.settings_manager:show()
+-- #((XraySettings#showSettingsManager))
+function XraySettings.showSettingsManager(active_tab, tab_labels)
+
+    local self = DX.s
+    if self.tabbed_interface then
+        UIManager:close(self.tabbed_interface)
+        self.tabbed_interface = nil
+    end
+    if not active_tab then
+        active_tab = 1
+    end
+    if not tab_labels then
+        tab_labels = {
+            "algemeen",
+            "systeem",
+        }
+    end
+    self.tabbed_interface = self.settings_manager:getTabContent(self.showSettingsManager, active_tab, tab_labels)
+
+    UIManager:show(self.tabbed_interface)
 end
 
 function XraySettings:toggleSetting(key, alternatives)

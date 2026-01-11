@@ -336,7 +336,7 @@ function XrayButtons:forUiInfoTopLeft(target, new_trigger, parent)
             callback = function()
                 UIManager:close(parent.xray_ui_info_dialog)
                 parent.xray_ui_info_dialog = nil
-                DX.s:showSettingsManager()
+                DX.s.showSettingsManager()
             end
         }),
     }
@@ -755,7 +755,7 @@ function XrayButtons:forItemViewerTopLeft(parent)
             callback = function()
                 UIManager:close(parent.item_viewer)
                 parent.item_viewer = nil
-                DX.s:showSettingsManager()
+                DX.s.showSettingsManager()
             end
         }),
     }
@@ -1337,7 +1337,7 @@ function XrayButtons:forListTopLeft(parent)
             callback = function()
                 UIManager:close(parent.xray_items_chooser_dialog)
                 parent.xray_items_chooser_dialog = nil
-                DX.s:showSettingsManager()
+                DX.s.showSettingsManager()
             end
         }),
     }

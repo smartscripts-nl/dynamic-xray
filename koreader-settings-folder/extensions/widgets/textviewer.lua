@@ -134,6 +134,7 @@ local TextViewer = InputContainer:extend{
     parent = nil,
     prev_item_callback = nil,
     separator = nil,
+    --* this table will be populated by ((TabFactory#setTabButtonAndContent)):
     tabs_table_buttons = nil,
     text = nil,
     text_margin = Size.margin.small,

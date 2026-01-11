@@ -38,8 +38,6 @@ local pairs = pairs
 local table = table
 local type = type
 
-local count, count2
-
 -- Inject scroll page method for ScrollHtmlWidget
 ScrollHtmlWidget.scrollToPage = function(self, page_num)
     if page_num > self.htmlbox_widget.page_count then
@@ -83,24 +81,19 @@ end
 
 --- @class HtmlBox
 local HtmlBox = InputContainer:extend{
-    height = nil,
-    images = nil,
-    width = nil,
-
-    --* Static class member, holds a ref to the currently opened widgets (in instantiation order).
-    window_list = {},
-
     active_tab = nil,
-    after_close_callback = nil,
     additional_key_events = nil,
+    after_close_callback = nil,
     align = "center",
-    boox_go_10_height_correction = 5,
     buttons_table = nil,
     content_padding = nil,
-    key_events_module = nil,
+    fullscreen = false,
+    height = nil,
     html = nil,
     info_panel_buttons = nil,
     info_panel_text = nil,
+    key_events_module = nil,
+    modal = true,
     next_item_callback = nil,
     no_buttons_row = false,
     --* to inform the parent about a newly activated tab, via ((TabNavigator#broadcastActivatedTab)):
@@ -110,15 +103,17 @@ local HtmlBox = InputContainer:extend{
     prev_item_callback = nil,
     side_buttons = nil,
     side_buttons_width = Screen:scaleBySize(135),
+    --* this table will be populated by ((TabFactory#setTabButtonAndContent)):
     tabs_table_buttons = nil,
     title = nil,
     title_alignment = "left",
     title_tab_buttons_left = nil,
     title_tab_callbacks = nil,
     top_buttons_left = nil,
+    width = nil,
+    --* Static class member, holds a ref to the currently opened widgets (in instantiation order).
+    window_list = {},
     window_size = "medium", --* or fullscreen, max, large, small, or table with props h and w, or highcenter
-
-    modal = true,
 }
 
 function HtmlBox:init()
@@ -374,27 +369,6 @@ function HtmlBox:onCloseWidget()
     end
     self.additional_key_events = nil
 
-    --* Our TextBoxWidget/HtmlBoxWidget/TextWidget/ImageWidget are proper child widgets,
-    --* so this event will propagate to 'em, and they'll free their resources.
-
-    --* What's left is stuff that isn't directly in our widget tree...
-    if self.images_cleanup_needed then
-        --logger.dbg("freeing lookup results images blitbuffers")
-        count = #self.results
-        local r, im
-        for i = 1, count do
-            r = self.results[i]
-            if r.images and #r.images > 0 then
-                count2 = #r.images
-                for z = 1, count2 do
-                    im = r.images[z]
-                    if im.bb then im.bb:free() end
-                    if im.hi_bb then im.hi_bb:free() end
-                end
-            end
-        end
-    end
-
     --* Drop our ref from the static class member
     for i = #HtmlBox.window_list, 1, -1 do
         local window = HtmlBox.window_list[i]
@@ -521,8 +495,6 @@ function HtmlBox:onForwardingPanRelease(arg, ges)
     --* We can forward onMovablePanRelease() does enough checks
     return self.movable:onMovablePanRelease(arg, ges)
 end
-
---* ================= SMARTSCRIPTS ===================
 
 function HtmlBox:onReadNextItem()
     if not self.next_item_callback then
@@ -1193,7 +1165,9 @@ end
 
 --- @private
 function HtmlBox:setModuleProps()
-    if self.window_size == "middlebox" then
+    if self.fullscreen then
+        self.window_size = "fullscreen"
+    elseif self.window_size == "middlebox" then
         self.window_size = {
             w = Screen:getWidth() / 2,
             h = Screen:getHeight() / 2 + Screen:scaleBySize(20),
@@ -1211,7 +1185,6 @@ function HtmlBox:setModuleProps()
     if font_size_alt < 8 then
         font_size_alt = 8
     end
-    self.image_alt_face = Font:getFace("cfont", font_size_alt)
     self.is_fullscreen = self.window_size == "fullscreen"
 
     --* Scrollable offsets of the various showResults* menus and submenus,

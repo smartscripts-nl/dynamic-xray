@@ -784,7 +784,7 @@ end
 --- @param iparent XrayPageNavigator
 function XrayPageNavigator:execSettingsCallback(iparent)
     iparent:closePageNavigator()
-    DX.s:showSettingsManager()
+    DX.s.showSettingsManager()
     return true
 end
 

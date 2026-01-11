@@ -33,7 +33,7 @@ local DX = DX
 local G_reader_settings = G_reader_settings
 local math = math
 local pairs = pairs
-local table = table
+local table_insert = table.insert
 local type = type
 
 --- @class TitleBar
@@ -56,7 +56,7 @@ local TitleBar = OverlapGroup:extend{
     --* by default: single line, truncated if overflow
     --* the default could be made dependant on self.fullscreen
     title_multilines = false, --* multilines if overflow
-    title_shrink_font_to_fit = false, --* reduce font size so that single line text fits
+    title_shrink_font_to_fit = true, --* reduce font size so that single line text fits
 
     subtitle = nil,
     subtitle_face = Font:getFace("xx_smallinfofont"),
@@ -206,11 +206,6 @@ function TitleBar:init()
         self:injectSideContainers("right")
     end
 
-    --[[if not self.has_top_buttons_left and self.has_top_buttons_right then
-        local filler_width = self.right_buttons_container:getSize().w
-        table.insert(self.left_buttons_container, HorizontalGroup:new{HorizontalSpan:new{ width = filler_width }})
-    end]]
-
     if self._initial_re_init_needed then
         --* We have computed all the self._initial_ metrics needed.
         self._initial_re_init_needed = nil
@@ -219,7 +214,7 @@ function TitleBar:init()
         return
     end
 
-    table.insert(self, self.main_container)
+    table_insert(self, self.main_container)
 
     if not self.title_bar_height then
         self.title_bar_height = self.main_container:getSize().h
@@ -451,8 +446,8 @@ function TitleBar:injectTitle()
             self.title_widget = TextWidget:new{
                 text = self.title,
                 face = title_face,
-                alignment = self.align,
                 padding = 0,
+                alignment = self.align,
                 lang = self.lang,
                 --* truncate if not self.title_shrink_font_to_fit:
                 max_width = not self.title_shrink_font_to_fit and title_max_width,
@@ -536,14 +531,14 @@ function TitleBar:injectTitle()
         local title_elems = {
             HorizontalSpan:new{ width = self.top_left_buttons_reserved_width + self.title_h_padding },
         }
-        table.insert(title_elems, self.title_widget)
+        table_insert(title_elems, self.title_widget)
         self.inner_title_group = HorizontalGroup:new(title_elems)
-        table.insert(self.title_group, self.inner_title_group)
+        table_insert(self.title_group, self.inner_title_group)
     else
-        table.insert(self.title_group, self.title_widget)
+        table_insert(self.title_group, self.title_widget)
     end
     if self.subtitle_widget then
-        table.insert(self.subtitle_group, VerticalSpan:new{ width = self.title_subtitle_v_padding })
+        table_insert(self.subtitle_group, VerticalSpan:new{ width = self.title_subtitle_v_padding })
         if self.align == "left" then
             local span_width = self.title_h_padding
             if not self.subtitle_fullwidth then
@@ -553,9 +548,9 @@ function TitleBar:injectTitle()
                 HorizontalSpan:new{ width = span_width },
                 self.subtitle_widget,
             }
-            table.insert(self.subtitle_group, self.inner_subtitle_group)
+            table_insert(self.subtitle_group, self.inner_subtitle_group)
         else
-            table.insert(self.subtitle_group, self.subtitle_widget)
+            table_insert(self.subtitle_group, self.subtitle_widget)
         end
     end
 
@@ -570,7 +565,7 @@ function TitleBar:injectTitle()
     end
 
     --- title:
-    table.insert(self.title_group_vertically_centered, self.title_group)
+    table_insert(self.title_group_vertically_centered, self.title_group)
 
     self.center_container = VerticalGroup:new{
         align = self.align,
@@ -578,11 +573,11 @@ function TitleBar:injectTitle()
         self.title_group_vertically_centered,
     }
     if self.align == "left" and self.subtitle_widget then
-        table.insert(self.center_container, self.subtitle_group)
+        table_insert(self.center_container, self.subtitle_group)
     end
 
     if self.align == "center" and self.subtitle_widget then
-        table.insert(self.center_container, self.subtitle_widget)
+        table_insert(self.center_container, self.subtitle_widget)
         --- we need this extra CenterContainer as wrapper to make sure that title and subtitle are nicely centered as one module:
         self.center_container = CenterContainer:new{
             dimen = Geom:new{ w = math.max(self.title_width, self.subtitle_width), h = self.title_height },
@@ -614,7 +609,7 @@ function TitleBar:injectTitle()
     --! at least needed for Leeslijsten!:
     self.titlebar_height = self.center_container:getSize().h
 
-    table.insert(self.main_container, self.center_container)
+    table_insert(self.main_container, self.center_container)
 end
 
 function TitleBar:injectTabButtonsLeft()
@@ -624,15 +619,15 @@ function TitleBar:injectTabButtonsLeft()
     if self.tab_buttons_left then
         local separator = self.is_landscape_screen and HorizontalSpan:new{ width = self.title_h_padding } or HorizontalSpan:new{ width = self.title_h_padding_portrait }
         --* horizontal padding from the left:
-        table.insert(self.left_buttons_container, HorizontalSpan:new{ width = self.title_h_padding })
+        table_insert(self.left_buttons_container, HorizontalSpan:new{ width = self.title_h_padding })
         local button
         local count = #self.tab_buttons_left
         for i = 1, count do
             button = self:instantiateButton(self.tab_buttons_left[i])
             --? used by methods in ((TabFactory#setTabButtonAndContent)) > ((tabs in titlebar)) ??:
-            table.insert(self.tabs, button)
-            table.insert(self.left_buttons_container, separator)
-            table.insert(self.left_buttons_container, button)
+            table_insert(self.tabs, button)
+            table_insert(self.left_buttons_container, separator)
+            table_insert(self.left_buttons_container, button)
         end
 
         self.left_buttons_height = self.left_buttons_container:getSize().h
@@ -651,16 +646,16 @@ function TitleBar:injectTabButtonsRight()
         for i = count, 1, -1 do
             button = self:instantiateButton(self.tab_buttons_right[i])
             --? used by methods in ((TabFactory#setTabButtonAndContent)) ??:
-            table.insert(self.tabs, button)
-            table.insert(self.right_buttons_container, 1, button)
-            table.insert(self.right_buttons_container, 2, separator)
+            table_insert(self.tabs, button)
+            table_insert(self.right_buttons_container, 1, button)
+            table_insert(self.right_buttons_container, 2, separator)
         end
 
         self.right_buttons_container_populated = true
 
     --* add empty spacer:
     elseif not self.top_buttons_right then
-        table.insert(self.right_buttons_container, HorizontalSpan:new{ width = self.top_right_buttons_reserved_width })
+        table_insert(self.right_buttons_container, HorizontalSpan:new{ width = self.top_right_buttons_reserved_width })
 
         self.right_buttons_container_populated = true
     end
@@ -711,15 +706,18 @@ function TitleBar:injectTopButtonsGroups()
         for nr = 1, count do
             button = self:instantiateButton(self.top_buttons_left[nr])
             if nr == 1 then
-                table.insert(self.left_buttons_container, horizontal_spacer)
+                table_insert(self.left_buttons_container, horizontal_spacer)
+                if self.is_popout_dialog then
+                    table_insert(self.left_buttons_container, horizontal_spacer)
+                end
             end
             button = self:getAdaptedTopButton(button)
             if nr == 1 then
                 self.left_button = button
             end
-            table.insert(self.left_buttons_container, button)
+            table_insert(self.left_buttons_container, button)
             if nr < #self.top_buttons_left then
-                table.insert(self.left_buttons_container, horizontal_spacer)
+                table_insert(self.left_buttons_container, horizontal_spacer)
             end
         end
         self.left_buttons_height = self.left_buttons_container:getSize().h
@@ -729,14 +727,14 @@ function TitleBar:injectTopButtonsGroups()
         for nr = 1, count do
             button = self:instantiateButton(self.top_buttons_right[nr])
             if nr < #self.top_buttons_right and not self.has_only_close_button then
-                table.insert(self.right_buttons_container, horizontal_spacer)
+                table_insert(self.right_buttons_container, horizontal_spacer)
             end
             button = self:getAdaptedTopButton(button)
             if nr == 1 then
                 self.right_button = button
             end
 
-            table.insert(self.right_buttons_container, button)
+            table_insert(self.right_buttons_container, button)
         end
         self:addCloseButtonRightSpacer()
         self.right_buttons_height = self.right_buttons_container:getSize().h
@@ -761,13 +759,16 @@ function TitleBar:addCloseButtonRightSpacer()
         right_border_spacer = HorizontalSpan:new{ width = self:getHorizontalSpacerWidth("for_close_button") }
     end
 
-    table.insert(self.right_buttons_container, right_border_spacer)
+    table_insert(self.right_buttons_container, right_border_spacer)
 end
 
 function TitleBar:injectBottomLineAndOrSubmenuButtonTable()
     if self.with_bottom_line or self.submenu_buttontable then
+
+        local width = self.is_popout_dialog and self.width - 2 * Size.line.thick or self.width
+
         local line_widget = LineWidget:new{
-            dimen = Geom:new{ w = self.width, h = self.bottom_line_thickness },
+            dimen = Geom:new{ w = width, h = self.bottom_line_thickness },
             background = self.submenu_buttontable and KOR.colors.title_bar_with_submenu_bottom_line or KOR.colors.title_bar_bottom_line
         }
         if self.bottom_line_h_padding then
@@ -783,7 +784,7 @@ function TitleBar:injectBottomLineAndOrSubmenuButtonTable()
             self.submenu_buttontable_container,
             line_widget,
         }
-        table.insert(self, filler_and_bottom_line)
+        table_insert(self, filler_and_bottom_line)
         self.titlebar_height = filler_and_bottom_line:getSize().h
     end
 
@@ -808,7 +809,7 @@ function TitleBar:injectSubTitle()
                 }
             }
         }
-        table.insert(self, filler_and_info_text)
+        table_insert(self, filler_and_info_text)
         if not self.bottom_v_padding then
             self.bottom_v_padding = 0
         end
@@ -823,7 +824,7 @@ function TitleBar:injectSideContainers(side)
 
         if self.has_top_buttons_left then
             --* the height used for computation was computed in ((TitleBar#injectTopButtonsGroups)) or ((TitleBar#injectTabButtonsLeft)):
-            table.insert(self.main_container, VerticalGroup:new{
+            table_insert(self.main_container, VerticalGroup:new{
                 align = "left",
                 overlap_align = "left",
                 self.left_buttons_container,
@@ -832,7 +833,7 @@ function TitleBar:injectSideContainers(side)
         end
         --* in case of top_buttons_right but no top_buttons_left and centered title, add empty filler for left buttons group:
         if self.has_top_buttons_right and self.align == "center" then
-            table.insert(self.main_container, VerticalGroup:new{
+            table_insert(self.main_container, VerticalGroup:new{
                 align = "left",
                 overlap_align = "left",
                 HorizontalSpan:new{ width = self.top_right_buttons_reserved_width },
@@ -846,7 +847,7 @@ function TitleBar:injectSideContainers(side)
         if self.has_top_buttons_right then
             --* the height used for computation was computed in ((TitleBar#injectTopButtonsGroups)):
             local dims = self.right_buttons_container:getSize()
-            table.insert(self.main_container, RightContainer:new{
+            table_insert(self.main_container, RightContainer:new{
                 dimen = Geom:new{ w = self.top_right_buttons_reserved_width, h = dims.h },
                 self.right_buttons_container,
             })
@@ -854,7 +855,7 @@ function TitleBar:injectSideContainers(side)
         end
         --* in case of top_buttons_left but no top_buttons_right and centered title, add empty filler for right buttons group:
         if self.has_top_buttons_left and self.align == "center" then
-            table.insert(self.main_container, VerticalGroup:new{
+            table_insert(self.main_container, VerticalGroup:new{
                 align = "left",
                 overlap_align = "left",
                 HorizontalSpan:new{ width = self.top_left_buttons_reserved_width },
@@ -895,7 +896,7 @@ end
 
 function TitleBar:injectSubMenuButtons()
     if self.submenu_buttontable then
-        table.insert(self.submenu_buttontable_container, self.submenu_buttontable)
+        table_insert(self.submenu_buttontable_container, self.submenu_buttontable)
     end
 end
 
@@ -920,7 +921,7 @@ function TitleBar:replaceTopButtonsLeftByTabButtonsLeft()
         for i = 1, count do
             button = self.top_buttons_left[i]
             button.bordersize = 0
-            table.insert(self.tab_buttons_left, 1, button)
+            table_insert(self.tab_buttons_left, 1, button)
         end
         self.top_buttons_left = nil
     end
@@ -970,7 +971,7 @@ function TitleBar:addVerticalSpacers()
             },
         }
         if not self.title_width_was_adapted then
-            table.insert(config, VerticalSpan:new{ width = spacer_height })
+            table_insert(config, VerticalSpan:new{ width = spacer_height })
         end
         self.center_container = VerticalGroup:new(config)
 
@@ -1009,7 +1010,7 @@ function TitleBar:addVerticalSpacers()
             self.left_buttons_container,
         }
         if highest_elem == "left_buttons" and not self.title_width_was_adapted then
-            table.insert(self.left_buttons_container, VerticalSpan:new{ width = spacer_height })
+            table_insert(self.left_buttons_container, VerticalSpan:new{ width = spacer_height })
         end
     end
 
