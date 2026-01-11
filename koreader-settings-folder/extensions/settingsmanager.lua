@@ -2,14 +2,12 @@
 local require = require
 
 local ButtonDialogTitle = require("extensions/widgets/buttondialogtitle")
-local ButtonTable = require("extensions/widgets/buttontable")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local DataStorage = require("datastorage")
 local Device = require("device")
 local KOR = require("extensions/kor")
 local LuaSettings = require("luasettings")
 local Menu = require("extensions/widgets/menu")
-local Size = require("extensions/modules/size")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
@@ -21,6 +19,7 @@ local G_reader_settings = G_reader_settings
 local has_text = has_text
 local math_floor = math.floor
 local pairs = pairs
+local table = table
 local table_insert = table.insert
 local tonumber = tonumber
 local tostring = tostring
@@ -153,8 +152,9 @@ function SettingsManager:getTabContent(caller_method, active_tab)
         modal = true,
     }
     self.width = math_floor(dimen.w * 0.8)
+    local tab_label_fontsize = 16
     self.settings_menu = Menu:new{
-        title_submenu_buttontable = self:generateTabButtons(caller_method),
+        title_submenu_buttontable = KOR.tabfactory:generateTabButtons(caller_method, self.active_tab, self.tab_labels, self.width, tab_label_fontsize),
         show_parent = self.ui,
         height = math_floor(dimen.h * 0.8),
         width = self.width,
@@ -162,7 +162,6 @@ function SettingsManager:getTabContent(caller_method, active_tab)
         is_popout = true,
         fullscreen = false,
         with_bottom_line = true,
-        --no_overlay = true,
         perpage = self.items_per_page,
         top_buttons_left = {
             {
@@ -184,36 +183,12 @@ If you longpress a setting, you'll see an explanation of that setting.]]), self.
     table_insert(self.settings_dialog, self.settings_menu)
     self.settings_menu.close_callback = function()
         UIManager:close(self.settings_dialog)
+        KOR.dialogs:closeOverlay()
     end
     self:updateItemTable()
     self.settings_menu:switchItemTable(self.list_title .. ": instellingen", self.item_table)
 
     return self.settings_dialog
-end
-
---- @private
-function SettingsManager:generateTabButtons(caller_method)
-    local buttons = {{}}
-    for i = 1, #self.tab_labels do
-        table_insert(buttons[1], {
-            text = i == self.active_tab and KOR.icons.active_tab_bare .. self.tab_labels[i] or self.tab_labels[i],
-            callback = function()
-                local current = i
-                --* points to ((XraySettings#showSettingsManager)):
-                caller_method(current, self.tab_labels)
-            end,
-        })
-    end
-
-    return ButtonTable:new{
-        width = self.width - 2 * Size.margin.default,
-        button_font_face = "redhat",
-        button_font_size = 17,
-        buttons = buttons,
-        zero_sep = true,
-        show_parent = self,
-        button_font_weight = "normal",
-    }
 end
 
 --- @private
