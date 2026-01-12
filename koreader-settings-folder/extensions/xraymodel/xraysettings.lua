@@ -28,6 +28,8 @@ local pairs = pairs
 --* DX.m and therefore DX.m:isPrivateDXversion not yet available here:
 local locked_xray_setting_message = IS_AUTHORS_DX_INSTALLATION and "Deze instelling door Dynamic Xray automatisch berekend en kan daarom niet worden aangepast door de gebruiker." or _("This setting will be automatically computed by Dynamic Xray and therefor the user cannot modify it.")
 
+local hotkeys_warning = "\n\n" .. _("NB: updated hotkeys are effective immediately - except possibly when they conflict with other hotkeys in KOReader.")
+
 --- @class XraySettings
 --- @field settings_manager SettingsManager
 local XraySettings = WidgetContainer:new{
@@ -38,6 +40,66 @@ local XraySettings = WidgetContainer:new{
         batch_count_for_import = {
             value = 5,
             explanation = _("This number determines in how many batches Xray items from other books will be imported. In case of very many items, a higher number here is probably prudent."),
+            locked = 0,
+        },
+        hk_add_item = {
+            value = "A",
+            explanation = _("To add a new Xray item, in the Item Viewer, the List of Items or the Page Navigator.") .. hotkeys_warning,
+            locked = 0,
+        },
+        hk_edit_item = {
+            value = "E",
+            explanation = _("To edit the current Xray item in the Item Viewer or the Page Navigator.") .. hotkeys_warning,
+            locked = 0,
+        },
+        hk_show_list = {
+            value = "L",
+            explanation = _("To open the List of Items. Available in the Item Viewer, the Page Navigator and the Page Information Popup.") .. hotkeys_warning,
+            locked = 0,
+        },
+        hk_goto_next_item = {
+            value = "N",
+            explanation = _("To go to the next item in a DX dialog were the triangle pointing to the right is visible.") .. hotkeys_warning,
+            locked = 0,
+        },
+        hk_open_chapter_from_viewer = {
+            value = "O",
+            explanation = _("To open a specific chapter in the ebook from the Item Viewer.") .. hotkeys_warning,
+            locked = 0,
+        },
+        hk_open_page_navigator_from_list = {
+            value = "N",
+            explanation = _("To open the Page Navigator from the List of Items. The List will be closed.") .. hotkeys_warning,
+            locked = 0,
+        },
+        hotkey_open_xray_settings_from_page_navigator = {
+            value = "S",
+            explanation = _("To open the XraySettings from Page Navigator.") .. hotkeys_warning,
+            locked = 0,
+        },
+        hk_show_pagebrowser_from_page_navigator = {
+            value = "B",
+            explanation = _("To open the pagebrowser popup in the Page Navigator.") .. hotkeys_warning,
+            locked = 0,
+        },
+        hk_goto_previous_item = {
+            value = "P",
+            explanation = _("To go to the previous item in a DX dialog were the triangle pointing to the left is visible.") .. hotkeys_warning,
+            locked = 0,
+        },
+        hk_show_information = {
+            value = "I",
+            explanation = _("To show a popup dialog with information about the current DX dialog. Available in dialogs where you see an information icon.") .. hotkeys_warning,
+            locked = 0,
+        },
+        hk_show_item_occurrences_from_viewer = {
+            value = "S",
+            explanation = _("To show the occurrences in the ebook of the current item in the Item Viewer, of in the Tapped Word Popup.") .. hotkeys_warning,
+            locked = 0,
+        },
+        hk_view_item_from_list_or_navigator = {
+            value = "V",
+            explanation = _("To view the details of the current item in the List of Items or in the Page Navigator.") .. hotkeys_warning,
             locked = 0,
         },
         is_android = {
@@ -98,6 +160,7 @@ local XraySettings = WidgetContainer:new{
     tabbed_interface = nil,
     tab_labels = {
         _("general"),
+        _("hotkeys"),
         _("system"),
     },
 }
@@ -131,10 +194,7 @@ function XraySettings.showSettingsManager(active_tab, tab_labels)
         active_tab = 1
     end
     if not tab_labels then
-        tab_labels = {
-            "algemeen",
-            "systeem",
-        }
+        tab_labels = self.tab_labels
     end
     self.tabbed_interface = self.settings_manager:getTabContent(self.showSettingsManager, active_tab, tab_labels)
 

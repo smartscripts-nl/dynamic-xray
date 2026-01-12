@@ -100,11 +100,9 @@ function SettingsManager:updateSettingsFromTemplate()
     end
 
     --* following the parent's settings template, add settings that were added there, or remove settings that were deleted there:
-    if
-        self:addNewSettingsOrHelpTextsFromTemplate()
-        or
-        self:removeSettingsFromTemplate()
-    then
+    local settings_were_added = self:addNewSettingsOrHelpTextsFromTemplate()
+    local settings_were_deleted = self:removeSettingsFromTemplate()
+    if settings_were_added or settings_were_deleted then
         self:saveSettings()
     end
 end
@@ -172,7 +170,7 @@ function SettingsManager:getTabContent(caller_method, active_tab)
 Items with an %2 are computed settings, which you can't modify manually.
 If you longpress a setting, you'll see an explanation of that setting.]]), self.list_title, KOR.icons.lock_bare))
                 end,
-            }
+            },
         },
         after_close_callback = function()
             KOR.dialogs:closeOverlay()
@@ -211,25 +209,30 @@ function SettingsManager:updateItemTable()
     self:sortMenuItems()
     self.item_table = {}
     count = #self.settings_for_menu
-        local item
-        for nr = 1, count do
-            local setting = self.settings_for_menu[nr]
+    local item, is_hotkey
+    local list_no = 0
+    local not_editable_message = _("this setting cannot be modified by the user...")
+    for nr = 1, count do
+        local setting = self.settings_for_menu[nr]
+        is_hotkey = setting.text:match("^hk_")
         if
-            (self.active_tab == 1 and setting.locked == 0)
-            or (self.active_tab == 2 and setting.locked == 1)
+        (self.active_tab == 1 and setting.locked == 0 and not is_hotkey)
+                or (self.active_tab == 2 and is_hotkey)
+                or (self.active_tab == 3 and setting.locked == 1)
         then
             setting.type = type(setting.value)
             local current_nr = nr
+            list_no = list_no + 1
             item = {
-                text = KOR.strings:formatListItemNumber(nr, setting.text),
+                text = KOR.strings:formatListItemNumber(list_no, self:removeHotkeyPrefix(setting.text)),
                 key = setting.key,
-                explanation = _(setting.explanation),
+                explanation = setting.explanation,
                 editable = true,
                 deletable = false,
                 callback = function()
                     if setting.locked == 1 then
                         self:showParentDialog()
-                        KOR.messages:notify(_("this setting cannot be modified by the user..."))
+                        KOR.messages:notify(not_editable_message)
                         return
                     end
                     self:editSetting(setting, current_nr)
@@ -242,7 +245,9 @@ end
 
 --- @private
 function SettingsManager:onMenuHoldSettings(item)
-    KOR.dialogs:niceAlert(item.key, item.explanation)
+    --- @type SettingsManager manager
+    local manager = self._manager
+    KOR.dialogs:niceAlert(manager:removeHotkeyPrefix(item.key), item.explanation)
     return true
 end
 
@@ -299,15 +304,16 @@ function SettingsManager:editSetting(settings, current_nr)
         return
     end
 
-    self:showPromptForNewSetting(key, value, current_nr, itype, explanation)
+    self:showPromptForNewSettingsValue(key, value, current_nr, itype, explanation)
 end
 
-function SettingsManager:showPromptForNewSetting(key, value, current_nr, itype, explanation)
+--- @private
+function SettingsManager:showPromptForNewSettingsValue(key, value, current_nr, itype, explanation)
     KOR.dialogs:prompt({
-        title = key,
+        title = self:removeHotkeyPrefix(key),
         allow_newline = false,
         input_type = itype == "number" and "number" or "text",
-        description = _("Explanation:\n") .. KOR.strings:lowerFirst(explanation):gsub("%.$", ""),
+        description = explanation:gsub("%.$", ""),
         input = tostring(value),
         callback = function(new_value)
             self:handleNewValue(new_value, key, current_nr, itype)
@@ -335,6 +341,10 @@ function SettingsManager:handleNewValue(new_value, key, current_nr, itype)
     elseif itype == "string" and has_text(new_value) then
         is_valid = true
     end
+    --* ensure hotkeys only have one uppercase character:
+    if is_valid and key:match("^hk_") then
+        new_value = KOR.strings:upper(new_value):sub(1, 1)
+    end
     if not is_valid then
         self:showParentDialog()
         KOR.messages:notify(_("you entered an invalid value..."), 4)
@@ -354,6 +364,11 @@ function SettingsManager:changeMenuSetting(key, value, current_nr)
     self.settings_for_menu[current_nr].value = value
     self.settings_for_menu[current_nr].text = key .. ": " .. tostring(value)
     self:updateItemTable()
+end
+
+---@private
+function SettingsManager:removeHotkeyPrefix(text)
+    return text:gsub("^hk_", "", 1)
 end
 
 --- @private

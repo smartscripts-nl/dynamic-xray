@@ -916,7 +916,7 @@ function XrayPageNavigator:getHotkeysInformation()
             .. _("e-book: Jump to page currently displayed in Page Navigator")
             .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>L</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
-            .. _("show List of Xray items")
+            .. _("show List of Items")
             .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>N</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
             .. _("jump to Next page in Page Navigator")

@@ -212,7 +212,7 @@ function ButtonInfoPopup:forXrayFromItemToChapter(props)
 		icon_size_ratio = 0.6,
 		info = T([[book icon | Jump to a specific chapter.
 
-Hotkey %1 O]], KOR.icons.arrow_bare),
+Hotkey %1 %2]], KOR.icons.arrow_bare, DX.s.hk_open_chapter_from_viewer),
 		callback_label = KOR.icons.arrow_bare .. _(" chapter..."),
 		--! callback defined by calling module
 	}, props)
@@ -234,7 +234,7 @@ function ButtonInfoPopup:forXrayItemAdd(props)
 		icon = "plus",
 		info = T([[plus icon | Add Xray item..
 
-Hotkey %1 V]], KOR.icons.arrow_bare),
+Hotkey %1 %2]], KOR.icons.arrow_bare, DX.s.hk_add_item),
 		callback_label = _("add"),
 		--! callback defined by calling module
 	}, props)
@@ -246,7 +246,7 @@ function ButtonInfoPopup:forXrayItemEdit(props)
 		icon_size_ratio = 0.6,
 		info = T([[edit icon | Edit description.
 
-Hotkey %1 E]], KOR.icons.arrow_bare),
+Hotkey %1 %2]], KOR.icons.arrow_bare, DX.s.hk_edit_item),
 		callback_label = _("edit"),
 		--! callback defined by calling module
 	}, props)
@@ -288,9 +288,9 @@ end
 function ButtonInfoPopup:forXrayList(props)
 	return KOR.buttonprops:set({
 		icon = "list",
-		info = T([[list icon | Show list of Xray items.
+		info = T([[list icon | Show List of Items.
 
-Hotkey %1 L]], KOR.icons.arrow_bare),
+Hotkey %1 %2]], KOR.icons.arrow_bare, DX.s.hk_show_list),
 		callback_label = _("list"),
 		callback = function()
 			DX.c:onShowList()
@@ -303,7 +303,7 @@ function ButtonInfoPopup:forXrayNextItem(props)
 		text = KOR.icons.next_bare,
 		info = T(_([[arrow icon | Go to next Xray item. You can also use the space bar on your (BT) keyboard for this.
 
-Alternate hotkey %1 N]]), KOR.icons.arrow_bare),
+Alternate hotkey %1 %2]]), KOR.icons.arrow_bare, DX.s.hk_goto_next_item),
 		callback_label = _("to next"),
 		--! callback defined by calling module
 	}, props)
@@ -323,7 +323,7 @@ function ButtonInfoPopup:forXrayPageNavigatorShowPageBrowser(props)
 	return KOR.buttonprops:set({
 		icon = "pages",
 		icon_size_ratio = 0.53,
-		info = T(_("pages icon | Show page currently shown in Pagina Navigator in a page browser popup.\n\n You can use this to quickly jump many page back or forth in Page Navigator, by tapping on a thumnail in the page browser.\n\nHotkey %1 B"), KOR.icons.arrow_bare),
+		info = T(_("pages icon | Show page currently shown in Pagina Navigator in a page browser popup.\n\n You can use this to quickly jump many page back or forth in Page Navigator, by tapping on a thumnail in the page browser.\n\nHotkey %1 %2"), KOR.icons.arrow_bare, DX.s.hk_show_pagebrowser_from_page_navigator),
 		callback_label = _("page browser"),
 		--! callback defined by calling module
 	}, props)
@@ -334,7 +334,7 @@ function ButtonInfoPopup:forXrayPreviousItem(props)
 		text = KOR.icons.previous_bare,
 		info = T(_([[arrow icon | Go to previous Xray item. You can also use Shift+Space on your (BT) keyboard for this.
 
-Alternate hotkey %1 P]]), KOR.icons.arrow_bare),
+Alternate hotkey %1 %2]]), KOR.icons.arrow_bare, DX.s.hk_goto_previous_item),
 		callback_label = _("to previous"),
 		--! callback defined by calling module
 	}, props)
@@ -353,7 +353,7 @@ function ButtonInfoPopup:forXrayShowMatchReliabilityExplanation(props)
 	return KOR.buttonprops:set({
 		icon = "info-slender",
 		icon_size_ratio = 0.5,
-		info = T(_("information icon | Show explanation of reliability icons for hits found.\n\nHotkey %1 I"), KOR.icons.arrow_bare),
+		info = T(_("information icon | Show explanation of reliability icons for hits found.\n\nHotkey %1 %2"), KOR.icons.arrow_bare, DX.s.hk_show_information),
 		callback_label = _("show"),
 		callback = function()
 			return DX.d:showReliabilityIndicatorsExplanation()
@@ -460,7 +460,7 @@ end
 function ButtonInfoPopup:forXrayViewer(props)
 	return KOR.buttonprops:set({
 		icon = "view",
-		info = _("eye icon | Open Xray item viewer for the item displayed in the bottom panel."),
+		info = _("eye icon | Open Xray Item Viewer for the item displayed in the bottom panel."),
 		callback_label = _("open"),
 		--! callback defined by calling module
 	}, props)

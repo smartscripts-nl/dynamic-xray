@@ -708,7 +708,8 @@ function TitleBar:injectTopButtonsGroups()
             if nr == 1 then
                 table_insert(self.left_buttons_container, horizontal_spacer)
                 if self.is_popout_dialog then
-                    table_insert(self.left_buttons_container, horizontal_spacer)
+                    table_insert(self.left_buttons_container, HorizontalSpan:new{ width = Size.padding.large })
+
                 end
             end
             button = self:getAdaptedTopButton(button)

@@ -306,7 +306,7 @@ end
 
 --* compare ((XrayTappedWords#getCurrentListTabItems)):
 function XrayViewsData:getCurrentListTabItems(needle_item)
-    --* this will sometimes be the case when we first call up a definition through ReaderHighlight, before calling the list of Xray items:
+    --* this will sometimes be the case when we first call up a definition through ReaderHighlight, before calling the List of Items:
     if has_no_items(self.current_tab_items) then
         if has_items(self.item_table[1]) then
             self.items = KOR.tables:shallowCopy(self.item_table[1])

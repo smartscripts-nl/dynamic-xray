@@ -1203,7 +1203,9 @@ end
 
 function XrayDialogs:showHelp(initial_tab)
     --* these hotkeys are mostly defined in ((KeyEvents#addHotkeysForXrayList)):
-    local list_info = self.help_texts["list"] or T(_([[Titlebar %1/%2 = items displayed in series/book mode
+    local list_info = self.help_texts["list"] or T(_([[Shift+X = show List of Items
+
+Titlebar %1/%2 = items displayed in series/book mode
 Titlebar %3 = only linked items, from longpressed word
 Browse to next/previous page: Space/Shift+Space
 Longpress item: quick access to actions.

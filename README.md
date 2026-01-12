@@ -10,6 +10,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 * The advantage of the DX approach is that the user can dynamically add and modify items or link them to other items; the advantage of the Kindle approach is that it isn't error-prone.
 * DX can produce false hits, because it uses matching of the words in ebook texts to determine whether Xray items are present. For example, DX will be in trouble if there are two or more persons with the same first name in a book; DX won't be able to differentiate between them. But in about 95% of cases, the matches shown will be correct.
 * All interface texts can be translated by the user.
+* Some hotkeys for buttons in DX dialogs can be configured by the user. The Page Navigator can be called while reading an ebook, with Shift+X.
 
 ## Table of contents in this readme
 - [Use cases](#use-cases)
@@ -156,6 +157,12 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 
 ![09 Manage XraySettings in a tabbed interface.](images/09-manage-xray-settings.png)
 09 Manage XraySettings in a tabbed interface.
+
+![09b Manage DX hotkeys.](images/09b-user-configurable-dx-hotkeys.png)
+09b Manage DX hotkeys.
+
+![09c Modify a DX hotkey.](images/09c-modify-a-dx-hotkey.png)
+09c Modify a DX hotkey
 
 ![10 Interface translations list](images/10-interface-translations-list.png)
 09b Interface translations list

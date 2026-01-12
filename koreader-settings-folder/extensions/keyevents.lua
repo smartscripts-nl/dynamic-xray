@@ -152,12 +152,12 @@ function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
     local self = KOR.keyevents
     local parent = DX.d
     self:registerSharedHotkeys(key_events_module, {
-        ["E"] = function()
+        [DX.s.hk_edit_item] = function()
             parent:closeViewer()
             DX.c:onShowEditItemForm(DX.vd.current_item, false, 1)
             return true
         end,
-        ["N"] = function()
+        [DX.s.hk_goto_previous_item] = function()
             -- #((next related item via hotkey))
             if DX.m.use_tapped_word_data then
                 parent:viewNextTappedWordItem()
@@ -166,12 +166,12 @@ function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
             parent:viewNextItem(DX.vd.current_item)
             return true
         end,
-        ["L"] = function()
+        [DX.s.hk_show_list] = function()
             parent:closeViewer()
             parent:showList(DX.vd.current_item)
             return true
         end,
-        ["P"] = function()
+        [DX.s.hk_goto_previous_item] = function()
             if DX.m.use_tapped_word_data then
                 parent:viewPreviousTappedWordItem()
                 return true
@@ -184,7 +184,7 @@ function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
     local actions = {
         {
             label = "add",
-            hotkey = { { "A" } },
+            hotkey = { { DX.s.hk_add_item } },
             callback = function()
                 parent:closeViewer()
                 DX.c:resetFilteredItems()
@@ -210,59 +210,14 @@ function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
         },
         {
             label = "edit",
-            hotkey = { { "E" } },
+            hotkey = { { DX.s.hk_edit_item } },
             callback = function()
-                return self:execTopMostSharedHotkey("E", key_events_module)
+                return self:execTopMostSharedHotkey(DX.s.hk_edit_item, key_events_module)
             end,
         },
         {
             label = "hits",
-            hotkey = { { "H" } },
-            callback = function()
-                DX.c:viewItemHits(DX.vd.current_item.name)
-                return true
-            end,
-        },
-        {
-            label = "show_info",
-            hotkey = { { "Shift", { "I" } } },
-            callback = function()
-                parent:showHelp(2)
-                return true
-            end,
-        },
-        {
-            label = "goto_list",
-            hotkey = { { "L" } },
-            callback = function()
-                return self:execTopMostSharedHotkey("L", key_events_module)
-            end,
-        },
-        {
-            label = "goto_next_item_viewer",
-            hotkey = { { "N" } },
-            callback = function()
-                return self:execTopMostSharedHotkey("N", key_events_module)
-            end,
-        },
-        {
-            label = "open_chapter",
-            hotkey = { { "O" } },
-            callback = function()
-                parent:showJumpToChapterDialog()
-                return true
-            end,
-        },
-        {
-            label = "goto_previous_item_viewer",
-            hotkey = { { "P" } },
-            callback = function()
-                return self:execTopMostSharedHotkey("P", key_events_module)
-            end,
-        },
-        {
-            label = "search_hits",
-            hotkey = { { "Shift", { "S" } } },
+            hotkey = { { DX.s.hk_show_item_occurrences_from_viewer } },
             callback = function()
                 if DX.vd.current_item and has_items(DX.vd.current_item.book_hits) then
                     DX.c:viewItemHits(DX.vd.current_item.name)
@@ -270,6 +225,43 @@ function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
                     parent:_showNoHitsNotification(DX.vd.current_item.name)
                 end
                 return true
+            end,
+        },
+        {
+            label = "show_info",
+            hotkey = { { DX.s.hk_show_information } },
+            callback = function()
+                parent:showHelp(2)
+                return true
+            end,
+        },
+        {
+            label = "goto_list",
+            hotkey = { { DX.s.hk_show_list } },
+            callback = function()
+                return self:execTopMostSharedHotkey(DX.s.hk_show_list, key_events_module)
+            end,
+        },
+        {
+            label = "goto_next_item_viewer",
+            hotkey = { { DX.s.hk_goto_next_item } },
+            callback = function()
+                return self:execTopMostSharedHotkey(DX.s.hk_goto_next_item, key_events_module)
+            end,
+        },
+        {
+            label = "open_chapter",
+            hotkey = { { DX.s.hk_open_chapter_from_viewer } },
+            callback = function()
+                parent:showJumpToChapterDialog()
+                return true
+            end,
+        },
+        {
+            label = "goto_previous_item_viewer",
+            hotkey = { { DX.s.hk_goto_previous_item } },
+            callback = function()
+                return self:execTopMostSharedHotkey(DX.s.hk_goto_previous_item, key_events_module)
             end,
         },
     }
@@ -298,8 +290,16 @@ end
 function KeyEvents:addHotkeysForXrayList(parent, key_events_module)
     local actions = {
         {
+            label = "add",
+            hotkey = { { DX.s.hk_add_item } },
+            callback = function()
+                DX.c:onShowNewItemForm()
+                return true
+            end,
+        },
+        {
             label = "import",
-            hotkey = { { "I" } },
+            hotkey = { { "Shift", { "I" } } },
             callback = function()
                 parent:showRefreshHitsForCurrentEbookConfirmation()
                 return true
@@ -307,10 +307,17 @@ function KeyEvents:addHotkeysForXrayList(parent, key_events_module)
         },
         {
             label = "show_info",
-            hotkey = { { "Shift", { "I" } } },
+            hotkey = { { DX.s.hk_show_information } },
             callback = function()
                 parent:showHelp(1)
                 return true
+            end,
+        },
+        {
+            label = "show_navigator",
+            hotkey = { { DX.s.hk_open_page_navigator_from_list } },
+            callback = function()
+                return DX.c:openPageNavigatorFromList()
             end,
         },
         {
@@ -326,14 +333,6 @@ function KeyEvents:addHotkeysForXrayList(parent, key_events_module)
             hotkey = { { "O" } },
             callback = function()
                 DX.c:toggleSortingMode()
-                return true
-            end,
-        },
-        {
-            label = "add",
-            hotkey = { { "V" } },
-            callback = function()
-                DX.c:onShowNewItemForm()
                 return true
             end,
         },
@@ -395,16 +394,16 @@ function KeyEvents.addHotkeysForXrayPageNavigator(key_events_module)
     local parent = DX.pn
 
     self:registerSharedHotkeys(key_events_module, {
-        ["E"] = function()
+        [DX.s.hk_edit_item] = function()
             return parent:execEditCallback(parent)
         end,
-        ["L"] = function()
+        [DX.s.hk_show_list] = function()
             return parent:execShowListCallback(parent)
         end,
-        ["N"] = function()
+        [DX.s.hk_goto_next_item] = function()
             return parent:execGotoNextPageCallback(parent)
         end,
-        ["P"] = function()
+        [DX.s.hk_goto_previous_item] = function()
             return parent:execGotoPrevPageCallback(parent)
         end,
         ["S"] = function()
@@ -414,21 +413,21 @@ function KeyEvents.addHotkeysForXrayPageNavigator(key_events_module)
     local actions = {
         {
             label = "pagebrowser",
-            hotkey = { { "B" } },
+            hotkey = { { DX.s.hk_show_pagebrowser_from_page_navigator } },
             callback = function()
                 return parent:execShowPageBrowserCallback(parent)
             end,
         },
         {
             label = "edit",
-            hotkey = { { "E" } },
+            hotkey = { { DX.s.hk_edit_item } },
             callback = function()
-                return self:execTopMostSharedHotkey("E", key_events_module)
+                return self:execTopMostSharedHotkey(DX.s.hk_edit_item, key_events_module)
             end,
         },
         {
             label = "show_info",
-            hotkey = { { "I" } },
+            hotkey = { { DX.s.hk_show_information } },
             callback = function()
                 return parent:execShowHelpInfoCallback(parent)
             end,
@@ -449,35 +448,35 @@ function KeyEvents.addHotkeysForXrayPageNavigator(key_events_module)
         },
         {
             label = "goto_list",
-            hotkey = { { "L" } },
+            hotkey = { { DX.s.hk_show_list } },
             callback = function()
-                return self:execTopMostSharedHotkey("L", key_events_module)
+                return self:execTopMostSharedHotkey(DX.s.hk_show_list, key_events_module)
             end,
         },
         {
             label = "goto_next_page_navigator",
-            hotkey = { { "N" } },
+            hotkey = { { DX.s.hk_goto_next_item } },
             callback = function()
-                return self:execTopMostSharedHotkey("N", key_events_module)
+                return self:execTopMostSharedHotkey(DX.s.hk_goto_next_item, key_events_module)
             end,
         },
         {
             label = "goto_previous_navigator",
-            hotkey = { { "P" } },
+            hotkey = { { DX.s.hk_goto_previous_item } },
             callback = function()
-                return self:execTopMostSharedHotkey("P", key_events_module)
+                return self:execTopMostSharedHotkey(DX.s.hk_goto_previous_item, key_events_module)
             end,
         },
         {
             label = "pn_settings",
-            hotkey = { { { "S" } } },
+            hotkey = { { { DX.s.hotkey_open_xray_settings_from_page_navigator } } },
             callback = function()
                 return self:execTopMostSharedHotkey("S", key_events_module)
             end,
         },
         {
             label = "pn_viewer",
-            hotkey = { { { "V" } } },
+            hotkey = { { { DX.s.hk_view_item_from_list_or_navigator } } },
             callback = function()
                 return parent:execViewItemCallback(parent)
             end,
@@ -522,21 +521,21 @@ function KeyEvents.addHotkeysForXrayUIpageInfoViewer()
     local actions = {
         {
             label = "list",
-            hotkey = { { "L" } },
+            hotkey = { { DX.s.hk_show_list } },
             callback = function()
                 return parent:execShowListCallback(parent)
             end,
         },
         {
             label = "pagenavigator",
-            hotkey = { { "V" } },
+            hotkey = { { DX.s.hk_view_item_from_list_or_navigator } },
             callback = function()
                 return parent:execShowPageNavigatorCallback(parent)
             end,
         },
         {
             label = "show_info",
-            hotkey = { { "I" } },
+            hotkey = { { DX.s.hk_show_information } },
             callback = function()
                 return parent:execShowHelpInfoCallback(parent)
             end,

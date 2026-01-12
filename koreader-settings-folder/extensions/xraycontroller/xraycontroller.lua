@@ -410,6 +410,12 @@ function XrayController:showListConditionally(focus_item, show_list)
     end
 end
 
+function XrayController:openPageNavigatorFromList()
+    DX.d:closeListDialog()
+    self:showPageNavigator()
+    return true
+end
+
 function XrayController:showPageNavigator()
     local current_epage = DX.u:getCurrentPage()
     DX.pn:showNavigator(current_epage)

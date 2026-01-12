@@ -173,7 +173,7 @@ function XrayButtons:addFindAllHitsButton(buttons, needle_item, book_hits)
         table.insert(buttons[1], #buttons[1] - 2,
         KOR.buttoninfopopup:forSearchAllLocations({
             info = T([[search-list-icon | Show all occurrences of this Xray item in the current ebook.
-Hotkey %1 H]], KOR.icons.arrow_bare),
+Hotkey %1 %2]], KOR.icons.arrow_bare, DX.s.hk_show_item_occurrences_from_viewer),
             callback = function()
                 DX.c:viewItemHits(needle_item.name)
             end,
@@ -886,8 +886,7 @@ function XrayButtons:forListFooterRight(base_icon_size)
     local buttons = {
         KOR.buttoninfopopup:forXrayPageNavigator({
             callback = function()
-                DX.d:closeListDialog()
-                DX.c:showPageNavigator()
+                DX.c:openPageNavigatorFromList()
             end,
         }),
         KOR.buttonchoicepopup:forXrayItemsImport({
@@ -1261,7 +1260,7 @@ Continue?]])
                         DX.d:showList(DX.d.item_requested)
                     end)
                 end,
-                info = _("Close form and go to list of Xray items."),
+                info = _("Close form and go to List of Items."),
             }),
             KOR.buttoninfopopup:forXrayPageNavigator({
                 callback = function()
