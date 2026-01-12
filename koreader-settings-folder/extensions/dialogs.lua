@@ -274,10 +274,10 @@ end
 
 function Dialogs:showDialogOnTopOfOverlay(show_dialog_callback)
     --* this delay is needed to prevent that a parent dialog from which the current dialog was called immediately closes the overlay:
-    UIManager:scheduleIn(0.05, function()
-        local button_dialog_overlay = self:showOverlay()
+    UIManager:scheduleIn(0.02, function()
+        local dialog_background = self:showOverlay()
         --! register the overlay, so we can close it with ((ButtonDialogTitle#onCloseWidget)) > ((Dialogs#closeContextOverlay)) and are not left with its ghost after closing the ButtonDialogTitle:
-        self:registerContextOverlay(button_dialog_overlay)
+        self:registerContextOverlay(dialog_background)
         show_dialog_callback()
     end)
 end

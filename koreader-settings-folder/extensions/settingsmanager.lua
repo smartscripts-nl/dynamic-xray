@@ -161,14 +161,12 @@ function SettingsManager:getTabContent(caller_method, active_tab)
         fullscreen = false,
         with_bottom_line = true,
         perpage = self.items_per_page,
+        menu_name = "xray_settings",
         top_buttons_left = {
             {
                 icon = "info-slender",
                 callback = function()
-                    KOR.dialogs:niceAlert(_("Settings management"), T(_([[Here you can modify settings for %1.
-
-Items with an %2 are computed settings, which you can't modify manually.
-If you longpress a setting, you'll see an explanation of that setting.]]), self.list_title, KOR.icons.lock_bare))
+                    return self:showSettingsManagerInfo()
                 end,
             },
         },
@@ -184,9 +182,17 @@ If you longpress a setting, you'll see an explanation of that setting.]]), self.
         KOR.dialogs:closeOverlay()
     end
     self:updateItemTable()
-    self.settings_menu:switchItemTable(self.list_title .. ": instellingen", self.item_table)
+    self.settings_menu:switchItemTable(self.list_title .. ": " .. _("settings"), self.item_table)
 
     return self.settings_dialog
+end
+
+function SettingsManager:showSettingsManagerInfo()
+    if not self.list_title then
+        self.list_title = "Dynamic Xray"
+    end
+    KOR.dialogs:niceAlert(_("Settings management"), T(_("Here you can modify settings for %1.\n\nItems with an %2, under the third tab, are computed settings. These you can't modify manually.\n\nIf you longpress a setting, you'll see an explanation of that setting.\n\nWith the hotkeys 1 through 3 on your (BT) keyboard, you can select a tab in the Settings Manager."), self.list_title, KOR.icons.lock_bare))
+    return true
 end
 
 --- @private

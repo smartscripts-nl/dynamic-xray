@@ -33,6 +33,8 @@ local hotkeys_warning = "\n\n" .. _("NB: updated hotkeys are effective immediate
 --- @class XraySettings
 --- @field settings_manager SettingsManager
 local XraySettings = WidgetContainer:new{
+    active_tab = nil,
+    key_events = {},
     settings_manager = nil,
     --* the settings in this template will be dynamically read from settings/settings_manager.lua and then stored as props of the current class:
     --! these settings MUST have a locked prop, which is either 0 or 1; if 1, then user cannot modify that setting, because it is a computed property:
@@ -97,6 +99,11 @@ local XraySettings = WidgetContainer:new{
             explanation = _("To show the occurrences in the ebook of the current item in the Item Viewer, of in the Tapped Word Popup.") .. hotkeys_warning,
             locked = 0,
         },
+        hk_show_list_filter_dialog = {
+            value = "F",
+            explanation = _("If a filter icon is shown in te left side of a list footer, you can use this hotkey to call up a dialog for filtering that list.") .. hotkeys_warning,
+            locked = 0,
+        },
         hk_view_item_from_list_or_navigator = {
             value = "V",
             explanation = _("To view the details of the current item in the List of Items or in the Page Navigator.") .. hotkeys_warning,
@@ -159,9 +166,9 @@ local XraySettings = WidgetContainer:new{
     },
     tabbed_interface = nil,
     tab_labels = {
-        _("general"),
-        _("hotkeys"),
-        _("system"),
+        "1. " .. _("general"),
+        "2. " .. _("hotkeys"),
+        "3. " .. _("system"),
     },
 }
 
@@ -193,6 +200,7 @@ function XraySettings.showSettingsManager(active_tab, tab_labels)
     if not active_tab then
         active_tab = 1
     end
+    self.active_tab = active_tab
     if not tab_labels then
         tab_labels = self.tab_labels
     end

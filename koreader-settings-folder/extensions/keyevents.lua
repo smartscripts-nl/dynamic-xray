@@ -286,6 +286,7 @@ function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
 end
 
 --* information about available hotkeys in list shown in ((XrayButtons#forListTopLeft)) > ((XrayDialogs#showHelp)):
+--* compare for filtering Menu lists in general ((KeyEvents#addHotkeyForFilterButton)):
 --- @param parent XrayDialogs
 function KeyEvents:addHotkeysForXrayList(parent, key_events_module)
     local actions = {
@@ -494,7 +495,7 @@ function KeyEvents.addHotkeysForXrayPageNavigator(key_events_module)
         self:registerSharedHotkey(nhotkey, key_events_module, function()
             local nside_button = side_button
             --* callback defined in ((XrayPageNavigator#markedItemRegister)):
-            nside_button[1].callback()
+            nside_button.callback()
             return true
         end)
         table.insert(actions, {
@@ -510,6 +511,24 @@ function KeyEvents.addHotkeysForXrayPageNavigator(key_events_module)
 
     --! this ensures that hotkeys will even be available when we are in a scrolling html box. These actions will be consumed in ((HtmlBoxWidget#initHotkeys)):
     KOR.registry:set("add_parent_hotkeys", actions)
+end
+
+--- @param parent Menu
+function KeyEvents:addHotkeysForXraySettings(parent)
+    local module = DX.s
+    count = #module.tab_labels
+    for i = 1, count do
+        local current = i
+        self:registerCustomKeyEvent("XraySettings", parent, tostring(current), "show_settings_tab_" .. current, function()
+            if parent.active_tab == current then
+                return
+            end
+            module.showSettingsManager(current, module.tab_labels)
+        end)
+    end
+    self:registerCustomKeyEvent("XraySettings", parent, DX.s.hk_show_information, "show_settings_information", function()
+        return KOR.settingsmanager:showSettingsManagerInfo()
+    end)
 end
 
 -- #((KeyEvents#addHotkeysForXrayUIpageInfoViewer))
@@ -550,8 +569,7 @@ end
 
 function KeyEvents:addHotkeyForFilterButton(parent, filter_active, callback, reset_callback)
 
-    --* because in FileManagerHistory "F" hotkey has been used for activation of Fiction tab, only there use Shift+F:
-    local hotkey = KOR.registry:get("history_active") and { { "Shift", { "F" } } } or { { "F" } }
+    local hotkey = { { DX.s.hk_show_list_filter_dialog } }
     self:registerCustomKeyEvent("Menu", parent, hotkey, "FilterMenu", function()
         parent:resetAllBoldItems()
         if filter_active then
@@ -616,6 +634,10 @@ function KeyEvents:registerHotkeysMenu(parent)
             parent.key_events.SelectByShortCut = { { parent.item_shortcuts } }
         end
         parent.key_events.Right = { { "Right" } }
+    end
+
+    if parent.menu_name == "xray_settings" then
+        self:addHotkeysForXraySettings(parent)
     end
 end
 
