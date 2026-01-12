@@ -288,7 +288,9 @@ function SettingsManager:chooseSetting(key, current_nr, current_value, options, 
         button_font_bold = false,
         buttons = buttons,
     }
-    UIManager:show(self.option_chooser)
+    KOR.dialogs:showDialogOnTopOfOverlay(function()
+        UIManager:show(self.option_chooser)
+    end)
 end
 
 --- @private

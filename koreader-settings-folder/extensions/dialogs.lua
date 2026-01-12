@@ -263,11 +263,23 @@ function Dialogs:prompt(args)
         config.cursor_at_end = args.cursor_at_end ~= false
     end
     local widget = args.fields and MultiInputDialog or InputDialog
-    prompt_dialog = widget:new(config)
-    UIManager:show(prompt_dialog)
-    prompt_dialog:onShowKeyboard()
 
+    prompt_dialog = widget:new(config)
+    self:showDialogOnTopOfOverlay(function()
+        UIManager:show(prompt_dialog)
+        prompt_dialog:onShowKeyboard()
+    end)
     return prompt_dialog
+end
+
+function Dialogs:showDialogOnTopOfOverlay(show_dialog_callback)
+    --* this delay is needed to prevent that a parent dialog from which the current dialog was called immediately closes the overlay:
+    UIManager:scheduleIn(0.05, function()
+        local button_dialog_overlay = self:showOverlay()
+        --! register the overlay, so we can close it with ((ButtonDialogTitle#onCloseWidget)) > ((Dialogs#closeContextOverlay)) and are not left with its ghost after closing the ButtonDialogTitle:
+        self:registerContextOverlay(button_dialog_overlay)
+        show_dialog_callback()
+    end)
 end
 
 function Dialogs:closeOverlay()

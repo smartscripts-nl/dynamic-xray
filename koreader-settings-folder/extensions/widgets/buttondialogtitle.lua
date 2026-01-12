@@ -63,7 +63,6 @@ local ButtonDialogTitle = InputContainer:extend{
     button_font_size = 14,
     button_font_bold = true,
     button_font_size_force = nil,
-    no_overlay = false,
     ui = nil,
 
     top_buttons_left = nil,
@@ -187,12 +186,6 @@ function ButtonDialogTitle:init()
     --* make ButtonDialogTitle dialogs closeable with ((Dialogs#closeAllWidgets)):
     KOR.dialogs:registerWidget(self)
     --* prevent footer showing through upon showing a ButtonDialogTitle instance. Footer will obe made visible again in ((ButtonDialogTitle#onCloseWidget)):
-
-    if not self.no_overlay and not self.alpha then
-        --! register the overlay, so we can close it with ((ButtonDialogTitle#onCloseWidget)) > ((Dialogs#closeContextOverlay)) and are not left with its ghost after closing the ButtonDialogTitle:
-        local button_dialog_overlay = KOR.dialogs:showOverlayReloaded()
-        KOR.dialogs:registerContextOverlay(button_dialog_overlay)
-    end
 end
 
 function ButtonDialogTitle:setTitle(title)

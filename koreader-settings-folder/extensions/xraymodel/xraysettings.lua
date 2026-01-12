@@ -59,7 +59,7 @@ local XraySettings = WidgetContainer:new{
         },
         hk_goto_next_item = {
             value = "N",
-            explanation = _("To go to the next item in a DX dialog were the triangle pointing to the right is visible.") .. hotkeys_warning,
+            explanation = _("To go to the next item in a DX dialog where the triangle pointing to the right is visible.") .. hotkeys_warning,
             locked = 0,
         },
         hk_open_chapter_from_viewer = {
@@ -84,7 +84,7 @@ local XraySettings = WidgetContainer:new{
         },
         hk_goto_previous_item = {
             value = "P",
-            explanation = _("To go to the previous item in a DX dialog were the triangle pointing to the left is visible.") .. hotkeys_warning,
+            explanation = _("To go to the previous item in a DX dialog where the triangle pointing to the left is visible.") .. hotkeys_warning,
             locked = 0,
         },
         hk_show_information = {
