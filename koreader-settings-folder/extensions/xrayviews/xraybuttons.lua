@@ -271,6 +271,7 @@ function XrayButtons:forPageNavigator(parent)
      }}
 end
 
+--- @param parent XrayPageNavigator
 function XrayButtons:forPageNavigatorTopLeft(parent)
     return {
         {
@@ -279,6 +280,14 @@ function XrayButtons:forPageNavigatorTopLeft(parent)
                 parent:showHelpInformation()
             end,
         },
+        KOR.buttoninfopopup:forXrayPageNavigatorFilter({
+            callback = function()
+                if parent.page_navigator_filter_item then
+                    return parent:resetFilter()
+                end
+                return parent:setFilter()
+            end,
+        }),
         KOR.buttoninfopopup:forXrayTranslations(),
         KOR.buttoninfopopup:forXraySettings({
             callback = function()

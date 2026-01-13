@@ -24,6 +24,7 @@ local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 local Screen = require("device").screen
+local T = require("ffi/util").template
 
 local DX = DX
 local has_items = has_items
@@ -414,37 +415,58 @@ function XrayPageNavigator:markedItemRegister(item, html, word)
         label = button_index .. ". " .. label
     end
     table_insert(self.side_buttons, {{
-        text = label,
-        xray_item = item,
-        align = "left",
-       --* force_item will be set when we return to the Page Navigator from ((XrayPageNavigator#returnToNavigator)):
-        callback = function(force_return_to_item)
-            if not force_return_to_item and self.current_item and item.name == self.current_item.name then
-                return true
-            end
-            self.active_side_button = button_index
-            self:setCurrentItem(item)
-            self:setActiveScrollPage()
-            self:reloadPageNavigator(item, info_text)
-            return true
-        end,
-
-        --* for marking or unmarking an item as filter criterium:
-        hold_callback = function()
-            if self.active_filter_name == item.name then
+            text = label,
+            xray_item = item,
+            align = "left",
+           --* force_item will be set when we return to the Page Navigator from ((XrayPageNavigator#returnToNavigator)):
+            callback = function(force_return_to_item)
+                if not force_return_to_item and self.current_item and item.name == self.current_item.name then
+                    return true
+                end
+                self.active_side_button = button_index
+                self:setCurrentItem(item)
                 self:setActiveScrollPage()
-                self.page_navigator_filter_item = nil
-                self.active_filter_name = nil
                 self:reloadPageNavigator(item, info_text)
-                return
-            end
-            self:setActiveScrollPage()
-            self.active_filter_name = item.name
-            self.page_navigator_filter_item = item
-            self:reloadPageNavigator(item, info_text)
-        end,
-    }})
+                return true
+            end,
+
+            --* for marking or unmarking an item as filter criterium:
+            hold_callback = function()
+                if self.active_filter_name == item.name then
+                    return self:resetFilter(item, info_text)
+                end
+                return self:setFilter(item, info_text)
+            end,
+        }})
     return html
+end
+
+function XrayPageNavigator:resetFilter(item, info_text)
+    --* when called from filter button in ((XrayButtons#forPageNavigatorTopLeft)):
+    if not item then
+        item = self.current_item
+        info_text = self.info_panel_text
+    end
+    self:setActiveScrollPage()
+    self.page_navigator_filter_item = nil
+    self.active_filter_name = nil
+    self:reloadPageNavigator(item, info_text)
+    KOR.messages:notify(_("filter was reset") .. "...")
+    return true
+end
+
+function XrayPageNavigator:setFilter(item, info_text)
+    --* when called from reset filter button in ((XrayButtons#forPageNavigatorTopLeft)):
+    if not item then
+        item = self.current_item
+        info_text = self.info_panel_text
+    end
+    self:setActiveScrollPage()
+    self.active_filter_name = item.name
+    self.page_navigator_filter_item = item
+    self:reloadPageNavigator(item, info_text)
+    KOR.messages:notify(T(_("filter set to %1") .. "...", item.name))
+    return true
 end
 
 --- @private
