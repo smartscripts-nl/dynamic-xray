@@ -186,6 +186,15 @@ function ButtonInfoPopup:forTextViewerToTop(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forXrayExport(props)
+	return KOR.buttonprops:set({
+		icon = "export-xray",
+		info = T(_("export icon | Generate a copyable overview of all Xray items.\n\nYou could print this overview, to have it always ready next to your e-reader.\n\nHotkey %1 %2"), KOR.icons.arrow_bare, DX.s.hk_open_export_list_from_page_navigator),
+		callback_label = _("generate"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forXrayFilterByImportantType(props)
 	return KOR.buttonprops:set({
 		text = KOR.icons.xray_person_important_bare .. "/" .. KOR.icons.xray_term_important_bare,

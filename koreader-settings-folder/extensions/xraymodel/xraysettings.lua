@@ -74,6 +74,11 @@ local XraySettings = WidgetContainer:new{
             explanation = _("To open the Page Navigator from the List of Items. The List will be closed.") .. hotkeys_warning,
             locked = 0,
         },
+        hk_open_export_list_from_page_navigator = {
+            value = "X",
+            explanation = "Opens a popup with all Xray items as sorted in the Xray List and with info per item as shown in Page Information Popup. For copying and then printing, if you like." .. hotkeys_warning,
+            locked = 0,
+        },
         hotkey_open_xray_settings_from_page_navigator = {
             value = "S",
             explanation = _("To open the XraySettings from Page Navigator.") .. hotkeys_warning,

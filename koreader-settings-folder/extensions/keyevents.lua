@@ -427,6 +427,13 @@ function KeyEvents.addHotkeysForXrayPageNavigator(key_events_module)
             end,
         },
         {
+            label = "export_items",
+            hotkey = { { DX.s.hk_open_export_list_from_page_navigator } },
+            callback = function()
+                return parent:execExportXrayItemsCallback(parent)
+            end,
+        },
+        {
             label = "show_info",
             hotkey = { { DX.s.hk_show_information } },
             callback = function()

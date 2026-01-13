@@ -24,18 +24,19 @@ local Device = require("device")
 local Font = require("ui/font")
 local KOR = require("extensions/kor")
 local TextWidget = require("ui/widget/textwidget")
+local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 local Screen = Device.screen
+local T = require("ffi/util").template
 
 local DX = DX
-local has_content = has_content
 local has_no_text = has_no_text
 local has_text = has_text
 local math = math
 local pairs = pairs
 local table = table
-local tonumber = tonumber
+local table_insert = table.insert
 
 local count
 
@@ -62,7 +63,6 @@ local XrayUI = WidgetContainer:new{
     info_extra_button_rows = {},
     info_use_upper_case_names = false,
     info_extra_indent = "    ",
-    info_indent = "     ",
     page = nil,
     page_text = nil,
     paragraph_explanations = nil,
@@ -243,7 +243,7 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
 end
 
 function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanations, skip_xray_items, paragraph_headings, injected_nr, paragraph_hits_info)
-    local prefix, first_line, match_block, description, noun, xray_type_icon, aliases, linkwords, explanation, more_button_added
+    local more_button_added
 
     local name = items[i].name
     if injected_names[name] or (skip_xray_items and skip_xray_items[name]) then
@@ -252,43 +252,17 @@ function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanation
 
     injected_names[name] = name
     injected_nr = injected_nr + 1
-    prefix = injected_nr == 1 and "" or "\n"
+    --KOR.debug:hoera("XrayUI:generateParagraphInformation", i .. " > " .. injected_nr)
+
     if self.info_use_upper_case_names then
         name = KOR.strings:upper(name)
     end
-    description = KOR.strings:splitLinesToMaxLength(items[i].description, DX.vd.max_line_length, self.info_indent)
-    aliases, linkwords, explanation = "", "", ""
-    if has_text(items[i].aliases) then
-        noun = items[i].aliases:match(" ") and _("aliases: ") or _("alias: ")
-        noun = KOR.strings:ucfirst(noun, "force_only_first")
-        aliases = KOR.strings:splitLinesToMaxLength(items[i].aliases, DX.vd.max_line_length, self.info_indent, noun) .. "\n"
-    end
-    if has_text(items[i].linkwords) then
-        noun = items[i].linkwords:match(" ") and _("link terms: ") or _("link term: ")
-        noun = KOR.strings:ucfirst(noun, "force_only_first")
-        linkwords = KOR.strings:splitLinesToMaxLength(items[i].linkwords, DX.vd.max_line_length, self.info_indent, noun) .. "\n"
-    end
-    -- #((use xray match reliability indicators))
-    local xray_match_reliability_icon = DX.tw.match_reliability_indicators.full_name
-    --! don't use has_text here, because for full name hits we don't add a text (i.e. the full name) after the reliability weight icon)! Under Ubuntu this is not a problem, but using has_text under Android causes explanation not to be shown:
-    if has_content(xray_explanations[i]) then
-        explanation = xray_explanations[i]
-        xray_match_reliability_icon = explanation:match(self.separator .. "([^ ]+)")
-    end
-
-    xray_type_icon = DX.vd:getItemTypeIcon(items[i])
-    local hits = DX.vd.list_display_mode == "series" and items[i].series_hits or items[i].book_hits
-
-    --* here the info gets combined:
-    -- #((xray items dialog add match reliability explanations))
-    first_line = prefix .. xray_type_icon .. name .. " " .. tonumber(hits) .. explanation
-    first_line = KOR.strings:splitLinesToMaxLength(first_line, DX.vd.max_line_length, self.info_indent) .. "\n"
-    match_block = first_line .. description .. "\n" .. aliases .. linkwords
+    local match_block, xray_type_icon, xray_match_reliability_icon = DX.vd:generateXrayItemInfo(items, xray_explanations, i, name, injected_nr)
     paragraph_hits_info = paragraph_hits_info .. match_block
 
     -- #((headings for use in TextViewer))
     --* needles will be used in ((TextViewer#blockDown)) and  ((TextViewer#blockUp)):
-    table.insert(paragraph_headings, {
+    table_insert(paragraph_headings, {
         name = name,
         --* in paragraph/page info popup first show icon for type of item and importance thereof, and only after that the match reliability indicator icon:
         needle = xray_type_icon .. xray_match_reliability_icon .. " " .. name,
@@ -836,6 +810,16 @@ function XrayUI:reset()
     self.skip_xray_items = nil
     self.xray_context_props = nil
     self.xray_info_found = false
+end
+
+function XrayUI:toggleParagraphOrPageMode(parent, target, new_trigger)
+    local question = T(_([[Do you indeed want to toggle the Xray information display mode to %1?]]), target, new_trigger)
+    KOR.dialogs:confirm(question, function()
+        DX.s:toggleSetting("ui_mode", { "page", "paragraph" })
+        UIManager:close(parent.xray_ui_info_dialog)
+        parent.xray_ui_info_dialog = nil
+        UIManager:setDirty(nil, "full")
+    end)
 end
 
 return XrayUI

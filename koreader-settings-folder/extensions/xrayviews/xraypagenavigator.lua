@@ -30,6 +30,7 @@ local has_items = has_items
 local has_no_text = has_no_text
 local has_text = has_text
 local table = table
+local table_insert = table.insert
 
 local count
 --- @type XrayModel parent
@@ -41,6 +42,7 @@ local XrayPageNavigator = WidgetContainer:new{
     active_side_button = 1,
     alias_indent = "   ",
     button_labels_injected = "",
+    cached_export_info = nil,
     cached_hits_by_needle = {},
     cached_html_and_buttons_by_page_no = {},
     cached_html_by_page_no = {},
@@ -411,7 +413,7 @@ function XrayPageNavigator:markedItemRegister(item, html, word)
     if button_index < 10 then
         label = button_index .. ". " .. label
     end
-    table.insert(self.side_buttons, {{
+    table_insert(self.side_buttons, {{
         text = label,
         xray_item = item,
         align = "left",
@@ -686,6 +688,7 @@ function XrayPageNavigator:resetCache()
     self.cached_html_and_buttons_by_page_no = {}
     self.cached_hits_by_needle = {}
     self.cached_html_by_page_no = {}
+    self.cached_export_info = nil
 end
 
 function XrayPageNavigator:closePageNavigator()
@@ -751,6 +754,48 @@ function XrayPageNavigator:execEditCallback(iparent)
         iparent:setProp("return_to_current_item", iparent.current_item)
     end
     DX.c:onShowEditItemForm(iparent.current_item, false, 1)
+    return true
+end
+
+--* compare ((XrayDialogs#showUiPageInfo))
+function XrayPageNavigator:execExportXrayItemsCallback()
+
+    local top_buttons_left = DX.b:forExportItemsTopLeft()
+
+    if self.cached_export_info then
+        KOR.dialogs:textBox({
+            title = _("All Xray items"),
+            info = self.cached_export_info,
+            fullscreen = true,
+            top_buttons_left = top_buttons_left,
+        })
+        KOR.screenhelpers:refreshScreen()
+        return true
+    end
+
+    local items = DX.vd.items
+    if not items then
+        return true
+    end
+    local paragraphs = {}
+    local paragraph
+    count = #items
+    for i = 1, count do
+        paragraph = DX.vd:generateXrayItemInfo(items, nil, i, items[i].name, i)
+        if i == 1 then
+            paragraph = paragraph:gsub(DX.vd.info_indent, "", 1)
+        end
+        table_insert(paragraphs, paragraph)
+    end
+    self.cached_export_info = table.concat(paragraphs, "")
+
+    self.xray_export_info = KOR.dialogs:textBox({
+        title = "Alle Xray items",
+        info = self.cached_export_info,
+        fullscreen = true,
+        top_buttons_left = top_buttons_left,
+    })
+    KOR.screenhelpers:refreshScreen()
     return true
 end
 

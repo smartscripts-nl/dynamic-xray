@@ -13,6 +13,8 @@ local has_no_text = has_no_text
 local select = select
 local string = string
 local table = table
+local table_concat = table.concat
+local table_insert = table.insert
 local type = type
 
 --- accented characters:
@@ -54,6 +56,10 @@ function Strings:cleanup(text)
     return text:gsub("[”“‘’\"'—.,:;!¡?¿<>]", "")
 end
 
+function Strings:concatMulti(parts)
+    return table_concat(parts)
+end
+
 function Strings:getKeywordsForMatchingFrom(subject, no_lower_case, add_singulars)
     if not subject then
         return {}
@@ -76,14 +82,14 @@ function Strings:getKeywordsForMatchingFrom(subject, no_lower_case, add_singular
         keyword = keyword:gsub("%-", "%%-"):gsub("%.", "%%.")
         if add_singulars and keyword:match("s$") then
             singular = keyword:gsub("s$", "")
-            table.insert(singulars, singular)
+            table_insert(singulars, singular)
         end
         keywords[nr] = keyword
     end
     count = #singulars
     if add_singulars and count > 0 then
         for nr = 1, count do
-            table.insert(keywords, singulars[nr])
+            table_insert(keywords, singulars[nr])
         end
     end
     return KOR.tables:filter(keywords, function(ikeyword)
@@ -131,7 +137,7 @@ function Strings:sortKeywords(text)
     local joiner = splitter == ", *" and ", " or " "
     local parts = self:split(text, splitter)
     table.sort(parts)
-    return table.concat(parts, joiner)
+    return table_concat(parts, joiner)
 end
 
 function Strings:split(str, pat, capture_empty_entity)
@@ -335,16 +341,16 @@ function Strings:splitLinesToMaxLength(text, max_length, indent, first_word, don
             lined_text[index] = test .. " "
             if for_next_line then
                 index = index + 1
-                table.insert(lined_text, for_next_line .. " ")
+                table_insert(lined_text, for_next_line .. " ")
             end
         else
             index = index + 1
             if for_previous_line then
-                table.insert(lined_text, for_previous_line)
+                table_insert(lined_text, for_previous_line)
                 index = index + 1
             end
             insert = for_previous_line or word
-            table.insert(lined_text, insert .. " ")
+            table_insert(lined_text, insert .. " ")
         end
     end
 
@@ -358,7 +364,7 @@ function Strings:splitLinesToMaxLength(text, max_length, indent, first_word, don
         end
         lined_text[i] = lined_text[i]:gsub(" $", "")
     end
-    return table.concat(lined_text, "\n")
+    return table_concat(lined_text, "\n")
 end
 
 --* remove trailing and leading whitespace from string.

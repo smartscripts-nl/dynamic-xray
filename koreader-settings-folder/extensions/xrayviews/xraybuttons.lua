@@ -221,6 +221,11 @@ function XrayButtons:forPageNavigator(parent)
                  return parent:execShowListCallback()
              end
          }),
+         KOR.buttoninfopopup:forXrayExport({
+             callback = function()
+                 return parent:execExportXrayItemsCallback()
+             end
+         }),
          KOR.buttoninfopopup:forXrayViewer({
              enabled_function = function()
                  return parent.current_item and true or false
@@ -322,13 +327,7 @@ function XrayButtons:forUiInfoTopLeft(target, new_trigger, parent)
         KOR.buttoninfopopup:forXrayTogglePageOrParagraphInfo({
             icon = DX.s.ui_mode == "paragraph" and "paragraph" or "pages",
             callback = function()
-                local question = T(_([[Do you indeed want to toggle the Xray information display mode to %1?]]), target, new_trigger)
-                KOR.dialogs:confirm(question, function()
-                    DX.s:toggleSetting("ui_mode", { "page", "paragraph" })
-                    UIManager:close(parent.xray_ui_info_dialog)
-                    parent.xray_ui_info_dialog = nil
-                    UIManager:setDirty(nil, "full")
-                end)
+                DX.u:toggleParagraphOrPageMode(parent, target, new_trigger)
             end,
         }),
         KOR.buttoninfopopup:forXrayTranslations(),
@@ -1046,6 +1045,17 @@ function XrayButtons:forItemEditorTypeSwitch(item_copy, button_props)
     return KOR.buttoninfopopup:forXrayTypeSet({
         callback = callback,
     })
+end
+
+function XrayButtons:forExportItemsTopLeft()
+    return {
+        {
+            icon = "info-slender",
+            callback = function()
+                KOR.dialogs:niceAlert(_("Information"), T(_("The sorting of the items in this list and the book or series mode follow the settings which you made for the Items List.\n\nHotkey for showing this list from Page Navigator %1 %2"), KOR.icons.arrow_bare, DX.s.hk_open_export_list_from_page_navigator))
+            end
+        },
+    }
 end
 
 function XrayButtons:forFilterDialog()

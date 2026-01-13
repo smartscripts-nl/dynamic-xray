@@ -434,7 +434,12 @@ end
 function XrayController:toggleSortingMode()
     local mode = DX.m:toggleSortingMode()
     --* ((XrayController#toggleBookOrSeriesMode)) acts as a kind of reloader/refresher of data:
-    self:toggleBookOrSeriesMode(mode, DX.d.list_args.focus_item, DX.d.list_args.dont_show)
+    local focus_item = DX.d.list_args and DX.d.list_args.focus_item
+    local dont_show = DX.d.list_args and DX.d.list_args.dont_show
+    if not DX.d.list_args then
+        dont_show = true
+    end
+    self:toggleBookOrSeriesMode(mode, focus_item, dont_show)
 end
 
 --- @private

@@ -25,11 +25,14 @@ local T = require("ffi/util").template
 local _ = KOR:initCustomTranslations()
 
 local DX = DX
+local has_content = has_content
 local has_items = has_items
 local has_no_items = has_no_items
 local has_no_text = has_no_text
 local has_text = has_text
 local table = table
+local table_concat = table.concat
+local table_insert = table.insert
 local tonumber = tonumber
 local type = type
 
@@ -55,6 +58,7 @@ local XrayViewsData = WidgetContainer:new {
     filter_state = "unfiltered",
     filter_string = "",
     filter_xray_types = nil,
+    info_indent = "     ",
     item_meta_info_template = "<tr><td><ul><li>%1</li></ul></td><td>&nbsp;</td><td>%2</td></tr>",
     item_table = { {}, {}, {} },
     --* items, persons and terms props act as some kind of temporary data store (not influenced by filters etc.) for the current ebook xray items:
@@ -65,6 +69,7 @@ local XrayViewsData = WidgetContainer:new {
     persons = {},
     --* this prop can be modified with the checkbox in ((XrayDialogs#showFilterDialog)):
     search_simple = false,
+    separator = " " .. KOR.icons.arrow_bare .. " ",
     terms = {},
     type_matched = false,
     xray_type_description = "1 " .. KOR.icons.arrow_bare .. " " .. KOR.icons.xray_person_bare .. "  2 " .. KOR.icons.arrow_bare .. " " .. KOR.icons.xray_person_important_bare .. "  3 " .. KOR.icons.arrow_bare .. " " .. KOR.icons.xray_term_bare .. "  4 " .. KOR.icons.arrow_bare .. " " .. KOR.icons.xray_term_important_bare,
@@ -244,13 +249,13 @@ end
 function XrayViewsData:addItemToPersonsOrTerms(item)
     local item_copy = KOR.tables:shallowCopy(item)
     if item.xray_type <= 2 then
-        table.insert(self.item_table[2], item_copy)
+        table_insert(self.item_table[2], item_copy)
         item_copy.index = #self.persons + 1
-        table.insert(self.persons, item_copy)
+        table_insert(self.persons, item_copy)
     else
-        table.insert(self.item_table[3], item_copy)
+        table_insert(self.item_table[3], item_copy)
         item_copy.index = #self.terms + 1
-        table.insert(self.terms, item_copy)
+        table_insert(self.terms, item_copy)
     end
 end
 
@@ -397,15 +402,15 @@ function XrayViewsData:setChapterHits(chapter_stats, chapters_ordered, chapter_t
         for i = 1, count do
             existing_chapter = chapters_ordered[i]
             if chapter_stats[existing_chapter].index > chapter_props.index then
-                table.insert(chapters_ordered, i, chapter_title)
-                table.insert(self.chapters_start_pages_ordered, i, chapter_stats[chapter_title].start_page)
+                table_insert(chapters_ordered, i, chapter_title)
+                table_insert(self.chapters_start_pages_ordered, i, chapter_stats[chapter_title].start_page)
                 inserted = true
                 break
             end
         end
         if not inserted then
-            table.insert(chapters_ordered, chapter_title)
-            table.insert(self.chapters_start_pages_ordered, chapter_stats[chapter_title].start_page)
+            table_insert(chapters_ordered, chapter_title)
+            table_insert(self.chapters_start_pages_ordered, chapter_stats[chapter_title].start_page)
         end
     else
         chapter_stats[chapter_title].count = chapter_stats[chapter_title].count + 1
@@ -432,11 +437,11 @@ function XrayViewsData:getAllTextHits(search_text_or_item)
     local search_terms = { main_name }
     count = #aliases
     for i = 1, count do
-        table.insert(search_terms, aliases[i])
+        table_insert(search_terms, aliases[i])
     end
     count = #short_names
     for i = 1, count do
-        table.insert(search_terms, short_names[i])
+        table_insert(search_terms, short_names[i])
     end
 
     --* initialize containers
@@ -532,7 +537,7 @@ function XrayViewsData:_doWeakMatchCheck(t, needle, partial_matches, for_relatio
             if for_relations then
                 item.reliability_indicator = indicator
             end
-            table.insert(partial_matches, item)
+            table_insert(partial_matches, item)
             --* item_was_upgraded:
             return true
         end
@@ -580,11 +585,11 @@ end
 
 --- @private
 function XrayViewsData:addMenuItemToItemTables(menu_item)
-    table.insert(self.item_table_for_filter[1], menu_item)
+    table_insert(self.item_table_for_filter[1], menu_item)
     if menu_item.xray_type <= 2 then
-        table.insert(self.item_table_for_filter[2], menu_item)
+        table_insert(self.item_table_for_filter[2], menu_item)
     else
-        table.insert(self.item_table_for_filter[3], menu_item)
+        table_insert(self.item_table_for_filter[3], menu_item)
     end
 end
 
@@ -641,7 +646,7 @@ function XrayViewsData:updateFilteredCountUponTextMatch(item, linked_item_needle
     --* add to filtered sets:
     if matched then
         if is_first_loop and score > 20 and item.linkwords then
-            table.insert(linked_item_needles, item.linkwords)
+            table_insert(linked_item_needles, item.linkwords)
         end
 
         if is_first_loop then
@@ -701,13 +706,13 @@ function XrayViewsData:populateItemTableFromLinkWords(linked_item_needles, items
         return
     end
 
-    linked_item_needles = table.concat(linked_item_needles, " ")
+    linked_item_needles = table_concat(linked_item_needles, " ")
     local needles = KOR.strings:split(linked_item_needles, " ")
     local purged = {}
     count = #needles
     for i = 1, count do
         if not hits_registry:find(needles[i], 1, true) then
-            table.insert(purged, needles[i])
+            table_insert(purged, needles[i])
         end
     end
     needles = purged
@@ -757,7 +762,7 @@ function XrayViewsData:addLinkedItem(stage, needle_item, compare_item, linkwords
         --* we also check for matches with aliases of xray items:
         aliases_needle = stage == 1 and compare_item.aliases or needle_item.aliases
         if (parent:hasExactMatch(needle, linkword) or parent:hasExactMatch(aliases_needle, linkword)) and not linked_names_index[compare_item.name] then
-            table.insert(linked_items, compare_item)
+            table_insert(linked_items, compare_item)
             linked_names_index[compare_item.name] = true
             if stage == 2 then
                 break
@@ -820,7 +825,7 @@ function XrayViewsData:addMentionedInInfo(info, item, mentioned_in, has_aliases,
     --* "|" was used for GROUP_CONCAT in query:
     mentioned_in = KOR.strings:split(mentioned_in, "|")
 
-    return info .. info_spacer .. table.concat(mentioned_in, "\n")
+    return info .. info_spacer .. table_concat(mentioned_in, "\n")
 end
 
 function XrayViewsData:getItemInfo(item, ucfirst)
@@ -839,7 +844,7 @@ function XrayViewsData:addAliasesHtml(meta_info_html, item)
     if has_no_text(item.aliases) then
         return
     end
-    table.insert(meta_info_html, T(self.item_meta_info_template, item.aliases:match(" ") and "Aliassen:" or "Alias:", item.aliases))
+    table_insert(meta_info_html, T(self.item_meta_info_template, item.aliases:match(" ") and "Aliassen:" or "Alias:", item.aliases))
 end
 
 --- @private
@@ -848,7 +853,7 @@ function XrayViewsData:addLinkWordsHtml(meta_info_html, item)
     if has_no_text(item.linkwords) then
         return
     end
-    table.insert(meta_info_html, T(self.item_meta_info_template, item.linkwords:match(" ") and "Link-termen:" or "Link-term:", item.linkwords))
+    table_insert(meta_info_html, T(self.item_meta_info_template, item.linkwords:match(" ") and "Link-termen:" or "Link-term:", item.linkwords))
 end
 
 --- @private
@@ -860,18 +865,18 @@ function XrayViewsData:addMentionedInHtml(meta_info_html, item)
     end
     --* "|" was used for GROUP_CONCAT in query:
     local list = KOR.strings:split(item.mentioned_in, "|")
-    list = table.concat(list, "<br>")
-    table.insert(meta_info_html, T(self.item_meta_info_template, _("Mentioned in") .. ":", list))
+    list = table_concat(list, "<br>")
+    table_insert(meta_info_html, T(self.item_meta_info_template, _("Mentioned in") .. ":", list))
 end
 
 --- @private
 --- @param meta_info_html table
 function XrayViewsData:addHitsHtml(meta_info_html, item)
     if parent.current_series and item.series_hits then
-        table.insert(meta_info_html, T(self.item_meta_info_template, _("Hits in series") .. ":", tonumber(item.series_hits)))
+        table_insert(meta_info_html, T(self.item_meta_info_template, _("Hits in series") .. ":", tonumber(item.series_hits)))
     end
     if item.book_hits then
-        table.insert(meta_info_html, T(self.item_meta_info_template, _("Hits in book") .. ":", tonumber(item.book_hits)))
+        table_insert(meta_info_html, T(self.item_meta_info_template, _("Hits in book") .. ":", tonumber(item.book_hits)))
     end
 end
 
@@ -885,8 +890,8 @@ function XrayViewsData:getItemInfoHtml(item, ucfirst)
     self:addHitsHtml(meta_info_html, item)
     self:addMentionedInHtml(meta_info_html, item)
     if #meta_info_html > 1 then
-        table.insert(meta_info_html, "</table>")
-        info = info .. table.concat(meta_info_html, "")
+        table_insert(meta_info_html, "</table>")
+        info = info .. table_concat(meta_info_html, "")
     end
 
     --* only return general info:
@@ -941,6 +946,58 @@ function XrayViewsData:getItemTypeIcon(item, bare)
         return self.xray_type_icons_bare[item.xray_type]
     end
     return self.xray_type_icons[item.xray_type]
+end
+
+function XrayViewsData:generateXrayItemInfo(items, xray_explanations, i, name, injected_nr)
+
+    local first_line, description, noun, aliases, linkwords, explanation
+
+    local prefix = injected_nr == 1 and "" or "\n"
+    description = KOR.strings:splitLinesToMaxLength(items[i].description, DX.vd.max_line_length, self.info_indent)
+    aliases, linkwords, explanation = "", "", ""
+    if has_text(items[i].aliases) then
+        noun = KOR.icons.xray_alias_bare
+        aliases = KOR.strings:splitLinesToMaxLength(items[i].aliases, DX.vd.max_line_length, self.info_indent, noun) .. "\n"
+    end
+    if has_text(items[i].linkwords) then
+        noun = KOR.icons.xray_link_bare
+        linkwords = KOR.strings:splitLinesToMaxLength(items[i].linkwords, DX.vd.max_line_length, self.info_indent, noun) .. "\n"
+    end
+    -- #((use xray match reliability indicators))
+    local xray_match_reliability_icon = DX.tw.match_reliability_indicators.full_name
+    --! don't use has_text here, because for full name hits we don't add a text (i.e. the full name) after the reliability weight icon)! Under Ubuntu this is not a problem, but using has_text under Android causes explanation not to be shown:
+    if xray_explanations and has_content(xray_explanations[i]) then
+        explanation = xray_explanations[i]
+        xray_match_reliability_icon = explanation:match(self.separator .. "([^ ]+)")
+    end
+
+    local xray_type_icon = DX.vd:getItemTypeIcon(items[i])
+    local hits = DX.vd.list_display_mode == "series" and items[i].series_hits or items[i].book_hits
+
+    --* here the info gets combined:
+    -- #((xray items dialog add match reliability explanations))
+    first_line = prefix .. xray_type_icon .. name .. explanation
+    first_line = KOR.strings:splitLinesToMaxLength(first_line, DX.vd.max_line_length, self.info_indent) .. "\n"
+    if has_text(aliases) then
+        aliases = self.alias_indent .. aliases
+    end
+    if has_text(linkwords) then
+        linkwords = self.alias_indent .. linkwords
+    end
+
+    local info = KOR.strings:concatMulti({
+        first_line,
+        description,
+        "\n",
+        self.info_indent,
+        self.alias_indent,
+        KOR.icons.graph,
+        tonumber(hits),
+        "\n",
+        aliases,
+        linkwords,
+    })
+    return info, xray_type_icon, xray_match_reliability_icon
 end
 
 --* generate list item texts for ((XrayDialogs#showList)):
@@ -1018,10 +1075,10 @@ function XrayViewsData:addChapterToChapterStats(chapters_ordered, chapter_items,
         chapter_start_page = chapter_stats[chapter].start_page
                 and T(self.chapter_page_number_format, chapter_stats[chapter].start_page)
                 or ""
-        table.insert(chapter_items, "<tr><td>" ..
+        table_insert(chapter_items, "<tr><td>" ..
                 i .. ". <i>" .. chapter .. "</i>" .. chapter_start_page .. "</td><td>&nbsp;&nbsp;</td><td>" .. chapter_stats[chapter].count .. "</td></tr>")
     else
-        table.insert(chapter_items, chapter .. " " .. KOR.icons.arrow_bare .. " " .. chapter_stats[chapter].count .. "<br>")
+        table_insert(chapter_items, chapter .. " " .. KOR.icons.arrow_bare .. " " .. chapter_stats[chapter].count .. "<br>")
     end
     if chapter_stats[chapter].count > max_hits then
         max_hits = chapter_stats[chapter].count
@@ -1031,7 +1088,7 @@ end
 
 --- @private
 function XrayViewsData:generateChaptersListHtml(chapter_items, present_as_table, max_hits)
-    local chapter_info = table.concat(chapter_items, "")
+    local chapter_info = table_concat(chapter_items, "")
     local max_hit_indicator = max_hits .. " " .. KOR.icons.arrow_left_bare
 
     if present_as_table then
@@ -1270,9 +1327,9 @@ function XrayViewsData:populateTypeTables()
     for i = 1, count do
         xray_item = self.items[i]
         if xray_item.xray_type <= 2 then
-            table.insert(self.persons, xray_item)
+            table_insert(self.persons, xray_item)
         else
-            table.insert(self.terms, xray_item)
+            table_insert(self.terms, xray_item)
         end
     end
 end
