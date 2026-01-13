@@ -766,7 +766,9 @@ function XrayPageNavigator:execExportXrayItemsCallback()
         KOR.dialogs:textBox({
             title = _("All Xray items"),
             info = self.cached_export_info,
+            info_icon_less = self.cached_export_info_icon_less,
             fullscreen = true,
+            copy_icon_less_text = true,
             top_buttons_left = top_buttons_left,
         })
         KOR.screenhelpers:refreshScreen()
@@ -778,21 +780,27 @@ function XrayPageNavigator:execExportXrayItemsCallback()
         return true
     end
     local paragraphs = {}
-    local paragraph
+    local paragraphs_icon_less = {}
+    local paragraph, paragraph_icon_less
     count = #items
     for i = 1, count do
-        paragraph = DX.vd:generateXrayItemInfo(items, nil, i, items[i].name, i)
+        paragraph, paragraph_icon_less = DX.vd:generateXrayItemInfo(items, nil, i, items[i].name, i, "for_all_items_list")
         if i == 1 then
             paragraph = paragraph:gsub(DX.vd.info_indent, "", 1)
+            paragraph_icon_less = paragraph_icon_less:gsub(DX.vd.info_indent, "", 1)
         end
         table_insert(paragraphs, paragraph)
+        table_insert(paragraphs_icon_less, paragraph_icon_less)
     end
     self.cached_export_info = table.concat(paragraphs, "")
+    self.cached_export_info_icon_less = table.concat(paragraphs_icon_less, "")
 
     self.xray_export_info = KOR.dialogs:textBox({
-        title = "Alle Xray items",
+        title = _("All Xray items"),
         info = self.cached_export_info,
+        info_icon_less = self.cached_export_info_icon_less,
         fullscreen = true,
+        copy_icon_less_text = true,
         top_buttons_left = top_buttons_left,
     })
     KOR.screenhelpers:refreshScreen()

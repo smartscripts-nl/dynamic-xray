@@ -344,8 +344,13 @@ function Dialogs:textBox(args)
     info = KOR.html:htmlToPlainTextIfHtml(info)
     --* hotfix for initials in names:
     info = info:gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
-
     args.text = info
+
+    --* for a non-icon variant of a text with icons, e.g. as generated in ((XrayPageNavigator#execExportXrayItemsCallback)):
+    if args.info_icon_less then
+        --* hotfix for initials in names:
+        args.text_for_copy = args.info_icon_less:gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
+    end
 
     args.width_factor = args.width_factor or 1
     --local use_scrolling_dialog = args.use_scrolling_dialog or 1

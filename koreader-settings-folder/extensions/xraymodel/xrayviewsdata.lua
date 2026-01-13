@@ -948,20 +948,29 @@ function XrayViewsData:getItemTypeIcon(item, bare)
     return self.xray_type_icons[item.xray_type]
 end
 
-function XrayViewsData:generateXrayItemInfo(items, xray_explanations, i, name, injected_nr)
+function XrayViewsData:generateXrayItemInfo(items, xray_explanations, i, name, injected_nr, for_all_items_list)
 
-    local first_line, description, noun, aliases, linkwords, explanation
+    local first_line, first_line_fc, description, icon
 
     local prefix = injected_nr == 1 and "" or "\n"
     description = KOR.strings:splitLinesToMaxLength(items[i].description, DX.vd.max_line_length, self.info_indent)
-    aliases, linkwords, explanation = "", "", ""
+    --* suffix "fc" stands for "for copy":
+    local aliases, linkwords, aliases_fc, linkwords_fc, explanation, noun = "", "", "", "", "", ""
     if has_text(items[i].aliases) then
-        noun = KOR.icons.xray_alias_bare
-        aliases = KOR.strings:splitLinesToMaxLength(items[i].aliases, DX.vd.max_line_length, self.info_indent, noun) .. "\n"
+        icon = KOR.icons.xray_alias_bare
+        aliases = KOR.strings:splitLinesToMaxLength(items[i].aliases, DX.vd.max_line_length, self.info_indent, icon) .. "\n"
+        if for_all_items_list then
+            noun = self:getKeywordsCount(items[i].aliases) == 1 and _("alias") .. ": " or _("aliases") .. ": "
+            aliases_fc = KOR.strings:splitLinesToMaxLength(items[i].aliases, DX.vd.max_line_length, self.info_indent, noun) .. "\n"
+        end
     end
     if has_text(items[i].linkwords) then
-        noun = KOR.icons.xray_link_bare
-        linkwords = KOR.strings:splitLinesToMaxLength(items[i].linkwords, DX.vd.max_line_length, self.info_indent, noun) .. "\n"
+        icon = KOR.icons.xray_link_bare
+        linkwords = KOR.strings:splitLinesToMaxLength(items[i].linkwords, DX.vd.max_line_length, self.info_indent, icon) .. "\n"
+        if for_all_items_list then
+            noun = self:getKeywordsCount(items[i].linkwords) == 1 and _("link term") .. ": " or _("link terms") .. ": "
+            linkwords_fc = KOR.strings:splitLinesToMaxLength(items[i].linkwords, DX.vd.max_line_length, self.info_indent, noun) .. "\n"
+        end
     end
     -- #((use xray match reliability indicators))
     local xray_match_reliability_icon = DX.tw.match_reliability_indicators.full_name
@@ -978,11 +987,21 @@ function XrayViewsData:generateXrayItemInfo(items, xray_explanations, i, name, i
     -- #((xray items dialog add match reliability explanations))
     first_line = prefix .. xray_type_icon .. name .. explanation
     first_line = KOR.strings:splitLinesToMaxLength(first_line, DX.vd.max_line_length, self.info_indent) .. "\n"
+    if for_all_items_list then
+        first_line_fc = prefix .. name .. explanation
+        first_line_fc = KOR.strings:splitLinesToMaxLength(first_line_fc, DX.vd.max_line_length, self.info_indent) .. "\n"
+    end
     if has_text(aliases) then
         aliases = self.alias_indent .. aliases
     end
     if has_text(linkwords) then
         linkwords = self.alias_indent .. linkwords
+    end
+    if has_text(aliases_fc) then
+        aliases_fc = self.alias_indent .. aliases_fc
+    end
+    if has_text(linkwords_fc) then
+        linkwords_fc = self.alias_indent .. linkwords_fc
     end
 
     local info = KOR.strings:concatMulti({
@@ -997,6 +1016,26 @@ function XrayViewsData:generateXrayItemInfo(items, xray_explanations, i, name, i
         aliases,
         linkwords,
     })
+    local info_fc
+    if for_all_items_list then
+        info_fc = KOR.strings:concatMulti({
+            first_line_fc,
+            description,
+            "\n",
+            self.info_indent,
+            self.alias_indent,
+            _("mentions"),
+            ": ",
+            tonumber(hits),
+            "\n",
+            aliases_fc,
+            linkwords_fc,
+        })
+        --* for copyable list (without icons) of all items:
+        return info, info_fc
+    end
+
+    --* for Xray Page Information popup:
     return info, xray_type_icon, xray_match_reliability_icon
 end
 
@@ -1355,6 +1394,14 @@ end
 
 function XrayViewsData:setItems(items)
     self.items = items
+end
+
+--- @private
+function XrayViewsData:getKeywordsCount(text)
+    if not text:match(",") then
+        return KOR.strings:substrCount(text, " ") + 1
+    end
+    return KOR.strings:substrCount(text, ",") + 1
 end
 
 --- @private
