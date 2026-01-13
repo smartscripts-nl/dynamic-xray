@@ -86,6 +86,10 @@ You can show this navigator by:
 * tapping in KOReader's main menu: most left icon > Dynamic Xray > Show Page Navigator
 * assigning a gesture for "Show Xray Page Navigator" (in the Gestures menu under "Reflowable documents...") and then use this gesture.
 
+#### Generate a copyable list of all Xray items from Page Navigator
+
+With the export button in Page Navigator you open a popup with a list of all Xray items. Including stats and additional info per item. This list you can copy to the clipboard and then print, if you like, for usage next to your e-reader.
+
 #### Browsing by a specific item in the Page Navigator
 
 When you longpress an item in the side panel, a filter icon will appear on the left side of that item. From now on, while browsing forward or backwards, the Navigator will only show pages which contain that filtered item. Very handy for study purposes!
