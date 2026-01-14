@@ -55,11 +55,11 @@ local XrayPageNavigator = WidgetContainer:new{
     marker = KOR.icons.active_tab_bare,
     max_line_length = 80,
     navigator_page_no = nil,
+    no_navigator_page_found = false,
     non_active_layout = nil,
     non_filtered_items_marker_bold = "<strong>%1</strong>",
     non_filtered_items_marker_smallcaps = "<span style='font-variant: small-caps'>%1</span>",
     non_filtered_items_marker_smallcaps_italic = "<i style='font-variant: small-caps'>%1</i>",
-    no_navigator_page_found = false,
     page_navigator_filter_item = nil,
     prev_marked_item = nil,
     return_to_current_item = nil,
@@ -292,11 +292,11 @@ end
 function XrayPageNavigator:markAliasHit(html, item)
 
     local alias_matchers = KOR.strings:getKeywordsForMatchingFrom(item.aliases)
-    local word
+    local needle
     count = #alias_matchers
     for i = 1, count do
-        word = self:getNeedleString(alias_matchers[i], "for_substitution")
-        html = html:gsub(word, "<strong>" .. item.aliases .. "</strong>")
+        needle = self:getNeedleString(alias_matchers[i], "for_substitution")
+        html = self:markNeedleInHtml(html, needle, item.aliases)
     end
 
     return html
@@ -326,7 +326,7 @@ function XrayPageNavigator:markFullNameHit(html, item, subject, loop_no)
     end
     needle = self:getNeedleString(xray_name_swapped)
 
-    return html:gsub(needle, "<strong>" .. xray_name_swapped .. "</strong>"), org_html ~= html
+    return self:markNeedleInHtml(html, needle, xray_name_swapped), org_html ~= html
 end
 
 --- @private
@@ -681,7 +681,6 @@ function XrayPageNavigator:loadDataForPage(marker_name)
         --* don't use cache if a filtered item was set (with its additional html):
         and not self.active_filter_name
     then
-
 
         self.side_buttons = self.cached_html_and_buttons_by_page_no[self.navigator_page_no].side_buttons
         self:markActiveSideButton(self.side_buttons)
