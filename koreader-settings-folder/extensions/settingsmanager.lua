@@ -99,16 +99,13 @@ function SettingsManager:updateSettingsFromTemplate()
         return
     end
 
-    --* following the parent's settings template, add settings that were added there, or remove settings that were deleted there:
-    local settings_were_added = self:addNewSettingsOrHelpTextsFromTemplate()
-    local settings_were_deleted = self:removeSettingsFromTemplate()
-    if settings_were_added or settings_were_deleted then
+    if self:settingsWereUpdatedFromTemplate() then
         self:saveSettings()
     end
 end
 
 --- @private
-function SettingsManager:addNewSettingsOrHelpTextsFromTemplate()
+function SettingsManager:settingsWereUpdatedFromTemplate()
     local settings_were_updated = false
     for key, props in pairs(self.parent.settings_template) do
         --* add missing settings from template:
@@ -116,25 +113,28 @@ function SettingsManager:addNewSettingsOrHelpTextsFromTemplate()
             self.settings[key] = props
             settings_were_updated = true
 
-            --* add updated explanations from template:
+        --* add updated explanations from template:
         elseif self.settings[key].explanation ~= props.explanation then
             self.settings[key].explanation = props.explanation
             settings_were_updated = true
         end
-    end
-    return settings_were_updated
-end
 
---- @private
-function SettingsManager:removeSettingsFromTemplate()
-    local settings_were_deleted = false
+        --* change updated options from template:
+        if self.settings[key] and self.settings[key].options ~= props.options then
+            self.settings[key].options = props.options
+            settings_were_updated = true
+        end
+    end
+
+    --* remove settings which are not mentioned in the template anymore:
     for key in pairs(self.settings) do
         if not self.parent.settings_template[key] and key ~= "database_filename" then
             self.settings[key] = nil
-            settings_were_deleted = true
+            settings_were_updated = true
         end
     end
-    return settings_were_deleted
+
+    return settings_were_updated
 end
 
 function SettingsManager:showParentDialog()

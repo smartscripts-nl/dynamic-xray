@@ -79,7 +79,7 @@ local XraySettings = WidgetContainer:new{
             explanation = "Opens a popup with all Xray items as sorted in the Xray List and with info per item as shown in Page Information Popup. For copying and then printing, if you like." .. hotkeys_warning,
             locked = 0,
         },
-        hotkey_open_xray_settings_from_page_navigator = {
+        hk_open_xray_settings_from_page_navigator = {
             value = "S",
             explanation = _("To open the XraySettings from Page Navigator.") .. hotkeys_warning,
             locked = 0,
@@ -134,12 +134,20 @@ local XraySettings = WidgetContainer:new{
             explanation = _("This variables enables a number of default settings for KOReader onder Ubuntu, e.g. that the user can close some dialogs with ESC."),
             locked = 0,
         },
-        page_navigator_panels_font_size = {
-            value = 14,
-            explanation = _("With this setting you can determine the font size of the side and bottom panels in the Page Navigator (used in HtmlBox)."),
+        -- #((non_filtered_items_layout))
+        --* consumed in ((XrayPageNavigator#setNonFilteredItemsLayout)):
+        PN_non_filtered_items_layout = {
+            value = "small-caps-italic",
+            options = { "small-caps", "small-caps-italic", "bold", },
+            explanation = _("Page Navigator: when an item filter is set, the non-matching Xray items in the page will be marked with this lay-out."),
             locked = 0,
         },
-        ui_mode = {
+        PN_panels_font_size = {
+            value = 14,
+            explanation = _("Page Navigator: with this setting you can determine the font size of the side and bottom panels."),
+            locked = 0,
+        },
+        UI_mode = {
             value = "page",
             options = { "page", "paragraph" },
             explanation = _("This setting determines whether Xray items in a page are shown with one lightning marker for the entire page or star markers for each of the paragraphs with items."),

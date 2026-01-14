@@ -105,7 +105,7 @@ function XrayUI:drawMarker(c, rect)
     if note_mark_pos_x then
         local y_pos_shift = DX.s.is_ubuntu and 6 or 12
         local y_pos = rect.y + y_pos_shift
-        if DX.s.ui_mode == "page" then
+        if DX.s.UI_mode == "page" then
             y_pos = y_pos - 7
         end
         marker:paintTo(bb, note_mark_pos_x, y_pos)
@@ -123,7 +123,7 @@ end
 
 function XrayUI:getMarkerIconXpos(c, rect)
     local marker_width = c.marker_width
-    local is_xray_page_mode = DX.s.ui_mode == "page"
+    local is_xray_page_mode = DX.s.UI_mode == "page"
     local is_xray_paragraph_marker = not is_xray_page_mode
 
     local x = rect.x
@@ -178,9 +178,9 @@ function XrayUI:getParaMarker(bb)
     if bb then
         -- #((set xray marker size))
         --* compare ((set xray marker position))
-        local font_size = DX.s.ui_mode == "paragraph" and 10 or 18
+        local font_size = DX.s.UI_mode == "paragraph" and 10 or 18
         marker = TextWidget:new{
-            text = DX.s.ui_mode == "paragraph" and KOR.icons.xray_item or KOR.icons.lightning_bare,
+            text = DX.s.UI_mode == "paragraph" and KOR.icons.xray_item or KOR.icons.lightning_bare,
             face = Font:getFace("smallinfofont", font_size),
             fgcolor = KOR.colors.xray_page_or_paragraph_match_marker,
             padding = 0,
@@ -328,7 +328,7 @@ function XrayUI:ReaderViewInitParaOrPageData()
         local marker_line_found
         for p = 1, para_count do
             marker_line_found = self:ReaderViewLoopThroughParagraphOrPage(p)
-            if DX.s.ui_mode == "page" and marker_line_found then
+            if DX.s.UI_mode == "page" and marker_line_found then
                 return self.xray_info_found
             end
         end
@@ -351,7 +351,7 @@ end
 --* see ((XRAY_ITEMS)) for more info:
 --- @private
 function XrayUI:ReaderViewLoopThroughParagraphOrPage(p)
-    local ui_mode = DX.s.ui_mode
+    local ui_mode = DX.s.UI_mode
 
     --* self.page_text was set when storing self.paragraphs, in ((XrayUI#setParagraphsFromDocument)) > ((XrayUI#getFullPageText)):
     local haystack = ui_mode == "paragraph" and self.paragraphs[p].text or self.page_text

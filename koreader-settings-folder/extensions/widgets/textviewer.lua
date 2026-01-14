@@ -919,7 +919,7 @@ function TextViewer:showToc()
         }
     )
 
-    local xray_ui_mode = DX.s.ui_mode
+    local xray_ui_mode = DX.s.UI_mode
     local title = xray_ui_mode == "paragraph" and "Xray items in deze alinea" or "Xray items op deze pagina"
     self.toc_dialog = KOR.dialogs:showButtonDialog(buttons_count .. " " .. title, button_table)
 

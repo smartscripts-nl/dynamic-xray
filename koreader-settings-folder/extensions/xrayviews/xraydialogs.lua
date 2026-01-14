@@ -519,9 +519,9 @@ function XrayDialogs:showUiPageInfo(hits_info, headings, matches_count, extra_bu
             info = haystack_text .. "\n\n" .. info
         end
         local matches_count_info = matches_count == 1 and _("1 Xray item") or matches_count .. " " .. _("Xray items")
-        local subject = DX.s.ui_mode == "paragraph" and _(" in this paragraph") or _(" on this page")
-        local target = DX.s.ui_mode == "paragraph" and _("the ENTIRE PAGE") or _("PARAGRAPHS")
-        local new_trigger = DX.s.ui_mode == "paragraph" and _("the first line marked with a lightning icon") or _("a paragraph marked with a star")
+        local subject = DX.s.UI_mode == "paragraph" and _(" in this paragraph") or _(" on this page")
+        local target = DX.s.UI_mode == "paragraph" and _("the ENTIRE PAGE") or _("PARAGRAPHS")
+        local new_trigger = DX.s.UI_mode == "paragraph" and _("the first line marked with a lightning icon") or _("a paragraph marked with a star")
         local key_events_module = "XrayUIpageInfoViewer"
         --* the data below was populated in ((XrayUI#ReaderViewGenerateXrayInformation)):
         self.xray_ui_info_dialog = KOR.dialogs:textBox({

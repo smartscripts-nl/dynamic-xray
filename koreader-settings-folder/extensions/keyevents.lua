@@ -477,7 +477,7 @@ function KeyEvents.addHotkeysForXrayPageNavigator(key_events_module)
         },
         {
             label = "pn_settings",
-            hotkey = { { { DX.s.hotkey_open_xray_settings_from_page_navigator } } },
+            hotkey = { { { DX.s.hk_open_xray_settings_from_page_navigator } } },
             callback = function()
                 return self:execTopMostSharedHotkey("S", key_events_module)
             end,

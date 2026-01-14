@@ -334,7 +334,7 @@ end
 function XrayButtons:forUiInfoTopLeft(target, new_trigger, parent)
     return {
         KOR.buttoninfopopup:forXrayTogglePageOrParagraphInfo({
-            icon = DX.s.ui_mode == "paragraph" and "paragraph" or "pages",
+            icon = DX.s.UI_mode == "paragraph" and "paragraph" or "pages",
             callback = function()
                 DX.u:toggleParagraphOrPageMode(parent, target, new_trigger)
             end,

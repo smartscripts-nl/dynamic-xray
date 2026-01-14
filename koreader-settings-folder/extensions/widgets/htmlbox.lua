@@ -327,7 +327,7 @@ function HtmlBox:generateInfoPanel()
     local info_text = self.info_panel_text or " "
     self.info_panel = ScrollTextWidget:new{
         text = info_text,
-        face = Font:getFace("x_smallinfofont", DX.s.page_navigator_panels_font_size or 14),
+        face = Font:getFace("x_smallinfofont", DX.s.PN_panels_font_size or 14),
         line_height = 0.16,
         alignment = "left",
         justified = false,
@@ -675,7 +675,7 @@ function HtmlBox:generateSidePanelButtons()
     if has_no_items(self.side_buttons) then
         self.button_table_side = ScrollTextWidget:new{
             text = " ",
-            face = Font:getFace("x_smallinfofont", DX.s.page_navigator_panels_font_size or 14),
+            face = Font:getFace("x_smallinfofont", DX.s.PN_panels_font_size or 14),
             line_height = 0.16,
             alignment = "left",
             justified = false,
@@ -689,7 +689,7 @@ function HtmlBox:generateSidePanelButtons()
     self.button_table_side = ButtonTable:new{
         width = self.side_buttons_width,
         button_font_face = "x_smallinfofont",
-        button_font_size = DX.s.page_navigator_panels_font_size or 14,
+        button_font_size = DX.s.PN_panels_font_size or 14,
         buttons = self.side_buttons,
         show_parent = self,
         button_font_weight = "normal",

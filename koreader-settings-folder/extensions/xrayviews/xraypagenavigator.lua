@@ -55,6 +55,10 @@ local XrayPageNavigator = WidgetContainer:new{
     marker = KOR.icons.active_tab_bare,
     max_line_length = 80,
     navigator_page_no = nil,
+    non_active_layout = nil,
+    non_filtered_items_marker_bold = "<strong>%1</strong>",
+    non_filtered_items_marker_smallcaps = "<span style='font-variant: small-caps'>%1</span>",
+    non_filtered_items_marker_smallcaps_italic = "<i style='font-variant: small-caps'>%1</i>",
     no_navigator_page_found = false,
     page_navigator_filter_item = nil,
     prev_marked_item = nil,
@@ -230,13 +234,17 @@ function XrayPageNavigator:markItemsFoundInPageHtml(html, navigator_page_no, mar
     count = #hits
 
     self.prev_marked_item = nil
+    self:setNonFilteredItemsLayout()
     for i = 1, count do
         html = self:markItemsInHtml(html, hits[i])
     end
-    self.cached_html_and_buttons_by_page_no[self.navigator_page_no] = {
-        html = html,
-        side_buttons = self.side_buttons,
-    }
+    --* don't use cache if a filtered item was set (with its additional html):
+    if not self.active_filter_name then
+        self.cached_html_and_buttons_by_page_no[self.navigator_page_no] = {
+            html = html,
+            side_buttons = self.side_buttons,
+        }
+    end
     return html
 end
 
@@ -246,6 +254,7 @@ function XrayPageNavigator:markItemsInHtml(html, item)
         return html
     end
     self.prev_marked_item = item.name
+    self.is_filter_item = self.active_filter_name == item.name
 
     local subjects = {
         "name",
@@ -286,7 +295,7 @@ function XrayPageNavigator:markAliasHit(html, item)
     local word
     count = #alias_matchers
     for i = 1, count do
-        word = self:getMatchString(alias_matchers[i], "for_substitution")
+        word = self:getNeedleString(alias_matchers[i], "for_substitution")
         html = html:gsub(word, "<strong>" .. item.aliases .. "</strong>")
     end
 
@@ -300,11 +309,11 @@ function XrayPageNavigator:markFullNameHit(html, item, subject, loop_no)
     end
 
     local org_html = html
-    local replacer = self:getMatchString(subject, "for_substitution")
-    html = html:gsub(replacer, "<strong>" .. subject .. "</strong>")
+    local needle = self:getNeedleString(subject, "for_substitution")
+    html = self:markNeedleInHtml(html, needle)
     local subject_plural
-    replacer, subject_plural = self:getMatchStringPlural(subject, "for_substitution")
-    html = html:gsub(replacer, "<strong>" .. subject_plural .. "</strong>")
+    needle, subject_plural = self:getNeedleStringPlural(subject, "for_substitution")
+    html = self:markNeedleInHtml(html, needle, subject_plural)
 
     --* only replace swapped name for loop_no 1, because that's the full name:
     if loop_no > 1 then
@@ -315,9 +324,9 @@ function XrayPageNavigator:markFullNameHit(html, item, subject, loop_no)
     if not xray_name_swapped then
         return html, org_html ~= html
     end
-    replacer = self:getMatchString(xray_name_swapped)
+    needle = self:getNeedleString(xray_name_swapped)
 
-    return html:gsub(replacer, "<strong>" .. xray_name_swapped .. "</strong>"), org_html ~= html
+    return html:gsub(needle, "<strong>" .. xray_name_swapped .. "</strong>"), org_html ~= html
 end
 
 --- @private
@@ -325,15 +334,15 @@ function XrayPageNavigator:markPartialHits(html, item, uc, i, was_marked_for_ful
     local is_term, lc, matcher
 
     local is_lowercase_person = item.xray_type < 3 and not uc:match("[A-Z]")
-        is_term = item.xray_type > 2
+    is_term = item.xray_type > 2
     if (is_term or is_lowercase_person) and i == 1 then
-    uc = KOR.strings:ucfirst(uc)
+        uc = KOR.strings:ucfirst(uc)
     end
     --* e.g. don't mark "of" in "Consistorial Court of Discipline":
     local is_markable_part_of_name = (is_term or is_lowercase_person or uc:match("[A-Z]")) and uc:len() > 2 and true or false
 
-    matcher = self:getMatchString(uc)
-    local uc_matcher_plural = self:getMatchStringPlural(uc)
+    matcher = self:getNeedleString(uc)
+    local uc_matcher_plural = self:getNeedleStringPlural(uc)
     if was_marked_for_full or (is_markable_part_of_name and (html:match(matcher) or html:match(uc_matcher_plural))) then
         --* return html and add item to buttons:
         return self:markedItemRegister(item, html, uc)
@@ -341,7 +350,7 @@ function XrayPageNavigator:markPartialHits(html, item, uc, i, was_marked_for_ful
     --* for terms we also try to find lowercase variants of their names:
     elseif (is_term or is_lowercase_person) and is_markable_part_of_name then
         lc = KOR.strings:lower(uc)
-        matcher = self:getMatchString(lc)
+        matcher = self:getNeedleString(lc)
         if html:match(matcher) then
             --* return html and add item to buttons:
             return self:markedItemRegister(item, html, lc)
@@ -349,6 +358,17 @@ function XrayPageNavigator:markPartialHits(html, item, uc, i, was_marked_for_ful
     end
 
     return html
+end
+
+--- @private
+function XrayPageNavigator:setNonFilteredItemsLayout()
+    --* the indices here must correspond to the settings in ((non_filtered_items_layout)):
+    local non_filtered_layouts = {
+        ["small-caps"] = self.non_filtered_items_marker_smallcaps,
+        ["small-caps-italic"] = self.non_filtered_items_marker_smallcaps_italic,
+        ["bold"] = self.non_filtered_items_marker_bold,
+    }
+    self.non_active_layout = DX.s.PN_non_filtered_items_layout and non_filtered_layouts[DX.s.PN_non_filtered_items_layout] or self.non_filtered_items_marker_smallcaps_italic
 end
 
 --* this info will be consumed for the info panel in ((HtmlBox#generateScrollWidget)):
@@ -394,8 +414,8 @@ end
 
 --- @private
 function XrayPageNavigator:markedItemRegister(item, html, word)
-    local replacer = self:getMatchString(word, "for_substitution")
-    html = html:gsub(replacer, "<strong>%1</strong>")
+    local needle = self:getNeedleString(word, "for_substitution")
+    html = self:markNeedleInHtml(html, needle)
     local info_text = self:getItemInfoText(item)
     if info_text and not self.first_info_panel_text then
         self.first_info_panel_text = info_text
@@ -406,7 +426,7 @@ function XrayPageNavigator:markedItemRegister(item, html, word)
     end
 
     self.button_labels_injected = self.button_labels_injected .. " " .. item.name
-    local label = (self.active_filter_name == item.name and self.filter_marker .. item.name) or (item.name == self.marker_name and self.marker .. item.name) or item.name
+    local label = (self.is_filter_item and self.filter_marker .. item.name) or (item.name == self.marker_name and self.marker .. item.name) or item.name
     if item.name == self.marker_name then
         self:setCurrentItem(item)
     end
@@ -415,30 +435,47 @@ function XrayPageNavigator:markedItemRegister(item, html, word)
         label = button_index .. ". " .. label
     end
     table_insert(self.side_buttons, {{
-            text = label,
-            xray_item = item,
-            align = "left",
-           --* force_item will be set when we return to the Page Navigator from ((XrayPageNavigator#returnToNavigator)):
-            callback = function(force_return_to_item)
-                if not force_return_to_item and self.current_item and item.name == self.current_item.name then
-                    return true
-                end
-                self.active_side_button = button_index
-                self:setCurrentItem(item)
-                self:setActiveScrollPage()
-                self:reloadPageNavigator(item, info_text)
-                return true
-            end,
+          text = label,
+          xray_item = item,
+          align = "left",
+          --* force_item will be set when we return to the Page Navigator from ((XrayPageNavigator#returnToNavigator)):
+          callback = function(force_return_to_item)
+              if not force_return_to_item and self.current_item and item.name == self.current_item.name then
+                  return true
+              end
+              self.active_side_button = button_index
+              self:setCurrentItem(item)
+              self:setActiveScrollPage()
+              self:reloadPageNavigator(item, info_text)
+              return true
+          end,
 
-            --* for marking or unmarking an item as filter criterium:
-            hold_callback = function()
-                if self.active_filter_name == item.name then
-                    return self:resetFilter(item, info_text)
-                end
-                return self:setFilter(item, info_text)
-            end,
-        }})
+          --* for marking or unmarking an item as filter criterium:
+          hold_callback = function()
+              if self.active_filter_name == item.name then
+                  return self:resetFilter(item, info_text)
+              end
+              return self:setFilter(item, info_text)
+          end,
+      }})
     return html
+end
+
+--- @private
+function XrayPageNavigator:markNeedleInHtml(html, needle, derived_name)
+    if not self.active_filter_name and not derived_name then
+        return html:gsub(needle, "<strong>%1</strong>")
+    elseif not self.active_filter_name then
+        return html:gsub(needle, "<strong>" .. derived_name .. "</strong>")
+    end
+
+    if derived_name then
+        local non_active_layout = T(self.non_active_layout, derived_name)
+
+        return self.is_filter_item and html:gsub(needle, "<strong>" .. derived_name .. "</strong>") or html:gsub(needle, non_active_layout)
+    end
+
+    return self.is_filter_item and html:gsub(needle, "<strong>%1</strong>") or html:gsub(needle, self.non_active_layout)
 end
 
 function XrayPageNavigator:resetFilter(item, info_text)
@@ -608,7 +645,7 @@ function XrayPageNavigator:getPreviousPageHitForTerm()
 end
 
 --- @private
-function XrayPageNavigator:getMatchString(word, for_substitution)
+function XrayPageNavigator:getNeedleString(word, for_substitution)
     local matcher_esc = word:gsub("%-", "%%-")
     if for_substitution then
         return self.word_start .. "(" .. matcher_esc .. self.word_end .. ")"
@@ -617,7 +654,7 @@ function XrayPageNavigator:getMatchString(word, for_substitution)
 end
 
 --- @private
-function XrayPageNavigator:getMatchStringPlural(word, for_substitution)
+function XrayPageNavigator:getNeedleStringPlural(word, for_substitution)
     local matcher_esc = word:gsub("%-", "%%-")
     local plural_matcher
     if not matcher_esc:match("s$") then
@@ -639,7 +676,12 @@ end
 function XrayPageNavigator:loadDataForPage(marker_name)
 
     --* get html and side_buttons from cache; these were stored in ((XrayPageNavigator#markItemsFoundInPageHtml)):
-    if self.navigator_page_no and self.cached_html_and_buttons_by_page_no[self.navigator_page_no] then
+    if self.navigator_page_no and self.cached_html_and_buttons_by_page_no[self.navigator_page_no]
+
+        --* don't use cache if a filtered item was set (with its additional html):
+        and not self.active_filter_name
+    then
+
 
         self.side_buttons = self.cached_html_and_buttons_by_page_no[self.navigator_page_no].side_buttons
         self:markActiveSideButton(self.side_buttons)
@@ -943,7 +985,7 @@ If you have a (BT) keyboard, you can also browse with Space and Shift+Space. If 
 <br>
 With the target icon you can jump back to the page on which you started navigating through the pages.<br>
 <br>
-With the XraySetting "page_navigator_panels_font_size" (see cog icon in top left corner) you can change the font size of the side and bottom panels.]])
+With the XraySetting "PN_panels_font_size" (see cog icon in top left corner) you can change the font size of the side and bottom panels.]])
             },
             {
                 tab = _("Filtering"),
