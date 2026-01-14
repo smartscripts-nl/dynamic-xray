@@ -60,6 +60,7 @@ local XrayPageNavigator = WidgetContainer:new{
     non_filtered_items_marker_bold = "<strong>%1</strong>",
     non_filtered_items_marker_smallcaps = "<span style='font-variant: small-caps'>%1</span>",
     non_filtered_items_marker_smallcaps_italic = "<i style='font-variant: small-caps'>%1</i>",
+    non_filtered_layouts = nil,
     page_navigator_filter_item = nil,
     prev_marked_item = nil,
     return_to_current_item = nil,
@@ -74,6 +75,12 @@ local XrayPageNavigator = WidgetContainer:new{
 --- @param xray_model XrayModel
 function XrayPageNavigator:initDataHandlers(xray_model)
     parent = xray_model
+    --* the indices here must correspond to the settings in ((non_filtered_items_layout)):
+    self.non_filtered_layouts = {
+        ["small-caps"] = self.non_filtered_items_marker_smallcaps,
+        ["small-caps-italic"] = self.non_filtered_items_marker_smallcaps_italic,
+        ["bold"] = self.non_filtered_items_marker_bold,
+    }
 end
 
 function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text, marker_name)
@@ -362,13 +369,13 @@ end
 
 --- @private
 function XrayPageNavigator:setNonFilteredItemsLayout()
-    --* the indices here must correspond to the settings in ((non_filtered_items_layout)):
-    local non_filtered_layouts = {
-        ["small-caps"] = self.non_filtered_items_marker_smallcaps,
-        ["small-caps-italic"] = self.non_filtered_items_marker_smallcaps_italic,
-        ["bold"] = self.non_filtered_items_marker_bold,
-    }
-    self.non_active_layout = DX.s.PN_non_filtered_items_layout and non_filtered_layouts[DX.s.PN_non_filtered_items_layout] or self.non_filtered_items_marker_smallcaps_italic
+    self.non_active_layout =
+        DX.s.PN_non_filtered_items_layout
+        and
+        self.non_filtered_layouts[DX.s.PN_non_filtered_items_layout]
+        or
+        self.non_filtered_items_marker_smallcaps_italic
+
 end
 
 --* this info will be consumed for the info panel in ((HtmlBox#generateScrollWidget)):
