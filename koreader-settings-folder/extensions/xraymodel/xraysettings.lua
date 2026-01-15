@@ -24,6 +24,7 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 
 local pairs = pairs
+local type = type
 
 --* DX.m and therefore DX.m:isPrivateDXversion not yet available here:
 local locked_xray_setting_message = IS_AUTHORS_DX_INSTALLATION and "Deze instelling door Dynamic Xray automatisch berekend en kan daarom niet worden aangepast door de gebruiker." or _("This setting will be automatically computed by Dynamic Xray and therefor the user cannot modify it.")
@@ -135,6 +136,14 @@ local XraySettings = WidgetContainer:new{
             explanation = _("This variables enables a number of default settings for KOReader onder Ubuntu, e.g. that the user can close some dialogs with ESC."),
             locked = 0,
         },
+        PN_info_panel_height = {
+            --* this value is used in ((HtmlBox#generateInfoPanel)):
+            value = 0.22,
+            --* this validator references a function included in self.validators:
+            validator = "info_panel_height",
+            explanation = _("Page Navitator: this setting, always a fraction between 0.1 and 0.8, determines the height of the bottom info panel relative to the available screen height."),
+            locked = 0,
+        },
         -- #((non_filtered_items_layout))
         --* consumed in ((XrayPageNavigator#setNonFilteredItemsLayout)):
         PN_non_filtered_items_layout = {
@@ -183,6 +192,11 @@ local XraySettings = WidgetContainer:new{
         "1. " .. _("general"),
         "2. " .. _("hotkeys"),
         "3. " .. _("system"),
+    },
+    validators = {
+        ["info_panel_height"] = function(value)
+            return type(value) == "number" and value >= 0.1 and value <= 0.5 or _("a valid value should lie be between 0.1 and 0.5...")
+        end,
     },
 }
 

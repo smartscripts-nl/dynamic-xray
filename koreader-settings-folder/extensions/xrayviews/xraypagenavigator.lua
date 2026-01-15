@@ -27,6 +27,7 @@ local Screen = require("device").screen
 local T = require("ffi/util").template
 
 local DX = DX
+local has_content = has_content
 local has_items = has_items
 local has_no_text = has_no_text
 local has_text = has_text
@@ -288,8 +289,11 @@ function XrayPageNavigator:markItem(item, subject, html, loop_no)
     parts_count = #parts
     for i = 1, parts_count do
         uc = parts[i]
-        --* only here side panel buttons are populated:
-        html = self:markPartialHits(html, item, uc, i, was_marked_for_full)
+        --* len() > 2: for example don't mark "of" in "Consistorial Court of Discipline":
+        if uc:match("[A-Z]") or uc:len() > 2 then
+            --* only here side panel buttons are populated:
+            html = self:markPartialHits(html, item, uc, i, was_marked_for_full)
+        end
     end
     return html
 end
@@ -317,9 +321,11 @@ function XrayPageNavigator:markFullNameHit(html, item, subject, loop_no)
     local org_html = html
     local needle = self:getNeedleString(subject, "for_substitution")
     html = self:markNeedleInHtml(html, needle)
-    local subject_plural
-    needle, subject_plural = self:getNeedleStringPlural(subject, "for_substitution")
-    html = self:markNeedleInHtml(html, needle, subject_plural)
+    if not needle:match("s$") then
+        local subject_plural
+        needle, subject_plural = self:getNeedleStringPlural(subject, "for_substitution")
+        html = self:markNeedleInHtml(html, needle, subject_plural)
+    end
 
     --* only replace swapped name for loop_no 1, because that's the full name:
     if loop_no > 1 then
@@ -337,27 +343,25 @@ end
 
 --- @private
 function XrayPageNavigator:markPartialHits(html, item, uc, i, was_marked_for_full)
-    local is_term, lc, matcher
+    local is_term, lc, needle
 
     local is_lowercase_person = item.xray_type < 3 and not uc:match("[A-Z]")
     is_term = item.xray_type > 2
     if (is_term or is_lowercase_person) and i == 1 then
         uc = KOR.strings:ucfirst(uc)
     end
-    --* e.g. don't mark "of" in "Consistorial Court of Discipline":
-    local is_markable_part_of_name = (is_term or is_lowercase_person or uc:match("[A-Z]")) and uc:len() > 2 and true or false
 
-    matcher = self:getNeedleString(uc)
-    local uc_matcher_plural = self:getNeedleStringPlural(uc)
-    if was_marked_for_full or (is_markable_part_of_name and (html:match(matcher) or html:match(uc_matcher_plural))) then
+    needle = self:getNeedleString(uc)
+    local uc_needle_plural = self:getNeedleStringPlural(uc)
+    if was_marked_for_full or (html:match(needle) or html:match(uc_needle_plural)) then
         --* return html and add item to buttons:
         return self:markedItemRegister(item, html, uc)
 
     --* for terms we also try to find lowercase variants of their names:
-    elseif (is_term or is_lowercase_person) and is_markable_part_of_name then
+    elseif is_term or is_lowercase_person then
         lc = KOR.strings:lower(uc)
-        matcher = self:getNeedleString(lc)
-        if html:match(matcher) then
+        needle = self:getNeedleString(lc)
+        if html:match(needle) then
             --* return html and add item to buttons:
             return self:markedItemRegister(item, html, lc)
         end
@@ -391,8 +395,12 @@ function XrayPageNavigator:getItemInfoText(item)
 
     local reliability_indicator_placeholder = item.reliability_indicator and "  " or ""
     self.sub_info_separator = ""
-    local description = KOR.strings:splitLinesToMaxLength(item.name .. ": " .. item.description, self.max_line_length, self.alias_indent, nil, "dont_indent_first_line")
+
+    local description = item.description
+    description = KOR.strings:splitLinesToMaxLength(item.name .. ": " .. description, self.max_line_length, self.alias_indent, nil, "dont_indent_first_line")
     local info = "\n" .. reliability_indicator_placeholder .. description .. "\n"
+
+    info = self:itemInfoAddHits(info, item)
 
     self.sub_info_separator = "     "
     info = self:splitLinesToMaxLength(info, item.aliases, KOR.icons.xray_alias_bare .. " " .. item.aliases)
@@ -402,6 +410,25 @@ function XrayPageNavigator:getItemInfoText(item)
     self.cached_items[item.name] = info:gsub("\n  ", "", 1)
 
     return "\n" .. reliability_indicator .. self.cached_items[item.name]
+end
+
+--- @private
+function XrayPageNavigator:itemInfoAddHits(info, item)
+    local hits = ""
+    local series_hits_added = false
+    if DX.m.current_series and has_content(item.series_hits) then
+        series_hits_added = true
+        hits = KOR.icons.graph_bare .. " " .. _("series") .. " " .. item.series_hits
+    end
+    if has_content(item.book_hits) then
+        local separator = series_hits_added and ", " or KOR.icons.graph_bare
+        hits = hits .. separator .. " " .. _("book") .. " " .. item.book_hits
+    end
+    if has_text(hits) then
+        return info .. "\n" .. DX.vd.info_indent .. hits
+    end
+
+    return info
 end
 
 --- @private
@@ -771,6 +798,7 @@ function XrayPageNavigator:getInfoPanelText(info_panel_text)
 
     local side_button = self:getSideButton(1)
     --* xray_item.info_text for first button was generated in ((XrayPageNavigator#markActiveSideButton)) > ((XrayPageNavigator#generateInfoTextForFirstSideButton)):
+    --* info_text for each button generated via ((XrayPageNavigator#markedItemRegister)) > ((XrayPageNavigator#getItemInfoText)) > ((XrayPageNavigator#addSideButton)):
     return side_button and side_button.info_text or ""
 end
 

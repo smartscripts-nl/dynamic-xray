@@ -334,7 +334,7 @@ function HtmlBox:generateInfoPanel()
         dialog = self,
         --* info_panel_width was computed in ((HtmlBox#generateInfoButtons)):
         width = self.info_panel_width,
-        height = math.floor(Screen:getHeight() * 0.17),
+        height = math.floor(Screen:getHeight() * DX.s.PN_info_panel_height),
     }
     self.info_panel_separator = LineWidget:new{
         background = KOR.colors.line_separator,

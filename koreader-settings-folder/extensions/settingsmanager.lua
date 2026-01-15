@@ -2,6 +2,7 @@
 local require = require
 
 local ButtonDialogTitle = require("extensions/widgets/buttondialogtitle")
+local CenterContainer = require("ui/widget/container/centercontainer")
 local DataStorage = require("datastorage")
 local KOR = require("extensions/kor")
 local LuaSettings = require("luasettings")
@@ -42,6 +43,7 @@ local SettingsManager = WidgetContainer:new{
     settings_template = {
         is_mobile_device = {
             value = false,
+            validator = function(value) return ... end,
             explanation = "Deze variabele regelt een aantal standaard instellingen voor smalle schermen",
             locked = 0, --* or 1, for computed props
             options = { 0, 1 } --* optional, for fixed options
@@ -75,6 +77,7 @@ function SettingsManager:setUp(tab_labels)
             value = props.value,
             explanation = props.explanation,
             locked = props.locked,
+            validator = props.validator,
             options = props.options,
             text = key .. ": " .. tostring(props.value) .. locked_indicator }
         )
@@ -105,22 +108,26 @@ function SettingsManager:settingsWereUpdatedFromTemplate()
     local settings_were_updated = false
     for key, props in pairs(self.parent.settings_template) do
         --* add missing settings from template:
-        local new_setting_added = false
         if not self.settings[key] then
-            new_setting_added = true
             self.settings[key] = props
             settings_were_updated = true
 
-        --* add updated explanations from template:
-        elseif self.settings[key].explanation ~= props.explanation then
-            self.settings[key].explanation = props.explanation
-            settings_were_updated = true
-        end
-
-        --* change updated options from template:
-        if not new_setting_added and self.settings[key].options and props.options and KOR.tables:tablesAreNotEqual(self.settings[key].options, props.options) then
-            self.settings[key].options = props.options
-            settings_were_updated = true
+        else
+            --* add updated explanations from template:
+            if self.settings[key].explanation ~= props.explanation then
+                self.settings[key].explanation = props.explanation
+                settings_were_updated = true
+            end
+            --* change updated validator from template:
+            if self.settings[key].validator ~= props.validator then
+                self.settings[key].validator = props.validator
+                settings_were_updated = true
+            end
+            --* change updated options from template:
+            if self.settings[key].options and props.options and KOR.tables:tablesAreNotEqual(self.settings[key].options, props.options) then
+                self.settings[key].options = props.options
+                settings_were_updated = true
+            end
         end
     end
 
@@ -136,7 +143,38 @@ function SettingsManager:settingsWereUpdatedFromTemplate()
 end
 
 function SettingsManager:showParentDialog()
-    self.parent.showSettingsManager(self.active_tab)
+    self.parent.showSettingsManager(self.active_tab, self.tab_labels)
+end
+
+function SettingsManager:getTabContent(caller_method, active_tab)
+    self.active_tab = active_tab
+
+    local dimen = Screen:getSize()
+    self.settings_dialog = CenterContainer:new{
+        dimen = dimen,
+        modal = true,
+    }
+    self.width = math_floor(dimen.w * 0.8)
+    self.settings_menu = KOR.tabbedlist:create({
+        parent = self,
+        caller_method = caller_method,
+        active_tab = self.active_tab,
+        list_title = self.list_title .. ": instellingen",
+        menu_name = "xray_settings",
+        top_buttons_left = {
+            {
+                icon = "info-slender",
+                callback = function()
+                    return self:showSettingsManagerInfo()
+                end,
+            },
+        },
+        tab_label_fontsize = 16,
+        dimen = dimen,
+    })
+    table_insert(self.settings_dialog, self.settings_menu)
+
+    return self.settings_dialog
 end
 
 function SettingsManager:showSettingsManagerInfo()
@@ -162,7 +200,6 @@ function SettingsManager:sortMenuItems()
     end)
 end
 
---- @private
 function SettingsManager:updateItemTableForTab()
     self:sortMenuItems()
     self.item_table = {}
@@ -185,6 +222,7 @@ function SettingsManager:updateItemTableForTab()
                 text = KOR.strings:formatListItemNumber(list_no, self:removeHotkeyPrefix(setting.text)),
                 key = setting.key,
                 explanation = setting.explanation,
+                validator = setting.validator,
                 editable = true,
                 deletable = false,
                 callback = function()
@@ -295,7 +333,17 @@ function SettingsManager:handleNewValue(new_value, key, current_nr, itype)
         is_valid = true
     elseif itype == "number" then
         new_value = tonumber(new_value)
-        if new_value then
+        --* if a validator was provided, use that the validate the new value:
+        if self.settings[key].validator then
+            local validator_index = self.settings[key].validator
+            is_valid = self.parent.validators[validator_index](new_value)
+            --* if an error string was returned, instead of a boolean value:
+            if type(is_valid) == "string" then
+                self:showParentDialog()
+                KOR.messages:notify(is_valid)
+                return
+            end
+        elseif new_value then
             is_valid = true
         end
     elseif itype == "string" and has_text(new_value) then
