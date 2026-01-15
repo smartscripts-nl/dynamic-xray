@@ -273,6 +273,33 @@ function Tables:isNumericalTable(t)
     return true
 end
 
+function Tables:tablesAreEqual(t1, t2)
+    --* different types or one is nil:
+    if type(t1) ~= "table" or type(t2) ~= "table" then
+        return false
+    end
+
+    --* compare each key/value in t1
+    for k, v in pairs(t1) do
+        if t2[k] ~= v then
+            return false
+        end
+    end
+
+    --* Make sure t2 doesn’t have extra keys:
+    for k, v in pairs(t2) do
+        if t1[k] ~= v then
+            return false
+        end
+    end
+
+    return true
+end
+
+function Tables:tablesAreNotEqual(t1, t2)
+    return not self:tablesAreEqual(t1, t2)
+end
+
 function Tables:normalizeTableIndex(index)
     return index and index:lower():gsub("[%p%s]+$", "")
 end

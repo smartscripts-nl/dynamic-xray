@@ -12,6 +12,7 @@ local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 local Screen = Device.screen
+--local logger = require("logger")
 local T = require("ffi/util").template
 
 local DX = DX
@@ -109,7 +110,9 @@ function SettingsManager:settingsWereUpdatedFromTemplate()
     local settings_were_updated = false
     for key, props in pairs(self.parent.settings_template) do
         --* add missing settings from template:
+        local new_setting_added = false
         if not self.settings[key] then
+            new_setting_added = true
             self.settings[key] = props
             settings_were_updated = true
 
@@ -120,7 +123,7 @@ function SettingsManager:settingsWereUpdatedFromTemplate()
         end
 
         --* change updated options from template:
-        if self.settings[key] and self.settings[key].options ~= props.options then
+        if not new_setting_added and self.settings[key].options and props.options and KOR.tables:tablesAreNotEqual(self.settings[key].options, props.options) then
             self.settings[key].options = props.options
             settings_were_updated = true
         end
