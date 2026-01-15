@@ -31,6 +31,7 @@ local T = require("ffi/util").template
 local DX = DX
 local has_text = has_text
 local math = math
+local pairs = pairs
 local string = string
 local table = table
 local type = type
@@ -338,6 +339,8 @@ function XrayDataSaver.storeNewItem(new_item)
     local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver#storeNewItem")
     local stmt = conn:prepare(self.queries.insert_item)
     local x = new_item
+    --* set empty texts to nil; these might have been generated in ((MultiInputDialog#registerFieldValues)), when the user never opened a particular form tab for left the fields empty:
+    self:setEmptyPropsToNil(x)
     stmt:reset():bind(parent.current_ebook_basename, x.name, x.short_names, x.description, x.xray_type, x.aliases, x.linkwords):step()
 
     --* retrieve the id of the newly added item, needed for ((XrayViewsData#updateAndSortAllItemTables)):
@@ -361,6 +364,8 @@ function XrayDataSaver.storeUpdatedItem(updated_item)
     local sql = parent.current_series and self.queries.update_item_for_entire_series or self.queries.update_item
     local stmt = conn:prepare(sql)
     local x = updated_item
+    --* set empty texts to nil; these might have been generated in ((MultiInputDialog#registerFieldValues)), when the user never opened a particular form tab for left the fields empty:
+    self:setEmptyPropsToNil(x)
     --! when a xray item is defined for a series of books, all instances per book of that same item will ALL be updated!:
     --* this query will be used in both the series AND in current book display mode of the list of items, BUT ONLY IF a series for the current ebook is defined (so parent.current_series set):
     if parent.current_series then
@@ -587,6 +592,14 @@ function XrayDataSaver.modifyTables(conn, update_tasks_count, version_index)
     for i = version_index + 1, update_tasks_count do
         sql = self.scheme_alter_queries[i]
         conn:exec(sql)
+    end
+end
+
+function XrayDataSaver:setEmptyPropsToNil(values)
+    for key, value in pairs(values) do
+        if value == "" then
+            values[key] = nil
+        end
     end
 end
 

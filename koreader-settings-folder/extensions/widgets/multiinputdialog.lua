@@ -26,9 +26,9 @@ local Screen = Device.screen
 
 local DX = DX
 local math = math
-local table = table
+local table_insert = table.insert
 
-local count
+local count, count2
 local LEFT_SIDE = 1
 
 --* if we extend FocusManager here, then crash because of ((MultiInputDialog#init)) > InputDialog.init(self)
@@ -87,7 +87,7 @@ function MultiInputDialog:getFields()
     count = #self.input_fields
     for i = 1, count do
         field = self.input_fields[i]
-        table.insert(field_values, field:getText())
+        table_insert(field_values, field:getText())
     end
     return field_values
 end
@@ -103,7 +103,8 @@ function MultiInputDialog:getValues()
     local values = {}
     count = #self.field_values
     for i = 1, count do
-        table.insert(values, self.field_values[i])
+        --* value here can be an empty text "", but never nil, because that would result in the value not being added:
+        table_insert(values, self.field_values[i])
     end
     return values
 end
@@ -221,14 +222,14 @@ function MultiInputDialog:fieldAddToInputs(field_config, field_side)
         self.auto_height_field_index = #self.input_fields + 1
         self.field_config.height = self.initial_auto_field_height
         field = InputText:new(self.field_config)
-        table.insert(self.input_fields, field)
+        table_insert(self.input_fields, field)
         self:fieldAddToCurrentTabFields(field)
 
         return field
     end
 
     field = InputText:new(self.field_config)
-    table.insert(self.input_fields, field)
+    table_insert(self.input_fields, field)
     self:fieldAddToCurrentTabFields(field)
     if self.field_config.focused then
         --* sets the field to which scollbuttons etc. are coupled:
@@ -242,7 +243,7 @@ end
 --- @private
 function MultiInputDialog:fieldAddToCurrentTabFields(field)
     if not self.active_tab or (self.active_tab and self.active_tab == field.tab) then
-        table.insert(self.tab_fields, field)
+        table_insert(self.tab_fields, field)
     end
 end
 
@@ -393,9 +394,9 @@ function MultiInputDialog:insertIntoTargetContainer(group, is_field)
         return
     end
     if self.auto_height_field and self.auto_height_field_injected then
-        table.insert(self.BottomContainer, group)
+        table_insert(self.BottomContainer, group)
     else
-        table.insert(self.TopContainer, group)
+        table_insert(self.TopContainer, group)
     end
 end
 
@@ -648,7 +649,7 @@ end
 
 --- @private
 function MultiInputDialog:insertButtonGroup()
-    table.insert(self.BottomContainer, self.field_spacer)
+    table_insert(self.BottomContainer, self.field_spacer)
     self.button_table_height = self.button_table:getSize().h
     self.button_group = CenterContainer:new{
         dimen = Geom:new{
@@ -657,7 +658,7 @@ function MultiInputDialog:insertButtonGroup()
         },
         self.button_table,
     }
-    table.insert(self.BottomContainer, self.button_group)
+    table_insert(self.BottomContainer, self.button_group)
 end
 
 --- @private
@@ -721,7 +722,7 @@ function MultiInputDialog:adaptMiddleContainerHeight()
     end
 
     --* insert simple spacer to push the buttons to just above the keyboard:
-    table.insert(self.MiddleContainer, VerticalSpan:new{ width = difference })
+    table_insert(self.MiddleContainer, VerticalSpan:new{ width = difference })
 end
 
 --- @private
@@ -758,9 +759,9 @@ function MultiInputDialog:insertComputedHeightField(difference)
         },
         field,
     }
-    table.insert(self.MiddleContainer, self.field_spacer)
-    table.insert(self.MiddleContainer, group)
-    table.insert(self.MiddleContainer, self.field_spacer)
+    table_insert(self.MiddleContainer, self.field_spacer)
+    table_insert(self.MiddleContainer, group)
+    table_insert(self.MiddleContainer, self.field_spacer)
 
     return true
 end
@@ -798,14 +799,20 @@ end
 
 --- @private
 function MultiInputDialog:registerFieldValues(row, is_field_set)
+    local value
     if self.has_field_rows and is_field_set then
-        local count2 = #row
+        count2 = #row
         for field = 1, count2 do
-            table.insert(self.field_values, row[field].text)
+            --* value will be set to "" if the field is in an inactive tab:
+            --* for storage in the database these empty texts will be set to nil in ((XrayDataSaver#setEmptyPropsToNil)):
+            value = row[field].text or ""
+            table_insert(self.field_values, value)
         end
         return
     end
-    table.insert(self.field_values, row.text)
+    --* value will be set to "" if the field is in an inactive tab:
+    value = row.text or ""
+    table_insert(self.field_values, value)
 end
 
 --* MID suffix to prevent future name clashes, should we also add InputDialog#finalizeWidget:
