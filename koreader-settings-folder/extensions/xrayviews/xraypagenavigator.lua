@@ -52,6 +52,12 @@ local XrayPageNavigator = WidgetContainer:new{
     cached_items = {},
     current_item = nil,
     filtered_item_marker = KOR.icons.filter,
+    --* whole word name parts which may not be marked bold and trigger an item hit by themselves only; used in ((XrayPageNavigator#markItem)):
+    forbidden_needle_parts = {
+        ["De"] = true,
+        ["La"] = true,
+        ["Le"] = true,
+    },
     initial_browsing_page = nil,
     key_events = {},
     max_line_length = 80,
@@ -290,7 +296,7 @@ function XrayPageNavigator:markItem(item, subject, html, loop_no)
     for i = 1, parts_count do
         uc = parts[i]
         --* len() > 2: for example don't mark "of" in "Consistorial Court of Discipline":
-        if uc:match("[A-Z]") or uc:len() > 2 then
+        if not self.forbidden_needle_parts[uc] and (uc:match("[A-Z]") or uc:len() > 2) then
             --* only here side panel buttons are populated:
             html = self:markPartialHits(html, item, uc, i, was_marked_for_full)
         end
