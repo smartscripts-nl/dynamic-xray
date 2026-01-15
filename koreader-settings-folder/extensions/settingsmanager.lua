@@ -2,23 +2,18 @@
 local require = require
 
 local ButtonDialogTitle = require("extensions/widgets/buttondialogtitle")
-local CenterContainer = require("ui/widget/container/centercontainer")
 local DataStorage = require("datastorage")
-local Device = require("device")
 local KOR = require("extensions/kor")
 local LuaSettings = require("luasettings")
-local Menu = require("extensions/widgets/menu")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
-local Screen = Device.screen
 --local logger = require("logger")
 local T = require("ffi/util").template
 
 local DX = DX
 local G_reader_settings = G_reader_settings
 local has_text = has_text
-local math_floor = math.floor
 local pairs = pairs
 local table = table
 local table_insert = table.insert
@@ -141,53 +136,7 @@ function SettingsManager:settingsWereUpdatedFromTemplate()
 end
 
 function SettingsManager:showParentDialog()
-    self.parent.showSettingsManager(self.active_tab, self.tab_labels)
-end
-
-function SettingsManager:getTabContent(caller_method, active_tab)
-    self.active_tab = active_tab
-
-    local dimen = Screen:getSize()
-    self.settings_dialog = CenterContainer:new{
-        dimen = dimen,
-        modal = true,
-    }
-    self.width = math_floor(dimen.w * 0.8)
-    local tab_label_fontsize = 16
-    self.settings_menu = Menu:new{
-        title_submenu_buttontable = KOR.tabfactory:generateTabButtons(caller_method, self.active_tab, self.tab_labels, self.width, tab_label_fontsize),
-        show_parent = self.ui,
-        height = math_floor(dimen.h * 0.8),
-        width = self.width,
-        is_borderless = false,
-        is_popout = true,
-        fullscreen = false,
-        with_bottom_line = true,
-        perpage = self.items_per_page,
-        menu_name = "xray_settings",
-        top_buttons_left = {
-            {
-                icon = "info-slender",
-                callback = function()
-                    return self:showSettingsManagerInfo()
-                end,
-            },
-        },
-        after_close_callback = function()
-            KOR.dialogs:closeOverlay()
-        end,
-        onMenuHold = self.onMenuHoldSettings,
-        _manager = self,
-    }
-    table_insert(self.settings_dialog, self.settings_menu)
-    self.settings_menu.close_callback = function()
-        UIManager:close(self.settings_dialog)
-        KOR.dialogs:closeOverlay()
-    end
-    self:updateItemTable()
-    self.settings_menu:switchItemTable(self.list_title .. ": " .. _("settings"), self.item_table)
-
-    return self.settings_dialog
+    self.parent.showSettingsManager(self.active_tab)
 end
 
 function SettingsManager:showSettingsManagerInfo()
@@ -214,7 +163,7 @@ function SettingsManager:sortMenuItems()
 end
 
 --- @private
-function SettingsManager:updateItemTable()
+function SettingsManager:updateItemTableForTab()
     self:sortMenuItems()
     self.item_table = {}
     count = #self.settings_for_menu
@@ -374,7 +323,7 @@ function SettingsManager:changeMenuSetting(key, value, current_nr)
     end
     self.settings_for_menu[current_nr].value = value
     self.settings_for_menu[current_nr].text = key .. ": " .. tostring(value)
-    self:updateItemTable()
+    self:updateItemTableForTab()
 end
 
 ---@private
@@ -411,6 +360,10 @@ end
 function SettingsManager:saveSettings()
     self.settings_db:saveSetting(self.settings_index, self.settings)
     self.settings_db:flush()
+end
+
+function SettingsManager:setProp(prop, value)
+    self[prop] = value
 end
 
 return SettingsManager

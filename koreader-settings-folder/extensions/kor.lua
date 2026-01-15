@@ -25,6 +25,7 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 --- @field settingsmanager SettingsManager
 --- @field strings Strings
 --- @field system System
+--- @field tabbedlist TabbedList
 --- @field tabfactory TabFactory
 --- @field tabnavigator TabNavigator
 --- @field tables Tables
@@ -73,6 +74,7 @@ local KOR = WidgetContainer:new{
 	statisticshelpers = nil,
 	strings = nil,
 	system = nil,
+	tabbedlist = nil,
 	tabfactory = nil,
 	tabnavigator = nil,
 	tables = nil,
@@ -137,6 +139,7 @@ function KOR:initEarlyExtensions()
 	KOR.colors = require("extensions/colors")
 	KOR.databases = require("extensions/databases")
 	KOR.icons = require("extensions/icons")
+	KOR.tabbedlist = require("extensions/tabbedlist")
 	KOR.settingsmanager = require("extensions/settingsmanager")
 end
 

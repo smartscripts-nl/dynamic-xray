@@ -530,7 +530,7 @@ function KeyEvents:addHotkeysForXraySettings(parent)
             if parent.active_tab == current then
                 return
             end
-            module.showSettingsManager(current, module.tab_labels)
+            module.showSettingsManager(current)
         end)
     end
     self:registerCustomKeyEvent("XraySettings", parent, DX.s.hk_show_information, "show_settings_information", function()

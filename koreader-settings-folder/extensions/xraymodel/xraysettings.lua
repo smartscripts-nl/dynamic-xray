@@ -35,6 +35,7 @@ local hotkeys_warning = "\n\n" .. _("NB: updated hotkeys are effective immediate
 local XraySettings = WidgetContainer:new{
     active_tab = nil,
     key_events = {},
+    list_title = _("Dynamic Xray: settings"),
     settings_manager = nil,
     --* the settings in this template will be dynamically read from settings/settings_manager.lua and then stored as props of the current class:
     --! these settings MUST have a locked prop, which is either 0 or 1; if 1, then user cannot modify that setting, because it is a computed property:
@@ -203,7 +204,7 @@ function XraySettings:setUp()
 end
 
 -- #((XraySettings#showSettingsManager))
-function XraySettings.showSettingsManager(active_tab, tab_labels)
+function XraySettings.showSettingsManager(active_tab)
 
     local self = DX.s
     if self.tabbed_interface then
@@ -214,11 +215,24 @@ function XraySettings.showSettingsManager(active_tab, tab_labels)
         active_tab = 1
     end
     self.active_tab = active_tab
-    if not tab_labels then
-        tab_labels = self.tab_labels
-    end
-    self.tabbed_interface = self.settings_manager:getTabContent(self.showSettingsManager, active_tab, tab_labels)
 
+    self.settings_manager:setProp("active_tab", active_tab)
+    self.tabbed_interface = KOR.tabbedlist:create({
+        caller = self,
+        caller_method = self.showSettingsManager,
+        menu_manager = self.settings_manager,
+        top_buttons_left = {
+            {
+                icon = "info-slender",
+                callback = function()
+                    return self.settings_manager:showSettingsManagerInfo()
+                end,
+            },
+        },
+        populate_tab_items_callback = function()
+            self.settings_manager:updateItemTableForTab()
+        end,
+    })
     UIManager:show(self.tabbed_interface)
 end
 

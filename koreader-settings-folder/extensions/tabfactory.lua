@@ -14,7 +14,7 @@ local type = type
 
 --- @class TabFactory
 local TabFactory = WidgetContainer:extend{
-    tab_buttons_font = "redhat",
+    tab_buttons_font = "x_smallinfofont",
     tab_buttons_font_size = 14,
     tabs_as_table = G_reader_settings:readSetting("tabs_as_table"),
 }
@@ -156,7 +156,7 @@ function TabFactory:generateTabButtons(caller_method, active_tab, tab_labels, wi
 
     return ButtonTable:new{
         width = width - 2 * Size.margin.default,
-        button_font_face = "redhat",
+        button_font_face = "x_smallinfofont",
         button_font_size = font_size,
         buttons = buttons,
         zero_sep = true,
