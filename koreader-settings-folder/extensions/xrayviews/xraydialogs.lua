@@ -689,7 +689,6 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, ke
 end
 
 function XrayDialogs:showListWithRestoredArguments()
-    self.xray_items_inner_menu.close_callback()
     self:showList(self.list_args.focus_item, self.list_args.dont_show)
 end
 
