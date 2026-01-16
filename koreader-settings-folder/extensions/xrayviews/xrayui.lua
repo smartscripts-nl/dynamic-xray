@@ -252,7 +252,6 @@ function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanation
 
     injected_names[name] = name
     injected_nr = injected_nr + 1
-    --KOR.debug:hoera("XrayUI:generateParagraphInformation", i .. " > " .. injected_nr)
 
     if self.info_use_upper_case_names then
         name = KOR.strings:upper(name)

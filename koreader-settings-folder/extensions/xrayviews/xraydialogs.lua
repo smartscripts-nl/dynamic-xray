@@ -889,7 +889,6 @@ function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, 
     --* this can occur when we go back to the Viewer from an add new item dialog, before we even have visited the List of Items (which would populate the current list tab items):
     if not DX.vd.current_tab_items then
         DX.vd:getCurrentListTabItems()
-        --KOR.debug:alertTable("XrayDialogs:showItemViewer", "current_list_tab_items retrieved", DX.vd.current_tab_items)
     end
     local current_items_count = DX.vd.current_tab_items and #DX.vd.current_tab_items or 0
 
