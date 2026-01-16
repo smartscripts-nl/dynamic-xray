@@ -415,9 +415,12 @@ function XrayPageNavigator:getItemInfoText(item)
 
     info = self:itemInfoAddHits(info, item)
 
-    self.sub_info_separator = "     "
-    info = self:splitLinesToMaxLength(info, item.aliases, KOR.icons.xray_alias_bare .. " " .. item.aliases)
-    info = self:splitLinesToMaxLength(info, item.linkwords, KOR.icons.xray_link_bare .. " " .. item.linkwords)
+    if item.aliases then
+        info = self:splitLinesToMaxLength(info, item.aliases, KOR.icons.xray_alias_bare .. " " .. item.aliases)
+    end
+    if item.linkwords then
+        info = self:splitLinesToMaxLength(info, item.linkwords, KOR.icons.xray_link_bare .. " " .. item.linkwords)
+    end
 
     --* remove reliability_indicator_placeholder:
     self.cached_items[item.name] = info:gsub("\n  ", "", 1)
