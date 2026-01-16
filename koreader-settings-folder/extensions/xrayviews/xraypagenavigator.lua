@@ -148,14 +148,17 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text)
 end
 
 function XrayPageNavigator:toCurrentNavigatorPage()
-    self.active_side_button = 1
+    --! reset marker_item, so self.active_side_button in ((XrayPageNavigator#markActiveSideButton)) will not be set from a marker_item of a previous page:
+    self.marker_item = nil
+    self:setActiveSideButton("XrayPageNavigator:toCurrentNavigatorPage", 1)
     self.navigator_page_no = self.initial_browsing_page
     self.no_navigator_page_found = false
     self:showNavigator()
 end
 
 function XrayPageNavigator:toNextNavigatorPage()
-    self.active_side_button = 1
+    --! reset marker_item, so self.active_side_button in ((XrayPageNavigator#markActiveSideButton)) will not be set from a marker_item of a previous page:
+    self.marker_item = nil
     local first_info_panel_text
     --* navigation to next filtered item hit:
     if self.page_navigator_filter_item then
@@ -182,7 +185,8 @@ function XrayPageNavigator:toNextNavigatorPage()
 end
 
 function XrayPageNavigator:toPrevNavigatorPage()
-    self.active_side_button = 1
+    --! reset marker_item, so self.active_side_button in ((XrayPageNavigator#markActiveSideButton)) will not be set from a marker_item of a previous page:
+    self.marker_item = nil
     local first_info_panel_text
     --* navigation to previous filtered item hit:
     if self.page_navigator_filter_item then
@@ -685,6 +689,11 @@ end
 --- @private
 function XrayPageNavigator:loadDataForPage()
 
+    --* if marker_item is set, active_side_button will be set from that in ((XrayPageNavigator#markActiveSideButton)):
+    if not self.marker_item then
+        self:setActiveSideButton("XrayPageNavigator:loadDataForPage", 1)
+    end
+
     --* get html and side_buttons from cache; these were stored in ((XrayPageNavigator#markItemsFoundInPageHtml)):
     if self.navigator_page_no and self.cached_html_and_buttons_by_page_no[self.navigator_page_no]
 
@@ -698,7 +707,6 @@ function XrayPageNavigator:loadDataForPage()
         return self.cached_html_and_buttons_by_page_no[self.navigator_page_no].html
     end
 
-    self.active_side_button = 1
     local html = self:getPageHtmlForPage(self.navigator_page_no)
     --* self.cached_html_and_buttons_by_page_no will be updated here:
     --* side_buttons de facto populated in ((XrayPageNavigator#markedItemRegister)) > ((XrayPageNavigator#addSideButton)):
@@ -725,7 +733,6 @@ function XrayPageNavigator:addSideButton(item, info_text)
           if not force_return_to_item and self.current_item and item.name == self.current_item.name then
               return true
           end
-          self.active_side_button = button_index
           self:setCurrentItem(item)
           self:setActiveScrollPage()
           self.marker_item = item
@@ -751,7 +758,8 @@ function XrayPageNavigator:markActiveSideButton()
 
     --* self.marker_item was set from the callback of a side button, set in ((XrayPageNavigator#addSideButton)), or when changing the filtered item in ((XrayPageNavigator#setFilter)) or ((XrayPageNavigator#resetFilter)):
     if self.marker_item then
-        self.active_side_button = self:getSideButtonIndexByItem(self.marker_item)
+        local active_side_button = self:getSideButtonIndexByItem(self.marker_item)
+        self:setActiveSideButton("XrayPageNavigator:markActiveSideButton, from marker_item", active_side_button)
     end
 
     --* these are rows with one button each:
@@ -836,10 +844,10 @@ function XrayPageNavigator:returnToNavigator()
         self.initial_browsing_page = self.return_to_page
         self:showNavigator(self.return_to_page);
         self.return_to_page = nil
-        self.active_side_button = 1
+        local active_side_button = self.return_to_item_no or 1
+        self:setActiveSideButton("XrayPageNavigator:returnToNavigator", active_side_button)
         --* re-open the last opened item; also set by ((XrayPageNavigator#execEditCallback)):
         if self.return_to_item_no then
-            self.active_side_button = self.return_to_item_no
             self.current_item = self.return_to_current_item
             local side_button = self:getSideButton(self.return_to_item_no)
             --* callback defined in ((XrayPageNavigator#markedItemRegister)):
@@ -852,6 +860,15 @@ function XrayPageNavigator:returnToNavigator()
     end
 
     return false
+end
+
+--- @private
+function XrayPageNavigator:setActiveSideButton(context, active_side_button)
+    if active_side_button then
+        self.active_side_button = active_side_button
+    end
+    --* context was given here only for debugging:
+    self.garbage = context
 end
 
 function XrayPageNavigator:setProp(prop, value)
