@@ -188,7 +188,7 @@ function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
             callback = function()
                 parent:closeViewer()
                 DX.c:resetFilteredItems()
-                parent:initAndShowNewItemForm()
+                parent:showNewItemForm()
                 return true
             end,
         },

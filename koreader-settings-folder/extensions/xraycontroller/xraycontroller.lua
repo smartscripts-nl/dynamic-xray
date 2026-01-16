@@ -74,11 +74,11 @@ viewer: ((XrayButtons#forItemViewer))
 
 --* NAVIGATING THROUGH RELATED ITEMS SHOWN IN A POPUP BUTTONDIALOG UPON LONGPRESSING ON A WORD IN THE READER
 
-((XrayButtons#forItemsCollectionPopup)) > ((XrayTappedWords#itemsRegister)) > click on a button in the popup > triggers ((related item button callback)) > ((XrayDialogs#viewTappedWordItem)) (like item viewer ((XrayDialogs#showItemViewer)) for normal items, but now specifically and only for related items).
+((XrayButtons#forItemsCollectionPopup)) > ((XrayTappedWords#itemsRegister)) > click on a button in the popup > triggers ((related item button callback)) > ((XrayDialogs#viewTappedWordItem)) (like Item Viewer ((XrayDialogs#showItemViewer)) for normal items, but now specifically and only for related items).
 
 When navigating through the items ((XrayDialogs#viewNextTappedWordItem)) or ((XrayDialogs#viewPreviousTappedWordItem)) are called, either triggered with a button or by a key event.
 
-Via buttons: e.g. ((next related item via button)) (for this to work also next_item_callback and next_item_callback props of the item viewer in ((XrayDialogs#viewTappedWordItem)) have to be set).
+Via buttons: e.g. ((next related item via button)) (for this to work also next_item_callback and next_item_callback props of the Item Viewer in ((XrayDialogs#viewTappedWordItem)) have to be set).
 For a key event e.g.: ((next related item via hotkey))
 
 --* DISPLAYING HELP INFO
@@ -297,6 +297,11 @@ function XrayController:filterItemsByText(filter_string)
 end
 
 function XrayController:resetFilteredItems()
+    --* otherwise data would be reset and retrieved many times:
+    if self.filter_state == "unfiltered" then
+        return
+    end
+
     DX.d:setProp("filter_icon", nil)
     DX.d:setProp("filter_state", "unfiltered")
     DX.m:resetData("force_refresh")

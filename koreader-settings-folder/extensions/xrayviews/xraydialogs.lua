@@ -3,7 +3,7 @@ This extension is part of the Dynamic Xray plugin; it has all dialogs and forms 
 
 The Dynamic Xray plugin has kind of a MVC structure:
 M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
-V = ((XrayUI)), ((XrayPageNavigator)), and ((XrayDialogs)) and ((XrayButtons))
+V = ((XrayUI)), ((XrayPageNavigator)), ((XrayTranslations)) and ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
 
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
@@ -49,12 +49,12 @@ local has_text = has_text
 local math = math
 local select = select
 local table = table
+local table_insert = table.insert
 local tostring = tostring
 
+local count
 --- @type XrayTranslations translations
 local translations
-
-local count
 
 --- @class XrayDialogs
 local XrayDialogs = WidgetContainer:new{
@@ -120,16 +120,16 @@ function XrayDialogs:closeForm(mode)
             and self.form_was_cancelled
             and DX.vd.current_item
         then
-            --* reset values and go to item viewer:
+            --* reset values and go to Item Viewer:
             self.form_was_cancelled = false
             DX.vd:setProp("new_item_hits", nil)
             self:showItemViewer(DX.vd.current_item, self.called_from_list, nil, "skip_item_search")
-            --* signal that we were redirected to the item viewer:
+            --* signal that we were redirected to the Item Viewer:
             return true
         end
 
         self.form_was_cancelled = false
-        --* signal that we were NOT redirected to the item viewer:
+        --* signal that we were NOT redirected to the Item Viewer:
         return false
     end
 
@@ -302,17 +302,17 @@ Enter with only lowercase characters [a-z], because then searches for these item
 
     --* on mobile devices we don't want two field rows (not enough space):
     if DX.s.is_mobile_device then
-        table.insert(fields, aliases_field)
-        table.insert(fields, linkwords_field)
-        table.insert(fields, xray_type_field)
-        table.insert(fields, short_names_field)
+        table_insert(fields, aliases_field)
+        table_insert(fields, linkwords_field)
+        table_insert(fields, xray_type_field)
+        table_insert(fields, short_names_field)
     else
         --* insert 2 two field rows:
-        table.insert(fields, {
+        table_insert(fields, {
             aliases_field,
             linkwords_field,
         })
-        table.insert(fields, {
+        table_insert(fields, {
             short_names_field,
             xray_type_field,
         })
@@ -337,8 +337,15 @@ end
 --* compare ((XrayDialogs#showEditItemForm)):
 --* props for current form were initialised in ((XrayFormsData#initNewItemFormProps)) > ((XrayController#onShowNewItemForm)):
 function XrayDialogs:showNewItemForm(args)
-    local active_form_tab = args.active_form_tab or self.active_form_tab
-    local item_copy = args.item_copy
+    --! args will be nil when new item form called with a hotkey:
+    local active_form_tab = args and args.active_form_tab or self.active_form_tab or 1
+    local title, item_copy = DX.fd:initNewItemFormProps()
+    if args and args.title then
+        title = args.title
+    end
+    if args and args.item_copy then
+        item_copy = args.item_copy
+    end
 
     --* to be able to re-attach the book_hits etc. to the item if the user DOES save it:
     --* consumed in ((XrayController#saveNewItem)):
@@ -351,14 +358,14 @@ function XrayDialogs:showNewItemForm(args)
     --* make sure we don't retain field values from previous form sessions:
     DX.fd:resetItemProps(item_copy)
     self.add_item_input = MultiInputDialog:new{
-        title = args.title,
+        title = title,
         title_shrink_font_to_fit = true,
         title_tab_buttons_left = self.title_tab_buttons_left,
         active_tab = active_form_tab,
         tab_callback = DX.fd:getFormTabCallback("add", active_form_tab, item_copy),
         has_field_rows = true,
-        fields = self:getFormFields(item_copy, args.prefilled_field, args.name_from_selected_text),
-        focus_field = args.focus_field,
+        fields = self:getFormFields(item_copy, args and args.prefilled_field, args and args.name_from_selected_text),
+        focus_field = args and args.focus_field or 1,
         close_callback = function()
             self:closeForm("add")
         end,
@@ -494,7 +501,7 @@ search for hits in the name, aliases or short names and show linked items for th
 
     --* insert check buttons before the regular buttons
     local nb_elements = #self.filter_xray_items_input.dialog_frame[1]
-    table.insert(self.filter_xray_items_input.dialog_frame[1], nb_elements - 1, check_buttons)
+    table_insert(self.filter_xray_items_input.dialog_frame[1], nb_elements - 1, check_buttons)
     UIManager:show(self.filter_xray_items_input)
     self.filter_xray_items_input:onShowKeyboard()
 end
@@ -664,7 +671,7 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, ke
     }
     self.xray_items_inner_menu = Menu:new(config)
 
-    table.insert(self.xray_items_chooser_dialog, self.xray_items_inner_menu)
+    table_insert(self.xray_items_chooser_dialog, self.xray_items_inner_menu)
     self.xray_items_inner_menu.close_callback = function()
         UIManager:close(self.xray_items_chooser_dialog)
         KOR.dialogs:unregisterWidget(self.xray_items_chooser_dialog)
@@ -880,7 +887,13 @@ function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, 
         return
     end
     book_hits = needle_item.book_hits
-    local current_items_count = #DX.vd.current_tab_items
+    --* this can occur when we go back to the Viewer from an add new item dialog, before we even have visited the List of Items (which would populate the current list tab items):
+    if not DX.vd.current_tab_items then
+        DX.vd:getCurrentListTabItems()
+        --KOR.debug:alertTable("XrayDialogs:showItemViewer", "current_list_tab_items retrieved", DX.vd.current_tab_items)
+    end
+    local current_items_count = DX.vd.current_tab_items and #DX.vd.current_tab_items or 0
+
 
     self:closeListDialog()
 
@@ -1133,7 +1146,6 @@ function XrayDialogs:switchFocusFieldLoop(input_fields, last_field_no, focus_fie
     end
     input_fields[focus_field_no]:onFocus()
 end
-
 
 
 

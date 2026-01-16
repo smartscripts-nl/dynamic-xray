@@ -31,6 +31,7 @@ local has_no_text = has_no_text
 local has_text = has_text
 local pairs = pairs
 local table = table
+local table_insert = table.insert
 local type = type
 
 local count
@@ -96,7 +97,7 @@ function XrayModel:initDataHandlers()
     data_loader:initDataHandlers(self)
     data_saver:initDataHandlers(self)
 
-    if self:isPublicDXversion("silent") then
+    if self:isPublicDXversion() then
         --* since XrayTranslations needs table xrays_translations to be created, we run this here:
         data_saver.createAndModifyTables()
     end
@@ -193,9 +194,9 @@ function XrayModel:addLinkedItemsAsContextButtonsForViewer(buttons, needle_item,
         end
 
         --* insert each new row at position 1 ABOVE previous rows:
-        table.insert(buttons, 1, row)
+        table_insert(buttons, 1, row)
     end
-    table.insert(buttons, 1, first_row)
+    table_insert(buttons, 1, first_row)
     if add_more_button then
         DX.b:addMoreButton(buttons, nil, {
             --* popup buttons dialog doesn't have to display any additional info, except the buttons, so may contain more buttons - this prop to be consumed in ((XrayButtons#handleMoreButtonClick)):
@@ -229,7 +230,7 @@ function XrayModel:insertViewerContextButton(row, item, tapped_word)
     else
         linked_item_hits = has_items(item.book_hits) and " (" .. item.book_hits .. ")" or ""
     end
-    table.insert(row, {
+    table_insert(row, {
         text = item.name:lower() .. linked_item_hits .. KOR.icons.xray_link_bare .. icon,
         font_bold = item.is_bold,
         text_font_face = "x_smallinfofont",
@@ -262,11 +263,11 @@ function XrayModel:switchFirstAndSurName(name)
 
     local name_parts = KOR.strings:split(name, " ", false)
     local parts = {}
-    table.insert(parts, name_parts[2] .. ",")
+    table_insert(parts, name_parts[2] .. ",")
     count = #name_parts
     for nr = 1, count do
         if nr ~= 2 then
-            table.insert(parts, name_parts[nr])
+            table_insert(parts, name_parts[nr])
         end
     end
     return table.concat(parts, " ")
@@ -408,6 +409,9 @@ end
 
 --* compare usage of ((Strings#sortKeywords)) in ((XrayFormsData#convertFieldValuesToItemProps)):
 function XrayModel:splitByCommaOrSpace(subject, add_singulars)
+    if not subject then
+        return
+    end
     local separated_by_commas = subject:match(",")
     local keywords
     local plural_keywords = {}
@@ -420,7 +424,7 @@ function XrayModel:splitByCommaOrSpace(subject, add_singulars)
         keywords[nr] = keyword:gsub("%-", "%%-")
         if add_singulars and keyword:match("s$") then
             local plural = keyword:gsub("s$", "")
-            table.insert(plural_keywords, plural)
+            table_insert(plural_keywords, plural)
         end
     end
     if #plural_keywords > 0 then
@@ -431,6 +435,9 @@ end
 
 --- @private
 function XrayModel:hasExactMatch(haystack, needle)
+    if not haystack or not needle then
+        return false
+    end
     if haystack == needle then
         return true
     end

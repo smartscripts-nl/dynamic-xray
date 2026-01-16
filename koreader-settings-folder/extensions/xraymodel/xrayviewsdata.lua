@@ -48,7 +48,6 @@ local tapped_words
 local XrayViewsData = WidgetContainer:new {
     active_list_tab = 1,
     alias_indent = "  ",
-    cached_hits = {},
     chapter_page_number_format = "<span style='font-size: 80%; color: #888888;'> [p.%1]</span>",
     chapter_props = {},
     chapters_start_pages_ordered = {},
@@ -259,6 +258,7 @@ function XrayViewsData:addItemToPersonsOrTerms(item)
     end
 end
 
+--- @private
 function XrayViewsData:repopulateItemsPersonsTerms(item)
     count = #self.items
     self.persons = {}
@@ -318,7 +318,8 @@ function XrayViewsData:getCurrentListTabItems(needle_item)
             self.persons = KOR.tables:shallowCopy(self.item_table[2])
             self.terms = KOR.tables:shallowCopy(self.item_table[3])
         else
-            self.initData()
+            self.initData("force_refresh")
+            self.prepareData()
         end
     end
 
@@ -728,7 +729,7 @@ function XrayViewsData:getLinkedItems(needle_item)
 
     --* don't return here when needle_item has no linkwords, because we also search in the other xray items, to see if THEIR linkwords match to the name of the needle_item...
     local linked_items, linked_names_index = {}, {}
-    local linkwords = parent:splitByCommaOrSpace(needle_item.linkwords, "add_singulars") or {}
+    local linkwords = has_text(needle_item.linkwords) and parent:splitByCommaOrSpace(needle_item.linkwords, "add_singulars") or {}
 
     local haystack_item
     count = #self.items
@@ -761,7 +762,14 @@ function XrayViewsData:addLinkedItem(stage, needle_item, compare_item, linkwords
         needle = stage == 1 and compare_item.name or needle_item.name
         --* we also check for matches with aliases of xray items:
         aliases_needle = stage == 1 and compare_item.aliases or needle_item.aliases
-        if (parent:hasExactMatch(needle, linkword) or parent:hasExactMatch(aliases_needle, linkword)) and not linked_names_index[compare_item.name] then
+        if
+            (
+                parent:hasExactMatch(needle, linkword)
+                or
+                (aliases_needle and parent:hasExactMatch(aliases_needle, linkword))
+            )
+            and not linked_names_index[compare_item.name]
+        then
             table_insert(linked_items, compare_item)
             linked_names_index[compare_item.name] = true
             if stage == 2 then
@@ -771,6 +779,7 @@ function XrayViewsData:addLinkedItem(stage, needle_item, compare_item, linkwords
     end
 end
 
+--- @private
 function XrayViewsData:getItemIndexById(id)
     local items = self:getCurrentListTabItems()
     count = #items
@@ -904,37 +913,6 @@ function XrayViewsData:getItemInfoHtml(item, ucfirst)
     --* prop chapter_hits - if determined - will have the chapter info in html format:
     --* since we want to view our info tabbed, we return two values in case of html display and don't concatenate them:
     return info, T(_("<span style='font-size: 90%'>An %1 marks the highest number of hits in the current book...</span>"), KOR.icons.arrow_left_bare) .. item.chapter_hits
-end
-
---* this info will be consumed for the info panel in ((HtmlBox#generateScrollWidget)):
---- @private
-function XrayViewsData:getItemInfoText(item)
-    --* the reliability_indicators were added in ((XrayUI#getXrayItemsFoundInText)) > ((XrayUI#matchNameInPageOrParagraph)) and ((XrayUI#matchAliasesToParagraph)):
-    local reliability_indicator = item.reliability_indicator and item.reliability_indicator .. " " or ""
-    local sub_info_separator = "\n     "
-    local info = "\n" .. reliability_indicator .. item.name .. ": " .. item.description .. "\n"
-    if has_text(item.aliases) then
-        info = info .. sub_info_separator .. KOR.icons.xray_alias_bare .. " " .. item.aliases
-    end
-    if has_text(item.linkwords) then
-        return info .. sub_info_separator .. KOR.icons.xray_link_bare .. " " .. item.linkwords
-    end
-    return info
-end
-
-function XrayViewsData:generateInfoPanelTextIfMissing(side_buttons, info_panel_text)
-    if info_panel_text or not side_buttons or not side_buttons[1] then
-        return info_panel_text
-    end
-
-    local first_item = side_buttons[1][1]
-    --* this prop was set in ((XrayPageNavigator#markItem)):
-    info_panel_text = self.first_info_panel_text or self:getItemInfoText(first_item)
-    self.first_info_panel_text = info_panel_text
-    self.first_info_panel_item_name = first_item.name
-    side_buttons[1][1].text = KOR.icons.active_tab_bare .. side_buttons[1][1].text
-
-    return info_panel_text
 end
 
 function XrayViewsData:getItemTypeIcon(item, bare)
@@ -1162,7 +1140,7 @@ function XrayViewsData:getChapterHitsPerTerm(term, chapter_stats, chapters_order
     for i = 1, result_count do
         last_chapter_title = KOR.toc:getTocLastChapterInfo(results[i].start)
 
-        --* the cached chapter_props will only be reset in ((XrayController#resetDynamicXray)), so when opening another ebook:
+        --* the cached chapter_props will only be reset in ((XrayController#onReaderReady)) > ((XrayController#resetDynamicXray)), so when opening another ebook:
         if not self.chapter_props[last_chapter_title] then
             last_chapter_index = KOR.toc:getAccurateTocIndexByXPointer(results[i].start)
 

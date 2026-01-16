@@ -97,19 +97,7 @@ function XrayFormsData:initNewItemFormProps(name_from_selected_text, active_form
             item.xray_type = xray_type_from_previous_tab
         end
     end
-    local item_copy = item and KOR.tables:shallowCopy(item) or {
-        description = "",
-        name = "",
-        short_names = "",
-        linkwords = "",
-        aliases = "",
-        xray_type = xray_type,
-        mentioned_in = nil,
-        book_hits = 0,
-        chapter_hits = '',
-        series_hits = 0,
-        series = parent.current_series,
-    }
+    local item_copy = self:getItemCopy(item, xray_type)
 
     --* show how many times the selected text occurs in the book:
     local search_text = name_from_selected_text or item_copy.name
@@ -132,6 +120,23 @@ function XrayFormsData:initNewItemFormProps(name_from_selected_text, active_form
     end
 
     return title, item_copy, prefilled_field
+end
+
+--- @private
+function XrayFormsData:getItemCopy(item, xray_type)
+    return item and KOR.tables:shallowCopy(item) or {
+        description = "",
+        name = "",
+        short_names = "",
+        linkwords = "",
+        aliases = "",
+        xray_type = xray_type or 1,
+        mentioned_in = nil,
+        book_hits = 0,
+        chapter_hits = '',
+        series_hits = 0,
+        series = parent.current_series,
+    }
 end
 
 --* called from ((XrayDialogs#showNewItemForm)):

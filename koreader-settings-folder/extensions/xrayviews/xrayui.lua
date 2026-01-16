@@ -510,6 +510,9 @@ end
 
 --- @private
 function XrayUI:matchAliasesToParagraph(paragraph, book_hits, explanations, item)
+    if has_no_text(item.aliases) then
+        return false
+    end
     local aliases = item.aliases
     local alias_table = DX.m:splitByCommaOrSpace(aliases)
     local alias

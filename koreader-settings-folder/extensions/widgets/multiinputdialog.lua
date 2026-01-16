@@ -40,6 +40,7 @@ local MultiInputDialog = InputDialog:extend{
     a_field_was_focussed = false,
     auto_height_field = nil,
     auto_height_field_index = nil,
+    auto_height_field_tab_index = nil,
     bottom_v_padding = Size.padding.small,
     description_face = Font:getDefaultDialogFontFace(),
     description_padding = Size.padding.small,
@@ -115,7 +116,6 @@ function MultiInputDialog:onSwitchFocus(inputbox)
     for i = 1, count do
         self:onUnfocus(self.tab_fields[i])
     end
-    self:refreshDialog()
     --* focus new inputbox
     self:onFocus(inputbox)
 end
@@ -220,6 +220,7 @@ function MultiInputDialog:fieldAddToInputs(field_config, field_side)
         self.auto_height_field = KOR.tables:shallowCopy(self.field_config)
         --! we need this index to replace the temporary input field with the field with computed height:
         self.auto_height_field_index = #self.input_fields + 1
+        self.auto_height_field_tab_index = #self.tab_fields + 1
         self.field_config.height = self.initial_auto_field_height
         field = InputText:new(self.field_config)
         table_insert(self.input_fields, field)
@@ -752,6 +753,9 @@ function MultiInputDialog:insertComputedHeightField(difference)
     end
 
     self.input_fields[self.auto_height_field_index] = field
+    --! this is also very important for correct behavior in ((MultiInputDialog#onSwitchFocus)), which would otherwise in the loop there reference a no longer existing, replaced field:
+    self.tab_fields[self.auto_height_field_tab_index] = field
+
     local group = CenterContainer:new{
         dimen = Geom:new{
             w = self.full_width,
