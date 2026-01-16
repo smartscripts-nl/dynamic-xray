@@ -284,6 +284,16 @@ function ButtonInfoPopup:forXrayItemSaveAndShowModule(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forXrayItemsExportToFile(props)
+	return KOR.buttonprops:set({
+		icon = "export",
+		icon_size_ratio = 0.53,
+		info = _("export icon | Export this list to xray-items.txt in the settings folder of KOReader (in most cases named \"koreader\")."),
+		callback_label = _("export"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forXrayItemsIndex(props)
 	return KOR.buttonprops:set({
 		icon = "index",

@@ -18,6 +18,7 @@ These modules are initialized in ((initialize Xray modules)) and ((XrayControlle
 
 local require = require
 
+local DataStorage = require("datastorage")
 local Event = require("ui/event")
 local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
@@ -31,8 +32,10 @@ local has_content = has_content
 local has_items = has_items
 local has_no_text = has_no_text
 local has_text = has_text
-local table = table
+local os_date = os.date
+local table_concat = table.concat
 local table_insert = table.insert
+local tonumber = tonumber
 
 local count
 --- @type XrayModel parent
@@ -426,13 +429,17 @@ end
 function XrayPageNavigator:itemInfoAddHits(info, item)
     local hits = ""
     local series_hits_added = false
-    if DX.m.current_series and has_content(item.series_hits) then
+    if parent.current_series and has_content(item.series_hits) then
         series_hits_added = true
-        hits = KOR.icons.graph_bare .. " " .. _("series") .. " " .. item.series_hits
+        hits = KOR.icons.graph_bare .. " " .. _("series") .. " " .. tonumber(item.series_hits)
     end
     if has_content(item.book_hits) then
         local separator = series_hits_added and ", " or KOR.icons.graph_bare
-        hits = hits .. separator .. " " .. _("book") .. " " .. item.book_hits
+        hits = hits .. separator .. " " .. _("book") .. " " .. tonumber(item.book_hits)
+    end
+    --* when called from list of all items in TextViewer > ((XrayViewsData#generateXrayItemInfo)):
+    if info == "" then
+        return hits
     end
     if has_text(hits) then
         return info .. "\n" .. DX.vd.info_indent .. hits
@@ -871,6 +878,31 @@ function XrayPageNavigator:setActiveSideButton(context, active_side_button)
     self.garbage = context
 end
 
+--- @private
+function XrayPageNavigator:showExportXrayItemsDialog()
+    local top_buttons_left = DX.b:forExportItemsTopLeft()
+    local title = parent.current_series and _("All Xray items: series mode") or _("All Xray items: book mode")
+
+    KOR.dialogs:textBox({
+        title = title,
+        info = self.cached_export_info,
+        info_icon_less = self.cached_export_info_icon_less,
+        fullscreen = true,
+        copy_icon_less_text = true,
+        extra_button = KOR.buttoninfopopup:forXrayItemsExportToFile({
+            callback = function()
+                title = title:gsub(": ([^\n]+)", " in \"" .. parent.current_title .. "\" (%1)")
+                local info = title .. "\n" .. _("List generated") .. ": " .. os_date("%Y-%m-%d") .. "\n\n" .. self.cached_export_info_icon_less
+                KOR.files:filePutcontents(DataStorage:getDataDir() .. "/xray-items.txt", info)
+                KOR.messages:notify(_("list exported to xray-items.txt..."))
+            end,
+        }),
+        extra_button_position = 3,
+        top_buttons_left = top_buttons_left,
+    })
+    KOR.screenhelpers:refreshScreen()
+end
+
 function XrayPageNavigator:setProp(prop, value)
     self[prop] = value
 end
@@ -902,18 +934,8 @@ end
 --* compare ((XrayDialogs#showUiPageInfo))
 function XrayPageNavigator:execExportXrayItemsCallback()
 
-    local top_buttons_left = DX.b:forExportItemsTopLeft()
-
     if self.cached_export_info then
-        KOR.dialogs:textBox({
-            title = _("All Xray items"),
-            info = self.cached_export_info,
-            info_icon_less = self.cached_export_info_icon_less,
-            fullscreen = true,
-            copy_icon_less_text = true,
-            top_buttons_left = top_buttons_left,
-        })
-        KOR.screenhelpers:refreshScreen()
+        self:showExportXrayItemsDialog()
         return true
     end
 
@@ -934,18 +956,10 @@ function XrayPageNavigator:execExportXrayItemsCallback()
         table_insert(paragraphs, paragraph)
         table_insert(paragraphs_icon_less, paragraph_icon_less)
     end
-    self.cached_export_info = table.concat(paragraphs, "")
-    self.cached_export_info_icon_less = table.concat(paragraphs_icon_less, "")
+    self.cached_export_info = table_concat(paragraphs, "")
+    self.cached_export_info_icon_less = table_concat(paragraphs_icon_less, "")
 
-    self.xray_export_info = KOR.dialogs:textBox({
-        title = _("All Xray items"),
-        info = self.cached_export_info,
-        info_icon_less = self.cached_export_info_icon_less,
-        fullscreen = true,
-        copy_icon_less_text = true,
-        top_buttons_left = top_buttons_left,
-    })
-    KOR.screenhelpers:refreshScreen()
+    self:showExportXrayItemsDialog()
     return true
 end
 

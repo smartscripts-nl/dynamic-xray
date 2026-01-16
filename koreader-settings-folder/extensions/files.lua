@@ -5,10 +5,28 @@ local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local lfs = require("libs/libkoreader-lfs")
 
+local io_open = io.open
+
 --- @class Files
 local Files = WidgetContainer:extend{
     ui = nil,
 }
+
+function Files:filePutcontents(path, content)
+    self:fileSetContents(path, content)
+end
+
+function Files:fileSetContents(path, content)
+    local target = io_open(path, "wb")
+    if target then
+        target:write(content)
+        target:close()
+        target = nil
+        return
+    end
+
+    KOR.messages:notify("file " .. path .. " does not exist...")
+end
 
 function Files:openFile(full_path)
 

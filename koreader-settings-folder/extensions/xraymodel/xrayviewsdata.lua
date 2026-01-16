@@ -959,7 +959,7 @@ function XrayViewsData:generateXrayItemInfo(items, xray_explanations, i, name, i
     end
 
     local xray_type_icon = DX.vd:getItemTypeIcon(items[i])
-    local hits = DX.vd.list_display_mode == "series" and items[i].series_hits or items[i].book_hits
+    local hits = DX.pn:itemInfoAddHits("", items[i])
 
     --* here the info gets combined:
     -- #((xray items dialog add match reliability explanations))
@@ -988,8 +988,7 @@ function XrayViewsData:generateXrayItemInfo(items, xray_explanations, i, name, i
         "\n",
         self.info_indent,
         self.alias_indent,
-        KOR.icons.graph,
-        tonumber(hits),
+        hits,
         "\n",
         aliases,
         linkwords,
@@ -1004,7 +1003,7 @@ function XrayViewsData:generateXrayItemInfo(items, xray_explanations, i, name, i
             self.alias_indent,
             _("mentions"),
             ": ",
-            tonumber(hits),
+            hits:gsub(KOR.icons.graph_bare .. " ", "", 1),
             "\n",
             aliases_fc,
             linkwords_fc,
@@ -1158,92 +1157,6 @@ function XrayViewsData:getChapterHitsPerTerm(term, chapter_stats, chapters_order
     return total_count
 end
 
-function XrayViewsData:resultsPageGreaterThan(results, current_page, next_page)
-    local page_no
-    if has_items(results) then
-        count = #results
-        local last_occurrence = KOR.document:getPageFromXPointer(results[count].start)
-        if current_page == last_occurrence then
-            return
-        end
-        for i = 1, count do
-            page_no = KOR.document:getPageFromXPointer(results[i].start)
-            if page_no > current_page and (not next_page or page_no < next_page) then
-                return page_no
-            end
-        end
-    end
-end
-
-function XrayViewsData:resultsPageSmallerThan(results, current_page, prev_page)
-    local page_no
-    if has_items(results) then
-        count = #results
-        local first_occurrence = KOR.document:getPageFromXPointer(results[1].start)
-        if current_page == first_occurrence then
-            return
-        end
-        for i = count, 1, -1 do
-            page_no = KOR.document:getPageFromXPointer(results[i].start)
-            if page_no < current_page and (not prev_page or page_no > prev_page) then
-                return page_no
-            end
-        end
-    end
-end
-
-function XrayViewsData:getNextPageHitForTerm(item, current_page)
-    local document = KOR.ui.document
-    local results, needle, case_insensitive
-    --* if applicable, we only search for first names (then probably more accurate hits count):
-    needle = parent:getRealFirstOrSurName(item)
-    --* for lowercase needles (terms instead of persons), we search case insensitive:
-    case_insensitive = not needle:match("[A-Z]")
-
-    --! using document:findAllTextWholeWords instead of document:findAllText here crucial to get exact hits count:
-    results = self.cached_hits[needle] or document:findAllTextWholeWords(needle, case_insensitive, 0, 3000, false)
-    self.cached_hits[needle] = results
-    local next_page = self:resultsPageGreaterThan(results, current_page)
-
-    local search_for_aliases = has_text(item.aliases)
-    if search_for_aliases then
-        local aliases = parent:splitByCommaOrSpace(item.aliases)
-        local aliases_count = #aliases
-        for a = 1, aliases_count do
-            results = document:findAllTextWholeWords(aliases[a], case_insensitive, 0, 3000, false)
-            next_page = self:resultsPageGreaterThan(results, current_page, next_page)
-        end
-    end
-
-    return next_page
-end
-
-function XrayViewsData:getPreviousPageHitForTerm(item, current_page)
-    local document = KOR.ui.document
-    local results, needle, case_insensitive
-    --* if applicable, we only search for first names (then probably more accurate hits count):
-    needle = parent:getRealFirstOrSurName(item)
-    --* for lowercase needles (terms instead of persons), we search case insensitive:
-    case_insensitive = not needle:match("[A-Z]")
-
-    --! using document:findAllTextWholeWords instead of document:findAllText here crucial to get exact hits count:
-    results = self.cached_hits[needle] or document:findAllTextWholeWords(needle, case_insensitive, 0, 3000, false)
-    self.cached_hits[needle] = results
-    local prev_page = self:resultsPageSmallerThan(results, current_page)
-
-    local search_for_aliases = has_text(item.aliases)
-    if search_for_aliases then
-        local aliases = parent:splitByCommaOrSpace(item.aliases)
-        local aliases_count = #aliases
-        for a = 1, aliases_count do
-            results = document:findAllTextWholeWords(aliases[a], case_insensitive, 0, 3000, false)
-            prev_page = self:resultsPageSmallerThan(results, current_page, prev_page)
-        end
-    end
-
-    return prev_page
-end
-
 --* called from ((XrayViewsData#prepareData)):
 --- @private
 function XrayViewsData:indexItems(new_item)
@@ -1262,7 +1175,6 @@ function XrayViewsData:indexItems(new_item)
     for nr = 1, count do
         local current = nr
         self.items[nr].index = nr
-
         if new_item and new_item.name == self.items[nr].name then
             new_item = self.items[nr]
         end
