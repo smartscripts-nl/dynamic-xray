@@ -33,9 +33,11 @@ local Screen = Device.screen
 local DX = DX
 local G_reader_settings = G_reader_settings
 local has_no_items = has_no_items
+local has_text = has_text
 local math = math
 local pairs = pairs
 local table = table
+local table_insert = table.insert
 local type = type
 
 -- Inject scroll page method for ScrollHtmlWidget
@@ -136,6 +138,7 @@ function HtmlBox:init()
     self:generateInfoButtons()
     self:generateInfoPanel()
     self:generateScrollWidget()
+    self:generateSidePanel()
     self:addFrameToContentWidget()
     self:generateWidget()
     self:finalizeWidget()
@@ -294,7 +297,7 @@ end
 
 --- @private
 function HtmlBox:generateInfoButtons()
-    --? for some reason self.button_table_side not available when we click on the item viewer button; because then self.side_buttons not set at the start of ((HtmlBox#generateSidePanelButtons)) and the script returns, without generating the side buttons:
+    --? for some reason self.button_table_side not available when we click on the Item Viewer button; because then self.side_buttons not set at the start of ((HtmlBox#generateSidePanelButtons)) and the script returns, without generating the side buttons:
     self.info_panel_width = self.button_table_side and self.content_width - self.button_table_side:getSize().w or self.content_width
 
     local buttons = ButtonTable:new {
@@ -660,11 +663,101 @@ function HtmlBox:computeLineHeight()
     end
 end
 
+--- @private
+--- @param parent XrayPageNavigator
+function HtmlBox:activateParentTab(parent, tab_no)
+    parent.active_side_tab = tab_no
+    --self:setCurrentItem(item)
+    parent:setActiveScrollPage()
+    parent.marker_item = parent.current_item
+    parent:reloadPageNavigator(parent.info_panel_text)
+end
+
+function HtmlBox:generateSidePanel()
+
+    --- @type XrayPageNavigator parent
+    local parent = self.parent
+
+    --* parent.current_item is set from the callback of a side_button in ((XrayPageNavigator#addSideButton)) and when marking the active button in ((XrayPageNavigator#markActiveSideButton))
+    local has_linked_items = parent.active_side_tab == 1 and parent.current_item and has_text(parent.current_item.linkwords)
+
+    local tab1_config = {
+        callback = function()
+            self:activateParentTab(parent, 1)
+        end,
+    }
+    local tab2_config = {
+        enabled = parent.active_side_tab == 1 and has_linked_items or parent.active_side_tab == 2,
+        callback = function()
+            if parent.active_side_tab == 2 then
+                KOR.messages:notify("deze tab is al geopend...")
+                return true
+            elseif not has_linked_items then
+                KOR.messages:notify("het in het onderpaneel weergegeven item heeft geen gelinkte items...")
+                return true
+            end
+            self:activateParentTab(parent, 2)
+        end,
+    }
+    --* see for the buttons: ((ButtonInfoPopup#forXrayPageNavigatorContextButtons)) and ((ButtonInfoPopup#forXrayPageNavigatorMainButtons)):
+    local active_marker = KOR.icons.active_tab_bare
+    if parent.active_side_tab == 1 then
+        tab1_config.text_icon = {
+            text = active_marker,
+            fgcolor = KOR.colors.lighter_indicator_color,
+            icon = "page-light",
+        }
+    else
+        tab2_config.text_icon = {
+            text = active_marker,
+            fgcolor = KOR.colors.lighter_indicator_color,
+            icon = "link",
+        }
+    end
+    local bottom_buttons = ButtonTable:new{
+        width = self.side_buttons_width,
+        button_font_face = "redhat",
+        button_font_size = DX.s.PN_panels_font_size or 14,
+        buttons = {{
+           KOR.buttoninfopopup:forXrayPageNavigatorMainButtons(tab1_config),
+           KOR.buttoninfopopup:forXrayPageNavigatorContextButtons(tab2_config),
+        }},
+        show_parent = self,
+        button_font_weight = "normal",
+    }
+
+    self.spacer_width = self.avail_height - self.button_table_side:getSize().h - bottom_buttons:getSize().h - self.box_title:getSize().h - 2 * self.content_padding_v - 2 * self.button_table_side_separator:getSize().h
+    local has_side_buttons = #self.side_buttons > 0
+
+    local bottom_padding = VerticalSpan:new{
+        width = self.spacer_width
+    }
+
+    self.side_panel = has_side_buttons and VerticalGroup:new{
+        align = "left",
+        --* these buttons (or a spacer in case of no buttons) were generated in ((HtmlBox#generateSidePanelButtons)):
+        self.button_table_side,
+        self.button_table_side_separator,
+        bottom_padding,
+        self.button_table_side_separator,
+        bottom_buttons,
+    }
+    or
+    VerticalGroup:new{
+        align = "left",
+        self.button_table_side,
+        bottom_padding,
+        self.button_table_side_separator,
+        bottom_buttons,
+    }
+end
+
 function HtmlBox:generateSidePanelButtons()
     --* these side panel buttons were generated in ((XrayPageNavigator#markItemsFoundInPageHtml)) > ((XrayPageNavigator#markedItemRegister)):
     if not self.side_buttons then
         return
     end
+
     self.button_table_side_separator = LineWidget:new{
         background = KOR.colors.line_separator,
         dimen = Geom:new{
@@ -770,7 +863,7 @@ function HtmlBox:finalizeWidget()
         }
 
     --* we're a new window:
-    table.insert(HtmlBox.window_list, self)
+    table_insert(HtmlBox.window_list, self)
 
     UIManager:setDirty(self, function()
         return "partial", self.box_frame.dimen
@@ -790,26 +883,10 @@ end
 --- @private
 function HtmlBox:addFrameToContentWidget()
     if self.button_table_side then
-        local spacer_width = self.avail_height - self.button_table_side:getSize().h - self.box_title:getSize().h - 2 * self.content_padding_v
         local has_side_buttons = #self.side_buttons > 0
         if has_side_buttons then
-            spacer_width = spacer_width - self.button_table_side_separator:getSize().h
+            self.spacer_width = self.spacer_width - self.button_table_side_separator:getSize().h
         end
-        local bottom_padding = VerticalSpan:new{
-            width = spacer_width
-        }
-        local side_panel = has_side_buttons and VerticalGroup:new{
-            align = "left",
-            self.button_table_side,
-            self.button_table_side_separator,
-            bottom_padding,
-        }
-        or
-        VerticalGroup:new{
-            align = "left",
-            self.button_table_side,
-            bottom_padding,
-        }
         self.content_widget = FrameContainer:new{
             padding = 0,
             padding_left = self.content_padding_h,
@@ -836,14 +913,13 @@ function HtmlBox:addFrameToContentWidget()
                         margin = 0,
                         color = KOR.colors.line_separator,
                         bordersize = Size.line.medium,
-                        side_panel,
+                        self.side_panel,
                     }
                 }
             },
         }
         return
     end
-
     self.content_widget = FrameContainer:new{
         padding = 0,
         padding_left = self.content_padding_h,

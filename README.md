@@ -11,6 +11,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 * DX can produce false hits, because it uses matching of the words in ebook texts to determine whether Xray items are present. For example, DX will be in trouble if there are two or more persons with the same first name in a book; DX won't be able to differentiate between them. But in about 95% of cases, the matches shown will be correct.
 * All interface texts can be translated by the user.
 * Some hotkeys for buttons in DX dialogs can be configured by the user, from within KOReader. The Page Navigator can be called while reading an ebook, with Shift+X.
+* The Page Navigator module now offers an extra side tab, to quickly inspect Xray items which are linked to the items named in the page. You can see this in action in the [videos section](#videos).
 
 ## Table of contents in this readme
 - [Use cases](#use-cases)
