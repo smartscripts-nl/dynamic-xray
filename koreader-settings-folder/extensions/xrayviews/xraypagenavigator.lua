@@ -932,6 +932,7 @@ end
 function XrayPageNavigator:resetActiveSideButtons(context)
 
     self.active_side_buttons = { 1, 1 }
+    self.info_panel_texts = { {}, {} }
 
     --* context was given here only for debugging:
     self.garbage = context
@@ -942,6 +943,7 @@ end
 function XrayPageNavigator:setActiveSideButton(context, active_side_button)
     if active_side_button and self.active_side_tab == 1 then
         self.active_side_buttons = { active_side_button, 1 }
+        self.info_panel_texts[2] = {}
     elseif active_side_button then
         self.active_side_buttons = { self.active_side_buttons[1], active_side_button }
     end
