@@ -342,8 +342,8 @@ function ButtonInfoPopup:forXrayPageNavigatorContextButtons(props)
 	return KOR.buttonprops:set({
 		icon = "link",
 		icon_size_ratio = 0.53,
-		info = "link-ikoon | Open het paneel met context-items bij het item dat op dit moment in het onderpaneel geladen is.",
-		callback_label = "context-items",
+		info = _("link icon | Open the quick inspection panel with Xray items linked to the in-page-item currently shown in the bottom info panel."),
+		callback_label = _("linked items"),
 		--! callback defined by calling module
 	}, props)
 end
@@ -364,8 +364,8 @@ function ButtonInfoPopup:forXrayPageNavigatorMainButtons(props)
 	return KOR.buttonprops:set({
 		icon = "page-light",
 		icon_size_ratio = 0.53,
-		info = "pagina-ikoon | Open het hoofdpaneel met items in de huidige pagina.",
-		callback_label = "context-items",
+		info = _("page icon | Open the main side panel, showing Xray items found in the current page."),
+		callback_label = _("page items"),
 		--! callback defined by calling module
 	}, props)
 end
