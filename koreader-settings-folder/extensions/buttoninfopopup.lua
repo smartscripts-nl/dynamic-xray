@@ -338,6 +338,16 @@ function ButtonInfoPopup:forXrayPageNavigator(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forXrayPageNavigatorContextButtons(props)
+	return KOR.buttonprops:set({
+		icon = "link",
+		icon_size_ratio = 0.53,
+		info = "link-ikoon | Open het paneel met context-items bij het item dat op dit moment in het onderpaneel geladen is.",
+		callback_label = "context-items",
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forXrayPageNavigatorFilter(props)
 	local filter_info = _("filter icon | Filter pages for occurrences of the item currently displayed in the bottom info panel. So the Navigator only jump between pages which have this item.")
 	local reset_filter_info = _("filter icon | Reset the filter for Page Navigator.")
@@ -346,6 +356,16 @@ function ButtonInfoPopup:forXrayPageNavigatorFilter(props)
 		icon_size_ratio = 0.53,
 		info = DX.pn.page_navigator_filter_item and reset_filter_info or filter_info,
 		callback_label = DX.pn.page_navigator_filter_item and _("reset filter") or _("filter"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forXrayPageNavigatorMainButtons(props)
+	return KOR.buttonprops:set({
+		icon = "page-light",
+		icon_size_ratio = 0.53,
+		info = "pagina-ikoon | Open het hoofdpaneel met items in de huidige pagina.",
+		callback_label = "context-items",
 		--! callback defined by calling module
 	}, props)
 end
