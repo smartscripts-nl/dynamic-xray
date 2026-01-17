@@ -716,7 +716,7 @@ function HtmlBox:generateSidePanel()
     end
     local bottom_buttons = ButtonTable:new{
         width = self.side_buttons_width,
-        button_font_face = "redhat",
+        button_font_face = "x_smallinfofont",
         button_font_size = DX.s.PN_panels_font_size or 14,
         buttons = {{
            KOR.buttoninfopopup:forXrayPageNavigatorMainButtons(tab1_config),

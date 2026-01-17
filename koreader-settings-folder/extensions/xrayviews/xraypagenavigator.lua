@@ -45,7 +45,7 @@ local parent
 local XrayPageNavigator = WidgetContainer:new{
     active_filter_name = nil,
     active_item_marker = KOR.icons.active_tab_bare,
-    active_side_button = 1,
+    active_side_buttons = { 1, 1 },
     active_side_tab = 1,
     alias_indent = "   ",
     button_labels_injected = "",
@@ -62,6 +62,8 @@ local XrayPageNavigator = WidgetContainer:new{
         ["La"] = true,
         ["Le"] = true,
     },
+    --* two sets, one for each side_panel:
+    info_panel_texts = { {}, {} },
     initial_browsing_page = nil,
     key_events = {},
     max_line_length = 80,
@@ -118,9 +120,17 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text)
         self:closePageNavigator()
     end
     local html = self:loadDataForPage()
-    if not info_panel_text then
+
+    local has_side_buttons = #self.side_buttons > 0
+    if has_side_buttons then
+        local active_side_button = self.active_side_buttons[self.active_side_tab]
+        info_panel_text = self.info_panel_texts[self.active_side_tab][active_side_button]
+    end
+    if not info_panel_text and self.first_info_panel_text then
         --* this text was generated for the first item via ((XrayPageNavigator#markActiveSideButton)) > ((XrayPageNavigator#generateInfoTextForFirstSideButton))
         info_panel_text = self.first_info_panel_text
+    elseif not info_panel_text then
+        info_panel_text = " "
     end
 
     local key_events_module = "XrayPageNavigator"
@@ -154,8 +164,6 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text)
 end
 
 function XrayPageNavigator:toCurrentNavigatorPage()
-    --! reset marker_item, so self.active_side_button in ((XrayPageNavigator#markActiveSideButton)) will not be set from a marker_item of a previous page:
-    self.marker_item = nil
     self:setActiveSideButton("XrayPageNavigator:toCurrentNavigatorPage", 1)
     self.navigator_page_no = self.initial_browsing_page
     self.no_navigator_page_found = false
@@ -163,8 +171,7 @@ function XrayPageNavigator:toCurrentNavigatorPage()
 end
 
 function XrayPageNavigator:toNextNavigatorPage()
-    --! reset marker_item, so self.active_side_button in ((XrayPageNavigator#markActiveSideButton)) will not be set from a marker_item of a previous page:
-    self.marker_item = nil
+    self:resetActiveSideButtons("XrayPageNavigator:toNextNavigatorPage")
     local first_info_panel_text
     --* navigation to next filtered item hit:
     if self.page_navigator_filter_item then
@@ -191,8 +198,7 @@ function XrayPageNavigator:toNextNavigatorPage()
 end
 
 function XrayPageNavigator:toPrevNavigatorPage()
-    --! reset marker_item, so self.active_side_button in ((XrayPageNavigator#markActiveSideButton)) will not be set from a marker_item of a previous page:
-    self.marker_item = nil
+    self:resetActiveSideButtons("XrayPageNavigator:toPrevNavigatorPage")
     local first_info_panel_text
     --* navigation to previous filtered item hit:
     if self.page_navigator_filter_item then
@@ -516,7 +522,7 @@ function XrayPageNavigator:resetFilter(item, info_text)
     self:setActiveScrollPage()
     self.page_navigator_filter_item = nil
     self.active_filter_name = nil
-    self.marker_item = item
+    self:resetActiveSideButtons("XrayPageNavigator:resetFilter")
     self:reloadPageNavigator(info_text)
     KOR.messages:notify(_("filter was reset") .. "...")
     return true
@@ -531,7 +537,7 @@ function XrayPageNavigator:setFilter(item, info_text)
     self:setActiveScrollPage()
     self.active_filter_name = item.name
     self.page_navigator_filter_item = item
-    self.marker_item = item
+    self:resetActiveSideButtons("XrayPageNavigator:setFilter")
     self:reloadPageNavigator(info_text)
     KOR.messages:notify(T(_("filter set to %1") .. "...", item.name))
     return true
@@ -706,11 +712,6 @@ end
 --- @private
 function XrayPageNavigator:loadDataForPage()
 
-    --* if marker_item is set, active_side_button will be set from that in ((XrayPageNavigator#markActiveSideButton)):
-    if not self.marker_item then
-        self:setActiveSideButton("XrayPageNavigator:loadDataForPage", 1)
-    end
-
     self.side_buttons = {}
     if self.active_side_tab == 2 and self.current_item then
         self:populateLinkedItemButtons()
@@ -725,7 +726,7 @@ function XrayPageNavigator:loadDataForPage()
 
         if self.active_side_tab == 1 then
             self.side_buttons = self.cached_html_and_buttons_by_page_no[self.navigator_page_no].side_buttons
-            self:markActiveSideButton(self.side_buttons)
+            self:markActiveSideButton()
         end
 
         return self.cached_html_and_buttons_by_page_no[self.navigator_page_no].html
@@ -743,24 +744,32 @@ end
 --* regular main item buttons (self.active_side_tab == 1) were added in ((XrayPageNavigator#markedItemRegister)):
 --- @private
 function XrayPageNavigator:populateLinkedItemButtons()
-    local item = self.current_item
-    local linked_items = DX.vd:getLinkedItems(item)
-    --KOR.debug:alertTable("XrayPageNavigator:populateLinkedItemButtons", "linked_items", linked_items)
+    local linked_items = DX.vd:getLinkedItems(self.current_item)
 
-    self:addSideButton(self.current_item, self.first_info_panel_text)
-    local info_panel_text
+    table_insert(linked_items, 1, self.current_item)
+
     count = #linked_items
+    local info_panel_text
     for i = 1, count do
-        --info_panel_text = self:getItemInfoText(linked_items[i])
         info_panel_text = DX.vd:generateXrayItemInfo(linked_items, nil, i, linked_items[i].name, 2, "for_all_items_list")
-        info_panel_text = info_panel_text
-            --* apply some hacks to get a correct, uniform lay-out for the info in the bottom panel:
-            :gsub(DX.vd.info_indent, DX.vd.alias_indent)
-            :gsub(DX.vd.alias_indent, "", 1)
-            :gsub("\n" .. DX.vd.alias_indent, ": ", 1)
-            :gsub(DX.vd.alias_indent .. KOR.icons.graph_bare, "\n" .. DX.vd.alias_indent .. DX.vd.alias_indent .. KOR.icons.graph_bare, 1)
+        if i == 1 then
+            self.first_info_panel_text = info_panel_text
+        end
+        --* apply some hacks to get a correct, uniform lay-out for the info in the bottom panel (apparently we need this for side panel no 2, but not for side panel 1):
+        info_panel_text = self:formatInfoPanelText(info_panel_text)
         self:addSideButton(linked_items[i], info_panel_text)
     end
+end
+
+--* called from ((XrayPageNavigator#populateLinkedItemButtons)):
+--- @private
+function XrayPageNavigator:formatInfoPanelText(info_panel_text)
+    return info_panel_text
+        --* apply some hacks to get a correct, uniform lay-out for the info of linked items in the bottom panel:
+        :gsub(DX.vd.info_indent, DX.vd.alias_indent)
+        :gsub(DX.vd.alias_indent, "", 1)
+        :gsub("\n" .. DX.vd.alias_indent, ": ", 1)
+        :gsub(DX.vd.alias_indent .. KOR.icons.graph_bare, "\n" .. DX.vd.alias_indent .. DX.vd.alias_indent .. KOR.icons.graph_bare, 1)
 end
 
 --- @private
@@ -771,13 +780,19 @@ function XrayPageNavigator:addSideButton(item, info_text)
     if button_index < 10 then
         label = button_index .. ". " .. label
     end
+    local index = #self.side_buttons + 1
+    if self.active_side_buttons[self.active_side_tab] == index then
+        label = self.active_item_marker .. label
+    end
+    table_insert(self.info_panel_texts[self.active_side_tab], info_text)
     table_insert(self.side_buttons, {{
       text = label,
       xray_item = item,
-      index = #self.side_buttons + 1,
+      index = index,
       align = "left",
       --* force_item will be set when we return to the Page Navigator from ((XrayPageNavigator#returnToNavigator)):
       callback = function(force_return_to_item)
+          self:setActiveSideButton("XrayPageNavigator:addSideButton button callback", index)
           --* in side tab no 2 taps on the current item must display info:
           if self.active_side_tab ~= 2 and not force_return_to_item and self.current_item and item.name == self.current_item.name then
               return true
@@ -787,7 +802,6 @@ function XrayPageNavigator:addSideButton(item, info_text)
                 self:setCurrentItem(item)
           end
           self:setActiveScrollPage()
-          self.marker_item = item
           self:reloadPageNavigator(info_text)
           return true
       end,
@@ -808,12 +822,6 @@ function XrayPageNavigator:markActiveSideButton()
     local button
     self.current_item = nil
 
-    --* self.marker_item was set from the callback of a side button, set in ((XrayPageNavigator#addSideButton)), or when changing the filtered item in ((XrayPageNavigator#setFilter)) or ((XrayPageNavigator#resetFilter)):
-    if self.marker_item then
-        local active_side_button = self:getSideButtonIndexByItem(self.marker_item)
-        self:setActiveSideButton("XrayPageNavigator:markActiveSideButton, from marker_item", active_side_button)
-    end
-
     --* these are rows with one button each:
     for r = 1, count do
         button = self:getSideButton(r)
@@ -823,7 +831,7 @@ function XrayPageNavigator:markActiveSideButton()
         if button.xray_item.name == self.active_filter_name then
             button.text = self.filtered_item_marker .. button.text
         end
-        if button.index == self.active_side_button then
+        if r == self.active_side_buttons[self.active_side_tab] then
             button.text = self.active_item_marker .. button.text
             --! only items in side panel no 1 (main items) may modify self.current_item:
             if self.active_side_tab == 1 then
@@ -919,11 +927,25 @@ function XrayPageNavigator:returnToNavigator()
     return false
 end
 
+--* compare ((XrayPageNavigator#setActiveSideButton)):
+--- @private
+function XrayPageNavigator:resetActiveSideButtons(context)
+
+    self.active_side_buttons = { 1, 1 }
+
+    --* context was given here only for debugging:
+    self.garbage = context
+end
+
+--* compare ((XrayPageNavigator#resetActiveSideButtons)):
 --- @private
 function XrayPageNavigator:setActiveSideButton(context, active_side_button)
-    if active_side_button then
-        self.active_side_button = active_side_button
+    if active_side_button and self.active_side_tab == 1 then
+        self.active_side_buttons = { active_side_button, 1 }
+    elseif active_side_button then
+        self.active_side_buttons = { self.active_side_buttons[1], active_side_button }
     end
+
     --* context was given here only for debugging:
     self.garbage = context
 end
