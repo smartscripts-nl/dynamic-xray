@@ -17,6 +17,18 @@ local ButtonChoicePopup = WidgetContainer:new{
 	use_caching = true,
 }
 
+function ButtonChoicePopup:forSearchAllLocationsGotoLocation(props)
+	return KOR.buttonprops:set({
+		icon = "goto-location",
+		icon_size_ratio = 0.5,
+		info = T(_("target icon %1jump to context of this search hit in book%2jump to context of this search hit in navigator"), "| :", self.separator),
+		callback_label = _("book"),
+		--! callback defined by calling module
+		hold_callback_label = _("navigator"),
+		--! hold_callback defined by calling module
+	}, props)
+end
+
 --* these methods return ALL PROPS for a button as a button definition table, to be used as argument for creating a button table
 
 --* ":\n" and separator ":\n\n" in buttons in this class will be replaced by the label words, in ((ButtonProps#setOverruleProps)):
