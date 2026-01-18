@@ -633,7 +633,7 @@ function ReaderSearch:showHitWithContext(item, not_cached)
                         self:toPrevHit()
                     end,
                 },
-                KOR.buttonchoicepopup:forSearchAllLocationsGotoLocation({
+                KOR.buttoninfopopup:forSearchAllLocationsGotoLocation({
                     callback = function()
                         self:closeHitviewer("close_item_viewer")
                         KOR.dialogs:closeAllOverlays()
@@ -642,19 +642,20 @@ function ReaderSearch:showHitWithContext(item, not_cached)
                             KOR.link:addCurrentLocationToStack()
                             KOR.rolling:onGotoXPointer(item.start, item.start) --* show target line marker
                             KOR.document:getTextFromXPointers(item.start, item["end"], true) --* highlight
-                            return
+                        else
+                            local page = item.mandatory
+                            local boxes = {}
+                            count = #item.boxes
+                            for i = 1, count do
+                                boxes[i] = KOR.document:nativeToPageRectTransform(page, item.boxes[i])
+                            end
+                            KOR.link:onGotoLink({ page = page - 1 })
+                            self.view.highlight.temp[page] = boxes
                         end
-
-                        local page = item.mandatory
-                        local boxes = {}
-                        count = #item.boxes
-                        for i = 1, count do
-                            boxes[i] = KOR.document:nativeToPageRectTransform(page, item.boxes[i])
-                        end
-                        KOR.link:onGotoLink({ page = page - 1 })
-                        self.view.highlight.temp[page] = boxes
                     end,
-                    hold_callback = function()
+                }),
+                KOR.buttoninfopopup:forSearchAllLocationsGotoPageNavigator({
+                    callback = function()
                         self:closeHitviewer("close_item_viewer")
                         KOR.dialogs:closeAllOverlays()
                         local page = KOR.document:getPageFromXPointer(item.start)

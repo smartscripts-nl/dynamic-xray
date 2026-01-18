@@ -126,6 +126,26 @@ function ButtonInfoPopup:forSearchAllLocations(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forSearchAllLocationsGotoLocation(props)
+	return KOR.buttonprops:set({
+		icon = "goto-location",
+		icon_size_ratio = 0.5,
+		info = _("target icon | Jump to context of this search hit in the book."),
+		callback_label = _("jump"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forSearchAllLocationsGotoPageNavigator(props)
+	return KOR.buttonprops:set({
+		icon = "navigator_wheel",
+		icon_size_ratio = 0.5,
+		info = _("navigator icon | Jump to context of this search hit in the Page Navigator."),
+		callback_label = _("jump"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forSearchNew(props)
 	return KOR.buttonprops:set({
 		text = KOR.icons.search_bare,
