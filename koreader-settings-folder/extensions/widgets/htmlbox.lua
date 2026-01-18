@@ -104,8 +104,11 @@ local HtmlBox = InputContainer:extend{
     --* optional list of full_paths, to open books retrieved on base of the current html content of the box:
     paths = nil,
     prev_item_callback = nil,
+    screen_height = nil,
+    screen_width = nil,
     side_buttons = nil,
     side_buttons_width = Screen:scaleBySize(135),
+    side_panel_tab_activators = nil,
     --* this table will be populated by ((TabFactory#setTabButtonAndContent)):
     tabs_table_buttons = nil,
     title = nil,
@@ -162,8 +165,8 @@ function HtmlBox:initTouch()
     if Device:isTouchDevice() then
         local range = Geom:new{
             x = 0, y = 0,
-            w = Screen:getWidth(),
-            h = Screen:getHeight(),
+            w = self.screen_width,
+            h = self.screen_height,
         }
         self.ges_events = {
             TapClose = {
@@ -338,7 +341,7 @@ function HtmlBox:generateInfoPanel()
         dialog = self,
         --* info_panel_width was computed in ((HtmlBox#generateInfoButtons)):
         width = self.info_panel_width,
-        height = math.floor(Screen:getHeight() * DX.s.PN_info_panel_height),
+        height = math.floor(self.screen_height * DX.s.PN_info_panel_height),
     }
     self.info_panel_separator = LineWidget:new{
         background = KOR.colors.line_separator,
@@ -407,7 +410,7 @@ function HtmlBox:onTapClose(arg, ges_ev)
     --* processed for scrolling definition by ScrollTextWidget, which
     --* will pop it up for us here when it can't scroll anymore).
     --* This allow for continuous reading of results' definitions with tap.
-    if BD.flipIfMirroredUILayout(ges_ev.pos.x < Screen:getWidth() / 2) then
+    if BD.flipIfMirroredUILayout(ges_ev.pos.x < self.screen_width / 2) then
         self:onReadPrevItem()
     else
         self:onReadNextItem()
@@ -674,6 +677,7 @@ function HtmlBox:activateParentTab(parent, tab_no)
     parent:reloadPageNavigator(parent.info_panel_text)
 end
 
+--- @private
 function HtmlBox:generateSidePanel()
 
     if not self.called_from_page_navigator then
@@ -685,7 +689,38 @@ function HtmlBox:generateSidePanel()
 
     --* parent.current_item is set from the callback of a side_button in ((XrayPageNavigator#addSideButton)) and when marking the active button in ((XrayPageNavigator#markActiveSideButton))
     local has_linked_items = parent.active_side_tab == 1 and parent.current_item and has_text(parent.current_item.linkwords)
+    if has_linked_items then
+        self:generateSidePanelTabActivators(parent, has_linked_items)
+    end
 
+    self.spacer_width = self.screen_height - self.side_buttons_table:getSize().h - (has_linked_items and self.side_panel_tab_activators:getSize().h or 0) - self.box_title:getSize().h - 2 * self.content_padding_v - 2 * self.side_buttons_table_separator:getSize().h
+    local has_side_buttons = #self.side_buttons > 0
+
+    local bottom_padding = VerticalSpan:new{
+        width = self.spacer_width
+    }
+    self.side_panel = has_side_buttons and VerticalGroup:new{
+        align = "left",
+        --* these buttons (or a spacer in case of no buttons) were generated in ((HtmlBox#generateSidePanelButtons)):
+        self.side_buttons_table,
+        self.side_buttons_table_separator,
+        bottom_padding,
+        self.side_buttons_table_separator,
+        self.side_panel_tab_activators,
+    }
+    or
+    VerticalGroup:new{
+        align = "left",
+        self.side_buttons_table,
+        bottom_padding,
+        self.side_buttons_table_separator,
+        self.side_panel_tab_activators,
+    }
+end
+
+--- @private
+--- @param parent XrayPageNavigator
+function HtmlBox:generateSidePanelTabActivators(parent, has_linked_items)
     local tab1_config = {
         enabled = parent.active_side_tab == 2,
         callback = function()
@@ -716,7 +751,7 @@ function HtmlBox:generateSidePanel()
             icon = "link",
         }
     end
-    local bottom_buttons = ButtonTable:new{
+    self.side_panel_tab_activators = ButtonTable:new{
         width = self.side_buttons_width,
         button_font_face = "x_smallinfofont",
         button_font_size = DX.s.PN_panels_font_size or 14,
@@ -727,33 +762,9 @@ function HtmlBox:generateSidePanel()
         show_parent = self,
         button_font_weight = "normal",
     }
+    end
 
-    self.spacer_width = self.avail_height - self.side_buttons_table:getSize().h - bottom_buttons:getSize().h - self.box_title:getSize().h - 2 * self.content_padding_v - 2 * self.side_buttons_table_separator:getSize().h
-    local has_side_buttons = #self.side_buttons > 0
-
-    local bottom_padding = VerticalSpan:new{
-        width = self.spacer_width
-    }
-
-    self.side_panel = has_side_buttons and VerticalGroup:new{
-        align = "left",
-        --* these buttons (or a spacer in case of no buttons) were generated in ((HtmlBox#generateSidePanelButtons)):
-        self.side_buttons_table,
-        self.side_buttons_table_separator,
-        bottom_padding,
-        self.side_buttons_table_separator,
-        bottom_buttons,
-    }
-    or
-    VerticalGroup:new{
-        align = "left",
-        self.side_buttons_table,
-        bottom_padding,
-        self.side_buttons_table_separator,
-        bottom_buttons,
-    }
-end
-
+--- @private
 function HtmlBox:generateSidePanelButtons()
     --* these side panel buttons were generated in ((XrayPageNavigator#markItemsFoundInPageHtml)) > ((XrayPageNavigator#markedItemRegister)):
     if not self.called_from_page_navigator or not self.side_buttons then
@@ -776,7 +787,7 @@ function HtmlBox:generateSidePanelButtons()
             justified = false,
             dialog = self,
             width = self.side_buttons_width,
-            height = math.floor(Screen:getHeight() * 0.18),
+            height = math.floor(self.screen_height * 0.18),
         }
         return
     end
@@ -1212,7 +1223,7 @@ end
 
 --- @private
 function HtmlBox:computeAvailableHeight()
-    self.avail_height = Screen:getHeight() - self.margin_top - self.margin_bottom
+    self.avail_height = self.screen_height - self.margin_top - self.margin_bottom
     if DX.s.is_tablet_device and self.is_fullscreen then
         self.avail_height = self.avail_height + 10
     elseif DX.s.is_ubuntu and self.is_fullscreen then
@@ -1222,7 +1233,7 @@ function HtmlBox:computeAvailableHeight()
     self.region = Geom:new{
         x = 0,
         y = self.is_fullscreen and 0 or self.margin_top,
-        w = Screen:getWidth(),
+        w = self.screen_width,
         h = self.avail_height,
     }
 end
@@ -1244,12 +1255,14 @@ end
 
 --- @private
 function HtmlBox:setModuleProps()
+    self.screen_height = Screen:getHeight()
+    self.screen_width = Screen:getWidth()
     if self.fullscreen then
         self.window_size = "fullscreen"
     elseif self.window_size == "middlebox" then
         self.window_size = {
-            w = Screen:getWidth() / 2,
-            h = Screen:getHeight() / 2 + Screen:scaleBySize(20),
+            w = self.screen_width / 2,
+            h = self.screen_height / 2 + Screen:scaleBySize(20),
         }
     end
     if self.tabs_table_buttons then
@@ -1337,17 +1350,17 @@ function HtmlBox:setWidth()
             self.width = math.floor(self.window_size.w)
         --* always use max available width on Bigme:
         elseif self.is_fullscreen then
-            self.width = Screen:getWidth()
+            self.width = self.screen_width
         elseif self.window_size == "max" or DX.s.is_mobile_device then
-            self.width = Screen:getWidth() - 2 * Size.margin.default
+            self.width = self.screen_width - 2 * Size.margin.default
         elseif self.window_size == "large" then
-            self.width = Screen:getWidth() - 2 * Size.margin.extreme
+            self.width = self.screen_width - 2 * Size.margin.extreme
         elseif self.window_size == "highcenter" then
-            self.width = math.floor(Screen:getWidth() * 0.6)
+            self.width = math.floor(self.screen_width * 0.6)
         elseif self.window_size == "medium" then
-            self.width = Screen:getWidth() - Screen:scaleBySize(300)
+            self.width = self.screen_width - Screen:scaleBySize(300)
         else
-            self.width = Screen:getWidth() - Screen:scaleBySize(80)
+            self.width = self.screen_width - Screen:scaleBySize(80)
         end
     end
     self.frame_bordersize = not self.is_fullscreen and Size.border.window or 0
