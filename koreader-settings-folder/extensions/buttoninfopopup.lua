@@ -339,6 +339,10 @@ function ButtonInfoPopup:forXrayPageNavigator(props)
 end
 
 function ButtonInfoPopup:forXrayPageNavigatorContextButtons(props)
+	--* when there are no linked items for the current item in Page Navigator:
+	if props.text then
+		return props
+	end
 	return KOR.buttonprops:set({
 		icon = "link",
 		icon_size_ratio = 0.53,

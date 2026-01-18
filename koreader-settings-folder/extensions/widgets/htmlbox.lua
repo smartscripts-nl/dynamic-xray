@@ -687,31 +687,28 @@ function HtmlBox:generateSidePanel()
     local has_linked_items = parent.active_side_tab == 1 and parent.current_item and has_text(parent.current_item.linkwords)
 
     local tab1_config = {
+        enabled = parent.active_side_tab == 2,
         callback = function()
             self:activateParentTab(parent, 1)
         end,
     }
     local tab2_config = {
-        enabled = parent.active_side_tab == 1 and has_linked_items or parent.active_side_tab == 2,
+        enabled = parent.active_side_tab == 1 and has_linked_items,
         callback = function()
-            if parent.active_side_tab == 2 then
-                KOR.messages:notify("deze tab is al geopend...")
-                return true
-            elseif not has_linked_items then
-                KOR.messages:notify("het in het onderpaneel weergegeven item heeft geen gelinkte items...")
-                return true
-            end
             self:activateParentTab(parent, 2)
         end,
     }
     --* see for the buttons: ((ButtonInfoPopup#forXrayPageNavigatorContextButtons)) and ((ButtonInfoPopup#forXrayPageNavigatorMainButtons)):
     local active_marker = KOR.icons.active_tab_bare
-    if parent.active_side_tab == 1 then
+    if parent.active_side_tab == 1 and has_linked_items then
         tab1_config.text_icon = {
             text = active_marker,
             fgcolor = KOR.colors.lighter_indicator_color,
             icon = "page-light",
         }
+    --* show no link icon when there are no linked items:
+    elseif parent.active_side_tab == 1 then
+        tab2_config.text = " "
     else
         tab2_config.text_icon = {
             text = active_marker,
