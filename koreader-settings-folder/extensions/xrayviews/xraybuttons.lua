@@ -226,6 +226,13 @@ function XrayButtons:forPageNavigator(parent)
                  return parent:execExportXrayItemsCallback()
              end
          }),
+         KOR.buttoninfopopup:forSearchAllLocations({
+             info = _("search-list-icon | Show all occurrences in the book of the item currently displayed below."),
+             callback = function()
+                 local name = parent.current_item and parent.current_item.name
+                 return parent:execShowItemOccurrencesCallback(name)
+             end
+         }),
          KOR.buttoninfopopup:forXrayViewer({
              enabled_function = function()
                  return parent.current_item and true or false

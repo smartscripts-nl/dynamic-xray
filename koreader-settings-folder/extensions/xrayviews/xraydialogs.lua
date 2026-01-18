@@ -79,7 +79,6 @@ local XrayDialogs = WidgetContainer:new{
     list_is_opened = false,
     list_title = nil,
     needle_name_for_list_page = "",
-    no_navigator_page_found = false,
     other_fields_face = Font:getFace("x_smallinfofont", 19),
     -- #((Xray-item edit dialog: tab buttons in TitleBar))
     title_tab_buttons_left = { _(" xray-item "), _(" metadata ") },

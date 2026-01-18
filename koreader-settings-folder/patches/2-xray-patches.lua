@@ -637,6 +637,7 @@ function ReaderSearch:showHitWithContext(item, not_cached)
                     callback = function()
                         self:closeHitviewer("close_item_viewer")
                         KOR.dialogs:closeAllOverlays()
+                        DX.pn:closePageNavigator()
                         if self.ui.rolling then
                             KOR.link:addCurrentLocationToStack()
                             KOR.rolling:onGotoXPointer(item.start, item.start) --* show target line marker

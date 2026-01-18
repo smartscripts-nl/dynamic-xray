@@ -88,6 +88,7 @@ local HtmlBox = InputContainer:extend{
     after_close_callback = nil,
     align = "center",
     buttons_table = nil,
+    called_from_page_navigator = false,
     content_padding = nil,
     fullscreen = false,
     height = nil,
@@ -297,18 +298,18 @@ end
 
 --- @private
 function HtmlBox:generateInfoButtons()
-    --? for some reason self.button_table_side not available when we click on the Item Viewer button; because then self.side_buttons not set at the start of ((HtmlBox#generateSidePanelButtons)) and the script returns, without generating the side buttons:
-    self.info_panel_width = self.button_table_side and self.content_width - self.button_table_side:getSize().w or self.content_width
+    --? for some reason self.side_buttons_table not available when we click on the Item Viewer button; because then self.side_buttons not set at the start of ((HtmlBox#generateSidePanelButtons)) and the script returns, without generating the side buttons:
+    self.info_panel_width = self.side_buttons_table and self.content_width - self.side_buttons_table:getSize().w or self.content_width
 
-    local buttons = ButtonTable:new {
+    local buttons = ButtonTable:new{
         width = self.info_panel_width,
         buttons = self.info_panel_buttons,
         show_parent = self,
         button_font_weight = "normal",
     }
     local buttons_height = buttons:getSize().h
-    self.info_panel_nav_buttons = CenterContainer:new {
-        dimen = Geom:new {
+    self.info_panel_nav_buttons = CenterContainer:new{
+        dimen = Geom:new{
             w = self.info_panel_width,
             h = buttons_height,
         },
@@ -318,7 +319,7 @@ end
 
 --- @private
 function HtmlBox:generateInfoPanel()
-    if not self.button_table_side then
+    if not self.side_buttons_table then
         --* for consumption in ((HtmlBox#generateScrollWidget)):
         self.swidth = self.content_width
         self.sheight = self.content_height
@@ -675,6 +676,10 @@ end
 
 function HtmlBox:generateSidePanel()
 
+    if not self.called_from_page_navigator then
+        return
+    end
+
     --- @type XrayPageNavigator parent
     local parent = self.parent
 
@@ -726,7 +731,7 @@ function HtmlBox:generateSidePanel()
         button_font_weight = "normal",
     }
 
-    self.spacer_width = self.avail_height - self.button_table_side:getSize().h - bottom_buttons:getSize().h - self.box_title:getSize().h - 2 * self.content_padding_v - 2 * self.button_table_side_separator:getSize().h
+    self.spacer_width = self.avail_height - self.side_buttons_table:getSize().h - bottom_buttons:getSize().h - self.box_title:getSize().h - 2 * self.content_padding_v - 2 * self.side_buttons_table_separator:getSize().h
     local has_side_buttons = #self.side_buttons > 0
 
     local bottom_padding = VerticalSpan:new{
@@ -736,29 +741,29 @@ function HtmlBox:generateSidePanel()
     self.side_panel = has_side_buttons and VerticalGroup:new{
         align = "left",
         --* these buttons (or a spacer in case of no buttons) were generated in ((HtmlBox#generateSidePanelButtons)):
-        self.button_table_side,
-        self.button_table_side_separator,
+        self.side_buttons_table,
+        self.side_buttons_table_separator,
         bottom_padding,
-        self.button_table_side_separator,
+        self.side_buttons_table_separator,
         bottom_buttons,
     }
     or
     VerticalGroup:new{
         align = "left",
-        self.button_table_side,
+        self.side_buttons_table,
         bottom_padding,
-        self.button_table_side_separator,
+        self.side_buttons_table_separator,
         bottom_buttons,
     }
 end
 
 function HtmlBox:generateSidePanelButtons()
     --* these side panel buttons were generated in ((XrayPageNavigator#markItemsFoundInPageHtml)) > ((XrayPageNavigator#markedItemRegister)):
-    if not self.side_buttons then
+    if not self.called_from_page_navigator or not self.side_buttons then
         return
     end
 
-    self.button_table_side_separator = LineWidget:new{
+    self.side_buttons_table_separator = LineWidget:new{
         background = KOR.colors.line_separator,
         dimen = Geom:new{
             w = self.side_buttons_width,
@@ -766,7 +771,7 @@ function HtmlBox:generateSidePanelButtons()
         }
     }
     if has_no_items(self.side_buttons) then
-        self.button_table_side = ScrollTextWidget:new{
+        self.side_buttons_table = ScrollTextWidget:new{
             text = " ",
             face = Font:getFace("x_smallinfofont", DX.s.PN_panels_font_size or 14),
             line_height = 0.16,
@@ -779,7 +784,7 @@ function HtmlBox:generateSidePanelButtons()
         return
     end
 
-    self.button_table_side = ButtonTable:new{
+    self.side_buttons_table = ButtonTable:new{
         width = self.side_buttons_width,
         button_font_face = "x_smallinfofont",
         button_font_size = DX.s.PN_panels_font_size or 14,
@@ -882,51 +887,52 @@ end
 
 --- @private
 function HtmlBox:addFrameToContentWidget()
-    if self.button_table_side then
-        local has_side_buttons = #self.side_buttons > 0
-        if has_side_buttons then
-            self.spacer_width = self.spacer_width - self.button_table_side_separator:getSize().h
-        end
+    if not self.called_from_page_navigator then
         self.content_widget = FrameContainer:new{
             padding = 0,
             padding_left = self.content_padding_h,
-            padding_right = 0,
+            padding_right = self.content_padding_h,
             margin = 0,
             bordersize = 0,
-            CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.content_width,
-                    h = self.content_height,
-                },
-                HorizontalGroup:new{
-                    align = "center",
-                    VerticalGroup:new{
-                        align = "left",
-                        self.html_widget,
-                        self.info_panel_separator,
-                        self.info_panel_nav_buttons,
-                        self.info_panel_separator,
-                        self.info_panel,
-                    },
-                    FrameContainer:new{
-                        padding = 0,
-                        margin = 0,
-                        color = KOR.colors.line_separator,
-                        bordersize = Size.line.medium,
-                        self.side_panel,
-                    }
-                }
-            },
+            self.html_widget,
         }
         return
+    end
+
+    local has_side_buttons = #self.side_buttons > 0
+    if has_side_buttons then
+        self.spacer_width = self.spacer_width - self.side_buttons_table_separator:getSize().h
     end
     self.content_widget = FrameContainer:new{
         padding = 0,
         padding_left = self.content_padding_h,
-        padding_right = self.content_padding_h,
+        padding_right = 0,
         margin = 0,
         bordersize = 0,
-        self.html_widget,
+        CenterContainer:new{
+            dimen = Geom:new{
+                w = self.content_width,
+                h = self.content_height,
+            },
+            HorizontalGroup:new{
+                align = "center",
+                VerticalGroup:new{
+                    align = "left",
+                    self.html_widget,
+                    self.info_panel_separator,
+                    self.info_panel_nav_buttons,
+                    self.info_panel_separator,
+                    self.info_panel,
+                },
+                FrameContainer:new{
+                    padding = 0,
+                    margin = 0,
+                    color = KOR.colors.line_separator,
+                    bordersize = Size.line.medium,
+                    self.side_panel,
+                }
+            }
+        },
     }
 end
 

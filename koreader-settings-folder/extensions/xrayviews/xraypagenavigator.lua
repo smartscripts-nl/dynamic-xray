@@ -68,7 +68,6 @@ local XrayPageNavigator = WidgetContainer:new{
     key_events = {},
     max_line_length = 80,
     navigator_page_no = nil,
-    no_navigator_page_found = false,
     non_active_layout = nil,
     non_filtered_items_marker_bold = "<strong>%1</strong>",
     non_filtered_items_marker_smallcaps = "<span style='font-variant: small-caps'>%1</span>",
@@ -81,8 +80,6 @@ local XrayPageNavigator = WidgetContainer:new{
     return_to_page = nil,
     scroll_to_page = nil,
     side_buttons = {},
-    word_end = "%f[%A]",
-    word_start = "%f[%a]",
 }
 
 --- @param xray_model XrayModel
@@ -113,12 +110,7 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text)
         end
     end
     self.initial_browsing_page = initial_browsing_page
-    --* this prop can be set in ((XrayPageNavigator#toNextNavigatorPage)) and ((XrayPageNavigator#toPrevNavigatorPage)):
-    if self.no_navigator_page_found then
-        self.no_navigator_page_found = false
-    else
-        self:closePageNavigator()
-    end
+    self:closePageNavigator()
     local html = self:loadDataForPage()
 
     local has_side_buttons = #self.side_buttons > 0
@@ -137,6 +129,7 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text)
     self.page_navigator = KOR.dialogs:htmlBox({
         title = DX.m.current_title .. " - p." .. self.navigator_page_no,
         parent = self,
+        called_from_page_navigator = true,
         html = html,
         modal = false,
         info_panel_text = self:getInfoPanelText(info_panel_text),
@@ -166,7 +159,6 @@ end
 function XrayPageNavigator:toCurrentNavigatorPage()
     self:setActiveSideButton("XrayPageNavigator:toCurrentNavigatorPage", 1)
     self.navigator_page_no = self.initial_browsing_page
-    self.no_navigator_page_found = false
     self:showNavigator()
 end
 
@@ -177,22 +169,22 @@ function XrayPageNavigator:toNextNavigatorPage()
     if self.page_navigator_filter_item then
         local next_page = self:getNextPageHitForTerm()
         if not next_page or next_page == self.navigator_page_no then
-            self.no_navigator_page_found = true
-            KOR.messages:notify(_("no next mention of this item found..."))
+            self:showNoNextPreviousOccurrenceMessage(1)
             return
         end
         self.navigator_page_no = next_page
         first_info_panel_text = self:getItemInfoText(self.page_navigator_filter_item)
+        self:showNavigator(self.initial_browsing_page, first_info_panel_text)
+        return
+    end
 
     --* regular navigation:
-    else
-        self.navigator_page_no = self.navigator_page_no + 1
-        local epages = KOR.document:getPageCount()
-        if self.navigator_page_no >= epages then
-            self.navigator_page_no = epages
-            self.no_navigator_page_found = true
-            return
-        end
+    self.navigator_page_no = self.navigator_page_no + 1
+    local epages = KOR.document:getPageCount()
+    if self.navigator_page_no >= epages then
+        self.navigator_page_no = epages
+    self:showNoNextPreviousOccurrenceMessage(1)
+        return
     end
     self:showNavigator(self.initial_browsing_page, first_info_panel_text)
 end
@@ -204,23 +196,29 @@ function XrayPageNavigator:toPrevNavigatorPage()
     if self.page_navigator_filter_item then
         local previous_page = self:getPreviousPageHitForTerm()
         if not previous_page or previous_page == self.navigator_page_no then
-            self.no_navigator_page_found = true
-            KOR.messages:notify(_("no previous mention of this item found..."))
+            self:showNoNextPreviousOccurrenceMessage(-1)
             return
         end
         self.navigator_page_no = previous_page
         first_info_panel_text = self:getItemInfoText(self.page_navigator_filter_item)
+        self:showNavigator(self.initial_browsing_page, first_info_panel_text)
+        return
+    end
 
     --* regular navigation:
-    else
-        self.navigator_page_no = self.navigator_page_no - 1
-        if self.navigator_page_no < 1 then
-            self.navigator_page_no = 1
-            self.no_navigator_page_found = true
-            return
-        end
+    self.navigator_page_no = self.navigator_page_no - 1
+    if self.navigator_page_no < 1 then
+        self.navigator_page_no = 1
+    self:showNoNextPreviousOccurrenceMessage(-1)
+        return
     end
     self:showNavigator(self.initial_browsing_page, first_info_panel_text)
+end
+
+--- @private
+function XrayPageNavigator:showNoNextPreviousOccurrenceMessage(direction)
+    local adjective = direction == 1 and "volgende" or "vorige"
+    KOR.messages:notify(T("geen %1 vermelding van dit item meer gevonden..."), adjective)
 end
 
 --- @private
@@ -327,7 +325,7 @@ function XrayPageNavigator:markAliasHit(html, item)
     local needle
     count = #alias_matchers
     for i = 1, count do
-        needle = self:getNeedleString(alias_matchers[i], "for_substitution")
+        needle = DX.vd:getNeedleString(alias_matchers[i], "for_substitution")
         html = self:markNeedleInHtml(html, needle, item.aliases)
     end
 
@@ -341,11 +339,11 @@ function XrayPageNavigator:markFullNameHit(html, item, subject, loop_no)
     end
 
     local org_html = html
-    local needle = self:getNeedleString(subject, "for_substitution")
+    local needle = DX.vd:getNeedleString(subject, "for_substitution")
     html = self:markNeedleInHtml(html, needle)
     if not needle:match("s$") then
         local subject_plural
-        needle, subject_plural = self:getNeedleStringPlural(subject, "for_substitution")
+        needle, subject_plural = DX.vd:getNeedleStringPlural(subject, "for_substitution")
         html = self:markNeedleInHtml(html, needle, subject_plural)
     end
 
@@ -358,7 +356,7 @@ function XrayPageNavigator:markFullNameHit(html, item, subject, loop_no)
     if not xray_name_swapped then
         return html, org_html ~= html
     end
-    needle = self:getNeedleString(xray_name_swapped)
+    needle = DX.vd:getNeedleString(xray_name_swapped)
 
     return self:markNeedleInHtml(html, needle, xray_name_swapped), org_html ~= html
 end
@@ -373,8 +371,8 @@ function XrayPageNavigator:markPartialHits(html, item, uc, i, was_marked_for_ful
         uc = KOR.strings:ucfirst(uc)
     end
 
-    needle = self:getNeedleString(uc)
-    local uc_needle_plural = self:getNeedleStringPlural(uc)
+    needle = DX.vd:getNeedleString(uc)
+    local uc_needle_plural = DX.vd:getNeedleStringPlural(uc)
     if was_marked_for_full or (html:match(needle) or html:match(uc_needle_plural)) then
         --* return html and add item to buttons:
         return self:markedItemRegister(item, html, uc)
@@ -382,7 +380,7 @@ function XrayPageNavigator:markPartialHits(html, item, uc, i, was_marked_for_ful
     --* for terms we also try to find lowercase variants of their names:
     elseif is_term or is_lowercase_person then
         lc = KOR.strings:lower(uc)
-        needle = self:getNeedleString(lc)
+        needle = DX.vd:getNeedleString(lc)
         if html:match(needle) then
             --* return html and add item to buttons:
             return self:markedItemRegister(item, html, lc)
@@ -476,7 +474,7 @@ end
 
 --- @private
 function XrayPageNavigator:markedItemRegister(item, html, word)
-    local needle = self:getNeedleString(word, "for_substitution")
+    local needle = DX.vd:getNeedleString(word, "for_substitution")
     html = self:markNeedleInHtml(html, needle)
     local info_text = self:getItemInfoText(item)
     if info_text and not self.first_info_panel_text then
@@ -679,34 +677,6 @@ function XrayPageNavigator:getPreviousPageHitForTerm()
         prev_page = self:resultsPageSmallerThan(results, current_page, prev_page)
     end
     return prev_page
-end
-
---- @private
-function XrayPageNavigator:getNeedleString(word, for_substitution)
-    local matcher_esc = word:gsub("%-", "%%-")
-    if for_substitution then
-        return self.word_start .. "(" .. matcher_esc .. self.word_end .. ")"
-    end
-    return self.word_start .. matcher_esc .. self.word_end
-end
-
---- @private
-function XrayPageNavigator:getNeedleStringPlural(word, for_substitution)
-    local matcher_esc = word:gsub("%-", "%%-")
-    local plural_matcher
-    if not matcher_esc:match("s$") then
-        plural_matcher = matcher_esc .. "s"
-        word = word .. "s"
-
-    --* if a word already seems to be in plural form, deduce its possible singular form:
-    else
-        plural_matcher = matcher_esc:gsub("s$", "")
-        word = word:gsub("s$", "")
-    end
-    if for_substitution then
-        return self.word_start .. "(" .. plural_matcher .. self.word_end .. ")", word
-    end
-    return self.word_start .. plural_matcher .. self.word_end
 end
 
 --- @private
@@ -1081,6 +1051,15 @@ function XrayPageNavigator:execShowListCallback()
     return true
 end
 
+function XrayPageNavigator:execShowItemOccurrencesCallback(item_name)
+    if not item_name then
+        KOR.messages:notify(_("no item to display found on this page..."))
+        return true
+    end
+    DX.c:viewItemHits(item_name)
+    return true
+end
+
 --! needed for ((XrayPageNavigator#execShowPageBrowserCallback)) > show PageBrowserWidget > tap on a page > ((PageBrowserWidget#onClose)) > call laucher:onClose():
 function XrayPageNavigator:onClose()
     self:closePageNavigator()
@@ -1120,7 +1099,7 @@ function XrayPageNavigator:execViewItemCallback(iparent)
 end
 
 
---- ================= HELP INFORMATION ==================
+--- =============== HELP INFORMATION ================
 
 function XrayPageNavigator:showHelpInformation()
     local screen_dims = Screen:getSize()

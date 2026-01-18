@@ -71,6 +71,8 @@ local XrayViewsData = WidgetContainer:new {
     separator = " " .. KOR.icons.arrow_bare .. " ",
     terms = {},
     type_matched = false,
+    word_end = "%f[%A]",
+    word_start = "%f[%a]",
     xray_type_description = "1 " .. KOR.icons.arrow_bare .. " " .. KOR.icons.xray_person_bare .. "  2 " .. KOR.icons.arrow_bare .. " " .. KOR.icons.xray_person_important_bare .. "  3 " .. KOR.icons.arrow_bare .. " " .. KOR.icons.xray_term_bare .. "  4 " .. KOR.icons.arrow_bare .. " " .. KOR.icons.xray_term_important_bare,
     --* for usage in ((XrayButtons#forItemEditorTypeSwitch)):
     xray_type_choice_labels = {
@@ -1292,6 +1294,32 @@ function XrayViewsData:getKeywordsCount(text)
         return KOR.strings:substrCount(text, " ") + 1
     end
     return KOR.strings:substrCount(text, ",") + 1
+end
+
+function XrayViewsData:getNeedleString(word, for_substitution)
+    local matcher_esc = word:gsub("%-", "%%-")
+    if for_substitution then
+        return self.word_start .. "(" .. matcher_esc .. self.word_end .. ")"
+    end
+    return self.word_start .. matcher_esc .. self.word_end
+end
+
+function XrayViewsData:getNeedleStringPlural(word, for_substitution)
+    local matcher_esc = word:gsub("%-", "%%-")
+    local plural_matcher
+    if not matcher_esc:match("s$") then
+        plural_matcher = matcher_esc .. "s"
+        word = word .. "s"
+
+        --* if a word already seems to be in plural form, deduce its possible singular form:
+    else
+        plural_matcher = matcher_esc:gsub("s$", "")
+        word = word:gsub("s$", "")
+    end
+    if for_substitution then
+        return self.word_start .. "(" .. plural_matcher .. self.word_end .. ")", word
+    end
+    return self.word_start .. plural_matcher .. self.word_end
 end
 
 --- @private
