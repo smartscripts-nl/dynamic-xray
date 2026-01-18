@@ -82,13 +82,13 @@ ScrollHtmlWidget.scrollToPage = function(self, page_num)
 end
 
 --- @class HtmlBox
+--- @field page_navigator XrayPageNavigator
 local HtmlBox = InputContainer:extend{
     active_tab = nil,
     additional_key_events = nil,
     after_close_callback = nil,
     align = "center",
     buttons_table = nil,
-    called_from_page_navigator = false,
     content_padding = nil,
     fullscreen = false,
     height = nil,
@@ -99,6 +99,7 @@ local HtmlBox = InputContainer:extend{
     modal = true,
     next_item_callback = nil,
     no_buttons_row = false,
+    page_navigator = nil,
     --* to inform the parent about a newly activated tab, via ((TabNavigator#broadcastActivatedTab)):
     parent = nil,
     --* optional list of full_paths, to open books retrieved on base of the current html content of the box:
@@ -668,32 +669,27 @@ function HtmlBox:computeLineHeight()
 end
 
 --- @private
---- @param parent XrayPageNavigator
-function HtmlBox:activateParentTab(parent, tab_no)
-    parent.active_side_tab = tab_no
-    --self:setCurrentItem(item)
-    parent:setActiveScrollPage()
-    parent.marker_item = parent.current_item
-    parent:reloadPageNavigator(parent.info_panel_text)
+function HtmlBox:activatePageNavigatorPanelTab(tab_no)
+    self.page_navigator.active_side_tab = tab_no
+    self.page_navigator:setActiveScrollPage()
+    self.page_navigator:reloadPageNavigator(self.page_navigator.info_panel_text)
 end
 
 --- @private
 function HtmlBox:generateSidePanel()
 
-    if not self.called_from_page_navigator then
+    if not self.page_navigator then
         return
     end
 
-    --- @type XrayPageNavigator parent
-    local parent = self.parent
-
-    --* parent.current_item is set from the callback of a side_button in ((XrayPageNavigator#addSideButton)) and when marking the active button in ((XrayPageNavigator#markActiveSideButton))
-    local has_linked_items = parent.active_side_tab == 1 and parent.current_item and has_text(parent.current_item.linkwords)
-    if has_linked_items then
-        self:generateSidePanelTabActivators(parent, has_linked_items)
+    --* self.page_navigator.current_item is set from the callback of a side_button in ((XrayPageNavigator#addSideButton)) and when marking the active button in ((XrayPageNavigator#markActiveSideButton))
+    local has_linked_items = self.page_navigator.active_side_tab == 1 and self.page_navigator.current_item and has_text(self.page_navigator.current_item.linkwords)
+    local generate_tab_activators = has_linked_items or self.page_navigator.active_side_tab == 2
+    if generate_tab_activators then
+        self:generateSidePanelTabActivators(has_linked_items)
     end
 
-    self.spacer_width = self.screen_height - self.side_buttons_table:getSize().h - (has_linked_items and self.side_panel_tab_activators:getSize().h or 0) - self.box_title:getSize().h - 2 * self.content_padding_v - 2 * self.side_buttons_table_separator:getSize().h
+    self.spacer_width = self.screen_height - self.side_buttons_table:getSize().h - (generate_tab_activators and self.side_panel_tab_activators:getSize().h or 0) - self.box_title:getSize().h - 2 * self.content_padding_v - 2 * self.side_buttons_table_separator:getSize().h
     local has_side_buttons = #self.side_buttons > 0
 
     local bottom_padding = VerticalSpan:new{
@@ -719,30 +715,29 @@ function HtmlBox:generateSidePanel()
 end
 
 --- @private
---- @param parent XrayPageNavigator
-function HtmlBox:generateSidePanelTabActivators(parent, has_linked_items)
+function HtmlBox:generateSidePanelTabActivators(has_linked_items)
     local tab1_config = {
-        enabled = parent.active_side_tab == 2,
+        enabled = self.page_navigator.active_side_tab == 2,
         callback = function()
-            self:activateParentTab(parent, 1)
+            self:activatePageNavigatorPanelTab(1)
         end,
     }
     local tab2_config = {
-        enabled = parent.active_side_tab == 1 and has_linked_items,
+        enabled = self.page_navigator.active_side_tab == 1 and has_linked_items,
         callback = function()
-            self:activateParentTab(parent, 2)
+            self:activatePageNavigatorPanelTab(2)
         end,
     }
     --* see for the buttons: ((ButtonInfoPopup#forXrayPageNavigatorContextButtons)) and ((ButtonInfoPopup#forXrayPageNavigatorMainButtons)):
     local active_marker = KOR.icons.active_tab_bare
-    if parent.active_side_tab == 1 and has_linked_items then
+    if self.page_navigator.active_side_tab == 1 and has_linked_items then
         tab1_config.text_icon = {
             text = active_marker,
             fgcolor = KOR.colors.lighter_indicator_color,
             icon = "page-light",
         }
     --* show no link icon when there are no linked items:
-    elseif parent.active_side_tab == 1 then
+    elseif self.page_navigator.active_side_tab == 1 then
         tab2_config.text = " "
     else
         tab2_config.text_icon = {
@@ -767,7 +762,7 @@ function HtmlBox:generateSidePanelTabActivators(parent, has_linked_items)
 --- @private
 function HtmlBox:generateSidePanelButtons()
     --* these side panel buttons were generated in ((XrayPageNavigator#markItemsFoundInPageHtml)) > ((XrayPageNavigator#markedItemRegister)):
-    if not self.called_from_page_navigator or not self.side_buttons then
+    if not self.page_navigator or not self.side_buttons then
         return
     end
 
@@ -895,7 +890,7 @@ end
 
 --- @private
 function HtmlBox:addFrameToContentWidget()
-    if not self.called_from_page_navigator then
+    if not self.page_navigator then
         self.content_widget = FrameContainer:new{
             padding = 0,
             padding_left = self.content_padding_h,

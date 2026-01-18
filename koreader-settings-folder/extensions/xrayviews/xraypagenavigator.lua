@@ -128,8 +128,7 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text)
     local key_events_module = "XrayPageNavigator"
     self.page_navigator = KOR.dialogs:htmlBox({
         title = DX.m.current_title .. " - p." .. self.navigator_page_no,
-        parent = self,
-        called_from_page_navigator = true,
+        page_navigator = self,
         html = html,
         modal = false,
         info_panel_text = self:getInfoPanelText(info_panel_text),
@@ -901,6 +900,7 @@ end
 --- @private
 function XrayPageNavigator:resetActiveSideButtons(context)
 
+    self.active_side_tab = 1
     self.active_side_buttons = { 1, 1 }
     self.info_panel_texts = { {}, {} }
 
