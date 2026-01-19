@@ -27,6 +27,7 @@ local band = bit.band
 local Screen = Device.screen
 local Input = Device.input
 
+local DX = DX
 local G_reader_settings = G_reader_settings
 local os = os
 local table = table
@@ -122,7 +123,7 @@ function Notification:init()
     local radius = self.at_right_top and 0 or Screen:scaleBySize(7)
     local margin = self.at_right_top and 0 or self.margin
     local border_size = self.at_right_top and 0 or Size.border.window
-    local container = self.at_right_top and not KOR.devicebrand.is_android and RightContainer or CenterContainer
+    local container = self.at_right_top and not DX.s.is_android and RightContainer or CenterContainer
     --* color added by Alex:
     local notification_color = Blitbuffer.COLOR_GRAY_1
     local text_widget = TextWidget:new{
@@ -132,8 +133,8 @@ function Notification:init()
         max_width = Screen:getWidth() - 2 * (self.margin + self.padding)
     }
     local widget_size = text_widget:getSize()
-    local container_width = self.at_right_top and not KOR.devicebrand.is_android and Screen:getWidth() or widget_size.w
-    self.frame = self.at_right_top and not KOR.devicebrand.is_android and container:new{
+    local container_width = self.at_right_top and not DX.s.is_android and Screen:getWidth() or widget_size.w
+    self.frame = self.at_right_top and not DX.s.is_android and container:new{
         dimen = Geom:new{
             w = container_width,
             h = widget_size.h
