@@ -358,6 +358,11 @@ function HtmlBox:generateInfoPanel()
     self.sheight = height
 end
 
+--- @private
+function HtmlBox:getInfoPanelHeight()
+    return math.floor(self.screen_height * DX.s.PN_info_panel_height)
+end
+
 --* Used in init & update to instantiate the Scroll*Widget that self.html_widget points to
 --- @private
 function HtmlBox:generateScrollWidget()
@@ -961,61 +966,6 @@ end
 
 --- @private
 function HtmlBox:generateFullScreenWidget()
-    self.frame_bordersize = 0
-        if self.no_buttons_row then
-            self.box_frame = self.tabs_table and FrameContainer:new{
-                radius = 0,
-                bordersize = self.frame_bordersize,
-                fullscreen = true,
-                covers_fullscreen = true,
-                padding = 0,
-                margin = 0,
-                background = Blitbuffer.COLOR_WHITE,
-                VerticalGroup:new{
-                    align = "left",
-                    self.box_title,
-                    self.tabs_table,
-                    self.separator,
-                    self.content_top_margin,
-                    --* content
-                    CenterContainer:new{
-                        dimen = Geom:new{
-                            w = self.inner_width,
-                            h = self.content_widget:getSize().h,
-                        },
-                        self.content_widget,
-                    },
-                    self.content_bottom_margin,
-                }
-            }
-            or
-            FrameContainer:new{
-                radius = 0,
-                bordersize = self.frame_bordersize,
-                fullscreen = true,
-                covers_fullscreen = true,
-                padding = 0,
-                margin = 0,
-                background = Blitbuffer.COLOR_WHITE,
-                VerticalGroup:new{
-                    align = "left",
-                    self.box_title,
-                    self.separator,
-                    self.content_top_margin,
-                    --* content
-                    CenterContainer:new{
-                        dimen = Geom:new{
-                            w = self.inner_width,
-                            h = self.content_widget:getSize().h,
-                        },
-                        self.content_widget,
-                    },
-                    self.content_bottom_margin,
-                }
-            }
-        return
-    end
-
     --* WITH buttons row:
     self.box_frame = self.tabs_table and FrameContainer:new{
         radius = 0,
@@ -1082,6 +1032,69 @@ function HtmlBox:generateFullScreenWidget()
                 self.button_table,
             }
         }
+    }
+end
+
+--- @private
+function HtmlBox:generateFullScreenWidgetNoButtonsRow()
+    if self.tabs_table then
+        self.box_frame = FrameContainer:new{
+        radius = 0,
+        bordersize = self.frame_bordersize,
+        fullscreen = true,
+        covers_fullscreen = true,
+        padding = 0,
+        margin = 0,
+        background = Blitbuffer.COLOR_WHITE,
+        VerticalGroup:new{
+            align = "left",
+            self.box_title,
+                self.tabs_table,
+            self.separator,
+            self.content_top_margin,
+            --* content
+            CenterContainer:new{
+                dimen = Geom:new{
+                    w = self.inner_width,
+                    h = self.content_widget:getSize().h,
+                },
+                self.content_widget,
+            },
+            self.content_bottom_margin,
+            }
+        }
+        return
+    end
+
+    local group_config = {
+        self.box_title,
+        self.separator,
+        self.content_top_margin,
+        --* content
+        CenterContainer:new{
+            dimen = Geom:new{
+                w = self.inner_width,
+            h = self.content_widget:getSize().h,
+            },
+            self.content_widget,
+        },
+        self.content_bottom_margin,
+    }
+    --? I don't know why I need this hack on my Bigme phone:
+    if DX.s.is_mobile_device then
+        local spacer = VerticalSpan:new { width = Size.padding.large }
+        table.insert(group_config, 2, spacer)
+    end
+    group_config.align = "left"
+    self.box_frame = FrameContainer:new{
+        radius = 0,
+        bordersize = self.frame_bordersize,
+        fullscreen = true,
+        covers_fullscreen = true,
+        padding = 0,
+        margin = 0,
+        background = Blitbuffer.COLOR_WHITE,
+        VerticalGroup:new(group_config)
     }
 end
 
@@ -1224,6 +1237,12 @@ end
 --- @private
 function HtmlBox:generateWidget()
     if self.is_fullscreen then
+        self.frame_bordersize = 0
+        if self.no_buttons_row then
+            self:generateFullScreenWidgetNoButtonsRow()
+            self:generateMovableContainer()
+            return
+        end
         self:generateFullScreenWidget()
         self:generateMovableContainer()
         return
