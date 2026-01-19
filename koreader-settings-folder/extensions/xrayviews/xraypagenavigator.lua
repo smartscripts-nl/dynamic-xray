@@ -686,7 +686,7 @@ end
 function XrayPageNavigator:loadDataForPage()
 
     self.side_buttons = {}
-    if self.active_side_tab == 2 and self.current_item then
+    if self.current_item then
         self:populateLinkedItemButtons()
     end
 
@@ -717,10 +717,16 @@ end
 --* regular main item buttons (self.active_side_tab == 1) were added in ((XrayPageNavigator#markedItemRegister)):
 --- @private
 function XrayPageNavigator:populateLinkedItemButtons()
-    local linked_items = DX.vd:getLinkedItems(self.current_item)
+    local linked_items_were_determined = self.current_item.linked_items
+
+    --* the linked_items prop of self.current_item will be used in ((HtmlBox#generateSidePanel)) to determine whether the side panel tab activator buttons should be shown...
+    --! shallowCopy used twice in this method, to ensure that table_insert(linked_items... farther below doesn't modify this prop (and so would make it contain ever more duplicated items)!
+    local linked_items = linked_items_were_determined and KOR.tables:shallowCopy(self.current_item.linked_items) or DX.vd:getLinkedItems(self.current_item)
+    if not linked_items_were_determined then
+        self.current_item.linked_items = KOR.tables:shallowCopy(linked_items)
+    end
 
     table_insert(linked_items, 1, self.current_item)
-
     count = #linked_items
     local info_panel_text
     for i = 1, count do
@@ -862,11 +868,12 @@ function XrayPageNavigator:getInfoPanelText(info_panel_text)
 end
 
 function XrayPageNavigator:resetCache()
-    self.cached_items = {}
+    self.cached_export_info = nil
     self.cached_html_and_buttons_by_page_no = {}
     self.cached_hits_by_needle = {}
     self.cached_html_by_page_no = {}
-    self.cached_export_info = nil
+    self.cached_items = {}
+    self.current_item = nil
 end
 
 function XrayPageNavigator:closePageNavigator()

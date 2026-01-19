@@ -425,6 +425,7 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
                     DX.d:showList(needle_item)
                 end,
             }),
+            KOR.buttoninfopopup:forXrayPageNavigator(),
             KOR.buttoninfopopup:forXrayPreviousItem({
                 callback = function()
                     DX.d:viewPreviousItem(needle_item)
@@ -899,11 +900,7 @@ end
 --* compare ((XrayButtons#forListFooterLeft)):
 function XrayButtons:forListFooterRight(base_icon_size)
     local buttons = {
-        KOR.buttoninfopopup:forXrayPageNavigator({
-            callback = function()
-                DX.c:openPageNavigatorFromList()
-            end,
-        }),
+        KOR.buttoninfopopup:forXrayPageNavigator(),
         KOR.buttonchoicepopup:forXrayItemsImport({
             callback = function()
                 DX.d:showRefreshHitsForCurrentEbookConfirmation()

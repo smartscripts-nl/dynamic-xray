@@ -344,7 +344,10 @@ function ButtonInfoPopup:forXrayPageNavigator(props)
 		icon_size_ratio = 0.53,
 		info = _("navigator icon | In a popup dialog navigate through the pages of the current ebook and see which Xray items they contain. For each Xray item you can request additional info about them."),
 		callback_label = _("navigate"),
-		--! callback defined by calling module
+		--! callback can be overruled by caller:
+		callback = function()
+			DX.c:openPageNavigatorFromList()
+		end,
 	}, props)
 end
 
