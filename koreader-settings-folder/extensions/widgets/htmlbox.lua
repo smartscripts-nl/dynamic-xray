@@ -701,9 +701,16 @@ function HtmlBox:generateSidePanel()
         self:generateSidePanelTabActivators(has_linked_items)
     end
 
-    self.spacer_width = self.screen_height - self.side_buttons_table:getSize().h - (generate_tab_activators and self.side_panel_tab_activators:getSize().h or 0) - self.box_title:getSize().h - 2 * self.content_padding_v - 2 * self.side_buttons_table_separator:getSize().h
-    local has_side_buttons = #self.side_buttons > 0
+    --* self.avail_height was computed in ((HtmlBox#computeAvailableHeight)):
+    self.spacer_width = self.avail_height
+        --* for top and bottom margin:
+        - 2 * self.content_top_margin:getSize().h
+        - self.side_buttons_table:getSize().h
+        - (generate_tab_activators and self.side_panel_tab_activators:getSize().h or 0)
+        - self.box_title:getSize().h
+        - 2 * self.side_buttons_table_separator:getSize().h
 
+    local has_side_buttons = #self.side_buttons > 0
     local bottom_padding = VerticalSpan:new{
         width = self.spacer_width
     }
@@ -954,6 +961,7 @@ end
 
 --- @private
 function HtmlBox:generateFullScreenWidget()
+    self.frame_bordersize = 0
         if self.no_buttons_row then
             self.box_frame = self.tabs_table and FrameContainer:new{
                 radius = 0,
@@ -1232,6 +1240,8 @@ end
 --- @private
 function HtmlBox:computeAvailableHeight()
     self.avail_height = self.screen_height - self.margin_top - self.margin_bottom
+
+    --? I don't know why I need these hacks?:
     if DX.s.is_tablet_device and self.is_fullscreen then
         self.avail_height = self.avail_height + 10
     elseif DX.s.is_ubuntu and self.is_fullscreen then
