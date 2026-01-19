@@ -32,6 +32,7 @@ local Screen = Device.screen
 
 local DX = DX
 local G_reader_settings = G_reader_settings
+local has_items = has_items
 local has_no_items = has_no_items
 local has_text = has_text
 local math = math
@@ -670,21 +671,32 @@ end
 
 --- @private
 function HtmlBox:activatePageNavigatorPanelTab(tab_no)
-    self.page_navigator.active_side_tab = tab_no
-    self.page_navigator:setActiveScrollPage()
-    self.page_navigator:reloadPageNavigator(self.page_navigator.info_panel_text)
+    local pn = self.page_navigator
+    pn.active_side_tab = tab_no
+    pn:setActiveScrollPage()
+    pn:reloadPageNavigator(pn.info_panel_text)
 end
 
 --- @private
 function HtmlBox:generateSidePanel()
 
-    if not self.page_navigator then
+    local pn = self.page_navigator
+    if not pn then
         return
     end
 
-    --* self.page_navigator.current_item is set from the callback of a side_button in ((XrayPageNavigator#addSideButton)) and when marking the active button in ((XrayPageNavigator#markActiveSideButton))
-    local has_linked_items = self.page_navigator.active_side_tab == 1 and self.page_navigator.current_item and has_text(self.page_navigator.current_item.linkwords)
-    local generate_tab_activators = has_linked_items or self.page_navigator.active_side_tab == 2
+    --* self.page_navigator.current_item is set from the callback of a side_button in ((XrayPageNavigator#addSideButton)) and when marking the active button in ((XrayPageNavigator#markActiveSideButton)):
+    --! the linked_items prop for the current_item were set in ((XrayPageNavigator#populateLinkedItemButtons)):
+    local has_linked_items =
+        pn.active_side_tab == 1
+        and pn.current_item
+        and (
+            has_text(pn.current_item.linkwords)
+            or
+            has_items(pn.current_item.linked_items)
+        )
+
+    local generate_tab_activators = has_linked_items or pn.active_side_tab == 2
     if generate_tab_activators then
         self:generateSidePanelTabActivators(has_linked_items)
     end
@@ -716,28 +728,29 @@ end
 
 --- @private
 function HtmlBox:generateSidePanelTabActivators(has_linked_items)
+    local pn = self.page_navigator
     local tab1_config = {
-        enabled = self.page_navigator.active_side_tab == 2,
+        enabled = pn.active_side_tab == 2,
         callback = function()
             self:activatePageNavigatorPanelTab(1)
         end,
     }
     local tab2_config = {
-        enabled = self.page_navigator.active_side_tab == 1 and has_linked_items,
+        enabled = pn.active_side_tab == 1 and has_linked_items,
         callback = function()
             self:activatePageNavigatorPanelTab(2)
         end,
     }
     --* see for the buttons: ((ButtonInfoPopup#forXrayPageNavigatorContextButtons)) and ((ButtonInfoPopup#forXrayPageNavigatorMainButtons)):
     local active_marker = KOR.icons.active_tab_bare
-    if self.page_navigator.active_side_tab == 1 and has_linked_items then
+    if pn.active_side_tab == 1 and has_linked_items then
         tab1_config.text_icon = {
             text = active_marker,
             fgcolor = KOR.colors.lighter_indicator_color,
             icon = "page-light",
         }
     --* show no link icon when there are no linked items:
-    elseif self.page_navigator.active_side_tab == 1 then
+    elseif pn.active_side_tab == 1 then
         tab2_config.text = " "
     else
         tab2_config.text_icon = {

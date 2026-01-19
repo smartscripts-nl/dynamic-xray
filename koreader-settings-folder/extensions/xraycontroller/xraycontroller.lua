@@ -351,7 +351,7 @@ function XrayController:saveUpdatedItem(item_copy, return_modus, reload_manager)
     end
 
     DX.vd:updateAndSortAllItemTables(updated_item)
-    --* item data was updated, so previous item viewer instances must be closed:
+    --* item data was updated, so previous Item Viewer instances must be closed:
     DX.d:closeItemViewer()
     self:resetDynamicXray("is_prepared")
 
@@ -522,6 +522,8 @@ function XrayController:resetDynamicXray(is_prepared)
     DX.m:setTitleAndSeries(full_path)
     --! don't call DX.u:reset() here, because then Xray markers in page would disappear...
     DX.pn:resetCache()
+    DX.pn:resetActiveSideButtons("XrayController:resetDynamicXray")
+    DX.pn:reloadPageNavigator(DX.pn.initial_browsing_page)
     DX.vd:resetAllFilters()
     --* when current method called after saving an item from a form:
     if is_prepared then
