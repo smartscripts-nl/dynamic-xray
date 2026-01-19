@@ -36,7 +36,7 @@ local table_insert = table.insert
 local tonumber = tonumber
 local type = type
 
-local count
+local count, count2
 --- @type XrayDataLoader data_loader
 local data_loader
 --- @type XrayModel parent
@@ -731,18 +731,18 @@ function XrayViewsData:getLinkedItems(needle_item)
 
     --* don't return here when needle_item has no linkwords, because we also search in the other xray items, to see if THEIR linkwords match to the name of the needle_item...
     local linked_items, linked_names_index = {}, {}
-    local linkwords = has_text(needle_item.linkwords) and parent:splitByCommaOrSpace(needle_item.linkwords, "add_singulars") or {}
+    local needle_item_has_linkwords = has_text(needle_item.linkwords)
 
     local haystack_item
     count = #self.items
     for i = 1, count do
         haystack_item = self.items[i]
         --* add items which are linked by the keywords in needle_item:
-        self:addLinkedItem(1, needle_item, haystack_item, linkwords, linked_names_index, linked_items)
+        if needle_item_has_linkwords then
+            self:addLinkedItem(needle_item, haystack_item, linked_names_index, linked_items)
+        end
         if not linked_names_index[haystack_item.name] and has_text(haystack_item.linkwords) then
-            --* add items which link via THEIR linkwords to the needle_item:
-            local other_linkwords = parent:splitByCommaOrSpace(haystack_item.linkwords, "add_singulars")
-            self:addLinkedItem(2, needle_item, haystack_item, other_linkwords, linked_names_index, linked_items)
+            self:addBackLinkedItem(needle_item, haystack_item, linked_names_index, linked_items)
         end
     end
     if #linked_items > 1 then
@@ -752,31 +752,59 @@ function XrayViewsData:getLinkedItems(needle_item)
 end
 
 --- @private
-function XrayViewsData:addLinkedItem(stage, needle_item, compare_item, linkwords, linked_names_index, linked_items)
-    if compare_item.name == needle_item.name then
+function XrayViewsData:addLinkedItem(needle_item, haystack_item, linked_names_index, linked_items)
+    if haystack_item.name == needle_item.name then
         return
     end
     local linkword, needle, aliases_needle
-    count = #linkwords
-    for i = 1, count do
+    local linkwords = parent:splitByCommaOrSpace(needle_item.linkwords, "add_singulars")
+    count2 = #linkwords
+    for i = 1, count2 do
         linkword = linkwords[i]
         linkword = linkword:gsub("%-", "%%-")
-        needle = stage == 1 and compare_item.name or needle_item.name
+        needle = haystack_item.name
         --* we also check for matches with aliases of xray items:
-        aliases_needle = stage == 1 and compare_item.aliases or needle_item.aliases
+        aliases_needle = haystack_item.aliases
         if
             (
                 parent:hasExactMatch(needle, linkword)
                 or
                 (aliases_needle and parent:hasExactMatch(aliases_needle, linkword))
             )
-            and not linked_names_index[compare_item.name]
+            and not linked_names_index[haystack_item.name]
         then
-            table_insert(linked_items, compare_item)
-            linked_names_index[compare_item.name] = true
-            if stage == 2 then
-                break
-            end
+            table_insert(linked_items, haystack_item)
+            linked_names_index[haystack_item.name] = true
+        end
+    end
+end
+
+--- @private
+function XrayViewsData:addBackLinkedItem(needle_item, haystack_item, linked_names_index, linked_items)
+    if haystack_item.name == needle_item.name then
+        return
+    end
+    --* add items which link via THEIR linkwords to the needle_item:
+    local haystack_linkwords = parent:splitByCommaOrSpace(haystack_item.linkwords, "add_singulars")
+    local linkword, needle, aliases_needle
+    count2 = #haystack_linkwords
+    for i = 1, count2 do
+        linkword = haystack_linkwords[i]
+        linkword = linkword:gsub("%-", "%%-")
+        needle = needle_item.name
+        --* we also check for matches with aliases of xray items:
+        aliases_needle = needle_item.aliases
+        if
+            (
+                parent:hasExactMatch(needle, linkword)
+                or
+                (aliases_needle and parent:hasExactMatch(aliases_needle, linkword))
+            )
+            and not linked_names_index[haystack_item.name]
+        then
+            table_insert(linked_items, haystack_item)
+            linked_names_index[haystack_item.name] = true
+            break
         end
     end
 end
@@ -1284,6 +1312,7 @@ function XrayViewsData:registerUpdatedItem(updated_item)
     self:updateAndSortAllItemTables(updated_item)
 end
 
+--- @private
 function XrayViewsData:setItems(items)
     self.items = items
 end
