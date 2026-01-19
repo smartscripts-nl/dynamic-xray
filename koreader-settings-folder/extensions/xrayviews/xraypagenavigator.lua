@@ -836,6 +836,15 @@ function XrayPageNavigator:generateInfoTextForFirstSideButton(button)
     self.first_info_panel_item_name = button.xray_item.name
 end
 
+function XrayPageNavigator:getCurrentTabItem()
+    if self.active_side_tab == 1 then
+        return self.current_item
+    end
+
+    local button_index = self.active_side_buttons[2]
+    return self.side_buttons[button_index][1].xray_item
+end
+
 --- @private
 function XrayPageNavigator:getInfoPanelText(info_panel_text)
     if info_panel_text then
@@ -960,11 +969,12 @@ end
 
 --- @param iparent XrayPageNavigator
 function XrayPageNavigator:execEditCallback(iparent)
-    if not iparent.current_item then
+    local current_tab_item = iparent:getCurrentTabItem()
+    if not current_tab_item then
         KOR.messages:notify(_("there was no item to be edited..."))
         return true
     end
-    DX.fd:setFormItemId(iparent.current_item.id)
+    DX.fd:setFormItemId(current_tab_item.id)
     iparent:closePageNavigator()
     DX.c:setProp("return_to_viewer", false)
     --* to to be consumed in ((XrayButtons#forItemEditor)) > ((XrayPageNavigator#returnToNavigator)):
@@ -973,7 +983,7 @@ function XrayPageNavigator:execEditCallback(iparent)
         iparent:setProp("return_to_item_no", iparent.active_side_button)
         iparent:setProp("return_to_current_item", iparent.current_item)
     end
-    DX.c:onShowEditItemForm(iparent.current_item, false, 1)
+    DX.c:onShowEditItemForm(current_tab_item, false, 1)
     return true
 end
 
@@ -1053,12 +1063,17 @@ function XrayPageNavigator:execShowListCallback()
     return true
 end
 
-function XrayPageNavigator:execShowItemOccurrencesCallback(item_name)
-    if not item_name then
+function XrayPageNavigator:execShowItemOccurrencesCallback()
+    local current_tab_item = self:getCurrentTabItem()
+    if not current_tab_item then
+        return true
+    end
+
+    if not current_tab_item then
         KOR.messages:notify(_("no item to display found on this page..."))
         return true
     end
-    DX.c:viewItemHits(item_name)
+    DX.c:viewItemHits(current_tab_item.name)
     return true
 end
 
@@ -1096,7 +1111,11 @@ end
 
 --- @param iparent XrayPageNavigator
 function XrayPageNavigator:execViewItemCallback(iparent)
-    DX.d:showItemViewer(iparent.current_item)
+    local current_tab_item = iparent:getCurrentTabItem()
+    if not current_tab_item then
+        return true
+    end
+    DX.d:showItemViewer(current_tab_item)
     return true
 end
 

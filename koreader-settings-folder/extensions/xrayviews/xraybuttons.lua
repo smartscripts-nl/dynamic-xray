@@ -34,6 +34,7 @@ local has_items = has_items
 local has_no_text = has_no_text
 local has_text = has_text
 local table = table
+local table_insert = table.insert
 
 local count
 
@@ -72,10 +73,10 @@ function XrayButtons:addTappedWordCollectionButton(button_table, indicator_butto
     local max_total_buttons = data.max_total_buttons
 
     if nr == 1 or (nr - 1) % max_buttons_per_row == 0 then
-        table.insert(button_table, {})
+        table_insert(button_table, {})
         --* indicator_button_table will be nil when called from ((XrayUI#showParagraphInformation)):
         if indicator_button_table then
-            table.insert(indicator_button_table, {})
+            table_insert(indicator_button_table, {})
         end
     end
     local current_row = #button_table
@@ -111,7 +112,7 @@ function XrayButtons:addTappedWordCollectionButton(button_table, indicator_butto
     end
 
     local icon, text, status_indicators, status_indicator_color = DX.tw:getTypeAndReliabilityIcons(item)
-    table.insert(button_table[current_row], {
+    table_insert(button_table[current_row], {
         text = text,
         --* is_bold prop was set in ((XrayTappedWords#collectionPopulateAndSort)):
         font_bold = item.is_bold,
@@ -134,11 +135,11 @@ function XrayButtons:addTappedWordCollectionButton(button_table, indicator_butto
         return
     end
     if status_icons then
-        table.insert(status_icons, status_indicators)
+        table_insert(status_icons, status_indicators)
     end
     local hits = DX.vd.list_display_mode == "series" and item.series_hits or item.book_hits
     text = has_items(hits) and status_indicators .. " " .. hits or text
-    table.insert(indicator_button_table[current_row], {
+    table_insert(indicator_button_table[current_row], {
         text = text,
         --* is_bold prop was set in ((XrayTappedWords#collectionPopulateAndSort)):
         font_bold = item.is_bold,
@@ -170,7 +171,7 @@ end
 --- @private
 function XrayButtons:addFindAllHitsButton(buttons, needle_item, book_hits)
     if has_text(needle_item.name) and book_hits and book_hits > 0 then
-        table.insert(buttons[1], #buttons[1] - 2,
+        table_insert(buttons[1], #buttons[1] - 2,
         KOR.buttoninfopopup:forSearchAllLocations({
             info = T([[search-list-icon | Show all occurrences of this Xray item in the current ebook.
 Hotkey %1 %2]], KOR.icons.arrow_bare, DX.s.hk_show_item_occurrences_from_viewer),
@@ -184,7 +185,7 @@ end
 --* indicator_buttons (for separate rows with indicators) will be nil when called from ((XrayButtons#forItemViewerBottomContextButtons)):
 function XrayButtons:addMoreButton(buttons, indicator_buttons, props)
     local extra_buttons_count = #props.source_items - props.max_total_buttons + 1
-    table.insert(buttons[props.current_row], {
+    table_insert(buttons[props.current_row], {
         text = "[+" .. extra_buttons_count .. "]",
         font_bold = false,
         text_font_face = "x_smallinfofont",
@@ -196,7 +197,7 @@ function XrayButtons:addMoreButton(buttons, indicator_buttons, props)
     if not indicator_buttons then
         return
     end
-    table.insert(indicator_buttons[props.current_row], {
+    table_insert(indicator_buttons[props.current_row], {
         text = " ",
         font_bold = false,
         text_font_face = "x_smallinfofont",
@@ -229,8 +230,7 @@ function XrayButtons:forPageNavigator(parent)
          KOR.buttoninfopopup:forSearchAllLocations({
              info = _("search-list-icon | Show all occurrences in the book of the item currently displayed below."),
              callback = function()
-                 local name = parent.current_item and parent.current_item.name
-                 return parent:execShowItemOccurrencesCallback(name)
+                return parent:execShowItemOccurrencesCallback()
              end
          }),
          KOR.buttoninfopopup:forXrayViewer({
@@ -313,24 +313,24 @@ function XrayButtons:forUiInfo(parent, buttons)
 
     --! upon a tap on a button these routines are executed: ((Xray page hits TOC search routine)) > ((TextViewer#findCallback)) > ((XrayModel#removeMatchReliabilityIndicators))
 
-    table.insert(buttons, 1, KOR.buttoninfopopup:forXrayItemsIndex({
+    table_insert(buttons, 1, KOR.buttoninfopopup:forXrayItemsIndex({
         callback = function()
             parent:showToc()
         end,
     }))
-    table.insert(buttons, 2, KOR.buttoninfopopup:forXrayPreviousItem({
+    table_insert(buttons, 2, KOR.buttoninfopopup:forXrayPreviousItem({
         id = "previ",
         callback = function()
             parent:blockUp()
         end,
     }))
-    table.insert(buttons, 3, KOR.buttoninfopopup:forXrayNextItem({
+    table_insert(buttons, 3, KOR.buttoninfopopup:forXrayNextItem({
         id = "nexti",
         callback = function()
             parent:blockDown()
         end,
     }))
-    table.insert(buttons, 2, KOR.buttoninfopopup:forXrayPageNavigator({
+    table_insert(buttons, 2, KOR.buttoninfopopup:forXrayPageNavigator({
         callback = function()
             DX.pn:showNavigator()
         end,
@@ -371,7 +371,7 @@ function XrayButtons:handleMoreButtonClick(props, extra_buttons_count)
     --* first make sure we copy ALL the not yet shown items, before optionally updating max_total_buttons in the next code block:
     count = #source_items
     for nr = max_total_buttons, count do
-        table.insert(shifted_source_items, source_items[nr])
+        table_insert(shifted_source_items, source_items[nr])
     end
     --* popup buttons dialog doesn't have to display any additional info, except the buttons, so may contain more buttons; for example see ((XrayButtons#forItemViewerBottomContextButtons)):
     if props.max_total_buttons_after_first_popup then
@@ -397,7 +397,7 @@ function XrayButtons:handleMoreButtonClick(props, extra_buttons_count)
             props.extra_item_callback(citem)
         end
         mprops.hold_callback = function()
-            props.item_hold_callback(item, icon)
+            props.item_hold_callback(item, "")
         end
         local more_button_added = self:addTappedWordCollectionButton(popup_buttons, popup_indicator_buttons, item, mprops)
         if more_button_added then
@@ -860,7 +860,7 @@ function XrayButtons:forListContext(manager, item)
     return buttons
 end
 
---* compare buttons for item viewer ((XrayButtons#forItemViewer)):
+--* compare buttons for Item Viewer ((XrayButtons#forItemViewer)):
 --* compare ((XrayButtons#forListFooterRight)):
 function XrayButtons:forListFooterLeft(focus_item, dont_show, base_icon_size)
     local notify_list_display_mode = DX.vd.list_display_mode == "series" and _("series") or _("book")
@@ -880,7 +880,7 @@ Current sorting mode: %1.]]), current_sorting_mode:upper()),
         }))
     }
     if DX.m.current_series then
-        table.insert(buttons, 1, Button:new(KOR.buttoninfopopup:forXrayToggleBookOrSeriesMode({
+        table_insert(buttons, 1, Button:new(KOR.buttoninfopopup:forXrayToggleBookOrSeriesMode({
             icon_size_ratio = base_icon_size + 0.1,
             info = T([[book-icon | Switch between display of Xray items in %1 book or %2 series mode. In series mode all items for the entires series will be shown.
 
@@ -895,7 +895,7 @@ Current mode: %3 %4.]], KOR.icons.xray_book_mode_bare, KOR.icons.xray_series_mod
     return buttons
 end
 
---* compare buttons for item viewer ((XrayButtons#forItemViewer)):
+--* compare buttons for Item Viewer ((XrayButtons#forItemViewer)):
 --* compare ((XrayButtons#forListFooterLeft)):
 function XrayButtons:forListFooterRight(base_icon_size)
     local buttons = {
@@ -921,7 +921,7 @@ function XrayButtons:forListFooterRight(base_icon_size)
     }
 
     if DX.m.current_series then
-        table.insert(buttons, 2, Button:new(KOR.buttoninfopopup:forSeriesCurrentBook({
+        table_insert(buttons, 2, Button:new(KOR.buttoninfopopup:forSeriesCurrentBook({
             icon_size_ratio = base_icon_size + 0.1,
             callback = function()
                 KOR.descriptiondialog:showSeriesForEbookPath(KOR.registry.current_ebook)
@@ -1007,7 +1007,7 @@ function XrayButtons:forItemEditorTypeSwitch(item_copy, button_props)
         local current_field_values = {}
         for i = 1, 4 do
             --* these values will be restored in ((XrayDialogs#dispatchFocusSwitch)):
-            table.insert(current_field_values, input_fields[i]:getText())
+            table_insert(current_field_values, input_fields[i]:getText())
         end
         local buttons = {
             {},
@@ -1035,7 +1035,7 @@ function XrayButtons:forItemEditorTypeSwitch(item_copy, button_props)
             --! this MUST be a local var, for changeType to work as expected:
             local itype = i
             active_marker = itype == active_type and KOR.icons.active_tab_bare .. " " or ""
-            table.insert(buttons[row], {
+            table_insert(buttons[row], {
                 text = active_marker .. DX.vd.xray_type_choice_labels[itype],
                 align = "left",
                 callback = function()
@@ -1183,17 +1183,17 @@ function XrayButtons:forItemsCollectionPopup(items_found, tapped_word)
     for i = 1, count do
         --* insert separator row at start of rows:
         if i == 1 then
-            table.insert(combined_rows, {})
+            table_insert(combined_rows, {})
         end
-        table.insert(combined_rows, indicator_buttons[i])
-        table.insert(combined_rows, buttons[i])
+        table_insert(combined_rows, indicator_buttons[i])
+        table_insert(combined_rows, buttons[i])
         --* insert separator row between and at end of rows:
         if i <= count then
-            table.insert(combined_rows, {})
+            table_insert(combined_rows, {})
         end
     end
     buttons = combined_rows
-    table.insert(buttons, {
+    table_insert(buttons, {
         KOR.buttoninfopopup:forXrayList(),
         {
             icon = "info-slender",
@@ -1336,7 +1336,7 @@ function XrayButtons:forListSubmenu()
     --* insert buttons for Alles, Personen, Begrippen:
     local buttons = { {} }
     for i = 1, 3 do
-        table.insert(buttons[1], self:getListSubmenuButton(i))
+        table_insert(buttons[1], self:getListSubmenuButton(i))
     end
     return ButtonTable:new{
         width = Screen:getWidth(),
