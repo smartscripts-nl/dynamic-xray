@@ -119,6 +119,9 @@ SRELL_ERROR_CODES[666] = _("Expression may lead to an extremely long search time
 --- PATCH CREDOCUMENT
 -- #((PATCH CREDOCUMENT))
 
+CreDocument.empty_line = " <br/>"
+CreDocument.text_indent = "     "
+
 function CreDocument:setDocument()
     local ok
     ok, self._document = pcall(cre.newDocView, CanvasContext:getWidth(), CanvasContext:getHeight(), self._view_mode)
@@ -166,7 +169,7 @@ function CreDocument:getPageText(page_no)
     if has_no_items(texts) then
         return ""
     end
-    return table_concat(texts, "\n   ")
+    return table_concat(texts, "\n" .. self.text_indent)
 end
 
 function CreDocument:getPageHtml(page_no, mark_text)
@@ -191,7 +194,7 @@ function CreDocument:getPageHtml(page_no, mark_text)
     if has_no_items(texts) then
         return ""
     end
-    html = table_concat(texts, "<br/>   ")
+    html = table_concat(texts, "<br/>" .. self.text_indent)
     if mark_text then
         html = html:gsub(mark_text, "<strong>" .. mark_text .. "</strong>")
     end
@@ -214,15 +217,15 @@ function CreDocument:getPageTextFromXPs(xp, next_page_xp, for_html)
             --* handle separators in the text:
         elseif not parts[i]:match("[A-Za-z0-9]") then
             separator_was_inserted = true
-            table.insert(formatted, " " .. lb)
+            table.insert(formatted, self.empty_line)
             if for_html then
                 table_insert(formatted, "<p style='text-align: center'>" .. parts[i] .. "</p>")
             else
                 table_insert(formatted, parts[i] .. lb)
             end
-            table.insert(formatted, " " .. lb)
+            table.insert(formatted, self.empty_line)
         else
-            local prefix = not separator_was_inserted and "   " or ""
+            local prefix = not separator_was_inserted and self.text_indent or ""
             table_insert(formatted, prefix .. parts[i] .. lb)
             separator_was_inserted = false
         end
