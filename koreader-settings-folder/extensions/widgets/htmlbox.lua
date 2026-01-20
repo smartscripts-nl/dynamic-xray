@@ -4,7 +4,6 @@
 local require = require
 
 local BD = require("ui/bidi")
-local Blitbuffer = require("ffi/blitbuffer")
 local ButtonTable = require("extensions/widgets/buttontable")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Device = require("device")
@@ -91,6 +90,8 @@ local HtmlBox = InputContainer:extend{
     align = "center",
     buttons_table = nil,
     content_padding = nil,
+    frame_content_fullscreen = nil,
+    frame_content_windowed = nil,
     fullscreen = false,
     height = nil,
     html = nil,
@@ -125,6 +126,7 @@ local HtmlBox = InputContainer:extend{
 }
 
 function HtmlBox:init()
+    self:initFrames()
     self:setModuleProps()
     self:initHotkeys()
     self:initTouch()
@@ -147,7 +149,33 @@ function HtmlBox:init()
     self:generateSidePanel()
     self:addFrameToContentWidget()
     self:generateWidget()
+    if not self.is_fullscreen then
+        self:generateMovableContainer()
+    end
     self:finalizeWidget()
+end
+
+--- @private
+function HtmlBox:initFrames()
+    self.frame_bordersize = not self.is_fullscreen and Size.border.window or 0
+    self.frame_content_windowed = {
+        radius = Size.radius.window,
+        bordersize = self.frame_bordersize,
+        padding = 0,
+        margin = 0,
+        background = KOR.colors.background,
+    }
+    self.frame_content_fullscreen = {
+        radius = 0,
+        bordersize = self.frame_bordersize,
+        fullscreen = true,
+        covers_fullscreen = true,
+        padding = 0,
+        margin = 0,
+        background = KOR.colors.background,
+        --* make the borders white to hide them completely:
+        color = KOR.colors.background,
+    }
 end
 
 --- @private
@@ -458,17 +486,26 @@ function HtmlBox:onHoldClose()
 end
 
 function HtmlBox:onSwipe(arg, ges)
+    if not self.movable then
+        return false
+    end
     --* Let our MovableContainer handle swipe outside of definition
     return self.movable:onMovableSwipe(arg, ges)
 end
 
 function HtmlBox:onHoldStartText(_, ges)
+    if not self.movable then
+        return false
+    end
     --* Forward Hold events not processed by TextBoxWidget event handler
     --* to our MovableContainer
     return self.movable:onMovableHold(_, ges)
 end
 
 function HtmlBox:onHoldPanText(arg, ges)
+    if not self.movable then
+        return false
+    end
     --* Forward Hold events not processed by TextBoxWidget event handler
     --* to our MovableContainer
     --* We only forward it if we did forward the Touch
@@ -478,6 +515,9 @@ function HtmlBox:onHoldPanText(arg, ges)
 end
 
 function HtmlBox:onHoldReleaseText(_, ges)
+    if not self.movable then
+        return false
+    end
     --* Forward Hold events not processed by TextBoxWidget event handler
     --* to our MovableContainer
     return self.movable:onMovableHoldRelease(_, ges)
@@ -488,6 +528,9 @@ end
 --* unwanted moves of the window while we are selecting text in
 --* the definition widget.
 function HtmlBox:onForwardingTouch(arg, ges)
+    if not self.movable then
+        return false
+    end
     --* This Touch may be used as the Hold we don't get (for example,
     --* when we start our Hold on the bottom buttons)
     if not ges.pos:intersectWith(self.content_widget.dimen) then
@@ -499,6 +542,9 @@ function HtmlBox:onForwardingTouch(arg, ges)
 end
 
 function HtmlBox:onForwardingPan(arg, ges)
+    if not self.movable then
+        return false
+    end
     --* We only forward it if we did forward the Touch or are currently moving
     if self.movable._touch_pre_pan_was_inside or self.movable._moving then
         return self.movable:onMovablePan(arg, ges)
@@ -506,6 +552,9 @@ function HtmlBox:onForwardingPan(arg, ges)
 end
 
 function HtmlBox:onForwardingPanRelease(arg, ges)
+    if not self.movable then
+        return false
+    end
     --* We can forward onMovablePanRelease() does enough checks
     return self.movable:onMovablePanRelease(arg, ges)
 end
@@ -584,13 +633,13 @@ end
 function HtmlBox:computeHeights()
     local tabs_table_height = self.tabs_table_buttons and self.tabs_table:getSize().h or 0
     local buttons_height = self.button_table and self.button_table:getSize().h or 0
-    local others_height = self.frame_bordersize * 2 --* HtmlBox border
-            + self.box_title:getHeight()
-            + Size.line.thick
-            + self.content_top_margin:getSize().h
-            + self.content_bottom_margin:getSize().h
-            + buttons_height
-            + tabs_table_height
+    local others_height =
+        self.frame_bordersize * 2
+        + self.box_title:getHeight()
+        + Size.line.thick
+        + 2 * self.content_top_margin:getSize().h
+        + buttons_height
+        + tabs_table_height
 
     --* To properly adjust the definition to the height of text, we need
     --* the line height a ScrollTextWidget will use for the current font
@@ -617,11 +666,8 @@ function HtmlBox:computeHeights()
         self.content_height = nb_lines * self.content_line_height
 
     elseif self.is_fullscreen or self.window_size == "max" then
-        --* Available height for definition + components
         self.height = self.avail_height
         self.content_height = self.height - others_height
-        local nb_lines = math.floor(self.content_height / self.content_line_height)
-        self.content_height = nb_lines * self.content_line_height
 
     elseif self.window_size == "large" then
         self.content_height = math.floor(self.avail_height * 0.7)
@@ -632,7 +678,6 @@ function HtmlBox:computeHeights()
         self.height = self.content_height + others_height
 
     elseif self.window_size == "highcenter" then
-        --* Available height for definition + components
         self.height = self.avail_height
         self.content_height = self.height - others_height
         local nb_lines = math.floor(self.content_height / self.content_line_height)
@@ -646,7 +691,7 @@ function HtmlBox:computeHeights()
         self.content_height = math.floor(nb_lines * self.content_line_height * 0.35)
 
     else
-        --* Definition height was previously computed as 0.5*0.7*screen_height, so keep
+        --* Main content height was previously computed as 0.5*0.7*screen_height, so keep
         --* it that way. Components will add themselves to that.
         self.content_height = math.floor(self.avail_height * 0.5 * 0.7)
         --* But we want it to fit to the lines that will show, to avoid
@@ -884,7 +929,7 @@ function HtmlBox:finalizeWidget()
     --* self.region was set in ((HtmlBox#computeAvailableHeight)):
     self[1] = self.is_fullscreen and
         WidgetContainer:new{
-            align = self.align,
+            align = "top",
             dimen = self.region,
             self.box_frame,
         }
@@ -965,258 +1010,6 @@ function HtmlBox:addFrameToContentWidget()
 end
 
 --- @private
-function HtmlBox:generateFullScreenWidget()
-    --* WITH buttons row:
-    self.box_frame = self.tabs_table and FrameContainer:new{
-        radius = 0,
-        bordersize = self.frame_bordersize,
-        fullscreen = true,
-        covers_fullscreen = true,
-        padding = 0,
-        margin = 0,
-        background = Blitbuffer.COLOR_WHITE,
-        VerticalGroup:new{
-            align = "left",
-            self.box_title,
-            self.tabs_table,
-            self.separator,
-            self.content_top_margin,
-            --* content
-            CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.inner_width,
-                    h = self.content_widget:getSize().h,
-                },
-                self.content_widget,
-            },
-            self.content_bottom_margin,
-            --* buttons
-            CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.inner_width,
-                    h = self.button_table:getSize().h,
-                },
-                self.button_table,
-            }
-        }
-    }
-    or
-    FrameContainer:new{
-        radius = 0,
-        bordersize = self.frame_bordersize,
-        fullscreen = true,
-        covers_fullscreen = true,
-        padding = 0,
-        margin = 0,
-        background = Blitbuffer.COLOR_WHITE,
-        VerticalGroup:new{
-            align = "left",
-            self.box_title,
-            self.separator,
-            self.content_top_margin,
-            --* content
-            CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.inner_width,
-                    h = self.content_widget:getSize().h,
-                },
-                self.content_widget,
-            },
-            self.content_bottom_margin,
-            --* buttons
-            CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.inner_width,
-                    h = self.button_table:getSize().h,
-                },
-                self.button_table,
-            }
-        }
-    }
-end
-
---- @private
-function HtmlBox:generateFullScreenWidgetNoButtonsRow()
-    if self.tabs_table then
-        self.box_frame = FrameContainer:new{
-        radius = 0,
-        bordersize = self.frame_bordersize,
-        fullscreen = true,
-        covers_fullscreen = true,
-        padding = 0,
-        margin = 0,
-        background = Blitbuffer.COLOR_WHITE,
-        VerticalGroup:new{
-            align = "left",
-            self.box_title,
-                self.tabs_table,
-            self.separator,
-            self.content_top_margin,
-            --* content
-            CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.inner_width,
-                    h = self.content_widget:getSize().h,
-                },
-                self.content_widget,
-            },
-            self.content_bottom_margin,
-            }
-        }
-        return
-    end
-
-    local group_config = {
-        self.box_title,
-        self.separator,
-        self.content_top_margin,
-        --* content
-        CenterContainer:new{
-            dimen = Geom:new{
-                w = self.inner_width,
-            h = self.content_widget:getSize().h,
-            },
-            self.content_widget,
-        },
-        self.content_bottom_margin,
-    }
-    --? I don't know why I need this hack on my Bigme phone:
-    if DX.s.is_mobile_device then
-        local spacer = VerticalSpan:new { width = Size.padding.large }
-        table.insert(group_config, 2, spacer)
-    end
-    group_config.align = "left"
-    self.box_frame = FrameContainer:new{
-        radius = 0,
-        bordersize = self.frame_bordersize,
-        fullscreen = true,
-        covers_fullscreen = true,
-        padding = 0,
-        margin = 0,
-        background = Blitbuffer.COLOR_WHITE,
-        VerticalGroup:new(group_config)
-    }
-end
-
---- @private
-function HtmlBox:generateNoButtonsRowWidget()
-    self.box_frame = self.tabs_table and FrameContainer:new{
-        radius = Size.radius.window,
-        bordersize = self.frame_bordersize,
-        padding = 0,
-        margin = 0,
-        background = Blitbuffer.COLOR_WHITE,
-        VerticalGroup:new{
-            align = "left",
-            self.box_title,
-            self.tabs_table,
-            self.separator,
-            self.content_top_margin,
-            --* content
-            CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.inner_width,
-                    h = self.content_widget:getSize().h,
-                },
-                self.content_widget,
-            },
-            self.content_bottom_margin,
-        }
-    }
-    or
-    --* without tabs_table
-    FrameContainer:new{
-        radius = Size.radius.window,
-        bordersize = self.frame_bordersize,
-        padding = 0,
-        margin = 0,
-        background = Blitbuffer.COLOR_WHITE,
-        VerticalGroup:new{
-            align = "left",
-            self.box_title,
-            self.separator,
-            self.content_top_margin,
-            --* content
-            CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.inner_width,
-                    h = self.content_widget:getSize().h,
-                },
-                self.content_widget,
-            },
-            self.content_bottom_margin,
-        }
-    }
-end
-
---- @private
-function HtmlBox:generateButtonsRowWidget()
-    self.box_frame = self.tabs_table and FrameContainer:new{
-        radius = Size.radius.window,
-        bordersize = self.frame_bordersize,
-        padding = 0,
-        margin = 0,
-        background = Blitbuffer.COLOR_WHITE,
-        VerticalGroup:new{
-            align = "left",
-            self.box_title,
-            self.tabs_table,
-            self.separator,
-            self.content_top_margin,
-            --* content
-            CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.inner_width,
-                    h = self.content_widget:getSize().h,
-                },
-                self.content_widget,
-            },
-            self.content_bottom_margin,
-            --* buttons
-            CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.inner_width,
-                    h = self.button_table:getSize().h,
-                },
-                self.button_table,
-            }
-        }
-    }
-    or
-    --* without tabs_table:
-    FrameContainer:new{
-        radius = Size.radius.window,
-        bordersize = self.frame_bordersize,
-        padding = 0,
-        margin = 0,
-        background = Blitbuffer.COLOR_WHITE,
-        VerticalGroup:new{
-            align = "left",
-            self.box_title,
-            self.separator,
-            self.content_top_margin,
-            --* content
-            CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.inner_width,
-                    h = self.content_widget:getSize().h,
-                },
-                self.content_widget,
-            },
-            self.content_bottom_margin,
-            --* buttons
-            CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.inner_width,
-                    h = self.button_table:getSize().h,
-                },
-                self.button_table,
-            }
-        }
-    }
-end
-
---- @private
 function HtmlBox:generateMovableContainer()
     self.movable = MovableContainer:new{
         --* We'll handle these events ourselves, and call appropriate
@@ -1229,43 +1022,60 @@ function HtmlBox:generateMovableContainer()
             --* but may happen while selecting text: we need to check
             --* a few things before forwarding them
             "touch", "pan", "pan_release",
-        },
+            },
         self.box_frame,
     }
 end
 
 --- @private
 function HtmlBox:generateWidget()
-    if self.is_fullscreen then
-        self.frame_bordersize = 0
-        if self.no_buttons_row then
-            self:generateFullScreenWidgetNoButtonsRow()
-            self:generateMovableContainer()
-            return
-        end
-        self:generateFullScreenWidget()
-        self:generateMovableContainer()
-        return
+
+    local frame = self.is_fullscreen and self.frame_content_fullscreen or self.frame_content_windowed
+
+    local elements = VerticalGroup:new{
+        self.box_title,
+        self.separator,
+        self.content_top_margin,
+        --* content
+        CenterContainer:new{
+            dimen = Geom:new{
+                w = self.inner_width,
+                h = self.content_widget:getSize().h,
+            },
+            self.content_widget,
+        },
+        self.content_bottom_margin,
+    }
+
+    if self.tabs_table then
+        table_insert(elements, 2, self.tabs_table)
     end
 
-    if self.no_buttons_row then
-        self:generateNoButtonsRowWidget()
-    else
-        self:generateButtonsRowWidget()
+    --? I don't know why I need this hack on my Bigme phone:
+    if self.is_fullscreen and DX.s.is_mobile_device then
+        local spacer = VerticalSpan:new{ width = Size.padding.large }
+        table.insert(elements, 2, spacer)
     end
-    self:generateMovableContainer()
+
+    if not self.no_buttons_row then
+        table_insert(elements, CenterContainer:new{
+            dimen = Geom:new{
+                w = self.inner_width,
+                h = self.button_table:getSize().h,
+            },
+            self.button_table,
+        })
+    end
+
+    elements.align = "left"
+    table.insert(frame, elements)
+    self.box_frame = FrameContainer:new(frame)
 end
 
 --- @private
 function HtmlBox:computeAvailableHeight()
     self.avail_height = self.screen_height - self.margin_top - self.margin_bottom
 
-    --? I don't know why I need these hacks?:
-    if DX.s.is_tablet_device and self.is_fullscreen then
-        self.avail_height = self.avail_height + 10
-    elseif DX.s.is_ubuntu and self.is_fullscreen then
-        self.avail_height = self.avail_height + 7
-    end
     --* Region in which the window will be aligned center/top/bottom:
     self.region = Geom:new{
         x = 0,
@@ -1400,7 +1210,6 @@ function HtmlBox:setWidth()
             self.width = self.screen_width - Screen:scaleBySize(80)
         end
     end
-    self.frame_bordersize = not self.is_fullscreen and Size.border.window or 0
     self.inner_width = self.width - 2 * self.frame_bordersize
 end
 
