@@ -180,7 +180,7 @@ function CreDocument:getPageHtml(page_no, mark_text)
     local next_page_no = page_no + 1
     local next_page_xp = self:getPageXPointer(next_page_no)
     if has_text(next_page_xp) then
-        html = self:getPageTextFromXPs(xp, next_page_xp)
+        html = self:getPageTextFromXPs(xp, next_page_xp, "for_html")
         if mark_text then
             html = html:gsub(mark_text, "<strong>" .. mark_text .. "</strong>")
         end
@@ -200,7 +200,7 @@ end
 
 --* return page text, format it with indents and add whitespace around separators in the text:
 --- @private
-function CreDocument:getPageTextFromXPs(xp, next_page_xp)
+function CreDocument:getPageTextFromXPs(xp, next_page_xp, for_html)
     local text = self:getTextFromXPointers(xp, next_page_xp)
     text = text:gsub("\n[ \t]+", "\n")
     local formatted = {}
@@ -214,9 +214,13 @@ function CreDocument:getPageTextFromXPs(xp, next_page_xp)
             --* handle separators in the text:
         elseif not parts[i]:match("[A-Za-z0-9]") then
             separator_was_inserted = true
-            table_insert(formatted, " " .. lb)
-            table_insert(formatted, parts[i] .. lb)
-            table_insert(formatted, " " .. lb)
+            table.insert(formatted, " " .. lb)
+            if for_html then
+                table_insert(formatted, "<p style='text-align: center'>" .. parts[i] .. "</p>")
+            else
+                table_insert(formatted, parts[i] .. lb)
+            end
+            table.insert(formatted, " " .. lb)
         else
             local prefix = not separator_was_inserted and "   " or ""
             table_insert(formatted, prefix .. parts[i] .. lb)
