@@ -880,8 +880,6 @@ function XrayPageNavigator:closePageNavigator()
     if self.page_navigator then
         UIManager:close(self.page_navigator)
         self.page_navigator = nil
-        --* this return can be used when jumping from ReaderSearch to the Page Navigator, in ((jump from ReaderSearch to Xray Page Navigator)):
-        return self.initial_browsing_page
     end
 end
 

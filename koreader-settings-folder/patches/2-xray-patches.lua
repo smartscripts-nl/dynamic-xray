@@ -51,6 +51,7 @@ local ReaderSearch = require("apps/reader/modules/readersearch")
 local ReaderToc = require("apps/reader/modules/readertoc")
 local ReaderView = require("apps/reader/modules/readerview")
 local TextBoxWidget = require("ui/widget/textboxwidget")
+local Trapper = require("ui/trapper")
 local UIManager = require("ui/uimanager")
 local _ = require("gettext")
 local lfs = require("libs/libkoreader-lfs")
@@ -380,7 +381,6 @@ function ReaderSearch:findAllText(search_text)
     local last_search_hash = (self.last_search_text or "") .. tostring(self.case_insensitive) .. tostring(self.use_regex)
     local not_cached = self.last_search_hash ~= last_search_hash
     if not_cached then
-        local Trapper = require("ui/trapper")
         local info = InfoMessage:new{ text = _("Searching… (tap to cancel)") }
         UIManager:show(info)
         UIManager:forceRePaint()
@@ -660,14 +660,9 @@ function ReaderSearch:showHitWithContext(item, not_cached)
                         KOR.dialogs:closeAllOverlays()
                         local page = KOR.document:getPageFromXPointer(item.start)
                         -- #((jump from ReaderSearch to Xray Page Navigator))
-                        --* initial_page will only be truthy when the ReaderSearch dialog was opened from the Xray Page Navigator:
-                        local initial_page = DX.pn:closePageNavigator()
-                        if initial_page then
-                            DX.pn:setProp("navigator_page_no", page)
-                            DX.pn:showNavigator(initial_page)
-                            return
-                        end
-                        DX.pn:showNavigator(page)
+                        DX.pn:resetActiveSideButtons("ReaderSearch:showHitWithContext")
+                        DX.pn:setProp("navigator_page_no", page)
+                        DX.pn:showNavigator()
                     end,
                 }),
                 {
@@ -769,7 +764,7 @@ function ReaderSearch:searchCallback(reverse, xray_item_or_highlight_text, case_
         self.case_insensitive = not self.check_button_case.checked
     end
     --* when search dialog activated from Xray dialog, nog check_whole_words_only checkbox is available; so in that case assume true:
-    self.whole_words_only = self.check_whole_words_only and self.check_whole_words_only.checked or true
+    self.whole_words_only = self.check_whole_words_only and self.check_whole_words_only.checked or false
     local regex_error = self.use_regex and KOR.document:checkRegex(search_text)
     if self.use_regex and regex_error ~= 0 then
         logger.dbg("ReaderSearch: regex error", regex_error, SRELL_ERROR_CODES[regex_error])
@@ -780,26 +775,26 @@ function ReaderSearch:searchCallback(reverse, xray_item_or_highlight_text, case_
             error_message = _("Invalid regular expression.")
         end
         UIManager:show(InfoMessage:new{ text = error_message })
+        return
+    end
 
     --* no regex error:
-    else
-        --* when searchAllText triggered from XrayController plugin context menu, there is no input menu to be closed:
-        if not xray_item_or_highlight_text then
-            UIManager:close(self.input_dialog)
-        end
-        --* can be 0 or 1 in this case:
-        if reverse then
-            self.last_search_hash = nil
-            --* calls the bottom button dialog!!!:
-            --* so this is another dialog then ((ReaderSearch#onShowFulltextSearchInput)):
-            self:onShowSearchDialog(search_text, reverse, self.use_regex, self.case_insensitive)
-        else
-            local Trapper = require("ui/trapper")
-            Trapper:wrap(function()
-                self:findAllText(search_text)
-            end)
-        end
+    --* when searchAllText triggered from XrayController plugin context menu, there is no input menu to be closed:
+    if not xray_item_or_highlight_text then
+        UIManager:close(self.input_dialog)
     end
+    --* can be 0 or 1 in this case:
+    if reverse then
+        self.last_search_hash = nil
+        --* calls the bottom button dialog!!!:
+        --* so this is another dialog then ((ReaderSearch#onShowFulltextSearchInput)):
+        self:onShowSearchDialog(search_text, reverse, self.use_regex, self.case_insensitive)
+        return
+    end
+
+    Trapper:wrap(function()
+        self:findAllText(search_text)
+    end)
 end
 
 function ReaderSearch:onShowFulltextSearchInput()

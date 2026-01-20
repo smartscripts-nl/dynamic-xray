@@ -386,11 +386,6 @@ function HtmlBox:generateInfoPanel()
     self.sheight = height
 end
 
---- @private
-function HtmlBox:getInfoPanelHeight()
-    return math.floor(self.screen_height * DX.s.PN_info_panel_height)
-end
-
 --* Used in init & update to instantiate the Scroll*Widget that self.html_widget points to
 --- @private
 function HtmlBox:generateScrollWidget()
