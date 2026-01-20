@@ -41,7 +41,6 @@ A button dialog widget that shows a grid of buttons.
 
 local require = require
 
-local Blitbuffer = require("ffi/blitbuffer")
 local BottomContainer = require("ui/widget/container/bottomcontainer")
 local ButtonTable = require("extensions/widgets/buttontable")
 local CenterContainer = require("ui/widget/container/centercontainer")
@@ -65,6 +64,7 @@ local Screen = require("device").screen
 
 local DX = DX
 local math = math
+local type = type
 
 --- @class ButtonDialog
 local ButtonDialog = InputContainer:extend{
@@ -78,7 +78,6 @@ local ButtonDialog = InputContainer:extend{
     pos = nil,
     after_close_callback = nil,
     modal = true,
-    move_to_bottom = nil,
 
     tap_close_callback = nil,
     alpha = nil, -- passed to MovableContainer
@@ -187,7 +186,7 @@ function ButtonDialog:init()
             alpha = self.alpha,
             FrameContainer:new{
                 scontainer or self.buttontable,
-                background = not self.readonly and Blitbuffer.COLOR_WHITE or Blitbuffer.COLOR_BLACK,
+                background = not self.readonly and KOR.colors.background or KOR.colors.black,
                 bordersize = Size.border.window,
                 radius = Size.radius.window,
                 padding = Size.padding.button,
@@ -262,8 +261,11 @@ end
 
 function ButtonDialog:positionButtonTable()
     local dimen = Screen:getSize()
+    if type(self.pos) == "table" then
+
+
     -- bottom center of screen:
-    if self.pos == "bottom-center" then
+    elseif self.pos == "bottom-center" then
 
         self[1] = CenterContainer:new{
             dimen = dimen,

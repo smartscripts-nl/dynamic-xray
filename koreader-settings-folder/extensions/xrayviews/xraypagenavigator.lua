@@ -226,7 +226,9 @@ function XrayPageNavigator:getPageHtmlForPage(page_no)
         return self.cached_html_by_page_no[page_no]
     end
 
-    self.cached_html_by_page_no[page_no] = KOR.document:getPageHtml(page_no)
+    --- @type CreDocument document
+    local document = KOR.document
+    self.cached_html_by_page_no[page_no] = document:getPageHtml(page_no)
     return self.cached_html_by_page_no[page_no]
 end
 
@@ -628,7 +630,8 @@ end
 function XrayPageNavigator:getNextPageHitForTerm()
     local item = self.page_navigator_filter_item
     local current_page = self.navigator_page_no
-    local document = KOR.ui.document
+    --- @type CreDocument document
+    local document = KOR.document
     local results, needle, case_insensitive
     --* if applicable, we only search for first names (then probably more accurate hits count):
     needle = parent:getRealFirstOrSurName(item)
@@ -657,7 +660,8 @@ end
 function XrayPageNavigator:getPreviousPageHitForTerm()
     local item = self.page_navigator_filter_item
     local current_page = self.navigator_page_no
-    local document = KOR.ui.document
+    --- @type CreDocument document
+    local document = KOR.document
     local results, needle, case_insensitive
     --* if applicable, we only search for first names (then probably more accurate hits count):
     needle = parent:getRealFirstOrSurName(item)

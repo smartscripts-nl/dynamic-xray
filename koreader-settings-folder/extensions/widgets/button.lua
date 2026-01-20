@@ -701,6 +701,13 @@ end
 
 function Button:onTapSelectButton(irr, pos)
     irr = pos
+    --* for usage with ((MovableContainer#ensureAnchor)):
+    KOR.registry:set("anchor_button", {
+        x = pos.x,
+        y = pos.y,
+        w = self.width,
+        h = self.height,
+    })
     if self.enabled or self.allow_tap_when_disabled then
         if self.callback then
             if G_reader_settings:isFalse("flash_ui") then

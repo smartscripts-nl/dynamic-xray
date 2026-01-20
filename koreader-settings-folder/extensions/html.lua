@@ -8,6 +8,7 @@ local util = require("util")
 local has_no_text = has_no_text
 local has_text = has_text
 local table = table
+local table_insert = table.insert
 local tonumber = tonumber
 
 local count
@@ -140,9 +141,11 @@ function Html:getAllHtmlContainersInPage(page_xp, start_page_no, include_punctua
     return containers, texts
 end
 
+--* this method should set self.paragraph_end (or not), to be used in ((Html#getAllHtmlContainersInPage)):
 --- @private
 function Html:loopThroughContainerWords(include_punctuation)
     local next_word_end, next_elem_no, in_current_page
+    --- @type CreDocument KDoc
     local KDoc = KOR.document
 
     local add_text_by = "word"
@@ -182,6 +185,7 @@ function Html:loopThroughContainerWords(include_punctuation)
             return
 
         else
+            --! this is the value we are interested in:
             self.paragraph_end = next_word_end
         end
     end
@@ -196,12 +200,12 @@ function Html:addContainerToContainers(paragraphs, texts, KDoc)
     if has_text(paragraph_text) then
         paragraph_text = KOR.strings:cleanupSelectedText(paragraph_text)
         paragraph_text = KOR.strings:removeNotes(paragraph_text)
-        table.insert(paragraphs, {
+        table_insert(paragraphs, {
             pos0 = self.paragraph_start,
             pos1 = self.paragraph_end,
             text = paragraph_text,
         })
-        table.insert(texts, paragraph_text)
+        table_insert(texts, paragraph_text)
     end
 end
 
@@ -256,7 +260,7 @@ function Html:textToHtml(text)
 
     local lines = {}
     for s in text:gmatch("[^\r\n]+") do
-        table.insert(lines, s)
+        table_insert(lines, s)
     end
 
     self.in_poetry = 0
@@ -285,7 +289,7 @@ function Html:openPoetry(result, start_index)
 end
 
 function Html:closePoetry(result, p)
-    table.insert(result, "</div>" .. p)
+    table_insert(result, "</div>" .. p)
 end
 
 function Html:formatHtmlLine(line, result)
@@ -300,9 +304,9 @@ function Html:formatHtmlLine(line, result)
     if is_page then
         if state == STATE_POETRY and self.in_poetry <= self.poetry_limit_lines then
             self:openPoetry(result, i - self.in_poetry)
-            table.insert(result, "</div><p class=\"export-page-number\">" .. line .. "</p>")
+            table_insert(result, "</div><p class=\"export-page-number\">" .. line .. "</p>")
         else
-            table.insert(result, "<p class=\"export-page-number\">" .. line .. "</p>")
+            table_insert(result, "<p class=\"export-page-number\">" .. line .. "</p>")
         end
         self.in_poetry = 0
         return
@@ -312,7 +316,7 @@ function Html:formatHtmlLine(line, result)
 
     if state == STATE_POETRY then
         if is_short then
-            table.insert(result, self:paragraph(line, is_blank))
+            table_insert(result, self:paragraph(line, is_blank))
             self.in_poetry = self.in_poetry + 1
 
             if self.in_poetry == self.poetry_limit_lines then
@@ -330,12 +334,12 @@ function Html:formatHtmlLine(line, result)
     --- NORMAL STATE
 
     if is_short then
-        table.insert(result, self:paragraph(line, is_blank))
+        table_insert(result, self:paragraph(line, is_blank))
         self.in_poetry = 1
         return
     end
 
-    table.insert(result, self:paragraph(line, is_blank))
+    table_insert(result, self:paragraph(line, is_blank))
     self.in_poetry = 0
 end
 

@@ -75,6 +75,8 @@ local next = next
 local pcall = pcall
 local select = select
 local table = table
+local table_concat = table.concat
+local table_insert = table.insert
 local tonumber = tonumber
 local tostring = tostring
 local type = type
@@ -152,11 +154,19 @@ function CreDocument:getPageText(page_no)
     if has_no_text(xp) then
         return ""
     end
+    local next_page_no = page_no + 1
+    local next_page_xp = self:getPageXPointer(next_page_no)
+
+    --* if we have the xp of a next page, we can get the page text much quicker:
+    if has_text(next_page_xp) then
+        return self:getPageTextFromXPs(xp, next_page_xp)
+    end
+
     local texts = select(2, KOR.html:getAllHtmlContainersInPage(xp, page_no))
     if has_no_items(texts) then
         return ""
     end
-    return table.concat(texts, "\n   ")
+    return table_concat(texts, "\n   ")
 end
 
 function CreDocument:getPageHtml(page_no, mark_text)
@@ -164,15 +174,56 @@ function CreDocument:getPageHtml(page_no, mark_text)
     if has_no_text(xp) then
         return ""
     end
+    local html
+
+    --* if we have the xp of a next page, we can get the page text much quicker:
+    local next_page_no = page_no + 1
+    local next_page_xp = self:getPageXPointer(next_page_no)
+    if has_text(next_page_xp) then
+        html = self:getPageTextFromXPs(xp, next_page_xp)
+        if mark_text then
+            html = html:gsub(mark_text, "<strong>" .. mark_text .. "</strong>")
+        end
+        return html
+    end
+
     local texts = select(2, KOR.html:getAllHtmlContainersInPage(xp, page_no, "include_punctuation"))
     if has_no_items(texts) then
         return ""
     end
-    local html = table.concat(texts, "<br/>   ")
+    html = table_concat(texts, "<br/>   ")
     if mark_text then
         html = html:gsub(mark_text, "<strong>" .. mark_text .. "</strong>")
     end
     return html
+end
+
+--* return page text, format it with indents and add whitespace around separators in the text:
+--- @private
+function CreDocument:getPageTextFromXPs(xp, next_page_xp)
+    local text = self:getTextFromXPointers(xp, next_page_xp)
+    text = text:gsub("\n[ \t]+", "\n")
+    local formatted = {}
+    local lb = "<br/>"
+    local parts = KOR.strings:split(text, "\n")
+    count = #parts
+    local separator_was_inserted = false
+    for i = 1, count do
+        if i == 1 then
+            table_insert(formatted, parts[i] .. lb)
+            --* handle separators in the text:
+        elseif not parts[i]:match("[A-Za-z0-9]") then
+            separator_was_inserted = true
+            table_insert(formatted, " " .. lb)
+            table_insert(formatted, parts[i] .. lb)
+            table_insert(formatted, " " .. lb)
+        else
+            local prefix = not separator_was_inserted and "   " or ""
+            table_insert(formatted, prefix .. parts[i] .. lb)
+            separator_was_inserted = false
+        end
+    end
+    return table_concat(formatted, "")
 end
 
 
@@ -438,45 +489,45 @@ function ReaderSearch:onShowFindAllResults(not_cached)
             t = {}
             ft = {}
             --* [[[ and ]]] will be replaced by <b> and </b> in ((Dialogs#htmlBox)):
-            table.insert(ft, "[[[")
+            table_insert(ft, "[[[")
             if item.matched_word_prefix then
-                table.insert(ft, item.matched_word_prefix)
+                table_insert(ft, item.matched_word_prefix)
             end
-            table.insert(ft, word)
+            table_insert(ft, word)
             if item.matched_word_suffix then
-                table.insert(ft, item.matched_word_suffix)
+                table_insert(ft, item.matched_word_suffix)
             end
-            table.insert(ft, "]]]")
+            table_insert(ft, "]]]")
 
             --* Make this word bolder, using Poor Text Formatting provided by TextBoxWidget
             --* (we know this text ends up in a TextBoxWidget).
-            table.insert(t, TextBoxWidget.PTF_BOLD_START)
+            table_insert(t, TextBoxWidget.PTF_BOLD_START)
 
             if item.matched_word_prefix then
-                table.insert(t, item.matched_word_prefix)
+                table_insert(t, item.matched_word_prefix)
             end
-            table.insert(t, word)
+            table_insert(t, word)
             if item.matched_word_suffix then
-                table.insert(t, item.matched_word_suffix)
+                table_insert(t, item.matched_word_suffix)
             end
-            table.insert(t, TextBoxWidget.PTF_BOLD_END)
+            table_insert(t, TextBoxWidget.PTF_BOLD_END)
             if item.prev_text then
-                table.insert(ft, 1, item.prev_text)
-                table.insert(ft, 2, " ")
+                table_insert(ft, 1, item.prev_text)
+                table_insert(ft, 2, " ")
                 --* expand the bold texts in the list with a couple of words:
                 self:injectCompactBoldHitContext(t, item.prev_text, -compact_context_wordcount, "at_start")
-                table.insert(t, 2, " ")
+                table_insert(t, 2, " ")
             end
             if item.next_text then
-                table.insert(ft, " ")
-                table.insert(ft, item.next_text)
-                table.insert(t, " ")
+                table_insert(ft, " ")
+                table_insert(ft, item.next_text)
+                table_insert(t, " ")
                 --* expand the bold texts in the list with a couple of words:
                 self:injectCompactBoldHitContext(t, item.next_text, compact_context_wordcount, false)
             end
             --* enable handling of our bold tags:
-            table.insert(t, 1, TextBoxWidget.PTF_HEADER)
-            item.text = table.concat(t, "")
+            table_insert(t, 1, TextBoxWidget.PTF_HEADER)
+            item.text = table_concat(t, "")
 
             --* local pageref
             if self.ui.rolling then
@@ -489,7 +540,7 @@ function ReaderSearch:onShowFindAllResults(not_cached)
             end
             item.mandatory = pageno --pageref or
             item.mandatory_dim = pageno > current_page
-            item.full_text = table.concat(ft, "")
+            item.full_text = table_concat(ft, "")
             item.nr = i
         end
         self.cached_select_number = select_number
@@ -569,15 +620,15 @@ function ReaderSearch:injectCompactBoldHitContext(text, context, words_limit, at
     count = #words
     if at_start then
         for i = count, 1, -1 do
-            table.insert(text, 1, words[i])
-            table.insert(text, 2, " ")
+            table_insert(text, 1, words[i])
+            table_insert(text, 2, " ")
         end
         return
     end
 
     for i = 1, count do
-        table.insert(text, words[i])
-        table.insert(text, " ")
+        table_insert(text, words[i])
+        table_insert(text, " ")
     end
 end
 
@@ -943,8 +994,8 @@ function PluginLoader:_addXrayPluginFolder(data_dir, extra_paths, lookup_path_li
 
     extra_paths = extra_paths or {}
     if KOR.tables:tableHasNot(extra_paths, extra_path) then
-        table.insert(lookup_path_list, extra_path)
-        table.insert(extra_paths, extra_path)
+        table_insert(lookup_path_list, extra_path)
+        table_insert(extra_paths, extra_path)
         G_reader_settings:saveSetting("extra_plugin_paths", extra_paths)
     end
 end
@@ -968,7 +1019,7 @@ function PluginLoader:_discover()
             for _, extra_path in ipairs(extra_paths) do
                 local extra_path_mode = lfs.attributes(extra_path, "mode")
                 if extra_path_mode == "directory" and extra_path ~= DEFAULT_PLUGIN_PATH then
-                    table.insert(lookup_path_list, extra_path)
+                    table_insert(lookup_path_list, extra_path)
                 end
             end
         else
@@ -979,7 +1030,7 @@ function PluginLoader:_discover()
             local extra_path = data_dir .. "/plugins"
             extra_paths = { extra_path }
             G_reader_settings:saveSetting("extra_plugin_paths", extra_paths)
-            table.insert(lookup_path_list, extra_path)
+            table_insert(lookup_path_list, extra_path)
         end
     end
 
@@ -1002,7 +1053,7 @@ function PluginLoader:_discover()
                 end
                 local name = select(2, util.splitFilePathName(plugin_root))
 
-                table.insert(discovered, {
+                table_insert(discovered, {
                     ["main"] = mainfile,
                     ["meta"] = metafile,
                     ["path"] = plugin_root,
