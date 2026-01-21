@@ -665,8 +665,7 @@ end
 function XrayPageNavigator:loadDataForPage()
 
     self.side_buttons = {}
-    --! first condition is essential to prevent getting wrong info panel texts assigned to the buttons in the main side tab:
-    if self.active_side_tab == 2 and self.current_item then
+    if self.current_item then
         self:populateLinkedItemButtons()
     end
 
@@ -699,11 +698,21 @@ end
 function XrayPageNavigator:populateLinkedItemButtons()
     local linked_items_were_determined = self.current_item.linked_items
 
+    --* only for the linked items tab (no. 2) the side buttons have to be populated with the linked_items:
+    if self.active_side_tab == 1 and linked_items_were_determined then
+        return
+    end
+
     --* the linked_items prop of self.current_item will be used in ((HtmlBox#generateSidePanel)) to determine whether the side panel tab activator buttons should be shown...
     --! shallowCopy used twice in this method, to ensure that table_insert(linked_items... farther below doesn't modify this prop (and so would make it contain ever more duplicated items)!
     local linked_items = linked_items_were_determined and KOR.tables:shallowCopy(self.current_item.linked_items) or DX.vd:getLinkedItems(self.current_item)
     if not linked_items_were_determined then
         self.current_item.linked_items = KOR.tables:shallowCopy(linked_items)
+    end
+
+    --* only for the linked items tab (no. 2) the side buttons have to be populated with the linked_items:
+    if self.active_side_tab == 1 then
+        return
     end
 
     table_insert(linked_items, 1, self.current_item)
