@@ -479,7 +479,7 @@ function XrayPageNavigator:markedItemRegister(item, html, word)
     end
     self.button_labels_injected = self.button_labels_injected .. " " .. item.name
 
-    --* linked item buttons (when self.active_side_tab == 2) are added in ((XrayPageNavigator#loadDataForPage)) > ((XrayPageNavigator#populateLinkedItemButtons)):
+    --* linked item buttons (when self.active_side_tab == 2) are added in ((XrayPageNavigator#loadDataForPage)) > ((XrayPageNavigator#computeLinkedItems)):
     if self.active_side_tab == 1 then
         self:addSideButton(item, info_text)
     end
@@ -666,7 +666,10 @@ function XrayPageNavigator:loadDataForPage()
 
     self.side_buttons = {}
     if self.current_item then
-        self:populateLinkedItemButtons()
+        self:computeLinkedItems()
+        if self.active_side_tab == 2 then
+            self:populateLinkedItemsPanel()
+        end
     end
 
     --* get html and side_buttons from cache; these were stored in ((XrayPageNavigator#markItemsFoundInPageHtml)):
@@ -695,7 +698,7 @@ end
 
 --* regular main item buttons (self.active_side_tab == 1) were added in ((XrayPageNavigator#markedItemRegister)):
 --- @private
-function XrayPageNavigator:populateLinkedItemButtons()
+function XrayPageNavigator:computeLinkedItems()
     local linked_items_were_determined = self.current_item.linked_items
 
     --* only for the linked items tab (no. 2) the side buttons have to be populated with the linked_items:
@@ -709,27 +712,29 @@ function XrayPageNavigator:populateLinkedItemButtons()
     if not linked_items_were_determined then
         self.current_item.linked_items = KOR.tables:shallowCopy(linked_items)
     end
-
-    --* only for the linked items tab (no. 2) the side buttons have to be populated with the linked_items:
-    if self.active_side_tab == 1 then
-        return
+    self.linked_items = linked_items
     end
 
-    table_insert(linked_items, 1, self.current_item)
-    count = #linked_items
+--- @private
+function XrayPageNavigator:populateLinkedItemsPanel()
+    --KOR.debug:alertTable("XrayPageNavigator:populateLinkedItemButtons", "linked_items", linked_items)
+    --KOR.debug:alertTable("XrayPageNavigator:populateLinkedItemButtons", "current_item", self.current_item)
+    --* self.linked_items was computed in ((XrayPageNavigator#computeLinkedItems)):
+    table_insert(self.linked_items, 1, self.current_item)
+    count = #self.linked_items
     local info_panel_text
     for i = 1, count do
-        info_panel_text = DX.vd:generateXrayItemInfo(linked_items, nil, i, linked_items[i].name, 2, "for_all_items_list")
+        info_panel_text = DX.vd:generateXrayItemInfo(self.linked_items, nil, i, self.linked_items[i].name, 2, "for_all_items_list")
         if i == 1 then
             self.first_info_panel_text = info_panel_text
         end
         --* apply some hacks to get a correct, uniform lay-out for the info in the bottom panel (apparently we need this for side panel no 2, but not for side panel 1):
         info_panel_text = self:formatInfoPanelText(info_panel_text)
-        self:addSideButton(linked_items[i], info_panel_text)
+        self:addSideButton(self.linked_items[i], info_panel_text)
     end
 end
 
---* called from ((XrayPageNavigator#populateLinkedItemButtons)):
+--* called from ((XrayPageNavigator#computeLinkedItems)):
 --- @private
 function XrayPageNavigator:formatInfoPanelText(info_panel_text)
     return info_panel_text
