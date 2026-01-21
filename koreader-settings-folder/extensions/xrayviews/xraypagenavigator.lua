@@ -33,6 +33,7 @@ local has_content = has_content
 local has_items = has_items
 local has_no_text = has_no_text
 local has_text = has_text
+local math_floor = math.floor
 local os_date = os.date
 local table_concat = table.concat
 local table_insert = table.insert
@@ -68,6 +69,7 @@ local XrayPageNavigator = WidgetContainer:new{
     info_panel_texts = { {}, {} },
     initial_browsing_page = nil,
     key_events = {},
+    linked_items = nil,
     max_line_length = 80,
     navigator_page_no = nil,
     non_active_layout = nil,
@@ -589,7 +591,10 @@ function XrayPageNavigator:resultsPageGreaterThan(results, current_page, next_pa
         return
     end
     local page_no, valid_next_page
-    for i = 1, count do
+    local start = 1
+    local l_end = count
+    start, l_end = self:getLoopStartEnd(results, start, l_end, current_page, next_page)
+    for i = start, l_end do
         page_no = KOR.document:getPageFromXPointer(results[i].start)
         valid_next_page = self:verifyPageHit(page_no > current_page and (not next_page or page_no < next_page), page_no)
         if valid_next_page then
@@ -609,7 +614,10 @@ function XrayPageNavigator:resultsPageSmallerThan(results, current_page, prev_pa
         return
     end
     local page_no, valid_prev_page
-    for i = count, 1, -1 do
+    local start = count
+    local l_end = 1
+    start, l_end = self:getLoopStartEnd(results, start, l_end, current_page, prev_page)
+    for i = start, l_end, -1 do
         page_no = KOR.document:getPageFromXPointer(results[i].start)
         valid_prev_page = self:verifyPageHit(page_no < current_page and (not prev_page or page_no > prev_page), page_no)
         if valid_prev_page then
@@ -639,7 +647,7 @@ function XrayPageNavigator:gotoPageHitForItem(goto_item, direction)
         --! using document:findAllTextWholeWords instead of document:findAllText here crucial to get exact hits count:
         results = self.cached_hits_by_needle[needle] or document:findAllTextWholeWords(needle, case_insensitive, 0, 3000, false)
         self.cached_hits_by_needle[needle] = results
-        local next_page = self:resultsPageGreaterThan(results, current_page)
+        local next_page = direction == 1 and self:resultsPageGreaterThan(results, current_page) or self:resultsPageSmallerThan(results, current_page)
 
         if has_no_text(item.aliases) then
             if not next_page or next_page == self.navigator_page_no then
@@ -659,6 +667,40 @@ function XrayPageNavigator:gotoPageHitForItem(goto_item, direction)
         end
         self:handleItemHitFound(next_page, goto_item)
     end)
+end
+
+--- @private
+function XrayPageNavigator:getLoopStartEnd(results, start, l_end, current_page, check_page)
+    local test_loops = 4
+    if count > 600 then
+        test_loops = 12
+    elseif count > 500 then
+        test_loops = 10
+    elseif count > 400 then
+        test_loops = 8
+    elseif count > 300 then
+        test_loops = 6
+    elseif count > 200 then
+        test_loops = 5
+    end
+    local needle, page_no, valid_page
+    local direction = start == 1 and 1 or -1
+    for i = 1, test_loops do
+        needle = math_floor(count / 2)
+        page_no = KOR.document:getPageFromXPointer(results[needle].start)
+        if direction == 1 then
+            valid_page = self:verifyPageHit(page_no > current_page and (not check_page or page_no < check_page), page_no)
+        else
+            valid_page = self:verifyPageHit(page_no < current_page and (not check_page or page_no > check_page), page_no)
+        end
+        if not valid_page then
+            start = needle
+        else
+            l_end = needle
+            self.garbage = i
+        end
+    end
+    return start, l_end
 end
 
 --- @private
