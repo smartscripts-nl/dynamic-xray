@@ -33,7 +33,7 @@ local has_content = has_content
 local has_items = has_items
 local has_no_text = has_no_text
 local has_text = has_text
-local math_floor = math.floor
+local math_ceil = math.ceil
 local os_date = os.date
 local table_concat = table.concat
 local table_insert = table.insert
@@ -686,7 +686,7 @@ function XrayPageNavigator:getLoopStartEnd(results, start, l_end, current_page, 
     local needle, page_no, valid_page
     local direction = start == 1 and 1 or -1
     for i = 1, test_loops do
-        needle = math_floor(count / 2)
+        needle = start + math_ceil((l_end - start) / 2)
         page_no = KOR.document:getPageFromXPointer(results[needle].start)
         if direction == 1 then
             valid_page = self:verifyPageHit(page_no > current_page and (not check_page or page_no < check_page), page_no)
@@ -1236,6 +1236,7 @@ function XrayPageNavigator:showHelpInformation()
             {
                 tab = _("Browsing"),
                 html = _([[With the arrows in the right bottom corner you can browse through pages.<br>
+    If you longpress the arrow buttons, PN will jump to the previous/next occurrence of the item shown in the bottom information panel.<br>
 <br>
 If you have a (BT) keyboard, you can also browse with Space and Shift+Space. If you reach the end of a page, the viewer will jump to the next page if you press Space. If you reach the top of a page, then Shift+Space will take you to the previous page.<br>
 <br>
