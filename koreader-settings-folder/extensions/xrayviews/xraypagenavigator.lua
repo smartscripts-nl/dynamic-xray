@@ -683,10 +683,14 @@ function XrayPageNavigator:getLoopStartEnd(results, start, l_end, current_page, 
     elseif count > 200 then
         test_loops = 5
     end
-    local needle, page_no, valid_page
+    local needle, page_no, valid_page, diff
     local direction = start == 1 and 1 or -1
     for i = 1, test_loops do
-        needle = start + math_ceil((l_end - start) / 2)
+        diff = l_end - start
+        if diff < 4 then
+            return start, l_end
+        end
+        needle = start + math_ceil(diff / 2)
         page_no = KOR.document:getPageFromXPointer(results[needle].start)
         if direction == 1 then
             valid_page = self:verifyPageHit(page_no > current_page and (not check_page or page_no < check_page), page_no)
