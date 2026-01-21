@@ -36,6 +36,7 @@ local BD = require("ui/bidi")
 local Button = require("extensions/widgets/button")
 local CanvasContext = require("document/canvascontext")
 local CheckButton = require("ui/widget/checkbutton")
+--- @class CreDocument
 local CreDocument = require("document/credocument")
 local Device = require("device")
 local InfoMessage = require("ui/widget/infomessage")
@@ -45,10 +46,15 @@ local LuaSettings = require("luasettings")
 local Menu = require("extensions/widgets/menu")
 local MovableContainer = require("ui/widget/container/movablecontainer")
 local PluginLoader = require("pluginloader")
+--- @class ReaderDictionary
 local ReaderDictionary = require("apps/reader/modules/readerdictionary")
+--- @class ReaderHighlight
 local ReaderHighlight = require("apps/reader/modules/readerhighlight")
+--- @class ReaderSearch
 local ReaderSearch = require("apps/reader/modules/readersearch")
+--- @class ReaderToc
 local ReaderToc = require("apps/reader/modules/readertoc")
+--- @class ReaderView
 local ReaderView = require("apps/reader/modules/readerview")
 local TextBoxWidget = require("ui/widget/textboxwidget")
 local Trapper = require("ui/trapper")

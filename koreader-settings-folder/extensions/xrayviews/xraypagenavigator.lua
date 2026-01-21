@@ -690,7 +690,8 @@ end
 function XrayPageNavigator:loadDataForPage()
 
     self.side_buttons = {}
-    if self.current_item then
+    --! first condition is essential to prevent getting wrong info panel texts assigned to the buttons in the main side tab:
+    if self.active_side_tab == 2 and self.current_item then
         self:populateLinkedItemButtons()
     end
 
