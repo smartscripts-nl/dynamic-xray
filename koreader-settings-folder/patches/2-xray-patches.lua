@@ -207,14 +207,14 @@ function CreDocument:getPageTextFromXPs(xp, next_page_xp, for_html)
     local text = self:getTextFromXPointers(xp, next_page_xp)
     text = text:gsub("\n[ \t]+", "\n")
     local formatted = {}
-    local lb = "<br/>"
+    local lb = for_html and "<br/>" or "\n"
     local parts = KOR.strings:split(text, "\n")
     count = #parts
     local separator_was_inserted = false
     for i = 1, count do
         if i == 1 then
             table_insert(formatted, parts[i] .. lb)
-            --* handle separators in the text:
+        --* handle separators in the text:
         elseif not parts[i]:match("[A-Za-z0-9]") then
             separator_was_inserted = true
             table.insert(formatted, self.empty_line)
