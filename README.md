@@ -79,7 +79,7 @@ This will make the code and updates much easier to maintain for me _and_ for clo
 
 ### Browsing with the Page Navigator (most Kindle-like)
 
-With the Page Navigator, you can browse through pages and see all known Xray items marked bold there. In the side panel you can tap on items to show their explanation in the bottom panel.
+With the Page Navigator, you can browse through pages and see all known Xray items marked bold there. In the side panel you can tap on items to show their explanation in the bottom panel. If you longpress the arrow buttons, PN will jump to the next/previous occurrence of the item in the e-book.
 
 You can show this navigator by:
 * pressing Shift+X on your (BT) keyboard; I'm not sure if this'll work on all KOReader installations

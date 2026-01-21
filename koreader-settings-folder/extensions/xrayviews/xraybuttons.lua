@@ -255,6 +255,9 @@ function XrayButtons:forPageNavigator(parent)
              callback = function()
                  return parent:execGotoPrevPageCallback(parent)
              end,
+             hold_callback = function()
+                 return parent:execGotoPrevPageCallback(parent, "goto_prev_item")
+             end,
          },
          KOR.buttoninfopopup:forXrayPageNavigatorShowPageBrowser({
              callback = function()
@@ -272,7 +275,10 @@ function XrayButtons:forPageNavigator(parent)
          {
              text = KOR.icons.next,
              callback = function()
-                 parent:execGotoNextPageCallback(parent)
+                 return parent:execGotoNextPageCallback(parent)
+             end,
+             hold_callback = function()
+                 return parent:execGotoNextPageCallback(parent, "goto_next_item")
              end,
          },
      }}

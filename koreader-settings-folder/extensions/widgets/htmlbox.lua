@@ -336,6 +336,7 @@ function HtmlBox:generateInfoButtons()
 
     local buttons = ButtonTable:new{
         width = self.info_panel_width,
+        --* these buttons were generated in ((XrayButtons#forPageNavigator)):
         buttons = self.info_panel_buttons,
         show_parent = self,
         button_font_weight = "normal",

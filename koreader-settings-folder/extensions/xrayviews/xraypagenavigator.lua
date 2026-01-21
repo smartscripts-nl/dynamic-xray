@@ -22,6 +22,7 @@ local DataStorage = require("datastorage")
 local Event = require("ui/event")
 local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
+local Trapper = require("ui/trapper")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 local Screen = require("device").screen
@@ -45,6 +46,7 @@ local parent
 local XrayPageNavigator = WidgetContainer:new{
     active_filter_name = nil,
     active_item_marker = KOR.icons.active_tab_bare,
+    active_side_button_info_text = nil,
     active_side_buttons = { 1, 1 },
     active_side_tab = 1,
     alias_indent = "   ",
@@ -74,6 +76,8 @@ local XrayPageNavigator = WidgetContainer:new{
     non_filtered_items_marker_smallcaps_italic = "<i style='font-variant: small-caps'>%1</i>",
     non_filtered_layouts = nil,
     page_navigator_filter_item = nil,
+    previous_filter_item = nil,
+    previous_filter_name = nil,
     prev_marked_item = nil,
     return_to_current_item = nil,
     return_to_item_no = nil,
@@ -161,19 +165,13 @@ function XrayPageNavigator:toCurrentNavigatorPage()
     self:showNavigator()
 end
 
-function XrayPageNavigator:toNextNavigatorPage()
+function XrayPageNavigator:toNextNavigatorPage(goto_next_item)
     self:resetActiveSideButtons("XrayPageNavigator:toNextNavigatorPage")
     local first_info_panel_text
+    local direction = 1
     --* navigation to next filtered item hit:
-    if self.page_navigator_filter_item then
-        local next_page = self:getNextPageHitForTerm()
-        if not next_page or next_page == self.navigator_page_no then
-            self:showNoNextPreviousOccurrenceMessage(1)
-            return
-        end
-        self.navigator_page_no = next_page
-        first_info_panel_text = self:getItemInfoText(self.page_navigator_filter_item)
-        self:showNavigator(self.initial_browsing_page, first_info_panel_text)
+    if self.page_navigator_filter_item or goto_next_item then
+        self:gotoPageHitForItem(goto_next_item, direction)
         return
     end
 
@@ -182,25 +180,19 @@ function XrayPageNavigator:toNextNavigatorPage()
     local epages = KOR.document:getPageCount()
     if self.navigator_page_no >= epages then
         self.navigator_page_no = epages
-    self:showNoNextPreviousOccurrenceMessage(1)
+        self:showNoNextPreviousOccurrenceMessage(direction)
         return
     end
     self:showNavigator(self.initial_browsing_page, first_info_panel_text)
 end
 
-function XrayPageNavigator:toPrevNavigatorPage()
+function XrayPageNavigator:toPrevNavigatorPage(goto_prev_item)
     self:resetActiveSideButtons("XrayPageNavigator:toPrevNavigatorPage")
     local first_info_panel_text
+    local direction = -1
     --* navigation to previous filtered item hit:
-    if self.page_navigator_filter_item then
-        local previous_page = self:getPreviousPageHitForTerm()
-        if not previous_page or previous_page == self.navigator_page_no then
-            self:showNoNextPreviousOccurrenceMessage(-1)
-            return
-        end
-        self.navigator_page_no = previous_page
-        first_info_panel_text = self:getItemInfoText(self.page_navigator_filter_item)
-        self:showNavigator(self.initial_browsing_page, first_info_panel_text)
+    if self.page_navigator_filter_item or goto_prev_item then
+        self:gotoPageHitForItem(goto_prev_item, direction)
         return
     end
 
@@ -208,7 +200,7 @@ function XrayPageNavigator:toPrevNavigatorPage()
     self.navigator_page_no = self.navigator_page_no - 1
     if self.navigator_page_no < 1 then
         self.navigator_page_no = 1
-    self:showNoNextPreviousOccurrenceMessage(-1)
+        self:showNoNextPreviousOccurrenceMessage(direction)
         return
     end
     self:showNavigator(self.initial_browsing_page, first_info_panel_text)
@@ -217,7 +209,7 @@ end
 --- @private
 function XrayPageNavigator:showNoNextPreviousOccurrenceMessage(direction)
     local adjective = direction == 1 and "volgende" or "vorige"
-    KOR.messages:notify(T("geen %1 vermelding van dit item meer gevonden..."), adjective)
+    KOR.messages:notify(T("no %1 occurrence of this item found...", adjective))
 end
 
 --- @private
@@ -627,63 +619,46 @@ function XrayPageNavigator:resultsPageSmallerThan(results, current_page, prev_pa
 end
 
 --- @private
-function XrayPageNavigator:getNextPageHitForTerm()
-    local item = self.page_navigator_filter_item
-    local current_page = self.navigator_page_no
-    --- @type CreDocument document
-    local document = KOR.document
-    local results, needle, case_insensitive
-    --* if applicable, we only search for first names (then probably more accurate hits count):
-    needle = parent:getRealFirstOrSurName(item)
-    --* for lowercase needles (terms instead of persons), we search case insensitive:
-    case_insensitive = not needle:match("[A-Z]")
+function XrayPageNavigator:gotoPageHitForItem(goto_item, direction)
+    Trapper:wrap(function()
+        if goto_item then
+            self:setTemporaryFilterItem(goto_item)
+        end
+        local item = self.page_navigator_filter_item
+        local current_page = self.navigator_page_no
+        --- @type CreDocument document
+        local document = KOR.document
+        local results, needle, case_insensitive
+        --* if applicable, we only search for first names (then probably more accurate hits count):
+        needle = parent:getRealFirstOrSurName(item)
+        local adjective = direction == 1 and _("next") or _("previous")
+        KOR.messages:notify(T(_("to %1 occurrence of \"%2\""), adjective, needle))
+        --* for lowercase needles (terms instead of persons), we search case insensitive:
+        case_insensitive = not needle:match("[A-Z]")
 
-    --! using document:findAllTextWholeWords instead of document:findAllText here crucial to get exact hits count:
-    results = self.cached_hits_by_needle[needle] or document:findAllTextWholeWords(needle, case_insensitive, 0, 3000, false)
-    self.cached_hits_by_needle[needle] = results
-    local next_page = self:resultsPageGreaterThan(results, current_page)
+        --! using document:findAllTextWholeWords instead of document:findAllText here crucial to get exact hits count:
+        results = self.cached_hits_by_needle[needle] or document:findAllTextWholeWords(needle, case_insensitive, 0, 3000, false)
+        self.cached_hits_by_needle[needle] = results
+        local next_page = self:resultsPageGreaterThan(results, current_page)
 
-    if has_no_text(item.aliases) then
-        return next_page
-    end
+        if has_no_text(item.aliases) then
+            if not next_page or next_page == self.navigator_page_no then
+                self:showNoNextPreviousOccurrenceMessage(1)
+                return
+            end
+            self:handleItemHitFound(next_page, goto_item)
+            return
+        end
 
-    local aliases = parent:splitByCommaOrSpace(item.aliases)
-    local aliases_count = #aliases
-    for a = 1, aliases_count do
-        results = document:findAllTextWholeWords(aliases[a], case_insensitive, 0, 3000, false)
-        next_page = self:resultsPageGreaterThan(results, current_page, next_page)
-    end
-    return next_page
-end
-
---- @private
-function XrayPageNavigator:getPreviousPageHitForTerm()
-    local item = self.page_navigator_filter_item
-    local current_page = self.navigator_page_no
-    --- @type CreDocument document
-    local document = KOR.document
-    local results, needle, case_insensitive
-    --* if applicable, we only search for first names (then probably more accurate hits count):
-    needle = parent:getRealFirstOrSurName(item)
-    --* for lowercase needles (terms instead of persons), we search case insensitive:
-    case_insensitive = not needle:match("[A-Z]")
-
-    --! using document:findAllTextWholeWords instead of document:findAllText here crucial to get exact hits count:
-    results = self.cached_hits_by_needle[needle] or document:findAllTextWholeWords(needle, case_insensitive, 0, 3000, false)
-    self.cached_hits_by_needle[needle] = results
-    local prev_page = self:resultsPageSmallerThan(results, current_page)
-
-    if has_no_text(item.aliases) then
-        return prev_page
-    end
-
-    local aliases = parent:splitByCommaOrSpace(item.aliases)
-    local aliases_count = #aliases
-    for a = 1, aliases_count do
-        results = document:findAllTextWholeWords(aliases[a], case_insensitive, 0, 3000, false)
-        prev_page = self:resultsPageSmallerThan(results, current_page, prev_page)
-    end
-    return prev_page
+        local aliases = parent:splitByCommaOrSpace(item.aliases)
+        local aliases_count = #aliases
+        for a = 1, aliases_count do
+            results = self.cached_hits_by_needle[needle] or document:findAllTextWholeWords(aliases[a], case_insensitive, 0, 3000, false)
+            self.cached_hits_by_needle[needle] = results
+            next_page = self:resultsPageGreaterThan(results, current_page, next_page)
+        end
+        self:handleItemHitFound(next_page, goto_item)
+    end)
 end
 
 --- @private
@@ -801,6 +776,7 @@ function XrayPageNavigator:addSideButton(item, info_text)
 end
 
 --* these side panel buttons were generated in ((XrayPageNavigator#markItemsFoundInPageHtml)) > ((XrayPageNavigator#markedItemRegister)):
+--- @private
 function XrayPageNavigator:markActiveSideButton()
     count = #self.side_buttons
     local button
@@ -815,17 +791,28 @@ function XrayPageNavigator:markActiveSideButton()
         if button.xray_item.name == self.active_filter_name then
             button.text = self.filtered_item_marker .. button.text
         end
-        if r == self.active_side_buttons[self.active_side_tab] then
+
+        --* this might be set by ((XrayPageNavigator#handleItemHitFound)):
+        if self.active_side_button_by_name and button.xray_item.name == self.active_side_button_by_name then
+            self:setCurrentItem(button.xray_item)
+            button.text = self.active_item_marker .. button.text
+            self.active_side_buttons[1] = r
+            self.info_panel_text = self.active_side_button_info_text
+        end
+
+        if r == self.active_side_buttons[self.active_side_tab] and not self.active_side_button_by_name then
             button.text = self.active_item_marker .. button.text
             --! only items in side panel no 1 (main items) may modify self.current_item:
             if self.active_side_tab == 1 then
                 self:setCurrentItem(button.xray_item)
             end
         end
-        if r == 1 then
+        if r == 1 and not self.active_side_button_by_name then
             self:generateInfoTextForFirstSideButton(button)
         end
     end
+    self.active_side_button_by_name = nil
+    self.active_side_button_info_text = nil
 end
 
 function XrayPageNavigator:getSideButton(i)
@@ -972,6 +959,33 @@ function XrayPageNavigator:showExportXrayItemsDialog()
     KOR.screenhelpers:refreshScreen()
 end
 
+--- @private
+function XrayPageNavigator:handleItemHitFound(page, called_upon_hold_button)
+    self.navigator_page_no = page
+    local first_info_panel_text = self:getItemInfoText(self.page_navigator_filter_item)
+    self.active_side_button_by_name = self.active_filter_name
+    self.active_side_button_info_text = first_info_panel_text
+    if called_upon_hold_button then
+        self:undoTemporaryFilterItem()
+    end
+    self:showNavigator(self.initial_browsing_page, first_info_panel_text)
+end
+
+--- @private
+function XrayPageNavigator:setTemporaryFilterItem(goto_item)
+    self.previous_filter_item = KOR.tables:shallowCopy(self.page_navigator_filter_item)
+    self.previous_filter_name = self.active_filter_name
+
+    self.page_navigator_filter_item = KOR.tables:shallowCopy(goto_item)
+    self.active_filter_name = goto_item.name
+end
+
+--- @private
+function XrayPageNavigator:undoTemporaryFilterItem()
+    self.page_navigator_filter_item = self.previous_filter_item
+    self.active_filter_name = self.previous_filter_name
+end
+
 function XrayPageNavigator:setProp(prop, value)
     self[prop] = value
 end
@@ -1034,14 +1048,20 @@ function XrayPageNavigator:execExportXrayItemsCallback()
 end
 
 --- @param iparent XrayPageNavigator
-function XrayPageNavigator:execGotoNextPageCallback(iparent)
-    iparent:toNextNavigatorPage()
+function XrayPageNavigator:execGotoNextPageCallback(iparent, goto_next_item)
+    if goto_next_item then
+        goto_next_item = self:getCurrentTabItem()
+    end
+    iparent:toNextNavigatorPage(goto_next_item)
     return true
 end
 
 --- @param iparent XrayPageNavigator
-function XrayPageNavigator:execGotoPrevPageCallback(iparent)
-    iparent:toPrevNavigatorPage()
+function XrayPageNavigator:execGotoPrevPageCallback(iparent, goto_prev_item)
+    if goto_prev_item then
+        goto_prev_item = self:getCurrentTabItem()
+    end
+    iparent:toPrevNavigatorPage(goto_prev_item)
     return true
 end
 
