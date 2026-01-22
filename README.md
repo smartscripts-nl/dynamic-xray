@@ -1,6 +1,6 @@
 # Dynamic Xray plugin
 # Kindle-like functionality for KOReader
-
+ 
 A KOReader plugin to view "xray items", i.e. user defined explanations of persons and terms in single books or even entire series:
 
 * This DX plugin was inspired by the X-ray system on Kindles (see explanation
