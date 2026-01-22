@@ -88,6 +88,7 @@ local ButtonDialog = InputContainer:extend{
     readonly = false,
     button_lines = 2,
 
+    forced_width = nil,
     -- (with the first one we can use the standard dialog or otherwise my adapted version):
     width_is_dependent_on_button_count = false,
     button_width = 0.25,
@@ -305,7 +306,9 @@ end
 function ButtonDialog:setDynamicButtonProps()
     --* make width of dialog dependent on button count of first row:
     local iwidth
-    if self.width_is_dependent_on_button_count then
+    if self.forced_width then
+        iwidth = self.forced_width
+    elseif self.width_is_dependent_on_button_count then
         local factor = #self.buttons[1]
         local button_count = factor
         local orientation = Screen:getScreenMode()

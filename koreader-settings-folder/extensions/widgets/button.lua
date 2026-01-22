@@ -699,14 +699,17 @@ function Button:_undoFeedbackHighlight(is_translucent)
     end
 end
 
+--* pos can be used for ((Dialogs#alertInfo)), to show the info alert directly below a tapped button:
+--* see ((MOVE_MOVABLES_TO_Y_POSITION)) for more info:
 function Button:onTapSelectButton(irr, pos)
     irr = pos
+    local dims = self:getSize()
     --* for usage with ((MovableContainer#ensureAnchor)):
     KOR.registry:set("anchor_button", {
-        x = pos.x,
-        y = pos.y,
-        w = self.width,
-        h = self.height,
+        x = pos.pos.x,
+        y = pos.pos.y,
+        w = dims.w,
+        h = dims.h,
     })
     if self.enabled or self.allow_tap_when_disabled then
         if self.callback then

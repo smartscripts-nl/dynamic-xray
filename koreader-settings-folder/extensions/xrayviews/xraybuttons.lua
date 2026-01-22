@@ -211,22 +211,17 @@ end
 --- @param parent XrayPageNavigator
 function XrayButtons:forPageNavigator(parent)
     return {{
-         {
+        KOR.buttoninfopopup:forXrayButtonsPopup({
+            callback = function()
+                return parent:execShowPopupButtonsCallback(parent)
+            end
+        }),
+        {
              icon = "back",
              callback = function()
                  parent:closePageNavigator()
              end
          },
-         KOR.buttoninfopopup:forXrayList({
-             callback = function()
-                 return parent:execShowListCallback()
-             end
-         }),
-         KOR.buttoninfopopup:forXrayExport({
-             callback = function()
-                 return parent:execExportXrayItemsCallback()
-             end
-         }),
          KOR.buttoninfopopup:forSearchAllLocations({
              info = _("search-list-icon | Show all occurrences in the book of the item currently displayed below."),
              callback = function()
@@ -241,7 +236,13 @@ function XrayButtons:forPageNavigator(parent)
                  return parent:execViewItemCallback(parent)
              end,
          }),
-         KOR.buttoninfopopup:forXrayItemEdit({
+        KOR.buttoninfopopup:forXrayItemAdd({
+            info = _("plus icon | Add an Xray item."),
+            callback = function()
+                return parent:execAddCallback(parent)
+            end,
+        }),
+        KOR.buttoninfopopup:forXrayItemEdit({
              enabled_function = function()
                  return parent.current_item and true or false
              end,
@@ -259,11 +260,6 @@ function XrayButtons:forPageNavigator(parent)
                  return parent:execGotoPrevPageCallback(parent, "goto_prev_item")
              end,
          },
-         KOR.buttoninfopopup:forXrayPageNavigatorShowPageBrowser({
-             callback = function()
-                 return parent:execShowPageBrowserCallback(parent)
-             end,
-         }),
          KOR.buttonchoicepopup:forXrayPageNavigatorToCurrentPage({
              callback = function()
                  return parent:execJumpToCurrentPageInNavigatorCallback(parent)
@@ -272,7 +268,12 @@ function XrayButtons:forPageNavigator(parent)
                  return parent:execJumpToCurrentPageInEbookCallback(parent)
              end,
          }),
-         {
+        KOR.buttoninfopopup:forXrayPageNavigatorGotoPage({
+            callback = function()
+                return parent:execJumpToPageCallback(parent)
+            end
+        }),
+        {
              text = KOR.icons.next,
              callback = function()
                  return parent:execGotoNextPageCallback(parent)
@@ -282,6 +283,36 @@ function XrayButtons:forPageNavigator(parent)
              end,
          },
      }}
+end
+
+--- @param parent XrayPageNavigator
+function XrayButtons:forPageNavigatorPopupButtons(parent)
+    return {
+        {
+            KOR.buttoninfopopup:forXrayList({
+                callback = function()
+                    UIManager:close(parent.movable_popup_menu)
+                    return parent:execShowListCallback()
+                end
+            })
+        },
+        {
+            KOR.buttoninfopopup:forXrayExport({
+                callback = function()
+                    UIManager:close(parent.movable_popup_menu)
+                    return parent:execExportXrayItemsCallback()
+                end
+            })
+        },
+        {
+            KOR.buttoninfopopup:forXrayPageNavigatorShowPageBrowser({
+                callback = function()
+                    UIManager:close(parent.movable_popup_menu)
+                    return parent:execShowPageBrowserCallback(parent)
+                end,
+            }),
+        },
+    }
 end
 
 --- @param parent XrayPageNavigator

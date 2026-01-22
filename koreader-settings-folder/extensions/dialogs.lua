@@ -265,10 +265,15 @@ function Dialogs:prompt(args)
     local widget = args.fields and MultiInputDialog or InputDialog
 
     prompt_dialog = widget:new(config)
-    self:showDialogOnTopOfOverlay(function()
-        UIManager:show(prompt_dialog)
-        prompt_dialog:onShowKeyboard()
-    end)
+    if not args.no_overlay then
+        self:showDialogOnTopOfOverlay(function()
+            UIManager:show(prompt_dialog)
+            prompt_dialog:onShowKeyboard()
+        end)
+        return prompt_dialog
+    end
+    UIManager:show(prompt_dialog)
+    prompt_dialog:onShowKeyboard()
     return prompt_dialog
 end
 

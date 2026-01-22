@@ -993,6 +993,17 @@ function MovableContainer:moveToYPos(target_y_pos)
     self:_moveBy(0, move_by, "restrict_to_screen")
 end
 
+function MovableContainer:moveToAnchor(anchor, buttons_count)
+    self.screen_height = Screen:getHeight()
+    self.screen_width = Screen:getWidth()
+    self._orig_y = math.floor((self.screen_height - anchor.h) / 2)
+    self._orig_x = math.floor((self.screen_width - anchor.w) / 2)
+
+    local move_by_x = anchor.x - math.floor(anchor.w / 2) - self._orig_x + Screen:scaleBySize(2.75)
+    local move_by_y = anchor.y - buttons_count * anchor.h - self._orig_y + Screen:scaleBySize(3)
+    self:_moveBy(move_by_x, move_by_y)
+end
+
 
 --- PATCH PLUGINLOADER
 -- #((PATCH PLUGINLOADER))

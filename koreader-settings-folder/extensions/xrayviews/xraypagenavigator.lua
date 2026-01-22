@@ -18,9 +18,11 @@ These modules are initialized in ((initialize Xray modules)) and ((XrayControlle
 
 local require = require
 
+local ButtonDialog = require("extensions/widgets/buttondialog")
 local DataStorage = require("datastorage")
 local Event = require("ui/event")
 local KOR = require("extensions/kor")
+local MovableContainer = require("ui/widget/container/movablecontainer")
 local UIManager = require("ui/uimanager")
 local Trapper = require("ui/trapper")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
@@ -72,18 +74,21 @@ local XrayPageNavigator = WidgetContainer:new{
     linked_items = nil,
     max_line_length = 80,
     navigator_page_no = nil,
+    movable_popup_menu = nil,
     non_active_layout = nil,
     non_filtered_items_marker_bold = "<strong>%1</strong>",
     non_filtered_items_marker_smallcaps = "<span style='font-variant: small-caps'>%1</span>",
     non_filtered_items_marker_smallcaps_italic = "<i style='font-variant: small-caps'>%1</i>",
     non_filtered_layouts = nil,
     page_navigator_filter_item = nil,
+    popup_menu = nil,
     previous_filter_item = nil,
     previous_filter_name = nil,
     prev_marked_item = nil,
     return_to_current_item = nil,
     return_to_item_no = nil,
     return_to_page = nil,
+    screen_width = nil,
     scroll_to_page = nil,
     side_buttons = {},
 }
@@ -97,6 +102,7 @@ function XrayPageNavigator:initDataHandlers(xray_model)
         ["small-caps-italic"] = self.non_filtered_items_marker_smallcaps_italic,
         ["bold"] = self.non_filtered_items_marker_bold,
     }
+    self.screen_width = Screen:getWidth()
 end
 
 function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text)
@@ -162,7 +168,7 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text)
 end
 
 function XrayPageNavigator:toCurrentNavigatorPage()
-    self:setActiveSideButton("XrayPageNavigator:toCurrentNavigatorPage", 1)
+    self:resetActiveSideButtons("XrayPageNavigator:toCurrentNavigatorPage")
     self.navigator_page_no = self.initial_browsing_page
     self:showNavigator()
 end
@@ -1056,6 +1062,14 @@ end
 
 
 --- @param iparent XrayPageNavigator
+function XrayPageNavigator:execAddCallback(iparent)
+    iparent.return_to_page = iparent.navigator_page_no
+    iparent:closePageNavigator()
+    DX.c:resetFilteredItems()
+    DX.c:onShowNewItemForm()
+end
+
+--- @param iparent XrayPageNavigator
 function XrayPageNavigator:execEditCallback(iparent)
     local current_tab_item = iparent:getCurrentTabItem()
     if not current_tab_item then
@@ -1141,6 +1155,28 @@ function XrayPageNavigator:execJumpToCurrentPageInEbookCallback(iparent)
 end
 
 --- @param iparent XrayPageNavigator
+function XrayPageNavigator:execJumpToPageCallback(iparent)
+
+    local dialog
+    dialog = KOR.dialogs:prompt({
+        title = _("Jump to page"),
+        input = "",
+        input_type = "number",
+        allow_newline = false,
+        cursor_at_end = true,
+        width = math_ceil(self.screen_width / 3),
+        no_overlay = true,
+        callback = function(value)
+            UIManager:close(dialog)
+            iparent:resetActiveSideButtons("XrayPageNavigator:toCurrentNavigatorPage")
+            iparent.navigator_page_no = tonumber(value)
+            self:showNavigator()
+        end,
+    })
+    return true
+end
+
+--- @param iparent XrayPageNavigator
 function XrayPageNavigator:execSettingsCallback(iparent)
     iparent:closePageNavigator()
     DX.s.showSettingsManager()
@@ -1200,6 +1236,28 @@ function XrayPageNavigator:execShowPageBrowserCallback(iparent)
     }
     UIManager:show(self.page_browser)
     self.page_browser:update()
+    return true
+end
+
+--- @param iparent XrayPageNavigator
+function XrayPageNavigator:execShowPopupButtonsCallback(iparent)
+    --* this width was set when tapping on the parent button, in ((Button#onTapSelectButton)):
+    local anchor = KOR.registry:get("anchor_button")
+    local buttons = DX.b:forPageNavigatorPopupButtons(iparent)
+    self.popup_menu = ButtonDialog:new{
+        forced_width = anchor.w,
+        tap_close_callback = function()
+            UIManager:close(self.movable_popup_menu)
+        end,
+        buttons = buttons,
+    }
+    self.movable_popup_menu = MovableContainer:new{
+        self.popup_menu,
+        dimen = Screen:getSize(),
+    }
+
+    self.movable_popup_menu:moveToAnchor(anchor, #buttons)
+    UIManager:show(self.movable_popup_menu)
     return true
 end
 

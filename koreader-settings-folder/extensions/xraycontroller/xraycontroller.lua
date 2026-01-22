@@ -332,6 +332,10 @@ function XrayController:saveNewItem(return_modus)
     self:resetDynamicXray()
     --* to force an update of the list of items in ((XrayDialogs#showList)):
     KOR.registry:set("new_item", new_item)
+
+    if return_modus == "return_to_navigator_page" then
+        return DX.pn:returnToNavigator()
+    end
     self:showListConditionally(new_item, return_modus)
 end
 

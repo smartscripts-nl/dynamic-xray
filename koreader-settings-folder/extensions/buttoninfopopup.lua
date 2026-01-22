@@ -196,6 +196,15 @@ function ButtonInfoPopup:forTextViewerToTop(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forXrayButtonsPopup(props)
+	return KOR.buttonprops:set({
+		icon = "context-menu",
+		info = _("arrow icon | Show popup menu. You can close it by tapping on the screen somewhere outside the menu."),
+		callback_label = _("show"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forXrayExport(props)
 	return KOR.buttonprops:set({
 		icon = "export-xray",
@@ -373,6 +382,16 @@ function ButtonInfoPopup:forXrayPageNavigatorFilter(props)
 		icon_size_ratio = 0.53,
 		info = DX.pn.page_navigator_filter_item and reset_filter_info or filter_info,
 		callback_label = DX.pn.page_navigator_filter_item and _("reset filter") or _("filter"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forXrayPageNavigatorGotoPage(props)
+	return KOR.buttonprops:set({
+		text = "#",
+		fgcolor = KOR.colors.darker_indicator_color,
+		info = _("hash icon | Jump to a specific page in the Navigator."),
+		callback_label = _("jump"),
 		--! callback defined by calling module
 	}, props)
 end
