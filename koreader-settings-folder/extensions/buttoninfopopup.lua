@@ -198,8 +198,12 @@ end
 
 function ButtonInfoPopup:forXrayButtonsPopup(props)
 	return KOR.buttonprops:set({
-		icon = "context-menu",
-		info = _("arrow icon | Show popup menu. You can close it by tapping on the screen somewhere outside the menu."),
+		text_icon = {
+			text = KOR.icons.arrow_up_bare,
+			fgcolor = KOR.colors.lighter_indicator_color,
+			icon = "popup-menu",
+		},
+		info = _("popup menu icon | Show popup menu. You can close it by tapping on the screen somewhere outside the menu."),
 		callback_label = _("show"),
 		--! callback defined by calling module
 	}, props)
@@ -388,9 +392,12 @@ end
 
 function ButtonInfoPopup:forXrayPageNavigatorGotoPage(props)
 	return KOR.buttonprops:set({
-		text = "#",
-		fgcolor = KOR.colors.darker_indicator_color,
-		info = _("hash icon | Jump to a specific page in the Navigator."),
+		text_icon = {
+			text = KOR.icons.arrow_bare,
+			fgcolor = KOR.colors.lighter_indicator_color,
+			icon = "page-number",
+		},
+		info = _("page-hash icon | Jump to a specific page in the Navigator."),
 		callback_label = _("jump"),
 		--! callback defined by calling module
 	}, props)

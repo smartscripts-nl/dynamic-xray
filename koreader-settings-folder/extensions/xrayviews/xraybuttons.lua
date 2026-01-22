@@ -211,18 +211,18 @@ end
 --- @param parent XrayPageNavigator
 function XrayButtons:forPageNavigator(parent)
     return {{
-        KOR.buttoninfopopup:forXrayButtonsPopup({
-            callback = function()
-                return parent:execShowPopupButtonsCallback(parent)
-            end
-        }),
         {
              icon = "back",
              callback = function()
                  parent:closePageNavigator()
              end
          },
-         KOR.buttoninfopopup:forSearchAllLocations({
+        KOR.buttoninfopopup:forXrayButtonsPopup({
+            callback = function()
+                return parent:execShowPopupButtonsCallback(parent)
+            end
+        }),
+        KOR.buttoninfopopup:forSearchAllLocations({
              info = _("search-list-icon | Show all occurrences in the book of the item currently displayed below."),
              callback = function()
                 return parent:execShowItemOccurrencesCallback()
@@ -260,7 +260,12 @@ function XrayButtons:forPageNavigator(parent)
                  return parent:execGotoPrevPageCallback(parent, "goto_prev_item")
              end,
          },
-         KOR.buttonchoicepopup:forXrayPageNavigatorToCurrentPage({
+        KOR.buttoninfopopup:forXrayPageNavigatorGotoPage({
+            callback = function()
+                return parent:execJumpToPageCallback(parent)
+            end
+        }),
+        KOR.buttonchoicepopup:forXrayPageNavigatorToCurrentPage({
              callback = function()
                  return parent:execJumpToCurrentPageInNavigatorCallback(parent)
              end,
@@ -268,11 +273,6 @@ function XrayButtons:forPageNavigator(parent)
                  return parent:execJumpToCurrentPageInEbookCallback(parent)
              end,
          }),
-        KOR.buttoninfopopup:forXrayPageNavigatorGotoPage({
-            callback = function()
-                return parent:execJumpToPageCallback(parent)
-            end
-        }),
         {
              text = KOR.icons.next,
              callback = function()
