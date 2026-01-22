@@ -936,9 +936,14 @@ end
 
 function XrayPageNavigator:closePageNavigator()
     if self.page_navigator then
+        self:closePopupMenu()
         UIManager:close(self.page_navigator)
         self.page_navigator = nil
     end
+end
+
+function XrayPageNavigator:closePopupMenu()
+    UIManager:close(self.movable_popup_menu)
 end
 
 function XrayPageNavigator:resetReturnToProps()
@@ -1164,7 +1169,7 @@ function XrayPageNavigator:execJumpToPageCallback(iparent)
         input_type = "number",
         allow_newline = false,
         cursor_at_end = true,
-        width = math_ceil(self.screen_width / 3),
+        width = math_ceil(self.screen_width / 2.5),
         no_overlay = true,
         callback = function(value)
             UIManager:close(dialog)
@@ -1247,7 +1252,7 @@ function XrayPageNavigator:execShowPopupButtonsCallback(iparent)
     self.popup_menu = ButtonDialog:new{
         forced_width = anchor.w,
         tap_close_callback = function()
-            UIManager:close(self.movable_popup_menu)
+            self:closePopupMenu()
         end,
         buttons = buttons,
     }

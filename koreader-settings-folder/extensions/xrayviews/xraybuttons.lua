@@ -291,7 +291,7 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
         {
             KOR.buttoninfopopup:forXrayList({
                 callback = function()
-                    UIManager:close(parent.movable_popup_menu)
+                    parent:closePopupMenu()
                     return parent:execShowListCallback()
                 end
             })
@@ -299,7 +299,7 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
         {
             KOR.buttoninfopopup:forXrayExport({
                 callback = function()
-                    UIManager:close(parent.movable_popup_menu)
+                    parent:closePopupMenu()
                     return parent:execExportXrayItemsCallback()
                 end
             })
@@ -307,7 +307,7 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
         {
             KOR.buttoninfopopup:forXrayPageNavigatorShowPageBrowser({
                 callback = function()
-                    UIManager:close(parent.movable_popup_menu)
+                    parent:closePopupMenu()
                     return parent:execShowPageBrowserCallback(parent)
                 end,
             }),
