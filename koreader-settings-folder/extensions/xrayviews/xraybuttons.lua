@@ -775,10 +775,10 @@ function XrayButtons:forTranslationViewer(parent, translation)
     }
 end
 
-function XrayButtons:forItemViewerTabs(main_info, hits_info)
+function XrayButtons:getItemViewerTabs(main_info, hits_info, linked_items_info)
     local has_chapter_info = hits_info ~= ""
     local hits_tab_enabled, hits_tab_color = KOR.buttonprops:getButtonState(has_chapter_info)
-    return {
+    local tabs = {
         {
             tab = _("main information"),
             --* strangely enough usage of .redhat - defined in ((htmlbox.lua)) - forces a serif font for blockquotes, but not for paragraphs:
@@ -792,6 +792,15 @@ function XrayButtons:forItemViewerTabs(main_info, hits_info)
             html = "<div style='margin: 1em 2em' class='redhat'>" .. hits_info .. "</div>",
         },
     }
+    if linked_items_info then
+        table_insert(tabs, {
+            tab = _("linked items"),
+            html = linked_items_info,
+            content_type = "text",
+        })
+    end
+
+    return tabs
 end
 
 --- @param parent XrayDialogs

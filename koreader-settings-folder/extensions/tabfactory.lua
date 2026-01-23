@@ -46,25 +46,27 @@ function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
         count = #args.tabs
         for i = 1, count do
             local current = i
-            local label = args.tabs[current].tab
-            tab_is_enabled = args.tabs[current].enabled ~= false
+            local tab = args.tabs[current]
+            local label = tab.tab
+            tab_is_enabled = tab.enabled ~= false
             is_current_tab = current == active_tab
             if is_current_tab then
                 --* other_factory currently not used anywhere:
                 if not args.other_factory then
-                    tab_content = type(args.tabs[current][content_prop]) == "function" and args.tabs[current][content_prop]() or args.tabs[current][content_prop]
+                    tab_content = type(tab[content_prop]) == "function" and tab[content_prop]() or tab[content_prop]
                 else
                     tab_content = args.other_factory()
                     args.other_factory = nil
                 end
             end
+            tab.is_active_tab = current == active_tab
             table_insert(buttons[1], {
                 text = label,
                 --* active tab will be marked with bold and slightly bigger text in ((Button#generateTextLabel)) > ((mark active tab bold)):
                 is_active_tab = current == active_tab,
                 --* to force non bold prop for not active tabs (for which is_active_tab is not true):
                 is_tab_button = true,
-                is_target_tab = args.tabs[current].is_target_tab,
+                is_target_tab = tab.is_target_tab,
                 text_font_face = args.tab_buttons_font,
                 text_font_size = is_current_tab and math.floor(args.tab_buttons_font_size * 1.1) or args.tab_buttons_font_size,
                 text_font_weight = is_current_tab and "bold" or "normal",
@@ -75,21 +77,21 @@ function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
                 --* these two props can be set using ((ButtonProps#getButtonState)):
                 --* see also ((TabNavigator)) > ((generate tab navigation event handlers)), where the key event for activating a disabled tab is also disabled:
                 enabled = tab_is_enabled,
-                fgcolor = args.tabs[current].fgcolor,
+                fgcolor = tab.fgcolor,
 
-                target_button_text = args.tabs[current].target_button_text,
+                target_button_text = tab.target_button_text,
                 -- #((textboxTabbed tab button callbacks))
                 -- #((htmlBoxTabbed tab button callbacks))
                 callback = function()
-                    local has_factory = type(args.tabs[current][content_prop]) == "function" or args.other_factory
+                    local has_factory = type(tab[content_prop]) == "function" or args.other_factory
                     if current == active_tab and not has_factory then
                         return
                     end
-                    if has_factory and args.tabs[current].target_tab then
-                        active_tab = args.tabs[current].target_tab
+                    if has_factory and tab.target_tab then
+                        active_tab = tab.target_tab
                         args.active_tab = active_tab
-                        args.other_factory = args.tabs[current][content_prop]
-                        caller[tab_method](caller, args.tabs[current].target_tab, args)
+                        args.other_factory = tab[content_prop]
+                        caller[tab_method](caller, tab.target_tab, args)
                         return
                     end
                     caller[tab_method](caller, current, args)

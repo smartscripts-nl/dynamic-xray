@@ -84,12 +84,13 @@ end
 --- @class HtmlBox
 --- @field page_navigator XrayPageNavigator
 local HtmlBox = InputContainer:extend{
-    active_tab = nil,
     additional_key_events = nil,
     after_close_callback = nil,
     align = "center",
     buttons_table = nil,
     content_padding = nil,
+    --* this is the default, but some widgets can set the content_type to "text" for a specific tab; e.g. see ((XrayButtons#getItemViewerTabs)):
+    content_type = "html",
     frame_content_fullscreen = nil,
     frame_content_windowed = nil,
     fullscreen = false,
@@ -390,6 +391,21 @@ end
 --* Used in init & update to instantiate the Scroll*Widget that self.html_widget points to
 --- @private
 function HtmlBox:generateScrollWidget()
+    --* this is the default, but some widgets can set the content_type to "text" for a specific tab; e.g. see ((XrayButtons#getItemViewerTabs)):
+    if self.content_type == "text" then
+        self.html_widget = ScrollTextWidget:new{
+            text = self.html,
+            face = self.content_face,
+            line_height = KOR.registry.line_height or 0.95,
+            alignment = "left",
+            justified = false,
+            dialog = self,
+            width = self.swidth,
+            height = self.sheight,
+        }
+        return
+    end
+
     self.html_widget = ScrollHtmlWidget:new{
         html_body = self.html,
         css = self:getHtmlBoxCss(),

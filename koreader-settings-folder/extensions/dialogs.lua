@@ -97,10 +97,23 @@ function Dialogs:htmlBox(args)
 
     --* args/config.window_size can be: "fullscreen", "max", "large", "medium" or "small", or a table with props h and w:
     --* you also can set args.title_tab_buttons_left and args.title_tab_callbacks:
-    local config = args
-    config.html = config.html
-      :gsub("%[%[%[", "<b>")
-      :gsub("%]%]%]", "</b>")
+    --! use shallowCopy to prevent unintentional overwriting of original options:
+    local config = KOR.tables:shallowCopy(args)
+    config.content_type = "html"
+    if config.tabs then
+        for i = 1, #config.tabs do
+            if config.tabs[i].is_active_tab then
+                --* content_type can be set to "text" for the linked items info in ((XrayButtons#getItemViewerTabs)); this content_type prop will be used in
+                config.content_type = config.tabs[i].content_type
+                break
+            end
+        end
+    end
+    if config.content_type == "html" then
+        config.html = config.html
+            :gsub("%[%[%[", "<b>")
+            :gsub("%]%]%]", "</b>")
+    end
 
     local box = HtmlBox:new(config)
     UIManager:show(box)

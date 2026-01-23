@@ -38,7 +38,6 @@ local has_no_text = has_no_text
 local has_text = has_text
 local math_ceil = math.ceil
 local os_date = os.date
-local table_concat = table.concat
 local table_insert = table.insert
 local tonumber = tonumber
 
@@ -1108,21 +1107,7 @@ function XrayPageNavigator:execExportXrayItemsCallback()
     if not items then
         return true
     end
-    local paragraphs = {}
-    local paragraphs_icon_less = {}
-    local paragraph, paragraph_icon_less
-    count = #items
-    for i = 1, count do
-        paragraph, paragraph_icon_less = DX.vd:generateXrayItemInfo(items, nil, i, items[i].name, i, "for_all_items_list")
-        if i == 1 then
-            paragraph = paragraph:gsub(DX.vd.info_indent, "", 1)
-            paragraph_icon_less = paragraph_icon_less:gsub(DX.vd.info_indent, "", 1)
-        end
-        table_insert(paragraphs, paragraph)
-        table_insert(paragraphs_icon_less, paragraph_icon_less)
-    end
-    self.cached_export_info = table_concat(paragraphs, "")
-    self.cached_export_info_icon_less = table_concat(paragraphs_icon_less, "")
+    self.cached_export_info, self.cached_export_info_icon_less = DX.vd:generateXrayItemsOverview(items)
 
     self:showExportXrayItemsDialog()
     return true

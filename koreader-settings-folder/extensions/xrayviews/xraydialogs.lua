@@ -903,6 +903,12 @@ function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, 
     local name = needle_item.name
     local icon = DX.vd:getItemTypeIcon(needle_item)
 
+    local linked_items_info
+    local linked_items = DX.vd:getLinkedItems(needle_item)
+    if linked_items then
+        linked_items_info = DX.vd:generateXrayItemsOverview(linked_items)
+    end
+
     --* this sometimes happens when we only just added a new item from the ebook text and want to view it immediately:
     if needle_item.index > current_items_count then
         needle_item.index = current_items_count
@@ -912,7 +918,8 @@ function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, 
     self.needle_name_for_list_page = needle_item.name
 
     local key_events_module = "XrayItemViewer"
-    local tabs = DX.b:forItemViewerTabs(main_info, hits_info)
+    local tabs = DX.b:getItemViewerTabs(main_info, hits_info, linked_items_info)
+
     self.item_viewer = KOR.dialogs:htmlBoxTabbed(1, {
         title = title,
         top_buttons_left = DX.b:forItemViewerTopLeft(self),
@@ -980,7 +987,7 @@ function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_wo
     self.needle_name_for_list_page = needle_item.name
 
     local key_events_module = "TappedWordViewer"
-    local tabs = DX.b:forItemViewerTabs(main_info, hits_info)
+    local tabs = DX.b:getItemViewerTabs(main_info, hits_info)
     self.item_viewer = KOR.dialogs:htmlBoxTabbed(1, {
         title = title,
         top_buttons_left = DX.b:forItemViewerTopLeft(self),
