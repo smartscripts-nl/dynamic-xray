@@ -28,6 +28,7 @@ local Trapper = require("ui/trapper")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 local Screen = require("device").screen
+local Size = require("ui/size")
 local T = require("ffi/util").template
 
 local DX = DX
@@ -942,6 +943,7 @@ function XrayPageNavigator:closePageNavigator()
     end
 end
 
+--* the popup menu was opened in ((XrayPageNavigator#execShowPopupButtonsCallback)):
 function XrayPageNavigator:closePopupMenu()
     UIManager:close(self.movable_popup_menu)
 end
@@ -1251,6 +1253,8 @@ function XrayPageNavigator:execShowPopupButtonsCallback(iparent)
     local buttons = DX.b:forPageNavigatorPopupButtons(iparent)
     self.popup_menu = ButtonDialog:new{
         forced_width = anchor.w,
+        bordercolor = KOR.colors.line_separator,
+        borderradius = Size.radius.default,
         tap_close_callback = function()
             self:closePopupMenu()
         end,

@@ -44,6 +44,7 @@ local InputDialog = require("ui/widget/inputdialog")
 local KOR = require("extensions/kor")
 local LuaSettings = require("luasettings")
 local Menu = require("extensions/widgets/menu")
+--- @class MovableContainer
 local MovableContainer = require("ui/widget/container/movablecontainer")
 local PluginLoader = require("pluginloader")
 --- @class ReaderDictionary
@@ -65,6 +66,7 @@ local logger = require("logger")
 local tr = KOR:initCustomTranslations()
 local util = require("util")
 local Screen = Device.screen
+local Size = require("ui/size")
 local Utf8Proc = require("ffi/utf8proc")
 local T = require("ffi/util").template
 
@@ -77,6 +79,7 @@ local has_no_text = has_no_text
 local has_text = has_text
 local ipairs = ipairs
 local math = math
+local math_floor = math.floor
 local next = next
 local pcall = pcall
 local select = select
@@ -979,6 +982,8 @@ end
 
 --- PATCH MOVABLECONTAINER
 -- #((PATCH MOVABLECONTAINER))
+MovableContainer.screen_height = Screen:getHeight()
+MovableContainer.screen_width = Screen:getWidth()
 
 function MovableContainer:moveToYPos(target_y_pos)
     if not target_y_pos then
@@ -986,21 +991,19 @@ function MovableContainer:moveToYPos(target_y_pos)
     end
     self.dimen = self:getSize()
 
-    self._orig_y = math.floor((Screen:getHeight() - self.dimen.h) / 2)
-    self._orig_x = math.floor((Screen:getWidth() - self.dimen.w) / 2)
+    self._orig_y = math_floor((self.screen_height - self.dimen.h) / 2)
+    self._orig_x = math_floor((self.screen_width - self.dimen.w) / 2)
 
     local move_by = 0 - self._orig_y + target_y_pos
     self:_moveBy(0, move_by, "restrict_to_screen")
 end
 
 function MovableContainer:moveToAnchor(anchor, buttons_count)
-    self.screen_height = Screen:getHeight()
-    self.screen_width = Screen:getWidth()
-    self._orig_y = math.floor((self.screen_height - anchor.h) / 2)
-    self._orig_x = math.floor((self.screen_width - anchor.w) / 2)
+    self._orig_y = math_floor((self.screen_height - anchor.h) / 2)
+    self._orig_x = math_floor((self.screen_width - anchor.w) / 2)
 
-    local move_by_x = anchor.x - math.floor(anchor.w / 2) - self._orig_x + Screen:scaleBySize(2.75)
-    local move_by_y = anchor.y - buttons_count * anchor.h - self._orig_y + Screen:scaleBySize(3)
+    local move_by_x = anchor.x - math_floor(anchor.w / 2) - self._orig_x + Size.padding.button
+    local move_by_y = math_floor(anchor.y - buttons_count * anchor.h - self._orig_y + (buttons_count - 0.2) * Size.padding.button)
     self:_moveBy(move_by_x, move_by_y)
 end
 

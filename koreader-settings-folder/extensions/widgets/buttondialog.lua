@@ -70,6 +70,9 @@ local type = type
 local ButtonDialog = InputContainer:extend{
     buttons = nil,
 
+    --* this will be the color of the FrameContainer:
+    bordercolor = nil,
+    borderradius = nil,
     font_weight = "bold",
     button_width = 0.25,
     button_font_face = "infofont",
@@ -189,7 +192,8 @@ function ButtonDialog:init()
                 scontainer or self.buttontable,
                 background = not self.readonly and KOR.colors.background or KOR.colors.black,
                 bordersize = Size.border.window,
-                radius = Size.radius.window,
+                color = self.bordercolor,
+                radius = self.borderradius or Size.radius.window,
                 padding = Size.padding.button,
                 -- No padding at top or bottom to make all buttons
                 -- look the same size
