@@ -113,7 +113,7 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text)
         return
     end
 
-    self.popup_buttons = DX.b:forPageNavigatorPopupButtons(self)
+    self.popup_buttons = self.popup_buttons or DX.b:forPageNavigatorPopupButtons(self)
 
     --! watch out: this is another var than navigator_page_no on the next line; if you make their names identical, then browsing to next or previous page is not possible anymore:
     --* initial_browsing_page is the page on which you started using the Navigator, while self.navigator_page_no is the actual page you are viewing in the Navigator after browsing to other pages:
