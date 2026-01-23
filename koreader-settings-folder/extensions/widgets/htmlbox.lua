@@ -754,7 +754,7 @@ function HtmlBox:activatePageNavigatorPanelTab(tab_no)
     local pn = self.page_navigator
     pn.active_side_tab = tab_no
     pn:setActiveScrollPage()
-    pn:reloadPageNavigator(pn.info_panel_text)
+    pn:reloadPageNavigator()
 end
 
 --- @private

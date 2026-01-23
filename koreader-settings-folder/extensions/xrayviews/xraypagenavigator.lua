@@ -49,7 +49,6 @@ local parent
 local XrayPageNavigator = WidgetContainer:new{
     active_filter_name = nil,
     active_item_marker = KOR.icons.active_tab_bare,
-    active_side_button_info_text = nil,
     active_side_buttons = { 1, 1 },
     active_side_tab = 1,
     alias_indent = "   ",
@@ -106,7 +105,7 @@ function XrayPageNavigator:initDataHandlers(xray_model)
     self.screen_width = Screen:getWidth()
 end
 
-function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text)
+function XrayPageNavigator:showNavigator(initial_browsing_page)
 
     if KOR.ui and KOR.ui.paging then
         KOR.messages:notify(_("the page navigator is only available in epubs etc..."))
@@ -128,25 +127,13 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text)
     self:closePageNavigator()
     local html = self:loadDataForPage()
 
-    local has_side_buttons = #self.side_buttons > 0
-    if has_side_buttons then
-        local active_side_button = self.active_side_buttons[self.active_side_tab]
-        info_panel_text = self.info_panel_texts[self.active_side_tab][active_side_button]
-    end
-    if not info_panel_text and self.first_info_panel_text then
-        --* this text was generated for the first item via ((XrayPageNavigator#markActiveSideButton)) > ((XrayPageNavigator#generateInfoTextForFirstSideButton))
-        info_panel_text = self.first_info_panel_text
-    elseif not info_panel_text then
-        info_panel_text = " "
-    end
-
     local key_events_module = "XrayPageNavigator"
     self.page_navigator = KOR.dialogs:htmlBox({
         title = DX.m.current_title .. " - p." .. self.navigator_page_no,
         page_navigator = self,
         html = html,
         modal = false,
-        info_panel_text = self:getInfoPanelText(info_panel_text),
+        info_panel_text = self:getInfoPanelText(),
         window_size = "fullscreen",
         has_anchor_button = true,
         key_events_module = key_events_module,
@@ -179,7 +166,6 @@ end
 
 function XrayPageNavigator:toNextNavigatorPage(goto_next_item)
     self:resetActiveSideButtons("XrayPageNavigator:toNextNavigatorPage")
-    local first_info_panel_text
     local direction = 1
     --* navigation to next filtered item hit:
     if self.page_navigator_filter_item or goto_next_item then
@@ -195,12 +181,11 @@ function XrayPageNavigator:toNextNavigatorPage(goto_next_item)
         self:showNoNextPreviousOccurrenceMessage(direction)
         return
     end
-    self:showNavigator(self.initial_browsing_page, first_info_panel_text)
+    self:showNavigator(self.initial_browsing_page)
 end
 
 function XrayPageNavigator:toPrevNavigatorPage(goto_prev_item)
     self:resetActiveSideButtons("XrayPageNavigator:toPrevNavigatorPage")
-    local first_info_panel_text
     local direction = -1
     --* navigation to previous filtered item hit:
     if self.page_navigator_filter_item or goto_prev_item then
@@ -215,7 +200,7 @@ function XrayPageNavigator:toPrevNavigatorPage(goto_prev_item)
         self:showNoNextPreviousOccurrenceMessage(direction)
         return
     end
-    self:showNavigator(self.initial_browsing_page, first_info_panel_text)
+    self:showNavigator(self.initial_browsing_page)
 end
 
 --- @private
@@ -421,8 +406,10 @@ function XrayPageNavigator:getItemInfoText(item)
     local reliability_indicator_placeholder = item.reliability_indicator and "  " or ""
     self.sub_info_separator = ""
 
+    local icon = DX.vd:getItemTypeIcon(item, "bare")
+    --* alias_indent suffixed with 2 spaces, because of icon .. " ":
     local description = item.description
-    description = KOR.strings:splitLinesToMaxLength(item.name .. ": " .. description, self.max_line_length, self.alias_indent, nil, "dont_indent_first_line")
+    description = KOR.strings:splitLinesToMaxLength(icon .. " " .. item.name .. ": " .. description, self.max_line_length, self.alias_indent .. "  ", nil, "dont_indent_first_line")
     local info = "\n" .. reliability_indicator_placeholder .. description .. "\n"
 
     info = self:itemInfoAddHits(info, item)
@@ -516,32 +503,30 @@ function XrayPageNavigator:markNeedleInHtml(html, needle, derived_name)
     return self.is_filter_item and html:gsub(needle, "<strong>%1</strong>") or html:gsub(needle, self.non_active_layout)
 end
 
-function XrayPageNavigator:resetFilter(item, info_text)
+function XrayPageNavigator:resetFilter(item)
     --* when called from filter button in ((XrayButtons#forPageNavigatorTopLeft)):
     if not item then
         item = self.current_item
-        info_text = self.info_panel_text
     end
     self:setActiveScrollPage()
     self.page_navigator_filter_item = nil
     self.active_filter_name = nil
     self:resetActiveSideButtons("XrayPageNavigator:resetFilter")
-    self:reloadPageNavigator(info_text)
+    self:reloadPageNavigator()
     KOR.messages:notify(_("filter was reset") .. "...")
     return true
 end
 
-function XrayPageNavigator:setFilter(item, info_text)
+function XrayPageNavigator:setFilter(item)
     --* when called from reset filter button in ((XrayButtons#forPageNavigatorTopLeft)):
     if not item then
         item = self.current_item
-        info_text = self.info_panel_text
     end
     self:setActiveScrollPage()
     self.active_filter_name = item.name
     self.page_navigator_filter_item = item
     self:resetActiveSideButtons("XrayPageNavigator:setFilter")
-    self:reloadPageNavigator(info_text)
+    self:reloadPageNavigator()
     KOR.messages:notify(T(_("filter set to %1") .. "...", item.name))
     return true
 end
@@ -552,12 +537,12 @@ function XrayPageNavigator:setCurrentItem(item)
 end
 
 --- @private
-function XrayPageNavigator:reloadPageNavigator(info_text)
+function XrayPageNavigator:reloadPageNavigator()
     --* this might be the case when current method called after adding/updating an Xray item, from ((XrayController#resetDynamicXray)):
     if not self.page_navigator then
         return
     end
-    self:showNavigator(self.initial_browsing_page, info_text)
+    self:showNavigator(self.initial_browsing_page)
     self:restoreActiveScrollPage()
 end
 
@@ -831,16 +816,16 @@ function XrayPageNavigator:addSideButton(item, info_text)
                 self:setCurrentItem(item)
           end
           self:setActiveScrollPage()
-          self:reloadPageNavigator(info_text)
+          self:reloadPageNavigator()
           return true
       end,
 
       --* for marking or unmarking an item as filter criterium:
       hold_callback = function()
           if self.active_filter_name == item.name then
-              return self:resetFilter(item, info_text)
+              return self:resetFilter(item)
           end
-          return self:setFilter(item, info_text)
+          return self:setFilter(item)
       end,
   }})
 end
@@ -867,7 +852,6 @@ function XrayPageNavigator:markActiveSideButton()
             self:setCurrentItem(button.xray_item)
             button.text = self.active_item_marker .. button.text
             self.active_side_buttons[1] = r
-            self.info_panel_text = self.active_side_button_info_text
         end
 
         if r == self.active_side_buttons[self.active_side_tab] and not self.active_side_button_by_name then
@@ -882,7 +866,6 @@ function XrayPageNavigator:markActiveSideButton()
         end
     end
     self.active_side_button_by_name = nil
-    self.active_side_button_info_text = nil
 end
 
 function XrayPageNavigator:getSideButton(i)
@@ -918,15 +901,28 @@ function XrayPageNavigator:getCurrentTabItem()
 end
 
 --- @private
-function XrayPageNavigator:getInfoPanelText(info_panel_text)
-    if info_panel_text then
-        return info_panel_text
+function XrayPageNavigator:getInfoPanelText()
+    if #self.side_buttons == 0 then
+        return " "
     end
 
-    local side_button = self:getSideButton(1)
+    local active_side_button = self.active_side_buttons[self.active_side_tab]
+
+    --* the info panel texts per button were computed in ((XrayPageNavigator#addSideButton)):
+    if has_text(self.info_panel_texts[self.active_side_tab][active_side_button]) then
+        return self.info_panel_texts[self.active_side_tab][active_side_button]
+    end
+
+    if has_text(self.first_info_panel_text) and active_side_button == 1 then
+        --* this text was generated for the first item via ((XrayPageNavigator#markActiveSideButton)) > ((XrayPageNavigator#generateInfoTextForFirstSideButton))
+        return self.first_info_panel_text
+    end
+
+    local side_button = self:getSideButton(active_side_button)
+
     --* xray_item.info_text for first button was generated in ((XrayPageNavigator#markActiveSideButton)) > ((XrayPageNavigator#generateInfoTextForFirstSideButton)):
     --* info_text for each button generated via ((XrayPageNavigator#markedItemRegister)) > ((XrayPageNavigator#getItemInfoText)) > ((XrayPageNavigator#addSideButton)):
-    return side_button and side_button.info_text or ""
+    return side_button and (side_button.info_text or self:getItemInfoText(side_button.xray_item)) or " "
 end
 
 function XrayPageNavigator:resetCache()
@@ -1038,13 +1034,11 @@ end
 --- @private
 function XrayPageNavigator:handleItemHitFound(page, called_upon_hold_button)
     self.navigator_page_no = page
-    local first_info_panel_text = self:getItemInfoText(self.page_navigator_filter_item)
     self.active_side_button_by_name = self.active_filter_name
-    self.active_side_button_info_text = first_info_panel_text
     if called_upon_hold_button then
         self:undoTemporaryFilterItem()
     end
-    self:showNavigator(self.initial_browsing_page, first_info_panel_text)
+    self:showNavigator(self.initial_browsing_page)
 end
 
 --- @private
