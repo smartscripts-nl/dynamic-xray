@@ -157,6 +157,16 @@ local XraySettings = WidgetContainer:new{
             explanation = _("Page Navigator: with this setting you can determine the font size of the side and bottom panels."),
             locked = 0,
         },
+        PN_popup_xpos_factor = {
+            value = 1.62,
+            explanation = "With this factor you can finetune the horizontal position of the popup menu called with the second button from the left in Page Navigator. Bigger values will move the menu more to the right. NB: use a point for decimal numbers.",
+            locked = 0,
+        },
+        PN_popup_ypos_factor = {
+            value = 2.25,
+            explanation = "With this factor you can finetune the vertical position of the popup menu called with the second button from the left in Page Navigator. Bigger values move the menu higher up. NB: use a point for decimal numbers.",
+            locked = 0,
+        },
         UI_mode = {
             value = "page",
             options = { "page", "paragraph" },

@@ -218,6 +218,7 @@ function XrayButtons:forPageNavigator(parent)
              end
          },
         KOR.buttoninfopopup:forXrayButtonsPopup({
+            is_anchor_button = true,
             callback = function()
                 return parent:execShowPopupButtonsCallback(parent)
             end

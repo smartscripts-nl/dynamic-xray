@@ -703,14 +703,6 @@ end
 --* see ((MOVE_MOVABLES_TO_Y_POSITION)) for more info:
 function Button:onTapSelectButton(irr, pos)
     irr = pos
-    local dims = self:getSize()
-    --* for usage with ((MovableContainer#ensureAnchor)):
-    KOR.registry:set("anchor_button", {
-        x = pos.pos.x,
-        y = pos.pos.y,
-        w = dims.w,
-        h = dims.h,
-    })
     if self.enabled or self.allow_tap_when_disabled then
         if self.callback then
             if G_reader_settings:isFalse("flash_ui") then

@@ -203,7 +203,7 @@ function ButtonInfoPopup:forXrayButtonsPopup(props)
 			fgcolor = KOR.colors.lighter_indicator_color,
 			icon = "popup-menu",
 		},
-		info = _("popup menu icon | Show popup menu. You can close it by tapping on the screen somewhere outside the menu."),
+		info = _("popup menu icon | Show popup menu. You can close it by tapping on the screen somewhere outside the menu. With PN_popup_xpos_factor and PN_popup_xpos_factor in XraySettings you can finetune the positioning of this menu."),
 		callback_label = _("show"),
 		--! callback defined by calling module
 	}, props)

@@ -35,6 +35,7 @@ local has_items = has_items
 local has_no_items = has_no_items
 local has_text = has_text
 local math = math
+local math_floor = math.floor
 local pairs = pairs
 local table = table
 local table_insert = table.insert
@@ -85,6 +86,9 @@ end
 --- @field page_navigator XrayPageNavigator
 local HtmlBox = InputContainer:extend{
     additional_key_events = nil,
+    anchor_button_height = nil,
+    anchor_button_no = nil,
+    anchor_button_width = nil,
     after_close_callback = nil,
     align = "center",
     buttons_table = nil,
@@ -94,6 +98,7 @@ local HtmlBox = InputContainer:extend{
     frame_content_fullscreen = nil,
     frame_content_windowed = nil,
     fullscreen = false,
+    has_anchor_button = false,
     height = nil,
     html = nil,
     info_panel_buttons = nil,
@@ -342,6 +347,19 @@ function HtmlBox:generateInfoButtons()
         show_parent = self,
         button_font_weight = "normal",
     }
+
+    if self.has_anchor_button then
+        local acount = #self.info_panel_buttons[1]
+        self.anchor_button_width = math_floor(self.info_panel_width / acount)
+        self.anchor_button_height = buttons:getSize().h
+        for i = 1, acount do
+            if self.info_panel_buttons[1][i].is_anchor_button then
+                self.anchor_button_no = i
+                break
+            end
+        end
+    end
+
     local buttons_height = buttons:getSize().h
     self.info_panel_nav_buttons = CenterContainer:new{
         dimen = Geom:new{
@@ -373,7 +391,7 @@ function HtmlBox:generateInfoPanel()
         dialog = self,
         --* info_panel_width was computed in ((HtmlBox#generateInfoButtons)):
         width = self.info_panel_width,
-        height = math.floor(self.screen_height * DX.s.PN_info_panel_height),
+        height = math_floor(self.screen_height * DX.s.PN_info_panel_height),
     }
     self.info_panel_separator = LineWidget:new{
         background = KOR.colors.line_separator,
@@ -672,9 +690,9 @@ function HtmlBox:computeHeights()
     -- #((set HtmlBox dialog height))
     --* compare ((set HtmlBox dialog width))
     if type(self.window_size) == "table" then
-        self.height = math.min(self.avail_height, math.floor(self.window_size.h))
+        self.height = math.min(self.avail_height, math_floor(self.window_size.h))
         self.content_height = self.height - others_height
-        local nb_lines = math.floor(self.content_height / self.content_line_height)
+        local nb_lines = math_floor(self.content_height / self.content_line_height)
         self.content_height = nb_lines * self.content_line_height
 
     elseif self.is_fullscreen or self.window_size == "max" then
@@ -682,7 +700,7 @@ function HtmlBox:computeHeights()
         self.content_height = self.height - others_height
 
     elseif self.window_size == "large" then
-        self.content_height = math.floor(self.avail_height * 0.7)
+        self.content_height = math_floor(self.avail_height * 0.7)
         --* But we want it to fit to the lines that will show, to avoid
         --* any extra padding
         local nb_lines = Math.round(self.content_height / self.content_line_height)
@@ -692,20 +710,20 @@ function HtmlBox:computeHeights()
     elseif self.window_size == "highcenter" then
         self.height = self.avail_height
         self.content_height = self.height - others_height
-        local nb_lines = math.floor(self.content_height / self.content_line_height)
-        self.content_height = math.floor(nb_lines * self.content_line_height * 0.95)
+        local nb_lines = math_floor(self.content_height / self.content_line_height)
+        self.content_height = math_floor(nb_lines * self.content_line_height * 0.95)
 
     elseif self.window_size == "medium" then
         --* Available height for definition + components
         self.height = self.avail_height
         self.content_height = self.height - others_height
-        local nb_lines = math.floor(self.content_height / self.content_line_height)
-        self.content_height = math.floor(nb_lines * self.content_line_height * 0.35)
+        local nb_lines = math_floor(self.content_height / self.content_line_height)
+        self.content_height = math_floor(nb_lines * self.content_line_height * 0.35)
 
     else
         --* Main content height was previously computed as 0.5*0.7*screen_height, so keep
         --* it that way. Components will add themselves to that.
-        self.content_height = math.floor(self.avail_height * 0.5 * 0.7)
+        self.content_height = math_floor(self.avail_height * 0.5 * 0.7)
         --* But we want it to fit to the lines that will show, to avoid
         --* any extra padding
         local nb_lines = Math.round(self.content_height / self.content_line_height)
@@ -748,7 +766,7 @@ function HtmlBox:generateSidePanel()
     end
 
     --* self.page_navigator.current_item is set from the callback of a side_button in ((XrayPageNavigator#addSideButton)) and when marking the active button in ((XrayPageNavigator#markActiveSideButton)):
-    --! the linked_items prop for the current_item were set in ((XrayPageNavigator#populateLinkedItemButtons)):
+    --! the linked_items prop for the current_item were set in ((XrayPageNavigator#computeLinkedItems)):
     local has_linked_items =
         pn.active_side_tab == 1
         and pn.current_item
@@ -864,7 +882,7 @@ function HtmlBox:generateSidePanelButtons()
             justified = false,
             dialog = self,
             width = self.side_buttons_width,
-            height = math.floor(self.screen_height * 0.18),
+            height = math_floor(self.screen_height * 0.18),
         }
         return
     end
@@ -1044,6 +1062,15 @@ function HtmlBox:generateWidget()
 
     local frame = self.is_fullscreen and self.frame_content_fullscreen or self.frame_content_windowed
 
+    local content_height = self.content_widget:getSize().h
+    local y
+    if self.anchor_button_no then
+        y = self.box_title:getSize().h
+        + self.separator:getSize().h
+        + self.content_top_margin:getSize().h
+        + content_height
+    end
+
     local elements = VerticalGroup:new{
         self.box_title,
         self.separator,
@@ -1052,7 +1079,7 @@ function HtmlBox:generateWidget()
         CenterContainer:new{
             dimen = Geom:new{
                 w = self.inner_width,
-                h = self.content_widget:getSize().h,
+                h = content_height,
             },
             self.content_widget,
         },
@@ -1061,12 +1088,18 @@ function HtmlBox:generateWidget()
 
     if self.tabs_table then
         table_insert(elements, 2, self.tabs_table)
+        if self.anchor_button_no then
+            y = y + self.tabs_table:getSize().h
+        end
     end
 
     --? I don't know why I need this hack on my Bigme phone:
     if self.is_fullscreen and DX.s.is_mobile_device then
         local spacer = VerticalSpan:new{ width = Size.padding.large }
         table.insert(elements, 2, spacer)
+        if self.anchor_button_no then
+            y = y + spacer:getSize().h
+        end
     end
 
     if not self.no_buttons_row then
@@ -1076,6 +1109,16 @@ function HtmlBox:generateWidget()
                 h = self.button_table:getSize().h,
             },
             self.button_table,
+        })
+    end
+
+    if self.anchor_button_no then
+        --* for usage with ((MovableContainer#moveToAnchor)):
+        KOR.registry:set("anchor_button", {
+            x = self.content_padding_h + math_floor(DX.s.PN_popup_xpos_factor * self.anchor_button_width),
+            parent_y = y,
+            w = self.anchor_button_width,
+            h = self.anchor_button_height,
         })
     end
 
@@ -1206,7 +1249,7 @@ function HtmlBox:setWidth()
     --* compare ((set HtmlBox dialog height))
     if not self.width then
         if type(self.window_size) == "table" then
-            self.width = math.floor(self.window_size.w)
+            self.width = math_floor(self.window_size.w)
         --* always use max available width on Bigme:
         elseif self.is_fullscreen then
             self.width = self.screen_width
@@ -1215,7 +1258,7 @@ function HtmlBox:setWidth()
         elseif self.window_size == "large" then
             self.width = self.screen_width - 2 * Size.margin.extreme
         elseif self.window_size == "highcenter" then
-            self.width = math.floor(self.screen_width * 0.6)
+            self.width = math_floor(self.screen_width * 0.6)
         elseif self.window_size == "medium" then
             self.width = self.screen_width - Screen:scaleBySize(300)
         else

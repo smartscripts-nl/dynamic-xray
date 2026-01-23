@@ -311,7 +311,7 @@ function SettingsManager:showPromptForNewSettingsValue(key, value, current_nr, i
         title = self:removeHotkeyPrefix(key),
         allow_newline = false,
         input_type = itype == "number" and "number" or "text",
-        description = explanation:gsub("%.$", ""),
+        description = explanation:gsub("%.$", ":"),
         input = tostring(value),
         callback = function(new_value)
             self:handleNewValue(new_value, key, current_nr, itype)

@@ -145,6 +145,7 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text)
         modal = false,
         info_panel_text = self:getInfoPanelText(info_panel_text),
         window_size = "fullscreen",
+        has_anchor_button = true,
         key_events_module = key_events_module,
         no_buttons_row = true,
         top_buttons_left = DX.b:forPageNavigatorTopLeft(self),
@@ -1233,7 +1234,7 @@ end
 
 --- @param iparent XrayPageNavigator
 function XrayPageNavigator:execShowPopupButtonsCallback(iparent)
-    --* this width was set when tapping on the parent button, in ((Button#onTapSelectButton)):
+    --* these anchor dims - computed based on the widths and heights of HtmlBox elements - were set in ((HtmlBox#generateWidget)):
     local anchor = KOR.registry:get("anchor_button")
     local buttons = DX.b:forPageNavigatorPopupButtons(iparent)
     self.popup_menu = ButtonDialog:new{
@@ -1245,12 +1246,13 @@ function XrayPageNavigator:execShowPopupButtonsCallback(iparent)
         end,
         buttons = buttons,
     }
+    anchor.y = anchor.parent_y - math_ceil(DX.s.PN_popup_ypos_factor * self.popup_menu.inner_height)
     self.movable_popup_menu = MovableContainer:new{
         self.popup_menu,
         dimen = Screen:getSize(),
     }
 
-    self.movable_popup_menu:moveToAnchor(anchor, #buttons)
+    self.movable_popup_menu:moveToAnchor(anchor)
     UIManager:show(self.movable_popup_menu)
     return true
 end

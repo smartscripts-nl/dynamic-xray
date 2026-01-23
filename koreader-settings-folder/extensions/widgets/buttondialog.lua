@@ -95,6 +95,7 @@ local ButtonDialog = InputContainer:extend{
     -- (with the first one we can use the standard dialog or otherwise my adapted version):
     width_is_dependent_on_button_count = false,
     button_width = 0.25,
+    inner_height = nil,
     ui = nil,
 }
 
@@ -201,6 +202,7 @@ function ButtonDialog:init()
                 padding_bottom = 0,
             }
     }
+    self.inner_height = scontainer and scontainer:getSize().h or self.buttontable:getSize().h
 
     self:positionButtonTable()
 
