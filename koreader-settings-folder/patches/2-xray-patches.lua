@@ -66,7 +66,6 @@ local logger = require("logger")
 local tr = KOR:initCustomTranslations()
 local util = require("util")
 local Screen = Device.screen
-local Size = require("ui/size")
 local Utf8Proc = require("ffi/utf8proc")
 local T = require("ffi/util").template
 

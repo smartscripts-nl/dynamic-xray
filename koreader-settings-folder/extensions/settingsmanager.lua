@@ -67,21 +67,31 @@ function SettingsManager:setUp(tab_labels)
         end
         self:updateSettingsFromTemplate()
     end
-
-    local locked_indicator
     for key, props in pairs(self.settings) do
-        self.parent[key] = props.value
-        locked_indicator = props.locked == 1 and " " .. KOR.icons.lock_bare or ""
-        table_insert(self.settings_for_menu, {
-            key = key,
-            value = props.value,
-            explanation = props.explanation,
-            locked = props.locked,
-            validator = props.validator,
-            options = props.options,
-            text = key .. ": " .. tostring(props.value) .. locked_indicator }
-        )
+        self:setKeyAndValue(key, props)
     end
+end
+
+--- @private
+function SettingsManager:setKeyAndValue(key, props)
+    local locked_indicator = props.locked == 1 and " " .. KOR.icons.lock_bare or ""
+    if props.type == "number" and type(props.value) ~= "number" then
+        props.value = tonumber(props.value)
+        if not props.value then
+            props.value = 1
+        end
+    end
+    self.parent[key] = props.value
+    table_insert(self.settings_for_menu, {
+        key = key,
+        value = props.value,
+        explanation = props.explanation,
+        locked = props.locked,
+        validator = props.validator,
+        options = props.options,
+    type = props.type,
+        text = key .. ": " .. tostring(props.value) .. locked_indicator }
+    )
 end
 
 --- @private
@@ -118,9 +128,14 @@ function SettingsManager:settingsWereUpdatedFromTemplate()
                 self.settings[key].explanation = props.explanation
                 settings_were_updated = true
             end
-            --* change updated validator from template:
+            --* change updated validators from template:
             if self.settings[key].validator ~= props.validator then
                 self.settings[key].validator = props.validator
+                settings_were_updated = true
+            end
+            --* change updated types from template:
+            if self.settings[key].type ~= props.type then
+                self.settings[key].type = props.type
                 settings_were_updated = true
             end
             --* change updated options from template:
@@ -215,7 +230,7 @@ function SettingsManager:updateItemTableForTab()
                 or (self.active_tab == 2 and is_hotkey)
                 or (self.active_tab == 3 and setting.locked == 1)
         then
-            setting.type = type(setting.value)
+            setting.type = setting.type or type(setting.value)
             local current_nr = nr
             list_no = list_no + 1
             item = {
@@ -223,6 +238,7 @@ function SettingsManager:updateItemTableForTab()
                 key = setting.key,
                 explanation = setting.explanation,
                 validator = setting.validator,
+                type = setting.type,
                 editable = true,
                 deletable = false,
                 callback = function()
@@ -231,6 +247,7 @@ function SettingsManager:updateItemTableForTab()
                         KOR.messages:notify(not_editable_message)
                         return
                     end
+
                     self:editSetting(setting, current_nr)
                 end
             }
@@ -248,8 +265,8 @@ function SettingsManager:onMenuHoldSettings(item)
 end
 
 --- @private
-function SettingsManager:chooseSetting(key, current_nr, current_value, options, explanation)
-    local has_boolean_options = type(current_value) == "boolean" and not options
+function SettingsManager:chooseSetting(key, current_nr, current_value, options, explanation, itype)
+    local has_boolean_options = itype ~= "number" and type(current_value) == "boolean" and not options
     if has_boolean_options then
         options = { true, false }
     end
@@ -296,9 +313,12 @@ function SettingsManager:editSetting(settings, current_nr)
     local itype = settings.type
     local options = settings.options
     local explanation = settings.explanation
+    if itype == "number" then
+        value = tonumber(settings.value)
+    end
     KOR.dialogs:showOverlay()
     if options or itype == "boolean" then
-        self:chooseSetting(key, current_nr, value, options, explanation)
+        self:chooseSetting(key, current_nr, value, options, explanation, itype)
         return
     end
 
@@ -324,6 +344,9 @@ end
 
 --- @private
 function SettingsManager:handleNewValue(new_value, key, current_nr, itype)
+    if itype == "number" then
+        new_value = tonumber(new_value)
+    end
     local is_valid = false
     if itype == "boolean" and new_value == "true" or new_value == "1" then
         new_value = true

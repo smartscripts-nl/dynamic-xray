@@ -220,7 +220,7 @@ function XrayButtons:forPageNavigator(parent)
         KOR.buttoninfopopup:forXrayButtonsPopup({
             is_anchor_button = true,
             callback = function()
-                return parent:execShowPopupButtonsCallback(parent)
+                return parent:execShowPopupButtonsCallback()
             end
         }),
         KOR.buttoninfopopup:forSearchAllLocations({

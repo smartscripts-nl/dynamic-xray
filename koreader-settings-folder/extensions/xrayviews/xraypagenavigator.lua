@@ -81,6 +81,7 @@ local XrayPageNavigator = WidgetContainer:new{
     non_filtered_items_marker_smallcaps_italic = "<i style='font-variant: small-caps'>%1</i>",
     non_filtered_layouts = nil,
     page_navigator_filter_item = nil,
+    popup_buttons = nil,
     popup_menu = nil,
     previous_filter_item = nil,
     previous_filter_name = nil,
@@ -111,6 +112,8 @@ function XrayPageNavigator:showNavigator(initial_browsing_page, info_panel_text)
         KOR.messages:notify(_("the page navigator is only available in epubs etc..."))
         return
     end
+
+    self.popup_buttons = DX.b:forPageNavigatorPopupButtons(self)
 
     --! watch out: this is another var than navigator_page_no on the next line; if you make their names identical, then browsing to next or previous page is not possible anymore:
     --* initial_browsing_page is the page on which you started using the Navigator, while self.navigator_page_no is the actual page you are viewing in the Navigator after browsing to other pages:
@@ -1232,11 +1235,9 @@ function XrayPageNavigator:execShowPageBrowserCallback(iparent)
     return true
 end
 
---- @param iparent XrayPageNavigator
-function XrayPageNavigator:execShowPopupButtonsCallback(iparent)
+function XrayPageNavigator:execShowPopupButtonsCallback()
     --* these anchor dims - computed based on the widths and heights of HtmlBox elements - were set in ((HtmlBox#generateWidget)):
     local anchor = KOR.registry:get("anchor_button")
-    local buttons = DX.b:forPageNavigatorPopupButtons(iparent)
     self.popup_menu = ButtonDialog:new{
         forced_width = anchor.w,
         bordercolor = KOR.colors.line_separator,
@@ -1244,7 +1245,7 @@ function XrayPageNavigator:execShowPopupButtonsCallback(iparent)
         tap_close_callback = function()
             self:closePopupMenu()
         end,
-        buttons = buttons,
+        buttons = self.popup_buttons,
     }
     anchor.y = anchor.parent_y - math_ceil(DX.s.PN_popup_ypos_factor * self.popup_menu.inner_height)
     self.movable_popup_menu = MovableContainer:new{

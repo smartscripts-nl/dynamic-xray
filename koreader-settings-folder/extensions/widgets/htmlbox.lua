@@ -1116,7 +1116,7 @@ function HtmlBox:generateWidget()
         --* for usage with ((MovableContainer#moveToAnchor)):
         KOR.registry:set("anchor_button", {
             x = self.content_padding_h + math_floor(DX.s.PN_popup_xpos_factor * self.anchor_button_width),
-            parent_y = y,
+            parent_y = y - 4 * self.anchor_button_height,
             w = self.anchor_button_width,
             h = self.anchor_button_height,
         })
