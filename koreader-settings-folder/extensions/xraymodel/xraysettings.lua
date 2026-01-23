@@ -167,7 +167,7 @@ local XraySettings = WidgetContainer:new{
             type = "number",
         },
         PN_popup_ypos_factor = {
-            value = 2.25,
+            value = 0.8,
             explanation = "With this factor you can finetune the vertical position of the popup menu called with the second button from the left in Page Navigator. Bigger values move the menu higher up. NB: use a point for decimal numbers.",
             locked = 0,
             type = "number",
