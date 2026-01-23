@@ -141,15 +141,27 @@ local XraySettings = WidgetContainer:new{
             value = 10,
             explanation = "This variables enables the numbers of spaces used to indent the item information in e.g. the PN item info panel at the bottom.",
             locked = 0,
-            validator = "item_info_indent",
+            validator = {
+                name = "item_info_indent",
+                min_value = 4,
+                max_value = 14,
+                default_value = 10,
+                value_step = 1,
+            },
             type = "number",
         },
         PN_info_panel_height = {
             --* this value is used in ((HtmlBox#generateInfoPanel)):
             value = 0.22,
             --* this validator references a function included in self.validators:
-            validator = "info_panel_height",
-            explanation = _("Page Navitator: this setting, always a fraction between 0.1 and 0.8, determines the height of the bottom info panel relative to the available screen height."),
+            validator = {
+                name = "info_panel_height",
+                min_value = 0.1,
+                max_value = 0.5,
+                default_value = 0.22,
+                value_step = 0.01,
+            },
+            explanation = _("Page Navitator: this setting, a fraction between 0.1 and 0.8, determines the height of the bottom info panel relative to the screen height."),
             locked = 0,
             type = "number",
         },

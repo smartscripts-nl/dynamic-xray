@@ -6,6 +6,7 @@ local CenterContainer = require("ui/widget/container/centercontainer")
 local DataStorage = require("datastorage")
 local KOR = require("extensions/kor")
 local LuaSettings = require("luasettings")
+local SpinWidget = require("ui/widget/spinwidget")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
@@ -15,6 +16,7 @@ local T = require("ffi/util").template
 local DX = DX
 local G_reader_settings = G_reader_settings
 local has_text = has_text
+local math_floor = math.floor
 local pairs = pairs
 local table = table
 local table_insert = table.insert
@@ -307,6 +309,41 @@ function SettingsManager:chooseSetting(key, current_nr, current_value, options, 
 end
 
 --- @private
+function SettingsManager:setNumber(key, current_nr, current_value, validator_props, explanation)
+    local is_decimal = math_floor(validator_props.min_value) ~= validator_props.min_value
+    current_value = is_decimal and 100 * current_value or current_value
+    local min_value = is_decimal and 100 * validator_props.min_value or validator_props.min_value
+    local max_value = is_decimal and 100 * validator_props.max_value or validator_props.max_value
+    local default_value = is_decimal and 100 * validator_props.default_value or validator_props.default_value
+    local value_step = is_decimal and 100 * validator_props.value_step or validator_props.value_step
+    if is_decimal then
+        explanation = explanation .. "\n" .. _("THE VALUE YOU CHOOSE WILL BE DIVIDED BY 100!")
+    end
+
+    local number_value_adaptor = SpinWidget:new{
+        value = current_value,
+        info_text = explanation:gsub("%.$", ":"),
+        value_min = min_value,
+        value_max = max_value,
+        default_value = default_value,
+        value_step = value_step,
+        keep_shown_on_apply = false,
+        title_text = _("Change number value"),
+        callback = function(spin)
+            local value = is_decimal and spin.value/100 or spin.value
+            self:saveSetting(key, value)
+            self:changeMenuSetting(key, value, current_nr)
+            KOR.messages:notify(_("setting ") .. key .. _(" modified to ") .. tostring(value), 4)
+            self:showParentDialog()
+        end,
+        cancel_callback = function()
+            self:showParentDialog()
+        end
+    }
+    UIManager:show(number_value_adaptor)
+end
+
+--- @private
 function SettingsManager:editSetting(settings, current_nr)
     local key = settings.key
     local value = settings.value
@@ -319,6 +356,9 @@ function SettingsManager:editSetting(settings, current_nr)
     KOR.dialogs:showOverlay()
     if options or itype == "boolean" then
         self:chooseSetting(key, current_nr, value, options, explanation, itype)
+        return
+    elseif itype == "number" and settings.validator then
+        self:setNumber(key, current_nr, value, settings.validator, explanation)
         return
     end
 
@@ -358,7 +398,7 @@ function SettingsManager:handleNewValue(new_value, key, current_nr, itype)
         new_value = tonumber(new_value)
         --* if a validator was provided, use that the validate the new value:
         if self.settings[key].validator then
-            local validator_index = self.settings[key].validator
+            local validator_index = self.settings[key].validator["name"]
             is_valid = self.parent.validators[validator_index](new_value)
             --* if an error string was returned, instead of a boolean value:
             if type(is_valid) == "string" then
