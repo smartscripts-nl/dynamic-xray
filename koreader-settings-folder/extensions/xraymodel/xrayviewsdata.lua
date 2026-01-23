@@ -989,7 +989,7 @@ function XrayViewsData:generateXrayItemInfo(items, xray_explanations, i, name, i
     end
 
     local xray_type_icon = DX.vd:getItemTypeIcon(items[i])
-    local hits = DX.pn:itemInfoAddHits("", items[i])
+    local hits = DX.pn:itemInfoAddHits(items[i])
 
     --* here the info gets combined:
     -- #((xray items dialog add match reliability explanations))

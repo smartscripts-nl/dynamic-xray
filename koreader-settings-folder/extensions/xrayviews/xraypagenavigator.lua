@@ -38,6 +38,7 @@ local has_no_text = has_no_text
 local has_text = has_text
 local math_ceil = math.ceil
 local os_date = os.date
+local table_concat = table.concat
 local table_insert = table.insert
 local tonumber = tonumber
 
@@ -400,7 +401,6 @@ function XrayPageNavigator:getItemInfoText(item)
         return "\n" .. reliability_indicator .. self.cached_items[item.name]
     end
 
-    self.alias_indent_corrected = DX.s.is_mobile_device and self.alias_indent .. self.alias_indent .. self.alias_indent .. self.alias_indent or self.alias_indent
     self.max_line_length = DX.s.is_mobile_device and 40 or self.max_line_length
 
     local reliability_indicator_placeholder = item.reliability_indicator and "  " or ""
@@ -409,17 +409,22 @@ function XrayPageNavigator:getItemInfoText(item)
     local icon = DX.vd:getItemTypeIcon(item, "bare")
     --* alias_indent suffixed with 2 spaces, because of icon .. " ":
     local description = item.description
-    description = KOR.strings:splitLinesToMaxLength(icon .. " " .. item.name .. ": " .. description, self.max_line_length, self.alias_indent .. "  ", nil, "dont_indent_first_line")
+    description = KOR.strings:splitLinesToMaxLength(icon .. " " .. item.name .. ": " .. description, self.max_line_length, self.alias_indent .. "  ", nil, "dont_indent_first_line")
     local info = "\n" .. reliability_indicator_placeholder .. description .. "\n"
 
-    info = self:itemInfoAddHits(info, item)
+    local info_table = {}
+    local indent = self:getItemInfoIndentation()
 
-    self.sub_info_separator = "     "
-    if item.aliases then
-        info = self:splitLinesToMaxLength(info, item.aliases, KOR.icons.xray_alias_bare .. " " .. item.aliases)
+    local hits_info = self:itemInfoAddHits(item, indent)
+    if has_text(hits_info) then
+        table_insert(info_table, hits_info .. "\n")
     end
-    if item.linkwords then
-        info = self:splitLinesToMaxLength(info, item.linkwords, KOR.icons.xray_link_bare .. " " .. item.linkwords)
+    --* for use with ((XrayPageNavigator#splitLinesToMaxLength)):
+    self.alias_indent_corrected = DX.s.is_mobile_device and self.alias_indent .. self.alias_indent .. self.alias_indent .. self.alias_indent or self.alias_indent
+    self:itemInfoAddPropInfo(item, "aliases", KOR.icons.xray_alias_bare, info_table, indent)
+    self:itemInfoAddPropInfo(item, "linkwords", KOR.icons.xray_link_bare, info_table, indent)
+    if #info_table > 0 then
+        info = info .. " \n" .. table_concat(info_table, "")
     end
 
     --* remove reliability_indicator_placeholder:
@@ -429,7 +434,17 @@ function XrayPageNavigator:getItemInfoText(item)
 end
 
 --- @private
-function XrayPageNavigator:itemInfoAddHits(info, item)
+function XrayPageNavigator:getItemInfoIndentation()
+    local indent = " "
+    return indent:rep(DX.s.item_info_indent)
+end
+
+--- @private
+function XrayPageNavigator:itemInfoAddHits(item, indent)
+    --* when called from ((XrayViewsData#generateXrayItemInfo)) - so when generating an overview of all Xray items -, add no additional indentation:
+    if not indent then
+        indent = ""
+    end
     local hits = ""
     local series_hits_added = false
     if parent.current_series and has_content(item.series_hits) then
@@ -440,28 +455,30 @@ function XrayPageNavigator:itemInfoAddHits(info, item)
         local separator = series_hits_added and ", " or KOR.icons.graph_bare .. " "
         hits = hits .. separator .. _("book") .. " " .. tonumber(item.book_hits)
     end
-    --* when called from list of all items in TextViewer > ((XrayViewsData#generateXrayItemInfo)):
-    if info == "" then
-        return hits
-    end
     if has_text(hits) then
-        return info .. "\n" .. DX.vd.info_indent .. hits
+        return indent .. hits
     end
-
-    return info
+    return hits
 end
 
 --- @private
-function XrayPageNavigator:splitLinesToMaxLength(info, prop, text)
+function XrayPageNavigator:itemInfoAddPropInfo(item, prop, icon, info_table, indent)
+    if not item[prop] then
+        return
+    end
+
+    local prop_info = self:splitLinesToMaxLength(item[prop], icon .. " " .. item[prop])
+    if has_text(prop_info) then
+        table_insert(info_table, indent .. prop_info .. "\n")
+    end
+end
+
+--- @private
+function XrayPageNavigator:splitLinesToMaxLength(prop, text)
     if not has_text(prop) then
-        return info
+        return ""
     end
-    local separator = self.sub_info_separator ~= "" and self.sub_info_separator or ""
-    text = KOR.strings:splitLinesToMaxLength(separator .. text, self.max_line_length, self.alias_indent_corrected, nil, "dont_indent_first_line")
-    if separator ~= "" then
-        separator = "\n"
-    end
-    return info .. separator .. text
+    return KOR.strings:splitLinesToMaxLength(text, self.max_line_length - DX.s.item_info_indent, self.alias_indent_corrected, nil, "dont_indent_first_line")
 end
 
 --- @private
@@ -931,6 +948,7 @@ function XrayPageNavigator:resetCache()
     self.cached_hits_by_needle = {}
     self.cached_html_by_page_no = {}
     self.cached_items = {}
+    self.info_panel_texts = { {}, {} }
     self.current_item = nil
 end
 

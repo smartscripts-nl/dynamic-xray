@@ -137,6 +137,13 @@ local XraySettings = WidgetContainer:new{
             explanation = _("This variables enables a number of default settings for KOReader onder Ubuntu, e.g. that the user can close some dialogs with ESC."),
             locked = 0,
         },
+        item_info_indent = {
+            value = 10,
+            explanation = "This variables enables the numbers of spaces used to indent the item information in e.g. the PN item info panel at the bottom.",
+            locked = 0,
+            validator = "item_info_indent",
+            type = "number",
+        },
         PN_info_panel_height = {
             --* this value is used in ((HtmlBox#generateInfoPanel)):
             value = 0.22,
@@ -210,7 +217,12 @@ local XraySettings = WidgetContainer:new{
     },
     validators = {
         ["info_panel_height"] = function(value)
-            return type(value) == "number" and value >= 0.1 and value <= 0.5 or _("a valid value should lie be between 0.1 and 0.5...")
+            return type(value) == "number" and value >= 0.1 and value <= 0.5 or _("a valid value should lie between 0.1 and 0.5...")
+        end,
+        ["item_info_indent"] = function(value)
+            --* so we immediately will see the new indentation:
+            DX.pn:resetCache()
+            return type(value) == "number" and value >= 4 and value <= 14 or _("a valid value should lie between 4 and 14...")
         end,
     },
 }
