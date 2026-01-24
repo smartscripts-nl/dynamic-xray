@@ -199,7 +199,7 @@ function XrayButtons:forPageNavigator(parent)
         {
              icon = "back",
              callback = function()
-                DX.cb:closePageNavigator()
+                DX.pn:closePageNavigator()
              end
          },
         KOR.buttoninfopopup:forXrayButtonsPopup({
