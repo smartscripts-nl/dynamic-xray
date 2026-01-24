@@ -413,11 +413,20 @@ function ButtonInfoPopup:forXrayPageNavigatorMainButtons(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forXrayPageNavigatorSearchItem(props)
+	return KOR.buttonprops:set({
+		icon = "appbar.search",
+		info = "loupe icon | Search an item in Navigator, via the Items List as selector dialog. First PN will search in backward direction; if no item found there, it will then search in forward direction.",
+		callback_label = _("search"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forXrayPageNavigatorShowPageBrowser(props)
 	return KOR.buttonprops:set({
 		icon = "pages",
 		icon_size_ratio = 0.53,
-		info = T(_("pages icon | Show page currently shown in Pagina Navigator in a page browser popup.\n\n You can use this to quickly jump many page back or forth in Page Navigator, by tapping on a thumnail in the page browser.\n\nHotkey %1 %2"), KOR.icons.arrow_bare, DX.s.hk_show_pagebrowser_from_page_navigator),
+		info = T(_("pages icon | Show page currently shown in Page Navigator in a page browser popup.\n\n You can use this to quickly jump many page back or forth in Page Navigator, by tapping on a thumnail in the page browser.\n\nHotkey %1 %2"), KOR.icons.arrow_bare, DX.s.hk_show_pagebrowser_from_page_navigator),
 		callback_label = _("page browser"),
 		--! callback defined by calling module
 	}, props)

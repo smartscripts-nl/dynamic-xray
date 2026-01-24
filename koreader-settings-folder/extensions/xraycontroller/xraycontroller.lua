@@ -247,8 +247,9 @@ function XrayController:listHasReloadOrDontShowRequest(focus_item, dont_show)
 end
 
 --* in event name format because of gesture:
-function XrayController:onShowList(focus_item, dont_show)
-    DX.d:showList(focus_item, dont_show)
+--* select_mode will be truthy when called from ((XrayCallbacks#execPageNavigatorSearchItemCallback)), so list can be used as an item selector for the item to search in Page Navigator:
+function XrayController:onShowList(focus_item, dont_show, select_mode)
+    DX.d:showList(focus_item, dont_show, select_mode)
 end
 
 --* in event name format because of gesture:

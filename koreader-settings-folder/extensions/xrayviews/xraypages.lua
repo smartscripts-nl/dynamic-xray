@@ -38,6 +38,7 @@ local XrayPages = WidgetContainer:new {
     previous_filter_item = nil,
     previous_filter_name = nil,
     prev_marked_item = nil,
+    search_also_in_opposite_direction = false,
 }
 
 function XrayPages:resultsPageGreaterThan(results, current_page, next_page)
@@ -231,6 +232,13 @@ function XrayPages:toPrevNavigatorPage(goto_prev_item)
     DX.pn:showNavigator(DX.pn.initial_browsing_page)
 end
 
+function XrayPages:toPrevOrNextNavigatorPage(goto_item)
+    DX.sp:resetActiveSideButtons("XrayPages:toPrevOrNextNavigatorPage")
+    local direction = -1
+    self.search_also_in_opposite_direction = true
+    self:gotoPageHitForItem(goto_item, direction)
+end
+
 --- @private
 function XrayPages:gotoPageHitForItem(goto_item, direction)
     Trapper:wrap(function()
@@ -254,8 +262,14 @@ function XrayPages:gotoPageHitForItem(goto_item, direction)
         DX.pn.cached_hits_by_needle[needle] = results
         local next_page = direction == 1 and self:resultsPageGreaterThan(results, current_page) or self:resultsPageSmallerThan(results, current_page)
 
+        local no_page_found = not next_page or next_page == DX.pn.navigator_page_no
+        if self.search_also_in_opposite_direction and no_page_found then
+            next_page = self:resultsPageGreaterThan(results, current_page)
+            no_page_found = not next_page or next_page == DX.pn.navigator_page_no
+        end
+
         if has_no_text(item.aliases) then
-            if not next_page or next_page == DX.pn.navigator_page_no then
+            if no_page_found then
                 self:showNoNextPreviousOccurrenceMessage(direction)
                 return
             end
@@ -270,7 +284,15 @@ function XrayPages:gotoPageHitForItem(goto_item, direction)
             DX.pn.cached_hits_by_needle[needle] = results
             next_page = self:resultsPageGreaterThan(results, current_page, next_page)
         end
-        if not next_page or next_page == DX.pn.navigator_page_no then
+
+        no_page_found = not next_page or next_page == DX.pn.navigator_page_no
+
+        if self.search_also_in_opposite_direction and no_page_found then
+            next_page = self:resultsPageGreaterThan(results, current_page)
+            no_page_found = not next_page or next_page == DX.pn.navigator_page_no
+        end
+
+        if no_page_found then
             self:showNoNextPreviousOccurrenceMessage(direction)
             return
         end

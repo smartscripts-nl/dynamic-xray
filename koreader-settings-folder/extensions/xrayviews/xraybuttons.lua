@@ -208,13 +208,12 @@ function XrayButtons:forPageNavigator(parent)
                 return DX.cb:execShowPopupButtonsCallback(parent)
             end
         }),
-        KOR.buttoninfopopup:forSearchAllLocations({
-             info = _("search-list-icon | Show all occurrences in the book of the item currently displayed below."),
-             callback = function()
-                return DX.cb:execShowItemOccurrencesCallback()
-             end
-         }),
-         KOR.buttoninfopopup:forXrayViewer({
+        KOR.buttoninfopopup:forXrayPageNavigatorSearchItem({
+            callback = function()
+                return DX.cb:execPageNavigatorSearchItemCallback()
+            end,
+        }),
+        KOR.buttoninfopopup:forXrayViewer({
              enabled_function = function()
                  return parent.current_item and true or false
              end,
@@ -289,6 +288,14 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
                     return DX.cb:execExportXrayItemsCallback()
                 end
             })
+        },
+        {
+            KOR.buttoninfopopup:forSearchAllLocations({
+                info = _("search-list-icon | Show all occurrences in the book of the item currently displayed below."),
+                callback = function()
+                    return DX.cb:execShowItemOccurrencesCallback()
+                end
+            }),
         },
         {
             KOR.buttoninfopopup:forXrayPageNavigatorShowPageBrowser({

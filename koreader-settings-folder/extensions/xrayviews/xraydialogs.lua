@@ -575,10 +575,10 @@ function XrayDialogs:getListFilter()
 end
 
 --- @private
-function XrayDialogs:_prepareItemsForList(current_tab_items)
+function XrayDialogs:_prepareItemsForList(current_tab_items, items_for_select)
 
     --* items already prepared, so don't do it again:
-    if current_tab_items and current_tab_items[1] and current_tab_items[1].text then
+    if not self.select_mode and current_tab_items and current_tab_items[1] and current_tab_items[1].text then
         return
     end
 
@@ -587,23 +587,36 @@ function XrayDialogs:_prepareItemsForList(current_tab_items)
         local item = current_tab_items[i]
         item.text = DX.vd:generateListItemText(item)
         item.text = KOR.strings:formatListItemNumber(i, item.text)
-        item.callback = function()
+        item.callback = self.select_mode and
+        function()
+            DX.p:toPrevOrNextNavigatorPage(item)
+            self.select_mode = false
+        end
+        or
+        function()
             UIManager:close(self.xray_items_chooser_dialog)
             self.needle_name_for_list_page = item.name
             self:showItemViewer(item, "called_from_list")
         end
+        if self.select_mode and item.text:match("%(%d") then
+            table_insert(items_for_select, item)
+        end
     end
 
-    DX.vd:setProp("current_tab_items", current_tab_items)
+    --KOR.debug:alertTable("XrayDialogs:_prepareItemsForList", "current_tab_items", current_tab_items)
+
+    if not self.select_mode then
+        DX.vd:setProp("current_tab_items", current_tab_items)
+    end
 end
 
 --- @private
-function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, key_events_module)
+function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, items_for_select, key_events_module)
 
     local select_number = focus_item and focus_item.index or 1
 
     --* optionally items are filtered here also:
-    local title = select(2, DX.vd:updateItemsTable(select_number))
+    local title = self.select_mode and _("Select an item") or select(2, DX.vd:updateItemsTable(select_number))
     self.list_title = title
     if not title then
         return
@@ -613,7 +626,7 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, ke
     --* this is the case after editing, deleting or adding xray_items:
     --* if the related items popup is active, after tapping on a name in the reader, show that collection of items instead of all items:
     --* here, if necessary, we format the items just like in ((XrayViewsData#filterAndAddItemToItemTables)):
-    self:_prepareItemsForList(current_tab_items)
+    self:_prepareItemsForList(current_tab_items, items_for_select)
 
     self.xray_items_chooser_dialog = CenterContainer:new{
         dimen = Screen:getSize(),
@@ -642,12 +655,12 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, ke
             KOR.keyevents:unregisterSharedHotkeys(key_events_module)
         end,
         is_borderless = true,
-        top_buttons_left = DX.b:forListTopLeft(self),
+        top_buttons_left = not self.select_mode and DX.b:forListTopLeft(self),
         -- #((filter table example))
         filter = self:getListFilter(),
         title_submenu_buttontable = DX.b:forListSubmenu(),
-        footer_buttons_left = DX.b:forListFooterLeft(focus_item, dont_show, base_icon_size),
-        footer_buttons_right = DX.b:forListFooterRight(base_icon_size),
+        footer_buttons_left = not self.select_mode and DX.b:forListFooterLeft(focus_item, dont_show, base_icon_size),
+        footer_buttons_right = not self.select_mode and DX.b:forListFooterRight(base_icon_size),
         --! don't use after_close_callback or call ((XrayController#resetFilteredItems)), because then filtering items will not work at all!
         onMenuHold = self.onMenuHold,
         items_per_page = self.items_per_page,
@@ -662,13 +675,14 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, ke
         self.xray_items_chooser_dialog = nil
     end
 
+    local subject = self.select_mode and items_for_select or current_tab_items
     if has_text(self.needle_name_for_list_page) then
-        self.xray_items_inner_menu:switchItemTable(title, current_tab_items, nil, {
+        self.xray_items_inner_menu:switchItemTable(title, subject, nil, {
             name = self.needle_name_for_list_page
         })
         self.needle_name_for_list_page = ""
     elseif select_number then
-        self.xray_items_inner_menu:switchItemTable(title, current_tab_items, select_number)
+        self.xray_items_inner_menu:switchItemTable(title, subject, select_number)
     end
 end
 
@@ -726,7 +740,8 @@ function XrayDialogs:refreshItemsList(action_result_message)
     end
 end
 
-function XrayDialogs:showList(focus_item, dont_show)
+function XrayDialogs:showList(focus_item, dont_show, select_mode)
+    self.select_mode = select_mode
 
     --! important for generating texts of xray items in this list: ((XrayViewsData#generateListItemText))
 
@@ -738,6 +753,8 @@ function XrayDialogs:showList(focus_item, dont_show)
 
     --! this condition is needed to prevent this call from triggering ((XrayViewsData#prepareData)) > ((XrayViewsData#indexItems)), because that last call will be done at the proper time via ((XrayDialogs#showList)) > ((XrayModel#getCurrentItemsForView)) > ((XrayViewsData#getCurrentListTabItems)) > ((XrayViewsData#prepareData)) > ((XrayViewsData#indexItems)):
     local current_tab_items = not new_item and DX.m:getCurrentItemsForView()
+        local items_for_select = {}
+        --KOR.debug:alertTable("XrayDialogs:showList", "current_tab_items after", current_tab_items)
     --* this will occur after a filter reset from ((XrayController#resetFilteredItems)) and sometimes when we first call up a definition through ReaderHighlight:
     if new_item or has_no_items(current_tab_items) then
         --* if items were already retrieved from the database, that will not be done again: XrayViewsData.items etc. will be reset from XrayViewsData.item_table, in ((XrayViewsData#getCurrentListTabItems))
@@ -768,7 +785,7 @@ function XrayDialogs:showList(focus_item, dont_show)
 
     local key_events_module = "XrayItemsList"
 
-    self:initListDialog(focus_item, dont_show, current_tab_items, key_events_module)
+    self:initListDialog(focus_item, dont_show, current_tab_items, items_for_select, key_events_module)
     self.list_is_opened = true
 
     KOR.keyevents:addHotkeysForXrayList(self, key_events_module)
