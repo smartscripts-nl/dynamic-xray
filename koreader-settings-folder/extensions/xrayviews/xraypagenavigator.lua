@@ -19,7 +19,6 @@ local table_concat = table.concat
 local table_insert = table.insert
 local tonumber = tonumber
 
-local count
 --- @type XrayModel parent
 local parent
 
@@ -27,34 +26,19 @@ local parent
 local XrayPageNavigator = WidgetContainer:new{
     active_filter_name = nil,
     alias_indent = "   ",
-    button_labels_injected = "",
     cached_export_info = nil,
     cached_hits_by_needle = {},
     cached_html_and_buttons_by_page_no = {},
     cached_items = {},
     current_item = nil,
-    --* whole word name parts which may not be marked bold and trigger an item hit by themselves only; used in ((XrayPageNavigator#markItem)):
-    forbidden_needle_parts = {
-        ["De"] = true,
-        ["La"] = true,
-        ["Le"] = true,
-    },
     initial_browsing_page = nil,
     key_events = {},
     max_line_length = 80,
     navigator_page_no = nil,
     movable_popup_menu = nil,
-    non_active_layout = nil,
-    non_filtered_items_marker_bold = "<strong>%1</strong>",
-    non_filtered_items_marker_smallcaps = "<span style='font-variant: small-caps'>%1</span>",
-    non_filtered_items_marker_smallcaps_italic = "<i style='font-variant: small-caps'>%1</i>",
-    non_filtered_layouts = nil,
     page_navigator_filter_item = nil,
     popup_buttons = nil,
     popup_menu = nil,
-    previous_filter_item = nil,
-    previous_filter_name = nil,
-    prev_marked_item = nil,
     return_to_current_item = nil,
     return_to_item_no = nil,
     return_to_page = nil,
@@ -65,12 +49,6 @@ local XrayPageNavigator = WidgetContainer:new{
 --- @param xray_model XrayModel
 function XrayPageNavigator:initDataHandlers(xray_model)
     parent = xray_model
-    --* the indices here must correspond to the settings in ((non_filtered_items_layout)):
-    self.non_filtered_layouts = {
-        ["small-caps"] = self.non_filtered_items_marker_smallcaps,
-        ["small-caps-italic"] = self.non_filtered_items_marker_smallcaps_italic,
-        ["bold"] = self.non_filtered_items_marker_bold,
-    }
     self.screen_width = Screen:getWidth()
 end
 
@@ -108,7 +86,7 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
         key_events_module = key_events_module,
         no_buttons_row = true,
         top_buttons_left = DX.b:forPageNavigatorTopLeft(self),
-        --* side_buttons were generated via ((XrayPageNavigator#markedItemRegister)) > ((XraySidePanels#addSideButton)):
+        --* side_buttons were generated via ((XrayPages#markedItemRegister)) > ((XraySidePanels#addSideButton)):
         side_buttons = DX.sp.side_buttons,
         info_panel_buttons = DX.b:forPageNavigator(self),
         hotkeys_configurator = function()
@@ -125,159 +103,6 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
             DX.p:toPrevNavigatorPage()
         end,
     })
-end
-
---- @private
-function XrayPageNavigator:markItemsFoundInPageHtml(html, navigator_page_no)
-    DX.sp:resetSideButtons()
-    self.button_labels_injected = ""
-    self.navigator_page_no = navigator_page_no
-    self.first_info_panel_text = nil
-
-    local hits = DX.u:getXrayItemsFoundInText(html, "for_navigator")
-    if not hits then
-        return html
-    end
-
-    count = #hits
-    self.prev_marked_item = nil
-    self:setNonFilteredItemsLayout()
-    for i = 1, count do
-        html = self:markItemsInHtml(html, hits[i])
-    end
-    --* don't use cache if a filtered item was set (with its additional html):
-    if not self.active_filter_name then
-        self.cached_html_and_buttons_by_page_no[self.navigator_page_no] = {
-            html = html,
-            side_buttons = DX.sp.side_buttons,
-        }
-    end
-    return html
-end
-
---- @private
-function XrayPageNavigator:markItemsInHtml(html, item)
-    if item.name == self.prev_marked_item then
-        return html
-    end
-    self.prev_marked_item = item.name
-    self.is_filter_item = self.active_filter_name == item.name
-
-    local subjects = {
-        "name",
-        "aliases",
-        "short_names",
-    }
-    for l = 1, 3 do
-        if has_text(item[subjects[l]]) then
-            html = self:markItem(item, item[subjects[l]], html, l)
-        end
-    end
-    return html
-end
-
---- @private
-function XrayPageNavigator:markItem(item, subject, html, loop_no)
-    local parts, parts_count, uc, was_marked_for_full
-
-    --* subject can be the name or the alias of an Xray item:
-    subject = KOR.strings:trim(subject)
-    html, was_marked_for_full = self:markFullNameHit(html, item, subject, loop_no)
-    html = self:markAliasHit(html, item, subject)
-
-    parts = KOR.strings:split(subject, ",? ")
-    parts_count = #parts
-    for i = 1, parts_count do
-        uc = parts[i]
-        --* len() > 2: for example don't mark "of" in "Consistorial Court of Discipline":
-        if not self.forbidden_needle_parts[uc] and (uc:match("[A-Z]") or uc:len() > 2) then
-            --* only from here to ((XrayPageNavigator#markedItemRegister)) side panel buttons are populated:
-            html = self:markPartialHits(html, item, uc, i, was_marked_for_full)
-        end
-    end
-    return html
-end
-
---- @private
-function XrayPageNavigator:markAliasHit(html, item)
-
-    local alias_matchers = KOR.strings:getKeywordsForMatchingFrom(item.aliases)
-    local needle
-    count = #alias_matchers
-    for i = 1, count do
-        needle = DX.vd:getNeedleString(alias_matchers[i], "for_substitution")
-        html = self:markNeedleInHtml(html, needle, item.aliases)
-    end
-
-    return html
-end
-
---- @private
-function XrayPageNavigator:markFullNameHit(html, item, subject, loop_no)
-    if item.reliability_indicator ~= DX.tw.match_reliability_indicators.full_name then
-        return html, false
-    end
-
-    local org_html = html
-    local needle = DX.vd:getNeedleString(subject, "for_substitution")
-    html = self:markNeedleInHtml(html, needle)
-    if not needle:match("s$") then
-        local subject_plural
-        needle, subject_plural = DX.vd:getNeedleStringPlural(subject, "for_substitution")
-        html = self:markNeedleInHtml(html, needle, subject_plural)
-    end
-
-    --* only replace swapped name for loop_no 1, because that's the full name:
-    if loop_no > 1 then
-        return html, org_html ~= html
-    end
-
-    local xray_name_swapped = KOR.strings:getNameSwapped(subject)
-    if not xray_name_swapped then
-        return html, org_html ~= html
-    end
-    needle = DX.vd:getNeedleString(xray_name_swapped)
-
-    return self:markNeedleInHtml(html, needle, xray_name_swapped), org_html ~= html
-end
-
---- @private
-function XrayPageNavigator:markPartialHits(html, item, uc, i, was_marked_for_full)
-    local is_term, lc, needle
-
-    local is_lowercase_person = item.xray_type < 3 and not uc:match("[A-Z]")
-    is_term = item.xray_type > 2
-    if (is_term or is_lowercase_person) and i == 1 then
-        uc = KOR.strings:ucfirst(uc)
-    end
-
-    needle = DX.vd:getNeedleString(uc)
-    local uc_needle_plural = DX.vd:getNeedleStringPlural(uc)
-    if was_marked_for_full or (html:match(needle) or html:match(uc_needle_plural)) then
-        --* return html and add item to buttons:
-        return self:markedItemRegister(item, html, uc)
-
-    --* for terms we also try to find lowercase variants of their names:
-    elseif is_term or is_lowercase_person then
-        lc = KOR.strings:lower(uc)
-        needle = DX.vd:getNeedleString(lc)
-        if html:match(needle) then
-            --* return html and add item to buttons:
-            return self:markedItemRegister(item, html, lc)
-        end
-    end
-
-    return html
-end
-
---- @private
-function XrayPageNavigator:setNonFilteredItemsLayout()
-    self.non_active_layout =
-        DX.s.PN_non_filtered_items_layout
-        and
-        self.non_filtered_layouts[DX.s.PN_non_filtered_items_layout]
-        or
-        self.non_filtered_items_marker_smallcaps_italic
 end
 
 --* this info will be consumed for the info panel in ((HtmlBox#generateScrollWidget)):
@@ -370,45 +195,6 @@ function XrayPageNavigator:splitLinesToMaxLength(prop, text)
     return KOR.strings:splitLinesToMaxLength(text, self.max_line_length - DX.s.item_info_indent, self.alias_indent_corrected, nil, "dont_indent_first_line")
 end
 
---- @private
-function XrayPageNavigator:markedItemRegister(item, html, word)
-    local needle = DX.vd:getNeedleString(word, "for_substitution")
-    html = self:markNeedleInHtml(html, needle)
-    local info_text = self:getItemInfoText(item)
-    if info_text and not self.first_info_panel_text then
-        self.first_info_panel_text = info_text
-        self.first_info_panel_item_name = item.name
-    end
-    if self.button_labels_injected:match(item.name) then
-        return html
-    end
-    self.button_labels_injected = self.button_labels_injected .. " " .. item.name
-
-    --* linked item buttons (when DX.sp.active_side_tab == 2) are added in ((XrayPageNavigator#loadDataForPage)) > ((XraySidePanels#computeLinkedItems)):
-    if DX.sp.active_side_tab == 1 then
-        DX.sp:addSideButton(item, info_text)
-    end
-
-    return html
-end
-
---- @private
-function XrayPageNavigator:markNeedleInHtml(html, needle, derived_name)
-    if not self.active_filter_name and not derived_name then
-        return html:gsub(needle, "<strong>%1</strong>")
-    elseif not self.active_filter_name then
-        return html:gsub(needle, "<strong>" .. derived_name .. "</strong>")
-    end
-
-    if derived_name then
-        local non_active_layout = T(self.non_active_layout, derived_name)
-
-        return self.is_filter_item and html:gsub(needle, "<strong>" .. derived_name .. "</strong>") or html:gsub(needle, non_active_layout)
-    end
-
-    return self.is_filter_item and html:gsub(needle, "<strong>%1</strong>") or html:gsub(needle, self.non_active_layout)
-end
-
 function XrayPageNavigator:resetFilter()
     self:setActiveScrollPage()
     self.page_navigator_filter_item = nil
@@ -476,7 +262,7 @@ function XrayPageNavigator:loadDataForPage()
         end
     end
 
-    --* get html and side_buttons from cache; these were stored in ((XrayPageNavigator#markItemsFoundInPageHtml)):
+    --* get html and side_buttons from cache; these were stored in ((XrayPages#markItemsFoundInPageHtml)):
     if self.navigator_page_no and self.cached_html_and_buttons_by_page_no[self.navigator_page_no]
 
         --* don't use cache if a filtered item was set (with its additional html):
@@ -493,8 +279,8 @@ function XrayPageNavigator:loadDataForPage()
 
     local html = DX.p:getPageHtmlForPage(self.navigator_page_no)
     --* self.cached_html_and_buttons_by_page_no will be updated here:
-    --* side_buttons FOR SIDE PANEL TAB NO.1 de facto populated in ((XrayPageNavigator#markedItemRegister)) > ((XraySidePanels#addSideButton)):
-    html = self:markItemsFoundInPageHtml(html, self.navigator_page_no)
+    --* side_buttons FOR SIDE PANEL TAB NO.1 de facto populated in ((XrayPages#markedItemRegister)) > ((XraySidePanels#addSideButton)):
+    html = DX.p:markItemsFoundInPageHtml(html, self.navigator_page_no)
 
     --? eilas, when a filter has been set, linked items for side panel no 2 have to be recomputed for some reason:
     if self.current_item and DX.sp.active_side_tab == 2 and self.active_filter_name then
@@ -538,7 +324,7 @@ function XrayPageNavigator:getInfoPanelText()
     local side_button = DX.sp:getSideButton(active_side_button)
 
     --* xray_item.info_text for first button was generated in ((XraySidePanels#markActiveSideButton)) > ((XraySidePanels#generateInfoTextForFirstSideButton)):
-    --* info_text for each button generated via ((XrayPageNavigator#markedItemRegister)) > ((XrayPageNavigator#getItemInfoText)) > ((XraySidePanels#addSideButton)):
+    --* info_text for each button generated via ((XrayPages#markedItemRegister)) > ((XrayPageNavigator#getItemInfoText)) > ((XraySidePanels#addSideButton)):
     return side_button and (side_button.info_text or self:getItemInfoText(side_button.xray_item)) or " "
 end
 
@@ -584,7 +370,7 @@ function XrayPageNavigator:returnToNavigator()
             self.current_item = self.return_to_current_item
             local side_button = DX.sp:getSideButton(self.return_to_item_no)
             if side_button then
-                --* callback defined in ((XrayPageNavigator#markedItemRegister)):
+                --* callback defined in ((XrayPages#markedItemRegister)):
                 side_button.callback("force_return_to_item")
             end
             self.return_to_current_item = nil

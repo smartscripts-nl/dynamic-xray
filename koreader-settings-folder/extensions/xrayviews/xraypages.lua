@@ -13,6 +13,7 @@ local T = require("ffi/util").template
 local DX = DX
 local has_items = has_items
 local has_no_text = has_no_text
+local has_text = has_text
 local math_ceil = math.ceil
 local tonumber = tonumber
 
@@ -20,7 +21,24 @@ local count
 
 --- @class XrayPages
 local XrayPages = WidgetContainer:new {
+    button_labels_injected = "",
     cached_html_by_page_no = {},
+    debug_filter_process = false,
+    --* whole word name parts which may not be marked bold and trigger an item hit by themselves only; used in ((XrayPages#markItem)):
+    forbidden_needle_parts = {
+        ["De"] = true,
+        ["La"] = true,
+        ["Le"] = true,
+    },
+    is_filter_item = false,
+    non_active_layout = nil,
+    non_filtered_items_marker_bold = "<strong>%1</strong>",
+    non_filtered_items_marker_smallcaps = "<span style='font-variant: small-caps'>%1</span>",
+    non_filtered_items_marker_smallcaps_italic = "<i style='font-variant: small-caps'>%1</i>",
+    non_filtered_layouts = nil,
+    previous_filter_item = nil,
+    previous_filter_name = nil,
+    prev_marked_item = nil,
 }
 
 function XrayPages:resultsPageGreaterThan(results, current_page, next_page)
@@ -273,8 +291,8 @@ end
 
 --- @private
 function XrayPages:setTemporaryFilterItem(goto_item)
-    DX.pn.previous_filter_item = KOR.tables:shallowCopy(DX.pn.page_navigator_filter_item)
-    DX.pn.previous_filter_name = DX.pn.active_filter_name
+    self.previous_filter_item = KOR.tables:shallowCopy(DX.pn.page_navigator_filter_item)
+    self.previous_filter_name = DX.pn.active_filter_name
 
     DX.pn:setProp("page_navigator_filter_item", KOR.tables:shallowCopy(goto_item))
     DX.pn:setProp("active_filter_name", goto_item.name)
@@ -282,14 +300,228 @@ end
 
 --- @private
 function XrayPages:undoTemporaryFilterItem()
-    DX.pn.page_navigator_filter_item = DX.pn.previous_filter_item
-    DX.pn.active_filter_name = DX.pn.previous_filter_name
+    DX.pn:setProp("page_navigator_filter_item", self.previous_filter_item)
+    DX.pn:setProp("active_filter_name", self.previous_filter_name)
 end
 
 --- @private
 function XrayPages:showNoNextPreviousOccurrenceMessage(direction)
     local adjective = direction == 1 and _("next") or _("previous")
     KOR.messages:notify(T(_("no %1 occurrence of this item found..."), adjective))
+end
+
+function XrayPages:markItemsFoundInPageHtml(html, navigator_page_no)
+    DX.sp:resetSideButtons()
+    self.button_labels_injected = ""
+    DX.pn:setProp("navigator_page_no", navigator_page_no)
+    DX.pn:setProp("first_info_panel_text", nil)
+
+    if not self.non_active_layout then
+        self:activateNonFilteredItemsLayout()
+    end
+
+    local hits = DX.u:getXrayItemsFoundInText(html, "for_navigator")
+    if not hits then
+        return html
+    end
+
+    count = #hits
+    self.prev_marked_item = nil
+    self:initNonFilteredItemsLayout()
+    for i = 1, count do
+        html = self:markItemsInHtml(html, hits[i])
+    end
+    --* don't use cache if a filtered item was set (with its additional html):
+    if not DX.pn.active_filter_name then
+        DX.pn.cached_html_and_buttons_by_page_no[DX.pn.navigator_page_no] = {
+            html = html,
+            side_buttons = DX.sp.side_buttons,
+        }
+    end
+    return html
+end
+
+--- @private
+function XrayPages:markedItemRegister(item, html, word)
+    local needle = DX.vd:getNeedleString(word, "for_substitution")
+    html = self:markNeedleInHtml(html, needle)
+    local info_text = DX.pn:getItemInfoText(item)
+    if info_text and not DX.pn.first_info_panel_text then
+        DX.pn:setProp("first_info_panel_text", info_text)
+        DX.pn:setProp("first_info_panel_item_name", item.name)
+
+    end
+    if self.button_labels_injected:match(item.name) then
+        return html
+    end
+    self.button_labels_injected = self.button_labels_injected .. " " .. item.name
+
+    --* linked item buttons (when DX.sp.active_side_tab == 2) are added in ((XrayPageNavigator#loadDataForPage)) > ((XraySidePanels#computeLinkedItems)):
+    if DX.sp.active_side_tab == 1 then
+        DX.sp:addSideButton(item, info_text)
+    end
+
+    return html
+end
+
+--- @private
+function XrayPages:markNeedleInHtml(html, needle, derived_name)
+    if not DX.pn.active_filter_name and not derived_name then
+        return html:gsub(needle, "<strong>%1</strong>")
+    elseif not DX.pn.active_filter_name then
+        return html:gsub(needle, "<strong>" .. derived_name .. "</strong>")
+    end
+
+    if derived_name then
+        local non_active_layout = T(self.non_active_layout, derived_name)
+
+        return self.is_filter_item and html:gsub(needle, "<strong>" .. derived_name .. "</strong>") or html:gsub(needle, non_active_layout)
+    end
+
+    return self.is_filter_item and html:gsub(needle, "<strong>%1</strong>") or html:gsub(needle, self.non_active_layout)
+end
+
+--- @private
+function XrayPages:markItemsInHtml(html, item)
+    if item.name == self.prev_marked_item then
+        return html
+    end
+    self.prev_marked_item = item.name
+    self.is_filter_item = DX.pn.active_filter_name == item.name
+
+    local subjects = {
+        "name",
+        "aliases",
+        "short_names",
+    }
+    for l = 1, 3 do
+        if has_text(item[subjects[l]]) then
+            html = self:markItem(item, item[subjects[l]], html, l)
+        end
+    end
+    return html
+end
+
+--- @private
+function XrayPages:markItem(item, subject, html, loop_no)
+    local parts, parts_count, uc, was_marked_for_full
+
+    --* subject can be the name or the alias of an Xray item:
+    subject = KOR.strings:trim(subject)
+    html, was_marked_for_full = self:markFullNameHit(html, item, subject, loop_no)
+    html = self:markAliasHit(html, item, subject)
+
+    parts = KOR.strings:split(subject, ",? ")
+    --KOR.debug:alertTable("XrayPageNavigator:markItem", "needle: parts", parts)
+    parts_count = #parts
+    for i = 1, parts_count do
+        uc = parts[i]
+        --* len() > 2: for example don't mark "of" in "Consistorial Court of Discipline":
+        if not self.forbidden_needle_parts[uc] and (uc:match("[A-Z]") or uc:len() > 2) then
+            --* only from here to ((XrayPages#markedItemRegister)) side panel buttons are populated:
+            html = self:markPartialHits(html, item, uc, i, was_marked_for_full)
+        end
+    end
+    return html
+end
+
+--- @private
+function XrayPages:markAliasHit(html, item)
+
+    local alias_matchers = KOR.strings:getKeywordsForMatchingFrom(item.aliases)
+    local needle
+    count = #alias_matchers
+    for i = 1, count do
+        needle = DX.vd:getNeedleString(alias_matchers[i], "for_substitution")
+        html = self:markNeedleInHtml(html, needle, item.aliases)
+    end
+
+    return html
+end
+
+--- @private
+function XrayPages:markFullNameHit(html, item, subject, loop_no)
+    if item.reliability_indicator ~= DX.tw.match_reliability_indicators.full_name then
+        return html, false
+    end
+
+    local org_html = html
+    local needle = DX.vd:getNeedleString(subject, "for_substitution")
+    html = self:markNeedleInHtml(html, needle)
+    if not needle:match("s$") then
+        local subject_plural
+        needle, subject_plural = DX.vd:getNeedleStringPlural(subject, "for_substitution")
+        html = self:markNeedleInHtml(html, needle, subject_plural)
+    end
+
+    --* only replace swapped name for loop_no 1, because that's the full name:
+    if loop_no > 1 then
+        return html, org_html ~= html
+    end
+
+    local xray_name_swapped = KOR.strings:getNameSwapped(subject)
+    if not xray_name_swapped then
+        return html, org_html ~= html
+    end
+    needle = DX.vd:getNeedleString(xray_name_swapped)
+
+    return self:markNeedleInHtml(html, needle, xray_name_swapped), org_html ~= html
+end
+
+--- @private
+function XrayPages:markPartialHits(html, item, uc, i, was_marked_for_full)
+    local is_term, lc, needle
+
+    local is_lowercase_person = item.xray_type < 3 and not uc:match("[A-Z]")
+    is_term = item.xray_type > 2
+    if (is_term or is_lowercase_person) and i == 1 then
+        uc = KOR.strings:ucfirst(uc)
+    end
+
+    needle = DX.vd:getNeedleString(uc)
+    local uc_needle_plural = DX.vd:getNeedleStringPlural(uc)
+    if was_marked_for_full or (html:match(needle) or html:match(uc_needle_plural)) then
+        if self.debug_filter_process then
+            KOR.debug:hoera("XrayPageNavigator:markPartialHits uc", needle)
+        end
+        --* return html and add item to buttons:
+        return self:markedItemRegister(item, html, uc)
+
+        --* for terms we also try to find lowercase variants of their names:
+    elseif is_term or is_lowercase_person then
+        lc = KOR.strings:lower(uc)
+        needle = DX.vd:getNeedleString(lc)
+        if html:match(needle) then
+            if self.debug_filter_process then
+                KOR.debug:hoera("XrayPageNavigator:markPartialHits lc", needle)
+            end
+            --* return html and add item to buttons:
+            return self:markedItemRegister(item, html, lc)
+        end
+    end
+
+    return html
+end
+
+function XrayPages:initNonFilteredItemsLayout()
+    --* the indices here must correspond to the settings in ((non_filtered_items_layout)):
+    self.non_filtered_layouts = {
+        ["small-caps"] = self.non_filtered_items_marker_smallcaps,
+        ["small-caps-italic"] = self.non_filtered_items_marker_smallcaps_italic,
+        ["bold"] = self.non_filtered_items_marker_bold,
+    }
+end
+
+--- @private
+function XrayPages:activateNonFilteredItemsLayout()
+    if not self.non_filtered_layouts then
+        self:initNonFilteredItemsLayout()
+    end
+    self.non_active_layout = DX.s.PN_non_filtered_items_layout
+        and
+        self.non_filtered_layouts[DX.s.PN_non_filtered_items_layout]
+        or
+        self.non_filtered_items_marker_smallcaps_italic
 end
 
 return XrayPages
