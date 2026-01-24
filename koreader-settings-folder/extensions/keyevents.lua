@@ -396,19 +396,19 @@ function KeyEvents.addHotkeysForXrayPageNavigator(key_events_module)
 
     self:registerSharedHotkeys(key_events_module, {
         [DX.s.hk_edit_item] = function()
-            return parent:execEditCallback(parent)
+            return DX.cb:execEditCallback(parent)
         end,
         [DX.s.hk_show_list] = function()
-            return parent:execShowListCallback(parent)
+            return DX.cb:execShowListCallback(parent)
         end,
         [DX.s.hk_goto_next_item] = function()
-            return parent:execGotoNextPageCallback(parent)
+            return DX.cb:execGotoNextPageCallback()
         end,
         [DX.s.hk_goto_previous_item] = function()
-            return parent:execGotoPrevPageCallback(parent)
+            return DX.cb:execGotoPrevPageCallback()
         end,
         ["S"] = function()
-            return parent:execSettingsCallback(parent)
+            return DX.cb:execSettingsCallback(parent)
         end,
     })
     local actions = {
@@ -416,7 +416,7 @@ function KeyEvents.addHotkeysForXrayPageNavigator(key_events_module)
             label = "pagebrowser",
             hotkey = { { DX.s.hk_show_pagebrowser_from_page_navigator } },
             callback = function()
-                return parent:execShowPageBrowserCallback(parent)
+                return DX.cb:execShowPageBrowserCallback(parent)
             end,
         },
         {
@@ -430,28 +430,28 @@ function KeyEvents.addHotkeysForXrayPageNavigator(key_events_module)
             label = "export_items",
             hotkey = { { DX.s.hk_open_export_list_from_page_navigator } },
             callback = function()
-                return parent:execExportXrayItemsCallback(parent)
+                return DX.cb:execExportXrayItemsCallback(parent)
             end,
         },
         {
             label = "show_info",
             hotkey = { { DX.s.hk_show_information } },
             callback = function()
-                return parent:execShowHelpInfoCallback(parent)
+                return DX.cb:execShowHelpInfoCallback(parent)
             end,
         },
         {
             label = "jump_navigator",
             hotkey = { { "J" } },
             callback = function()
-                return parent:execJumpToCurrentPageInNavigatorCallback(parent)
+                return DX.cb:execJumpToCurrentPageInNavigatorCallback()
             end,
         },
         {
             label = "jump_ebook",
             hotkey = { { "Shift", { "J" } } },
             callback = function()
-                return parent:execJumpToCurrentPageInEbookCallback(parent)
+                return DX.cb:execJumpToCurrentPageInEbookCallback(parent)
             end,
         },
         {
@@ -486,7 +486,7 @@ function KeyEvents.addHotkeysForXrayPageNavigator(key_events_module)
             label = "pn_viewer",
             hotkey = { { { DX.s.hk_view_item_from_list_or_navigator } } },
             callback = function()
-                return parent:execViewItemCallback(parent)
+                return DX.cb:execViewItemCallback()
             end,
         },
     }
@@ -495,7 +495,7 @@ function KeyEvents.addHotkeysForXrayPageNavigator(key_events_module)
     --* display information of first nine items in side panel in bottom info panel, with hotkeys 1 through 9:
     for i = 1, 9 do
         local nhotkey = tostring(i)
-        local side_button = parent:getSideButton(i)
+        local side_button = DX.sp:getSideButton(i)
         if not side_button then
             break
         end

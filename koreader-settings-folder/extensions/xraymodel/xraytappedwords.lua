@@ -1,20 +1,5 @@
---[[--
-This extension is part of the Dynamic Xray plugin; its task is the handling of taps on words in the ebook text, to show associated Dynamic Xray information, if available for those words.
 
-The Dynamic Xray plugin has kind of a MVC structure:
-M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
-V = ((XrayUI)), ((XrayPageNavigator)), ((XrayTranslations)) and ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
-C = ((XrayController))
-
-XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
-
-The views layer has two main streams:
-1) XrayUI, which is only responsible for displaying tappable xray markers (lightning or star icons) in the ebook text;
-2) XrayPageNavigator, XrayDialogs and XrayButtons, which are responsible for displaying dialogs and interaction with the user.
-When the ebook text is displayed, XrayUI has done its work and finishes. Only after actions by the user (e.g. tapping on an xray item in the book), XrayDialogs will be activated.
-
-These modules are initialized in ((initialize Xray modules)) and ((XrayController#init)).
---]]--
+--* see ((Dynamic Xray: module info)) for more info
 
 local require = require
 
@@ -26,6 +11,7 @@ local DX = DX
 local has_text = has_text
 local pairs = pairs
 local table = table
+local table_insert = table.insert
 
 local count
 --- @type XrayModel parent
@@ -178,14 +164,14 @@ function XrayTappedWords:buildItemIndex()
         name = KOR.tables:normalizeTableIndex(item.name)
         if name then
             index[name] = index[name] or {}
-            table.insert(index[name], item)
+            table_insert(index[name], item)
         end
         if item.aliases then
             for alias in item.aliases:gmatch("[^,]+") do
                 alias_norm = KOR.tables:normalizeTableIndex(alias)
                 if alias_norm then
                     index[alias_norm] = index[alias_norm] or {}
-                    table.insert(index[alias_norm], item)
+                    table_insert(index[alias_norm], item)
                 end
             end
         end
@@ -198,7 +184,7 @@ end
 --* store the metadata of related items (derived from buttons metadata in ), for use when generating the text prop for those items in the list, in ((XrayTappedWords#getCurrentListTabItems)):
 --- @private
 function XrayTappedWords:storeCollectionMetadata(status_indicators)
-    table.insert(self.tapped_word_status_indicators, status_indicators)
+    table_insert(self.tapped_word_status_indicators, status_indicators)
 end
 
 --* compare ((XrayViewsData#getCurrentListTabItems)):
@@ -289,13 +275,13 @@ function XrayTappedWords:relatedItemAdd(args)
     local item = args.subject[args.nr]
 
     if item[self.relation_primary_prop] == true then
-        table.insert(self.at_top1_name_matches, item)
+        table_insert(self.at_top1_name_matches, item)
         return
     elseif item[self.relation_secundary_prop] == true then
-        table.insert(self.at_top2_alias_matches, item)
+        table_insert(self.at_top2_alias_matches, item)
         return
     end
-    table.insert(self.bottom_linked_items, item)
+    table_insert(self.bottom_linked_items, item)
 end
 
 function XrayTappedWords:collectionPopulateAndSort(items, tapped_word)
@@ -312,7 +298,7 @@ function XrayTappedWords:collectionPopulateAndSort(items, tapped_word)
 
         --* is_bold prop MUST be set to either false or true, to be used in ((ButtonTable#init)):
         copy.is_bold = copy.is_bold1 or copy.is_bold2
-        table.insert(copies, copy)
+        table_insert(copies, copy)
     end
 
     --* make sure that items with hits are shown first always, and then show items without hits (but linked) according to XrayViewsData.list_display_mode:
@@ -363,10 +349,10 @@ function XrayTappedWords:collectionSortAndPurge(needle_items, needle_matches_ful
 
         is_unique_item = not already_injected:find(" " .. item.name .. " ", 1, true)
         if is_full_match and is_unique_item then
-            table.insert(sorted_and_purged, 1, item)
+            table_insert(sorted_and_purged, 1, item)
             already_injected = already_injected .. item.name .. " "
         elseif is_unique_item then
-            table.insert(sorted_and_purged, item)
+            table_insert(sorted_and_purged, item)
             already_injected = already_injected .. item.name .. " "
         end
     end
@@ -430,7 +416,7 @@ function XrayTappedWords:addCollectionItem(candidates, seen, needle_item, includ
             key = eitem.tapped_index or eitem.name
             if not seen[key] then
                 seen[key] = true
-                table.insert(self.items_collection, eitem)
+                table_insert(self.items_collection, eitem)
             end
         end
         items_collection = {}
@@ -447,7 +433,7 @@ function XrayTappedWords:matchItemToTappedWord(tapped_word_collection, item, nee
     local linked_items, linked_names_index = views_data:getLinkedItems(needle_item)
     count = #linked_items
     for i = 1, count do
-        table.insert(tapped_word_collection, linked_items[i])
+        table_insert(tapped_word_collection, linked_items[i])
     end
     if linked_names_index[item.name] then
         return
@@ -456,22 +442,22 @@ function XrayTappedWords:matchItemToTappedWord(tapped_word_collection, item, nee
     --* include extact fullname match, if allowed:
     if include_name_match and (not tapped_word or tapped_word == item.name) and (item.tapped_index == needle_item.tapped_index or item.name == needle_item.name or item.name:match("^" .. needle_item.name .. "s$")) then
         item.reliability_indicator = self.match_reliability_indicators.full_name
-        table.insert(tapped_word_collection, item)
+        table_insert(tapped_word_collection, item)
         return
 
     elseif include_name_match and tapped_word and item.name:match("^" .. tapped_word_matcher) then
         item.reliability_indicator = self.match_reliability_indicators.first_name
-        table.insert(tapped_word_collection, item)
+        table_insert(tapped_word_collection, item)
         return
 
     elseif include_name_match and tapped_word and item.name:match(tapped_word_matcher .. "$") then
         item.reliability_indicator = self.match_reliability_indicators.last_name
-        table.insert(tapped_word_collection, item)
+        table_insert(tapped_word_collection, item)
         return
 
     elseif include_name_match and tapped_word and item.name:match(tapped_word_matcher) then
         item.reliability_indicator = self.match_reliability_indicators.partial_match
-        table.insert(tapped_word_collection, item)
+        table_insert(tapped_word_collection, item)
         return
     end
 
@@ -482,7 +468,7 @@ function XrayTappedWords:matchItemToTappedWord(tapped_word_collection, item, nee
         alias = aliases[i]:gsub("%-", "%%-")
         if parent:hasExactMatch(item.aliases, alias) then
             item.reliability_indicator = self.match_reliability_indicators.alias
-            table.insert(tapped_word_collection, item)
+            table_insert(tapped_word_collection, item)
             return
         end
     end
@@ -554,14 +540,14 @@ function XrayTappedWords:itemsSort(top1_count, top2_count, bottom_count)
     local item
     for i = 1, top2_count do
         item = self.at_top2_alias_matches[i]
-        table.insert(related_items_sorted, item)
+        table_insert(related_items_sorted, item)
     end
     if bottom_count > 1 then
         table.sort(self.bottom_linked_items, sorter)
     end
     for i = 1, bottom_count do
         item = self.bottom_linked_items[i]
-        table.insert(related_items_sorted, item)
+        table_insert(related_items_sorted, item)
     end
 
     return related_items_sorted
@@ -700,9 +686,9 @@ function XrayTappedWords:setPopupResult(sorted_items, popup_icons)
         item = self.popup_items[i]
         item.icons = popup_icons[i]
         if item.xray_type <= 2 then
-            table.insert(self.popup_persons, item)
+            table_insert(self.popup_persons, item)
         else
-            table.insert(self.popup_terms, item)
+            table_insert(self.popup_terms, item)
         end
     end
 end

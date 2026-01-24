@@ -1,20 +1,5 @@
---[[--
-This extension is part of the Dynamic Xray plugin; it has all methods for making Xray items available and visible in ReaderView and ReaderHighlight.
 
-The Dynamic Xray plugin has kind of a MVC structure:
-M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
-V = ((XrayUI)), ((XrayPageNavigator)), ((XrayTranslations)) and ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
-C = ((XrayController))
-
-XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
-
-The views layer has two main streams:
-1) XrayUI, which is only responsible for displaying tappable xray markers (lightning or star icons) in the ebook text;
-2) XrayPageNavigator, XrayDialogs and XrayButtons, which are responsible for displaying dialogs and interaction with the user.
-When the ebook text is displayed, XrayUI has done its work and finishes. Only after actions by the user (e.g. tapping on an xray item in the book), XrayDialogs will be activated.
-
-These modules are initialized in ((initialize Xray modules)) and ((XrayController#init)).
---]]--
+--* see ((Dynamic Xray: module info)) for more info
 
 --! info about TextViewer TOC functionality for Xray items: see ((TextViewer toc button))
 

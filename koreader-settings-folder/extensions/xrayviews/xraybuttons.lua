@@ -1,20 +1,5 @@
---[[--
-This extension is part of the Dynamic Xray plugin; it has buttons which are generated for dialogs and forms in XrayController and its other extensions.
 
-The Dynamic Xray plugin has kind of a MVC structure:
-M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
-V = ((XrayUI)), ((XrayPageNavigator)), ((XrayTranslations)) and ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
-C = ((XrayController))
-
-XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
-
-The views layer has two main streams:
-1) XrayUI, which is only responsible for displaying tappable xray markers (lightning or star icons) in the ebook text;
-2) XrayPageNavigator, XrayDialogs and XrayButtons, which are responsible for displaying dialogs and interaction with the user.
-When the ebook text is displayed, XrayUI has done its work and finishes. Only after actions by the user (e.g. tapping on an xray item in the book), XrayDialogs will be activated.
-
-These modules are initialized in ((initialize Xray modules)) and ((XrayController#init)).
---]]--
+--* see ((Dynamic Xray: module info)) for more info
 
 local require = require
 
@@ -214,19 +199,19 @@ function XrayButtons:forPageNavigator(parent)
         {
              icon = "back",
              callback = function()
-                 parent:closePageNavigator()
+                DX.cb:closePageNavigator()
              end
          },
         KOR.buttoninfopopup:forXrayButtonsPopup({
             is_anchor_button = true,
             callback = function()
-                return parent:execShowPopupButtonsCallback()
+                return DX.cb:execShowPopupButtonsCallback(parent)
             end
         }),
         KOR.buttoninfopopup:forSearchAllLocations({
              info = _("search-list-icon | Show all occurrences in the book of the item currently displayed below."),
              callback = function()
-                return parent:execShowItemOccurrencesCallback()
+                return DX.cb:execShowItemOccurrencesCallback()
              end
          }),
          KOR.buttoninfopopup:forXrayViewer({
@@ -234,13 +219,13 @@ function XrayButtons:forPageNavigator(parent)
                  return parent.current_item and true or false
              end,
              callback = function()
-                 return parent:execViewItemCallback(parent)
+                return DX.cb:execViewItemCallback()
              end,
          }),
         KOR.buttoninfopopup:forXrayItemAdd({
             info = _("plus icon | Add an Xray item."),
             callback = function()
-                return parent:execAddCallback(parent)
+                return DX.cb:execAddCallback(parent)
             end,
         }),
         KOR.buttoninfopopup:forXrayItemEdit({
@@ -249,38 +234,38 @@ function XrayButtons:forPageNavigator(parent)
              end,
              info = "edit-ikoon | Bewerk het item dat in het infopaneel hieronder wordt weergegeven.",
              callback = function()
-                 return parent:execEditCallback(parent)
+                return DX.cb:execEditCallback(parent)
              end,
          }),
          {
              text = KOR.icons.previous,
              callback = function()
-                 return parent:execGotoPrevPageCallback(parent)
+             return DX.cb:execGotoPrevPageCallback()
              end,
              hold_callback = function()
-                 return parent:execGotoPrevPageCallback(parent, "goto_prev_item")
+             return DX.cb:execGotoPrevPageCallback("goto_prev_item")
              end,
          },
         KOR.buttoninfopopup:forXrayPageNavigatorGotoPage({
             callback = function()
-                return parent:execJumpToPageCallback(parent)
+                return DX.cb:execJumpToPageCallback()
             end
         }),
         KOR.buttonchoicepopup:forXrayPageNavigatorToCurrentPage({
              callback = function()
-                 return parent:execJumpToCurrentPageInNavigatorCallback(parent)
+             return DX.cb:execJumpToCurrentPageInNavigatorCallback()
              end,
              hold_callback = function()
-                 return parent:execJumpToCurrentPageInEbookCallback(parent)
+             return DX.cb:execJumpToCurrentPageInEbookCallback(parent)
              end,
          }),
         {
              text = KOR.icons.next,
              callback = function()
-                 return parent:execGotoNextPageCallback(parent)
+             return DX.cb:execGotoNextPageCallback()
              end,
              hold_callback = function()
-                 return parent:execGotoNextPageCallback(parent, "goto_next_item")
+             return DX.cb:execGotoNextPageCallback("goto_next_item")
              end,
          },
      }}
@@ -293,7 +278,7 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
             KOR.buttoninfopopup:forXrayList({
                 callback = function()
                     parent:closePopupMenu()
-                    return parent:execShowListCallback()
+                    return DX.cb:execShowListCallback()
                 end
             })
         },
@@ -301,7 +286,7 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
             KOR.buttoninfopopup:forXrayExport({
                 callback = function()
                     parent:closePopupMenu()
-                    return parent:execExportXrayItemsCallback()
+                    return DX.cb:execExportXrayItemsCallback()
                 end
             })
         },
@@ -309,7 +294,7 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
             KOR.buttoninfopopup:forXrayPageNavigatorShowPageBrowser({
                 callback = function()
                     parent:closePopupMenu()
-                    return parent:execShowPageBrowserCallback(parent)
+                    return DX.cb:execShowPageBrowserCallback(parent)
                 end,
             }),
         },
@@ -336,7 +321,7 @@ function XrayButtons:forPageNavigatorTopLeft(parent)
         KOR.buttoninfopopup:forXrayTranslations(),
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
-                parent:execSettingsCallback(parent)
+                DX.cb:execSettingsCallback(parent)
             end
         }),
     }
@@ -457,6 +442,13 @@ end
 function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, book_hits)
     local buttons = {
         {
+            {
+                icon = "back",
+                icon_size_ratio = 0.55,
+                callback = function()
+                    DX.d:closeViewer()
+                end,
+            },
             KOR.buttoninfopopup:forXrayList({
                 callback = function()
                     DX.d:closeViewer()
@@ -464,16 +456,6 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
                 end,
             }),
             KOR.buttoninfopopup:forXrayPageNavigator(),
-            KOR.buttoninfopopup:forXrayPreviousItem({
-                callback = function()
-                    DX.d:viewPreviousItem(needle_item)
-                end,
-            }),
-            KOR.buttoninfopopup:forXrayNextItem({
-                callback = function()
-                    DX.d:viewNextItem(needle_item)
-                end,
-            }),
             KOR.buttonchoicepopup:forXrayItemDelete({
                 icon = "dustbin",
                 icon_size_ratio = 0.5,
@@ -535,13 +517,16 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
                     KOR.dictionary:onLookupWord(first_name)
                 end,
             }),
-            {
-                icon = "back",
-                icon_size_ratio = 0.55,
+            KOR.buttoninfopopup:forXrayPreviousItem({
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:viewPreviousItem(needle_item)
                 end,
-            },
+            }),
+            KOR.buttoninfopopup:forXrayNextItem({
+                callback = function()
+                    DX.d:viewNextItem(needle_item)
+                end,
+            }),
         }
     }
 
@@ -793,7 +778,7 @@ function XrayButtons:getItemViewerTabs(main_info, hits_info, linked_items_info)
             html = "<div style='margin: 1em 2em' class='redhat'>" .. hits_info .. "</div>",
         },
     }
-    if linked_items_info then
+    if has_text(linked_items_info) then
         table_insert(tabs, {
             tab = _("linked items"),
             html = linked_items_info,
@@ -824,7 +809,7 @@ function XrayButtons:forItemViewerTopLeft(parent)
     }
 end
 
---* compare buttons for item viewer ((XrayButtons#forItemViewer)):
+--* compare buttons for Item Viewer ((XrayButtons#forItemViewer)):
 --- @param manager XrayController
 function XrayButtons:forListContext(manager, item)
     local importance_label = (item.xray_type == 2 or item.xray_type == 4) and KOR.icons.xray_person_bare .. "/" .. KOR.icons.xray_term_bare .. _(" normal") or KOR.icons.xray_person_important_bare .. "/" .. KOR.icons.xray_term_important_bare .. _(" important")

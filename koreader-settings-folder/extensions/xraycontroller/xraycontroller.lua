@@ -2,10 +2,10 @@
 --[[--
 This is the controller for the Dynamic Xray plugin. It has been structured in kind of a MVC structure:
 M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
-V = ((XrayUI)), ((XrayPageNavigator)), ((XrayTranslations)) and ((XrayTranslationsManager)), and ((XrayDialogs)) and ((XrayButtons))
+V = ((XrayUI)), ((XrayPageNavigator)) and ((XrayCallbacks)) and ((XrayPages)) and ((XraySidePanels)), ((XrayTranslations)) and ((XrayTranslationsManager)), ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
 
-XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database.
+XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database. XrayTappedWords handles data requests resulting from users longpressing (partial) names of Xray items in the e-book text.
 
 The views layer has three main streams:
 1) XrayUI, which is only responsible for displaying tappable xray markers (lightning or star icons) in the ebook text;
@@ -105,6 +105,7 @@ KOR:initBaseExtensions()
 --- @class DX
 --- @field b XrayButtons
 --- @field c XrayController
+--- @field cb XrayCallbacks
 --- @field d XrayDialogs
 --- @field dl XrayDataLoader
 --- @field ds XrayDataSaver
@@ -112,16 +113,20 @@ KOR:initBaseExtensions()
 --- @field m XrayModel
 --- @field pn XrayPageNavigator
 --- @field s XraySettings
+--- @field sp XraySidePanels
 --- @field t XrayTranslations
 --- @field tm XrayTranslationsManager
 --- @field tw XrayTappedWords
 --- @field vd XrayViewsData
 --- @field u XrayUI
+--- @field p XrayPages
 DX = {
     --* shorthand notation for Buttons:
     b = nil,
     --* shorthand notation for Controller:
     c = nil,
+    --* shorthand notation for Callbacks; this module will be initialized in ((KOR#initDX)):
+    cb = nil,
     --* shorthand notation for Dialogs:
     d = nil,
     --* shorthand notation for DataLoader; this module will be initialized in ((XrayModel#initDataHandlers)):
@@ -132,10 +137,14 @@ DX = {
     fd = nil,
     --* shorthand notation for Model:
     m = nil,
-    --* shorthand notation for PageNavigator:
+    --* shorthand notation for Pages; this module will be initialized in ((KOR#initDX)):
+    p = nil,
+    --* shorthand notation for PageNavigator; this module will be initialized in ((XrayModel#initDataHandlers)):
     pn = nil,
     --* shorthand notation for Settings; this module will be initialized in ((KOR#initDX)):
     s = nil,
+    --* shorthand notation for SidePanels; this module will be initialized in ((KOR#initDX)):
+    sp = nil,
     --* shorthand notation for Translations; this module will be initialized in ((XrayModel#initDataHandlers)):
     t = nil,
     --* shorthand notation for TranslationsManager; this module will be initialized in ((KOR#initDX)):
@@ -526,9 +535,10 @@ function XrayController:resetDynamicXray(is_prepared)
     DX.m:setTitleAndSeries(full_path)
     --! don't call DX.u:reset() here, because then Xray markers in page would disappear...
     DX.pn:resetCache()
-    DX.pn:resetActiveSideButtons("XrayController:resetDynamicXray")
+    DX.sp:resetActiveSideButtons("XrayController:resetDynamicXray")
     DX.pn:reloadPageNavigator()
     DX.vd:resetAllFilters()
+    DX.p:resetCache()
     --* when current method called after saving an item from a form:
     if is_prepared then
         return

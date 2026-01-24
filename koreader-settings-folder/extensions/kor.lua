@@ -124,7 +124,10 @@ function KOR:initDX()
 	DX.m:initDataHandlers()
 
 	DX.b = require("extensions/xrayviews/xraybuttons")
+	DX.cb = require("extensions/xrayviews/xraycallbacks")
 	DX.d = require("extensions/xrayviews/xraydialogs")
+	DX.p = require("extensions/xrayviews/xraypages")
+	DX.sp = require("extensions/xrayviews/xraysidepanels")
 	DX.u = require("extensions/xrayviews/xrayui")
 	if DX.m:isPublicDXversion() then
 		DX.tm = require("extensions/xrayviews/xraytranslationsmanager")

@@ -321,6 +321,7 @@ function SettingsManager:setNumber(key, current_nr, current_value, validator_pro
     end
 
     local number_value_adaptor = SpinWidget:new{
+        width_factor = 0.8,
         value = current_value,
         info_text = explanation:gsub("%.$", ":"),
         value_min = min_value,
@@ -336,7 +337,7 @@ function SettingsManager:setNumber(key, current_nr, current_value, validator_pro
             KOR.messages:notify(_("setting ") .. key .. _(" modified to ") .. tostring(value), 4)
             self:showParentDialog()
         end,
-        cancel_callback = function()
+        close_callback = function()
             self:showParentDialog()
         end
     }
