@@ -95,7 +95,7 @@ end
 function XraySidePanels:resetActiveSideButtons(context, dont_reset_active_side_buttons)
 
     self.active_side_tab = 1
-    --* this will be truthy when current method called from ((XrayPageNavigator#setFilter)); in this way we prevent XrayPageNavigator.current_item being reset, because we need that to be unchanged in ((XrayPageNavigator#loadDataForPage)) > ((XraySidePanels#populateLinkedItemsPanel)):
+    --! this will be truthy when current method called from ((XrayPageNavigator#setFilter)); in this way we prevent XrayPageNavigator.current_item being reset, because we need that to be unchanged in ((XrayPageNavigator#loadDataForPage)) > ((XraySidePanels#populateLinkedItemsPanel)):
     if not dont_reset_active_side_buttons then
         self.active_side_buttons = { 1, 1 }
     end

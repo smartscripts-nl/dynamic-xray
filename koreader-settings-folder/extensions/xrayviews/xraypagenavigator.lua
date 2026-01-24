@@ -427,8 +427,6 @@ function XrayPageNavigator:setFilter(item)
     self:setActiveScrollPage()
     self.active_filter_name = item.name
     self.page_navigator_filter_item = item
-    --! needed for correct showing of linked items in side panel no 2 at end of ((XrayPageNavigator#loadDataForPage)):
-    self:setCurrentItem(item)
     DX.sp:resetActiveSideButtons("XrayPageNavigator:setFilter", "dont_reset_active_side_buttons")
 
     self:reloadPageNavigator()
