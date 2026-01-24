@@ -23,7 +23,6 @@ local count
 local XrayPages = WidgetContainer:new {
     button_labels_injected = "",
     cached_html_by_page_no = {},
-    debug_filter_process = false,
     --* whole word name parts which may not be marked bold and trigger an item hit by themselves only; used in ((XrayPages#markItem)):
     forbidden_needle_parts = {
         ["De"] = true,
@@ -412,7 +411,6 @@ function XrayPages:markItem(item, subject, html, loop_no)
     html = self:markAliasHit(html, item, subject)
 
     parts = KOR.strings:split(subject, ",? ")
-    --KOR.debug:alertTable("XrayPageNavigator:markItem", "needle: parts", parts)
     parts_count = #parts
     for i = 1, parts_count do
         uc = parts[i]
@@ -481,9 +479,6 @@ function XrayPages:markPartialHits(html, item, uc, i, was_marked_for_full)
     needle = DX.vd:getNeedleString(uc)
     local uc_needle_plural = DX.vd:getNeedleStringPlural(uc)
     if was_marked_for_full or (html:match(needle) or html:match(uc_needle_plural)) then
-        if self.debug_filter_process then
-            KOR.debug:hoera("XrayPageNavigator:markPartialHits uc", needle)
-        end
         --* return html and add item to buttons:
         return self:markedItemRegister(item, html, uc)
 
@@ -492,9 +487,6 @@ function XrayPages:markPartialHits(html, item, uc, i, was_marked_for_full)
         lc = KOR.strings:lower(uc)
         needle = DX.vd:getNeedleString(lc)
         if html:match(needle) then
-            if self.debug_filter_process then
-                KOR.debug:hoera("XrayPageNavigator:markPartialHits lc", needle)
-            end
             --* return html and add item to buttons:
             return self:markedItemRegister(item, html, lc)
         end

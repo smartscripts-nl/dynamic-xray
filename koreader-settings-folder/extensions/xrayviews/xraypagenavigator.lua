@@ -37,6 +37,8 @@ local XrayPageNavigator = WidgetContainer:new{
     navigator_page_no = nil,
     movable_popup_menu = nil,
     page_navigator_filter_item = nil,
+    --* we need this item for computing linked item buttons in side panel no 2:
+    parent_item = nil,
     popup_buttons = nil,
     popup_menu = nil,
     return_to_current_item = nil,
@@ -223,6 +225,11 @@ end
 --- @private
 function XrayPageNavigator:setCurrentItem(item)
     self.current_item = item
+    if not item then
+        return
+    end
+    --* we need this item for computing linked item buttons in side panel no 2:
+    self.parent_item = KOR.tables:shallowCopy(item)
 end
 
 --- @private
@@ -258,7 +265,7 @@ function XrayPageNavigator:loadDataForPage()
     if self.current_item then
         DX.sp:computeLinkedItems()
         if DX.sp.active_side_tab == 2 and not self.active_filter_name then
-            DX.sp:populateLinkedItemsPanel(self.current_item)
+            DX.sp:populateLinkedItemsPanel()
         end
     end
 
@@ -283,9 +290,9 @@ function XrayPageNavigator:loadDataForPage()
     html = DX.p:markItemsFoundInPageHtml(html, self.navigator_page_no)
 
     --? eilas, when a filter has been set, linked items for side panel no 2 have to be recomputed for some reason:
-    if self.current_item and DX.sp.active_side_tab == 2 and self.active_filter_name then
+    if DX.sp.active_side_tab == 2 and self.active_filter_name then
         DX.sp:computeLinkedItems()
-        DX.sp:populateLinkedItemsPanel(self.current_item)
+        DX.sp:populateLinkedItemsPanel()
     end
 
     DX.sp:markActiveSideButton()

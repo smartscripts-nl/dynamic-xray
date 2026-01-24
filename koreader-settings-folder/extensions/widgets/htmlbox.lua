@@ -379,7 +379,7 @@ function HtmlBox:generateInfoPanel()
     end
 
     local height = self.content_height
-    --* info_text was generated in ((XrayPageNavigator#showNavigator)) > ((XrayPageNavigator#markItemsFoundInPageHtml)) > ((XrayPageNavigator#markItem)) > ((XrayPageNavigator#getItemInfoText)):
+    --* info_text was generated in ((XrayPageNavigator#showNavigator)) > ((XrayPages#markItemsFoundInPageHtml)) > ((XrayPages#markItem)) > ((XrayPageNavigator#getItemInfoText)):
     local info_text = self.info_panel_text or " "
     self.info_panel = ScrollTextWidget:new{
         text = info_text,
@@ -806,7 +806,7 @@ end
 
 --- @private
 function HtmlBox:generateSidePanelButtons()
-    --* these side panel buttons were generated in ((XrayPageNavigator#markItemsFoundInPageHtml)) > ((XrayPageNavigator#markedItemRegister)):
+    --* these side panel buttons were generated in ((XrayPages#markItemsFoundInPageHtml)) > ((XrayPages#markedItemRegister)):
     if not self.page_navigator or not self.side_buttons then
         return
     end

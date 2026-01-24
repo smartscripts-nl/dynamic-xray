@@ -501,7 +501,7 @@ function KeyEvents.addHotkeysForXrayPageNavigator(key_events_module)
         end
         self:registerSharedHotkey(nhotkey, key_events_module, function()
             local nside_button = side_button
-            --* callback defined in ((XrayPageNavigator#markedItemRegister)):
+            --* callback defined in ((XrayPages#markedItemRegister)):
             nside_button.callback()
             return true
         end)

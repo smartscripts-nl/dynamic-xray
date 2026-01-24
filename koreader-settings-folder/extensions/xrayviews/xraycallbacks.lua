@@ -42,8 +42,8 @@ function XrayCallbacks:execEditCallback(iparent)
     DX.c:setProp("return_to_viewer", false)
     --* to to be consumed in ((XrayButtons#forItemEditor)) > ((XrayPageNavigator#returnToNavigator)):
     iparent:setProp("return_to_page", iparent.navigator_page_no)
-    if #iparent.side_buttons > 0 then
-        iparent:setProp("return_to_item_no", iparent.active_side_button)
+    if #DX.sp.side_buttons > 0 then
+        iparent:setProp("return_to_item_no", DX.sp.active_side_button)
         iparent:setProp("return_to_current_item", iparent.current_item)
     end
     DX.c:onShowEditItemForm(current_tab_item, false, 1)
