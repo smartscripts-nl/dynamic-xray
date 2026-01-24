@@ -616,7 +616,7 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
     local select_number = focus_item and focus_item.index or 1
 
     --* optionally items are filtered here also:
-    local title = self.select_mode and _("Select an item") or select(2, DX.vd:updateItemsTable(select_number))
+    local title = self.select_mode and _("Select an item to search:") or select(2, DX.vd:updateItemsTable(select_number))
     self.list_title = title
     if not title then
         return

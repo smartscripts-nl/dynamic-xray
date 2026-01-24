@@ -483,6 +483,13 @@ function KeyEvents.addHotkeysForXrayPageNavigator(key_events_module)
             end,
         },
         {
+            label = "pn_search_item",
+            hotkey = { { "Shift", { "S" } } },
+            callback = function()
+                return DX.cb:execPageNavigatorSearchItemCallback()
+            end,
+        },
+        {
             label = "pn_viewer",
             hotkey = { { { DX.s.hk_view_item_from_list_or_navigator } } },
             callback = function()
