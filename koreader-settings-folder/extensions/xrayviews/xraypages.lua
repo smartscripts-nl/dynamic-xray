@@ -264,7 +264,7 @@ end
 --- @private
 function XrayPages:handleItemHitFound(page, called_upon_hold_button)
     DX.pn:setProp("navigator_page_no", page)
-    DX.pn.active_side_button_by_name = DX.pn.active_filter_name
+    DX.sp.active_side_button_by_name = DX.pn.active_filter_name
     if called_upon_hold_button then
         self:undoTemporaryFilterItem()
     end

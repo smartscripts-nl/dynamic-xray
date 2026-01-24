@@ -41,7 +41,6 @@ local XrayPageNavigator = WidgetContainer:new{
     },
     initial_browsing_page = nil,
     key_events = {},
-    linked_items = nil,
     max_line_length = 80,
     navigator_page_no = nil,
     movable_popup_menu = nil,
@@ -385,7 +384,7 @@ function XrayPageNavigator:markedItemRegister(item, html, word)
     end
     self.button_labels_injected = self.button_labels_injected .. " " .. item.name
 
-    --* linked item buttons (when DX.sp.active_side_tab == 2) are added in ((XrayPageNavigator#loadDataForPage)) > ((XrayPageNavigator#computeLinkedItems)):
+    --* linked item buttons (when DX.sp.active_side_tab == 2) are added in ((XrayPageNavigator#loadDataForPage)) > ((XraySidePanels#computeLinkedItems)):
     if DX.sp.active_side_tab == 1 then
         DX.sp:addSideButton(item, info_text)
     end
@@ -428,7 +427,10 @@ function XrayPageNavigator:setFilter(item)
     self:setActiveScrollPage()
     self.active_filter_name = item.name
     self.page_navigator_filter_item = item
-    self:resetActiveSideButtons("XrayPageNavigator:setFilter")
+    --! needed for correct showing of linked items in side panel no 2 at end of ((XrayPageNavigator#loadDataForPage)):
+    self:setCurrentItem(item)
+    DX.sp:resetActiveSideButtons("XrayPageNavigator:setFilter", "dont_reset_active_side_buttons")
+
     self:reloadPageNavigator()
     KOR.messages:notify(T(_("filter set to %1") .. "...", item.name))
     return true
@@ -445,7 +447,7 @@ function XrayPageNavigator:reloadPageNavigator()
     if not self.page_navigator then
         return
     end
-    self:showNavigator(self.initial_browsing_page)
+    self:showNavigator()
     self:restoreActiveScrollPage()
 end
 
@@ -470,9 +472,9 @@ function XrayPageNavigator:loadDataForPage()
 
     DX.sp:resetSideButtons()
     if self.current_item then
-        self:computeLinkedItems()
-        if DX.sp.active_side_tab == 2 then
-            DX.sp:populateLinkedItemsPanel()
+        DX.sp:computeLinkedItems()
+        if DX.sp.active_side_tab == 2 and not self.active_filter_name then
+            DX.sp:populateLinkedItemsPanel(self.current_item)
         end
     end
 
@@ -493,31 +495,19 @@ function XrayPageNavigator:loadDataForPage()
 
     local html = DX.p:getPageHtmlForPage(self.navigator_page_no)
     --* self.cached_html_and_buttons_by_page_no will be updated here:
-    --* side_buttons de facto populated in ((XrayPageNavigator#markedItemRegister)) > ((XraySidePanels#addSideButton)):
+    --* side_buttons FOR SIDE PANEL TAB NO.1 de facto populated in ((XrayPageNavigator#markedItemRegister)) > ((XraySidePanels#addSideButton)):
     html = self:markItemsFoundInPageHtml(html, self.navigator_page_no)
+
+    --? eilas, when a filter has been set, linked items for side panel no 2 have to be recomputed for some reason:
+    if self.current_item and DX.sp.active_side_tab == 2 and self.active_filter_name then
+        DX.sp:computeLinkedItems()
+        DX.sp:populateLinkedItemsPanel(self.current_item)
+    end
+
     DX.sp:markActiveSideButton()
 
     return html
 end
-
---* regular main item buttons (DX.sp.active_side_tab == 1) were added in ((XrayPageNavigator#markedItemRegister)):
---- @private
-function XrayPageNavigator:computeLinkedItems()
-    local linked_items_were_determined = self.current_item.linked_items
-
-    --* only for the linked items tab (no. 2) the side buttons have to be populated with the linked_items:
-    if DX.sp.active_side_tab == 1 and linked_items_were_determined then
-        return
-    end
-
-    --* the linked_items prop of self.current_item will be used in ((HtmlBox#generateSidePanel)) to determine whether the side panel tab activator buttons should be shown...
-    --! shallowCopy used twice in this method, to ensure that table_insert(linked_items... farther below doesn't modify this prop (and so would make it contain ever more duplicated items)!
-    local linked_items = linked_items_were_determined and KOR.tables:shallowCopy(self.current_item.linked_items) or DX.vd:getLinkedItems(self.current_item)
-    if not linked_items_were_determined then
-        self.current_item.linked_items = KOR.tables:shallowCopy(linked_items)
-    end
-    self.linked_items = linked_items
-    end
 
 --* called from ((XraySidePanels#populateLinkedItemsPanel)):
 function XrayPageNavigator:formatInfoPanelText(info_panel_text)

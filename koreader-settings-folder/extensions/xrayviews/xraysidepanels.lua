@@ -13,6 +13,7 @@ local Size = require("extensions/modules/size")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 
 local DX = DX
+local has_items = has_items
 local has_no_items = has_no_items
 local math_floor = math.floor
 local table_insert = table.insert
@@ -27,6 +28,7 @@ local XraySidePanels = WidgetContainer:new{
     filtered_item_marker = KOR.icons.filter,
     --* two sets, one for each side_panel:
     info_panel_texts = { {}, {} },
+    linked_items = {},
     side_buttons = {},
 }
 
@@ -90,10 +92,13 @@ end
 
 --* compare ((XraySidePanels#setActiveSideButton)):
 --- @private
-function XraySidePanels:resetActiveSideButtons(context)
+function XraySidePanels:resetActiveSideButtons(context, dont_reset_active_side_buttons)
 
     self.active_side_tab = 1
-    self.active_side_buttons = { 1, 1 }
+    --* this will be truthy when current method called from ((XrayPageNavigator#setFilter)); in this way we prevent XrayPageNavigator.current_item being reset, because we need that to be unchanged in ((XrayPageNavigator#loadDataForPage)) > ((XraySidePanels#populateLinkedItemsPanel)):
+    if not dont_reset_active_side_buttons then
+        self.active_side_buttons = { 1, 1 }
+    end
     self.info_panel_texts = { {}, {} }
 
     --* context was given here only for debugging:
@@ -162,20 +167,21 @@ function XraySidePanels:generateInfoTextForFirstSideButton(button)
     DX.pn:setProp("first_info_panel_item_name", button.xray_item.name)
 end
 
+--* this method is only called for side panel no.2:
 --- @private
-function XraySidePanels:populateLinkedItemsPanel()
-    --* XrayPageNavigator.linked_items was computed in ((XrayPageNavigator#computeLinkedItems)):
-    table_insert(DX.pn.linked_items, 1, DX.pn.current_item)
-    count = #DX.pn.linked_items
+function XraySidePanels:populateLinkedItemsPanel(current_item)
+    --* self.linked_items was computed in ((XraySidePanels#computeLinkedItems)):
+    table_insert(self.linked_items, 1, current_item)
+    local lcount = #self.linked_items
     local info_panel_text
-    for i = 1, count do
-        info_panel_text = DX.vd:generateXrayItemInfo(DX.pn.linked_items, nil, i, DX.pn.linked_items[i].name, 2, "for_all_items_list")
+    for i = 1, lcount do
+        info_panel_text = DX.vd:generateXrayItemInfo(self.linked_items, nil, i, self.linked_items[i].name, 2, "for_all_items_list")
         if i == 1 then
             DX.pn:setProp("first_info_panel_text", info_panel_text)
         end
         --* apply some hacks to get a correct, uniform lay-out for the info in the bottom panel (apparently we need this for side panel no 2, but not for side panel 1):
         info_panel_text = DX.pn:formatInfoPanelText(info_panel_text)
-        self:addSideButton(DX.pn.linked_items[i], info_panel_text)
+        self:addSideButton(self.linked_items[i], info_panel_text)
     end
 end
 
@@ -265,6 +271,24 @@ function XraySidePanels:activatePageNavigatorPanelTab(tab_no)
     local pn = DX.pn
     pn:setActiveScrollPage()
     pn:reloadPageNavigator()
+end
+
+--* regular main item buttons (DX.sp.active_side_tab == 1) were added in ((XrayPageNavigator#markedItemRegister)):
+--- @private
+function XraySidePanels:computeLinkedItems()
+
+    local linked_items_were_determined = has_items(DX.pn.current_item.linked_items)
+    --* only for the linked items tab (no. 2) the side buttons have to be populated with the linked_items:
+    if self.active_side_tab == 1 and linked_items_were_determined then
+        return
+    end
+
+    --* the linked_items prop of self.current_item will be used in ((HtmlBox#generateSidePanel)) to determine whether the side panel tab activator buttons should be shown...
+    --! shallowCopy used twice in this method, to ensure that table_insert(linked_items... farther below doesn't modify this prop (and so would make it contain ever more duplicated items)!
+    self.linked_items = linked_items_were_determined and KOR.tables:shallowCopy(DX.pn.current_item.linked_items) or DX.vd:getLinkedItems(DX.pn.current_item)
+    if not linked_items_were_determined then
+        DX.pn.current_item.linked_items = KOR.tables:shallowCopy(self.linked_items)
+    end
 end
 
 function XraySidePanels:setSideButtons(buttons)

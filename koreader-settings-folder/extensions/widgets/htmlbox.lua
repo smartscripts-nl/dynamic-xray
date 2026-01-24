@@ -757,7 +757,7 @@ function HtmlBox:generateSidePanel()
     end
 
     --* self.page_navigator.current_item is set from the callback of a side_button in ((XraySidePanels#addSideButton)) and when marking the active button in ((XraySidePanels#markActiveSideButton)):
-    --! the linked_items prop for the current_item were set in ((XrayPageNavigator#computeLinkedItems)):
+    --! the linked_items prop for the current_item were set in ((XraySidePanels#computeLinkedItems)):
     local has_linked_items =
         DX.sp.active_side_tab == 1
         and pn.current_item
