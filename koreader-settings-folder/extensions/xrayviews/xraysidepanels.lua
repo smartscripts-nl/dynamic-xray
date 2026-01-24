@@ -32,7 +32,6 @@ local XraySidePanels = WidgetContainer:new{
     side_buttons = {},
 }
 
---- @private
 function XraySidePanels:addSideButton(item, info_text)
     --* active marking of buttons will be done in ((XraySidePanels#markActiveSideButton))
     local label = item.name
@@ -77,7 +76,6 @@ function XraySidePanels:addSideButton(item, info_text)
 end
 
 --* compare ((XraySidePanels#resetActiveSideButtons)):
---- @private
 function XraySidePanels:setActiveSideButton(context, active_side_button)
     if active_side_button and self.active_side_tab == 1 then
         self.active_side_buttons = { active_side_button, 1 }
@@ -91,7 +89,6 @@ function XraySidePanels:setActiveSideButton(context, active_side_button)
 end
 
 --* compare ((XraySidePanels#setActiveSideButton)):
---- @private
 function XraySidePanels:resetActiveSideButtons(context, dont_reset_active_side_buttons)
 
     self.active_side_tab = 1
@@ -106,7 +103,6 @@ function XraySidePanels:resetActiveSideButtons(context, dont_reset_active_side_b
 end
 
 --* these side panel buttons were generated in ((XrayPageNavigator#markItemsFoundInPageHtml)) > ((XrayPageNavigator#markedItemRegister)):
---- @private
 function XraySidePanels:markActiveSideButton()
     count = #self.side_buttons
     local button
@@ -148,7 +144,6 @@ function XraySidePanels:getSideButton(i)
 end
 
 --* currently not used:
---- @private
 function XraySidePanels:getSideButtonIndexByItem(item)
     local bcount = #self.side_buttons
     for i = 1, bcount do
@@ -168,7 +163,6 @@ function XraySidePanels:generateInfoTextForFirstSideButton(button)
 end
 
 --* this method is only called for side panel no.2:
---- @private
 function XraySidePanels:populateLinkedItemsPanel(current_item)
     --* self.linked_items was computed in ((XraySidePanels#computeLinkedItems)):
     table_insert(self.linked_items, 1, current_item)
@@ -274,7 +268,6 @@ function XraySidePanels:activatePageNavigatorPanelTab(tab_no)
 end
 
 --* regular main item buttons (DX.sp.active_side_tab == 1) were added in ((XrayPageNavigator#markedItemRegister)):
---- @private
 function XraySidePanels:computeLinkedItems()
 
     local linked_items_were_determined = has_items(DX.pn.current_item.linked_items)
