@@ -2,7 +2,7 @@
 --[[--
 This is the controller for the Dynamic Xray plugin. It has been structured in kind of a MVC structure:
 M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
-V = ((XrayUI)), ((XrayPageNavigator)) and ((XrayCallbacks)) and ((XrayPages)) and ((XraySidePanels)), ((XrayTranslations)) and ((XrayTranslationsManager)), ((XrayDialogs)) and ((XrayButtons))
+V = ((XrayUI)), ((XrayPageNavigator)) and ((XrayCallbacks)) and ((XrayPages)) and ((XraySidePanels)) and ((XrayInfoPanel)), ((XrayTranslations)) and ((XrayTranslationsManager)), ((XrayDialogs)) and ((XrayButtons))
 C = ((XrayController))
 
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database. XrayTappedWords handles data requests resulting from users longpressing (partial) names of Xray items in the e-book text.
@@ -110,6 +110,7 @@ KOR:initBaseExtensions()
 --- @field dl XrayDataLoader
 --- @field ds XrayDataSaver
 --- @field fd XrayFormsData
+--- @field ip XrayInfoPanel
 --- @field m XrayModel
 --- @field pn XrayPageNavigator
 --- @field s XraySettings
@@ -135,6 +136,8 @@ DX = {
     ds = nil,
     --* shorthand notation for FormsData; this module will be initialized in ((XrayModel#initDataHandlers)):
     fd = nil,
+    --* shorthand notation for InfoPanel; this module will be initialized in ((KOR#initDX)):
+    ip = nil,
     --* shorthand notation for Model:
     m = nil,
     --* shorthand notation for Pages; this module will be initialized in ((KOR#initDX)):

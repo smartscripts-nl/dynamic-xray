@@ -175,7 +175,7 @@ function XraySidePanels:populateLinkedItemsPanel()
             DX.pn:setProp("first_info_panel_text", info_panel_text)
         end
         --* apply some hacks to get a correct, uniform lay-out for the info in the bottom panel (apparently we need this for side panel no 2, but not for side panel 1):
-        info_panel_text = DX.pn:formatInfoPanelText(info_panel_text)
+        info_panel_text = DX.ip:formatInfoPanelText(info_panel_text)
         self:addSideButton(self.linked_items[i], info_panel_text)
     end
 end
