@@ -157,7 +157,7 @@ function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
             DX.c:onShowEditItemForm(DX.vd.current_item, false, 1)
             return true
         end,
-        [DX.s.hk_goto_previous_item] = function()
+        [DX.s.hk_goto_next_item] = function()
             -- #((next related item via hotkey))
             if DX.m.use_tapped_word_data then
                 parent:viewNextTappedWordItem()
