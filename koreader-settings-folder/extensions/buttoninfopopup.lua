@@ -274,7 +274,7 @@ end
 
 function ButtonInfoPopup:forXrayItemEdit(props)
 	return KOR.buttonprops:set({
-		icon = "edit-light",
+		icon = "edit-lighter",
 		icon_size_ratio = 0.6,
 		info = T([[edit icon | Edit description.
 
