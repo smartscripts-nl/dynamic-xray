@@ -1155,7 +1155,6 @@ end
 --* the chapter data retrieved here are generated for display in ((XrayViewsData#getAllTextHits)) caller of current method > ((generate chapter info)):
 --- @private
 function XrayViewsData:getChapterHitsPerTerm(term, chapter_stats, chapters_ordered, total_count)
-    local document = KOR.ui.document
     local results, needle, case_insensitive, last_chapter_title, last_chapter_index
     --* if applicable, we only search for first names (then probably more accurate hits count):
     needle = parent:getRealFirstOrSurName(term)
@@ -1163,7 +1162,7 @@ function XrayViewsData:getChapterHitsPerTerm(term, chapter_stats, chapters_order
     case_insensitive = not needle:match("[A-Z]")
 
     --! using document:findAllTextWholeWords instead of document:findAllText here crucial to get exact hits count:
-    results = document:findAllTextWholeWords(needle, case_insensitive, 0, 3000, false)
+    results = KOR.document:findAllTextWholeWords(needle, case_insensitive, 0, 3000, false)
 
     if has_no_items(results) then
         return total_count

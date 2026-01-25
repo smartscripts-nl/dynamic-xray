@@ -99,7 +99,6 @@ function Html:removeListIndents(text)
 end
 
 function Html:getAllHtmlContainersInPage(page_xp, start_page_no, include_punctuation)
-    local KDoc = KOR.document
     local containers = {}
     local texts = {}
     local pos = page_xp
@@ -122,16 +121,16 @@ function Html:getAllHtmlContainersInPage(page_xp, start_page_no, include_punctua
         if not self.paragraph_end then
             break
         end
-        self:addContainerToContainers(containers, texts, KDoc)
+        self:addContainerToContainers(containers, texts)
 
         --* advance to next paragraph:
-        pos = KDoc:getNextVisibleWordEnd(self.paragraph_end)
+        pos = KOR.document:getNextVisibleWordEnd(self.paragraph_end)
         if not pos then
             break
         end
 
         self.current_elem_no = self:getHtmlElementIndex(pos)
-        in_current_page = KDoc:getPageFromXPointer(pos) == start_page_no
+        in_current_page = KOR.document:getPageFromXPointer(pos) == start_page_no
         if not in_current_page then
             break
         end
@@ -145,20 +144,17 @@ end
 --- @private
 function Html:loopThroughContainerWords(include_punctuation)
     local next_word_end, next_elem_no, in_current_page
-    --- @type CreDocument KDoc
-    local KDoc = KOR.document
-
     local add_text_by = "word"
     while true do
         if add_text_by == "word" then
-            next_word_end = KDoc:getNextVisibleWordEnd(self.paragraph_end)
+            next_word_end = KOR.document:getNextVisibleWordEnd(self.paragraph_end)
         else
-            next_word_end = KDoc:getNextVisibleChar(self.paragraph_end)
+            next_word_end = KOR.document:getNextVisibleChar(self.paragraph_end)
         end
 
         if not next_word_end and include_punctuation and add_text_by == "word" then
             add_text_by = "char"
-            next_word_end = KDoc:getNextVisibleChar(self.paragraph_end)
+            next_word_end = KOR.document:getNextVisibleChar(self.paragraph_end)
 
         elseif not next_word_end then
             --* we're ready looping through this container, so break out of the loop:
@@ -166,7 +162,7 @@ function Html:loopThroughContainerWords(include_punctuation)
         end
 
         next_elem_no = self:getHtmlElementIndex(next_word_end)
-        in_current_page = KDoc:getPageFromXPointer(next_word_end) == self.start_page_no
+        in_current_page = KOR.document:getPageFromXPointer(next_word_end) == self.start_page_no
 
         --* stop at the end of the page, ignore any partial paragraph spilling to next page:
         if not in_current_page then
@@ -192,9 +188,9 @@ function Html:loopThroughContainerWords(include_punctuation)
 end
 
 --- @private
-function Html:addContainerToContainers(paragraphs, texts, KDoc)
+function Html:addContainerToContainers(paragraphs, texts)
     --* extract text for the current paragraph
-    local paragraph_text = KDoc:getTextFromXPointers(self.paragraph_start, self.paragraph_end)
+    local paragraph_text = KOR.document:getTextFromXPointers(self.paragraph_start, self.paragraph_end)
 
     --* skip empty or image-only paragraphs:
     if has_text(paragraph_text) then

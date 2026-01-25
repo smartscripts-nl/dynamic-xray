@@ -184,9 +184,7 @@ function XrayPages:getPageHtmlForPage(page_no)
         return self.cached_html_by_page_no[page_no]
     end
 
-    --- @type CreDocument document
-    local document = KOR.document
-    self.cached_html_by_page_no[page_no] = document:getPageHtml(page_no)
+    self.cached_html_by_page_no[page_no] = KOR.document:getPageHtml(page_no)
     return self.cached_html_by_page_no[page_no]
 end
 
@@ -254,8 +252,6 @@ function XrayPages:gotoPageHitForItem(goto_item, direction)
         end
         local item = DX.pn.page_navigator_filter_item
         local current_page = DX.pn.navigator_page_no
-        --- @type CreDocument document
-        local document = KOR.document
         local results, needle, case_insensitive
         --* if applicable, we only search for first names (then probably more accurate hits count):
         needle = DX.m:getRealFirstOrSurName(item)
@@ -265,7 +261,7 @@ function XrayPages:gotoPageHitForItem(goto_item, direction)
         case_insensitive = not needle:match("[A-Z]")
 
         --! using document:findAllTextWholeWords instead of document:findAllText here crucial to get exact hits count:
-        results = DX.pn.cached_hits_by_needle[needle] or document:findAllTextWholeWords(needle, case_insensitive, 0, 3000, false)
+        results = DX.pn.cached_hits_by_needle[needle] or KOR.document:findAllTextWholeWords(needle, case_insensitive, 0, 3000, false)
         DX.pn.cached_hits_by_needle[needle] = results
         local next_page = direction == 1 and self:resultsPageGreaterThan(results, current_page) or self:resultsPageSmallerThan(results, current_page)
 
@@ -287,7 +283,7 @@ function XrayPages:gotoPageHitForItem(goto_item, direction)
         local aliases = DX.m:splitByCommaOrSpace(item.aliases)
         local aliases_count = #aliases
         for a = 1, aliases_count do
-            results = DX.pn.cached_hits_by_needle[needle] or document:findAllTextWholeWords(aliases[a], case_insensitive, 0, 3000, false)
+            results = DX.pn.cached_hits_by_needle[needle] or KOR.document:findAllTextWholeWords(aliases[a], case_insensitive, 0, 3000, false)
             DX.pn.cached_hits_by_needle[needle] = results
             next_page = self:resultsPageGreaterThan(results, current_page, next_page)
         end
