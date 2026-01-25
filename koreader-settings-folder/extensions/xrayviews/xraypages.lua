@@ -137,19 +137,26 @@ function XrayPages:verifyPageHit(condition, page_no)
 end
 
 function XrayPages:jumpToPage()
+    local max_page = KOR.document:getPageCount()
     local dialog
     dialog = KOR.dialogs:prompt({
         title = _("Jump to page"),
         input = "",
         input_type = "number",
+        description = T(_("Last page: %1"), KOR.document:getPageCount()),
         allow_newline = false,
         cursor_at_end = true,
         width = math_ceil(DX.pn.screen_width / 2.5),
         no_overlay = true,
         callback = function(value)
             UIManager:close(dialog)
+            value = tonumber(value)
+            if value == 0 or value > max_page then
+                KOR.messages:notify(_("the page number entered was invalid") .. "...")
+                return
+            end
             DX.sp:resetActiveSideButtons("XrayPages:jumpToPage")
-            DX.pn.navigator_page_no = tonumber(value)
+            DX.pn.navigator_page_no = value
             DX.pn:showNavigator()
         end,
     })
