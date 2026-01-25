@@ -182,6 +182,14 @@ function XrayCallbacks:execShowPopupButtonsCallback(iparent)
         forced_width = anchor.w,
         bordercolor = KOR.colors.line_separator,
         borderradius = Size.radius.default,
+        additional_key_events = {
+            ClosePopupMenu = {
+                { { DX.s.hk_page_navigator_popup_menu } }, function()
+                    iparent:closePopupMenu()
+                    return true
+                end
+            },
+        },
         tap_close_callback = function()
             iparent:closePopupMenu()
         end,

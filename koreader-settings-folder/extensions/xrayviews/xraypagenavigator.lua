@@ -320,6 +320,7 @@ end
 --* the popup menu was opened in ((XrayCallbacks#execShowPopupButtonsCallback)):
 function XrayPageNavigator:closePopupMenu()
     UIManager:close(self.movable_popup_menu)
+    self.movable_popup_menu = nil
 end
 
 function XrayPageNavigator:resetReturnToProps()
@@ -467,6 +468,9 @@ function XrayPageNavigator:getHotkeysInformation()
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>L</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
             .. _("show List of Items")
             .. [[</td></tr>
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>M</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+            .. _("toggle the Page Navigator popup Menu with additional actions")
+           .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>N</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
             .. _("jump to Next page in Page Navigator")
             .. [[</td></tr>
@@ -476,6 +480,9 @@ function XrayPageNavigator:getHotkeysInformation()
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>S</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
             .. _("open Dynamic Xray Settings")
             .. [[</td></tr>
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+S</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+            .. _("Search for an Xray item in the Page Navigator")
+            ..[[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>V</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
             .. _("View details of item currently displayed in bottom info panel")
             .. [[</td></tr>

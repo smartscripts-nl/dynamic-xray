@@ -59,10 +59,8 @@ local UIManager = require("ui/uimanager")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local VerticalSpan = require("ui/widget/verticalspan")
 local _ = require("gettext")
-local Input = require("extensions/modules/input")
 local Screen = require("device").screen
 
-local DX = DX
 local math = math
 local type = type
 
@@ -106,9 +104,7 @@ function ButtonDialog:init()
         end
         self.width = math.floor(math.min(Screen:getWidth(), Screen:getHeight()) * self.width_factor)
     end
-    if Device:hasKeys() then
-        self.key_events.Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } }
-    end
+    KOR.keyevents:addHotkeysForButtonDialog(self)
     if not self.readonly and Device:isTouchDevice() then
         self.ges_events.TapClose = {
             GestureRange:new{

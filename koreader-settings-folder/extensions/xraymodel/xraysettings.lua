@@ -72,6 +72,11 @@ local XraySettings = WidgetContainer:new{
             explanation = _("To open the XraySettings from Page Navigator.") .. hotkeys_warning,
             locked = 0,
         },
+        hk_page_navigator_popup_menu = {
+            value = "M",
+            explanation = "Toggle the Page Navigator popup menu with additional actions." .. hotkeys_warning,
+            locked = 0,
+        },
         hk_show_pagebrowser_from_page_navigator = {
             value = "B",
             explanation = _("To open the pagebrowser popup in the Page Navigator.") .. hotkeys_warning,

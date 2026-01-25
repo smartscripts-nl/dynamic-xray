@@ -496,6 +496,14 @@ function KeyEvents.addHotkeysForXrayPageNavigator(key_events_module)
             end,
         },
         {
+            label = "pn_popup_menu",
+            --* in ((XrayCallbacks#execShowPopupButtonsCallback)) an additional key_event with the same hotkey will be added to the popup menu, to close it again:
+            hotkey = { { DX.s.hk_page_navigator_popup_menu } },
+            callback = function()
+                return DX.cb:execShowPopupButtonsCallback(parent)
+            end,
+        },
+        {
             label = "pn_viewer",
             hotkey = { { { DX.s.hk_view_item_from_list_or_navigator } } },
             callback = function()
@@ -587,6 +595,24 @@ function KeyEvents.addHotkeysForXrayUIpageInfoViewer()
     KOR.registry:set("add_parent_hotkeys", actions)
 end
 
+--- @param parent ButtonDialog
+function KeyEvents:addHotkeysForButtonDialog(parent)
+    if not Device:hasKeys() then
+        return
+    end
+    parent.key_events.Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } }
+
+    if parent.additional_key_events then
+        for label, set in pairs(parent.additional_key_events) do
+            parent["on" .. label] = function()
+                return set[2]()
+            end
+            parent.key_events[label] = set[1]
+        end
+    end
+end
+
+--- @param parent Menu
 function KeyEvents:addHotkeyForFilterButton(parent, filter_active, callback, reset_callback)
 
     local hotkey = { { DX.s.hk_show_list_filter_dialog } }
