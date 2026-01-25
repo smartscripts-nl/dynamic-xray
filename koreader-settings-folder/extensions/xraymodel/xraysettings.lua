@@ -72,6 +72,11 @@ local XraySettings = WidgetContainer:new{
             explanation = _("To open the XraySettings from Page Navigator.") .. hotkeys_warning,
             locked = 0,
         },
+        hk_page_navigator_jump_to_page_no = {
+            value = "3",
+            explanation = "Open the dialog for jumping to a specific page (3 is the key below #)." .. hotkeys_warning,
+            locked = 0,
+        },
         hk_page_navigator_popup_menu = {
             value = "M",
             explanation = "Toggle the Page Navigator popup menu with additional actions." .. hotkeys_warning,

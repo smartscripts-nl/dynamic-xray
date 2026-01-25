@@ -461,6 +461,13 @@ function KeyEvents.addHotkeysForXrayPageNavigator(key_events_module)
             end,
         },
         {
+            label = "jump_to_page_no",
+            hotkey = { { DX.s.hk_page_navigator_jump_to_page_no } },
+            callback = function()
+                return DX.cb:execJumpToPageCallback()
+            end,
+        },
+        {
             label = "goto_list",
             hotkey = { { DX.s.hk_show_list } },
             callback = function()

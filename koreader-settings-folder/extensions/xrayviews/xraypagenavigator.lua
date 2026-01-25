@@ -453,6 +453,11 @@ function XrayPageNavigator:getHotkeysInformation()
 <strong>In Page Navigator</strong><br>
 <br>
 <table style='border-collapse: collapse'>
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>3 ]]
+            .. _("(the key below #)")
+            .. [[</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+            .. ("open dialog for jumping to a specific page number")
+            .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>E</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
             .. _("Edit Xray item shown in bottom info panel")
             .. [[</td></tr>
