@@ -342,11 +342,11 @@ function XrayUI:ReaderViewLoopThroughParagraphOrPage(p)
     local hits, explanations, skip_items = self:getXrayItemsFoundInText(haystack)
     if hits then
         --* for debugging only:
-        table.insert(self.paragraphs_with_matches, self.paragraphs[p].text)
+        table_insert(self.paragraphs_with_matches, self.paragraphs[p].text)
         --* to be consumed in ((XrayUI#ReaderHighlightGenerateXrayInformation)):
-        table.insert(self.paragraph_hits, hits)
-        table.insert(self.paragraph_explanations, explanations)
-        table.insert(self.skip_xray_items, skip_items)
+        table_insert(self.paragraph_hits, hits)
+        table_insert(self.paragraph_explanations, explanations)
+        table_insert(self.skip_xray_items, skip_items)
         local name
         count = #hits
         for xi = 1, count do
@@ -395,7 +395,7 @@ function XrayUI:ReaderViewLoopThroughParagraphOrPage(p)
             if rect then
                 local marker_rect = self:drawMarker(c, rect)
                 if marker_rect then
-                    table.insert(self.rects_with_matches, marker_rect)
+                    table_insert(self.rects_with_matches, marker_rect)
                 end
                 return true
             end
@@ -500,12 +500,13 @@ function XrayUI:matchAliasesToParagraph(paragraph, book_hits, explanations, item
     local aliases = item.aliases
     local alias_table = DX.m:splitByCommaOrSpace(aliases)
     local alias
+    local ri = KOR.informationdialog.match_reliability_indicators
     count = #alias_table
     for i = 1, count do
         alias = alias_table[i]
         if paragraph:match(alias) then
-            self:registerParagraphMatch(book_hits, explanations, item, self.separator .. DX.tw.match_reliability_indicators.alias .. " " .. alias)
-            item.reliability_indicator = DX.tw.match_reliability_indicators.alias
+            self:registerParagraphMatch(book_hits, explanations, item, self.separator .. ri.alias .. " " .. alias)
+            item.reliability_indicator = ri.alias
             return true
         end
     end
@@ -526,6 +527,8 @@ function XrayUI:matchNameInPageOrParagraph(text, lower_text, needle, hits, parti
         family_name = name_parts[#name_parts]
     end
 
+    local ri = KOR.informationdialog.match_reliability_indicators
+
     local matcher = needle:gsub("%-", "%%-")
     local plural_matcher
     if not matcher:match("s$") then
@@ -545,8 +548,8 @@ function XrayUI:matchNameInPageOrParagraph(text, lower_text, needle, hits, parti
         (xray_name_swapped and KOR.strings:hasWholeWordMatch(text, lower_text, xray_name_swapped))
     then
         --* for full name hits don't add the xray_needle to the explanation, that would lead to stupid repetition of the full name:
-        self:registerParagraphMatch(hits, explanations, item, self.separator .. DX.tw.match_reliability_indicators.full_name)
-        item.reliability_indicator = DX.tw.match_reliability_indicators.full_name
+        self:registerParagraphMatch(hits, explanations, item, self.separator .. ri.full_name)
+        item.reliability_indicator = ri.full_name
 
         -- #((log family name))
         if has_family_name and not is_lower_case then
@@ -600,12 +603,12 @@ function XrayUI:matchNameInPageOrParagraph(text, lower_text, needle, hits, parti
     end
 
     if match_found then
-        local match_reliability_indicator = DX.tw.match_reliability_indicators.partial_match
+        local match_reliability_indicator = ri.partial_match
         matching_parts = matching_parts:gsub(", $", "")
         if left_side_match_found then
-            match_reliability_indicator = DX.tw.match_reliability_indicators.first_name
+            match_reliability_indicator = ri.first_name
         elseif right_side_match_found then
-            match_reliability_indicator = DX.tw.match_reliability_indicators.last_name
+            match_reliability_indicator = ri.last_name
         end
         self:registerParagraphMatch(hits, explanations, item, self.separator .. match_reliability_indicator .. " " .. matching_parts)
         item.reliability_indicator = match_reliability_indicator
@@ -668,8 +671,8 @@ function XrayUI:reduceParagraphHits(hits, partial_hits, explanations)
         if not processed_names[xray_name] then
             --* whole name hits must always be kept:
             if multiple_hits_count == 0 and partial_hits_count == 0 then
-                table.insert(reduced, xray_item)
-                table.insert(reduced_explanations, explanations[nr])
+                table_insert(reduced, xray_item)
+                table_insert(reduced_explanations, explanations[nr])
                 processed_names[xray_name] = 1
 
             --* when full name and surname found in a paragraph, e.g. Thomas Carlyle), but also found the single name Carlyle, prevent Carlyle Foster to be counted as a hit:
@@ -680,8 +683,8 @@ function XrayUI:reduceParagraphHits(hits, partial_hits, explanations)
                 end
             end
             if not first_name_matches_a_surname and (not multiple_hits_count or partial_hits_count) then
-                table.insert(reduced, xray_item)
-                table.insert(reduced_explanations, explanations[nr])
+                table_insert(reduced, xray_item)
+                table_insert(reduced_explanations, explanations[nr])
                 processed_names[xray_name] = 1
             end
         end
@@ -691,8 +694,8 @@ end
 
 --- @private
 function XrayUI:registerParagraphMatch(hits, explanations, item, message)
-    table.insert(hits, item)
-    table.insert(explanations, message)
+    table_insert(hits, item)
+    table_insert(explanations, message)
 end
 
 --- @private
@@ -719,8 +722,8 @@ function XrayUI:removePartialHitsIfFullNameHitFound(hits, explanations, partial_
                     end
                 end
                 if not skip_item then
-                    table.insert(pruned_collection, xray_item)
-                    table.insert(pruned_explanations, explanations[nr])
+                    table_insert(pruned_collection, xray_item)
+                    table_insert(pruned_explanations, explanations[nr])
                 end
             end
         end
@@ -803,8 +806,10 @@ function XrayUI:toggleParagraphOrPageMode(parent, target, new_trigger)
     local question = T(_([[Do you indeed want to toggle the Xray information display mode to %1?]]), target, new_trigger)
     KOR.dialogs:confirm(question, function()
         DX.s:toggleSetting("ui_mode", { "page", "paragraph" })
-        UIManager:close(parent.xray_ui_info_dialog)
-        parent.xray_ui_info_dialog = nil
+        if parent then
+            UIManager:close(parent.xray_ui_info_dialog)
+            parent.xray_ui_info_dialog = nil
+        end
         UIManager:setDirty(nil, "full")
     end)
 end

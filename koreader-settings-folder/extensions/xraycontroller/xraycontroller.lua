@@ -83,7 +83,7 @@ For a key event e.g.: ((next related item via hotkey))
 
 --* DISPLAYING HELP INFO
 
-((XrayDialogs#showHelp))
+((InformationDialog#forDynamicXrayListAndViewer))
 ]]
 
 local require = require

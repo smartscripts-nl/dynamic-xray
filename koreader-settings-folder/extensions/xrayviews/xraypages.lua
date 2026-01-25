@@ -461,7 +461,7 @@ end
 
 --- @private
 function XrayPages:markFullNameHit(html, item, subject, loop_no)
-    if item.reliability_indicator ~= DX.tw.match_reliability_indicators.full_name then
+    if item.reliability_indicator ~= KOR.informationdialog:getMatchReliabilityIndicator("full_name") then
         return html, false
     end
 

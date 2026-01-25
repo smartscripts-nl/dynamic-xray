@@ -29,17 +29,6 @@ local XrayTappedWords = WidgetContainer:new{
     --* set via ((XrayDialogs#viewTappedWordItem)) > ((XrayTappedWords#registerCurrentItem))
     current_tapped_word_item = nil,
     items_collection = {},
-    match_reliability_explanations = nil,
-    -- #((xray match reliability indicators))
-    --* these match reliability indicators will be injected in the dialog with page or paragraphs information in ((XrayUI#showParagraphInformation)) > ((xray items dialog add match reliability explanations)):
-    match_reliability_indicators = {
-        full_name = KOR.icons.xray_full_bare,
-        alias = KOR.icons.xray_alias_bare,
-        first_name = KOR.icons.xray_half_left_bare,
-        last_name = KOR.icons.xray_half_right_bare,
-        partial_match = KOR.icons.xray_partial_bare,
-        linked_item = KOR.icons.xray_link_bare,
-    },
     popup_items = nil,
     popup_persons = nil,
     popup_terms = nil,
@@ -441,22 +430,22 @@ function XrayTappedWords:matchItemToTappedWord(tapped_word_collection, item, nee
 
     --* include extact fullname match, if allowed:
     if include_name_match and (not tapped_word or tapped_word == item.name) and (item.tapped_index == needle_item.tapped_index or item.name == needle_item.name or item.name:match("^" .. needle_item.name .. "s$")) then
-        item.reliability_indicator = self.match_reliability_indicators.full_name
+        item.reliability_indicator = KOR.informationdialog:getMatchReliabilityIndicator("full_name")
         table_insert(tapped_word_collection, item)
         return
 
     elseif include_name_match and tapped_word and item.name:match("^" .. tapped_word_matcher) then
-        item.reliability_indicator = self.match_reliability_indicators.first_name
+        item.reliability_indicator = KOR.informationdialog:getMatchReliabilityIndicator("first_name")
         table_insert(tapped_word_collection, item)
         return
 
     elseif include_name_match and tapped_word and item.name:match(tapped_word_matcher .. "$") then
-        item.reliability_indicator = self.match_reliability_indicators.last_name
+        item.reliability_indicator = KOR.informationdialog:getMatchReliabilityIndicator("last_name")
         table_insert(tapped_word_collection, item)
         return
 
     elseif include_name_match and tapped_word and item.name:match(tapped_word_matcher) then
-        item.reliability_indicator = self.match_reliability_indicators.partial_match
+        item.reliability_indicator = KOR.informationdialog:getMatchReliabilityIndicator("partial_match")
         table_insert(tapped_word_collection, item)
         return
     end
@@ -467,7 +456,7 @@ function XrayTappedWords:matchItemToTappedWord(tapped_word_collection, item, nee
     for i = 1, count do
         alias = aliases[i]:gsub("%-", "%%-")
         if parent:hasExactMatch(item.aliases, alias) then
-            item.reliability_indicator = self.match_reliability_indicators.alias
+            item.reliability_indicator = KOR.informationdialog:getMatchReliabilityIndicator("alias")
             table_insert(tapped_word_collection, item)
             return
         end
@@ -487,14 +476,16 @@ function XrayTappedWords:getTypeAndReliabilityIcons(item)
 
     local text = KOR.strings:lower(item.name)
 
+    local ri = KOR.informationdialog.match_reliability_indicators
+
     --* reliability_icons were added using ((xray match reliability indicators)):
     local status_indicator_color
     if matches_with_tapped_word and not alias_matches_with_tapped_word and item.reliability_indicator then
         status_indicators = item.reliability_indicator .. status_indicators
     elseif alias_matches_with_tapped_word then
-        status_indicators = self.match_reliability_indicators.alias .. status_indicators
+        status_indicators = ri.alias .. status_indicators
     else
-        status_indicators = self.match_reliability_indicators.linked_item .. status_indicators
+        status_indicators = KOR.informationdialog:getMatchReliabilityIndicator("linked_item") .. status_indicators
         --* show linked items with lighter status indicator icons:
         status_indicator_color = KOR.colors.xray_item_status_indicators_color
     end
@@ -553,34 +544,13 @@ function XrayTappedWords:itemsSort(top1_count, top2_count, bottom_count)
     return related_items_sorted
 end
 
---* called from ((TextViewer#showToc)) or ((XrayTappedWords#getXrayItemAsDictionaryEntry)), for info icon:
-function XrayTappedWords:getMatchReliabilityExplanation()
-    if self.match_reliability_explanations then
-        return self.match_reliability_explanations
-    end
-    local indicators = self.match_reliability_indicators
-    local explanations = {
-        indicators.full_name .. _(" full name"),
-        indicators.alias .. _(" alias"),
-        indicators.first_name .. _(" first name"),
-        indicators.last_name .. _(" surname"),
-        indicators.partial_match .. _(" partial hit"),
-        indicators.linked_item .. _(" linked item"),
-    }
-    self.match_reliability_explanations = table.concat(explanations, "\n") .. [[
-
-The type of similarity determines the icon and indicates how reliable this hit is (a wrong hit might be shown). Full names and aliases are the most reliable of all.
-]]
-    return self.match_reliability_explanations
-end
-
 function XrayTappedWords:doSimpleSearchScoreMatch(item)
     local name_lower = item.name:lower()
     local aliases_lower = item.aliases:lower()
     local short_names_lower = item.short_names:lower()
     local description = item.description:lower()
     local needle_lower = "%f[%w]" .. DX.vd.filter_string:lower() .. "%f[%W]"
-    return (name_lower:match(needle_lower) or description:match(needle_lower) or aliases_lower:match(needle_lower) or short_names_lower:match(needle_lower)) and 100, self.match_reliability_indicators.full_name or 0, nil
+    return (name_lower:match(needle_lower) or description:match(needle_lower) or aliases_lower:match(needle_lower) or short_names_lower:match(needle_lower)) and 100, KOR.informationdialog:getMatchReliabilityIndicator("full_name") or 0, nil
 end
 
 --- @private
@@ -656,7 +626,7 @@ function XrayTappedWords:doScoreMatch(item)
         rule = rules[i]
         val = fields[rule.key]
         if val and rule.does_match(val) then
-            return rule.score, self.match_reliability_indicators[rule.indicator]
+            return rule.score, KOR.informationdialog:getMatchReliabilityIndicator(rule.indicator)
         end
     end
     return 0, nil

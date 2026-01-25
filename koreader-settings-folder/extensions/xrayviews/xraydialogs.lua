@@ -1159,9 +1159,8 @@ end
 --* for usage by hotkeys defined in ((KeyEvents#addHotkeysForXrayUIpageInfoViewer))
 
 
---- @param iparent XrayDialogs
-function XrayDialogs:execShowHelpInfoCallback(iparent)
-    return iparent:showReliabilityIndicatorsExplanation()
+function XrayDialogs:execShowHelpInfoCallback()
+    return KOR.informationdialog:forReliabilityIndicatorsExplanation()
 end
 
 --- @param iparent XrayDialogs
@@ -1193,7 +1192,7 @@ function XrayDialogs:showReliabilityIndicatorsExplanation()
         tabs = {
             {
                 tab = _("reliability icons"),
-                info = DX.tw:getMatchReliabilityExplanation()
+                info = KOR.informationdialog:getMatchReliabilityExplanation()
             },
             {
                 tab = _("viewer buttons"),
@@ -1219,64 +1218,8 @@ For editing an item: longpress the button and choose "Edit".
     return true
 end
 
-function XrayDialogs:showHelp(initial_tab)
-    --* these hotkeys are mostly defined in ((KeyEvents#addHotkeysForXrayList)):
-    local list_info = self.help_texts["list"] or T(_([[Shift+X = show List of Items
-
-Titlebar %1/%2 = items displayed in series/book mode
-Titlebar %3 = only linked items, from longpressed word
-Browse to next/previous page: Space/Shift+Space
-Longpress item: quick access to actions.
-
-A, P, B = activate tab starting with that character
-1 through 9 = open corresponding item in list
-F = Filter list
-I = Import items and update hits
-Shift+I = show this Information dialog
-M = toggle book or series Mode
-O = toggle sOrt by alphabet or hits count
-S = show books in Series
-V = add item
-X = import items from eXternal series
-]]), KOR.icons.xray_series_mode_bare, KOR.icons.xray_book_mode_bare, KOR.icons.xray_tapped_collection_bare)
-    self.help_texts["list"] = list_info
-
-    --* these hotkeys are mostly defined in ((KeyEvents#addHotkeysForXrayItemViewer)):
-    local viewer_info = self.help_texts["viewer"] or T(_([[
-
-You can also navigate through items by tapping near to the left or right border of the viewer dialog.
-Browse to next/previous info screen: Space/Shift+Space
-
-1, 2 = activate first or second tab
-
-A = Add item
-D = Delete current item for current book
-Shift+D = Delete current item for entire series
-E = Edit current item
-Shift+I = show this Information dialog
-L = go back to List
-N = go to Next item (when Right doesn't work)
-O = Open chapter no...
-P = go to Previous item (when Left doesn't work)
-S = show Series manager
-Shift+S = Show all hits in book
-]]), KOR.icons.series_mode_bare, KOR.icons.book_bare)
-    self.help_texts["viewer"] = viewer_info
-
-    KOR.dialogs:textBoxTabbed(initial_tab, {
-        title = _("(BT) Hotkeys and more"),
-        is_standard_tabbed_dialog = true,
-        tabs = {
-            {
-                tab = _("In list of items"),
-                info = list_info,
-            },
-            {
-                tab = _("In item viewer"),
-                info = viewer_info,
-            },
-        }
-    })
+function XrayDialogs:setHelpText(key, help_info)
+    self.help_texts[key] = help_info
 end
 
 function XrayDialogs:getControllerEntryName(entry)

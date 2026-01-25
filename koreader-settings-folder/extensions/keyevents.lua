@@ -145,7 +145,7 @@ function KeyEvents:addHotkeysForTextViewer(parent, key_events_module)
     end
 end
 
---* information about available hotkeys in list shown in ((XrayDialogs#showItemViewer)) > ((XrayDialogs#showHelp)):
+--* information about available hotkeys in list shown in ((XrayDialogs#showItemViewer)) > ((InformationDialog#forDynamicXrayListAndViewer)):
 -- #((KeyEvents#addHotkeysForXrayItemViewer))
 --* compare ((KeyEvents#addHotkeysForXrayPageNavigator)):
 function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
@@ -231,8 +231,7 @@ function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
             label = "show_info",
             hotkey = { { DX.s.hk_show_information } },
             callback = function()
-                parent:showHelp(2)
-                return true
+                return KOR.informationdialog:forDynamicXrayListAndViewer(2)
             end,
         },
         {
@@ -285,7 +284,7 @@ function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
     KOR.registry:set("add_parent_hotkeys", actions)
 end
 
---* information about available hotkeys in list shown in ((XrayButtons#forListTopLeft)) > ((XrayDialogs#showHelp)):
+--* information about available hotkeys in list shown in ((XrayButtons#forListTopLeft)) > ((InformationDialog#forDynamicXrayListAndViewer)):
 --* compare for filtering Menu lists in general ((KeyEvents#addHotkeyForFilterButton)):
 --- @param parent XrayDialogs
 function KeyEvents:addHotkeysForXrayList(parent, key_events_module)
@@ -310,8 +309,7 @@ function KeyEvents:addHotkeysForXrayList(parent, key_events_module)
             label = "show_info",
             hotkey = { { DX.s.hk_show_information } },
             callback = function()
-                parent:showHelp(1)
-                return true
+                return KOR.informationdialog:forDynamicXrayListAndViewer(1)
             end,
         },
         {
@@ -591,7 +589,7 @@ function KeyEvents.addHotkeysForXrayUIpageInfoViewer()
             label = "show_info",
             hotkey = { { DX.s.hk_show_information } },
             callback = function()
-                return parent:execShowHelpInfoCallback(parent)
+                return parent:execShowHelpInfoCallback()
             end,
         },
     }
