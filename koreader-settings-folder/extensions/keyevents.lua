@@ -382,7 +382,13 @@ function KeyEvents:addHotkeysForXrayList(parent, key_events_module)
             per_page = parent.xray_items_inner_menu.perpage
             local item_no = (current_page - 1) * per_page + current
             UIManager:close(parent.xray_items_chooser_dialog)
-            parent:showItemViewer(DX.vd:getItem(item_no))
+            local item = DX.vd:getItem(item_no)
+            if parent.select_mode then
+                parent.select_mode = false
+                DX.p:toPrevOrNextNavigatorPage(item)
+            else
+                parent:showItemViewer(item)
+            end
             return true
         end)
     end
