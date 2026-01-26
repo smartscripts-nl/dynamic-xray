@@ -655,8 +655,8 @@ function ReaderSearch:showHitWithContext(item, not_cached)
     --* [[[ and ]]] - injected in ((ReaderSearch#onShowFindAllResults)) - will be replaced by <b> and </b> in ((Dialogs#htmlBox))
     context_string = KOR.html:textToHtml(context_string)
     context_string = context_string
-            :gsub("<p>", "<p>... ", 1)
-            :gsub("</p>$", " ...</p>", 1)
+        :gsub("<p>", "<p>... ", 1)
+        :gsub("</p>$", " ...</p>", 1)
     local toc_info = KOR.toc:getTocPathInfoForText(item.start, nil, "has_own_title")
     if has_text(toc_info) then
         toc_info = toc_info .. "\n\n"
@@ -728,7 +728,7 @@ function ReaderSearch:showHitWithContext(item, not_cached)
                         -- #((jump from ReaderSearch to Xray Page Navigator))
                         DX.sp:resetActiveSideButtons("ReaderSearch:showHitWithContext")
                         DX.pn:setProp("navigator_page_no", page)
-                        DX.pn:showNavigator()
+                        DX.pn:showNavigator(DX.pn.initial_browsing_page)
                     end,
                 }),
                 {

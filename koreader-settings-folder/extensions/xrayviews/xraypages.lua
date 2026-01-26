@@ -215,7 +215,7 @@ function XrayPages:jumpToPage()
             end
             DX.sp:resetActiveSideButtons("XrayPages:jumpToPage")
             DX.pn.navigator_page_no = value
-            DX.pn:showNavigator()
+            DX.pn:showNavigator(DX.pn.initial_browsing_page)
         end,
     })
 end
@@ -253,7 +253,7 @@ end
 function XrayPages:toCurrentNavigatorPage()
     DX.sp:resetActiveSideButtons("XrayPages:toCurrentNavigatorPage")
     DX.pn.navigator_page_no = DX.pn.initial_browsing_page
-    DX.pn:showNavigator()
+    DX.pn:showNavigator(DX.pn.initial_browsing_page)
 end
 
 function XrayPages:toNextNavigatorPage(goto_next_item)

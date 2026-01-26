@@ -72,7 +72,7 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
             return
         end
     end
-    self.initial_browsing_page = initial_browsing_page
+    self.initial_browsing_page = initial_browsing_page or DX.u:getCurrentPage()
     self:closePageNavigator()
     local html = self:loadDataForPage()
 
@@ -238,7 +238,7 @@ function XrayPageNavigator:reloadPageNavigator()
     if not self.page_navigator then
         return
     end
-    self:showNavigator()
+    self:showNavigator(self.initial_browsing_page)
     self:restoreActiveScrollPage()
 end
 
@@ -334,7 +334,7 @@ function XrayPageNavigator:returnToNavigator()
     if self.return_to_page then
         --* this is needed so we can return to the page we were looking at:
         self.navigator_page_no = self.return_to_page
-        self:showNavigator()
+        self:showNavigator(self.initial_browsing_page)
         self.return_to_page = nil
         local active_side_button = self.return_to_item_no or 1
         DX.sp:setActiveSideButton("XrayPageNavigator:returnToNavigator", active_side_button)
