@@ -3,6 +3,8 @@ local require = require
 
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 
+local pairs = pairs
+
 --* initialization of extensions, plugins etc. below is done through ((ExtensionsInit)), called from reader.lua or the init methods of plugins
 --- @class KOR
 --- @field buttonchoicepopup ButtonChoicePopup
@@ -123,14 +125,19 @@ function KOR:initDX()
 	--* if we would use this and consequently would reference DX.c.model instead of DX.m in the other DX modules, data would be reloaded from database onReaderReady for each new book:
 	DX.m:initDataHandlers()
 
-	DX.b = require("extensions/xrayviews/xraybuttons")
-	DX.cb = require("extensions/xrayviews/xraycallbacks")
-	DX.d = require("extensions/xrayviews/xraydialogs")
-	DX.i = require("extensions/xrayviews/xrayinformation")
-	DX.ip = require("extensions/xrayviews/xrayinfopanel")
-	DX.p = require("extensions/xrayviews/xraypages")
-	DX.sp = require("extensions/xrayviews/xraysidepanels")
-	DX.u = require("extensions/xrayviews/xrayui")
+	local modules = {
+		b = "extensions/xrayviews/xraybuttons",
+		cb = "extensions/xrayviews/xraycallbacks",
+		d = "extensions/xrayviews/xraydialogs",
+		i = "extensions/xrayviews/xrayinformation",
+		ip = "extensions/xrayviews/xrayinfopanel",
+		p = "extensions/xrayviews/xraypages",
+		sp = "extensions/xrayviews/xraysidepanels",
+		u = "extensions/xrayviews/xrayui",
+	}
+	for key, module in pairs(modules) do
+		DX[key] = require(module)
+	end
 	if DX.m:isPublicDXversion() then
 		DX.tm = require("extensions/xrayviews/xraytranslationsmanager")
 	end
