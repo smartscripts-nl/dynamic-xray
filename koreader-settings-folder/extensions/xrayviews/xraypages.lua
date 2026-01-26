@@ -20,7 +20,9 @@ local tonumber = tonumber
 local count
 
 --- @class XrayPages
-local XrayPages = WidgetContainer:new {
+local XrayPages = WidgetContainer:new{
+    browsing_page_current = nil,
+    browsing_page_new = nil,
     button_labels_injected = "",
     cached_html_by_page_no = {},
     --* whole word name parts which may not be marked bold and trigger an item hit by themselves only; used in ((XrayPages#markItem)):
@@ -41,52 +43,88 @@ local XrayPages = WidgetContainer:new {
     search_also_in_opposite_direction = false,
 }
 
-function XrayPages:resultsPageGreaterThan(results, current_page, next_page)
+function XrayPages:getNextPageFrom(results)
     if not has_items(results) then
         return
     end
     count = #results
     local last_occurrence = KOR.document:getPageFromXPointer(results[count].start)
-    if current_page == last_occurrence then
+    if self.browsing_page_current >= last_occurrence then
         return
     end
-    local page_no, valid_next_page
+    local page_no
     local start = 1
     local l_end = count
-    start, l_end = self:getLoopStartEnd(results, start, l_end, current_page, next_page)
+    start, l_end = self:getNextLoopStartEnd(results, start, l_end, last_occurrence)
     for i = start, l_end do
         page_no = KOR.document:getPageFromXPointer(results[i].start)
-        valid_next_page = self:verifyPageHit(page_no > current_page and (not next_page or page_no < next_page), page_no)
-        if valid_next_page then
-            return valid_next_page
+        if self:isValidNextFilteredItemPage(page_no, last_occurrence) then
+            return page_no
         end
     end
 end
 
-function XrayPages:resultsPageSmallerThan(results, current_page, prev_page)
-    if not has_items(results) then
-        return
-    end
+function XrayPages:getPreviousPageFrom(results)
     count = #results
     local first_occurrence = KOR.document:getPageFromXPointer(results[1].start)
-    if current_page == first_occurrence then
+    if self.browsing_page_current <= first_occurrence then
         return
     end
-    local page_no, valid_prev_page
+    local page_no
     local start = count
     local l_end = 1
-    start, l_end = self:getLoopStartEnd(results, start, l_end, current_page, prev_page)
+    start, l_end = self:getPreviousLoopStartEnd(results, start, l_end)
     for i = start, l_end, -1 do
+        --* pageHasItemName example: if we made "Coram van Texel" the filter item, the script would search for occurrences of "Coram" and - but for this extra condition - yield back a false hit for "Farder Coram":
         page_no = KOR.document:getPageFromXPointer(results[i].start)
-        valid_prev_page = self:verifyPageHit(page_no < current_page and (not prev_page or page_no > prev_page), page_no)
-        if valid_prev_page then
-            return valid_prev_page
+        if self:isValidPreviousFilteredItemPage(page_no, first_occurrence) then
+            return page_no
         end
     end
 end
 
 --- @private
-function XrayPages:getLoopStartEnd(results, start, l_end, current_page, check_page)
+function XrayPages:showNextOrPreviousItemMessage(direction, needle)
+    if self.search_also_in_opposite_direction then
+        return
+    end
+
+    local adjective = direction == 1 and _("next") or _("previous")
+    KOR.messages:notify(T(_("go to %1 occurrence of \"%2\""), adjective, needle))
+        end
+
+--- @private
+function XrayPages:setValidNextBrowsingPage(page_no, direction)
+    if not page_no then
+        return
+    end
+    if not self.browsing_page_new then
+        self.browsing_page_new = page_no
+        return
+    end
+
+    if direction == 1 and page_no > self.browsing_page_current and page_no < self.browsing_page_new then
+        self.browsing_page_new = page_no
+
+    elseif direction == -1 and page_no < self.browsing_page_current and page_no > self.browsing_page_new then
+        self.browsing_page_new = page_no
+    end
+    end
+
+--- @private
+function XrayPages:isValidNextFilteredItemPage(page_no, last_occurrence)
+    --* pageHasItemName example: if we made "Coram van Texel" the filter item, the script would search for occurrences of "Coram" and - but for this extra condition - yield back a false hit for "Farder Coram":
+    return page_no > self.browsing_page_current and page_no <= last_occurrence and self:pageHasItemName(page_no)
+end
+
+--- @private
+function XrayPages:isValidPreviousFilteredItemPage(page_no, first_occurrence)
+    --* pageHasItemName example: if we made "Coram van Texel" the filter item, the script would search for occurrences of "Coram" and - but for this extra condition - yield back a false hit for "Farder Coram":
+    return page_no < self.browsing_page_current and page_no >= first_occurrence and self:pageHasItemName(page_no)
+end
+
+--- @private
+function XrayPages:getNextLoopStartEnd(results, start, l_end, last_occurrence)
     local test_loops = 4
     if count > 600 then
         test_loops = 12
@@ -99,24 +137,21 @@ function XrayPages:getLoopStartEnd(results, start, l_end, current_page, check_pa
     elseif count > 200 then
         test_loops = 5
     end
-    local needle, page_no, valid_page, diff
-    local direction = start == 1 and 1 or -1
+    local needle_no, page_no, diff
     for i = 1, test_loops do
         diff = l_end - start
         if diff < 4 then
             return start, l_end
         end
-        needle = start + math_ceil(diff / 2)
-        page_no = KOR.document:getPageFromXPointer(results[needle].start)
-        if direction == 1 then
-            valid_page = self:verifyPageHit(page_no > current_page and (not check_page or page_no < check_page), page_no)
+        needle_no = start + math_ceil(diff / 2)
+        page_no = KOR.document:getPageFromXPointer(results[needle_no].start)
+        --* if the page is valid, we can subtract from l_end:
+        if self:isValidNextFilteredItemPage(page_no, last_occurrence) then
+            l_end = needle_no
+
+        --* if the page is not valid, we can use it as start marker:
         else
-            valid_page = self:verifyPageHit(page_no < current_page and (not check_page or page_no > check_page), page_no)
-        end
-        if not valid_page then
-            start = needle
-        else
-            l_end = needle
+            start = needle_no
             self.garbage = i
         end
     end
@@ -124,16 +159,39 @@ function XrayPages:getLoopStartEnd(results, start, l_end, current_page, check_pa
 end
 
 --- @private
-function XrayPages:verifyPageHit(condition, page_no)
-    if
-        condition
-        and
-        --! verify that the filter item is present in this page; if not, then it must be another item of which the name partly(!) matches with the name of the filter item:
-        --* e.g.: if we made "Coram van Texel" the filter item, the script would search for occurrences of "Coram" and - but for this extra condition - yield back a false hit for "Farder Coram":
-        self:pageHasItemName(page_no)
-    then
-        return page_no
+function XrayPages:getPreviousLoopStartEnd(results, start, l_end, first_occurrence)
+    local test_loops = 4
+    if count > 600 then
+        test_loops = 12
+    elseif count > 500 then
+        test_loops = 10
+    elseif count > 400 then
+        test_loops = 8
+    elseif count > 300 then
+        test_loops = 6
+    elseif count > 200 then
+        test_loops = 5
     end
+    local needle_no, page_no, diff
+    --! initially start = count and l_end is 1, because we loop back from count to 1; so start is greater than l_end!
+    for i = 1, test_loops do
+        diff = l_end - start
+        if diff < 4 then
+            return start, l_end
+        end
+        needle_no = start + math_ceil(diff / 2)
+        page_no = KOR.document:getPageFromXPointer(results[needle_no].start)
+        --* if the page is valid, we can subtract from start:
+        if self:isValidPreviousFilteredItemPage(page_no, first_occurrence) then
+            start = needle_no
+
+        --* if the page is not valid, we can use it as end marker:
+        else
+            l_end = needle_no
+            self.garbage = i
+        end
+    end
+    return start, l_end
 end
 
 function XrayPages:jumpToPage()
@@ -143,7 +201,7 @@ function XrayPages:jumpToPage()
         title = _("Jump to page"),
         input = "",
         input_type = "number",
-        description = T(_("Last page: %1"), KOR.document:getPageCount()),
+        description = T(_("Last page: %1"), max_page),
         allow_newline = false,
         cursor_at_end = true,
         width = math_ceil(DX.pn.screen_width / 2.5),
@@ -251,65 +309,96 @@ function XrayPages:gotoPageHitForItem(goto_item, direction)
             self:setTemporaryFilterItem(goto_item)
         end
         local item = DX.pn.page_navigator_filter_item
-        local current_page = DX.pn.navigator_page_no
         local results, needle, case_insensitive
         --* if applicable, we only search for first names (then probably more accurate hits count):
         needle = DX.m:getRealFirstOrSurName(item)
-        local adjective = direction == 1 and _("next") or _("previous")
-        KOR.messages:notify(T(_("to %1 occurrence of \"%2\""), adjective, needle))
         --* for lowercase needles (terms instead of persons), we search case insensitive:
         case_insensitive = not needle:match("[A-Z]")
+
+        self:showNextOrPreviousItemMessage(direction, needle)
 
         --! using document:findAllTextWholeWords instead of document:findAllText here crucial to get exact hits count:
         results = DX.pn.cached_hits_by_needle[needle] or KOR.document:findAllTextWholeWords(needle, case_insensitive, 0, 3000, false)
         DX.pn.cached_hits_by_needle[needle] = results
-        local next_page = direction == 1 and self:resultsPageGreaterThan(results, current_page) or self:resultsPageSmallerThan(results, current_page)
 
-        local no_page_found = not next_page or next_page == DX.pn.navigator_page_no
+        self.browsing_page_new = nil
+        self.browsing_page_current = DX.pn.navigator_page_no
+
+        local next_page = direction == 1
+            and self:getNextPageFrom(results)
+            or self:getPreviousPageFrom(results)
+        self:setValidNextBrowsingPage(next_page, direction)
+
+        local no_page_found = not next_page
         if self.search_also_in_opposite_direction and no_page_found then
-            next_page = self:resultsPageGreaterThan(results, current_page)
-            no_page_found = not next_page or next_page == DX.pn.navigator_page_no
+            --* search_also_in_opposite_direction is true when the search was initiated from ((XrayCallbacks#execPageNavigatorSearchItemCallback)) > ((XrayPages#toPrevOrNextNavigatorPage)); in that case we started searching backwards, but if that yielded no result, we'll now search in forward direction:
+            next_page = self:getNextPageFrom(results)
+            no_page_found = not next_page
+            self:setValidNextBrowsingPage(next_page, direction)
         end
 
         if has_no_text(item.aliases) then
+            self.search_also_in_opposite_direction = false
             if no_page_found then
+                self:undoTemporaryFilterItem(goto_item)
                 self:showNoNextPreviousOccurrenceMessage(direction)
                 return
             end
-            self:handleItemHitFound(next_page, goto_item)
+            self:handleItemHitFound(next_page)
+            --! this statement MUST be executed AFTER the previous one, because undoTemporaryFilterItem reset DX.pn.active_filter_name:
+            self:undoTemporaryFilterItem(goto_item)
+            return
+            end
+
+        self:searchNextOrPreviousAliasHit(item, needle, results, case_insensitive, direction)
+
+        if self:invalidItemPageHitHandled(direction, goto_item) then
             return
         end
 
-        local aliases = DX.m:splitByCommaOrSpace(item.aliases)
-        local aliases_count = #aliases
-        for a = 1, aliases_count do
-            results = DX.pn.cached_hits_by_needle[needle] or KOR.document:findAllTextWholeWords(aliases[a], case_insensitive, 0, 3000, false)
-            DX.pn.cached_hits_by_needle[needle] = results
-            next_page = self:resultsPageGreaterThan(results, current_page, next_page)
-        end
-
-        no_page_found = not next_page or next_page == DX.pn.navigator_page_no
-
-        if self.search_also_in_opposite_direction and no_page_found then
-            next_page = self:resultsPageGreaterThan(results, current_page)
-            no_page_found = not next_page or next_page == DX.pn.navigator_page_no
-        end
-
-        if no_page_found then
-            self:showNoNextPreviousOccurrenceMessage(direction)
-            return
-        end
-        self:handleItemHitFound(next_page, goto_item)
+        self:handleItemHitFound(self.browsing_page_new)
+        --! this statement MUST be executed AFTER the previous one, because undoTemporaryFilterItem reset DX.pn.active_filter_name:
+        self:undoTemporaryFilterItem(goto_item)
     end)
 end
 
 --- @private
-function XrayPages:handleItemHitFound(page, called_upon_hold_button)
+function XrayPages:invalidItemPageHitHandled(direction, goto_item)
+    --* this prop should be set by ((XrayPages#setValidNextBrowsingPage)):
+    if
+        not self.browsing_page_new
+        or self.browsing_page_new == DX.pn.navigator_page_no
+        or direction == 1 and self.browsing_page_new < DX.pn.navigator_page_no
+        or direction == -1 and self.browsing_page_new > DX.pn.navigator_page_no
+    then
+        self:undoTemporaryFilterItem(goto_item)
+        self:showNoNextPreviousOccurrenceMessage(direction)
+        return true
+    end
+
+    return false
+end
+
+--- @private
+function XrayPages:searchNextOrPreviousAliasHit(item, needle, results, case_insensitive, direction)
+        local aliases = DX.m:splitByCommaOrSpace(item.aliases)
+        local aliases_count = #aliases
+    local next_page
+        for a = 1, aliases_count do
+            results = DX.pn.cached_hits_by_needle[needle] or KOR.document:findAllTextWholeWords(aliases[a], case_insensitive, 0, 3000, false)
+            DX.pn.cached_hits_by_needle[needle] = results
+            next_page = direction == 1 and self:getNextPageFrom(results) or self:getPreviousPageFrom(results)
+            if not next_page and self.search_also_in_opposite_direction then
+                next_page = self:getNextPageFrom(results)
+        end
+            self:setValidNextBrowsingPage(next_page, direction)
+        end
+end
+
+--- @private
+function XrayPages:handleItemHitFound(page)
     DX.pn:setProp("navigator_page_no", page)
     DX.sp.active_side_button_by_name = DX.pn.active_filter_name
-    if called_upon_hold_button then
-        self:undoTemporaryFilterItem()
-    end
     DX.pn:showNavigator(DX.pn.initial_browsing_page)
 end
 
@@ -323,7 +412,10 @@ function XrayPages:setTemporaryFilterItem(goto_item)
 end
 
 --- @private
-function XrayPages:undoTemporaryFilterItem()
+function XrayPages:undoTemporaryFilterItem(goto_item)
+    if not goto_item then
+        return
+    end
     DX.pn:setProp("page_navigator_filter_item", self.previous_filter_item)
     DX.pn:setProp("active_filter_name", self.previous_filter_name)
 end

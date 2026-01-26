@@ -30,7 +30,7 @@ local parent
 local tapped_words
 
 --- @class XrayViewsData
-local XrayViewsData = WidgetContainer:new {
+local XrayViewsData = WidgetContainer:new{
     active_list_tab = 1,
     alias_indent = "  ",
     chapter_page_number_format = "<span style='font-size: 80%; color: #888888;'> [p.%1]</span>",

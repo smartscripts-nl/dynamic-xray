@@ -12,7 +12,7 @@ local type = type
 
 --* used as registry for global vars:
 --- @class Registry
-local Registry = WidgetContainer:new {
+local Registry = WidgetContainer:new{
     current_ebook = nil,
     --* will be populated by ((Font#getDefaultDialogFontFace)):
     default_dialog_font = nil,
