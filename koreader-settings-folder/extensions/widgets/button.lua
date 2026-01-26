@@ -165,7 +165,7 @@ function Button:setBasicButtonProps()
         self.text = tostring(self.text)
     end
     -- #((hotfix for bold "edit" and "jump" buttons for xray items in page info TOC popup))
-    --! hotfix for the Xray "jump" and "edit" buttons which are shown when the user longpresses a xray item in de page/paragraph info TOC popup:
+    --! hotfix for the Xray "jump" and "edit" buttons which are shown when the user longpresses a xray item in the Page/Paragraph Info TOC popup:
     if self.text and (self.text:match(tr("edit") .. "$") or self.text:match(tr("jump") .. "$")) then
         self.text_font_bold = true
         self.font_bold = true

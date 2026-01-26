@@ -49,8 +49,9 @@ local Screen = Device.screen
 local DX = DX
 local io = io
 local math = math
+local math_floor = math.floor
 local select = select
-local table = table
+local table_insert = table.insert
 local type = type
 
 local count
@@ -1165,15 +1166,6 @@ function TextViewer:getDefaultButtons()
             end,
             hold_callback = self.default_hold_callback,
         }),
-        {
-            icon = "back",
-            icon_size_ratio = 0.8,
-            callback = function()
-                self:onClose()
-                --ScreenHelpers:refreshScreen()
-            end,
-            hold_callback = self.default_hold_callback,
-        },
     }
     if self.paragraph_headings then
         --* additional buttons can be inserted via ((TextViewer#initButtons)), when it is configurated with optional props extra_button, extra_button2 and extra_button3:
@@ -1236,25 +1228,33 @@ function TextViewer:initButtons()
         --* hotfix to prevent double addition of default buttons row:
         local last_row = self.buttons_table and self.buttons_table[#self.buttons_table] or nil
         if not last_row or not last_row[1] or (last_row[1].icon ~= "appbar.search" and last_row[1].text ~= _("Find")) then
-            table.insert(buttons, default_buttons)
+            table_insert(buttons, default_buttons)
         end
     end
     if self.extra_button then
         local position = self.extra_button_position or #buttons[1]
-        table.insert(buttons[1], position, self.extra_button)
+        table_insert(buttons[1], position, self.extra_button)
     end
     if self.extra_button2 then
         local position = self.extra_button2_position or #buttons[1]
-        table.insert(buttons[1], position, self.extra_button2)
+        table_insert(buttons[1], position, self.extra_button2)
     end
     if self.extra_button3 then
         local position = self.extra_button3_position or #buttons[1]
-        table.insert(buttons[1], position, self.extra_button3)
+        table_insert(buttons[1], position, self.extra_button3)
     end
+    table_insert(buttons[1], 1, {
+        icon = "back",
+        icon_size_ratio = 0.8,
+        callback = function()
+            self:onClose()
+        end,
+        hold_callback = self.default_hold_callback,
+    })
     if self.extra_button_rows then
         count = #self.extra_button_rows
         for i = 1, count do
-            table.insert(buttons, self.extra_button_rows[i])
+            table_insert(buttons, self.extra_button_rows[i])
         end
     end
     self.button_table = ButtonTable:new{
@@ -1396,7 +1396,7 @@ function TextViewer:getTopSpacer()
             dimen = Geom:new{
                 w = self.width,
                 --* this dimension actually decreases the top padding:
-                h = math.floor(0.2 * self.fullscreen_padding),
+                h = math_floor(0.2 * self.fullscreen_padding),
             },
             self.padding_span,
         }
@@ -1406,7 +1406,7 @@ function TextViewer:getTopSpacer()
     top_spacer = self.fullscreen_padding and CenterContainer:new{
         dimen = Geom:new{
             w = self.width,
-            h = math.floor(decrease_padding_factor * self.fullscreen_padding),
+            h = math_floor(decrease_padding_factor * self.fullscreen_padding),
         },
         self.padding_span,
     }
@@ -1431,9 +1431,9 @@ function TextViewer:initTabbedDialog()
     self.screen_width = Screen:getWidth()
 
     if self.is_standard_tabbed_dialog then
-        self.height = DX.s.is_tablet_device and math.floor(self.screen_height * 0.99) or math.floor(self.screen_height * 0.85)
+        self.height = DX.s.is_tablet_device and math_floor(self.screen_height * 0.99) or math_floor(self.screen_height * 0.85)
 
-        self.width = DX.s.is_tablet_device and math.floor(self.screen_width * 0.85) or math.floor(self.screen_width * 0.75)
+        self.width = DX.s.is_tablet_device and math_floor(self.screen_width * 0.85) or math_floor(self.screen_width * 0.75)
 
         self.no_buttons_row = true
         self.block_height_adaptation = true
@@ -1441,9 +1441,9 @@ function TextViewer:initTabbedDialog()
         self.less_top_padding = true
 
     elseif self.is_standard_tabbed_dialog_lower then
-        self.height = DX.s.is_tablet_device and math.floor(self.screen_height * 0.85) or math.floor(self.screen_height * 0.70)
+        self.height = DX.s.is_tablet_device and math_floor(self.screen_height * 0.85) or math_floor(self.screen_height * 0.70)
 
-        self.width = DX.s.is_tablet_device and math.floor(self.screen_width * 0.85) or math.floor(self.screen_width * 0.75)
+        self.width = DX.s.is_tablet_device and math_floor(self.screen_width * 0.85) or math_floor(self.screen_width * 0.75)
 
         self.no_buttons_row = true
         self.block_height_adaptation = true
@@ -1514,7 +1514,7 @@ function TextViewer:initTitleBar()
         count = #self.title_tab_buttons_left
         for i = 1, count do
             local text = self.title_tab_buttons_left[i]
-            table.insert(tab_buttons_left, Button:new{
+            table_insert(tab_buttons_left, Button:new{
                 text = text,
                 callback = function()
                     self.title_tab_callbacks[i]()
@@ -1627,24 +1627,20 @@ end
 
 --* ==================== SMARTSCRIPTS =====================
 
---- @private
 function TextViewer:onToPreviousTabWithShiftSpace()
     return self:onToPreviousTab()
 end
 
---- @private
 function TextViewer:onReadPrevItemWithShiftSpace()
     return self:onReadPrevItem()
 end
 
 --* add support for navigating to next tab with hardware keys:
---- @private
 function TextViewer:onToNextTab()
     return KOR.tabnavigator:onToNextTab()
 end
 
 --* add support for navigating to previous tab with hardware keys:
---- @private
 function TextViewer:onToPreviousTab()
     return KOR.tabnavigator:onToPreviousTab()
 end
@@ -1729,7 +1725,7 @@ function TextViewer:addLinkedItemsToTocButton(needle_item)
         local item = linked_items[l]
         local icon = DX.vd:getItemTypeIcon(item)
         local linked_item_matches = item.matches and item.matches > 0 and " (" .. item.matches .. ")" or ""
-        table.insert(extra_callbacks, {
+        table_insert(extra_callbacks, {
             overrule_callback_label = KOR.icons.xray_link_bare .. icon .. " " .. item.name:lower() .. linked_item_matches,
             for_separate_rows = true,
             callback = function()

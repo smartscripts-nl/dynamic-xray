@@ -555,6 +555,13 @@ function XrayDialogs:showUiPageInfo(hits_info, headings, matches_count, extra_bu
             extra_button2 = KOR.buttoninfopopup:forXrayShowMatchReliabilityExplanation({
                 icon_size_ratio = 0.58,
             }),
+            extra_button3_position = 3,
+            extra_button3 = KOR.buttoninfopopup:forXrayExport({
+                callback = function()
+                    UIManager:close(self.xray_ui_info_dialog)
+                    return DX.cb:execExportXrayItemsCallback()
+                end
+            }),
             extra_button_rows = extra_button_rows,
         })
     end
