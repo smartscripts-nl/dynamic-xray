@@ -660,7 +660,7 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
         filter = self:getListFilter(),
         title_submenu_buttontable = DX.b:forListSubmenu(),
         footer_buttons_left = not self.select_mode and DX.b:forListFooterLeft(focus_item, dont_show, base_icon_size),
-        footer_buttons_right = not self.select_mode and DX.b:forListFooterRight(base_icon_size),
+        footer_buttons_right = not self.select_mode and DX.b:forListFooterRight(),
         --! don't use after_close_callback or call ((XrayController#resetFilteredItems)), because then filtering items will not work at all!
         onMenuHold = self.onMenuHold,
         items_per_page = self.items_per_page,

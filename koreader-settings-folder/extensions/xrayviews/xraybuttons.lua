@@ -937,8 +937,14 @@ end
 
 --* compare buttons for Item Viewer ((XrayButtons#forItemViewer)):
 --* compare ((XrayButtons#forListFooterLeft)):
-function XrayButtons:forListFooterRight(base_icon_size)
-    local buttons = {
+function XrayButtons:forListFooterRight()
+    return {
+        KOR.buttoninfopopup:forXrayExport({
+            callback = function()
+                DX.pn:closePopupMenu()
+                return DX.cb:execExportXrayItemsCallback()
+            end
+        }),
         KOR.buttoninfopopup:forXrayPageNavigator(),
         KOR.buttonchoicepopup:forXrayItemsImport({
             callback = function()
@@ -955,16 +961,6 @@ function XrayButtons:forListFooterRight(base_icon_size)
             end,
         }),
     }
-
-    if DX.m.current_series then
-        table_insert(buttons, 2, Button:new(KOR.buttoninfopopup:forSeriesCurrentBook({
-            icon_size_ratio = base_icon_size + 0.1,
-            callback = function()
-                KOR.descriptiondialog:showSeriesForEbookPath(KOR.registry.current_ebook)
-            end
-        })))
-    end
-    return buttons
 end
 
 --- @private
