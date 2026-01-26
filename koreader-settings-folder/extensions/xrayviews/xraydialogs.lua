@@ -610,8 +610,6 @@ function XrayDialogs:_prepareItemsForList(current_tab_items, items_for_select)
         end
     end
 
-    --KOR.debug:alertTable("XrayDialogs:_prepareItemsForList", "current_tab_items", current_tab_items)
-
     if not self.select_mode then
         DX.vd:setProp("current_tab_items", current_tab_items)
     end
@@ -760,8 +758,7 @@ function XrayDialogs:showList(focus_item, dont_show, select_mode)
 
     --! this condition is needed to prevent this call from triggering ((XrayViewsData#prepareData)) > ((XrayViewsData#indexItems)), because that last call will be done at the proper time via ((XrayDialogs#showList)) > ((XrayModel#getCurrentItemsForView)) > ((XrayViewsData#getCurrentListTabItems)) > ((XrayViewsData#prepareData)) > ((XrayViewsData#indexItems)):
     local current_tab_items = not new_item and DX.m:getCurrentItemsForView()
-        local items_for_select = {}
-        --KOR.debug:alertTable("XrayDialogs:showList", "current_tab_items after", current_tab_items)
+    local items_for_select = {}
     --* this will occur after a filter reset from ((XrayController#resetFilteredItems)) and sometimes when we first call up a definition through ReaderHighlight:
     if new_item or has_no_items(current_tab_items) then
         --* if items were already retrieved from the database, that will not be done again: XrayViewsData.items etc. will be reset from XrayViewsData.item_table, in ((XrayViewsData#getCurrentListTabItems))
