@@ -1160,7 +1160,7 @@ end
 
 
 function XrayDialogs:execShowHelpInfoCallback()
-    return KOR.informationdialog:forReliabilityIndicatorsExplanation()
+    return DX.i:showReliabilityIndicatorsExplanation()
 end
 
 --- @param iparent XrayDialogs
@@ -1192,7 +1192,7 @@ function XrayDialogs:showReliabilityIndicatorsExplanation()
         tabs = {
             {
                 tab = _("reliability icons"),
-                info = KOR.informationdialog:getMatchReliabilityExplanation()
+                info = DX.i:getMatchReliabilityExplanation()
             },
             {
                 tab = _("viewer buttons"),

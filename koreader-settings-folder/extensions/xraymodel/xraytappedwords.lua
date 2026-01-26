@@ -430,22 +430,22 @@ function XrayTappedWords:matchItemToTappedWord(tapped_word_collection, item, nee
 
     --* include extact fullname match, if allowed:
     if include_name_match and (not tapped_word or tapped_word == item.name) and (item.tapped_index == needle_item.tapped_index or item.name == needle_item.name or item.name:match("^" .. needle_item.name .. "s$")) then
-        item.reliability_indicator = KOR.informationdialog:getMatchReliabilityIndicator("full_name")
+        item.reliability_indicator = DX.i:getMatchReliabilityIndicator("full_name")
         table_insert(tapped_word_collection, item)
         return
 
     elseif include_name_match and tapped_word and item.name:match("^" .. tapped_word_matcher) then
-        item.reliability_indicator = KOR.informationdialog:getMatchReliabilityIndicator("first_name")
+        item.reliability_indicator = DX.i:getMatchReliabilityIndicator("first_name")
         table_insert(tapped_word_collection, item)
         return
 
     elseif include_name_match and tapped_word and item.name:match(tapped_word_matcher .. "$") then
-        item.reliability_indicator = KOR.informationdialog:getMatchReliabilityIndicator("last_name")
+        item.reliability_indicator = DX.i:getMatchReliabilityIndicator("last_name")
         table_insert(tapped_word_collection, item)
         return
 
     elseif include_name_match and tapped_word and item.name:match(tapped_word_matcher) then
-        item.reliability_indicator = KOR.informationdialog:getMatchReliabilityIndicator("partial_match")
+        item.reliability_indicator = DX.i:getMatchReliabilityIndicator("partial_match")
         table_insert(tapped_word_collection, item)
         return
     end
@@ -456,7 +456,7 @@ function XrayTappedWords:matchItemToTappedWord(tapped_word_collection, item, nee
     for i = 1, count do
         alias = aliases[i]:gsub("%-", "%%-")
         if parent:hasExactMatch(item.aliases, alias) then
-            item.reliability_indicator = KOR.informationdialog:getMatchReliabilityIndicator("alias")
+            item.reliability_indicator = DX.i:getMatchReliabilityIndicator("alias")
             table_insert(tapped_word_collection, item)
             return
         end
@@ -476,7 +476,7 @@ function XrayTappedWords:getTypeAndReliabilityIcons(item)
 
     local text = KOR.strings:lower(item.name)
 
-    local ri = KOR.informationdialog.match_reliability_indicators
+    local ri = DX.i.match_reliability_indicators
 
     --* reliability_icons were added using ((xray match reliability indicators)):
     local status_indicator_color
@@ -485,7 +485,7 @@ function XrayTappedWords:getTypeAndReliabilityIcons(item)
     elseif alias_matches_with_tapped_word then
         status_indicators = ri.alias .. status_indicators
     else
-        status_indicators = KOR.informationdialog:getMatchReliabilityIndicator("linked_item") .. status_indicators
+        status_indicators = DX.i:getMatchReliabilityIndicator("linked_item") .. status_indicators
         --* show linked items with lighter status indicator icons:
         status_indicator_color = KOR.colors.xray_item_status_indicators_color
     end
@@ -550,7 +550,7 @@ function XrayTappedWords:doSimpleSearchScoreMatch(item)
     local short_names_lower = item.short_names:lower()
     local description = item.description:lower()
     local needle_lower = "%f[%w]" .. DX.vd.filter_string:lower() .. "%f[%W]"
-    return (name_lower:match(needle_lower) or description:match(needle_lower) or aliases_lower:match(needle_lower) or short_names_lower:match(needle_lower)) and 100, KOR.informationdialog:getMatchReliabilityIndicator("full_name") or 0, nil
+    return (name_lower:match(needle_lower) or description:match(needle_lower) or aliases_lower:match(needle_lower) or short_names_lower:match(needle_lower)) and 100, DX.i:getMatchReliabilityIndicator("full_name") or 0, nil
 end
 
 --- @private
@@ -626,7 +626,7 @@ function XrayTappedWords:doScoreMatch(item)
         rule = rules[i]
         val = fields[rule.key]
         if val and rule.does_match(val) then
-            return rule.score, KOR.informationdialog:getMatchReliabilityIndicator(rule.indicator)
+            return rule.score, DX.i:getMatchReliabilityIndicator(rule.indicator)
         end
     end
     return 0, nil

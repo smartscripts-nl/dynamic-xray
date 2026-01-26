@@ -505,7 +505,7 @@ function XrayViewsData:_doStrongMatchCheck(needle_item, matcher, args, t, for_re
 
     if tapped_ok and is_same_item then
         if for_relations then
-            item.reliability_indicator = KOR.informationdialog:getMatchReliabilityIndicator("full_name")
+            item.reliability_indicator = DX.i:getMatchReliabilityIndicator("full_name")
             return { item }, true, true
         end
         return item, true, true
@@ -599,7 +599,7 @@ function XrayViewsData:applyTextFilters(item, linked_item_needles, hits_registry
         end
         matched = has_items(score) and (is_first_loop or score > 20)
         if is_loop_for_linked_items and matched and not self.search_simple then
-            reliability_indicator = KOR.informationdialog:getMatchReliabilityIndicator("linked_item")
+            reliability_indicator = DX.i:getMatchReliabilityIndicator("linked_item")
         end
 
         --* here linked_item_needles is populated, IF not self.search_simple and we are in the first loop:
@@ -966,7 +966,7 @@ function XrayViewsData:generateXrayItemInfo(items, xray_explanations, i, name, i
         end
     end
     -- #((use xray match reliability indicators))
-    local xray_match_reliability_icon = KOR.informationdialog:getMatchReliabilityIndicator("full_name")
+    local xray_match_reliability_icon = DX.i:getMatchReliabilityIndicator("full_name")
     --! don't use has_text here, because for full name hits we don't add a text (i.e. the full name) after the reliability weight icon)! Under Ubuntu this is not a problem, but using has_text under Android causes explanation not to be shown:
     if xray_explanations and has_content(xray_explanations[i]) then
         explanation = xray_explanations[i]
@@ -1371,11 +1371,11 @@ function XrayViewsData:haystackItemPartlyMatches(needle, haystack, uc_haystack, 
     for i = 1, count do
         if self:isSingularOrPluralMatch(needle, parts[i]) or (is_lower_haystack and self:isSingularOrPluralMatch(needle, uc_parts[i])) then
             if i == 1 then
-                return KOR.informationdialog:getMatchReliabilityIndicator("first_name")
+                return DX.i:getMatchReliabilityIndicator("first_name")
             elseif i == count then
-                return KOR.informationdialog:getMatchReliabilityIndicator("last_name")
+                return DX.i:getMatchReliabilityIndicator("last_name")
             end
-            return KOR.informationdialog:getMatchReliabilityIndicator("partial_match")
+            return DX.i:getMatchReliabilityIndicator("partial_match")
         end
     end
     return false

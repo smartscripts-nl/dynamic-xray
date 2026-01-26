@@ -17,7 +17,6 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 --- @field files Files
 --- @field html Html
 --- @field icons Icons
---- @field informationdialog InformationDialog
 --- @field keyevents KeyEvents
 --- @field labels Labels
 --- @field messages Messages
@@ -66,7 +65,6 @@ local KOR = WidgetContainer:new{
 	files = nil,
 	html = nil,
 	icons = nil,
-	informationdialog = nil,
 	keyevents = nil,
 	labels = nil,
 	messages = nil,
@@ -99,7 +97,6 @@ local KOR = WidgetContainer:new{
 		"buttoninfopopup",
 		"filedirnames",
 		"html",
-		"informationdialog",
 		"labels",
 		"messages",
 		"screenhelpers",
@@ -129,6 +126,7 @@ function KOR:initDX()
 	DX.b = require("extensions/xrayviews/xraybuttons")
 	DX.cb = require("extensions/xrayviews/xraycallbacks")
 	DX.d = require("extensions/xrayviews/xraydialogs")
+	DX.i = require("extensions/xrayviews/xrayinformation")
 	DX.ip = require("extensions/xrayviews/xrayinfopanel")
 	DX.p = require("extensions/xrayviews/xraypages")
 	DX.sp = require("extensions/xrayviews/xraysidepanels")

@@ -500,7 +500,7 @@ function XrayUI:matchAliasesToParagraph(paragraph, book_hits, explanations, item
     local aliases = item.aliases
     local alias_table = DX.m:splitByCommaOrSpace(aliases)
     local alias
-    local ri = KOR.informationdialog.match_reliability_indicators
+    local ri = DX.i.match_reliability_indicators
     count = #alias_table
     for i = 1, count do
         alias = alias_table[i]
@@ -527,7 +527,7 @@ function XrayUI:matchNameInPageOrParagraph(text, lower_text, needle, hits, parti
         family_name = name_parts[#name_parts]
     end
 
-    local ri = KOR.informationdialog.match_reliability_indicators
+    local ri = DX.i.match_reliability_indicators
 
     local matcher = needle:gsub("%-", "%%-")
     local plural_matcher

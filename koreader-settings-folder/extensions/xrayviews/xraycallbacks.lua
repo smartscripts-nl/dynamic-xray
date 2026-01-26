@@ -119,7 +119,7 @@ function XrayCallbacks:execSettingsCallback(iparent)
 end
 
 function XrayCallbacks:execShowHelpInfoCallback()
-    return KOR.informationdialog:forPageNavigator()
+    return DX.i:showPageNavigatorHelp()
 end
 
 function XrayCallbacks:execShowListCallback()

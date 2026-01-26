@@ -459,7 +459,7 @@ function ButtonInfoPopup:forXrayShowMatchReliabilityExplanation(props)
 		info = T(_("information icon | Show explanation of reliability icons for hits found.\n\nHotkey %1 %2"), KOR.icons.arrow_bare, DX.s.hk_show_information),
 		callback_label = _("show"),
 		callback = function()
-			return KOR.informationdialog:forReliabilityIndicatorsExplanation()
+			return DX.i:showReliabilityIndicatorsExplanation()
 		end,
 	}, props)
 end

@@ -314,7 +314,7 @@ function XrayButtons:forPageNavigatorTopLeft(parent)
         {
             icon = "info-slender",
             callback = function()
-                return KOR.informationdialog:forPageNavigator(parent)
+                return DX.i:showPageNavigatorHelp(parent)
             end,
         },
         KOR.buttoninfopopup:forXrayPageNavigatorFilter({
@@ -802,7 +802,7 @@ function XrayButtons:forItemViewerTopLeft(parent)
         {
             icon = "info-slender",
             callback = function()
-                return KOR.informationdialog:forDynamicXrayListAndViewer(2)
+                return DX.i:showListAndViewerHelp(2)
             end
         },
         KOR.buttoninfopopup:forXrayTranslations(),
@@ -1156,7 +1156,7 @@ function XrayButtons:injectItemsCollectionButton(buttons, indicator_buttons, sta
     local item_with_alias_found = false
     local more_button_added, is_alias, is_non_bold_alias
 
-    is_alias = item.reliability_indicator and item.reliability_indicator == KOR.informationdialog:getMatchReliabilityIndicator("alias")
+    is_alias = item.reliability_indicator and item.reliability_indicator == DX.i:getMatchReliabilityIndicator("alias")
     is_non_bold_alias = is_alias and not item.is_bold
     if is_non_bold_alias then
         item_with_alias_found = true
@@ -1250,7 +1250,7 @@ NNon-bold items were either linked from a bold item or they have a linkword in c
                         },
                         {
                             tab = _("reliability icons"),
-                            info = KOR.informationdialog:getMatchReliabilityExplanation(),
+                            info = DX.i:getMatchReliabilityExplanation(),
                         },
                     },
                 })
@@ -1390,7 +1390,7 @@ function XrayButtons:forListTopLeft(parent)
         {
             icon = "info-slender",
             callback = function()
-                return KOR.informationdialog:forDynamicXrayListAndViewer(1)
+                return DX.i:showListAndViewerHelp(1)
             end
         },
         KOR.buttoninfopopup:forXrayTranslations(),

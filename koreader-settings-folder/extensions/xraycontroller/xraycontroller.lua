@@ -2,7 +2,7 @@
 --[[--
 This is the controller for the Dynamic Xray plugin. It has been structured in kind of a MVC structure:
 M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
-V = ((XrayUI)), ((XrayPageNavigator)) and ((XrayCallbacks)) and ((XrayPages)) and ((XraySidePanels)) and ((XrayInfoPanel)), ((XrayTranslations)) and ((XrayTranslationsManager)), ((XrayDialogs)) and ((XrayButtons))
+V = ((XrayUI)), ((XrayPageNavigator)) and ((XrayCallbacks)) and ((XrayPages)) and ((XraySidePanels)) and ((XrayInfoPanel)), ((XrayTranslations)) and ((XrayTranslationsManager)), ((XrayDialogs)) and ((XrayButtons)), ((XrayCallbacks)), ((XrayInformation))
 C = ((XrayController))
 
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database. XrayTappedWords handles data requests resulting from users longpressing (partial) names of Xray items in the e-book text.
@@ -10,8 +10,11 @@ XrayDataLoader is mainly concerned with retrieving data FROM the database, while
 The views layer has three main streams:
 1) XrayUI, which is only responsible for displaying tappable xray markers (lightning or star icons) in the ebook text;
 2) XrayPageNavigator, XrayDialogs and XrayButtons, which are responsible for displaying dialogs and interaction with the user.
-3) Worthy to be specially mentioned is XrayPageNavigator, which offers the user the most Kindle-like experience: navigating through pages, with Xray items marked bold and button with which to show explanations of the items in the bottom panel.
-4) Also mentionable is the fact that some DX dialogs have shared hotkeys, in which case the hotkeys of the top most dialog will be used, not that same hotkey for an underlying dialog. See ((XrayInfo#XRAY_DIALOGS_SHARED_HOTKEYS)) for an explanation.
+3) Worthy to be specially mentioned is XrayPageNavigator, which offers the user the most Kindle-like experience: navigating through pages, with Xray items marked bold and button with which to show explanations of the items in the bottom panel. XrayPageNavigator does have some sub-modules, each responsible for one aspect of its views:
+    a) XraySidePanels (DX.sp): responsible for the sidepanel (tabs) of the PageNavigator
+    b) XrayInfoPanel (DX.ip): responsible for the information panel at the bottom of the PageNavigator
+    c) XrayPages (DX.p): responsible for the main content op the Navigator, its pages. Handles navigation through these and marking of Xray items in them.
+4) Also mentionable is the fact that some DX dialogs have shared hotkeys, in which case the hotkeys of the top most dialog will be used, not that same hotkey for an underlying dialog. See ((XRAY_DIALOGS_SHARED_HOTKEYS)) for an explanation.
 
 
 The user will have the most Kindle-like experience when he/she opens the Page Navigator - see ((XrayController#onShowPageNavigator)). In this navigator all Xray items in a page will be marked bold and they will be mentioned in a side panel. Tapping on items in the side panel will put an explanation of that item in the bottom panel. You can even filter the content of the Navigator for a specific Xray item, so it will only show pages which contain that item.
@@ -83,7 +86,7 @@ For a key event e.g.: ((next related item via hotkey))
 
 --* DISPLAYING HELP INFO
 
-((InformationDialog#forDynamicXrayListAndViewer))
+((XrayInformation#showListAndViewerHelp))
 ]]
 
 local require = require
@@ -110,6 +113,7 @@ KOR:initBaseExtensions()
 --- @field dl XrayDataLoader
 --- @field ds XrayDataSaver
 --- @field fd XrayFormsData
+--- @field i XrayInformation
 --- @field ip XrayInfoPanel
 --- @field m XrayModel
 --- @field pn XrayPageNavigator
@@ -136,6 +140,8 @@ DX = {
     ds = nil,
     --* shorthand notation for FormsData; this module will be initialized in ((XrayModel#initDataHandlers)):
     fd = nil,
+    --* shorthand notation for Information; this module will be initialized in ((KOR#initDX)):
+    i = nil,
     --* shorthand notation for InfoPanel; this module will be initialized in ((KOR#initDX)):
     ip = nil,
     --* shorthand notation for Model:
@@ -238,7 +244,7 @@ function XrayController:listHasReloadOrDontShowRequest(focus_item, dont_show)
     if DX.d.list_title == false then
         self:resetFilteredItems()
         DX.d:setActionResultMessage("geen items gevonden met opgegeven filter...")
-        DX.d:showList(focus_item, dont_show, false)
+        DX.d:showList(focus_item, dont_show)
         return true
     end
 

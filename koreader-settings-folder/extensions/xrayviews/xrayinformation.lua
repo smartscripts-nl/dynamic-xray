@@ -10,8 +10,8 @@ local T = require("ffi/util").template
 local DX = DX
 local table_concat = table.concat
 
---- @class InformationDialog
-local InformationDialog = WidgetContainer:extend {
+--- @class XrayInformation
+local XrayInformation = WidgetContainer:extend {
     match_reliability_explanations = nil,
     -- #((xray match reliability indicators))
     --* these match reliability indicators will be injected in the dialog with page or paragraphs information in ((XrayUI#showParagraphInformation)) > ((xray items dialog add match reliability explanations)):
@@ -26,7 +26,7 @@ local InformationDialog = WidgetContainer:extend {
 }
 
 --* called from ((TextViewer#showToc)) or ((XrayTappedWords#getXrayItemAsDictionaryEntry)), for info icon:
-function InformationDialog:getMatchReliabilityExplanation()
+function XrayInformation:getMatchReliabilityExplanation()
     if self.match_reliability_explanations then
         return self.match_reliability_explanations
     end
@@ -44,11 +44,11 @@ function InformationDialog:getMatchReliabilityExplanation()
     return self.match_reliability_explanations
 end
 
-function InformationDialog:getMatchReliabilityIndicator(name)
+function XrayInformation:getMatchReliabilityIndicator(name)
     return self.match_reliability_indicators[name]
 end
 
-function InformationDialog:forPageNavigator(parent)
+function XrayInformation:showPageNavigatorHelp(parent)
     local screen_dims = Screen:getSize()
 
     KOR.dialogs:htmlBoxTabbed(1, {
@@ -102,7 +102,7 @@ Longpress on the filtered item in the side panel.]])
 end
 
 --- @private
-function InformationDialog:getPageNavigatorHotkeysInfo()
+function XrayInformation:getPageNavigatorHotkeysInfo()
     return self.hotkeys_information or _("For usage with (BT) keyboards:") .. [[<br>
                 <br>
 <strong>In Page Navigator</strong><br>
@@ -168,7 +168,7 @@ function InformationDialog:getPageNavigatorHotkeysInfo()
 </table>]]
 end
 
-function InformationDialog:forReliabilityIndicatorsExplanation()
+function XrayInformation:showReliabilityIndicatorsExplanation()
     KOR.dialogs:textBoxTabbed(1, {
         title = "Uitleg bij dit venster",
         is_standard_tabbed_dialog_lower = true,
@@ -198,7 +198,7 @@ FOOTER-IKONEN
     return true
 end
 
-function InformationDialog:forDynamicXrayListAndViewer(initial_tab)
+function XrayInformation:showListAndViewerHelp(initial_tab)
 
     --* these hotkeys are mostly defined in ((KeyEvents#addHotkeysForXrayList)):
     local list_info = DX.d.help_texts["list"] or T(_([[Shift+X = show List of Items
@@ -260,4 +260,4 @@ Shift+S = Show all hits in book
     return true
 end
 
-return InformationDialog
+return XrayInformation

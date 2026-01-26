@@ -385,7 +385,7 @@ end
 
 --* called from ((TextViewer#findCallback)):
 function XrayModel:removeMatchReliabilityIndicators(subject)
-    for _i, indicator in pairs(KOR.informationdialog.match_reliability_indicators) do
+    for _i, indicator in pairs(DX.i.match_reliability_indicators) do
         subject = subject:gsub(indicator .. " ", "")
         self.garbage = _i
     end
