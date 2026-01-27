@@ -283,7 +283,6 @@ end
 -- #((PATCH UIMANAGER))
 --* called from ((Files#openFile)):
 function UIManager:closeAllWidgetsExceptMainScreen()
-    self._window_display_modes = { self.main_reader_display_mode }
     --* i bigger than 1: we keep window 1, the reader or FileManager screen:
     count = #self._window_stack
     local w
