@@ -174,18 +174,6 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
             type = "number",
         },
-        PN_popup_xpos_factor = {
-            value = 1.62,
-            explanation = "With this factor you can finetune the horizontal position of the popup menu called with the second button from the left in Page Navigator. Bigger values will move the menu more to the right. NB: use a point for decimal numbers.",
-            locked = 0,
-            type = "number",
-        },
-        PN_popup_ypos_factor = {
-            value = 0.8,
-            explanation = "With this factor you can finetune the vertical position of the popup menu called with the second button from the left in Page Navigator. Bigger values move the menu higher up. NB: use a point for decimal numbers.",
-            locked = 0,
-            type = "number",
-        },
         UI_mode = {
             value = "page",
             options = { "page", "paragraph" },

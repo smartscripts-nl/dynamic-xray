@@ -1027,7 +1027,8 @@ function MovableContainer:moveToYPos(target_y_pos)
     self:_moveBy(0, move_by, "restrict_to_screen")
 end
 
-function MovableContainer:moveToAnchor(anchor)
+function MovableContainer:moveToAnchor()
+    local anchor = KOR.anchorbutton.button
 
     self._orig_y = math_floor((self.screen_height - anchor.h) / 2)
     self._orig_x = math_floor((self.screen_width - anchor.w) / 2)

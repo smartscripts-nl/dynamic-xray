@@ -17,7 +17,6 @@ local T = require("ffi/util").template
 local DX = DX
 local has_content = has_content
 local has_text = has_text
-local math_ceil = math.ceil
 local os_date = os.date
 local table_concat = table.concat
 local table_insert = table.insert
@@ -81,6 +80,7 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
     local html = self:loadDataForPage()
 
     local key_events_module = "XrayPageNavigator"
+    KOR.anchorbutton:init(2, #self.popup_buttons)
     self.page_navigator = KOR.dialogs:htmlBox({
         title = DX.m.current_title .. " - p." .. self.navigator_page_no,
         page_navigator = self,
@@ -109,6 +109,9 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
             DX.p:toPrevNavigatorPage()
         end,
     })
+
+    --! have the popup menu available immediately, so we can compute its height in this method, for correct positioning above the anchor button:
+    self:createPopupMenu()
 end
 
 --* this info will be consumed for the info panel in ((HtmlBox#generateScrollWidget)):
@@ -385,12 +388,10 @@ function XrayPageNavigator:showExportXrayItemsDialog()
     KOR.screenhelpers:refreshScreen()
 end
 
---* called via hotkey "M" in ((KeyEvents#addHotkeysForXrayPageNavigator)) or button in ((XrayButtons#forPageNavigator)) > ((XrayCallbacks#execShowPopupButtonsCallback)):
-function XrayPageNavigator:showPopupMenu()
-    --* these anchor dims - computed based on the widths and heights of HtmlBox elements - were set in ((HtmlBox#generateWidget)):
-    local anchor = KOR.registry:get("anchor_button")
-    local popup_menu = ButtonDialog:new{
-        forced_width = anchor.w,
+--- @private
+function XrayPageNavigator:createPopupMenu()
+    self.popup_menu = ButtonDialog:new{
+        forced_width = KOR.anchorbutton.width,
         bordercolor = KOR.colors.line_separator,
         borderradius = Size.radius.default,
         additional_key_events = KOR.keyevents:addHotkeysForXrayPageNavigatorPopupMenu(self),
@@ -400,13 +401,17 @@ function XrayPageNavigator:showPopupMenu()
         --* these buttons were populated in ((XrayButtons#forPageNavigatorPopupButtons)):
         buttons = self.popup_buttons,
     }
-    anchor.y = anchor.parent_y - math_ceil(DX.s.PN_popup_ypos_factor * popup_menu.inner_height)
+    KOR.anchorbutton:computeButtonYpos(self.popup_menu.inner_height)
+end
+
+--* called via hotkey "M" in ((KeyEvents#addHotkeysForXrayPageNavigator)) or button in ((XrayButtons#forPageNavigator)) > ((XrayCallbacks#execShowPopupButtonsCallback)):
+function XrayPageNavigator:showPopupMenu()
     self.movable_popup_menu = MovableContainer:new{
-        popup_menu,
+        self.popup_menu,
         dimen = Screen:getSize(),
     }
 
-    self.movable_popup_menu:moveToAnchor(anchor)
+    self.movable_popup_menu:moveToAnchor()
     UIManager:show(self.movable_popup_menu)
 end
 

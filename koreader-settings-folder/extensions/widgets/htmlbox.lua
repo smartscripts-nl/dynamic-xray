@@ -85,9 +85,6 @@ end
 --- @field page_navigator XrayPageNavigator
 local HtmlBox = InputContainer:extend{
     additional_key_events = nil,
-    anchor_button_height = nil,
-    anchor_button_no = nil,
-    anchor_button_width = nil,
     after_close_callback = nil,
     align = "center",
     buttons_table = nil,
@@ -348,15 +345,7 @@ function HtmlBox:generateInfoButtons()
     }
 
     if self.has_anchor_button then
-        local acount = #self.info_panel_buttons[1]
-        self.anchor_button_width = math_floor(self.info_panel_width / acount)
-        self.anchor_button_height = buttons:getSize().h
-        for i = 1, acount do
-            if self.info_panel_buttons[1][i].is_anchor_button then
-                self.anchor_button_no = i
-                break
-            end
-        end
+        KOR.anchorbutton:setHeight(buttons:getSize().h)
     end
 
     local buttons_height = buttons:getSize().h
@@ -980,12 +969,12 @@ function HtmlBox:generateWidget()
     local frame = self.is_fullscreen and self.frame_content_fullscreen or self.frame_content_windowed
 
     local content_height = self.content_widget:getSize().h
-    local y
-    if self.anchor_button_no then
-        y = self.box_title:getSize().h
+    if self.has_anchor_button then
+        KOR.anchorbutton:increaseParentYposWith(
+        self.box_title:getSize().h
         + self.separator:getSize().h
         + self.content_top_margin:getSize().h
-        + content_height
+            + content_height)
     end
 
     local elements = VerticalGroup:new{
@@ -1005,8 +994,8 @@ function HtmlBox:generateWidget()
 
     if self.tabs_table then
         table_insert(elements, 2, self.tabs_table)
-        if self.anchor_button_no then
-            y = y + self.tabs_table:getSize().h
+        if self.has_anchor_button then
+            KOR.anchorbutton:increaseParentYposWith(self.tabs_table:getSize().h)
         end
     end
 
@@ -1014,8 +1003,8 @@ function HtmlBox:generateWidget()
     if self.is_fullscreen and DX.s.is_mobile_device then
         local spacer = VerticalSpan:new{ width = Size.padding.large }
         table.insert(elements, 2, spacer)
-        if self.anchor_button_no then
-            y = y + spacer:getSize().h
+        if self.has_anchor_button then
+            KOR.anchorbutton:increaseParentYposWith(spacer:getSize().h)
         end
     end
 
@@ -1026,16 +1015,6 @@ function HtmlBox:generateWidget()
                 h = self.button_table:getSize().h,
             },
             self.button_table,
-        })
-    end
-
-    if self.anchor_button_no then
-        --* for usage with ((MovableContainer#moveToAnchor)):
-        KOR.registry:set("anchor_button", {
-            x = self.content_padding_h + math_floor(DX.s.PN_popup_xpos_factor * self.anchor_button_width),
-            parent_y = y - 4 * self.anchor_button_height,
-            w = self.anchor_button_width,
-            h = self.anchor_button_height,
         })
     end
 

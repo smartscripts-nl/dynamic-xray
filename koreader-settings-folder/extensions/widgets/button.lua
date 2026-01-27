@@ -41,7 +41,7 @@ local logger = require("logger")
 local DX = DX
 local G_reader_settings = G_reader_settings
 local math = math
-local table = table
+local table_insert = table.insert
 local tostring = tostring
 local type = type
 
@@ -106,6 +106,7 @@ local Button = InputContainer:extend {
     indicator_max_width = 60,
     info_callback = nil,
     is_active_tab = false,
+    is_anchor_button = false,
     is_tab_button = false,
     label_max_width = nil,
     readonly = false,
@@ -127,6 +128,7 @@ function Button:init()
     self:setWidgetContent()
     self:adaptPaddings()
     self:finalizeWidget()
+    self:setAnchorButtonWidth()
 end
 
 --- @private
@@ -308,10 +310,10 @@ function Button:setWidgetContent()
         }
     end
     if self.left_indicator then
-        table.insert(widget, 1, self.left_indicator)
+        table_insert(widget, 1, self.left_indicator)
     end
     if self.right_indicator then
-        table.insert(widget, self.right_indicator)
+        table_insert(widget, self.right_indicator)
     end
 
     local is_left_aligned = self.align == "left"
@@ -699,8 +701,6 @@ function Button:_undoFeedbackHighlight(is_translucent)
     end
 end
 
---* pos can be used for ((Dialogs#alertInfo)), to show the info alert directly below a tapped button:
---* see ((MOVE_MOVABLES_TO_Y_POSITION)) for more info:
 function Button:onTapSelectButton(irr, pos)
     irr = pos
     if self.enabled or self.allow_tap_when_disabled then
@@ -1026,6 +1026,12 @@ function Button:addTitleBarTabButtonProps(props, active_condition_true)
     props.margin = Size.margin.fine_tune
     props.fgcolor = active_condition_true and KOR.colors.active_tab or KOR.colors.inactive_tab
     props.bordercolor = active_condition_true and KOR.colors.button_default or KOR.colors.inactive_tab
+end
+
+function Button:setAnchorButtonWidth()
+    if self.is_anchor_button then
+        KOR.anchorbutton:setWidth(self.width)
+    end
 end
 
 return Button
