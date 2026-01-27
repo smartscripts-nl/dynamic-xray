@@ -344,4 +344,12 @@ function SeriesManager:showSeriesForEbookPath(full_path)
     self:onShowSeriesDialog()
 end
 
+function SeriesManager:setBookFinishedStatus(full_path)
+    local conn = KOR.databases:getDBconnForBookInfo("SeriesManager:setBookFinishedStatus")
+    local sql = "INSERT OR IGNORE INTO finished_books (path) VALUES ('safe_path');"
+    sql = KOR.databases:injectSafePath(sql, full_path)
+    conn:exec(sql)
+    conn = KOR.databases:closeInfoConnections(conn)
+end
+
 return SeriesManager

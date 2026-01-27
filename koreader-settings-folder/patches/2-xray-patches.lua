@@ -14,6 +14,7 @@
 -- ((PATCH READERHIGHLIGHT))
 --* ((PATCH READERSEARCH)) some methods completely replaced...
 -- ((PATCH LUASETTINGS))
+-- ((PATCH BOOKSTATUSWIDGET))
 -- ((PATCH MOVABLECONTAINER))
 -- ((PATCH PLUGINLOADER))
 
@@ -34,6 +35,7 @@ require("extensions/xraycontroller/xraycontroller")
 --* =====================================================
 
 local BD = require("ui/bidi")
+local BookStatusWidget = require("ui/widget/bookstatuswidget")
 local Button = require("extensions/widgets/button")
 local CanvasContext = require("document/canvascontext")
 local CheckButton = require("ui/widget/checkbutton")
@@ -993,6 +995,17 @@ end
 
 function LuaSettings:isNilOrFalse(key)
     return self.data[key] == nil or self.data[key] == false
+end
+
+
+--- PATCH BOOKSTATUSWIDGET
+-- #((PATCH BOOKSTATUSWIDGET))
+local orig_onChangeBookStatus = BookStatusWidget.onChangeBookStatus
+BookStatusWidget.onChangeBookStatus = function(self, option_name, option_value)
+    if option_name[option_value] == "complete" then
+        KOR.seriesmanager:setBookFinishedStatus(DX.m.current_ebook_full_path)
+    end
+    orig_onChangeBookStatus(self, option_name, option_value)
 end
 
 
