@@ -80,7 +80,7 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
     local html = self:loadDataForPage()
 
     local key_events_module = "XrayPageNavigator"
-    KOR.anchorbutton:init(2, #self.popup_buttons)
+    KOR.anchorbutton:initButtonProps(2, #self.popup_buttons)
     self.page_navigator = KOR.dialogs:htmlBox({
         title = DX.m.current_title .. " - p." .. self.navigator_page_no,
         page_navigator = self,

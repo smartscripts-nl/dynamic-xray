@@ -1,6 +1,5 @@
 
---* register props of an anchorbutton, with which to call and position a popup menu
---* for usage with ((MovableContainer#moveToAnchor))
+--* register props of a computed anchorbutton, with which to position a popup menu via ((MovableContainer#moveToAnchor))
 
 local require = require
 
@@ -19,6 +18,14 @@ local AnchorButton = WidgetContainer:extend{
     parent_y = 0,
     width = nil,
 }
+
+--* button_no registers the sequence number of the button in the ButtonTable with buttons_count buttons:
+--* don't call this method "init", because then it would be wrongly called by the KOR initialisation:
+function AnchorButton:initButtonProps(button_no, buttons_count)
+    self.parent_y = 0
+    self.button_no = button_no
+    self.buttons_count = buttons_count
+end
 
 function AnchorButton:increaseParentYposWith(elements_height)
     self.parent_y = self.parent_y + elements_height
@@ -49,13 +56,6 @@ end
 
 function AnchorButton:setWidth(width)
     self.width = width
-end
-
---* button_no registers the sequence number of the button in the ButtonTable with buttons_count buttons:
-function AnchorButton:init(button_no, buttons_count)
-    self.parent_y = 0
-    self.button_no = button_no
-    self.buttons_count = buttons_count
 end
 
 return AnchorButton
