@@ -170,7 +170,7 @@ function ButtonInfoPopup:forSeriesCurrentBook(props)
 	return KOR.buttonprops:set({
 		icon = "author",
 		icon_size_ratio = 0.5,
-		info = _("user icon | Show all books present on this e-reader of the series of which the current book is a member."),
+		info = T(_("user icon | Show all books present on this e-reader of the series of which the current book is a member.\n\nHotkey %1 Shift+S"), KOR.icons.arrow_bare),
 		callback_label = _("show"),
 		--! callback defined by calling module
 	}, props)

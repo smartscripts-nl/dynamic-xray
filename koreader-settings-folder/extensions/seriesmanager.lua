@@ -288,12 +288,12 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
         --* only show series name:
         after_close_callback = return_to_series_list and
             function()
-                KOR.dialogs:closeOverlay()
+                KOR.dialogs:closeAllOverlays()
                 self:onShowSeriesDialog(self.path, self.arg)
             end
             or
             function()
-                KOR.dialogs:closeOverlay()
+                KOR.dialogs:closeAllOverlays()
             end,
     })
 end

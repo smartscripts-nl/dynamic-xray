@@ -10,7 +10,7 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local DX = DX
 local has_items = has_items
 local pairs = pairs
-local table = table
+local table_insert = table.insert
 local tostring = tostring
 local type = type
 
@@ -265,15 +265,12 @@ function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
         },
     }
     if DX.m.current_series then
-        self:registerSharedHotkey("S", key_events_module, function()
-            KOR.descriptiondialog:showSeriesForEbookPath(KOR.registry.current_ebook)
-            return true
-        end)
-        table.insert(actions, {
+        table_insert(actions, {
             label = "show_serie",
-            hotkey = { { "S" } },
+            hotkey = { { "Shift", { "S" } } },
             callback = function()
-                return self:execTopMostSharedHotkey("S", key_events_module)
+                KOR.seriesmanager:showSeriesForEbookPath(DX.m.current_ebook_full_path)
+                return true
             end,
         })
     end
@@ -345,15 +342,12 @@ function KeyEvents:addHotkeysForXrayList(parent, key_events_module)
         },
     }
     if DX.m.current_series then
-        self:registerSharedHotkey("S", key_events_module, function()
-            KOR.descriptiondialog:showSeriesForEbookPath(KOR.registry.current_ebook)
-            return true
-        end)
-        table.insert(actions, {
+        table_insert(actions, {
             label = "show_serie",
-            hotkey = { { "S" } },
+            hotkey = { { "Shift", { "S" } } },
             callback = function()
-                return self:execTopMostSharedHotkey("S", key_events_module)
+                KOR.seriesmanager:showSeriesForEbookPath(DX.m.current_ebook_full_path)
+                return true
             end,
         })
     end
@@ -531,7 +525,7 @@ function KeyEvents.addHotkeysForXrayPageNavigator(key_events_module)
             nside_button.callback()
             return true
         end)
-        table.insert(actions, {
+        table_insert(actions, {
             label = "show_item_info_" .. nhotkey,
             hotkey = { { nhotkey } },
             callback = function()
@@ -846,7 +840,7 @@ function KeyEvents:registerSharedHotkey(key, key_events_module, callback)
         return
     end
 
-    table.insert(self.shared_hotkeys[key], { key_events_module, callback })
+    table_insert(self.shared_hotkeys[key], { key_events_module, callback })
 end
 
 --- @private
