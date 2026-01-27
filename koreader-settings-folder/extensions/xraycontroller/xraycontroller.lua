@@ -225,7 +225,7 @@ function XrayController:doBatchImport(count, callback)
         if initial_notification then
             UIManager:close(initial_notification)
         end
-        notification = KOR.messages:notify(percentage .. " " .. DX.d:getControllerEntryName("imported") .. "...", 4)
+        notification = KOR.messages:notify(percentage .. " " .. DX.d:getControllerEntryName("imported"), 4)
         UIManager:forceRePaint()
         loops = loops + 1
         if percentage:match("100") or loops > limit then

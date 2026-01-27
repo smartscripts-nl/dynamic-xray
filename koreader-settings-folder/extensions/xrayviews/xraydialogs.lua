@@ -891,7 +891,7 @@ function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, 
         return
     end
     book_hits = needle_item.book_hits
-    --* this can occur when we go back to the Viewer from an add new item dialog, before we even have visited the List of Items (which would populate the current list tab items):
+    --* this can occur when we go back to the Viewer from an add new item dialog, before we even have visited the Items List (which would populate the current list tab items):
     if not DX.vd.current_tab_items then
         DX.vd:getCurrentListTabItems()
     end

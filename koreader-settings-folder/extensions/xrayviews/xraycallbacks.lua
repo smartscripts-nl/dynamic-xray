@@ -3,18 +3,13 @@
 
 local require = require
 
-local ButtonDialog = require("extensions/widgets/buttondialog")
 local Event = require("ui/event")
 local KOR = require("extensions/kor")
-local MovableContainer = require("ui/widget/container/movablecontainer")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
-local Screen = require("device").screen
-local Size = require("ui/size")
 
 local DX = DX
-local math_ceil = math.ceil
 
 --- @class XrayCallbacks
 local XrayCallbacks = WidgetContainer:new{}
@@ -175,33 +170,7 @@ end
 
 --- @param iparent XrayPageNavigator
 function XrayCallbacks:execShowPopupButtonsCallback(iparent)
-    --* these anchor dims - computed based on the widths and heights of HtmlBox elements - were set in ((HtmlBox#generateWidget)):
-    local anchor = KOR.registry:get("anchor_button")
-    local popup_menu = ButtonDialog:new{
-        forced_width = anchor.w,
-        bordercolor = KOR.colors.line_separator,
-        borderradius = Size.radius.default,
-        additional_key_events = {
-            ClosePopupMenu = {
-                { { DX.s.hk_page_navigator_popup_menu } }, function()
-                    iparent:closePopupMenu()
-                    return true
-                end
-            },
-        },
-        tap_close_callback = function()
-            iparent:closePopupMenu()
-        end,
-        buttons = iparent.popup_buttons,
-    }
-    anchor.y = anchor.parent_y - math_ceil(DX.s.PN_popup_ypos_factor * popup_menu.inner_height)
-    iparent.movable_popup_menu = MovableContainer:new{
-        popup_menu,
-        dimen = Screen:getSize(),
-    }
-
-    iparent.movable_popup_menu:moveToAnchor(anchor)
-    UIManager:show(iparent.movable_popup_menu)
+    iparent:showPopupMenu()
     return true
 end
 

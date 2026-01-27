@@ -217,7 +217,7 @@ function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
         },
         {
             label = "hits",
-            hotkey = { { DX.s.hk_show_item_occurrences_from_viewer } },
+            hotkey = { { DX.s.hk_show_item_occurrences } },
             callback = function()
                 if DX.vd.current_item and has_items(DX.vd.current_item.book_hits) then
                     DX.c:viewItemHits(DX.vd.current_item.name)
@@ -432,9 +432,9 @@ function KeyEvents.addHotkeysForXrayPageNavigator(key_events_module)
         },
         {
             label = "export_items",
-            hotkey = { { DX.s.hk_open_export_list_from_page_navigator } },
+            hotkey = { { DX.s.hk_open_export_list } },
             callback = function()
-                return DX.cb:execExportXrayItemsCallback(parent)
+                return DX.cb:execExportXrayItemsCallback()
             end,
         },
         {
@@ -544,6 +544,44 @@ function KeyEvents.addHotkeysForXrayPageNavigator(key_events_module)
 
     --! this ensures that hotkeys will even be available when we are in a scrolling html box. These actions will be consumed in ((HtmlBoxWidget#initHotkeys)):
     KOR.registry:set("add_parent_hotkeys", actions)
+end
+
+--- @param parent XrayPageNavigator
+function KeyEvents:addHotkeysForXrayPageNavigatorPopupMenu(parent)
+    return {
+        --* this is a toggle, which now closes the popup menu with the same hotkey with which it was opened:
+        ClosePopupMenu = {
+            { { DX.s.hk_page_navigator_popup_menu } }, function()
+                parent:closePopupMenu()
+                return true
+            end
+        },
+        ShowList = {
+            { { DX.s.hk_show_list } }, function()
+                parent:closePopupMenu()
+                DX.d:showList(DX.vd.current_item)
+                return true
+            end
+        },
+        ShowExportList = {
+            { { DX.s.hk_open_export_list } }, function()
+                parent:closePopupMenu()
+                return DX.cb:execExportXrayItemsCallback()
+            end
+        },
+        ShowPageBrowser = {
+            { { DX.s.hk_show_pagebrowser_from_page_navigator } }, function()
+                parent:closePopupMenu()
+                return DX.cb:execShowPageBrowserCallback(parent)
+            end
+        },
+        ViewItemHits = {
+            { { DX.s.hk_show_item_occurrences } }, function()
+                parent:closePopupMenu()
+                return DX.cb:execShowItemOccurrencesCallback()
+            end
+        },
+    }
 end
 
 --- @param parent Menu

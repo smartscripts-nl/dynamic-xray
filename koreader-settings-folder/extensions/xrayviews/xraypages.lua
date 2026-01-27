@@ -210,7 +210,7 @@ function XrayPages:jumpToPage()
             UIManager:close(dialog)
             value = tonumber(value)
             if value == 0 or value > max_page then
-                KOR.messages:notify(_("the page number entered was invalid") .. "...")
+                KOR.messages:notify(_("the page number entered was invalid"))
                 return
             end
             DX.sp:resetActiveSideButtons("XrayPages:jumpToPage")

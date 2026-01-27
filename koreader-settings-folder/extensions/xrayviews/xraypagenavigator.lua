@@ -3,17 +3,21 @@
 
 local require = require
 
+local ButtonDialog = require("extensions/widgets/buttondialog")
 local DataStorage = require("datastorage")
 local KOR = require("extensions/kor")
+local MovableContainer = require("ui/widget/container/movablecontainer")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 local Screen = require("device").screen
+local Size = require("ui/size")
 local T = require("ffi/util").template
 
 local DX = DX
 local has_content = has_content
 local has_text = has_text
+local math_ceil = math.ceil
 local os_date = os.date
 local table_concat = table.concat
 local table_insert = table.insert
@@ -203,7 +207,7 @@ function XrayPageNavigator:resetFilter()
     self.active_filter_name = nil
     DX.sp:resetActiveSideButtons("XrayPageNavigator:resetFilter")
     self:reloadPageNavigator()
-    KOR.messages:notify(_("filter was reset") .. "...")
+    KOR.messages:notify(_("filter was reset"))
     return true
 end
 
@@ -218,7 +222,7 @@ function XrayPageNavigator:setFilter(item)
     DX.sp:resetActiveSideButtons("XrayPageNavigator:setFilter", "dont_reset_active_side_buttons")
 
     self:reloadPageNavigator()
-    KOR.messages:notify(T(_("filter set to %1") .. "...", item.name))
+    KOR.messages:notify(T(_("filter set to %1"), item.name))
     return true
 end
 
@@ -379,6 +383,31 @@ function XrayPageNavigator:showExportXrayItemsDialog()
         top_buttons_left = top_buttons_left,
     })
     KOR.screenhelpers:refreshScreen()
+end
+
+--* called via hotkey "M" in ((KeyEvents#addHotkeysForXrayPageNavigator)) or button in ((XrayButtons#forPageNavigator)) > ((XrayCallbacks#execShowPopupButtonsCallback)):
+function XrayPageNavigator:showPopupMenu()
+    --* these anchor dims - computed based on the widths and heights of HtmlBox elements - were set in ((HtmlBox#generateWidget)):
+    local anchor = KOR.registry:get("anchor_button")
+    local popup_menu = ButtonDialog:new{
+        forced_width = anchor.w,
+        bordercolor = KOR.colors.line_separator,
+        borderradius = Size.radius.default,
+        additional_key_events = KOR.keyevents:addHotkeysForXrayPageNavigatorPopupMenu(self),
+        tap_close_callback = function()
+            self:closePopupMenu()
+        end,
+        --* these buttons were populated in ((XrayButtons#forPageNavigatorPopupButtons)):
+        buttons = self.popup_buttons,
+    }
+    anchor.y = anchor.parent_y - math_ceil(DX.s.PN_popup_ypos_factor * popup_menu.inner_height)
+    self.movable_popup_menu = MovableContainer:new{
+        popup_menu,
+        dimen = Screen:getSize(),
+    }
+
+    self.movable_popup_menu:moveToAnchor(anchor)
+    UIManager:show(self.movable_popup_menu)
 end
 
 function XrayPageNavigator:setProp(prop, value)

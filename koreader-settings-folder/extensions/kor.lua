@@ -21,9 +21,11 @@ local pairs = pairs
 --- @field icons Icons
 --- @field keyevents KeyEvents
 --- @field labels Labels
+--- @field list List
 --- @field messages Messages
 --- @field registry Registry
 --- @field screenhelpers ScreenHelpers
+--- @field seriesmanager SeriesManager
 --- @field settingsmanager SettingsManager
 --- @field strings Strings
 --- @field system System
@@ -69,9 +71,11 @@ local KOR = WidgetContainer:new{
 	icons = nil,
 	keyevents = nil,
 	labels = nil,
+	list = nil,
 	messages = nil,
 	registry = nil,
 	screenhelpers = nil,
+	seriesmanager = nil,
 	settingsmanager = nil,
 	statisticshelpers = nil,
 	strings = nil,
@@ -100,8 +104,10 @@ local KOR = WidgetContainer:new{
 		"filedirnames",
 		"html",
 		"labels",
+		"list",
 		"messages",
 		"screenhelpers",
+		"seriesmanager",
 		"strings",
 		"system",
 		"tabfactory",

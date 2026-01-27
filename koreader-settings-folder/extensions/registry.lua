@@ -109,7 +109,7 @@ function Registry:toggleScrollingDialog()
     if self.use_scrolling_dialog > 3 then
         self.use_scrolling_dialog = 1
     end
-    KOR.messages:notify("scrolling ingesteld op " .. self.scroll_messages[self.use_scrolling_dialog] .. "...")
+    KOR.messages:notify("scrolling ingesteld op " .. self.scroll_messages[self.use_scrolling_dialog])
 end
 
 --* AXR_registry (renewable upon file updates etc.) defined in ((ExtensionsInit)) (as early as possible):

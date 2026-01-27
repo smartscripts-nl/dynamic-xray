@@ -5,8 +5,10 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local md5 = require("ffi/sha2").md5
 
 local has_no_items = has_no_items
+local math_ceil = math.ceil
 local pairs = pairs
 local table = table
+local table_insert = table.insert
 local tostring = tostring
 local type = type
 local unpack = unpack
@@ -22,7 +24,7 @@ function Tables:filter(tbl, callback)
     for i = 1, #tbl do
         value = tbl[i]
         if callback(value) then
-            table.insert(filtered, value)
+            table_insert(filtered, value)
         end
     end
     return filtered
@@ -47,7 +49,7 @@ function Tables:merge(t1, t2, add_indices)
     count = #t2
     for i = 1, count do
         v = t2[i]
-        table.insert(t1, v)
+        table_insert(t1, v)
     end
     if not add_indices then
         return t1
@@ -64,7 +66,7 @@ function Tables:concatField(itable, prop, separator)
     local texts = {}
     count = #itable
     for i = 1, count do
-        table.insert(texts, itable[i][prop])
+        table_insert(texts, itable[i][prop])
     end
 
     if not separator then
@@ -93,7 +95,7 @@ function Tables:slice(subject, startpos, icount)
     local sliced = {}
     if icount > 0 then
         for _, value in pairs({ unpack(subject, startpos, icount) }) do
-            table.insert(sliced, value)
+            table_insert(sliced, value)
         end
         return sliced
     end
@@ -102,7 +104,7 @@ function Tables:slice(subject, startpos, icount)
     local endpos = #subject
     startpos = endpos - (-icount) + 1
     for x = startpos, endpos do
-        table.insert(sliced, subject[x])
+        table_insert(sliced, subject[x])
     end
     return sliced
 end
@@ -141,10 +143,10 @@ function Tables:sortByPropDescendingAndSetTopItems(subject, sorting_prop, top_it
     for i = 1, count do
         item = subject[i]
         if top_items_selector_callback(item) then
-            table.insert(top_subjects, item)
-            table.insert(values, item[sorting_prop])
+            table_insert(top_subjects, item)
+            table_insert(values, item[sorting_prop])
         else
-            table.insert(other_subjects, item)
+            table_insert(other_subjects, item)
         end
     end
     self:sortByPropDescending(top_subjects, sorting_prop)
@@ -167,10 +169,10 @@ function Tables:sortByPropAscendingAndSetTopItems(subject, sorting_prop, top_ite
     for i = 1, count do
         item = subject[i]
         if top_items_selector_callback(item) then
-            table.insert(top_subjects, item)
-            table.insert(values, item[sorting_prop])
+            table_insert(top_subjects, item)
+            table_insert(values, item[sorting_prop])
         else
-            table.insert(other_subjects, item)
+            table_insert(other_subjects, item)
         end
     end
     self:sortByPropAscending(top_subjects, sorting_prop)
@@ -253,6 +255,45 @@ function Tables:tableToText(o, add_line_endings, get_unclipped_table, remove_ind
         end
         return value
     end
+end
+
+function Tables:arragenInVerticalColumns(subject, column_count)
+    if not column_count then
+        column_count = 2
+    end
+    if #subject <= column_count then
+        return {
+            subject,
+        }
+    end
+
+    local columnstable = {}
+    local to_next_column = math_ceil(#subject / column_count)
+    --* insert the rows needed:
+    for i = 1, to_next_column do
+        columnstable[i] = {}
+    end
+    --* populate per column:
+    local item
+    count = #subject
+    for nr = 1, count do
+        item = subject[nr]
+        local active_row = nr <= to_next_column and nr or nr % to_next_column
+        if active_row == 0 and nr == #subject then
+            active_row = to_next_column
+        end
+        table_insert(columnstable[active_row], item)
+    end
+    for i = 1, #columnstable do
+        if #columnstable[i] < column_count then
+            table_insert(columnstable[i], {
+                text = "",
+                callback = function()
+                end,
+            })
+        end
+    end
+    return columnstable
 end
 
 function Tables:isNumericalTable(t)

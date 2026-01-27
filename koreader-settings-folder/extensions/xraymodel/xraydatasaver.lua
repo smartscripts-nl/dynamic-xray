@@ -184,7 +184,15 @@ local XrayDataSaver = WidgetContainer:new{
             "UPDATE xray_translations SET msgstr = ? WHERE md5 = ?;",
     },
     --* these table modifications are run and depending on the setting "database_scheme_version" in ((XraySettings)), for the public version of DX:
-    scheme_alter_queries = {},
+    scheme_alter_queries = {
+        [[
+            CREATE TABLE IF NOT EXISTS finished_books
+            (
+                path  TEXT not null
+                    constraint finished_book_unique
+                    unique
+            );]],
+    },
     scheme_version_name = "database_scheme_version",
 }
 

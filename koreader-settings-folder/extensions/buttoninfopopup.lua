@@ -166,6 +166,16 @@ function ButtonInfoPopup:forSearchResetFilter(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forSeriesCurrentBook(props)
+	return KOR.buttonprops:set({
+		icon = "author",
+		icon_size_ratio = 0.5,
+		info = _("user icon | Show all books present on this e-reader of the series of which the current book is a member."),
+		callback_label = _("show"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forTextViewerCopy(props)
 	return KOR.buttonprops:set({
 		icon = "copy",
@@ -212,7 +222,7 @@ end
 function ButtonInfoPopup:forXrayExport(props)
 	return KOR.buttonprops:set({
 		icon = "export-xray",
-		info = T(_("export icon | Generate a copyable overview of all Xray items.\n\nYou could print this overview, to have it always ready next to your e-reader.\n\nHotkey %1 %2"), KOR.icons.arrow_bare, DX.s.hk_open_export_list_from_page_navigator),
+		info = T(_("export icon | Generate a copyable overview of all Xray items.\n\nYou could print this overview, to have it always ready next to your e-reader.\n\nHotkey %1 %2"), KOR.icons.arrow_bare, DX.s.hk_open_export_list),
 		callback_label = _("generate"),
 		--! callback defined by calling module
 	}, props)
@@ -330,7 +340,7 @@ end
 function ButtonInfoPopup:forXrayList(props)
 	return KOR.buttonprops:set({
 		icon = "list",
-		info = T([[list icon | Show List of Items.
+		info = T([[list icon | Show Items List.
 
 Hotkey %1 %2]], KOR.icons.arrow_bare, DX.s.hk_show_list),
 		callback_label = _("list"),

@@ -159,7 +159,7 @@ function XrayButtons:addFindAllHitsButton(buttons, needle_item, book_hits)
         table_insert(buttons[1], #buttons[1] - 2,
         KOR.buttoninfopopup:forSearchAllLocations({
             info = T([[search-list-icon | Show all occurrences of this Xray item in the current ebook.
-Hotkey %1 %2]], KOR.icons.arrow_bare, DX.s.hk_show_item_occurrences_from_viewer),
+Hotkey %1 %2]], KOR.icons.arrow_bare, DX.s.hk_show_item_occurrences),
             callback = function()
                 DX.c:viewItemHits(needle_item.name)
             end,
@@ -931,6 +931,12 @@ Current mode: %3 %4.]], KOR.icons.xray_book_mode_bare, KOR.icons.xray_series_mod
             end,
             show_parent = KOR.ui,
         })))
+        table_insert(buttons, 1, Button:new(KOR.buttoninfopopup:forSeriesCurrentBook({
+            icon_size_ratio = base_icon_size + 0.1,
+            callback = function()
+                KOR.seriesmanager:showSeriesForEbookPath(DX.m.current_ebook_full_path)
+            end
+        })))
     end
     return buttons
 end
@@ -1100,7 +1106,7 @@ function XrayButtons:forExportItemsTopLeft()
         {
             icon = "info-slender",
             callback = function()
-                KOR.dialogs:niceAlert(_("Information"), T(_("The sorting of the items in this list and the book or series mode follow the settings which you made for the Items List.\n\nHotkey for showing this list from Page Navigator %1 %2"), KOR.icons.arrow_bare, DX.s.hk_open_export_list_from_page_navigator))
+                KOR.dialogs:niceAlert(_("Information"), T(_("The sorting of the items in this list and the book or series mode follow the settings which you made for the Items List.\n\nHotkey for showing this list from Page Navigator %1 %2"), KOR.icons.arrow_bare, DX.s.hk_open_export_list))
             end
         },
     }
@@ -1318,7 +1324,7 @@ Continue?]])
                         DX.d:showList(DX.d.item_requested)
                     end)
                 end,
-                info = _("Close form and go to List of Items."),
+                info = _("Close form and go to Items List."),
             }),
             KOR.buttoninfopopup:forXrayPageNavigator({
                 callback = function()

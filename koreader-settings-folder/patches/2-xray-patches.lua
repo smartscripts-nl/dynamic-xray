@@ -7,6 +7,7 @@
 --! patches in this file:
 -- ((PATCH CREDOCUMENT))
 -- ((PATCH READERVIEW))
+-- ((PATCH UIMANAGER))
 -- ((PATCH READERDICTIONARY))
 --! I didn't patch DictQuickLookup, to add a add Xray item button to the dictionary dialog; dialog code for me too complicated to patch...
 -- ((PATCH READERTOC))
@@ -39,6 +40,7 @@ local CheckButton = require("ui/widget/checkbutton")
 --- @class CreDocument
 local CreDocument = require("document/credocument")
 local Device = require("device")
+local Event = require("ui/event")
 local InfoMessage = require("ui/widget/infomessage")
 local InputDialog = require("ui/widget/inputdialog")
 local KOR = require("extensions/kor")
@@ -276,6 +278,22 @@ ReaderView.recalculate = function(self)
     orig_recalculate(self)
 end
 
+
+--- PATCH UIMANAGER
+-- #((PATCH UIMANAGER))
+--* called from ((Files#openFile)):
+function UIManager:closeAllWidgetsExceptMainScreen()
+    self._window_display_modes = { self.main_reader_display_mode }
+    --* i bigger than 1: we keep window 1, the reader or FileManager screen:
+    count = #self._window_stack
+    local w
+    for i = count, 2, -1 do
+        w = self._window_stack[i].widget
+        w:handleEvent(Event:new("FlushSettings"))
+        --* ...and notify it that it ought to be gone now.
+        w:handleEvent(Event:new("CloseWidget"))
+    end
+end
 
 --- PATCH READERDICTIONARY
 -- #((PATCH READERDICTIONARY))

@@ -34,7 +34,7 @@ local XraySettings = WidgetContainer:new{
         },
         hk_add_item = {
             value = "A",
-            explanation = _("To add a new Xray item, in the Item Viewer, the List of Items or the Page Navigator.") .. hotkeys_warning,
+            explanation = _("To add a new Xray item, in the Item Viewer, the Items List or the Page Navigator.") .. hotkeys_warning,
             locked = 0,
         },
         hk_edit_item = {
@@ -44,7 +44,7 @@ local XraySettings = WidgetContainer:new{
         },
         hk_show_list = {
             value = "L",
-            explanation = _("To open the List of Items. Available in the Item Viewer, the Page Navigator and the Page Information Popup.") .. hotkeys_warning,
+            explanation = _("To open the Items List. Available in the Item Viewer, the Page Navigator and the Page Information Popup.") .. hotkeys_warning,
             locked = 0,
         },
         hk_goto_next_item = {
@@ -59,12 +59,12 @@ local XraySettings = WidgetContainer:new{
         },
         hk_open_page_navigator_from_list = {
             value = "N",
-            explanation = _("To open the Page Navigator from the List of Items. The List will be closed.") .. hotkeys_warning,
+            explanation = _("To open the Page Navigator from the Items List. The List will be closed.") .. hotkeys_warning,
             locked = 0,
         },
-        hk_open_export_list_from_page_navigator = {
+        hk_open_export_list = {
             value = "X",
-            explanation = "Opens a popup with all Xray items as sorted in the Xray List and with info per item as shown in Page Information Popup. For copying and then printing, if you like." .. hotkeys_warning,
+            explanation = "Opens a popup with all Xray items as sorted in the Items List and with info per item as shown in Page Information Popup. For copying and then printing, if you like." .. hotkeys_warning,
             locked = 0,
         },
         hk_open_xray_settings_from_page_navigator = {
@@ -97,9 +97,9 @@ local XraySettings = WidgetContainer:new{
             explanation = _("To show a popup dialog with information about the current DX dialog. Available in dialogs where you see an information icon.") .. hotkeys_warning,
             locked = 0,
         },
-        hk_show_item_occurrences_from_viewer = {
+        hk_show_item_occurrences = {
             value = "S",
-            explanation = _("To show the occurrences in the ebook of the current item in the Item Viewer, of in the Tapped Word Popup.") .. hotkeys_warning,
+            explanation = _("To show the occurrences in the ebook of the current item.") .. hotkeys_warning,
             locked = 0,
         },
         hk_show_list_filter_dialog = {
@@ -109,7 +109,7 @@ local XraySettings = WidgetContainer:new{
         },
         hk_view_item_from_list_or_navigator = {
             value = "V",
-            explanation = _("To view the details of the current item in the List of Items or in the Page Navigator.") .. hotkeys_warning,
+            explanation = _("To view the details of the current item in the Items List or in the Page Navigator.") .. hotkeys_warning,
             locked = 0,
         },
         is_android = {
@@ -161,7 +161,7 @@ local XraySettings = WidgetContainer:new{
             type = "number",
         },
         -- #((non_filtered_items_layout))
-        --* consumed in ((XrayPageNavigator#setNonFilteredItemsLayout)):
+        --* consumed in ((XrayPages#activateNonFilteredItemsLayout)):
         PN_non_filtered_items_layout = {
             value = "small-caps-italic",
             options = { "small-caps", "small-caps-italic", "bold", },

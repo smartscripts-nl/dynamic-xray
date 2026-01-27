@@ -126,7 +126,7 @@ function XrayInformation:getPageNavigatorHotkeysInfo()
             .. _("e-book: Jump to page currently displayed in Page Navigator")
             .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>L</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
-            .. _("show List of Items")
+            .. _("show Items List")
             .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>M</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
             .. _("toggle the Page Navigator popup Menu with additional actions")
@@ -201,7 +201,7 @@ end
 function XrayInformation:showListAndViewerHelp(initial_tab)
 
     --* these hotkeys are mostly defined in ((KeyEvents#addHotkeysForXrayList)):
-    local list_info = DX.d.help_texts["list"] or T(_([[Shift+X = show List of Items
+    local list_info = DX.d.help_texts["list"] or T(_([[Shift+X = show Items List
 
 Titlebar %1/%2 = items displayed in series/book mode
 Titlebar %3 = only linked items, from longpressed word

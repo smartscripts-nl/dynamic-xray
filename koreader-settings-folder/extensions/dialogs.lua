@@ -364,14 +364,13 @@ function Dialogs:textBox(args)
     info = info:gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
     args.text = info
 
-    --* for a non-icon variant of a text with icons, e.g. as generated in ((XrayPageNavigator#execExportXrayItemsCallback)):
+    --* for a non-icon variant of a text with icons:
     if args.info_icon_less then
         --* hotfix for initials in names:
         args.text_for_copy = args.info_icon_less:gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
     end
 
     args.width_factor = args.width_factor or 1
-    --local use_scrolling_dialog = args.use_scrolling_dialog or 1
     if args.fixed_face and type(args.fixed_face) == "string" then
         args.fixed_face = Font:getFace(args.fixed_face)
     end
@@ -516,6 +515,26 @@ function Dialogs:niceAlert(title, info, options)
         return nil
     end
     return dialog
+end
+
+function Dialogs:niceMultiConfirm(args)
+
+    self.nice_multiconfirm = ButtonDialogTitle:new{
+        title = args.title,
+        subtitle = args.subtitle,
+        use_low_title = true,
+        title_align = "center",
+        use_info_style = false,
+        font_weight = "normal",
+        width = args.max_width and Screen:getWidth(),
+        width_is_dependent_on_button_count = not args.max_width,
+        after_close_callback = args.after_close_callback,
+        top_buttons_left = args.top_buttons_left,
+        buttons = args.buttons,
+    }
+    UIManager:show(self.nice_multiconfirm)
+
+    return self.nice_multiconfirm
 end
 
 --* use timeout = nil for second argument when calling for no timeout:

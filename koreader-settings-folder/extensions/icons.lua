@@ -69,6 +69,8 @@ return {
     file_open_bare = "\u{F016}",
     filter = "\u{E932}",
     filter_reset = "\u{E934}",
+    finished = "\u{E833}" .. spacer,
+    finished_bare = "\u{E833}",
     graph = "\u{F437}" .. spacer,
     graph_bare = "\u{F437}",
     highlight_bare = "\u{2592}",
