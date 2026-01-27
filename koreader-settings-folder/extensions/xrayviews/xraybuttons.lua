@@ -274,6 +274,14 @@ end
 function XrayButtons:forPageNavigatorPopupButtons(parent)
     return {
         {
+            KOR.buttoninfopopup:forSeriesCurrentBook({
+                callback = function()
+                    parent:closePopupMenu()
+                    KOR.seriesmanager:showSeriesForEbookPath(DX.m.current_ebook_full_path)
+                end
+            })
+        },
+        {
             KOR.buttoninfopopup:forXrayList({
                 callback = function()
                     parent:closePopupMenu()
