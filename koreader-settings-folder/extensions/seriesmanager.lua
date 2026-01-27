@@ -119,6 +119,7 @@ function SeriesManager:onShowSeriesDialog(full_path, arg)
     self.path = full_path
     --* this var will be set in ((SeriesManager#searchSerieMembers)):
     local cached_result = KOR.registry:getOnce("series_members")
+    KOR.dialogs:closeOverlay()
 
     local cache_index
     if full_path then
@@ -150,6 +151,7 @@ function SeriesManager:onShowSeriesDialog(full_path, arg)
         return
     end
 
+    KOR.dialogs:closeOverlay()
     if self:showContextDialogForCurrentEbook(result, full_path) then
         return
     end
@@ -177,6 +179,7 @@ function SeriesManager:onShowSeriesDialog(full_path, arg)
             finished_paths = self.series[nr].finished_paths,
         }
         item.callback = function()
+            KOR.dialogs:closeOverlay()
             self:showContextDialog(item, "return_to_series_list", self.series[nr].path)
         end
         table_insert(self.item_table, item)
@@ -271,7 +274,7 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
         end
     end
     if arrange_vertically then
-        buttons = KOR.tables:arragenInVerticalColumns(buttons, 2)
+        buttons = KOR.tables:arrangeInVerticalColumns(buttons, 2)
     end
     title = item.text:gsub("  –  .+$", "")
     if active_button > 0 then
@@ -334,6 +337,7 @@ end
 function SeriesManager:showSeriesForEbookPath(full_path)
     local series_members = self:searchSerieMembers(full_path)
     if series_members and full_path then
+        KOR.dialogs:closeOverlay()
         self:closeDialog()
     end
 

@@ -264,16 +264,7 @@ function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
             end,
         },
     }
-    if DX.m.current_series then
-        table_insert(actions, {
-            label = "show_serie",
-            hotkey = { { "Shift", { "S" } } },
-            callback = function()
-                KOR.seriesmanager:showSeriesForEbookPath(DX.m.current_ebook_full_path)
-                return true
-            end,
-        })
-    end
+    self:addSeriesManagerHotkey(actions)
 
     --- SET HOTKEYS FOR HTMLBOXWIDGET INSTANCE
 
@@ -341,16 +332,7 @@ function KeyEvents:addHotkeysForXrayList(parent, key_events_module)
             end,
         },
     }
-    if DX.m.current_series then
-        table_insert(actions, {
-            label = "show_serie",
-            hotkey = { { "Shift", { "S" } } },
-            callback = function()
-                KOR.seriesmanager:showSeriesForEbookPath(DX.m.current_ebook_full_path)
-                return true
-            end,
-        })
-    end
+    self:addSeriesManagerHotkey(actions)
 
     --- SET HOTKEYS FOR LIST MENU INSTANCE
 
@@ -534,6 +516,8 @@ function KeyEvents.addHotkeysForXrayPageNavigator(key_events_module)
         })
     end
 
+    self:addSeriesManagerHotkey(actions)
+
     --- SET HOTKEYS FOR HTMLBOXWIDGET INSTANCE
 
     --! this ensures that hotkeys will even be available when we are in a scrolling html box. These actions will be consumed in ((HtmlBoxWidget#initHotkeys)):
@@ -600,6 +584,7 @@ end
 --* compare ((KeyEvents#addHotkeysForXrayItemViewer)) and see comment in ((HtmlBox#initHotkeys)):
 function KeyEvents.addHotkeysForXrayUIpageInfoViewer()
     local parent = DX.d
+    local self = KOR.keyevents
 
     --* no shared hotkeys here...
     local actions = {
@@ -625,6 +610,8 @@ function KeyEvents.addHotkeysForXrayUIpageInfoViewer()
             end,
         },
     }
+
+    self:addSeriesManagerHotkey(actions)
 
     --- SET HOTKEYS FOR SCROLLTEXTWIDGET INSTANCE
 
@@ -810,6 +797,19 @@ end
 --- @param parent Menu
 function KeyEvents:activateTab(parent, tab_no)
     parent.activate_tab_callback(tab_no)
+end
+
+function KeyEvents:addSeriesManagerHotkey(actions)
+    if DX.m.current_series then
+        table_insert(actions, {
+            label = "show_serie",
+            hotkey = { { "Shift", { "M" } } },
+            callback = function()
+                KOR.seriesmanager:showSeriesForEbookPath(DX.m.current_ebook_full_path)
+                return true
+            end,
+        })
+    end
 end
 
 --- @param parent Menu

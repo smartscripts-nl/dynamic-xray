@@ -257,7 +257,7 @@ function Tables:tableToText(o, add_line_endings, get_unclipped_table, remove_ind
     end
 end
 
-function Tables:arragenInVerticalColumns(subject, column_count)
+function Tables:arrangeInVerticalColumns(subject, column_count)
     if not column_count then
         column_count = 2
     end
@@ -267,11 +267,11 @@ function Tables:arragenInVerticalColumns(subject, column_count)
         }
     end
 
-    local columnstable = {}
+    local columns_table = {}
     local to_next_column = math_ceil(#subject / column_count)
     --* insert the rows needed:
     for i = 1, to_next_column do
-        columnstable[i] = {}
+        columns_table[i] = {}
     end
     --* populate per column:
     local item
@@ -282,18 +282,18 @@ function Tables:arragenInVerticalColumns(subject, column_count)
         if active_row == 0 and nr == #subject then
             active_row = to_next_column
         end
-        table_insert(columnstable[active_row], item)
+        table_insert(columns_table[active_row], item)
     end
-    for i = 1, #columnstable do
-        if #columnstable[i] < column_count then
-            table_insert(columnstable[i], {
+    for i = 1, #columns_table do
+        if #columns_table[i] < column_count then
+            table_insert(columns_table[i], {
                 text = "",
                 callback = function()
                 end,
             })
         end
     end
-    return columnstable
+    return columns_table
 end
 
 function Tables:isNumericalTable(t)
