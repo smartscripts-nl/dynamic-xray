@@ -24,7 +24,7 @@ function AnchorButton:increaseParentYposWith(elements_height)
     self.parent_y = self.parent_y + elements_height
 end
 
-function AnchorButton:computeButtonYpos(ypos_correction)
+function AnchorButton:setAnchorButtonFromPopupMenuHeight(popup_menu_height)
     local parent_y = self.parent_y - (self.buttons_count - 1) * self.height
     local x = self.button_no * self.width
     --* Ubuntu is a bit wacky with handling positions:
@@ -37,7 +37,7 @@ function AnchorButton:computeButtonYpos(ypos_correction)
     --* this computed "button" will be used as anchor point by ((MovableContainer#moveToAnchor)):
     self.button = {
         x = x,
-        y = parent_y - ypos_correction + correction_factor * self.height - Screen:scaleBySize(2),
+        y = parent_y - popup_menu_height + correction_factor * self.height - Screen:scaleBySize(2),
         w = self.width,
         h = self.height,
     }

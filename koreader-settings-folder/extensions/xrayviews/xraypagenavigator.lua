@@ -401,7 +401,7 @@ function XrayPageNavigator:createPopupMenu()
         --* these buttons were populated in ((XrayButtons#forPageNavigatorPopupButtons)):
         buttons = self.popup_buttons,
     }
-    KOR.anchorbutton:computeButtonYpos(self.popup_menu.inner_height)
+    KOR.anchorbutton:setAnchorButtonFromPopupMenuHeight(self.popup_menu.inner_height)
 end
 
 --* called via hotkey "M" in ((KeyEvents#addHotkeysForXrayPageNavigator)) or button in ((XrayButtons#forPageNavigator)) > ((XrayCallbacks#execShowPopupButtonsCallback)):
