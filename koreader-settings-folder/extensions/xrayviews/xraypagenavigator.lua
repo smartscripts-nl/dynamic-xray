@@ -88,7 +88,8 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
         modal = false,
         info_panel_text = DX.ip:getInfoPanelText(),
         window_size = "fullscreen",
-        has_anchor_button = true,
+        --* no computations needed when popup_menu was already created:
+        has_anchor_button = not self.popup_menu,
         key_events_module = key_events_module,
         no_buttons_row = true,
         top_buttons_left = DX.b:forPageNavigatorTopLeft(self),
@@ -312,6 +313,7 @@ function XrayPageNavigator:resetCache()
     self.cached_html_and_buttons_by_page_no = {}
     self.cached_hits_by_needle = {}
     self.cached_items = {}
+    self.popup_menu = nil
     DX.sp:resetActiveSideButtons("XrayPageNavigator:resetCache")
     self.current_item = nil
 end
@@ -390,6 +392,9 @@ end
 
 --- @private
 function XrayPageNavigator:createPopupMenu()
+    if self.popup_menu then
+        return
+    end
     self.popup_menu = ButtonDialog:new{
         forced_width = KOR.anchorbutton.width,
         bordercolor = KOR.colors.line_separator,
