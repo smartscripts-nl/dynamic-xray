@@ -11,7 +11,6 @@ local md5 = require("ffi/sha2").md5
 
 local DX = DX
 local has_content = has_content
-local has_items = has_items
 local has_text = has_text
 local last_file = last_file
 local pairs = pairs
@@ -187,7 +186,7 @@ function SeriesManager:onShowSeriesDialog(full_path, arg)
         }
         item.callback = function()
             KOR.dialogs:closeOverlay()
-            self:showContextDialog(item, item.series_name, "return_to_series_list", self.series[nr].path)
+            self:showContextDialog(item, "return_to_series_list", self.series[nr].path)
         end
         table_insert(self.item_table, item)
     end
@@ -201,7 +200,7 @@ function SeriesManager:onShowSeriesDialog(full_path, arg)
 end
 
 --* data for item were retrieved in ((SeriesManager#populateSeries)):
-function SeriesManager:showContextDialog(item, series_name, return_to_series_list, full_path)
+function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
     local called_from_description_dialog = KOR.registry:get("series_called_from_description_dialog")
     if not full_path then
         full_path = last_file()
@@ -315,7 +314,7 @@ function SeriesManager:showContextDialogForCurrentEbook(result, full_path)
         self:populateSeries(result)
         local series_name = result["series_name"][1]
         if self.series_table_indexed[series_name] then
-            self:showContextDialog(self.series_table_indexed[series_name], series_name, false, full_path)
+            self:showContextDialog(self.series_table_indexed[series_name], false, full_path)
             return true
         end
     end
