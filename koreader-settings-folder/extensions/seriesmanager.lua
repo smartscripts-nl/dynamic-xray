@@ -352,7 +352,8 @@ function SeriesManager:showSeriesForEbookPath(full_path)
         self:closeDialog()
     end
 
-    self:onShowSeriesDialog()
+    --* by adding param full_path, we make the manager display the series dialog for that particular file only:
+    self:onShowSeriesDialog(full_path)
 end
 
 function SeriesManager:setBookFinishedStatus(full_path)
