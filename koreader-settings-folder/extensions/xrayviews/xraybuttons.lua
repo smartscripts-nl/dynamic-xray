@@ -277,7 +277,7 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
             KOR.buttoninfopopup:forSeriesCurrentBook({
                 callback = function()
                     parent:closePopupMenu()
-                    KOR.seriesmanager:showSeriesForEbookPath(DX.m.current_ebook_full_path)
+                    KOR.seriesmanager:showSeriesForEbookPath()
                 end
             })
         },
@@ -942,7 +942,7 @@ Current mode: %3 %4.]], KOR.icons.xray_book_mode_bare, KOR.icons.xray_series_mod
         table_insert(buttons, 1, Button:new(KOR.buttoninfopopup:forSeriesCurrentBook({
             icon_size_ratio = base_icon_size + 0.1,
             callback = function()
-                KOR.seriesmanager:showSeriesForEbookPath(DX.m.current_ebook_full_path)
+                KOR.seriesmanager:showSeriesForEbookPath()
             end
         })))
     end

@@ -553,6 +553,13 @@ function KeyEvents:addHotkeysForXrayPageNavigatorPopupMenu(parent)
                 return DX.cb:execShowPageBrowserCallback(parent)
             end
         },
+        ShowSeriesManager = {
+            { { "Shift", { "M" } } }, function()
+                parent:closePopupMenu()
+                KOR.seriesmanager:showSeriesForEbookPath()
+                return true
+            end
+        },
         ViewItemHits = {
             { { DX.s.hk_show_item_occurrences } }, function()
                 parent:closePopupMenu()
@@ -805,7 +812,7 @@ function KeyEvents:addSeriesManagerHotkey(actions)
             label = "show_serie",
             hotkey = { { "Shift", { "M" } } },
             callback = function()
-                KOR.seriesmanager:showSeriesForEbookPath(DX.m.current_ebook_full_path)
+                KOR.seriesmanager:showSeriesForEbookPath()
                 return true
             end,
         })

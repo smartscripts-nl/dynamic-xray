@@ -9,6 +9,7 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 local md5 = require("ffi/sha2").md5
 
+local DX = DX
 local has_content = has_content
 local has_text = has_text
 local last_file = last_file
@@ -335,6 +336,9 @@ function SeriesManager:getSeriesName(full_path)
 end
 
 function SeriesManager:showSeriesForEbookPath(full_path)
+    if not full_path then
+        full_path = DX.m.current_ebook_full_path
+    end
     local series_members = self:searchSerieMembers(full_path)
     if series_members and full_path then
         KOR.dialogs:closeOverlay()

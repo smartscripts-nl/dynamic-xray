@@ -3,7 +3,7 @@
 
 local require = require
 
-local Size = require("ui/size")
+local Size = require("extensions/modules/size")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local Screen = require("device").screen
 
