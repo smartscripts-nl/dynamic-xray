@@ -10,16 +10,7 @@ local DX = DX
 local has_text = has_text
 
 --- @class XrayInfoPanel
-local XrayInfoPanel = WidgetContainer:new{
-    active_item_marker = KOR.icons.active_tab_bare,
-    active_side_buttons = { 1, 1 },
-    active_side_tab = 1,
-    filtered_item_marker = KOR.icons.filter,
-    --* two sets, one for each side_panel:
-    info_panel_texts = { {}, {} },
-    linked_items = {},
-    side_buttons = {},
-}
+local XrayInfoPanel = WidgetContainer:new{}
 
 --* called from ((XraySidePanels#populateLinkedItemsPanel)):
 function XrayInfoPanel:formatInfoPanelText(info_panel_text)

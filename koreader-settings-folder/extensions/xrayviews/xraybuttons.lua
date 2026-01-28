@@ -301,6 +301,7 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
             KOR.buttoninfopopup:forSearchAllLocations({
                 info = _("search-list-icon | Show all occurrences in the book of the item currently displayed below."),
                 callback = function()
+                    parent:closePopupMenu()
                     return DX.cb:execShowItemOccurrencesCallback()
                 end
             }),

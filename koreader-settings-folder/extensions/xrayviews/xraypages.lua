@@ -459,18 +459,19 @@ end
 
 --- @private
 function XrayPages:markedItemRegister(item, html, word)
+
+    if self:isPruneSideButton(item) then
+        return html
+    end
+
     local needle = DX.vd:getNeedleString(word, "for_substitution")
     html = self:markNeedleInHtml(html, needle)
+
     local info_text = DX.pn:getItemInfoText(item)
     if info_text and not DX.pn.first_info_panel_text then
         DX.pn:setProp("first_info_panel_text", info_text)
         DX.pn:setProp("first_info_panel_item_name", item.name)
-
     end
-    if self.button_labels_injected:match(item.name) then
-        return html
-    end
-    self.button_labels_injected = self.button_labels_injected .. " " .. item.name
 
     --* linked item buttons (when DX.sp.active_side_tab == 2) are added in ((XrayPageNavigator#loadDataForPage)) > ((XraySidePanels#computeLinkedItems)):
     if DX.sp.active_side_tab == 1 then
@@ -478,6 +479,16 @@ function XrayPages:markedItemRegister(item, html, word)
     end
 
     return html
+end
+
+--- @private
+function XrayPages:isPruneSideButton(item)
+    local unique_label = item.name:gsub("%-", "")
+    if self.button_labels_injected:match(unique_label) then
+        return true
+    end
+    self.button_labels_injected = self.button_labels_injected .. " " .. unique_label
+    return false
 end
 
 --- @private

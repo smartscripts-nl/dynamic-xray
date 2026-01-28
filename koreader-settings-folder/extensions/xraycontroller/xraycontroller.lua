@@ -546,7 +546,6 @@ function XrayController:resetDynamicXray(is_prepared)
     --! don't call DX.u:reset() here, because then Xray markers in page would disappear...
     DX.pn:resetCache()
     DX.sp:resetActiveSideButtons("XrayController:resetDynamicXray")
-    DX.pn:reloadPageNavigator()
     DX.vd:resetAllFilters()
     DX.p:resetCache()
     --* when current method called after saving an item from a form:

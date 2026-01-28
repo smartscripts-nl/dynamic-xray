@@ -344,7 +344,6 @@ function XrayPageNavigator:returnToNavigator()
         --* this is needed so we can return to the page we were looking at:
         self.navigator_page_no = self.return_to_page
         self:showNavigator(self.initial_browsing_page)
-        self.return_to_page = nil
         local active_side_button = self.return_to_item_no or 1
         DX.sp:setActiveSideButton("XrayPageNavigator:returnToNavigator", active_side_button)
         --* re-open the last opened item; also set by ((XrayCallbacks#execEditCallback)):
@@ -355,9 +354,8 @@ function XrayPageNavigator:returnToNavigator()
                 --* callback defined in ((XrayPages#markedItemRegister)):
                 side_button.callback("force_return_to_item")
             end
-            self.return_to_current_item = nil
-            self.return_to_item_no = nil
         end
+        self:resetReturnToProps()
 
         return true
     end
