@@ -115,7 +115,7 @@ local XrayDataSaver = WidgetContainer:new{
                 SELECT SUM(x2.book_hits)
                 FROM xray_items x2
                 JOIN bookinfo b2 ON b2.filename = x2.ebook
-                WHERE b2.series = a.series
+                WHERE b2.series = b.series
                   AND x2.name = x.name
             ) AS series_hits
             FROM xray_items x LEFT OUTER JOIN bookinfo b ON x.ebook = b.filename WHERE b.series = '%1' AND name NOT IN (SELECT name FROM xray_items WHERE ebook = '%2') ORDER BY x.name;]],
@@ -292,7 +292,7 @@ function XrayDataSaver.storeImportedItems(series)
             0 --* chapter_hits (html)
         ):step()
     end
-    stmt = KOR.databases:closeStmts(stmt)
+    stmt = KOR.databases:closeInfoStmts(stmt)
     --* above statementa were only concerned with metadata; actual hits update wil now be done in the model: ((XrayDataSaver#refreshItemHitsForCurrentEbook)):
     --* we don't close conn here, because it will be used there:
     DX.c:refreshItemHitsForCurrentEbook()
@@ -463,7 +463,7 @@ function XrayDataSaver:setBookHitsForImportedItems(conn, current_ebook_basename)
         end
     end)
 
-    KOR.databases:closeStmts(stmt)
+    KOR.databases:closeInfoStmts(stmt)
 end
 
 --* compare ((XrayDataSaver#setBookHitsForImportedItems)):
@@ -502,7 +502,7 @@ function XrayDataSaver:setSeriesHitsForImportedItems(conn, current_ebook_basenam
         end
     end)
 
-    KOR.databases:closeStmts(stmt)
+    KOR.databases:closeInfoStmts(stmt)
 end
 
 -- #((XrayDataSaver#createAndModifyTables))
