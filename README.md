@@ -49,11 +49,17 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
 ## Installation
 
 1. Clone this repo somewhere. From there:
-2. Copy _the contents of_ all folders under "koreader-settings-folder" to the corresponding folders under the settings folder (almost always named "koreader") of your KOReader installation.
-   * **⚠️ NB: Don't overwrite entire folders in this target folder with the folders from the repository!** The only folders which you can safely overwrite are "extensions" and "plugins/xraycontroller.koplugin".
-   * **⚠️ NB 2: the contents of the subfolder "icons" must be copied to the corresponding folder under the KOReader settings folder**, to have custom icons shown in the DX interface.
-   * NB 3: thanks to the patches DX applies to KOReader, the plugin XrayController will also be loaded from KOReader's settings folder...
-3. **⚠️ It's especially important that you copy koreader-settings-folder/patches/2-xray-patches.lua to a subfolder "patches" in your KOReader settings folder!** Without this, DX won't be available in your installation.
+   * **For Android**: copy _the contents of_ all folders under "koreader-settings-folder" to the corresponding folders under the settings folder (almost always named "koreader") of your KOReader installation.
+      * **⚠️ NB: Don't overwrite entire folders in this target folder with the folders from the repository!** The only folders which you can safely overwrite are "extensions" and "plugins/xraycontroller.koplugin".
+      * **⚠️ NB 2: the contents of the subfolder "icons" must be copied to the corresponding folder under the KOReader settings folder**, to have custom icons shown in the DX interface.
+      * NB 3: thanks to the patches DX applies to KOReader, the plugin XrayController will also be loaded from KOReader's settings folder...
+   * **For Kobo/Kindle** (if a .adds folder is present):
+     * copy _the contents of_ koreader-settings-folder/icons to .adds/koreader/resources/icons
+     * copy the _folder_ koreader-settings-folder/extensions to .adds/koreader
+     * copy the _folder_ koreader-settings-folder/plugins/xraycontroller.koplugin to .adds/koreader/plugins
+3. **⚠️ It's especially important that you copy koreader-settings-folder/patches/2-xray-patches.lua**:
+   * **For Android**: to a subfolder "patches" in your KOReader settings folder!** Without this, DX won't be available in your installation.
+   * **For Kobo/Kindle** (if a .adds folder is present): to a subfolder (create if not exists) "patches" of .adds/koreader
 4. The "koreader-settings-and-patches" folder in this repository represents the settings folder of your koreader installation. In most cases, this target folder will be named "koreader". In its root you should find settings.reader.lua.
 5. In that target folder, create a folder patches if it doesn't exist yet and copy koreader-settings-and-patches/patches/2-xray-patches.lua to that target patches folder.
 6. Copy koreader-settings-and-patches/settings/settings_manager.lua to the settings subfolder of the koreader settings folder of your current installation (this folder should already be present and should contain many files, e.g. sqlite3-files for KOReader's databases).
