@@ -11,6 +11,7 @@ local md5 = require("ffi/sha2").md5
 
 local DX = DX
 local has_content = has_content
+local has_items = has_items
 local has_text = has_text
 local last_file = last_file
 local pairs = pairs
@@ -41,7 +42,7 @@ function SeriesManager:searchSerieMembers(full_path)
     local sql = [[
         SELECT i.directory || i.filename AS path,
         i.authors,
-        i.series,
+        i.series AS series_name,
         GROUP_CONCAT(i.directory || i.filename, '%s') AS series_paths,
         GROUP_CONCAT(i.title, '%s') AS series_titles,
         GROUP_CONCAT(COALESCE(f.path, '-'), '%s')  AS finished_paths,
@@ -81,16 +82,19 @@ end
 function SeriesManager:populateSeries(result)
     --* query to get resultset in ((SeriesManager#searchSerieMembers))
     local series_table = {}
-    local index, show_title
+    local series_name, show_title, series_count
     count = #result[1]
     for i = 1, count do
-        index = result["series"][i]
+        series_name = result["series_name"][i]
         --* only add unique books:
-        if not series_table[index] then
-            show_title = result["authors"][i] .. ", " .. result["series"][i] .. " (" .. tonumber(result["series_count"][i]) .. ")"
+        if not series_table[series_name] then
+            series_count = tonumber(result["series_count"][i])
+            show_title = result["authors"][i] .. ", " .. result["series_name"][i] .. " (" .. series_count .. ")"
             show_title = show_title .. "  –  " .. result["series_titles"][i]
-            series_table[index] = {
+            series_table[series_name] = {
                 text = show_title,
+                series_name = series_name,
+                series_count = series_count,
                 path = result["path"][i],
                 index = i,
                 authors = result["authors"][i],
@@ -172,6 +176,8 @@ function SeriesManager:onShowSeriesDialog(full_path, arg)
             path = self.series[nr].path,
             editable = true,
             deletable = false,
+            series_count = self.series[nr].series_count,
+            series_name = self.series[nr].series_name,
             descriptions = self.series[nr].descriptions,
             pages = self.series[nr].pages,
             series_paths = self.series[nr].series_paths,
@@ -181,7 +187,7 @@ function SeriesManager:onShowSeriesDialog(full_path, arg)
         }
         item.callback = function()
             KOR.dialogs:closeOverlay()
-            self:showContextDialog(item, "return_to_series_list", self.series[nr].path)
+            self:showContextDialog(item, item.series_name, "return_to_series_list", self.series[nr].path)
         end
         table_insert(self.item_table, item)
     end
@@ -195,7 +201,7 @@ function SeriesManager:onShowSeriesDialog(full_path, arg)
 end
 
 --* data for item were retrieved in ((SeriesManager#populateSeries)):
-function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
+function SeriesManager:showContextDialog(item, series_name, return_to_series_list, full_path)
     local called_from_description_dialog = KOR.registry:get("series_called_from_description_dialog")
     if not full_path then
         full_path = last_file()
@@ -283,9 +289,11 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
     end
     if total_series_pages > 0 then
         title = KOR.strings:trim(title) .. " - " .. total_series_pages .. _("pp")
+    else
+        title = KOR.strings:trim(title) .. " - " .. "?" .. _("pp")
     end
     self.context_dialog = KOR.dialogs:niceMultiConfirm({
-        title = _("series") .. ": " .. title,
+        title = title,
         subtitle = _("tap = show description, hold = open e-book"),
         buttons = buttons,
         max_width = true,
@@ -305,9 +313,9 @@ end
 function SeriesManager:showContextDialogForCurrentEbook(result, full_path)
     if result and full_path and #result[1] == 1 then
         self:populateSeries(result)
-        local series = result["series"][1]
-        if self.series_table_indexed[series] then
-            self:showContextDialog(self.series_table_indexed[series], false, full_path)
+        local series_name = result["series_name"][1]
+        if self.series_table_indexed[series_name] then
+            self:showContextDialog(self.series_table_indexed[series_name], series_name, false, full_path)
             return true
         end
     end
