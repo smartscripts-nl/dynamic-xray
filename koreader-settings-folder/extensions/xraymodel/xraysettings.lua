@@ -73,8 +73,8 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
         },
         hk_page_navigator_jump_to_page_no = {
-            value = "3",
-            explanation = "Open the dialog for jumping to a specific page (3 is the key below #)." .. hotkeys_warning,
+            value = "U",
+            explanation = "Open the dialog for jUmping to a specific page nUmber." .. hotkeys_warning,
             locked = 0,
         },
         hk_page_navigator_popup_menu = {
