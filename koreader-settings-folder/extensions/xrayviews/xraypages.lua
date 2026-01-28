@@ -8,6 +8,7 @@ local Trapper = require("ui/trapper")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
+local md5 = require("ffi/sha2").md5
 local T = require("ffi/util").template
 
 local DX = DX
@@ -23,7 +24,7 @@ local count
 local XrayPages = WidgetContainer:new{
     browsing_page_current = nil,
     browsing_page_new = nil,
-    button_labels_injected = "",
+    button_labels_injected = {},
     cached_html_by_page_no = {},
     --* whole word name parts which may not be marked bold and trigger an item hit by themselves only; used in ((XrayPages#markItem)):
     forbidden_needle_parts = {
@@ -428,7 +429,7 @@ end
 
 function XrayPages:markItemsFoundInPageHtml(html, navigator_page_no)
     DX.sp:resetSideButtons()
-    self.button_labels_injected = ""
+    self.button_labels_injected = {}
     DX.pn:setProp("navigator_page_no", navigator_page_no)
     DX.pn:setProp("first_info_panel_text", nil)
 
@@ -483,11 +484,11 @@ end
 
 --- @private
 function XrayPages:isPruneSideButton(item)
-    local unique_label = item.name:gsub("%-", "")
-    if self.button_labels_injected:match(unique_label) then
+    local unique_label = md5(item.name)
+    if self.button_labels_injected[unique_label] then
         return true
     end
-    self.button_labels_injected = self.button_labels_injected .. " " .. unique_label
+    self.button_labels_injected[unique_label] = true
     return false
 end
 
