@@ -41,6 +41,7 @@ function SeriesManager:searchSerieMembers(full_path)
         SELECT i.directory || i.filename AS path,
         i.authors,
         i.series AS series_name,
+        COALESCE(SUM(i.pages), 0) AS series_total_pages,
         GROUP_CONCAT(i.directory || i.filename, '%s') AS series_paths,
         GROUP_CONCAT(i.title, '%s') AS series_titles,
         GROUP_CONCAT(COALESCE(f.path, '-'), '%s')  AS finished_paths,
@@ -103,6 +104,7 @@ function SeriesManager:populateSeries(result)
                 finished_paths = result["finished_paths"][i],
                 series_numbers = result["series_numbers"][i],
                 pages = result["pages"][i],
+                series_total_pages = result["series_total_pages"][i],
             }
         end
     end
@@ -178,6 +180,7 @@ function SeriesManager:onShowSeriesDialog(full_path, arg)
             series_name = self.series[nr].series_name,
             descriptions = self.series[nr].descriptions,
             pages = self.series[nr].pages,
+            series_total_pages = self.series[nr].series_total_pages,
             series_paths = self.series[nr].series_paths,
             series_numbers = self.series[nr].series_numbers,
             series_titles = self.series[nr].series_titles,
@@ -208,6 +211,7 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
 
     local descriptions = KOR.strings:split(item.descriptions, self.separator)
     local pages = KOR.strings:split(item.pages, self.separator)
+    local series_total_pages = tonumber(item.series_total_pages)
     local finished_paths = KOR.strings:split(item.finished_paths, self.separator)
     local series_paths = KOR.strings:split(item.series_paths, self.separator)
     local series_numbers = item.series_numbers and KOR.strings:split(item.series_numbers, self.separator)
@@ -216,7 +220,6 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
     local total_buttons = #series_paths
     local read_marker = " " .. KOR.icons.finished_bare
     local is_current_ebook, meta, serie_number, title, description, meta_items
-    local total_series_pages = 0
     local active_item_no = 0
     local boxes = {}
     for i = 1, total_buttons do
@@ -264,8 +267,8 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
     if active_item_no > 0 then
         title = title:gsub("%(", "(" .. active_item_no .. "/")
     end
-    if total_series_pages > 0 then
-        title = KOR.strings:trim(title) .. " - " .. total_series_pages .. _("pp")
+    if has_items(series_total_pages) then
+        title = KOR.strings:trim(title) .. " - " .. series_total_pages .. _("pp")
     else
         title = KOR.strings:trim(title) .. " - " .. "?" .. _("pp")
     end
