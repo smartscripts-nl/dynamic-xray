@@ -67,14 +67,16 @@ local FilesBox = InputContainer:extend{
 }
 
 function FilesBox:init()
-    self:initFrames()
     self:setModuleProps()
+    self:initFrame()
+    self:initRowSpacer()
     self:setWidth()
     --* height will be computed below, after we build top and bottom components, when we know how much height they are taking
     self:generateTitleBar()
     self:setPaddingAndSpacing()
     self:computeLineHeight()
-    self:computeAvailableHeight()
+    self:computeWindowRegion()
+    self:computeThumbnailDimensions()
     self:generateBoxes()
     self:injectRows()
     self:setSeparator()
@@ -82,32 +84,64 @@ function FilesBox:init()
     self:finalizeWidget()
 end
 
+--- @private
+function FilesBox:generateBoxes()
+    local box
+    count = #self.items
+    for i = 1, count do
+        box = self:generateBox({
+            info = self.items[i].info,
+            meta_info = self.items[i].meta_info,
+            font_bold = self.items[i].font_bold,
+            path = self.items[i].path,
+            callback = self.items[i].callback,
+            hold_callback = self.items[i].hold_callback,
+        })
+        table_insert(self.boxes, box)
+    end
+end
+
+--- @private
 function FilesBox:generateBox(params)
     local bookinfo = KOR.bookinfomanager:getBookInfo(params.path, true)
     if not bookinfo then
         return
     end
+    local thumbnail, info, meta_info = self:getBoxElements(params, bookinfo)
+
+    self.column_width = math_floor(self.screen_width / self.columns)
+    local button_table = self:getBoxButtons(params, bookinfo)
+
+    return self:getBoxContainer(thumbnail, info, meta_info, button_table)
+end
+
+--- @private
+function FilesBox:getBoxElements(params, bookinfo)
     local thumbnail = self:getBookCover(bookinfo, params.path, nil, self.thumbnail_width, false, 0)
 
+    local face = Font:getFace(self.font_face, self.font_size)
     local info = TextWidget:new{
         text = params.info,
         bold = params.font_bold,
-        face = Font:getFace(self.font_face, self.font_size),
+        face = face,
         padding = 0,
     }
     local meta_info = TextWidget:new{
         text = params.meta_info,
-        face = Font:getFace(self.font_face, self.font_size),
+        face = face,
         padding = 0,
     }
+    return thumbnail, info, meta_info
+end
 
-    self.column_width = math_floor(self.screen_width / self.columns)
+--- @private
+function FilesBox:getBoxButtons(params, bookinfo)
     local buttons = {{
           KOR.buttoninfopopup:forBookDescription({
               callback = function()
                   local description = params.description or bookinfo.description
                   if has_no_text(description) then
-                    KOR.messages:notify(_("no description found"))
+                      KOR.messages:notify(_("no description found"))
                       return true
                   end
                   KOR.dialogs:textBox({
@@ -134,11 +168,15 @@ function FilesBox:generateBox(params)
     local buttons_count = #buttons[1]
     local generic_icon_size = 40
     local icon_size = Screen:scaleBySize(generic_icon_size)
-    local button_table = ButtonTable:new{
+
+    return ButtonTable:new{
         width = buttons_count * icon_size + buttons_count * (Size.line.medium + Size.padding.small),
         buttons = buttons,
     }
+end
 
+--- @private
+function FilesBox:getBoxContainer(thumbnail, info, meta_info, button_table)
     dimen = Geom:new{
         w = self.column_width,
         h = self.thumbnail_width
@@ -160,23 +198,6 @@ function FilesBox:generateBox(params)
             },
         }
     }
-end
-
---- @private
-function FilesBox:generateBoxes()
-    local box
-    count = #self.items
-    for i = 1, count do
-        box = self:generateBox({
-            info = self.items[i].info,
-            meta_info = self.items[i].meta_info,
-            font_bold = self.items[i].font_bold,
-            path = self.items[i].path,
-            callback = self.items[i].callback,
-            hold_callback = self.items[i].hold_callback,
-        })
-        table_insert(self.boxes, box)
-    end
 end
 
 --- @private
@@ -217,7 +238,7 @@ function FilesBox:computeLineHeight()
 end
 
 --- @private
-function FilesBox:initFrames()
+function FilesBox:initFrame()
     self.frame_content_fullscreen = {
         radius = 0,
         bordersize = 0,
@@ -229,7 +250,10 @@ function FilesBox:initFrames()
         --* make the borders white to hide them completely:
         color = KOR.colors.background,
     }
+end
 
+--- @private
+function FilesBox:initRowSpacer()
     self.row_spacer_height = Screen:scaleBySize(15)
     self.row_spacer =
     VerticalSpan:new{ width = self.row_spacer_height }
@@ -265,7 +289,7 @@ end
 
 --- @private
 function FilesBox:finalizeWidget()
-    --* self.region was set in ((FilesBox#computeAvailableHeight)):
+    --* self.region was set in ((FilesBox#computeThumbnailDimensions)):
     self[1] = WidgetContainer:new{
             align = "top",
             dimen = self.region,
@@ -308,7 +332,7 @@ function FilesBox:generateWidget()
 end
 
 --- @private
-function FilesBox:computeAvailableHeight()
+function FilesBox:computeWindowRegion()
     self.avail_height = self.screen_height - self.box_title:getSize().h
 
     --* Region in which the window will be aligned center/top/bottom:
@@ -323,7 +347,14 @@ function FilesBox:computeAvailableHeight()
     local items_count = #self.items
     rows = math_ceil(items_count / self.columns)
 
-    self.avail_height = self.avail_height - (rows - 1) * self.row_spacer_height
+    self.thumbnail_width = math_floor(self.screen_width / (3 * self.columns))
+end
+
+--- @private
+function FilesBox:computeThumbnailDimensions()
+    local rows
+    local items_count = #self.items
+    rows = math_ceil(items_count / self.columns)
 
     self.thumbnail_width = math_floor(self.screen_width / (3 * self.columns))
 end
@@ -332,7 +363,6 @@ end
 function FilesBox:setModuleProps()
     dimen = nil
     self.boxes = {}
-
     self.screen_height = Screen:getHeight()
     self.screen_width = Screen:getWidth()
 end
