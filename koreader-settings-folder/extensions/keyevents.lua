@@ -807,16 +807,14 @@ function KeyEvents:activateTab(parent, tab_no)
 end
 
 function KeyEvents:addSeriesManagerHotkey(actions)
-    if DX.m.current_series then
-        table_insert(actions, {
-            label = "show_serie",
-            hotkey = { { "Shift", { "M" } } },
-            callback = function()
-                KOR.seriesmanager:showSeriesForEbookPath()
-                return true
-            end,
-        })
-    end
+    table_insert(actions, {
+        label = "show_serie",
+        hotkey = { { "Shift", { "M" } } },
+        callback = function()
+            KOR.seriesmanager:showSeriesForEbookPath()
+            return true
+        end,
+    })
 end
 
 --- @param parent Menu

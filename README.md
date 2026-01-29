@@ -12,7 +12,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 * All interface texts can be translated by the user.
 * Some hotkeys for buttons in DX dialogs can be configured by the user, from within KOReader. The Page Navigator can be called while reading an ebook, with Shift+X.
 * The Page Navigator module now offers an extra side tab to quickly inspect Xray items which are linked to the items named in the page. From there can then edit them, view more details about them or search all their locations in the current ebook. You can see this feature in action in the [videos section](#videos).
-* I am currently working on an enhanced series manager, with action buttons, for viewing large covers, descriptions, etc. As usual, I run into all kinds of problems when I try to port this to the public KOReader version. But I expect to succeed eventually... A preview can be seen in the last image under [Images](#images).
+* DX has a Series Manager for listing the books in a series. The items in this Manager have action buttons, for viewing large covers, descriptions, opening the e-book, etc. An example of this manager can be seen in the last image under [Images](#images).
 
 ## Table of contents in this readme
 - [Use cases](#use-cases)
@@ -189,7 +189,7 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 10d Help info for translations editor
 
 ![11 Series Manager with action buttons](images/11-series-manager-with-action-buttons.png)
-11 Preview of Series Manager with action buttons (NB: final version will have fewer c.q. other buttons and icons than the ones depicted here, because they reflect functionality tied into my personal system)
+11 Series Manager with action buttons (NB: version in this repository will have fewer c.q. other buttons and icons than the ones depicted here, because they reflect functionality tied into my personal system)
 
 ## DX Settings menu
 
@@ -222,6 +222,7 @@ PT_bookinfo_cache.sqlite3". In that case:
 * Currently none?
 
 ## Todos
+* Add edit form to Series Manager, with which the user can edit/add series indices or book descriptions and set the finished reading status of the book.
 * Base custom translations on indices instead of the texts they translate → continued usability of translations by the user much better protected, even when the actual text to be translated changes.
 
 ## About the code

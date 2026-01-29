@@ -132,7 +132,6 @@ function HtmlBox:init()
     self:setModuleProps()
     self:initHotkeys()
     self:initTouch()
-    self:hideFooter()
     self:setWidth()
     --* height will be computed below, after we build top and bottom components, when we know how much height they are taking
     self:generateTitleBar()
@@ -885,13 +884,6 @@ function HtmlBox:finalizeWidget()
 
     --* make HtmlBox widget closeable with ((Dialogs#closeAllWidgets)):
     KOR.dialogs:registerWidget(self)
-end
-
---- @private
-function HtmlBox:hideFooter()
-    if self.is_fullscreen then
-        KOR.screenhelpers:refreshScreen()
-    end
 end
 
 --- @private

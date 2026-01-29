@@ -1,8 +1,6 @@
 
 local require = require
 
-local Device = require("device")
-local Input = Device.input
 local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
@@ -11,10 +9,12 @@ local md5 = require("ffi/sha2").md5
 
 local DX = DX
 local has_content = has_content
+local has_items = has_items
 local has_text = has_text
 local last_file = last_file
 local pairs = pairs
 local string = string
+local table_concat = table.concat
 local table_insert = table.insert
 local tonumber = tonumber
 
@@ -26,7 +26,6 @@ local SeriesManager = WidgetContainer:extend{
     all_series_resultset = nil,
     arg = nil,
     context_dialog = nil,
-    items_per_page = G_reader_settings:readSetting("items_per_page") or 14,
     path = nil,
     separator = " • ",
     separator_with_extra_spacing = "  •  ",
@@ -150,12 +149,12 @@ function SeriesManager:onShowSeriesDialog(full_path, arg)
         self:_cache_resultset(cache_index, result)
     end
 
+    KOR.dialogs:closeOverlay()
     if not result then
         self:showNoSeriesFoundMessage()
         return
     end
 
-    KOR.dialogs:closeOverlay()
     if self:showContextDialogForCurrentEbook(result, full_path) then
         return
     end
@@ -209,40 +208,40 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
 
     local descriptions = KOR.strings:split(item.descriptions, self.separator)
     local pages = KOR.strings:split(item.pages, self.separator)
+    local finished_paths = KOR.strings:split(item.finished_paths, self.separator)
     local series_paths = KOR.strings:split(item.series_paths, self.separator)
     local series_numbers = item.series_numbers and KOR.strings:split(item.series_numbers, self.separator)
     local series_titles = KOR.strings:split(item.series_titles, self.separator)
-    local finished_paths = KOR.strings:split(item.finished_paths, self.separator)
 
-    local arrange_vertically = true
-    local buttons = arrange_vertically and {} or {{}}
     local total_buttons = #series_paths
-    local max_buttons_per_row = 2
-    local active_button = 0
     local read_marker = " " .. KOR.icons.finished_bare
-    local is_current_ebook, prefix, is_read, ebook_pages, meta, serie_number, title, description
+    local is_current_ebook, meta, serie_number, title, description, meta_items
     local total_series_pages = 0
+    local active_item_no = 0
+    local boxes = {}
     for i = 1, total_buttons do
+        meta_items = {}
         is_current_ebook = full_path == series_paths[i]
 
         if is_current_ebook then
-            active_button = i
+            active_item_no = i
         end
-        prefix = is_current_ebook and self.separator or ""
-        is_read = finished_paths ~= "-" and read_marker or ""
-        ebook_pages = pages and pages[i] and self.separator_with_extra_spacing .. pages[i] .. "pp" or ""
-        if pages[i] == "?" then
-            pages[i] = 0
+        if has_content(finished_paths[i]) and finished_paths[i] ~= "-" then
+            table_insert(meta_items, read_marker)
         end
-        total_series_pages = total_series_pages + tonumber(pages[i])
-        meta = is_read
-        if has_content(meta) then
-            meta = self.separator_with_extra_spacing .. meta
+        if has_content(pages[i]) then
+            table_insert(meta_items, pages[i] .. "pp")
+        end
+        meta = ""
+        if has_items(meta_items) then
+            meta = table_concat(meta_items, self.separator)
         end
         serie_number = series_numbers and series_numbers[i] or i
         description = descriptions[i]
         --* don't add point to serie numbers like 4.5:
-        if not serie_number:match("%.") then
+        if serie_number == "?" then
+            serie_number = "?.?"
+        elseif not serie_number:match("%.") then
             serie_number = serie_number .. "."
         end
         --* reduce a title like "Destroyermen 05 - Storm Surge" to "Storm Surge":
@@ -251,61 +250,33 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
         series_titles[i] = series_titles[i]:gsub("^.+%] ", "")
         --* reduce a title like "Seventh Carier.title" to "title":
         series_titles[i] = series_titles[i]:gsub("^.+%. ?", "")
-        table_insert(buttons, {
-            text = prefix .. serie_number .. " " .. series_titles[i] .. ebook_pages .. meta,
+        --table_insert(buttons[#buttons], {
+        table_insert(boxes, {
+            path = series_paths[i],
+            info = serie_number .. " " .. series_titles[i],
+            description = description,
+            meta_info = meta,
             font_bold = is_current_ebook,
             enabled = not called_from_description_dialog or not is_current_ebook,
-            callback = function()
-                if description == "?" then
-                    KOR.messages:notify(_("no description available for this ebook"))
-                    return
-                end
-                KOR.dialogs:textBox({
-                    title = series_titles[i],
-                    info = description,
                 })
-            end,
-            hold_callback = function()
-                if not is_current_ebook then
-                    Input:inhibitInputUntil(2)
-                    --* disable after close callback, so list of series will not be shown:
-                    self.context_dialog.after_close_callback = nil
-                    UIManager:close(self.context_dialog)
-                    KOR.files:openFile(series_paths[i])
-                end
-            end,
-        })
-        if not arrange_vertically and i >= max_buttons_per_row and i % max_buttons_per_row == 0 and i < total_buttons then
-            table_insert(buttons, {})
-        end
-    end
-    if arrange_vertically then
-        buttons = KOR.tables:arrangeInVerticalColumns(buttons, 2)
     end
     title = item.text:gsub("  –  .+$", "")
-    if active_button > 0 then
-        title = title:gsub("%(", "(" .. active_button .. "/")
+    if active_item_no > 0 then
+        title = title:gsub("%(", "(" .. active_item_no .. "/")
     end
     if total_series_pages > 0 then
         title = KOR.strings:trim(title) .. " - " .. total_series_pages .. _("pp")
     else
         title = KOR.strings:trim(title) .. " - " .. "?" .. _("pp")
     end
-    self.context_dialog = KOR.dialogs:niceMultiConfirm({
+    self.context_dialog = KOR.dialogs:filesBox({
         title = title,
-        subtitle = _("tap = show description, hold = open e-book"),
-        buttons = buttons,
-        max_width = true,
-        --* only show series name:
+        items = boxes,
         after_close_callback = return_to_series_list and
-            function()
-                KOR.dialogs:closeAllOverlays()
-                self:onShowSeriesDialog(self.path, self.arg)
-            end
-            or
-            function()
-                KOR.dialogs:closeAllOverlays()
-            end,
+        function()
+            KOR.dialogs:closeOverlay()
+            self:onShowSeriesDialog(self.path, self.parent_event, self.arg)
+        end,
     })
 end
 
@@ -343,6 +314,11 @@ function SeriesManager:getSeriesName(full_path)
 end
 
 function SeriesManager:showSeriesForEbookPath(full_path)
+    if not DX.m.current_series then
+        KOR.messages:notify(_("current book does not seem to be part of a series"))
+        return
+    end
+
     if not full_path then
         full_path = DX.m.current_ebook_full_path
     end

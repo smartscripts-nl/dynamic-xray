@@ -22,6 +22,34 @@ local ButtonInfoPopup = WidgetContainer:new{
 
 --* these methods return ALL PROPS for a button as a button definition table, to be used as argument for creating a button table
 
+function ButtonInfoPopup:forBookCoverPreviewSmall(props)
+	return KOR.buttonprops:set({
+		icon = "image",
+		info = _("image icon | Show cover of this book."),
+		callback_label = _("cover"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forBookDescription(props)
+	return KOR.buttonprops:set({
+		icon = "description",
+		info = _("page icon | Show description of this book."),
+		callback_label = _("show description"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forBookOpen(props)
+	return KOR.buttonprops:set({
+		icon = "folder-open",
+		icon_size_ratio = 0.5,
+		info = "folder icon | Open this book.",
+		callback_label = _("open"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forInputDialogSearchFirst(props)
 	return KOR.buttonprops:set({
 		text = KOR.icons.first,

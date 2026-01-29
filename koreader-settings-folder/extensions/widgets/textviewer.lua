@@ -1243,14 +1243,16 @@ function TextViewer:initButtons()
         local position = self.extra_button3_position or #buttons[1]
         table_insert(buttons[1], position, self.extra_button3)
     end
-    table_insert(buttons[1], 1, {
-        icon = "back",
-        icon_size_ratio = 0.8,
-        callback = function()
-            self:onClose()
-        end,
-        hold_callback = self.default_hold_callback,
-    })
+    if not self.buttons_table then
+        table_insert(buttons[1], 1, {
+            icon = "back",
+            icon_size_ratio = 0.8,
+            callback = function()
+                self:onClose()
+            end,
+            hold_callback = self.default_hold_callback,
+        })
+    end
     if self.extra_button_rows then
         count = #self.extra_button_rows
         for i = 1, count do

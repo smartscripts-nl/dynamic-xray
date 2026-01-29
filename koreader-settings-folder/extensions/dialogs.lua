@@ -3,8 +3,11 @@ local require = require
 
 local ButtonDialogTitle = require("extensions/widgets/buttondialogtitle")
 local ConfirmBox = require("extensions/widgets/confirmbox")
+local DocumentRegistry = require("document/documentregistry")
+local FilesBox = require("extensions/widgets/filesbox")
 local Font = require("extensions/modules/font")
 local HtmlBox = require("extensions/widgets/htmlbox")
+local ImageViewer = require("ui/widget/imageviewer")
 local InfoMessage = require("extensions/widgets/infomessage")
 local InputDialog = require("extensions/widgets/inputdialog")
 local KOR = require("extensions/kor")
@@ -13,8 +16,10 @@ local NiceAlert = require("extensions/widgets/nicealert")
 local TextViewer = require("extensions/widgets/textviewer")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
+local _ = KOR:initCustomTranslations()
 local Screen = require("device").screen
 
+local DX = DX
 local math = math
 local table = table
 local type = type
@@ -89,6 +94,23 @@ function Dialogs:getThreeQuarterDialogWidth()
         iwidth = Screen:getWidth() - 80
     end
     return iwidth
+end
+
+--* see ((DIALOGS))
+--* compare ((niceAlert)) for plain text message windows:
+function Dialogs:filesBox(args)
+
+    --! use shallowCopy to prevent unintentional overwriting of original options:
+    local config = KOR.tables:shallowCopy(args)
+    local box = FilesBox:new(config)
+    UIManager:show(box)
+
+    --* because htmlBoxTabbed already registered in its own method:
+    if not args.tabs then
+        self:registerWidget(box)
+    end
+
+    return box
 end
 
 --* see ((DIALOGS))
@@ -446,6 +468,38 @@ function Dialogs:textBoxTabbed(active_tab, args)
     return self.tabbed_textbox
 end
 
+function Dialogs:showBookCover(full_path)
+
+    if not full_path then
+        full_path = DX.m.current_ebook_full_path
+    end
+    local document = DocumentRegistry:openDocument(full_path)
+    if document then
+        --* needed for crengine
+        if not document:loadDocument(false) then
+            --* load only metadata
+            --* failed loading, calling other methods would segfault
+            DocumentRegistry:closeDocument(full_path)
+            KOR.messages:notify(_("document data could not be loaded"))
+            return
+        end
+
+        local cover_bb = document:getCoverPageImage()
+        if cover_bb then
+            local imgviewer = ImageViewer:new{
+                image = cover_bb,
+                with_title_bar = false,
+                fullscreen = true,
+                modal = true,
+            }
+            UIManager:show(imgviewer)
+        else
+            KOR.messages:notify(_("no cover found"))
+        end
+        DocumentRegistry:closeDocument(full_path)
+    end
+end
+
 function Dialogs:showButtonDialog(title, button_table)
     local dialog
     dialog = ButtonDialogTitle:new{
@@ -515,26 +569,6 @@ function Dialogs:niceAlert(title, info, options)
         return nil
     end
     return dialog
-end
-
-function Dialogs:niceMultiConfirm(args)
-
-    self.nice_multiconfirm = ButtonDialogTitle:new{
-        title = args.title,
-        subtitle = args.subtitle,
-        use_low_title = true,
-        title_align = "center",
-        use_info_style = false,
-        font_weight = "normal",
-        width = args.max_width and Screen:getWidth(),
-        width_is_dependent_on_button_count = not args.max_width,
-        after_close_callback = args.after_close_callback,
-        top_buttons_left = args.top_buttons_left,
-        buttons = args.buttons,
-    }
-    UIManager:show(self.nice_multiconfirm)
-
-    return self.nice_multiconfirm
 end
 
 --* use timeout = nil for second argument when calling for no timeout:
