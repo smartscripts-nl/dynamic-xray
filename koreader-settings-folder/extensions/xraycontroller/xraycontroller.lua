@@ -41,6 +41,15 @@ The Dynamic Xray module/plugin has two streams:
 
 2: plugin/controller and modules for providing lists and dialogs and crud actions for managing xray items (they are listed at the top of this file).
 
+--* GLOBAL HOTKEYS
+
+Some important DX modules can be called while reading, by global hotkeys:
+
+Shift + H: show Xray Help information
+Shift + L: show Xray List
+Shift + M: show Series Manager
+Shift + X: show Xray Page Navigator
+
 --* SYNTACTIC SUGAR
 -- #((SYNTACTIC SUGAR))
 

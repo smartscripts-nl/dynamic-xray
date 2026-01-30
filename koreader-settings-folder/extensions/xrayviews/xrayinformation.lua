@@ -105,7 +105,7 @@ end
 function XrayInformation:getPageNavigatorHotkeysInfo()
     return self.hotkeys_information or _("For usage with (BT) keyboards:") .. [[<br>
                 <br>
-<strong>Global hotkeys (while reading)</strong><br>
+<strong>]] .. _("Global hotkeys (while reading)") .. [[</strong><br>
 <br>
 <table style='border-collapse: collapse'>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+H</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
