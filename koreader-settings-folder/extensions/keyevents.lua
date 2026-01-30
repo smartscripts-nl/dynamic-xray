@@ -88,7 +88,8 @@ end
 --- @param parent XrayController
 function KeyEvents:addHotkeysForReaderUI(parent)
     parent.is_docless = parent.ui == nil or parent.ui.document == nil
-    if parent.is_docless or not Device:hasKeys() then
+    --* first condition: don't create the method anew every time you open another ebook:
+    if parent.ui.ShowXrayHelp or parent.is_docless or not Device:hasKeys() then
         return
     end
     local readerui = parent.ui
