@@ -192,6 +192,13 @@ local XrayDataSaver = WidgetContainer:new{
                     constraint finished_book_unique
                     unique
             );]],
+
+        [[
+            ALTER TABLE bookinfo ADD COLUMN rating_goodreads REAL;]],
+
+        [[
+            ALTER TABLE bookinfo ADD COLUMN publication_year INTEGER;]],
+
     },
     scheme_version_name = "database_scheme_version",
 }

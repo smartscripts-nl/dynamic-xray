@@ -321,7 +321,7 @@ function XrayFormsData:getFormTabCallback(mode, active_form_tab, item_copy)
         end
         --- @type MultiInputDialog source
         local source = mode == "add" and DX.d.add_item_input or DX.d.edit_item_input
-        item_copy = self:convertFieldValuesToItemProps(source:getValues())
+        item_copy = self:convertFieldValuesToItemProps(source:getAllTabsFieldsValues())
         DX.d:closeForm(mode)
         if mode == "edit" then
             DX.d.edit_item_input = nil

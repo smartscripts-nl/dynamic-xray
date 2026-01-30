@@ -40,6 +40,15 @@ function ButtonInfoPopup:forBookDescription(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forBookMetadataEdit(props)
+	return KOR.buttonprops:set({
+		icon = "edit-lighter",
+		info = _("Edit the metadata and description of this book."),
+		callback_label = _("edit"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forBookOpen(props)
 	return KOR.buttonprops:set({
 		icon = "folder-open",

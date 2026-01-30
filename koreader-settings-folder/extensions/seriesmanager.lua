@@ -43,7 +43,8 @@ function SeriesManager:searchSerieMembers(full_path)
         i.series AS series_name,
         COALESCE(SUM(i.pages), 0) AS series_total_pages,
         GROUP_CONCAT(i.directory || i.filename, '%s') AS series_paths,
-        GROUP_CONCAT(i.title, '%s') AS series_titles,
+        GROUP_CONCAT(COALESCE(i.rating_goodreads, '-'), '%s') AS series_ratings,
+        GROUP_CONCAT(COALESCE(i.title, '?'), '%s') AS series_titles,
         GROUP_CONCAT(COALESCE(f.path, '-'), '%s')  AS finished_paths,
         GROUP_CONCAT(COALESCE(i.series_index, '?'), '%s') AS series_numbers,
         GROUP_CONCAT(COALESCE(i.pages, '?'), '%s') AS pages,
@@ -63,7 +64,8 @@ function SeriesManager:searchSerieMembers(full_path)
     end
     --* use this cast to sort naturally:
     subquery = subquery .. " ORDER BY CAST(series_index AS DECIMAL)"
-    sql = string.format(sql, self.separator, self.separator, self.separator, self.separator, self.separator, self.separator, subquery)
+    local s = self.separator
+    sql = string.format(sql, s, s, s, s, s, s, s, subquery)
     local result = conn:exec(sql)
     conn = KOR.databases:closeInfoConnections(conn)
     if not full_path and not result then
@@ -100,6 +102,7 @@ function SeriesManager:populateSeries(result)
                 sort_index = result["authors"][i] .. " " .. show_title,
                 descriptions = result["descriptions"][i],
                 series_paths = result["series_paths"][i],
+                series_ratings = result["series_ratings"][i],
                 series_titles = result["series_titles"][i],
                 finished_paths = result["finished_paths"][i],
                 series_numbers = result["series_numbers"][i],
@@ -211,6 +214,7 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
     local series_total_pages = tonumber(item.series_total_pages)
     local finished_paths = KOR.strings:split(item.finished_paths, self.separator)
     local series_paths = KOR.strings:split(item.series_paths, self.separator)
+    local series_ratings = item.series_ratings and KOR.strings:split(item.series_ratings, self.separator)
     local series_numbers = item.series_numbers and KOR.strings:split(item.series_numbers, self.separator)
     local series_titles = KOR.strings:split(item.series_titles, self.separator)
 
@@ -231,6 +235,9 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
         end
         if has_content(pages[i]) then
             table_insert(meta_items, pages[i] .. "pp")
+        end
+        if has_content(series_ratings[i] and series_ratings[i] ~= '-') then
+            table_insert(meta_items, KOR.icons.rating_bare .. series_ratings[i])
         end
         meta = ""
         if has_items(meta_items) then
@@ -263,6 +270,9 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
     title = item.text:gsub("  –  .+$", "")
     if active_item_no > 0 then
         title = title:gsub("%(", "(" .. active_item_no .. "/")
+    end
+    if series_ratings then
+        title = title:gsub(KOR.icons.rating_bare .. "%d+,%d+", "")
     end
     if has_items(series_total_pages) then
         title = KOR.strings:trim(title) .. " - " .. series_total_pages .. _("pp")

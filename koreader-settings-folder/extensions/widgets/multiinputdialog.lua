@@ -25,7 +25,7 @@ local VerticalSpan = require("ui/widget/verticalspan")
 local Screen = Device.screen
 
 local DX = DX
-local math = math
+local math_floor = math.floor
 local table_insert = table.insert
 
 local count, count2
@@ -50,6 +50,7 @@ local MultiInputDialog = InputDialog:extend{
     field_nr = 0,
     fields = nil, --* array, mandatory
     focus_field = nil,
+    footer_description = nil,
     has_field_rows = false,
     input_face = Font:getDefaultDialogFontFace(),
     --* ALL fields, even those in inactive tabs:
@@ -63,8 +64,8 @@ local MultiInputDialog = InputDialog:extend{
     submenu_buttontable = nil,
     --* only the fields in the active tab:
     tab_fields = {},
-    title_tab_buttons_left = nil,
     title_tab_callbacks = nil,
+    top_paddings_tabs = nil,
 }
 
 function MultiInputDialog:init()
@@ -72,6 +73,8 @@ function MultiInputDialog:init()
     self:initMainContainers()
     self:initWidgetProps()
     self:insertRows()
+    self:insertFooterDescription()
+    self:insertTopPadding()
     self:registerInputFields()
     self:insertButtonGroup()
     --* adapt content of MiddleContainer: either a field with auto field height, or a spacer, to push the buttons to just above the keyboard:
@@ -93,7 +96,8 @@ function MultiInputDialog:getFields()
     return field_values
 end
 
-function MultiInputDialog:getValues()
+--* get the values of ALL fields, even those in non active tabs:
+function MultiInputDialog:getAllTabsFieldsValues()
     local field
     count = #self.input_fields
     for i = 1, count do
@@ -187,18 +191,18 @@ end
 
 --- @private
 function MultiInputDialog:setFieldWidth(field)
-    self.field_width = math.floor(self.width * 0.9)
+    self.field_width = math_floor(self.width * 0.9)
     if self.fields_count > 1 then
         --! don't make this factor bigger, because then in some situations fields don't fit and jump to next row:
         local factor = 0.49
-        self.field_width = math.floor(self.field_width * factor)
+        self.field_width = math_floor(self.field_width * factor)
         if not self:generateCustomEditButton(field) and field.input_type ~= "number" then
             self.field_width = self.field_width - self.edit_button_width
         end
 
     --* make single row long field align with halved fields:
     elseif self.has_field_rows then
-        self.field_width = math.floor(self.field_width * 1.045)
+        self.field_width = math_floor(self.field_width * 1.045)
     end
 end
 
@@ -464,17 +468,17 @@ function MultiInputDialog:getDescriptionContainer(field, field_config)
     local tile_width = self.full_width / self.fields_count
     local description_label = self:getDescription(field, field_config, tile_width)
     local description = FrameContainer:new{
-                padding = self.description_padding,
-                margin = 0,
-                bordersize = 0,
-                --* description in a multiple field row:
-                description_label,
-            }
+        padding = self.description_padding,
+        margin = 0,
+        bordersize = 0,
+        --* description in a multiple field row:
+        description_label,
+    }
     return LeftContainer:new{
-                dimen = Geom:new{
-                    w = tile_width,
+        dimen = Geom:new{
+            w = tile_width,
             h = description:getSize().h,
-                },
+        },
         description,
     }
 end
@@ -509,7 +513,7 @@ function MultiInputDialog:getDescription(field, field_config, width)
     }
     or
     TextBoxWidget:new{
-        text = self.description_prefix .. field_config.description,
+        text = self.description_prefix .. (field_config.description or ""),
         face = self.description_face or Font:getFace("x_smallinfofont"),
         width = width,
         padding = 0,
@@ -730,7 +734,7 @@ end
 function MultiInputDialog:insertComputedHeightField(difference)
 
     --* self.auto_height_field will be set in ((MultiInputDialog#fieldAddToInputs)), when a field there has height = "auto":
-    if not self.auto_height_field then
+    if not self.auto_height_field or self.input_fields[self.auto_height_field_index].tab ~= self.active_tab then
         return false
     end
 
@@ -780,6 +784,41 @@ function MultiInputDialog:insertRows()
 end
 
 --- @private
+function MultiInputDialog:insertFooterDescription()
+    if not self.footer_description then
+        return
+    end
+    local width = math_floor(0.9 * self.width)
+    local group = TextBoxWidget:new{
+        text = self.footer_description,
+        face = self.description_face,
+        alignment = "left",
+        width = width,
+    }
+    local height = group:getSize().h
+    table_insert(self.TopContainer, CenterContainer:new{
+        dimen = Geom:new{
+            w = self.width,
+            h = height
+        },
+        group,
+    })
+end
+
+--- @private
+function MultiInputDialog:insertTopPadding()
+    if not self.top_paddings_tabs or not self.top_paddings_tabs:match(self.active_tab) then
+        return
+    end
+
+    local vertical_span = VerticalSpan:new{
+        width = Size.padding.default,
+    }
+    --* insert the padding right after the titlebar:
+    table_insert(self.TopContainer, 2, vertical_span)
+end
+
+--- @private
 function MultiInputDialog:insertFieldRowIfActiveTab(row_nr)
     local target_tab
     local row = self.fields[row_nr]
@@ -788,7 +827,7 @@ function MultiInputDialog:insertFieldRowIfActiveTab(row_nr)
     target_tab = self.active_tab and ((is_field_set and row[1] and row[1].tab) or row.tab)
 
     --* only administrate for fields in inactive tabs, don't generate them:
-    if self.active_tab and target_tab < self.active_tab then
+    if self.active_tab and target_tab ~= self.active_tab then
         if is_field_set then
             self.field_nr = self.field_nr + #row
         else

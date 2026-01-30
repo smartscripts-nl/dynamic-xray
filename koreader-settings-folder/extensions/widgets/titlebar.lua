@@ -877,6 +877,8 @@ function TitleBar:setDesiredHeight()
 
     if DX.s.is_android and self.higher_tab_buttons then
         self.desired_height = self.desired_heights.android_higher_tabs
+    elseif DX.s.is_ubuntu and self.tab_buttons_left then
+        self.desired_height = self.desired_height + Screen:scaleBySize(43)
     end
 
     if self.for_filemanager then

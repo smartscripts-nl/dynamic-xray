@@ -165,6 +165,12 @@ function FilesBox:getBoxButtons(params, bookinfo)
                   KOR.dialogs:showBookCover(params.path)
               end,
           }),
+          KOR.buttoninfopopup:forBookMetadataEdit({
+              icon = "edit-lighter",
+              callback = function()
+                  KOR.ebookmetadata:editEbookMetadata(params.path)
+              end
+          }),
           KOR.buttoninfopopup:forBookOpen({
               icon = "folder-open",
               callback = function()

@@ -17,6 +17,7 @@ local pairs = pairs
 --- @field databases Databases
 --- @field dialogs Dialogs
 --- @field document CreDocument
+--- @field ebookmetadata EbookMetadata
 --- @field filedirnames FileDirNames
 --- @field files Files
 --- @field html Html
@@ -69,6 +70,7 @@ local KOR = WidgetContainer:new{
 	clipboard = nil,
 	colors = nil,
 	dialogs = nil,
+	ebookmetadata = nil,
 	filedirnames = nil,
 	files = nil,
 	html = nil,
@@ -107,6 +109,7 @@ local KOR = WidgetContainer:new{
 		"buttontablefactory",
 		"buttonchoicepopup",
 		"buttoninfopopup",
+		"ebookmetadata",
 		"filedirnames",
 		"html",
 		"labels",
