@@ -304,10 +304,14 @@ function SeriesManager:populateBoxData(boxes, full_path, i, d)
     title = title:gsub("^.+%] ", "")
     --* reduce a title like "Seventh Carier.title" to "title":
     title = title:gsub("^.+%. ?", "")
+    title = series_number .. title
+    if title and title:len() > DX.s.SeriesManager_max_title_length then
+        title = title:sub(1, DX.s.SeriesManager_max_title_length - 3) .. "…"
+    end
     --table_insert(buttons[#buttons], {
     table_insert(boxes, {
         path = d.path,
-        info = series_number .. " " .. title,
+        info = title,
         description = description,
         meta_info = meta,
         font_bold = is_current_ebook,

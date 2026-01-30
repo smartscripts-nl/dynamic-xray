@@ -174,6 +174,12 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
             type = "number",
         },
+        SeriesManager_max_title_length = {
+            value = 30,
+            explanation = _("Series Manager: if a title is longer than this value, it will be truncated with an ellipsis to this max length."),
+            locked = 0,
+            type = "number",
+        },
         UI_mode = {
             value = "page",
             options = { "page", "paragraph" },
