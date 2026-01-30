@@ -64,10 +64,10 @@ function EbookMetadata:editEbookMetadata(full_path, data, active_tab)
     local rel_desc = _("year (yyyy)")
     local rat_desc = _("GR-rating")
     local ser_desc = _("series")
-    local serno_desc = _("series-no")
+    local serno_desc = _("series-index")
     local pag_desc = _("pages")
     local desc_desc = _("description")
-    local fields_description = "\n" .. T(_("fields from left %1 right:\n1. year, 2. authors, 3. title, 4. series,\n5. series-no, 6. pages, 7. GoodReads-rating"), KOR.icons.arrow_bare)
+    local fields_description = "\n" .. T(_("fields from left %1 right:\n1. year, 2. authors, 3. title, 4. series,\n5. series-index, 6. pages, 7. GoodReads-rating"), KOR.icons.arrow_bare)
     fields_description = fields_description:gsub("(%d%.) ", "%1 ")
     metadata_dialog = MultiInputDialog:new{
         modal = true,

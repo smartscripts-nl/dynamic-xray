@@ -791,7 +791,7 @@ function MultiInputDialog:insertFooterDescription()
     local width = math_floor(0.9 * self.width)
     local group = TextBoxWidget:new{
         text = self.footer_description,
-        face = self.description_face,
+        face = Font:getFace("x_smallinfofont", 11),
         alignment = "left",
         width = width,
     }
