@@ -30,6 +30,7 @@ local math_floor = math.floor
 local math_min = math.min
 local table = table
 local table_insert = table.insert
+local table_remove = table.remove
 local type = type
 
 local scale_by_size = Screen:scaleBySize(1000000) / 1000000
@@ -53,7 +54,7 @@ local FilesBox = InputContainer:extend{
     columns = 3,
     column_width = nil,
     font_face = "x_smallinfofont",
-    font_size = 15,
+    font_size = 14,
     fullscreen = true,
     --* items must have props path and info (=text):
     items = {},
@@ -93,6 +94,7 @@ function FilesBox:generateBoxes()
             info = self.items[i].info,
             meta_info = self.items[i].meta_info,
             font_bold = self.items[i].font_bold,
+            is_current_ebook = self.items[i].is_current_ebook,
             path = self.items[i].path,
             callback = self.items[i].callback,
             hold_callback = self.items[i].hold_callback,
@@ -119,7 +121,8 @@ end
 function FilesBox:getBoxElements(params, bookinfo)
     local thumbnail = self:getBookCover(bookinfo, params.path, nil, self.thumbnail_width, false, 0)
 
-    local face = Font:getFace(self.font_face, self.font_size)
+    local font_size = params.is_current_ebook and self.font_size + 1 or self.font_size
+    local face = Font:getFace(self.font_face, font_size)
     local info = TextWidget:new{
         text = params.info,
         bold = params.font_bold,
@@ -165,6 +168,9 @@ function FilesBox:getBoxButtons(params, bookinfo)
               end,
           }),
       }}
+    if params.is_current_ebook then
+        table_remove(buttons[1])
+    end
     local buttons_count = #buttons[1]
     local generic_icon_size = 40
     local icon_size = Screen:scaleBySize(generic_icon_size)
@@ -196,7 +202,7 @@ function FilesBox:getBoxContainer(thumbnail, info, meta_info, button_table)
                     button_table,
                 }
             },
-        }
+        },
     }
 end
 

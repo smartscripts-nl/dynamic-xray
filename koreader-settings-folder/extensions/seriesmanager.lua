@@ -203,7 +203,6 @@ end
 
 --* data for item were retrieved in ((SeriesManager#populateSeries)):
 function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
-    local called_from_description_dialog = KOR.registry:get("series_called_from_description_dialog")
     if not full_path then
         full_path = last_file()
     end
@@ -219,7 +218,7 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
 
     local total_buttons = #series_paths
     local read_marker = " " .. KOR.icons.finished_bare
-    local is_current_ebook, meta, serie_number, title, description, meta_items
+    local is_current_ebook, meta, series_number, title, description, meta_items
     local active_item_no = 0
     local boxes = {}
     for i = 1, total_buttons do
@@ -239,13 +238,13 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
         if has_items(meta_items) then
             meta = table_concat(meta_items, self.separator)
         end
-        serie_number = series_numbers and series_numbers[i] or i
+        series_number = series_numbers and series_numbers[i] or i
         description = descriptions[i]
         --* don't add point to serie numbers like 4.5:
-        if serie_number == "?" then
-            serie_number = "?.?"
-        elseif not serie_number:match("%.") then
-            serie_number = serie_number .. "."
+        if series_number == "?" then
+            series_number = i .. "."
+        elseif not series_number:match("%.") then
+            series_number = series_number .. "."
         end
         --* reduce a title like "Destroyermen 05 - Storm Surge" to "Storm Surge":
         series_titles[i] = series_titles[i]:gsub("^.+ %- ", "")
@@ -256,12 +255,12 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
         --table_insert(buttons[#buttons], {
         table_insert(boxes, {
             path = series_paths[i],
-            info = serie_number .. " " .. series_titles[i],
+            info = series_number .. " " .. series_titles[i],
             description = description,
             meta_info = meta,
             font_bold = is_current_ebook,
-            enabled = not called_from_description_dialog or not is_current_ebook,
-                })
+            is_current_ebook = is_current_ebook,
+        })
     end
     title = item.text:gsub("  –  .+$", "")
     if active_item_no > 0 then
