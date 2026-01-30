@@ -22,6 +22,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
   - [Updating to new versions](#updating-to-new-versions)
   - [Entering your own translations for the DX interface](#entering-your-own-translations-for-the-dx-interface)
 - [Usage tips](#usage-tips)
+  - [Global hotkeys](#global-hotkeys)
   - [Browsing with the Page Navigator (most Kindle-like)](#adding-xray-items)
   - [Adding Xray items](#browsing-with-the-page-navigator-most-kindle-like)
   - [Displaying help information about the function of buttons](#displaying-help-information-about-the-function-of-buttons)
@@ -83,6 +84,15 @@ This will make the code and updates much easier to maintain for me _and_ for clo
 **⚠️ The folder frontend/extensions/translations with in it a .po-file has therefore now been removed.**
 
 ## Usage tips
+
+### Global hotkeys
+
+DX has global hotkeys for calling its main dialogs:
+
+* Shift + H: show Xray Help information
+* Shift + L: show Xray List
+* Shift + M: show Series Manager
+* Shift + X: show Xray Page Navigator
 
 ### Browsing with the Page Navigator (most Kindle-like)
 

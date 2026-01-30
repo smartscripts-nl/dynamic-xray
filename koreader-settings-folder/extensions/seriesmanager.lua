@@ -119,8 +119,7 @@ function SeriesManager:closeDialog()
     UIManager:close(self.series_dialog)
 end
 
---* arg path will more often than not be nil here:
-function SeriesManager:onShowSeriesDialog(full_path, arg)
+function SeriesManager:onShowSeriesDialog(full_path)
     self.path = full_path
     --* this var will be set in ((SeriesManager#searchSerieMembers)):
     local cached_result = KOR.registry:getOnce("series_members")
@@ -161,7 +160,6 @@ function SeriesManager:onShowSeriesDialog(full_path, arg)
         return
     end
 
-    self.arg = arg
     self:populateSeries(result)
     count = #self.series
     if count == 0 then
@@ -238,8 +236,8 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
         if has_items(meta_items) then
             meta = table_concat(meta_items, self.separator)
         end
-        series_number = series_numbers and series_numbers[i] or i
         description = descriptions[i]
+        series_number = series_numbers and series_numbers[i] or i
         --* don't add point to serie numbers like 4.5:
         if series_number == "?" then
             series_number = i .. "."
@@ -273,11 +271,12 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
     end
     self.context_dialog = KOR.dialogs:filesBox({
         title = title,
+        key_events_module = "series_manager_for_current_book",
         items = boxes,
         after_close_callback = return_to_series_list and
         function()
             KOR.dialogs:closeOverlay()
-            self:onShowSeriesDialog(self.path, self.parent_event, self.arg)
+            self:onShowSeriesDialog(self.path)
         end,
     })
 end

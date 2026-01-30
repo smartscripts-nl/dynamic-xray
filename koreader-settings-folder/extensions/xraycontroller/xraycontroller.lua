@@ -15,6 +15,7 @@ The views layer has three main streams:
     b) XrayInfoPanel (DX.ip): responsible for the information panel at the bottom of the PageNavigator
     c) XrayPages (DX.p): responsible for the main content op the Navigator, its pages. Handles navigation through these and marking of Xray items in them.
 4) Also mentionable is the fact that some DX dialogs have shared hotkeys, in which case the hotkeys of the top most dialog will be used, not that same hotkey for an underlying dialog. See ((XRAY_DIALOGS_SHARED_HOTKEYS)) for an explanation.
+5) DX has a ((SeriesManager)) for listing the books in a series. The items in this Manager have action buttons, for viewing large covers, descriptions, opening the e-book, etc. The Manager uses ((Dialogs#filesBox)) > ((FilesBox)) to generate its dialog. The user can call it by tapping on the user icon in some DX dialogs, or by pressing Shift+M.
 
 
 The user will have the most Kindle-like experience when he/she opens the Page Navigator - see ((XrayController#onShowPageNavigator)). In this navigator all Xray items in a page will be marked bold and they will be mentioned in a side panel. Tapping on items in the side panel will put an explanation of that item in the bottom panel. You can even filter the content of the Navigator for a specific Xray item, so it will only show pages which contain that item.
@@ -91,7 +92,6 @@ For a key event e.g.: ((next related item via hotkey))
 
 local require = require
 
-local Device = require("device")
 local Dispatcher = require("dispatcher")
 local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
@@ -266,13 +266,13 @@ end
 
 function XrayController:onReaderReady()
 
-    self:registerKeyEvents()
     KOR:registerUI(self.ui)
 
     if not DX.m then
         KOR.messages:notify("dynamic xray could not be initiated...")
         return
     end
+    KOR.keyevents:addHotkeysForReaderUI(self)
     self:resetDynamicXray()
 end
 
@@ -282,20 +282,6 @@ end
 
 function XrayController:onScreenResize()
     self:resetDynamicXray()
-end
-
---- @private
-function XrayController:registerKeyEvents()
-    self.is_docless = self.ui == nil or self.ui.document == nil
-    if self.is_docless or not Device:hasKeys() then
-        return
-    end
-
-    local readerui = self.ui
-    readerui.key_events.ShowPageNavigator = { { "Shift", { "X" } } }
-
-    --? for some reason this hotkey refuses to function: whichever key-combo I assign to it, it does not do anything:
-    --readerui.key_events.ShowList = { { "Shift", { "Z" } } }
 end
 
 function XrayController:filterItemsByImportantTypes()

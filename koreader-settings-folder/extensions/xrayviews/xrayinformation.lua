@@ -48,10 +48,10 @@ function XrayInformation:getMatchReliabilityIndicator(name)
     return self.match_reliability_indicators[name]
 end
 
-function XrayInformation:showPageNavigatorHelp(parent)
+function XrayInformation:showPageNavigatorHelp(parent, active_tab)
     local screen_dims = Screen:getSize()
 
-    KOR.dialogs:htmlBoxTabbed(1, {
+    KOR.dialogs:htmlBoxTabbed(active_tab or 1, {
         parent = parent or DX.pn,
         title = "Page Navigator hulp",
         modal = true,
@@ -105,12 +105,27 @@ end
 function XrayInformation:getPageNavigatorHotkeysInfo()
     return self.hotkeys_information or _("For usage with (BT) keyboards:") .. [[<br>
                 <br>
+<strong>Global hotkeys (while reading)</strong><br>
+<br>
+<table style='border-collapse: collapse'>
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+H</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+            .. ("show this Help information dialog")
+            .. [[</td></tr>
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+L</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+            .. ("show Xray List")
+            .. [[</td></tr>
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+M</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+            .. ("show Series Manager")
+            .. [[</td></tr>
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+X</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+            .. ("show Xray Page Navigator")
+            .. [[</td></tr>
+</table>
+                <br>
 <strong>In Page Navigator</strong><br>
 <br>
 <table style='border-collapse: collapse'>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>3 ]]
-            .. _("(the key below #)")
-            .. [[</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>U</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
             .. ("open dialog for jumping to a specific page number")
             .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>E</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]

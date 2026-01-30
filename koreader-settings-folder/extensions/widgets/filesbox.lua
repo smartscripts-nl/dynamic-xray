@@ -58,6 +58,8 @@ local FilesBox = InputContainer:extend{
     fullscreen = true,
     --* items must have props path and info (=text):
     items = {},
+    key_events_module = nil,
+    modal = true,
     row_spacer = nil,
     row_spacer_height = nil,
     subtitle = nil,
@@ -68,6 +70,7 @@ local FilesBox = InputContainer:extend{
 }
 
 function FilesBox:init()
+    self:initHotkeys()
     self:setModuleProps()
     self:initFrame()
     self:initRowSpacer()
@@ -363,6 +366,11 @@ function FilesBox:computeThumbnailDimensions()
     rows = math_ceil(items_count / self.columns)
 
     self.thumbnail_width = math_floor(self.screen_width / (3 * self.columns))
+end
+
+--- @private
+function FilesBox:initHotkeys()
+    KOR.keyevents:addHotkeysForFilesBox(self, self.key_events_module)
 end
 
 --- @private

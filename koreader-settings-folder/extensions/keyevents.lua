@@ -1,4 +1,3 @@
-
 local require = require
 
 local Device = require("device")
@@ -21,6 +20,19 @@ local KeyEvents = WidgetContainer:extend{
     shared_hotkeys = {},
 }
 
+--* here we add generic hotkeys for FilesBox, but a caller might already have added specific hotkeys for that module:
+--- @param parent FilesBox
+function KeyEvents:addHotkeysForFilesBox(parent, key_events_module)
+    if not Device:hasKeys() then
+        return
+    end
+    if not key_events_module then
+        key_events_module = "FilesBox"
+    end
+
+    self:addCloseHotkey(parent)
+end
+
 --* here we add generic hotkeys for HtmlBox, but a caller might already have added specific hotkeys for that module:
 --- @param parent HtmlBox
 function KeyEvents:addHotkeysForHtmlBox(parent, key_events_module)
@@ -42,8 +54,8 @@ function KeyEvents:addHotkeysForHtmlBox(parent, key_events_module)
             ToNextTab = { { Input.group.PgFwd }, doc = "naar volgende tab" },
             ForceNextTab = { { Input.group.TabNext }, doc = "forceer volgende tab" },
             ForcePreviousTab = { { Input.group.TabPrevious }, doc = "forceer vorige tab" },
-            Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } },
         }
+        self:addCloseHotkey(parent)
         -- #((set additional key events))
         self:addAdditionalHotkeysHtmlBox(parent)
 
@@ -67,9 +79,39 @@ function KeyEvents:addHotkeysForHtmlBox(parent, key_events_module)
         ReadNextItem = { { Input.group.PgFwd }, doc = "read next item" },
         ForceNextItem = { { Input.group.TabNext }, doc = "forceer volgend item" },
         ForcePrevItem = { { Input.group.TabPrevious }, doc = "forceer vorige item" },
-        Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } },
     }
+    self:addCloseHotkey(parent)
     self:addAdditionalHotkeysHtmlBox(parent)
+end
+
+--* here we add global hotkeys for ReaderUI:
+--- @param parent XrayController
+function KeyEvents:addHotkeysForReaderUI(parent)
+    parent.is_docless = parent.ui == nil or parent.ui.document == nil
+    if parent.is_docless or not Device:hasKeys() then
+        return
+    end
+    local readerui = parent.ui
+
+    readerui.key_events.ShowXrayHelp = { { "Shift", { "H" } } }
+    readerui.onShowXrayHelp = function()
+        return DX.i:showPageNavigatorHelp(parent, 3)
+    end
+
+    readerui.key_events.ShowXrayList = { { "Shift", { "L" } } }
+    readerui.onShowXrayList = function()
+        DX.c:onShowList()
+    end
+
+    readerui.key_events.ShowSeriesManager = { { "Shift", { "M" } } }
+    readerui.onShowSeriesManager = function()
+        KOR.seriesmanager:showSeriesForEbookPath()
+    end
+
+    readerui.onShowPageNavigator = function()
+        DX.c:onShowPageNavigator()
+    end
+    readerui.key_events.ShowPageNavigator = { { "Shift", { "X" } } }
 end
 
 --* here we add generic hotkeys for ScrollTextWidget, but a caller might already have added specific hotkeys for that module:
@@ -87,9 +129,8 @@ function KeyEvents:addHotkeysForScrollTextWidget(parent, key_events_module)
         ScrollUp = { { Input.group.PgBackScrollText } },
         -- #((navigate up in ScrollTextWidget with shift+space))
         ScrollUpWithShiftSpace = Input.group.ShiftSpace,
-        Test = { { "T" } },
-        Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } },
     }
+    self:addCloseHotkey(parent)
 end
 
 --- @param parent TextViewer
@@ -110,7 +151,6 @@ function KeyEvents:addHotkeysForTextViewer(parent, key_events_module)
             ToNextTab = { { Input.group.PgFwd }, doc = "naar volgende tab" },
             ForceNextTab = { { Input.group.TabNext }, doc = "forceer volgende tab" },
             ForcePreviousTab = { { Input.group.TabPrevious }, doc = "forceer vorige tab" },
-            Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } }
         }
         --self:setKeyEventsForTabs(parent, 8)
         --* see ((TABS)) for more info:
@@ -124,7 +164,7 @@ function KeyEvents:addHotkeysForTextViewer(parent, key_events_module)
             end)
         end
 
-    --* TextViewer instance without tabs:
+        --* TextViewer instance without tabs:
     else
         parent.key_events = {
             ReadPrevItem = { { Input.group.PgBack }, doc = "read prev item" },
@@ -132,10 +172,9 @@ function KeyEvents:addHotkeysForTextViewer(parent, key_events_module)
             ReadNextItem = { { Input.group.PgFwd }, doc = "read next item" },
             ForceNextItem = { { Input.group.TabNext }, doc = "forceer volgend item" },
             ForcePrevItem = { { Input.group.TabPrevious }, doc = "forceer vorige item" },
-            Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } }
         }
     end
-
+    self:addCloseHotkey(parent)
     self:addExtraButtonsHotkeys(parent, 1)
     self:addAdditionalHotkeysTextViewer(parent)
 
@@ -631,8 +670,8 @@ function KeyEvents:addHotkeysForButtonDialog(parent)
     if not Device:hasKeys() then
         return
     end
-    parent.key_events.Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } }
 
+    self:addCloseHotkey(parent)
     if parent.additional_key_events then
         for label, set in pairs(parent.additional_key_events) do
             parent["on" .. label] = function()
@@ -673,7 +712,7 @@ function KeyEvents:registerHotkeysInputDialog(parent)
         return
     end
 
-    parent.key_events.CloseDialog = { { Input.group.CloseDialog } }
+    self:addCloseHotkey(parent)
     --! this one really needed to handle BT keyboard input:
     --* @see ((onGetHardwareInput)):
     parent.key_events.GetHardwareInput = { { Input.group.FieldInput } }
@@ -693,7 +732,7 @@ function KeyEvents:registerHotkeysMenu(parent)
 
     if Device:hasKeys() then
         --* set up keyboard events
-        parent.key_events.Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } }
+        self:addCloseHotkey(parent)
         parent.key_events.NextPage = { { Input.group.PgFwd } }
         parent.key_events.PrevPage = { { Input.group.PgBack } }
         parent.key_events.PrevPageWithShiftSpace = Input.group.ShiftSpace
@@ -806,6 +845,13 @@ function KeyEvents:activateTab(parent, tab_no)
     parent.activate_tab_callback(tab_no)
 end
 
+function KeyEvents:addCloseHotkey(parent)
+    if not parent.key_events then
+        parent.key_events = {}
+    end
+    parent.key_events["Close"] = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } }
+end
+
 function KeyEvents:addSeriesManagerHotkey(actions)
     table_insert(actions, {
         label = "show_serie",
@@ -824,6 +870,7 @@ function KeyEvents:updateHotkeys(parent)
     end
 end
 
+--* shared hotkey actions must be registered by calling ((KeyEvents#registerSharedHotkey)) from the method which registers hotkeys for a specific module:
 function KeyEvents:execTopMostSharedHotkey(key, key_events_module)
     local keys_registry = self.shared_hotkeys[key]
     if not keys_registry or #keys_registry == 0 or keys_registry[#keys_registry][1] ~= key_events_module then
