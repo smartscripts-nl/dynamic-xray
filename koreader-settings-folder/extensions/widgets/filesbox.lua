@@ -12,6 +12,7 @@ local ImageWidget = require("ui/widget/imagewidget")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")
+local ScrollableContainer = require("ui/widget/container/scrollablecontainer")
 local Size = require("extensions/modules/size")
 local TextWidget = require("extensions/widgets/textwidget")
 local TitleBar = require("extensions/widgets/titlebar")
@@ -65,6 +66,7 @@ local FilesBox = InputContainer:extend{
     subtitle = nil,
     thumbnail_width = nil,
     title = nil,
+    titlebar = nil,
     window_size = "fullscreen",
     word_line_height = nil,
 }
@@ -179,7 +181,7 @@ function FilesBox:getBoxButtons(params, bookinfo)
     local icon_size = Screen:scaleBySize(generic_icon_size)
 
     return ButtonTable:new{
-        width = buttons_count * icon_size + buttons_count * (Size.line.medium + Size.padding.small),
+        width = buttons_count * icon_size + buttons_count * (Size.line.medium),
         buttons = buttons,
     }
 end
@@ -298,15 +300,41 @@ end
 
 --- @private
 function FilesBox:finalizeWidget()
+
+    local refresh_target
+    if self.box_frame:getSize().h > self.screen_height then
+        -- Our scrollable container needs to be known as widget.cropping_widget in
+        -- the widget that is passed to UIManager:show() for UIManager to ensure
+        -- proper interception of inner widget self repainting/invert (mostly used
+        -- when flashing for UI feedback that we want to limit to the cropped area).
+        self.cropping_widget = ScrollableContainer:new{
+            dimen = Geom:new{
+                w = self.region.w,
+                h = self.screen_height - self.titlebar:getSize().h,
+            },
+            show_parent = self,
+            --ignore_events = { "swipe" },
+            self.box_frame,
+        }
+        refresh_target = self.cropping_widget
+        --* self.region was set in ((FilesBox#computeThumbnailDimensions)):
+        self[1] = WidgetContainer:new{
+            align = "top",
+            dimen = self.region,
+            self.cropping_widget,
+        }
+    else
     --* self.region was set in ((FilesBox#computeThumbnailDimensions)):
     self[1] = WidgetContainer:new{
             align = "top",
             dimen = self.region,
             self.box_frame,
         }
+        refresh_target = self.box_frame
+    end
 
     UIManager:setDirty(self, function()
-        return "partial", self.box_frame.dimen
+        return "partial", refresh_target.dimen
     end)
 
     --* make FilesBox widget closeable with ((Dialogs#closeAllWidgets)):
@@ -321,13 +349,13 @@ function FilesBox:generateWidget()
     local content_height = self.content_widget:getSize().h
 
     local elements = VerticalGroup:new{
-        self.box_title,
+        self.titlebar,
         self.separator,
         self.content_top_margin,
         --* content
         CenterContainer:new{
             dimen = Geom:new{
-                w = self.inner_width,
+                w = self.width,
                 h = content_height,
             },
             self.content_widget,
@@ -342,7 +370,7 @@ end
 
 --- @private
 function FilesBox:computeWindowRegion()
-    self.avail_height = self.screen_height - self.box_title:getSize().h
+    self.avail_height = self.screen_height - self.titlebar:getSize().h
 
     --* Region in which the window will be aligned center/top/bottom:
     self.region = Geom:new{
@@ -387,7 +415,7 @@ function FilesBox:setPaddingAndSpacing()
     --* below the title:  lookup word and definition
     self.content_padding_h = self.content_padding or (self.window_size == "fullscreen" or self.window_size == "max" or type(self.window_size) == "table") and Size.padding.closebuttonpopupdialog or Size.padding.large
     local content_padding_v = Size.padding.fullscreen --* added via VerticalSpan
-    self.content_width = self.inner_width - 2 * self.content_padding_h
+    self.content_width = self.width - 2 * self.content_padding_h
 
     self.content_padding_v =  content_padding_v
 
@@ -410,7 +438,7 @@ end
 --- @private
 function FilesBox:generateTitleBar()
     local config = {
-        width = self.inner_width,
+        width = self.width,
         title = self.title,
         subtitle = self.subtitle,
         title_face = Font:getFace("smallinfofontbold"),
@@ -428,12 +456,13 @@ function FilesBox:generateTitleBar()
         lang = self.lang_out,
         top_buttons_left = self.top_buttons_left,
     }
-    self.box_title = TitleBar:new(config)
+    self.titlebar = TitleBar:new(config)
 end
 
 --- @private
 function FilesBox:setWidth()
-    self.width = self.screen_width
+    self.scrollbar_width = ScrollableContainer:getScrollbarWidth()
+    self.width = self.screen_width - self.scrollbar_width
     self.inner_width = self.width
 end
 

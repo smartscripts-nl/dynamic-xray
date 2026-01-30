@@ -233,7 +233,6 @@ PT_bookinfo_cache.sqlite3". In that case:
 
 ## Todos
 * Add edit form to Series Manager, with which the user can edit/add series indices or book descriptions and set the finished reading status of the book.
-* Also make the list of items in the Series Manager scrollable, so it will never get out of bounds if a series has too many books.
 * Base custom translations on indices instead of the texts they translate → continued usability of translations by the user much better protected, even when the actual text to be translated changes.
 
 ## About the code
