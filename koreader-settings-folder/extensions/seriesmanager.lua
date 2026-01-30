@@ -359,14 +359,14 @@ function SeriesManager:isValidEntry(entry)
 end
 
 function SeriesManager:showSeriesForEbookPath(full_path)
-    if not DX.m.current_series then
-        KOR.messages:notify(_("current book does not seem to be part of a series"))
-        return
-    end
-
     if not full_path then
         full_path = DX.m.current_ebook_full_path
     end
+    if not DX.m.current_series then
+        KOR.ebookmetadata:editEbookMetadata(full_path)
+        return
+    end
+
     local series_members = self:searchSerieMembers(full_path)
     if series_members and full_path then
         KOR.dialogs:closeOverlay()

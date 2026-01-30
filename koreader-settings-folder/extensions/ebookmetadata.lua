@@ -52,6 +52,10 @@ function EbookMetadata:getMetadata(full_path, data, conn)
 end
 
 function EbookMetadata:editEbookMetadata(full_path, data, active_tab)
+    --* this can be the case when the user tried to open the Series Manager and was redirected to here, because the book was not part of a series; see start of ((SeriesManager#showSeriesForEbookPath)):
+    if not data then
+        data = self:getMetadata(full_path)
+    end
     if not active_tab then
         active_tab = 1
     end
@@ -59,14 +63,6 @@ function EbookMetadata:editEbookMetadata(full_path, data, active_tab)
     local metadata_dialog
     local conn = KOR.databases:getDBconnForBookInfo("Ebooks:updateEbookMetadata")
     local authors, title, publication_year, series, series_index, rating_goodreads, pages, description = self:getMetadata(full_path, data, conn)
-    local aut_desc = _("authors")
-    local tit_desc = _("title")
-    local rel_desc = _("year (yyyy)")
-    local rat_desc = _("GR-rating")
-    local ser_desc = _("series")
-    local serno_desc = _("series-index")
-    local pag_desc = _("pages")
-    local desc_desc = _("description")
     local fields_description = "\n" .. T(_("fields from left %1 right:\n1. year, 2. authors, 3. title, 4. series,\n5. series-index, 6. pages, 7. GoodReads-rating"), KOR.icons.arrow_bare)
     fields_description = fields_description:gsub("(%d%.) ", "%1 ")
     metadata_dialog = MultiInputDialog:new{
@@ -100,124 +96,153 @@ function EbookMetadata:editEbookMetadata(full_path, data, active_tab)
         fullscreen = true, --* if true, a close button is not available
         covers_fullscreen = true,
         allow_newline = false,
-        fields = {
-            --* row with 2 fields:
-            {
-                {
-                    text = publication_year,
-                    tab = 1,
-                    allow_newline = false,
-                    input_type = "number",
-                    hint = rel_desc,
-                },
-                {
-                    text = authors,
-                    tab = 1,
-                    allow_newline = false,
-                    hint = aut_desc,
-                },
-            },
-            {
-                text = title,
-                tab = 1,
-                allow_newline = false,
-                hint = tit_desc,
-            },
-            --* row with 2 fields:
-            {
-                {
-                    text = series,
-                    tab = 1,
-                    allow_newline = false,
-                    hint = ser_desc,
-                },
-                {
-                    text = series_index,
-                    tab = 1,
-                    allow_newline = false,
-                    hint = serno_desc,
-                },
-            },
-            --* row with 2 fields:
-            {
-                {
-                    text = pages,
-                    tab = 1,
-                    allow_newline = false,
-                    input_type = "number",
-                    hint = pag_desc,
-                },
-                {
-                    text = rating_goodreads,
-                    tab = 1,
-                    allow_newline = false,
-                    input_type = "number",
-                    hint = rat_desc,
-                },
-            },
-            {
-                height = "auto",
-                text = description,
-                hint = desc_desc,
-                tab = 2,
-                scroll = true,
-                scroll_by_pan = true,
-                allow_newline = true,
-                cursor_at_end = true,
-                margin = Size.margin.small,
-            }
-        },
+        fields = self:getFields({
+            authors = authors,
+            description = description,
+            pages = pages,
+            publication_year = publication_year,
+            rating_goodreads = rating_goodreads,
+            series = series,
+            series_index = series_index,
+            title = title,
+        }),
         width = Screen:getWidth(),
-        buttons = {
-            {
-                {
-                    icon = "back",
-                    icon_size_ratio = 0.7,
-                    enabled = true,
-                    callback = function()
-                        metadata_dialog:onClose()
-                        UIManager:close(metadata_dialog)
-                    end,
-                },
-                {
-                    icon = "save",
-                    enabled = true,
-                    is_enter_default = true,
-                    callback = function()
-                        local fields = metadata_dialog:getAllTabsFieldsValues()
-                        metadata_dialog:onClose()
-
-                        publication_year = fields[1]
-                        authors = fields[2]
-                        title = fields[3]
-                        series = fields[4]
-                        series_index = fields[5]
-                        pages = fields[6]
-                        rating_goodreads = fields[7]
-                        description = fields[8]
-
-                        self:saveMetadata({
-                                conn = conn,
-                                path = full_path,
-                                metadata_dialog = metadata_dialog,
-                            },
-                        {
-                            authors = authors,
-                            title = title,
-                            publication_year = publication_year,
-                            series = series,
-                            series_index = series_index,
-                            rating_goodreads = rating_goodreads,
-                            pages = pages,
-                            description = description,
-                        })
-                    end,
-                },
-            },
-        },
+        buttons = self:getButtons(full_path, metadata_dialog, conn),
     }
     UIManager:show(metadata_dialog)
     metadata_dialog:onShowKeyboard()
+end
+
+--- @private
+function EbookMetadata:getFields(d)
+    local aut_desc = _("authors")
+    local tit_desc = _("title")
+    local rel_desc = _("year (yyyy)")
+    local rat_desc = _("GR-rating")
+    local ser_desc = _("series")
+    local serno_desc = _("series-index")
+    local pag_desc = _("pages")
+    local desc_desc = _("description")
+    return {
+        --* row with 2 fields:
+        {
+            {
+                text = d.publication_year,
+                tab = 1,
+                allow_newline = false,
+                input_type = "number",
+                hint = rel_desc,
+            },
+            {
+                text = d.authors,
+                tab = 1,
+                allow_newline = false,
+                hint = aut_desc,
+            },
+        },
+        {
+            text = d.title,
+            tab = 1,
+            allow_newline = false,
+            hint = tit_desc,
+        },
+        --* row with 2 fields:
+        {
+            {
+                text = d.series,
+                tab = 1,
+                allow_newline = false,
+                hint = ser_desc,
+            },
+            {
+                text = d.series_index,
+                tab = 1,
+                allow_newline = false,
+                hint = serno_desc,
+            },
+        },
+        --* row with 2 fields:
+        {
+            {
+                text = d.pages,
+                tab = 1,
+                allow_newline = false,
+                input_type = "number",
+                hint = pag_desc,
+            },
+            {
+                text = d.rating_goodreads,
+                tab = 1,
+                allow_newline = false,
+                input_type = "number",
+                hint = rat_desc,
+            },
+        },
+        {
+            height = "auto",
+            text = d.description,
+            hint = desc_desc,
+            tab = 2,
+            scroll = true,
+            scroll_by_pan = true,
+            allow_newline = true,
+            cursor_at_end = true,
+            margin = Size.margin.small,
+        }
+    }
+end
+
+--- @private
+function EbookMetadata:getButtons(full_path, metadata_dialog, conn)
+    return {
+        {
+            {
+                icon = "back",
+                icon_size_ratio = 0.7,
+                enabled = true,
+                callback = function()
+                    metadata_dialog:onClose()
+                    UIManager:close(metadata_dialog)
+                end,
+            },
+            {
+                icon = "save",
+                enabled = true,
+                is_enter_default = true,
+                callback = function()
+                    local fields = metadata_dialog:getAllTabsFieldsValues()
+                    metadata_dialog:onClose()
+
+                    local authors, title, publication_year, series, series_index, rating_goodreads, pages, description
+
+                    publication_year = fields[1]
+                    authors = fields[2]
+                    title = fields[3]
+                    series = fields[4]
+                    series_index = fields[5]
+                    pages = fields[6]
+                    rating_goodreads = fields[7]
+                    description = fields[8]
+
+                    self:saveMetadata({
+                        conn = conn,
+                        path = full_path,
+                        metadata_dialog = metadata_dialog,
+                    },
+                    {
+                        authors = authors,
+                        title = title,
+                        publication_year = publication_year,
+                        series = series,
+                        series_index = series_index,
+                        rating_goodreads = rating_goodreads,
+                        pages = pages,
+                        description = description,
+                    })
+                end,
+            },
+        },
+    }
 end
 
 function EbookMetadata:saveMetadata(context, data)
