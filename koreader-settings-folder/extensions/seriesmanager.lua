@@ -44,11 +44,12 @@ function SeriesManager:searchSerieMembers(full_path)
         COALESCE(SUM(i.pages), 0) AS series_total_pages,
         GROUP_CONCAT(i.directory || i.filename, '%s') AS series_paths,
         GROUP_CONCAT(COALESCE(i.rating_goodreads, '-'), '%s') AS series_ratings,
-        GROUP_CONCAT(COALESCE(i.title, '?'), '%s') AS series_titles,
+        GROUP_CONCAT(COALESCE(i.title, '-'), '%s') AS series_titles,
         GROUP_CONCAT(COALESCE(f.path, '-'), '%s')  AS finished_paths,
-        GROUP_CONCAT(COALESCE(i.series_index, '?'), '%s') AS series_numbers,
-        GROUP_CONCAT(COALESCE(i.pages, '?'), '%s') AS pages,
-        GROUP_CONCAT(COALESCE(i.description, '?'), '%s') AS descriptions,
+        GROUP_CONCAT(COALESCE(i.series_index, '-'), '%s') AS series_numbers,
+        GROUP_CONCAT(COALESCE(i.pages, '-'), '%s') AS pages,
+        GROUP_CONCAT(COALESCE(i.description, '-'), '%s') AS descriptions,
+        GROUP_CONCAT(COALESCE(i.publication_year, '-'), '%s') AS publication_years,
         COUNT(i.title) AS series_count
         FROM (%s) i LEFT OUTER JOIN finished_books f ON i.directory || i.filename = f.path
         WHERE i.series IS NOT NULL AND i.series != ''
@@ -65,7 +66,7 @@ function SeriesManager:searchSerieMembers(full_path)
     --* use this cast to sort naturally:
     subquery = subquery .. " ORDER BY CAST(series_index AS DECIMAL)"
     local s = self.separator
-    sql = string.format(sql, s, s, s, s, s, s, s, subquery)
+    sql = string.format(sql, s, s, s, s, s, s, s, s, subquery)
     local result = conn:exec(sql)
     conn = KOR.databases:closeInfoConnections(conn)
     if not full_path and not result then
@@ -106,6 +107,7 @@ function SeriesManager:populateSeries(result)
                 series_titles = result["series_titles"][i],
                 finished_paths = result["finished_paths"][i],
                 series_numbers = result["series_numbers"][i],
+                publication_years = result["publication_years"][i],
                 pages = result["pages"][i],
                 series_total_pages = result["series_total_pages"][i],
             }
@@ -185,6 +187,7 @@ function SeriesManager:onShowSeriesDialog(full_path)
             series_paths = self.series[nr].series_paths,
             series_numbers = self.series[nr].series_numbers,
             series_titles = self.series[nr].series_titles,
+            publication_years = self.series[nr].publication_years,
             finished_paths = self.series[nr].finished_paths,
         }
         item.callback = function()
@@ -212,6 +215,7 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
     local descriptions = KOR.strings:split(item.descriptions, self.separator)
     local pages = KOR.strings:split(item.pages, self.separator)
     local series_total_pages = tonumber(item.series_total_pages)
+    local publication_years = KOR.strings:split(item.publication_years, self.separator)
     local finished_paths = KOR.strings:split(item.finished_paths, self.separator)
     local series_paths = KOR.strings:split(item.series_paths, self.separator)
     local series_ratings = item.series_ratings and KOR.strings:split(item.series_ratings, self.separator)
@@ -219,53 +223,23 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
     local series_titles = KOR.strings:split(item.series_titles, self.separator)
 
     local total_buttons = #series_paths
-    local read_marker = " " .. KOR.icons.finished_bare
-    local is_current_ebook, meta, series_number, title, description, meta_items
+    local title, is_current_ebook
     local active_item_no = 0
     local boxes = {}
     for i = 1, total_buttons do
-        meta_items = {}
-        is_current_ebook = full_path == series_paths[i]
-
+        is_current_ebook = self:populateBoxData(boxes, full_path, i, {
+            description = descriptions[i],
+            finished_path = finished_paths[i],
+            pages = pages[i],
+            publication_year = publication_years[i],
+            rating_goodreads = series_ratings[i],
+            series_number = series_numbers[i],
+            path = series_paths[i],
+            title = series_titles[i],
+        })
         if is_current_ebook then
             active_item_no = i
         end
-        if has_content(finished_paths[i]) and finished_paths[i] ~= "-" then
-            table_insert(meta_items, read_marker)
-        end
-        if has_content(pages[i]) then
-            table_insert(meta_items, pages[i] .. "pp")
-        end
-        if has_content(series_ratings[i] and series_ratings[i] ~= '-') then
-            table_insert(meta_items, KOR.icons.rating_bare .. series_ratings[i])
-        end
-        meta = ""
-        if has_items(meta_items) then
-            meta = table_concat(meta_items, self.separator)
-        end
-        description = descriptions[i]
-        series_number = series_numbers and series_numbers[i] or i
-        --* don't add point to serie numbers like 4.5:
-        if series_number == "?" then
-            series_number = i .. "."
-        elseif not series_number:match("%.") then
-            series_number = series_number .. "."
-        end
-        --* reduce a title like "Destroyermen 05 - Storm Surge" to "Storm Surge":
-        series_titles[i] = series_titles[i]:gsub("^.+ %- ", "")
-        --* reduce a title like "[Lux 03] Opal" to "Opal":
-        series_titles[i] = series_titles[i]:gsub("^.+%] ", "")
-        --* reduce a title like "Seventh Carier.title" to "title":
-        series_titles[i] = series_titles[i]:gsub("^.+%. ?", "")
-        --table_insert(buttons[#buttons], {
-        table_insert(boxes, {
-            path = series_paths[i],
-            info = series_number .. " " .. series_titles[i],
-            description = description,
-            meta_info = meta,
-            font_bold = is_current_ebook,
-            is_current_ebook = is_current_ebook,
-        })
     end
     title = item.text:gsub("  –  .+$", "")
     if active_item_no > 0 then
@@ -289,6 +263,58 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
             self:onShowSeriesDialog(self.path)
         end,
     })
+end
+
+--- @private
+function SeriesManager:populateBoxData(boxes, full_path, i, d)
+    local read_marker = " " .. KOR.icons.finished_bare
+    local meta_items = {}
+    local meta, series_number, description, has_pages
+    local is_current_ebook = full_path == d.path
+
+    if self:isValidEntry(d.publication_year) then
+        table_insert(meta_items, d.publication_year)
+    end
+    if self:isValidEntry(d.finished_path) then
+        table_insert(meta_items, read_marker)
+    end
+    has_pages = self:isValidEntry(d.pages)
+    if has_pages then
+        table_insert(meta_items, d.pages .. "pp")
+    else
+        table_insert(meta_items, "?pp")
+    end
+    if self:isValidEntry(d.rating_goodreads) then
+        table_insert(meta_items, KOR.icons.rating_bare .. d.rating_goodreads)
+    end
+    meta = ""
+    if has_items(meta_items) then
+        meta = table_concat(meta_items, self.separator)
+    end
+    description = d.descriptions
+    --* don't add point to serie numbers like 4.5:
+    if d.series_number == "-" then
+        series_number = i .. "."
+    elseif not d.series_number:match("%.") then
+        series_number = d.series_number .. "."
+    end
+    --* reduce a title like "Destroyermen 05 - Storm Surge" to "Storm Surge":
+    local title = d.title:gsub("^.+ %- ", "")
+    --* reduce a title like "[Lux 03] Opal" to "Opal":
+    title = title:gsub("^.+%] ", "")
+    --* reduce a title like "Seventh Carier.title" to "title":
+    title = title:gsub("^.+%. ?", "")
+    --table_insert(buttons[#buttons], {
+    table_insert(boxes, {
+        path = d.path,
+        info = series_number .. " " .. title,
+        description = description,
+        meta_info = meta,
+        font_bold = is_current_ebook,
+        is_current_ebook = is_current_ebook,
+    })
+
+    return is_current_ebook
 end
 
 function SeriesManager:showContextDialogForCurrentEbook(result, full_path)
@@ -322,6 +348,10 @@ function SeriesManager:getSeriesName(full_path)
     conn = KOR.databases:closeInfoConnections(conn)
 
     return has_text(series), series_index
+end
+
+function SeriesManager:isValidEntry(entry)
+    return has_content(entry) and entry ~= "-"
 end
 
 function SeriesManager:showSeriesForEbookPath(full_path)
