@@ -17,7 +17,10 @@ local tonumber = tonumber
 local type = type
 
 --- @class EbookMetadata
-local EbookMetadata = InputContainer:extend{}
+--- @field metadata_dialog MultiInputDialog
+local EbookMetadata = InputContainer:extend{
+    metadata_dialog = nil,
+}
 
 function EbookMetadata:getMetadata(full_path, data, conn)
 
@@ -59,13 +62,11 @@ function EbookMetadata:editEbookMetadata(full_path, data, active_tab)
     if not active_tab then
         active_tab = 1
     end
-    --- @type MultiInputDialog metadata_dialog
-    local metadata_dialog
     local conn = KOR.databases:getDBconnForBookInfo("Ebooks:updateEbookMetadata")
     local authors, title, publication_year, series, series_index, rating_goodreads, pages, description = self:getMetadata(full_path, data, conn)
     local fields_description = "\n" .. T(_("fields from left %1 right:\n1. year, 2. authors, 3. title, 4. series,\n5. series-index, 6. pages, 7. GoodReads-rating"), KOR.icons.arrow_bare)
     fields_description = fields_description:gsub("(%d%.) ", "%1 ")
-    metadata_dialog = MultiInputDialog:new{
+    self.metadata_dialog = MultiInputDialog:new{
         modal = true,
         tabs_count = 2,
         has_field_rows = true,
@@ -74,7 +75,7 @@ function EbookMetadata:editEbookMetadata(full_path, data, active_tab)
             if new_tab == active_tab then
                 return
             end
-            UIManager:close(metadata_dialog)
+            self:closeDialog()
             self:editEbookMetadata(full_path, data, new_tab)
         end,
         title_tab_buttons_left = { " " .. _("metadata") .. " ", " " .. _("description") .. " " },
@@ -86,7 +87,7 @@ function EbookMetadata:editEbookMetadata(full_path, data, active_tab)
         --title = "Metadata: " .. path:gsub("^.+/", ""),
         title = _("Edit metadata") .. KOR.icons.arrow .. authors .. ": " .. title,
         close_callback = function()
-            UIManager:close(metadata_dialog)
+            self:closeDialog()
         end,
         footer_description = active_tab == 1 and "  " .. fields_description,
         focus_field = 3,
@@ -107,10 +108,10 @@ function EbookMetadata:editEbookMetadata(full_path, data, active_tab)
             title = title,
         }),
         width = Screen:getWidth(),
-        buttons = self:getButtons(full_path, metadata_dialog, conn),
+        buttons = self:getButtons(full_path, conn),
     }
-    UIManager:show(metadata_dialog)
-    metadata_dialog:onShowKeyboard()
+    UIManager:show(self.metadata_dialog)
+    self.metadata_dialog:onShowKeyboard()
 end
 
 --- @private
@@ -193,7 +194,7 @@ function EbookMetadata:getFields(d)
 end
 
 --- @private
-function EbookMetadata:getButtons(full_path, metadata_dialog, conn)
+function EbookMetadata:getButtons(full_path, conn)
     return {
         {
             {
@@ -201,8 +202,7 @@ function EbookMetadata:getButtons(full_path, metadata_dialog, conn)
                 icon_size_ratio = 0.7,
                 enabled = true,
                 callback = function()
-                    metadata_dialog:onClose()
-                    UIManager:close(metadata_dialog)
+                    self:closeDialog()
                 end,
             },
             {
@@ -210,8 +210,8 @@ function EbookMetadata:getButtons(full_path, metadata_dialog, conn)
                 enabled = true,
                 is_enter_default = true,
                 callback = function()
-                    local fields = metadata_dialog:getAllTabsFieldsValues()
-                    metadata_dialog:onClose()
+                    local fields = self.metadata_dialog:getAllTabsFieldsValues()
+                    self:closeDialog()
 
                     local authors, title, publication_year, series, series_index, rating_goodreads, pages, description
 
@@ -227,7 +227,6 @@ function EbookMetadata:getButtons(full_path, metadata_dialog, conn)
                     self:saveMetadata({
                         conn = conn,
                         path = full_path,
-                        metadata_dialog = metadata_dialog,
                     },
                     {
                         authors = authors,
@@ -262,7 +261,6 @@ function EbookMetadata:saveMetadata(context, data)
 
     local conn = context.conn
     local full_path = context.path
-    local metadata_dialog = context.metadata_dialog
     local filemanager_instance = context.filemanager_instance
 
     if has_content(authors) and has_content(title) then
@@ -283,8 +281,7 @@ function EbookMetadata:saveMetadata(context, data)
         stmt = KOR.databases:closeInfoStmts(stmt)
         KOR.databases:closeInfoConnections(conn)
 
-
-        UIManager:close(metadata_dialog)
+        self:closeDialog()
         --* when called from filemanager:
         if filemanager_instance then
             filemanager_instance:updateItems()
@@ -292,6 +289,11 @@ function EbookMetadata:saveMetadata(context, data)
             KOR.messages:notify("Metadata opgeslagen")
         end
     end
+end
+
+--- @private
+function EbookMetadata:closeDialog()
+    UIManager:close(self.metadata_dialog)
 end
 
 return EbookMetadata
