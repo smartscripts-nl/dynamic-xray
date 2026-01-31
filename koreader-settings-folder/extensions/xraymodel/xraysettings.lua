@@ -174,6 +174,11 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
             type = "number",
         },
+        SeriesManager_mark_active_title_with_border = {
+            value = true,
+            explanation = _("Series Manager: if set to true, the current book will be highlighted with a border around it."),
+            locked = 0,
+        },
         SeriesManager_max_title_length = {
             value = 30,
             explanation = _("Series Manager: if a title is longer than this value, it will be truncated with an ellipsis to this max length."),

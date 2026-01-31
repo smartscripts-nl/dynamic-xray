@@ -144,7 +144,7 @@ function TitleBar:init()
     --* we either have icon buttons in the left half of the titlebar, or tab buttons; don't allow both, so replace top_buttons_left by tab_buttons_left:
     self:replaceTopButtonsLeftByTabButtonsLeft()
     self:injectTabButtonsLeft()
-    --! this call must come before injectTabButtonsRight(), so self.has_top_buttons_right will be set to true if a close button has been added:
+    --! this call must come before ((injectTabButtonsRight)), so self.has_top_buttons_right will be set to true if a close button has been added:
     self:addCloseButton()
     self:injectTabButtonsRight()
 
@@ -154,7 +154,7 @@ function TitleBar:init()
     self:setTopButtonsSizeAndCallbacks()
     self:injectSubMenuButtons()
 
-    --! this call MUST come before injectSideContainers(), to nicely center the title:
+    --! this call MUST come before ((injectSideContainersLeft)), to nicely center the title:
     self:computeCorrectedTitleWidth()
     self:injectSideContainersLeft()
     --- this is de facto the title text:

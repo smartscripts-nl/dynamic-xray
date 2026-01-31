@@ -16,6 +16,7 @@ return {
 
     background = Blitbuffer.COLOR_WHITE,
     background_gray = Blitbuffer.COLOR_LIGHT_GRAY,
+    background_gray_light = Blitbuffer.COLOR_GRAY_D,
 
     bold_button_text_color = Blitbuffer.COLOR_DARK_GRAY,
 

@@ -220,6 +220,13 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
         title = self:formatDialogTitle(item),
         key_events_module = "series_manager_for_current_book",
         items = self.boxes,
+        top_buttons_left = {
+            KOR.buttoninfopopup:forXraySettings({
+                callback = function()
+                    DX.s.showSettingsManager()
+                end
+            }),
+        },
         after_close_callback = return_to_series_list and
         function()
             KOR.dialogs:closeOverlay()
@@ -282,7 +289,7 @@ function SeriesManager:generateBoxItem(i, is_current_ebook, d)
     local series_number = self:getSeriesNumber(d, i)
     table_insert(self.boxes, {
         path = d.path,
-        info = self:formatEbookTitle(d.title, series_number),
+        title_info = self:formatEbookTitle(d.title, series_number),
         meta_info = self:getMetaInformation(d),
         description = d.description,
         is_current_ebook = is_current_ebook,

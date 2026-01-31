@@ -24,6 +24,7 @@ local _ = KOR:initCustomTranslations()
 --local logger = require("logger")
 local Screen = Device.screen
 
+local DX = DX
 local has_no_text = has_no_text
 local math = math
 local math_ceil = math.ceil
@@ -98,7 +99,7 @@ function FilesBox:generateBoxes()
     count = #self.items
     for i = 1, count do
         box = self:generateBox({
-            info = self.items[i].info,
+            title_info = self.items[i].title_info,
             meta_info = self.items[i].meta_info,
             is_current_ebook = self.items[i].is_current_ebook,
             path = self.items[i].path,
@@ -115,12 +116,12 @@ function FilesBox:generateBox(params)
     if not bookinfo then
         return
     end
-    local thumbnail, info, meta_info = self:getBoxElements(params, bookinfo)
+    local thumbnail, title_info, meta_info = self:getBoxElements(params, bookinfo)
 
     self.column_width = math_floor(self.avail_width / self.columns)
     local button_table = self:getBoxButtons(params, bookinfo)
 
-    return self:getBoxContainer(thumbnail, info, meta_info, button_table)
+    return self:getBoxContainer(params, thumbnail, title_info, meta_info, button_table)
 end
 
 --- @private
@@ -129,8 +130,8 @@ function FilesBox:getBoxElements(params, bookinfo)
 
     local font_size = params.is_current_ebook and self.font_size + 1 or self.font_size
     local face = Font:getFace(self.font_face, font_size)
-    local info = TextWidget:new{
-        text = params.info,
+    local title_info = TextWidget:new{
+        text = params.title_info,
         bold = params.is_current_ebook,
         face = face,
         padding = 0,
@@ -140,7 +141,7 @@ function FilesBox:getBoxElements(params, bookinfo)
         face = face,
         padding = 0,
     }
-    return thumbnail, info, meta_info
+    return thumbnail, title_info, meta_info
 end
 
 --- @private
@@ -154,7 +155,7 @@ function FilesBox:getBoxButtons(params, bookinfo)
                       return true
                   end
                   KOR.dialogs:textBox({
-                      title = params.info,
+                      title = params.title_info,
                       info = description,
                       no_buttons_row = true,
                       use_computed_height = true,
@@ -195,12 +196,12 @@ function FilesBox:getBoxButtons(params, bookinfo)
 end
 
 --- @private
-function FilesBox:getBoxContainer(thumbnail, info, meta_info, button_table)
+function FilesBox:getBoxContainer(params, thumbnail, title_info, meta_info, button_table)
     dimen = Geom:new{
         w = self.column_width,
         h = self.thumbnail_width
     }
-    return CenterContainer:new{
+    local box = CenterContainer:new{
         dimen = dimen,
         HorizontalGroup:new{
             thumbnail,
@@ -210,13 +211,23 @@ function FilesBox:getBoxContainer(thumbnail, info, meta_info, button_table)
                     h = self.thumbnail_width,
                 },
                 VerticalGroup:new{
-                    info,
+                    title_info,
                     meta_info,
                     button_table,
                 }
             },
         },
     }
+    if DX.s.SeriesManager_mark_active_title_with_border and params.is_current_ebook then
+        box = FrameContainer:new{
+            radius = Size.radius.window,
+            bordersize = Size.border.default,
+            background = KOR.colors.background_gray_light,
+            color = KOR.colors.darker_indicator_color,
+            box,
+        }
+    end
+    return box
 end
 
 --- @private
@@ -421,7 +432,8 @@ function FilesBox:setModuleProps()
     self.boxes = {}
     self.screen_height = Screen:getHeight()
     self.screen_width = Screen:getWidth()
-    self.avail_width = self.screen_width - 2 * Size.padding.default
+    local factor = DX.s.SeriesManager_mark_active_title_with_border and 6 or 4
+    self.avail_width = self.screen_width - factor * Size.padding.default
     -- in portrait display there'll probably not be enough space for display of 3 columns:
     if KOR.screenhelpers:isPortraitScreen() then
         self.columns = 2
