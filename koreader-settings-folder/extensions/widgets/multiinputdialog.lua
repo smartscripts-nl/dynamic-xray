@@ -69,6 +69,8 @@ local MultiInputDialog = InputDialog:extend{
 }
 
 function MultiInputDialog:init()
+    --! crucial statement to prevent contamination of field values with the values of an older previous MultiInputDialog instance:
+    self:resetRegistryValues()
     --* NB: title and buttons are initialized in base class
     self:initMainContainers()
     self:initWidgetProps()
@@ -904,6 +906,14 @@ function MultiInputDialog:refreshDialog()
     UIManager:setDirty(self, function()
         return "ui", self.dialog_frame.dimen
     end)
+end
+
+--! crucial method to prevent contamination of field values with the values of an older/previous MultiInputDialog instances:
+function MultiInputDialog:resetRegistryValues()
+    self.input_fields = {}
+    self.field_values = {}
+    self.tab_fields = {}
+    KOR.registry:unset("field_edit_button_width", "edit_button_target", "xray_type_button", "xray_type_focusser", self.input_registry)
 end
 
 --- @private

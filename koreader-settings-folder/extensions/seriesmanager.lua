@@ -297,6 +297,8 @@ function SeriesManager:populateBoxData(boxes, full_path, i, d)
         series_number = i .. "."
     elseif not d.series_number:match("%.") then
         series_number = d.series_number .. "."
+    else
+        series_number = d.series_number
     end
     --* reduce a title like "Destroyermen 05 - Storm Surge" to "Storm Surge":
     local title = d.title:gsub("^.+ %- ", "")

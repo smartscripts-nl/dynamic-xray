@@ -339,13 +339,14 @@ function XrayDialogs:showNewItemForm(args)
         series_hits = item_copy.series_hits,
     })
 
-    --* make sure we don't retain field values from previous form sessions:
+    --! make sure we don't retain field values from previous form sessions; see also the crucial call to ((MultiInputDialog#resetRegistryValues)) on every init and tab-change of MultiInputDialog:
     DX.fd:resetItemProps(item_copy)
     self.add_item_input = MultiInputDialog:new{
         title = title,
         title_shrink_font_to_fit = true,
         title_tab_buttons_left = self.title_tab_buttons_left,
         active_tab = active_form_tab,
+        --* tab_callback can be called from ((InputDialog#init)); activate_tab_callback as used in several KeyEvents definitions not needed here:
         tab_callback = DX.fd:getFormTabCallback("add", active_form_tab, item_copy),
         has_field_rows = true,
         fields = self:getFormFields(item_copy, args and args.prefilled_field, args and args.name_from_selected_text),
@@ -402,19 +403,16 @@ function XrayDialogs:showEditItemForm(args)
     local item = args.item
     local item_copy = args.item_copy
 
+    --! making sure we don't retain field values from previous form sessions: crucial call to ((MultiInputDialog#resetRegistryValues)) on every init and tab-change of MultiInputDialog:
     self.edit_item_input = MultiInputDialog:new{
         title = KOR.icons.edit_bare .. " " .. item.name:gsub(" %(.+", ""):gsub(" %-.+", ""),
         title_shrink_font_to_fit = true,
         title_tab_buttons_left = self.title_tab_buttons_left,
+        tabs_count = 2,
         --* always start with first tab in form:
         active_tab = active_form_tab,
+        --* tab_callback can be called from ((InputDialog#init)); activate_tab_callback as used in several KeyEvents definitions not needed here:
         tab_callback = DX.fd:getFormTabCallback("edit", active_form_tab, item_copy),
-
-        tabs_count = 2,
-        activate_tab_callback = function(tab_no)
-            self:closeForm("edit")
-            DX.c:onShowEditItemForm(self.edit_args.xray_item, self.edit_args.reload_manager, tab_no)
-        end,
         has_field_rows = true,
         fields = self:getFormFields(item_copy),
         close_callback = function()

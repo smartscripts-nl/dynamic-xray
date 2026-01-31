@@ -55,10 +55,6 @@ function EbookMetadata:getMetadata(full_path, data, conn)
 end
 
 function EbookMetadata:editEbookMetadata(full_path, data, active_tab)
-    --* this can be the case when the user tried to open the Series Manager and was redirected to here, because the book was not part of a series; see start of ((SeriesManager#showSeriesForEbookPath)):
-    if not data then
-        data = self:getMetadata(full_path)
-    end
     if not active_tab then
         active_tab = 1
     end
@@ -75,8 +71,10 @@ function EbookMetadata:editEbookMetadata(full_path, data, active_tab)
             if new_tab == active_tab then
                 return
             end
+            data = self:saveDataForTabChange(data)
             self:closeDialog()
             self:editEbookMetadata(full_path, data, new_tab)
+            return true
         end,
         title_tab_buttons_left = { " " .. _("metadata") .. " ", " " .. _("description") .. " " },
         top_paddings_tabs = "1",
@@ -112,6 +110,27 @@ function EbookMetadata:editEbookMetadata(full_path, data, active_tab)
     }
     UIManager:show(self.metadata_dialog)
     self.metadata_dialog:onShowKeyboard()
+
+    return true
+end
+
+--* save the data entered in fields before we change to another tab, so data modifications will be persisted:
+--- @private
+function EbookMetadata:saveDataForTabChange(data)
+    local fields = self.metadata_dialog:getAllTabsFieldsValues()
+    if not data then
+        data = {}
+    end
+    data.publication_year = fields[1]
+    data.authors = fields[2]
+    data.title = fields[3]
+    data.series = fields[4]
+    data.series_index = fields[5]
+    data.pages = fields[6]
+    data.rating_goodreads = fields[7]
+    data.description = fields[8]
+
+    return data
 end
 
 --- @private
@@ -294,6 +313,7 @@ end
 --- @private
 function EbookMetadata:closeDialog()
     UIManager:close(self.metadata_dialog)
+    self.metadata_dialog = nil
 end
 
 return EbookMetadata
