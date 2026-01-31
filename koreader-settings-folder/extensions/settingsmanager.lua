@@ -31,6 +31,12 @@ local count
 --- @field parent XraySettings
 local SettingsManager = WidgetContainer:new{
     active_tab = nil,
+    check_modified_props = {
+        "after_change_callback",
+        "explanation",
+        "type",
+        "validator",
+    },
     filtered_settings = {},
     items_per_page = G_reader_settings:readSetting("items_per_page") or 14,
     item_table = nil,
@@ -120,6 +126,8 @@ end
 --- @private
 function SettingsManager:settingsWereUpdatedFromTemplate()
     local settings_were_updated = false
+    local p
+    local ccount = #self.check_modified_props
     for key, props in pairs(self.parent.settings_template) do
         --* add missing settings from template:
         if not self.settings[key] then
@@ -127,26 +135,16 @@ function SettingsManager:settingsWereUpdatedFromTemplate()
             settings_were_updated = true
 
         else
-            --* add updated explanations from template:
-            if self.settings[key].explanation ~= props.explanation then
-                self.settings[key].explanation = props.explanation
-                settings_were_updated = true
+
+            --* change updated props from template:
+            for i = 1, ccount do
+                p = self.check_modified_props[i]
+                if self.settings[key][p] ~= props[p] then
+                    self.settings[key][p] = props[p]
+                    settings_were_updated = true
+                end
             end
-            --* change updated validators from template:
-            if self.settings[key].validator ~= props.validator then
-                self.settings[key].validator = props.validator
-                settings_were_updated = true
-            end
-            --* change updated after_change_callbacks from template:
-            if self.settings[key].after_change_callback ~= props.after_change_callback then
-                self.settings[key].after_change_callback = props.after_change_callback
-                settings_were_updated = true
-            end
-            --* change updated types from template:
-            if self.settings[key].type ~= props.type then
-                self.settings[key].type = props.type
-                settings_were_updated = true
-            end
+
             --* change updated options from template:
             if self.settings[key].options and props.options and KOR.tables:tablesAreNotEqual(self.settings[key].options, props.options) then
                 self.settings[key].options = props.options
