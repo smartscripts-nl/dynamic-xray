@@ -133,22 +133,19 @@ local TitleBar = OverlapGroup:extend{
 
     tab_buttons_left_top_padding = nil,
 
-    --* dynamically set in ((TitleBar#init)):
+    --* dynamically set in ((TitleBar#setWidgetProps)):
     is_landscape_screen = true,
 }
 
 function TitleBar:init()
-    self:setModuleProps()
+    self:setWidgetProps()
     self:initContainers()
 
     --* we either have icon buttons in the left half of the titlebar, or tab buttons; don't allow both, so replace top_buttons_left by tab_buttons_left:
     self:replaceTopButtonsLeftByTabButtonsLeft()
     self:injectTabButtonsLeft()
-
     --! this call must come before injectTabButtonsRight(), so self.has_top_buttons_right will be set to true if a close button has been added:
-    if not self.tab_buttons_right then
-        self:addCloseButton()
-    end
+    self:addCloseButton()
     self:injectTabButtonsRight()
 
     self:setWidthIfMissing()
@@ -159,16 +156,12 @@ function TitleBar:init()
 
     --! this call MUST come before injectSideContainers(), to nicely center the title:
     self:computeCorrectedTitleWidth()
-    if self.has_top_buttons then
-        self:injectSideContainers("left")
-    end
+    self:injectSideContainersLeft()
     --- this is de facto the title text:
     self:injectTitleIntoMainContainer()
 
     --! to actually see all items, it is important that the left and right containers are inserted AFTER the center/title container:
-    if self.has_top_buttons then
-        self:injectSideContainers("right")
-    end
+    self:injectSideContainersRight()
     if self:wasReInitialized() then
         return
     end
@@ -193,7 +186,7 @@ function TitleBar:paintTo(bb, x, y)
 end
 
 --- @private
-function TitleBar:setModuleProps()
+function TitleBar:setWidgetProps()
     self.is_landscape_screen = KOR.screenhelpers:isLandscapeScreen()
 
     --- we don't want an in-your-face bottom line in case of fullscreen dialogs:
@@ -703,34 +696,36 @@ end
 --* see also ((addCloseButtonRightSpacer)):
 --- @private
 function TitleBar:addCloseButton()
-    if not self.no_close_button and self.close_callback and not self.tab_buttons_right then
-        self.has_top_buttons_right = true
-
-        local icon_height = KOR.buttonprops:getFixedIconHeight("for_close_button")
-
-        --* in this case we need a smaller spaer above the close button in ((TitleBar#addVerticalSpacers)) > ((lower spacer above close button)), because for some reason the button would not be vertically centered otherwise:
-        self.has_only_close_button_on_right_side = true
-        self.has_top_buttons = true
-
-        self.top_buttons_right = {
-            Button:new({
-                icon = "close",
-                icon_height = icon_height,
-                icon_width = icon_height,
-                --[[text = "x",
-                text_font_size = 14,
-                text_font_bold = false,]]
-                callback = function()
-                    self.close_callback()
-                end,
-                hold_callback = function()
-                    if self.close_hold_callback then
-                        self.close_hold_callback()
-                    end
-                end
-            }),
-        }
+    if self.no_close_button or self.tab_buttons_right or not self.close_callback then
+        return
     end
+
+    self.has_top_buttons_right = true
+
+    local icon_height = KOR.buttonprops:getFixedIconHeight("for_close_button")
+
+    --* in this case we need a smaller spaer above the close button in ((TitleBar#addVerticalSpacers)) > ((lower spacer above close button)), because for some reason the button would not be vertically centered otherwise:
+    self.has_only_close_button_on_right_side = true
+    self.has_top_buttons = true
+
+    self.top_buttons_right = {
+        Button:new({
+            icon = "close",
+            icon_height = icon_height,
+            icon_width = icon_height,
+            --[[text = "x",
+            text_font_size = 14,
+            text_font_bold = false,]]
+            callback = function()
+                self.close_callback()
+            end,
+            hold_callback = function()
+                if self.close_hold_callback then
+                    self.close_hold_callback()
+                end
+            end
+        }),
+    }
 end
 
 --* compare ((TitleBar#setTopButtonsSizeAndCallbacks))
@@ -859,55 +854,61 @@ function TitleBar:injectSubTitle()
 end
 
 --- @private
-function TitleBar:injectSideContainers(side)
-
-    --- inject left container, either with icon buttons or tab buttons:
-    if side == "left" then
-
-        if self.has_top_buttons_left then
-            --* the height used for computation was computed in ((TitleBar#injectTopButtonsGroups)) or ((TitleBar#injectTabButtonsLeft)):
-            local container = VerticalGroup:new{
-                align = "left",
-                overlap_align = "left",
-                self.left_buttons_container,
-            }
-            if self.tab_buttons_left then
-                self.tab_buttons_left_top_padding = VerticalSpan:new{ width = Screen:scaleBySize(2) }
-                table_insert(container, 1, self.tab_buttons_left_top_padding)
-            end
-            table_insert(self.main_container, container)
-            return
-        end
-        --* in case of top_buttons_right but no top_buttons_left and centered title, add empty filler for left buttons group:
-        if self.has_top_buttons_right and self.align == "center" then
-            table_insert(self.main_container, VerticalGroup:new{
-                align = "left",
-                overlap_align = "left",
-                HorizontalSpan:new{ width = self.top_right_buttons_reserved_width },
-            })
-        end
+function TitleBar:injectSideContainersLeft()
+    if not self.has_top_buttons then
         return
     end
 
-    --- inject right container:
-    if side == "right" then
-        if self.has_top_buttons_right then
-            --* the height used for computation was computed in ((TitleBar#injectTopButtonsGroups)):
-            local dims = self.right_buttons_container:getSize()
-            table_insert(self.main_container, RightContainer:new{
-                dimen = Geom:new{ w = self.top_right_buttons_reserved_width, h = dims.h },
-                self.right_buttons_container,
-            })
-            return
+    --- inject left container, either with icon buttons or tab buttons:
+
+    if self.has_top_buttons_left then
+        --* the height used for computation was computed in ((TitleBar#injectTopButtonsGroups)) or ((TitleBar#injectTabButtonsLeft)):
+        local container = VerticalGroup:new{
+            align = "left",
+            overlap_align = "left",
+            self.left_buttons_container,
+        }
+        if self.tab_buttons_left then
+            self.tab_buttons_left_top_padding = VerticalSpan:new{ width = Screen:scaleBySize(2) }
+            table_insert(container, 1, self.tab_buttons_left_top_padding)
         end
-        --* in case of top_buttons_left but no top_buttons_right and centered title, add empty filler for right buttons group:
-        if self.has_top_buttons_left and self.align == "center" then
-            table_insert(self.main_container, VerticalGroup:new{
-                align = "left",
-                overlap_align = "left",
-                HorizontalSpan:new{ width = self.top_left_buttons_reserved_width },
-            })
-        end
+        table_insert(self.main_container, container)
+        return
+    end
+
+    --* in case of top_buttons_right but no top_buttons_left and centered title, add empty filler for left buttons group:
+    if self.has_top_buttons_right and self.align == "center" then
+        table_insert(self.main_container, VerticalGroup:new{
+            align = "left",
+            overlap_align = "left",
+            HorizontalSpan:new{ width = self.top_right_buttons_reserved_width },
+        })
+    end
+end
+
+--- @private
+function TitleBar:injectSideContainersRight()
+    if not self.has_top_buttons then
+        return
+    end
+
+    if self.has_top_buttons_right then
+        --* the height used for computation was computed in ((TitleBar#injectTopButtonsGroups)):
+        local dims = self.right_buttons_container:getSize()
+        table_insert(self.main_container, RightContainer:new{
+            dimen = Geom:new{ w = self.top_right_buttons_reserved_width, h = dims.h },
+            self.right_buttons_container,
+        })
+        return
+    end
+
+    --* in case of top_buttons_left but no top_buttons_right and centered title, add empty filler for right buttons group:
+    if self.has_top_buttons_left and self.align == "center" then
+        table_insert(self.main_container, VerticalGroup:new{
+            align = "left",
+            overlap_align = "left",
+            HorizontalSpan:new{ width = self.top_left_buttons_reserved_width },
+        })
     end
 end
 
