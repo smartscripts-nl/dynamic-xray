@@ -99,17 +99,18 @@ function SeriesManager:getNonSeriesData(full_path)
     local result = conn:exec(sql)
     conn = KOR.databases:closeInfoConnections(conn)
     if not result then
-        self:showNoSeriesFoundMessage()
+        KOR.messages:notify(_("no data found for this ebook"))
         return
     end
-
     return result
 end
 
+--- @private
 function SeriesManager:showNoSeriesFoundMessage()
     KOR.messages:notify(_("no series found on this e-reader"), 5)
 end
 
+--- @private
 function SeriesManager:populateSeries(result)
     --* query to get resultset in ((SeriesManager#searchSerieMembers))
     local series_table = {}
@@ -149,6 +150,7 @@ function SeriesManager:populateSeries(result)
     end
 end
 
+--- @private
 function SeriesManager:closeDialog()
     UIManager:close(self.series_dialog)
 end
@@ -258,6 +260,7 @@ function SeriesManager:showContextDialogForNonSeriesBook(full_path)
 end
 
 --* data for item were retrieved in ((SeriesManager#populateSeries)):
+--- @private
 function SeriesManager:showContextDialog(item, return_to_series_list, full_path, is_non_series_item)
 
     self.is_non_series_item = is_non_series_item
@@ -431,6 +434,7 @@ function SeriesManager:getSeriesNumber(d, i)
     return series_number
 end
 
+--- @private
 function SeriesManager:showContextDialogForCurrentEbook(result, full_path)
     if result and full_path and #result[1] == 1 then
         self:populateSeries(result)
@@ -444,6 +448,7 @@ function SeriesManager:showContextDialogForCurrentEbook(result, full_path)
     return false
 end
 
+--- @private
 function SeriesManager:_cache_resultset(cache_index, resultset)
     --* query to get resultset in ((SeriesManager#searchSerieMembers))
     --* cache for individual file:
@@ -464,6 +469,7 @@ function SeriesManager:getSeriesName(full_path)
     return has_text(series), series_index
 end
 
+--- @private
 function SeriesManager:isValidEntry(entry)
     return has_content(entry) and entry ~= "-"
 end
