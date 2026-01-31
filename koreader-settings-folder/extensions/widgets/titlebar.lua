@@ -90,19 +90,11 @@ local TitleBar = OverlapGroup:extend{
     show_parent = nil,
 
     -- #((define desired height of title bar))
-    desired_height = nil,
-    desired_heights = {
-        android = 70,
-        bigme = 100,
-        boox_go_10 = 90,
-        --* this value will be used for FileManagerHistory under Android:
-        android_higher_tabs = 100,
-        ubuntu = 26,
-    },
+    computed_titlebar_height = 0,
     is_popout_dialog = false,
-    left_buttons_height = 0,
     title_height = 0,
-    right_buttons_height = 0,
+    top_left_buttons_height = 0,
+    top_right_buttons_height = 0,
     has_small_close_button_padding = false,
 
     has_only_close_button = false,
@@ -135,6 +127,8 @@ local TitleBar = OverlapGroup:extend{
     has_top_buttons_left = false,
     has_top_buttons_right = false,
     has_only_close_button_on_right_side = false,
+
+    tab_buttons_left_top_padding = nil,
 
     --* dynamically set in ((TitleBar#init)):
     is_landscape_screen = true,
@@ -181,7 +175,6 @@ function TitleBar:init()
     if not self.width then
         self.width = Screen:getWidth()
     end
-    self:setDesiredHeight()
     --* here also ((addCloseButtonRightSpacer)) is called:
     self:injectTopButtonsGroups()
     self:setTopButtonsSizeAndCallbacks()
@@ -525,6 +518,10 @@ function TitleBar:injectTitle()
         bordersize = 0,
     }
 
+    if self.tab_buttons_left then
+        table_insert(self.title_group, self.tab_buttons_left_top_padding)
+    end
+
     if self.align == "left" then
         --* we need to :resetLayout() both VerticalGroup and HorizontalGroup in :setTitle()
 
@@ -630,7 +627,7 @@ function TitleBar:injectTabButtonsLeft()
             table_insert(self.left_buttons_container, button)
         end
 
-        self.left_buttons_height = self.left_buttons_container:getSize().h
+        self.top_left_buttons_height = self.left_buttons_container:getSize().h
 
         self.left_buttons_container_populated = true
     end
@@ -658,6 +655,10 @@ function TitleBar:injectTabButtonsRight()
         table_insert(self.right_buttons_container, HorizontalSpan:new{ width = self.top_right_buttons_reserved_width })
 
         self.right_buttons_container_populated = true
+    end
+
+    if self.right_buttons_container_populated then
+        self.top_right_buttons_height = self.right_buttons_container:getSize().h
     end
 end
 
@@ -709,7 +710,6 @@ function TitleBar:injectTopButtonsGroups()
                 table_insert(self.left_buttons_container, horizontal_spacer)
                 if self.is_popout_dialog then
                     table_insert(self.left_buttons_container, HorizontalSpan:new{ width = Size.padding.large })
-
                 end
             end
             button = self:getAdaptedTopButton(button)
@@ -721,7 +721,7 @@ function TitleBar:injectTopButtonsGroups()
                 table_insert(self.left_buttons_container, horizontal_spacer)
             end
         end
-        self.left_buttons_height = self.left_buttons_container:getSize().h
+        self.top_left_buttons_height = self.left_buttons_container:getSize().h
     end
     if self.top_buttons_right and not self.right_buttons_container_populated then
         count = #self.top_buttons_right
@@ -738,7 +738,7 @@ function TitleBar:injectTopButtonsGroups()
             table_insert(self.right_buttons_container, button)
         end
         self:addCloseButtonRightSpacer()
-        self.right_buttons_height = self.right_buttons_container:getSize().h
+        self.top_right_buttons_height = self.right_buttons_container:getSize().h
     end
 end
 
@@ -781,7 +781,7 @@ function TitleBar:injectBottomLineAndOrSubmenuButtonTable()
         end
 
         local filler_and_bottom_line = VerticalGroup:new{
-            VerticalSpan:new{ width = self.desired_height },
+            VerticalSpan:new{ width = self.computed_titlebar_height },
             self.submenu_buttontable_container,
             line_widget,
         }
@@ -825,11 +825,16 @@ function TitleBar:injectSideContainers(side)
 
         if self.has_top_buttons_left then
             --* the height used for computation was computed in ((TitleBar#injectTopButtonsGroups)) or ((TitleBar#injectTabButtonsLeft)):
-            table_insert(self.main_container, VerticalGroup:new{
+            local container = VerticalGroup:new{
                 align = "left",
                 overlap_align = "left",
                 self.left_buttons_container,
-            })
+            }
+            if self.tab_buttons_left then
+                self.tab_buttons_left_top_padding = VerticalSpan:new{ width = Screen:scaleBySize(2) }
+                table_insert(container, 1, self.tab_buttons_left_top_padding)
+            end
+            table_insert(self.main_container, container)
             return
         end
         --* in case of top_buttons_right but no top_buttons_left and centered title, add empty filler for left buttons group:
@@ -862,27 +867,6 @@ function TitleBar:injectSideContainers(side)
                 HorizontalSpan:new{ width = self.top_left_buttons_reserved_width },
             })
         end
-    end
-end
-
-function TitleBar:setDesiredHeight()
-
-    if DX.s.is_tablet_device then
-        self.desired_height = self.desired_heights.boox_go_10
-    elseif DX.s.is_mobile_device then
-        self.desired_height = self.desired_heights.bigme
-    else
-        self.desired_height = DX.s.is_android and self.desired_heights.android or self.desired_heights.ubuntu
-    end
-
-    if DX.s.is_android and self.higher_tab_buttons then
-        self.desired_height = self.desired_heights.android_higher_tabs
-    elseif DX.s.is_ubuntu and self.tab_buttons_left then
-        self.desired_height = self.desired_height + Screen:scaleBySize(43)
-    end
-
-    if self.for_filemanager then
-        self.desired_height = self.desired_height + Screen:scaleBySize(27)
     end
 end
 
@@ -937,28 +921,24 @@ function TitleBar:addVerticalSpacers()
     local highest_elem = "title"
     local max_height = title_height
 
-    local top_left_buttons_height = 0
     if self.has_top_buttons_left then
-        top_left_buttons_height = self.left_buttons_container:getSize().h
-        if top_left_buttons_height > max_height then
-            max_height = top_left_buttons_height
+        --* this height was set in ((TitleBar#injectTabButtonsLeft)):
+        if self.top_left_buttons_height > max_height then
+            max_height = self.top_left_buttons_height
             highest_elem = "left_buttons"
         end
     end
-    local top_right_buttons_height = 0
     if self.has_top_buttons_right then
-        top_right_buttons_height = self.right_buttons_container:getSize().h
-        if top_right_buttons_height > max_height then
-            max_height = top_right_buttons_height
+        --* this height was set in ((TitleBar#injectTabButtonsRight)):
+        if self.top_right_buttons_height > max_height then
+            max_height = self.top_right_buttons_height
             highest_elem = "right_buttons"
         end
     end
 
-    if max_height >= self.desired_height then
-        self.desired_height = max_height + Screen:scaleBySize(10)
-    end
+    self.computed_titlebar_height = self.tab_buttons_left and max_height + Screen:scaleBySize(4) or max_height + Screen:scaleBySize(7)
 
-    local difference = self.desired_height - title_height
+    local difference = self.computed_titlebar_height - title_height
     local spacer_height = math.floor(difference / 2)
     local config
     if highest_elem == "title" then
@@ -1004,7 +984,7 @@ function TitleBar:addVerticalSpacers()
     end
 
     if self.has_top_buttons_left then
-        difference = self.desired_height - top_left_buttons_height
+        difference = self.computed_titlebar_height - self.top_left_buttons_height
         spacer_height = math.floor(difference / 2)
         self.left_buttons_container = VerticalGroup:new{
             align = "left",
@@ -1018,7 +998,7 @@ function TitleBar:addVerticalSpacers()
     end
 
     if self.has_top_buttons_right then
-        difference = self.desired_height - top_right_buttons_height
+        difference = self.computed_titlebar_height - self.top_right_buttons_height
         spacer_height = math.floor(difference / 2)
 
         -- #((lower spacer above close button))
@@ -1046,11 +1026,6 @@ function TitleBar:addVerticalSpacers()
             overlap_align = "left",
             self.right_buttons_container,
         }
-    end
-
-    --* when the title was shrunk, make the title filler less high in ((TitleBar#injectBottomLineAndOrSubmenuButtonTable)):
-    if self.title_width_was_adapted then
-        self.desired_height = math.max(self.center_container:getSize().h, self.left_buttons_container:getSize().h, self.right_buttons_container:getSize().h) - 20
     end
 end
 

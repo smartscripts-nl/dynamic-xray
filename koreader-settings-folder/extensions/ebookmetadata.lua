@@ -22,6 +22,7 @@ local EbookMetadata = InputContainer:extend{
     metadata_dialog = nil,
 }
 
+--- @private
 function EbookMetadata:getMetadata(full_path, data, conn)
 
     local is_local_conn = not conn
@@ -83,7 +84,7 @@ function EbookMetadata:editEbookMetadata(full_path, data, active_tab)
         titlebar_alignment = "center",
         --* long ebook file names yield a title bar that is too high:
         --title = "Metadata: " .. path:gsub("^.+/", ""),
-        title = _("Edit metadata") .. KOR.icons.arrow .. authors .. ": " .. title,
+        title = authors .. ": " .. title,
         close_callback = function()
             self:closeDialog()
         end,
