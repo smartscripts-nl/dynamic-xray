@@ -28,6 +28,7 @@ local SeriesManager = WidgetContainer:extend{
     arg = nil,
     boxes = {},
     context_dialog = nil,
+    is_non_series_item = false,
     path = nil,
     separator = " • ",
     separator_with_extra_spacing = "  •  ",
@@ -78,6 +79,30 @@ function SeriesManager:searchSerieMembers(full_path)
         return
     end
     KOR.registry:set("series_members", result)
+    return result
+end
+
+--- @private
+function SeriesManager:getNonSeriesData(full_path)
+
+    local conn = KOR.databases:getDBconnForBookInfo("SeriesManager:getNonSeriesData")
+    local sql = [[
+        SELECT authors,
+        rating_goodreads,
+        title,
+        pages,
+        publication_year
+        FROM bookinfo
+        WHERE directory || filename = 'safe_path';
+    ]]
+    sql = KOR.databases:injectSafePath(sql, full_path)
+    local result = conn:exec(sql)
+    conn = KOR.databases:closeInfoConnections(conn)
+    if not result then
+        self:showNoSeriesFoundMessage()
+        return
+    end
+
     return result
 end
 
@@ -216,9 +241,26 @@ function SeriesManager:reloadContextDialog()
     end
 end
 
---* data for item were retrieved in ((SeriesManager#populateSeries)):
-function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
+function SeriesManager:showContextDialogForNonSeriesBook(full_path)
+    local result = self:getNonSeriesData(full_path)
+    if not result then
+        return
+    end
+    local item = {
+        authors = result["authors"][1],
+        publication_year = result["publication_year"][1],
+        pages = result["pages"][1],
+        rating_goodreads = result["rating_goodreads"][1],
+        path = full_path,
+        title = result["title"][1],
+    }
+    self:showContextDialog(item, false, full_path, "is_non_series_item")
+end
 
+--* data for item were retrieved in ((SeriesManager#populateSeries)):
+function SeriesManager:showContextDialog(item, return_to_series_list, full_path, is_non_series_item)
+
+    self.is_non_series_item = is_non_series_item
     self.item = item
     self.return_to_series_list = return_to_series_list
     self.full_path = full_path
@@ -229,11 +271,21 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
     KOR.registry:set(self.series_context_dialog_index, true)
     KOR.dialogs:showOverlay()
 
-    self:generateBoxItems(item, full_path)
+    if self.is_non_series_item then
+        self.boxes = {}
+        local is_current_ebook = full_path == DX.m.current_ebook_full_path
+        item.text = item.authors .. ": " .. item.title
+        local box_item = self:generateSingleBoxItem(is_current_ebook, item)
+        table_insert(self.boxes, box_item)
+    else
+        self:generateBoxItems(item, full_path)
+    end
+    local title = self:formatDialogTitle(item)
     self.context_dialog = KOR.dialogs:filesBox({
-        title = self:formatDialogTitle(item),
+        title = title,
         key_events_module = self.series_context_dialog_index,
         items = self.boxes,
+        non_series_box = self.boxes[1],
         top_buttons_left = {
             KOR.buttoninfopopup:forXraySettings({
                 callback = function()
@@ -287,7 +339,7 @@ end
 function SeriesManager:formatDialogTitle(item)
     local series_total_pages = tonumber(item.series_total_pages) or 0
     local dialog_title = item.text:gsub("  –  .+$", "")
-    if self.active_item_no > 0 then
+    if not self.is_non_series_item and self.active_item_no > 0 then
         dialog_title = dialog_title:gsub("%(", "(" .. self.active_item_no .. "/")
     end
     if self.series_ratings then
@@ -309,6 +361,18 @@ function SeriesManager:generateBoxItem(i, is_current_ebook, d)
         description = d.description,
         is_current_ebook = is_current_ebook,
     })
+end
+
+--* compare ((FilesBox#generateBoxes)) for regular series boxes:
+--- @private
+function SeriesManager:generateSingleBoxItem(is_current_ebook, item)
+    local box_item = {
+        title_info = self:formatEbookTitle(item.title),
+        meta_info = self:getMetaInformation(item),
+        is_current_ebook = is_current_ebook,
+        path = item.path,
+    }
+    return box_item
 end
 
 --- @private
@@ -345,7 +409,10 @@ function SeriesManager:formatEbookTitle(title, series_number)
     title = title:gsub("^.+%] ", "")
     --* reduce a title like "Seventh Carier.title" to "title":
     title = title:gsub("^.+%. ?", "")
-    title = series_number .. " " .. title
+    --* series_number is not available for a non-series book:
+    if series_number then
+        title = series_number .. " " .. title
+    end
     if title and title:len() > DX.s.SeriesManager_max_title_length then
         return title:sub(1, DX.s.SeriesManager_max_title_length - 3) .. "…"
     end
@@ -406,7 +473,7 @@ function SeriesManager:showSeriesForEbookPath(full_path)
         full_path = DX.m.current_ebook_full_path
     end
     if not DX.m.current_series then
-        KOR.ebookmetadata:editEbookMetadata(full_path)
+        KOR.seriesmanager:showContextDialogForNonSeriesBook(full_path)
         return
     end
 

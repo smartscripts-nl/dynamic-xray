@@ -63,6 +63,7 @@ local FilesBox = InputContainer:extend{
     items = {},
     key_events_module = nil,
     modal = true,
+    non_series_box = nil,
     padding = nil,
     row_spacer = nil,
     row_spacer_height = nil,
@@ -87,7 +88,11 @@ function FilesBox:init()
     self:computeWindowRegion()
     self:computeThumbnailDimensions()
     self:generateBoxes()
-    self:injectRows()
+    if self.non_series_box then
+        self:injectSingleRow()
+    else
+        self:injectRows()
+    end
     self:setSeparator()
     self:generateWidget()
     self:finalizeWidget()
@@ -95,6 +100,11 @@ end
 
 --- @private
 function FilesBox:generateBoxes()
+    if self.non_series_box then
+        local box = self:generateBox(self.non_series_box)
+        table_insert(self.boxes, box)
+        return
+    end
     local box
     count = #self.items
     for i = 1, count do
@@ -154,9 +164,9 @@ function FilesBox:getBoxButtons(params, bookinfo)
                       KOR.messages:notify(_("no description found"))
                       return true
                   end
-                  KOR.dialogs:textBox({
+                  KOR.dialogs:textOrHtmlBox({
                       title = params.title_info,
-                      info = description,
+                      content = description,
                       no_buttons_row = true,
                       use_computed_height = true,
                   })
@@ -234,8 +244,8 @@ end
 function FilesBox:injectRows()
     local row
     local row_completed
-    count = #self.boxes
     self.content_widget = VerticalGroup:new{}
+    count = #self.boxes
     for i = 1, count do
         row_completed = i > 1 and (i % self.columns == 0 or i == count)
         if not row then
@@ -258,6 +268,24 @@ function FilesBox:injectRows()
             row = nil
         end
     end
+end
+
+--- @private
+function FilesBox:injectSingleRow()
+    self.content_widget = VerticalGroup:new{}
+    local row = HorizontalGroup:new{
+        self.padding,
+    }
+    table_insert(row, CenterContainer:new{
+        dimen = dimen,
+        self.boxes[1],
+    })
+    table_insert(row, self.padding)
+    table_insert(self.content_widget, CenterContainer:new{
+        dimen = { w = self.screen_width, h = self.thumbnail_width + self.row_spacer_height },
+        row,
+        self.row_spacer,
+    })
 end
 
 --- @private
@@ -418,7 +446,7 @@ function FilesBox:computeThumbnailDimensions()
     rows = math_ceil(items_count / self.columns)
 
     --* the thumbnail should be 1/4 of the available box width and the text should take 3/4 of it:
-    self.thumbnail_width = math_floor(self.avail_width / (self.columns * 4))
+    self.thumbnail_width = self.non_series_box and math_floor(self.avail_width / 1.9) or math_floor(self.avail_width / (self.columns * 4))
 end
 
 --- @private
@@ -434,8 +462,10 @@ function FilesBox:setModuleProps()
     self.screen_width = Screen:getWidth()
     local factor = DX.s.SeriesManager_mark_active_title_with_border and 7 or 4
     self.avail_width = self.screen_width - factor * Size.padding.default
-    -- in portrait display there'll probably not be enough space for display of 3 columns:
-    if KOR.screenhelpers:isPortraitScreen() then
+    if self.non_series_box then
+        self.columns = 1
+    --* in portrait display there'll probably not be enough space for display of 3 columns:
+    elseif KOR.screenhelpers:isPortraitScreen() then
         self.columns = 2
     end
 end

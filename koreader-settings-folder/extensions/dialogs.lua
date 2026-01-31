@@ -365,6 +365,21 @@ function Dialogs:showOverlayReloaded(caller_hint, modal)
     return self:showOverlay(caller_hint, modal)
 end
 
+function Dialogs:textOrHtmlBox(args)
+    if args.content:match("<[a-z]") then
+        args.html = args.content
+        local screen_dims = Screen:getSize()
+        args.window_size = {
+            h = screen_dims.h * 0.8,
+            w = screen_dims.w * 0.7,
+        }
+        return self:htmlBox(args)
+    end
+
+    args.info = args.content
+    return self:textBox(args)
+end
+
 --[[
 Example of textbox with custom buttons:
 local lang = "nl"
