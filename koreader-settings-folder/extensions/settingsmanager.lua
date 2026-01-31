@@ -91,6 +91,7 @@ function SettingsManager:setKeyAndValue(key, props)
         explanation = props.explanation,
         locked = props.locked,
         validator = props.validator,
+        after_change_callback = props.after_change_callback,
         options = props.options,
     type = props.type,
         text = key .. ": " .. tostring(props.value) .. locked_indicator }
@@ -134,6 +135,11 @@ function SettingsManager:settingsWereUpdatedFromTemplate()
             --* change updated validators from template:
             if self.settings[key].validator ~= props.validator then
                 self.settings[key].validator = props.validator
+                settings_were_updated = true
+            end
+            --* change updated after_change_callbacks from template:
+            if self.settings[key].after_change_callback ~= props.after_change_callback then
+                self.settings[key].after_change_callback = props.after_change_callback
                 settings_were_updated = true
             end
             --* change updated types from template:
@@ -240,6 +246,7 @@ function SettingsManager:updateItemTableForTab()
                 text = KOR.strings:formatListItemNumber(list_no, self:removeHotkeyPrefix(setting.text)),
                 key = setting.key,
                 explanation = setting.explanation,
+                after_change_callback = setting.after_change_callback,
                 validator = setting.validator,
                 type = setting.type,
                 editable = true,
@@ -287,7 +294,7 @@ function SettingsManager:chooseSetting(key, current_nr, current_value, options, 
                 self:saveSetting(key, options[current])
                 self:changeMenuSetting(key, options[current], current_nr)
                 KOR.messages:notify(_("setting ") .. key .. _(" modified to ") .. tostring(options[current]), 4)
-                self:showParentDialog()
+                self:handleAfterChangeCallback(key)
             end
         })
     end
@@ -336,7 +343,7 @@ function SettingsManager:setNumber(key, current_nr, current_value, validator_pro
             self:saveSetting(key, value)
             self:changeMenuSetting(key, value, current_nr)
             KOR.messages:notify(_("setting ") .. key .. _(" modified to ") .. tostring(value), 4)
-            self:showParentDialog()
+            self:handleAfterChangeCallback(key)
         end,
         close_callback = function()
             self:showParentDialog()
@@ -426,7 +433,17 @@ function SettingsManager:handleNewValue(new_value, key, current_nr, itype)
     self:saveSetting(key, new_value)
     self:changeMenuSetting(key, new_value, current_nr)
     KOR.messages:notify(_("settting ") .. key .. _(" modified to ") .. tostring(new_value), 4)
-    self:showParentDialog()
+    self:handleAfterChangeCallback(key)
+end
+
+--- @private
+function SettingsManager:handleAfterChangeCallback(key)
+    if self.settings[key].after_change_callback then
+        local callback_index = self.settings[key].after_change_callback
+        self.parent.after_change_callbacks[callback_index]()
+    else
+        self:showParentDialog()
+    end
 end
 
 --- @private

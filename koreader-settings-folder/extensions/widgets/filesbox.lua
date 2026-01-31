@@ -432,7 +432,7 @@ function FilesBox:setModuleProps()
     self.boxes = {}
     self.screen_height = Screen:getHeight()
     self.screen_width = Screen:getWidth()
-    local factor = DX.s.SeriesManager_mark_active_title_with_border and 6 or 4
+    local factor = DX.s.SeriesManager_mark_active_title_with_border and 7 or 4
     self.avail_width = self.screen_width - factor * Size.padding.default
     -- in portrait display there'll probably not be enough space for display of 3 columns:
     if KOR.screenhelpers:isPortraitScreen() then

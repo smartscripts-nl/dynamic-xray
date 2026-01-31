@@ -32,6 +32,7 @@ local SeriesManager = WidgetContainer:extend{
     separator = " • ",
     separator_with_extra_spacing = "  •  ",
     series = {},
+    series_context_dialog_index = "series_manager_for_current_book",
     series_ratings = nil,
     series_table_indexed = {},
     series_resultsets = {},
@@ -208,17 +209,30 @@ function SeriesManager:onShowSeriesDialog(full_path)
     UIManager:show(self.series_dialog)
 end
 
+function SeriesManager:reloadContextDialog()
+    if KOR.registry:get(self.series_context_dialog_index) then
+        UIManager:close(self.context_dialog)
+        self:showContextDialog(self.item, self.return_to_series_list, self.full_path)
+    end
+end
+
 --* data for item were retrieved in ((SeriesManager#populateSeries)):
 function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
+
+    self.item = item
+    self.return_to_series_list = return_to_series_list
+    self.full_path = full_path
+
     if not full_path then
         full_path = last_file()
     end
+    KOR.registry:set(self.series_context_dialog_index, true)
     KOR.dialogs:showOverlay()
 
     self:generateBoxItems(item, full_path)
     self.context_dialog = KOR.dialogs:filesBox({
         title = self:formatDialogTitle(item),
-        key_events_module = "series_manager_for_current_book",
+        key_events_module = self.series_context_dialog_index,
         items = self.boxes,
         top_buttons_left = {
             KOR.buttoninfopopup:forXraySettings({
@@ -229,6 +243,7 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
         },
         after_close_callback = return_to_series_list and
         function()
+            KOR.registry:unset(self.series_context_dialog_index)
             KOR.dialogs:closeOverlay()
             self:onShowSeriesDialog(self.path)
         end,

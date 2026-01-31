@@ -178,6 +178,7 @@ local XraySettings = WidgetContainer:new{
             value = true,
             explanation = _("Series Manager: if set to true, the current book will be highlighted with a border around it."),
             locked = 0,
+            after_change_callback = "series_manager_active_marker_toggled",
         },
         SeriesManager_max_title_length = {
             value = 30,
@@ -221,11 +222,16 @@ local XraySettings = WidgetContainer:new{
         "2. " .. _("hotkeys"),
         "3. " .. _("system"),
     },
+    after_change_callbacks = {
+        series_manager_active_marker_toggled = function()
+            KOR.seriesmanager:reloadContextDialog()
+        end,
+    },
     validators = {
-        ["info_panel_height"] = function(value)
+        info_panel_height = function(value)
             return type(value) == "number" and value >= 0.1 and value <= 0.5 or _("a valid value should lie between 0.1 and 0.5...")
         end,
-        ["item_info_indent"] = function(value)
+        item_info_indent = function(value)
             --* so we immediately will see the new indentation:
             DX.pn:resetCache()
             return type(value) == "number" and value >= 4 and value <= 14 or _("a valid value should lie between 4 and 14...")
