@@ -152,12 +152,14 @@ function EbookMetadata:getFields(d)
                 allow_newline = false,
                 input_type = "number",
                 hint = rel_desc,
+                cursor_at_end = true,
             },
             {
                 text = d.authors,
                 tab = 1,
                 allow_newline = false,
                 hint = aut_desc,
+                cursor_at_end = true,
             },
         },
         {
@@ -165,6 +167,7 @@ function EbookMetadata:getFields(d)
             tab = 1,
             allow_newline = false,
             hint = tit_desc,
+            cursor_at_end = true,
         },
         --* row with 2 fields:
         {
@@ -173,12 +176,14 @@ function EbookMetadata:getFields(d)
                 tab = 1,
                 allow_newline = false,
                 hint = ser_desc,
+                cursor_at_end = true,
             },
             {
                 text = d.series_index,
                 tab = 1,
                 allow_newline = false,
                 hint = serno_desc,
+                cursor_at_end = true,
             },
         },
         --* row with 2 fields:
@@ -189,6 +194,7 @@ function EbookMetadata:getFields(d)
                 allow_newline = false,
                 input_type = "number",
                 hint = pag_desc,
+                cursor_at_end = true,
             },
             {
                 text = d.rating_goodreads,
@@ -196,6 +202,7 @@ function EbookMetadata:getFields(d)
                 allow_newline = false,
                 input_type = "number",
                 hint = rat_desc,
+                cursor_at_end = true,
             },
         },
         {
@@ -206,7 +213,7 @@ function EbookMetadata:getFields(d)
             scroll = true,
             scroll_by_pan = true,
             allow_newline = true,
-            cursor_at_end = true,
+            cursor_at_end = false,
             margin = Size.margin.small,
         }
     }

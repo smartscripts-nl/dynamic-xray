@@ -23,13 +23,16 @@ local count
 --- @class SeriesManager
 local SeriesManager = WidgetContainer:extend{
     name = "series",
+    active_item_no = nil,
     all_series_resultset = nil,
     arg = nil,
+    boxes = {},
     context_dialog = nil,
     path = nil,
     separator = " • ",
     separator_with_extra_spacing = "  •  ",
     series = {},
+    series_ratings = nil,
     series_table_indexed = {},
     series_resultsets = {},
 }
@@ -212,51 +215,11 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
     end
     KOR.dialogs:showOverlay()
 
-    local descriptions = KOR.strings:split(item.descriptions, self.separator)
-    local pages = KOR.strings:split(item.pages, self.separator)
-    local series_total_pages = tonumber(item.series_total_pages)
-    local publication_years = KOR.strings:split(item.publication_years, self.separator)
-    local finished_paths = KOR.strings:split(item.finished_paths, self.separator)
-    local series_paths = KOR.strings:split(item.series_paths, self.separator)
-    local series_ratings = item.series_ratings and KOR.strings:split(item.series_ratings, self.separator)
-    local series_numbers = item.series_numbers and KOR.strings:split(item.series_numbers, self.separator)
-    local series_titles = KOR.strings:split(item.series_titles, self.separator)
-
-    local total_buttons = #series_paths
-    local title, is_current_ebook
-    local active_item_no = 0
-    local boxes = {}
-    for i = 1, total_buttons do
-        is_current_ebook = self:populateBoxData(boxes, full_path, i, {
-            description = descriptions[i],
-            finished_path = finished_paths[i],
-            pages = pages[i],
-            publication_year = publication_years[i],
-            rating_goodreads = series_ratings[i],
-            series_number = series_numbers[i],
-            path = series_paths[i],
-            title = series_titles[i],
-        })
-        if is_current_ebook then
-            active_item_no = i
-        end
-    end
-    title = item.text:gsub("  –  .+$", "")
-    if active_item_no > 0 then
-        title = title:gsub("%(", "(" .. active_item_no .. "/")
-    end
-    if series_ratings then
-        title = title:gsub(KOR.icons.rating_bare .. "%d+,%d+", "")
-    end
-    if has_items(series_total_pages) then
-        title = KOR.strings:trim(title) .. " - " .. series_total_pages .. _("pp")
-    else
-        title = KOR.strings:trim(title) .. " - " .. "?" .. _("pp")
-    end
+    self:generateBoxItems(item, full_path)
     self.context_dialog = KOR.dialogs:filesBox({
-        title = title,
+        title = self:formatDialogTitle(item),
         key_events_module = "series_manager_for_current_book",
-        items = boxes,
+        items = self.boxes,
         after_close_callback = return_to_series_list and
         function()
             KOR.dialogs:closeOverlay()
@@ -265,12 +228,71 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path)
     })
 end
 
+---  @private
+function SeriesManager:generateBoxItems(item, full_path)
+    local descriptions = KOR.strings:split(item.descriptions, self.separator)
+    local pages = KOR.strings:split(item.pages, self.separator)
+    local publication_years = KOR.strings:split(item.publication_years, self.separator)
+    local finished_paths = KOR.strings:split(item.finished_paths, self.separator)
+    local series_paths = KOR.strings:split(item.series_paths, self.separator)
+    self.series_ratings = item.series_ratings and KOR.strings:split(item.series_ratings, self.separator)
+    local series_numbers = item.series_numbers and KOR.strings:split(item.series_numbers, self.separator)
+    local series_titles = KOR.strings:split(item.series_titles, self.separator)
+
+    local total_buttons = #series_paths
+    local is_current_ebook
+    self.active_item_no = 0
+    self.boxes = {}
+    for i = 1, total_buttons do
+        is_current_ebook = full_path == series_paths[i]
+        self:generateBoxItem(i, is_current_ebook, {
+            description = descriptions[i],
+            finished_path = finished_paths[i],
+            pages = pages[i],
+            publication_year = publication_years[i],
+            rating_goodreads = self.series_ratings[i],
+            series_number = series_numbers[i],
+            path = series_paths[i],
+            title = series_titles[i],
+        })
+        if is_current_ebook then
+            self.active_item_no = i
+        end
+    end
+end
+
 --- @private
-function SeriesManager:populateBoxData(boxes, full_path, i, d)
+function SeriesManager:formatDialogTitle(item)
+    local series_total_pages = tonumber(item.series_total_pages) or 0
+    local dialog_title = item.text:gsub("  –  .+$", "")
+    if self.active_item_no > 0 then
+        dialog_title = dialog_title:gsub("%(", "(" .. self.active_item_no .. "/")
+    end
+    if self.series_ratings then
+        dialog_title = dialog_title:gsub(KOR.icons.rating_bare .. "%d+,%d+", "")
+    end
+    if has_items(series_total_pages) then
+        return KOR.strings:trim(dialog_title) .. " - " .. series_total_pages .. _("pp")
+    end
+    return dialog_title
+end
+
+--- @private
+function SeriesManager:generateBoxItem(i, is_current_ebook, d)
+    local series_number = self:getSeriesNumber(d, i)
+    table_insert(self.boxes, {
+        path = d.path,
+        info = self:formatEbookTitle(d.title, series_number),
+        meta_info = self:getMetaInformation(d),
+        description = d.description,
+        is_current_ebook = is_current_ebook,
+    })
+end
+
+--- @private
+function SeriesManager:getMetaInformation(d)
     local read_marker = " " .. KOR.icons.finished_bare
     local meta_items = {}
-    local meta, series_number, description, has_pages
-    local is_current_ebook = full_path == d.path
 
     if self:isValidEntry(d.publication_year) then
         table_insert(meta_items, d.publication_year)
@@ -278,8 +300,7 @@ function SeriesManager:populateBoxData(boxes, full_path, i, d)
     if self:isValidEntry(d.finished_path) then
         table_insert(meta_items, read_marker)
     end
-    has_pages = self:isValidEntry(d.pages)
-    if has_pages then
+    if self:isValidEntry(d.pages) then
         table_insert(meta_items, d.pages .. "pp")
     else
         table_insert(meta_items, "?pp")
@@ -287,39 +308,38 @@ function SeriesManager:populateBoxData(boxes, full_path, i, d)
     if self:isValidEntry(d.rating_goodreads) then
         table_insert(meta_items, KOR.icons.rating_bare .. d.rating_goodreads)
     end
-    meta = ""
     if has_items(meta_items) then
-        meta = table_concat(meta_items, self.separator)
+        return table_concat(meta_items, self.separator)
     end
-    description = d.descriptions
-    --* don't add point to serie numbers like 4.5:
-    if d.series_number == "-" then
-        series_number = i .. "."
-    elseif not d.series_number:match("%.") then
-        series_number = d.series_number .. "."
-    else
-        series_number = d.series_number
-    end
+
+    return ""
+end
+
+--- @private
+function SeriesManager:formatEbookTitle(title, series_number)
     --* reduce a title like "Destroyermen 05 - Storm Surge" to "Storm Surge":
-    local title = d.title:gsub("^.+ %- ", "")
+    title = title:gsub("^.+ %- ", "")
     --* reduce a title like "[Lux 03] Opal" to "Opal":
     title = title:gsub("^.+%] ", "")
     --* reduce a title like "Seventh Carier.title" to "title":
     title = title:gsub("^.+%. ?", "")
-    title = series_number .. title
+    title = series_number .. " " .. title
     if title and title:len() > DX.s.SeriesManager_max_title_length then
-        title = title:sub(1, DX.s.SeriesManager_max_title_length - 3) .. "…"
+        return title:sub(1, DX.s.SeriesManager_max_title_length - 3) .. "…"
     end
-    table_insert(boxes, {
-        path = d.path,
-        info = title,
-        description = description,
-        meta_info = meta,
-        font_bold = is_current_ebook,
-        is_current_ebook = is_current_ebook,
-    })
+    return title
+end
 
-    return is_current_ebook
+--- @private
+function SeriesManager:getSeriesNumber(d, i)
+    local series_number = d.series_number
+    if d.series_number == "-" then
+        return i .. "."
+        --* don't add point to serie numbers like 4.5:
+    elseif not d.series_number:match("%.") then
+        return d.series_number .. "."
+    end
+    return series_number
 end
 
 function SeriesManager:showContextDialogForCurrentEbook(result, full_path)

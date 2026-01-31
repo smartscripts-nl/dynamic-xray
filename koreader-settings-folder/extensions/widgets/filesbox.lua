@@ -32,7 +32,6 @@ local math_min = math.min
 local table = table
 local table_insert = table.insert
 local table_remove = table.remove
-local type = type
 
 local scale_by_size = Screen:scaleBySize(1000000) / 1000000
 local function _fontSize(dimen, nominal, max)
@@ -51,6 +50,8 @@ local count, dimen
 
 --- @class FilesBox
 local FilesBox = InputContainer:extend{
+    avail_height = nil,
+    avail_width = nil,
     boxes = {},
     columns = 3,
     column_width = nil,
@@ -61,6 +62,7 @@ local FilesBox = InputContainer:extend{
     items = {},
     key_events_module = nil,
     modal = true,
+    padding = nil,
     row_spacer = nil,
     row_spacer_height = nil,
     subtitle = nil,
@@ -73,13 +75,13 @@ local FilesBox = InputContainer:extend{
 
 function FilesBox:init()
     self:initHotkeys()
+    self:setPadding()
     self:setModuleProps()
     self:initFrame()
     self:initRowSpacer()
     self:setWidth()
     --* height will be computed below, after we build top and bottom components, when we know how much height they are taking
     self:generateTitleBar()
-    self:setPaddingAndSpacing()
     self:computeLineHeight()
     self:computeWindowRegion()
     self:computeThumbnailDimensions()
@@ -98,7 +100,6 @@ function FilesBox:generateBoxes()
         box = self:generateBox({
             info = self.items[i].info,
             meta_info = self.items[i].meta_info,
-            font_bold = self.items[i].font_bold,
             is_current_ebook = self.items[i].is_current_ebook,
             path = self.items[i].path,
             callback = self.items[i].callback,
@@ -116,7 +117,7 @@ function FilesBox:generateBox(params)
     end
     local thumbnail, info, meta_info = self:getBoxElements(params, bookinfo)
 
-    self.column_width = math_floor(self.screen_width / self.columns)
+    self.column_width = math_floor(self.avail_width / self.columns)
     local button_table = self:getBoxButtons(params, bookinfo)
 
     return self:getBoxContainer(thumbnail, info, meta_info, button_table)
@@ -130,7 +131,7 @@ function FilesBox:getBoxElements(params, bookinfo)
     local face = Font:getFace(self.font_face, font_size)
     local info = TextWidget:new{
         text = params.info,
-        bold = params.font_bold,
+        bold = params.is_current_ebook,
         face = face,
         padding = 0,
     }
@@ -169,6 +170,7 @@ function FilesBox:getBoxButtons(params, bookinfo)
               icon = "edit-lighter",
               callback = function()
                   KOR.ebookmetadata:editEbookMetadata(params.path)
+                  return true
               end
           }),
           KOR.buttoninfopopup:forBookOpen({
@@ -225,13 +227,18 @@ function FilesBox:injectRows()
     self.content_widget = VerticalGroup:new{}
     for i = 1, count do
         row_completed = i > 1 and (i % self.columns == 0 or i == count)
-        row = row or HorizontalGroup:new{}
+        if not row then
+            row = HorizontalGroup:new{
+                self.padding,
+            }
+        end
         table_insert(row, CenterContainer:new{
             dimen = dimen,
-            self.boxes[i]
+            self.boxes[i],
         })
 
         if row_completed then
+            table_insert(row, self.padding)
             table_insert(self.content_widget, CenterContainer:new{
                 dimen = { w = self.screen_width, h = self.thumbnail_width + self.row_spacer_height },
                 row,
@@ -357,7 +364,7 @@ function FilesBox:generateWidget()
     local elements = VerticalGroup:new{
         self.titlebar,
         self.separator,
-        self.content_top_margin,
+        self.padding,
         --* content
         CenterContainer:new{
             dimen = Geom:new{
@@ -366,7 +373,7 @@ function FilesBox:generateWidget()
             },
             self.content_widget,
         },
-        self.content_bottom_margin,
+        self.padding,
     }
 
     elements.align = "left"
@@ -399,7 +406,8 @@ function FilesBox:computeThumbnailDimensions()
     local items_count = #self.items
     rows = math_ceil(items_count / self.columns)
 
-    self.thumbnail_width = math_floor(self.screen_width / (3 * self.columns))
+    --* the thumbnail should be 1/4 of the available box width and the text should take 3/4 of it:
+    self.thumbnail_width = math_floor(self.avail_width / (self.columns * 4))
 end
 
 --- @private
@@ -413,25 +421,16 @@ function FilesBox:setModuleProps()
     self.boxes = {}
     self.screen_height = Screen:getHeight()
     self.screen_width = Screen:getWidth()
-    -- in portrait display there'll probably not be enough space for displaying 3 columns:
+    self.avail_width = self.screen_width - 2 * Size.padding.default
+    -- in portrait display there'll probably not be enough space for display of 3 columns:
     if KOR.screenhelpers:isPortraitScreen() then
         self.columns = 2
     end
 end
 
 --- @private
-function FilesBox:setPaddingAndSpacing()
-    --* This padding and the resulting width apply to the content
-    --* below the title:  lookup word and definition
-    self.content_padding_h = self.content_padding or (self.window_size == "fullscreen" or self.window_size == "max" or type(self.window_size) == "table") and Size.padding.closebuttonpopupdialog or Size.padding.large
-    local content_padding_v = Size.padding.fullscreen --* added via VerticalSpan
-    self.content_width = self.width - 2 * self.content_padding_h
-
-    self.content_padding_v =  content_padding_v
-
-    --* Spans between components
-    self.content_top_margin = VerticalSpan:new{ width = content_padding_v }
-    self.content_bottom_margin = VerticalSpan:new{ width = content_padding_v }
+function FilesBox:setPadding()
+    self.padding = VerticalSpan:new{ width = Size.padding.fullscreen }
 end
 
 --- @private
