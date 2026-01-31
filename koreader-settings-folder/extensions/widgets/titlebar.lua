@@ -32,6 +32,9 @@ local Screen = Device.screen
 local DX = DX
 local G_reader_settings = G_reader_settings
 local math = math
+local math_floor = math.floor
+local math_max = math.max
+local math_min = math.min
 local pairs = pairs
 local table_insert = table.insert
 local type = type
@@ -135,7 +138,62 @@ local TitleBar = OverlapGroup:extend{
 }
 
 function TitleBar:init()
+    self:setModuleProps()
+    self:initContainers()
 
+    --* we either have icon buttons in the left half of the titlebar, or tab buttons; don't allow both, so replace top_buttons_left by tab_buttons_left:
+    self:replaceTopButtonsLeftByTabButtonsLeft()
+    self:injectTabButtonsLeft()
+
+    --! this call must come before injectTabButtonsRight(), so self.has_top_buttons_right will be set to true if a close button has been added:
+    if not self.tab_buttons_right then
+        self:addCloseButton()
+    end
+    self:injectTabButtonsRight()
+
+    self:setWidthIfMissing()
+    --* here also ((addCloseButtonRightSpacer)) is called:
+    self:injectTopButtonsGroups()
+    self:setTopButtonsSizeAndCallbacks()
+    self:injectSubMenuButtons()
+
+    --! this call MUST come before injectSideContainers(), to nicely center the title:
+    self:computeCorrectedTitleWidth()
+    if self.has_top_buttons then
+        self:injectSideContainers("left")
+    end
+    --- this is de facto the title text:
+    self:injectTitleIntoMainContainer()
+
+    --! to actually see all items, it is important that the left and right containers are inserted AFTER the center/title container:
+    if self.has_top_buttons then
+        self:injectSideContainers("right")
+    end
+    if self:wasReInitialized() then
+        return
+    end
+
+    self:injectMainContainer()
+    self:injectBottomLineAndOrSubmenuButtonTable()
+    --* ((InputDialog)): description line above a field :
+    self:injectSubTitle()
+    self:setDims()
+
+    --* Call our base class's init (especially since OverlapGroup has very peculiar self.dimen semantics...)
+    OverlapGroup.init(self)
+end
+
+function TitleBar:paintTo(bb, x, y)
+    --* We need to update self.dimen's x and y for any ges.pos:intersectWith(title_bar)
+    --* to work. (This is done by FrameContainer, but not by most other widgets... It
+    --* should probably be done in all of them, but not sure of side effects...)
+    self.dimen.x = x
+    self.dimen.y = y
+    OverlapGroup.paintTo(self, bb, x, y)
+end
+
+--- @private
+function TitleBar:setModuleProps()
     self.is_landscape_screen = KOR.screenhelpers:isLandscapeScreen()
 
     --- we don't want an in-your-face bottom line in case of fullscreen dialogs:
@@ -150,7 +208,10 @@ function TitleBar:init()
     if self.has_top_buttons_left then
         self.align = "center"
     end
+end
 
+--- @private
+function TitleBar:initContainers()
     self.left_buttons_container = HorizontalGroup:new{
         --! "left" and "right" not allowed for HorizontalGroups !
         align = "center",
@@ -162,77 +223,48 @@ function TitleBar:init()
         align = "center",
     }
 
-    --* we either have icon buttons in the left half of the titlebar, or tab buttons; don't allow both, so replace top_buttons_left by tab_buttons_left:
-    self:replaceTopButtonsLeftByTabButtonsLeft()
-    self:injectTabButtonsLeft()
-
-    --! this call must come before injectTabButtonsRight(), so self.has_top_buttons_right will be set to true if a close button has been added:
-    if not self.tab_buttons_right then
-        self:addCloseButton()
-    end
-    self:injectTabButtonsRight()
-
-    if not self.width then
-        self.width = Screen:getWidth()
-    end
-    --* here also ((addCloseButtonRightSpacer)) is called:
-    self:injectTopButtonsGroups()
-    self:setTopButtonsSizeAndCallbacks()
-    self:injectSubMenuButtons()
-
     self.main_container = HorizontalGroup:new{
         align = "center",
     }
+end
 
-    --! this call MUST come before injectSideContainers(), to nicely center the title:
-    self:computeCorrectedTitleWidth()
-
-    if self.has_top_buttons then
-        self:injectSideContainers("left")
+--- @private
+function TitleBar:setWidthIfMissing()
+    if not self.width then
+        self.width = Screen:getWidth()
     end
+end
 
-    --- this is de facto the title text:
-    self:injectTitle()
-
-    --! to actually see all items, it is important that the left and right containers are inserted AFTER the center/title container:
-    if self.has_top_buttons then
-        self:injectSideContainers("right")
-    end
-
+--- @private
+function TitleBar:wasReInitialized()
     if self._initial_re_init_needed then
         --* We have computed all the self._initial_ metrics needed.
         self._initial_re_init_needed = nil
         self:clear()
         self:init()
-        return
+        return true
     end
 
+    return false
+    end
+
+--- @private
+function TitleBar:injectMainContainer()
     table_insert(self, self.main_container)
 
     if not self.title_bar_height then
         self.title_bar_height = self.main_container:getSize().h
     end
+end
 
-    self:injectBottomLineAndOrSubmenuButtonTable()
-
+--- @private
+function TitleBar:setDims()
     self.dimen = Geom:new{
         x = 0,
         y = 0,
         w = self.width,
         h = self.titlebar_height, --* buttons can overflow this
     }
-
-    --* Call our base class's init (especially since OverlapGroup has very peculiar self.dimen semantics...)
-    OverlapGroup.init(self)
-end
-
-function TitleBar:paintTo(bb, x, y)
-    --* We need to update self.dimen's x and y for any ges.pos:intersectWith(title_bar)
-    --* to work. (This is done by FrameContainer, but not by most other widgets... It
-    --* should probably be done in all of them, but not sure of side effects...)
-    self.dimen.x = x
-    self.dimen.y = y
-    OverlapGroup.paintTo(self, bb, x, y)
 end
 
 function TitleBar:getHeight()
@@ -275,6 +307,7 @@ function TitleBar:setTitle(title, no_refresh)
     end
 end
 
+--- @private
 function TitleBar:setSubTitle(subtitle)
     if self.subtitle_widget and not self.subtitle_multilines then --* no TextBoxWidget:setText() available
         self.subtitle_widget:setText(subtitle)
@@ -300,8 +333,7 @@ function TitleBar:setRightIcon(icon)
     end
 end
 
---* ==================== SMARTSCRIPTS =====================
-
+--- @private
 function TitleBar:setButtonIconType(config, button)
     local props = { "icon", "icon_text", "text_icon", "icon_icon" }
     local prop
@@ -317,6 +349,7 @@ end
 
 --* compare ((TitleBar#setTopButtonsSizeAndCallbacks))
 --* compare final injection in ((TitleBar#injectTopButtonsGroups))
+--- @private
 function TitleBar:getAdaptedTopButton(button)
 
     local config
@@ -352,6 +385,7 @@ function TitleBar:getAdaptedTopButton(button)
 end
 
 --? Is this necessary?
+--- @private
 function TitleBar:setButtonProps(button)
     local new_button = {}
     for name, prop in pairs(button) do
@@ -382,6 +416,7 @@ end
 
 --* compare ((TitleBar#getAdaptedTopButton))
 --* compare final injection in ((TitleBar#injectTopButtonsGroups))
+--- @private
 function TitleBar:setTopButtonsSizeAndCallbacks()
     self.has_only_close_button = not self.no_close_button and not self.top_buttons_left and self.top_buttons_right and not self.tab_buttons_right and true or false
     local bcount
@@ -409,7 +444,8 @@ function TitleBar:setTopButtonsSizeAndCallbacks()
     end
 end
 
-function TitleBar:injectTitle()
+--- @private
+function TitleBar:injectTitleIntoMainContainer()
 
     local title_max_width = self.corrected_title_width or self.width - 2 * self.title_h_padding - self.top_left_buttons_reserved_width - self.top_right_buttons_reserved_width
 
@@ -577,7 +613,7 @@ function TitleBar:injectTitle()
         table_insert(self.center_container, self.subtitle_widget)
         --- we need this extra CenterContainer as wrapper to make sure that title and subtitle are nicely centered as one module:
         self.center_container = CenterContainer:new{
-            dimen = Geom:new{ w = math.max(self.title_width, self.subtitle_width), h = self.title_height },
+            dimen = Geom:new{ w = math_max(self.title_width, self.subtitle_width), h = self.title_height },
             align = self.align,
             overlap_align = self.align,
             self.center_container,
@@ -609,6 +645,7 @@ function TitleBar:injectTitle()
     table_insert(self.main_container, self.center_container)
 end
 
+--- @private
 function TitleBar:injectTabButtonsLeft()
     --? used by methods in ((TabFactory#setTabButtonAndContent)) > ((tabs in titlebar)) ??:
     --* button props were set in ((Button#addTitleBarTabButtonProps)):
@@ -633,6 +670,7 @@ function TitleBar:injectTabButtonsLeft()
     end
 end
 
+--- @private
 function TitleBar:injectTabButtonsRight()
 
     --* button props were set in ((Button#addTitleBarTabButtonProps)):
@@ -663,6 +701,7 @@ function TitleBar:injectTabButtonsRight()
 end
 
 --* see also ((addCloseButtonRightSpacer)):
+--- @private
 function TitleBar:addCloseButton()
     if not self.no_close_button and self.close_callback and not self.tab_buttons_right then
         self.has_top_buttons_right = true
@@ -697,6 +736,7 @@ end
 --* compare ((TitleBar#setTopButtonsSizeAndCallbacks))
 --* compare ((TitleBar#getAdaptedTopButton))
 --- the groups generated here are only horizontally oriented
+--- @private
 function TitleBar:injectTopButtonsGroups()
     --* under Android we need more horizontal spacing:
     local spacer_width = self:getHorizontalSpacerWidth()
@@ -744,6 +784,7 @@ end
 
 --* see ((addCloseButton)):
 --* to add right margin for close button:
+--- @private
 function TitleBar:addCloseButtonRightSpacer()
     local right_border_spacer
     if self.for_filemanager or self.has_small_close_button_padding then
@@ -763,6 +804,7 @@ function TitleBar:addCloseButtonRightSpacer()
     table_insert(self.right_buttons_container, right_border_spacer)
 end
 
+--- @private
 function TitleBar:injectBottomLineAndOrSubmenuButtonTable()
     if self.with_bottom_line or self.submenu_buttontable then
 
@@ -788,12 +830,10 @@ function TitleBar:injectBottomLineAndOrSubmenuButtonTable()
         table_insert(self, filler_and_bottom_line)
         self.titlebar_height = filler_and_bottom_line:getSize().h
     end
-
-    --* ((InputDialog)): description line above a field :
-    self:injectSubTitle()
 end
 
 --* defacto used for showing description line above a field for ((InputDialog)):
+--- @private
 function TitleBar:injectSubTitle()
     if self.info_text then
         local h_padding = self.info_text_h_padding or self.title_h_padding
@@ -818,6 +858,7 @@ function TitleBar:injectSubTitle()
     end
 end
 
+--- @private
 function TitleBar:injectSideContainers(side)
 
     --- inject left container, either with icon buttons or tab buttons:
@@ -870,6 +911,7 @@ function TitleBar:injectSideContainers(side)
     end
 end
 
+--- @private
 function TitleBar:getHorizontalSpacerWidth(for_close_button)
     if DX.s.is_mobile_device then
         return Size.padding.fullscreen
@@ -881,12 +923,14 @@ function TitleBar:getHorizontalSpacerWidth(for_close_button)
     return DX.s.is_android and Size.padding.fullscreen or Size.padding.large --* or Size.padding.titlebarbutton instead of large
 end
 
+--- @private
 function TitleBar:injectSubMenuButtons()
     if self.submenu_buttontable then
         table_insert(self.submenu_buttontable_container, self.submenu_buttontable)
     end
 end
 
+--- @private
 function TitleBar:instantiateButton(button)
     return type(button) == "table" and Button:new(button) or button
 end
@@ -901,6 +945,7 @@ function TitleBar:refreshTabButtons(tab_buttons_left, tab_buttons_right)
     self:init()
 end
 
+--- @private
 function TitleBar:replaceTopButtonsLeftByTabButtonsLeft()
     if self.tab_buttons_left and self.top_buttons_left then
         local button
@@ -914,6 +959,7 @@ function TitleBar:replaceTopButtonsLeftByTabButtonsLeft()
     end
 end
 
+--- @private
 function TitleBar:addVerticalSpacers()
     local title_dims = self.center_container:getSize()
     local title_height = title_dims.h
@@ -939,7 +985,7 @@ function TitleBar:addVerticalSpacers()
     self.computed_titlebar_height = self.tab_buttons_left and max_height + Screen:scaleBySize(4) or max_height + Screen:scaleBySize(7)
 
     local difference = self.computed_titlebar_height - title_height
-    local spacer_height = math.floor(difference / 2)
+    local spacer_height = math_floor(difference / 2)
     local config
     if highest_elem == "title" then
         config = {
@@ -985,7 +1031,7 @@ function TitleBar:addVerticalSpacers()
 
     if self.has_top_buttons_left then
         difference = self.computed_titlebar_height - self.top_left_buttons_height
-        spacer_height = math.floor(difference / 2)
+        spacer_height = math_floor(difference / 2)
         self.left_buttons_container = VerticalGroup:new{
             align = "left",
             overlap_align = "left",
@@ -999,7 +1045,7 @@ function TitleBar:addVerticalSpacers()
 
     if self.has_top_buttons_right then
         difference = self.computed_titlebar_height - self.top_right_buttons_height
-        spacer_height = math.floor(difference / 2)
+        spacer_height = math_floor(difference / 2)
 
         -- #((lower spacer above close button))
         --* in this case we need a smaller spacer above the close button, because for some reason the button would not be vertically centered otherwise:
@@ -1029,6 +1075,7 @@ function TitleBar:addVerticalSpacers()
     end
 end
 
+--- @private
 function TitleBar:computeCorrectedTitleWidth()
     self.top_left_buttons_reserved_width = 0
     self.top_right_buttons_reserved_width = 0
@@ -1041,11 +1088,11 @@ function TitleBar:computeCorrectedTitleWidth()
     local screen_width = Screen:getWidth()
     if self.align == "center" and (self.has_top_buttons_left or self.has_top_buttons_right) then
         --* Keep title and subtitle text centered even if single button
-        self.top_left_buttons_reserved_width = math.max(self.top_left_buttons_reserved_width, self.top_right_buttons_reserved_width)
+        self.top_left_buttons_reserved_width = math_max(self.top_left_buttons_reserved_width, self.top_right_buttons_reserved_width)
         self.top_right_buttons_reserved_width = self.top_left_buttons_reserved_width
 
         -- #((corrected title width for Xray edit dialog))
-        self.corrected_title_width = math.min(self.width, screen_width - 2 * self.top_left_buttons_reserved_width)
+        self.corrected_title_width = math_min(self.width, screen_width - 2 * self.top_left_buttons_reserved_width)
     end
 end
 
