@@ -308,7 +308,6 @@ function SeriesManager:populateBoxData(boxes, full_path, i, d)
     if title and title:len() > DX.s.SeriesManager_max_title_length then
         title = title:sub(1, DX.s.SeriesManager_max_title_length - 3) .. "…"
     end
-    --table_insert(buttons[#buttons], {
     table_insert(boxes, {
         path = d.path,
         info = title,

@@ -413,6 +413,10 @@ function FilesBox:setModuleProps()
     self.boxes = {}
     self.screen_height = Screen:getHeight()
     self.screen_width = Screen:getWidth()
+    -- in portrait display there'll probably not be enough space for displaying 3 columns:
+    if KOR.screenhelpers:isPortraitScreen() then
+        self.columns = 2
+    end
 end
 
 --- @private
