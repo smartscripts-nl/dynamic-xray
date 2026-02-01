@@ -225,6 +225,7 @@ function SeriesManager:onShowSeriesDialog(full_path)
             finished_paths = self.series[nr].finished_paths,
         }
         item.callback = function()
+            UIManager:close(self.series_dialog)
             KOR.dialogs:closeOverlay()
             self:showContextDialog(item, "return_to_series_list", self.series[nr].path)
         end
@@ -337,7 +338,7 @@ function SeriesManager:generateBoxItems(item, full_path)
             finished_path = finished_paths[i],
             pages = pages[i],
             publication_year = publication_years[i],
-            rating_goodreads = self.series_ratings[i],
+            rating_goodreads = self.series_ratings and self.series_ratings[i],
             series_number = series_numbers[i],
             path = series_paths[i],
             title = series_titles[i],
