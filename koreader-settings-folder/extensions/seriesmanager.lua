@@ -288,7 +288,7 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path,
         title = title,
         key_events_module = self.series_context_dialog_index,
         items = self.boxes,
-        non_series_box = self.boxes[1],
+        non_series_box = self.is_non_series_item and self.boxes[1],
         top_buttons_left = {
             KOR.buttoninfopopup:forXraySettings({
                 callback = function()
