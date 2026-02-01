@@ -11,7 +11,6 @@ local DX = DX
 local has_content = has_content
 local has_items = has_items
 local has_text = has_text
-local last_file = last_file
 local pairs = pairs
 local string = string
 local table_concat = table.concat
@@ -78,7 +77,11 @@ function SeriesManager:searchSerieMembers(full_path)
         self:showNoSeriesFoundMessage()
         return
     end
-    KOR.registry:set("series_members", result)
+    if full_path then
+        KOR.registry:set("series_members", result)
+    else
+        KOR.registry:set("all_series", result)
+    end
     return result
 end
 
@@ -158,7 +161,7 @@ end
 function SeriesManager:onShowSeriesDialog(full_path)
     self.path = full_path
     --* this var will be set in ((SeriesManager#searchSerieMembers)):
-    local cached_result = KOR.registry:getOnce("series_members")
+    local cached_result = full_path and KOR.registry:getOnce("series_members") or KOR.registry:get("all_series")
     KOR.dialogs:closeOverlay()
 
     local cache_index
@@ -187,12 +190,12 @@ function SeriesManager:onShowSeriesDialog(full_path)
     end
 
     KOR.dialogs:closeOverlay()
-    if not result then
+    if full_path and not result then
         self:showNoSeriesFoundMessage()
         return
     end
 
-    if self:showContextDialogForCurrentEbook(result, full_path) then
+    if full_path and self:showContextDialogForCurrentEbook(result, full_path) then
         return
     end
 
@@ -263,14 +266,15 @@ end
 --- @private
 function SeriesManager:showContextDialog(item, return_to_series_list, full_path, is_non_series_item)
 
+    if not full_path then
+        full_path = DX.m.current_ebook_full_path
+    end
+
     self.is_non_series_item = is_non_series_item
     self.item = item
     self.return_to_series_list = return_to_series_list
     self.full_path = full_path
 
-    if not full_path then
-        full_path = last_file()
-    end
     KOR.registry:set(self.series_context_dialog_index, true)
     KOR.dialogs:showOverlay()
 
@@ -293,6 +297,12 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path,
             KOR.buttoninfopopup:forXraySettings({
                 callback = function()
                     DX.s.showSettingsManager()
+                end
+            }),
+            KOR.buttoninfopopup:forAllSeries({
+                callback = function()
+                    UIManager:close(self.context_dialog)
+                    DX.c:onShowSeriesManager()
                 end
             }),
         },
@@ -436,7 +446,13 @@ end
 
 --- @private
 function SeriesManager:showContextDialogForCurrentEbook(result, full_path)
-    if result and full_path and #result[1] == 1 then
+    if not full_path then
+        full_path = DX.m.current_ebook_full_path
+    end
+    if not result then
+        result = self:searchSerieMembers(full_path)
+    end
+    if result and full_path then -- and #result[1] == 1
         self:populateSeries(result)
         local series_name = result["series_name"][1]
         if self.series_table_indexed[series_name] then

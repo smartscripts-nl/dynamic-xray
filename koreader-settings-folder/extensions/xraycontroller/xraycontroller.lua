@@ -15,7 +15,7 @@ The views layer has three main streams:
     b) XrayInfoPanel (DX.ip): responsible for the information panel at the bottom of the PageNavigator
     c) XrayPages (DX.p): responsible for the main content op the Navigator, its pages. Handles navigation through these and marking of Xray items in them.
 4) Also mentionable is the fact that some DX dialogs have shared hotkeys, in which case the hotkeys of the top most dialog will be used, not that same hotkey for an underlying dialog. See ((XRAY_DIALOGS_SHARED_HOTKEYS)) for an explanation.
-5) DX has a ((SeriesManager)) for listing the books in a series. The items in this Manager have action buttons, for viewing large covers, descriptions, opening the e-book, etc. The user can also edit the metadata of ebooks from the Manager: authors, titles, series name, series index, page count, publication year, book description. The Manager uses ((Dialogs#filesBox)) > ((FilesBox)) to generate its dialog. The user can call it by tapping on the user icon in some DX dialogs, or by pressing Shift+M.
+5) DX has a ((SeriesManager)) for listing the books in a series. The items in this Manager have action buttons, for viewing large covers, descriptions, opening the e-book, etc. The user can also edit the metadata of ebooks from the Manager: authors, titles, series name, series index, page count, publication year, book description. The Manager uses ((Dialogs#filesBox)) > ((FilesBox)) to generate its dialog. The user can call it by tapping on the series manager icon in some DX dialogs, or by pressing Shift+M.
 
 
 The user will have the most Kindle-like experience when he/she opens the Page Navigator - see ((XrayController#onShowPageNavigator)). In this navigator all Xray items in a page will be marked bold and they will be mentioned in a side panel. Tapping on items in the side panel will put an explanation of that item in the bottom panel. You can even filter the content of the Navigator for a specific Xray item, so it will only show pages which contain that item.
@@ -106,6 +106,7 @@ local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 require("extensions/helperfunctions")
+local _ = KOR:initCustomTranslations()
 
 local has_no_text = has_no_text
 local pairs = pairs
@@ -217,6 +218,8 @@ function XrayController:onDispatcherRegisterActions()
     Dispatcher:registerAction("show_items", { category = "none", event = "ShowList", title = DX.d:getControllerEntryName("Show xray-items in this book/series"), reader = true })
     Dispatcher:registerAction("show_xray_page_navigator", { category = "none", event = "ShowPageNavigator", title = DX.d:getControllerEntryName("Show Xray Page Navigator"), rolling = true })
     Dispatcher:registerAction("add_xray_item", { category = "none", event = "AddNewXrayItem", title = DX.d:getControllerEntryName("Add an Xray item"), reader = true })
+    Dispatcher:registerAction("show_series_manager", { category = "none", event = "ShowSeriesManager", title = _("Show Series Manager"), reader = true })
+    Dispatcher:registerAction("show_series_manager_current_ebook", { category = "none", event = "ShowCurrentSeries", title = _("Show series and/or metadata for current e-book"), reader = true })
 end
 
 function XrayController:doBatchImport(count, callback)
@@ -267,9 +270,18 @@ function XrayController:onShowList(focus_item, dont_show, select_mode)
     DX.d:showList(focus_item, dont_show, select_mode)
 end
 
---* in event name format because of gesture:
+function XrayController:onShowCurrentSeries()
+    KOR.seriesmanager:showContextDialogForCurrentEbook()
+    return true
+end
+
 function XrayController:onShowPageNavigator()
     self:showPageNavigator()
+    return true
+end
+
+function XrayController:onShowSeriesManager()
+    KOR.seriesmanager:onShowSeriesDialog()
     return true
 end
 
@@ -488,7 +500,25 @@ function XrayController:viewItemHits(item_name)
 end
 
 function XrayController:addToMainMenu(menu_items)
-    local icon = KOR.icons.lightning_bare
+    local icon = KOR.icons.seriesmanager_bare
+    menu_items.series_manager = {
+        text = icon .. " Series Manager",
+        sub_item_table = {
+            {
+                text = icon .. " " .. _("Show all series"),
+                callback = function()
+                    self:onShowSeriesManager()
+                end
+            },
+            {
+                text = icon .. " " .. _("Show series or metadata for the current e-book"),
+                callback = function()
+                    self:onShowCurrentSeries()
+                end
+            },
+        }
+    }
+    icon = KOR.icons.lightning_bare
     menu_items.dynamic_xray = {
         text = icon .. DX.d:getControllerEntryName(" Dynamic Xray"),
         sub_item_table = {

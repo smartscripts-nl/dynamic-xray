@@ -90,6 +90,8 @@ return {
     reset_bare = "\u{EB58}",
     search = "\u{EA48}" .. spacer,
     search_bare = "\u{EA48}",
+    seriesmanager = "\u{ED18}" .. spacer,
+    seriesmanager_bare = "\u{ED18}",
     spacer = "\u{2002}",
     today = "\u{E7EE}" .. spacer,
     today_bare = "\u{E7EE}",

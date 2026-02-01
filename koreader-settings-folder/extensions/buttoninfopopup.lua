@@ -22,6 +22,16 @@ local ButtonInfoPopup = WidgetContainer:new{
 
 --* these methods return ALL PROPS for a button as a button definition table, to be used as argument for creating a button table
 
+function ButtonInfoPopup:forAllSeries(props)
+	return KOR.buttonprops:set({
+		icon_size_ratio = 0.6,
+		icon = "seriesmanager",
+		info = _("series manager icon | Show all series found in the database."),
+		callback_label = _("show"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forBookCoverPreviewSmall(props)
 	return KOR.buttonprops:set({
 		icon = "image",
@@ -205,10 +215,10 @@ end
 
 function ButtonInfoPopup:forSeriesCurrentBook(props)
 	return KOR.buttonprops:set({
-		icon = "author",
+		icon = "seriesmanager",
 		icon_size_ratio = 0.5,
 		--* see ((KeyEvents#addSeriesManagerHotkey)) for the hotkey:
-		info = T(_("user icon | Show all books present on this e-reader of the series of which the current book is a member.\n\nHotkey %1 Shift+M"), KOR.icons.arrow_bare),
+		info = T(_("series manager icon | Show all books present on this e-reader of the series of which the current book is a member.\n\nHotkey %1 Shift+M"), KOR.icons.arrow_bare),
 		callback_label = _("show"),
 		--! callback defined by calling module
 	}, props)
