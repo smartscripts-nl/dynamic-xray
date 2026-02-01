@@ -339,7 +339,7 @@ function SeriesManager:generateBoxItems(item, full_path)
             pages = pages[i],
             publication_year = publication_years[i],
             rating_goodreads = self.series_ratings and self.series_ratings[i],
-            series_number = series_numbers[i],
+            series_number = series_numbers and series_numbers[i],
             path = series_paths[i],
             title = series_titles[i],
         })
