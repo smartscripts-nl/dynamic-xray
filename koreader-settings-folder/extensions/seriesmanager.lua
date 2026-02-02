@@ -227,7 +227,7 @@ function SeriesManager:onShowSeriesDialog(full_path)
         item.callback = function()
             UIManager:close(self.series_dialog)
             KOR.dialogs:closeOverlay()
-            self:showContextDialog(item, "return_to_series_list", self.series[nr].path)
+            self:showContextDialog(item, self.series[nr].path)
         end
         table_insert(self.item_table, item)
     end
@@ -243,7 +243,7 @@ end
 function SeriesManager:reloadContextDialog()
     if KOR.registry:get(self.series_context_dialog_index) then
         UIManager:close(self.context_dialog)
-        self:showContextDialog(self.item, self.return_to_series_list, self.full_path)
+        self:showContextDialog(self.item, self.full_path)
     end
 end
 
@@ -260,12 +260,12 @@ function SeriesManager:showContextDialogForNonSeriesBook(full_path)
         path = full_path,
         title = result["title"][1],
     }
-    self:showContextDialog(item, false, full_path, "is_non_series_item")
+    self:showContextDialog(item, full_path, "is_non_series_item")
 end
 
 --* data for item were retrieved in ((SeriesManager#populateSeries)):
 --- @private
-function SeriesManager:showContextDialog(item, return_to_series_list, full_path, is_non_series_item)
+function SeriesManager:showContextDialog(item, full_path, is_non_series_item)
 
     if not full_path then
         full_path = DX.m.current_ebook_full_path
@@ -273,7 +273,6 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path,
 
     self.is_non_series_item = is_non_series_item
     self.item = item
-    self.return_to_series_list = return_to_series_list
     self.full_path = full_path
 
     KOR.registry:set(self.series_context_dialog_index, true)
@@ -307,12 +306,6 @@ function SeriesManager:showContextDialog(item, return_to_series_list, full_path,
                 end
             }),
         },
-        after_close_callback = return_to_series_list and
-        function()
-            KOR.registry:unset(self.series_context_dialog_index)
-            KOR.dialogs:closeOverlay()
-            self:onShowSeriesDialog(self.path)
-        end,
     })
 end
 
@@ -457,7 +450,7 @@ function SeriesManager:showContextDialogForCurrentEbook(result, full_path)
         self:populateSeries(result)
         local series_name = result["series_name"][1]
         if self.series_table_indexed[series_name] then
-            self:showContextDialog(self.series_table_indexed[series_name], false, full_path)
+            self:showContextDialog(self.series_table_indexed[series_name], full_path)
             return true
         end
     end
