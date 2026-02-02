@@ -51,10 +51,11 @@ local count, dimen
 
 --- @class FilesBox
 local FilesBox = InputContainer:extend{
+    active_item_background = KOR.colors.background_gray_light,
     avail_height = nil,
     avail_width = nil,
     boxes = {},
-    columns = 3,
+    columns = DX.s.SeriesManager_columns_count,
     column_width = nil,
     font_face = "x_smallinfofont",
     font_size = 14,
@@ -64,7 +65,8 @@ local FilesBox = InputContainer:extend{
     key_events_module = nil,
     modal = true,
     non_series_box = nil,
-    padding = nil,
+    padding_horizontal = nil,
+    padding_vertical = nil,
     row_spacer = nil,
     row_spacer_height = nil,
     subtitle = nil,
@@ -123,9 +125,6 @@ end
 --- @private
 function FilesBox:generateBox(params)
     local bookinfo = KOR.bookinfomanager:getBookInfo(params.path, true)
-    if not bookinfo then
-        return
-    end
     local thumbnail, title_info, meta_info = self:getBoxElements(params, bookinfo)
 
     self.column_width = math_floor(self.avail_width / self.columns)
@@ -197,10 +196,12 @@ function FilesBox:getBoxButtons(params, bookinfo)
     end
     local buttons_count = #buttons[1]
     local generic_icon_size = 40
-    local icon_size = Screen:scaleBySize(generic_icon_size)
+    local icon_size = math_floor(Screen:scaleBySize(generic_icon_size) * 0.9)
 
     return ButtonTable:new{
-        width = buttons_count * icon_size + buttons_count * (Size.line.medium),
+        no_separators = true,
+        background = params.is_current_ebook and self.active_item_background or KOR.colors.white,
+        width = buttons_count * icon_size,
         buttons = buttons,
     }
 end
@@ -232,7 +233,7 @@ function FilesBox:getBoxContainer(params, thumbnail, title_info, meta_info, butt
         box = FrameContainer:new{
             radius = Size.radius.window,
             bordersize = Size.border.default,
-            background = KOR.colors.background_gray_light,
+            background = self.active_item_background,
             color = KOR.colors.darker_indicator_color,
             box,
         }
@@ -259,7 +260,6 @@ function FilesBox:injectRows()
         })
 
         if row_completed then
-            table_insert(row, self.padding)
             table_insert(self.content_widget, CenterContainer:new{
                 dimen = { w = self.screen_width, h = self.thumbnail_width + self.row_spacer_height },
                 row,
@@ -274,13 +274,13 @@ end
 function FilesBox:injectSingleRow()
     self.content_widget = VerticalGroup:new{}
     local row = HorizontalGroup:new{
-        self.padding,
+        self.padding_horizontal,
     }
     table_insert(row, CenterContainer:new{
         dimen = dimen,
         self.boxes[1],
     })
-    table_insert(row, self.padding)
+    table_insert(row, self.padding_horizontal)
     table_insert(self.content_widget, CenterContainer:new{
         dimen = { w = self.screen_width, h = self.thumbnail_width + self.row_spacer_height },
         row,
@@ -403,7 +403,7 @@ function FilesBox:generateWidget()
     local elements = VerticalGroup:new{
         self.titlebar,
         self.separator,
-        self.padding,
+        self.padding_vertical,
         --* content
         CenterContainer:new{
             dimen = Geom:new{
@@ -412,7 +412,7 @@ function FilesBox:generateWidget()
             },
             self.content_widget,
         },
-        self.padding,
+        self.padding_vertical,
     }
 
     elements.align = "left"
@@ -456,23 +456,25 @@ end
 
 --- @private
 function FilesBox:setModuleProps()
+    self.columns = DX.s.SeriesManager_columns_count
     dimen = nil
     self.boxes = {}
     self.screen_height = Screen:getHeight()
     self.screen_width = Screen:getWidth()
     local factor = DX.s.SeriesManager_mark_active_title_with_border and 7 or 4
-    self.avail_width = self.screen_width - factor * Size.padding.default
+    if DX.s.SeriesManager_columns_count == 3 then
+        factor = DX.s.SeriesManager_mark_active_title_with_border and 5 or 2
+    end
+    self.avail_width = DX.s.SeriesManager_columns_count == 2 and self.screen_width - factor * Size.padding.default or self.screen_width - factor * Size.padding.button
     if self.non_series_box then
         self.columns = 1
-    --* in portrait display there'll probably not be enough space for display of 3 columns:
-    elseif KOR.screenhelpers:isPortraitScreen() then
-        self.columns = 2
     end
 end
 
 --- @private
 function FilesBox:setPadding()
-    self.padding = VerticalSpan:new{ width = Size.padding.fullscreen }
+    self.padding_vertical = VerticalSpan:new{ width = Size.padding.fullscreen }
+    self.padding_horizontal = VerticalSpan:new{ width = Size.padding.small }
 end
 
 --- @private

@@ -1,7 +1,6 @@
 
 local require = require
 
-local Blitbuffer = require("ffi/blitbuffer")
 local Button = require("extensions/widgets/button")
 local Device = require("device")
 local FocusManager = require("ui/widget/focusmanager")
@@ -15,7 +14,7 @@ local Geom = require("ui/geometry")
 local Screen = Device.screen
 
 local math = math
-local table = table
+local table_insert = table.insert
 
 --* compare ((ButtonTableFactory)) for easy construction of horizontally or vertically arranged button tables (to be called before generating the ButtonTable, so we can deliver an arranged button set):
 --- @class ButtonTable
@@ -43,12 +42,14 @@ local ButtonTable = FocusManager:extend{
     button_font_size = 18,
 
     is_active_tab = false,
-    readonly = false,
+    background = nil,
     button_lines = 2,
     button_font_weight = "bold",
     decrease_top_padding = nil,
     increase_top_padding = nil,
     no_bottom_spacer = false,
+    no_separators = false,
+    readonly = false,
     sep_color = KOR.colors.tabs_table_separators,
 }
 
@@ -72,7 +73,7 @@ function ButtonTable:init()
         horizontal_group = HorizontalGroup:new{}
         row = self.buttons[i]
         column_cnt = #row
-        available_width = self.width - self.sep_width * (column_cnt - 1)
+        available_width = self.no_separators and self.width or self.width - self.sep_width * (column_cnt - 1)
         unspecified_width_buttons = 0
         for j = 1, column_cnt do
             --* disabled, to create less distance between rows:
@@ -95,25 +96,27 @@ function ButtonTable:init()
                 button, max_button_height, min_needed_button_width = self:generateButton(btn_entry, max_button_height, default_button_width, min_needed_button_width)
 
                 buttons_layout_line[j] = button
-                table.insert(horizontal_group, button)
+                table_insert(horizontal_group, button)
             end
         end --* end for each button
 
         --* insert equal height vertical separators:
-        vertical_sep = LineWidget:new{
-            background = self.sep_color,
-            dimen = Geom:new{
-                w = self.sep_width,
-                h = max_button_height - Screen:scaleBySize(10),
+        if not self.no_separators then
+            vertical_sep = LineWidget:new{
+                background = self.sep_color,
+                dimen = Geom:new{
+                    w = self.sep_width,
+                    h = max_button_height - Screen:scaleBySize(10),
+                }
             }
-        }
-        inserted = 0
-        for j = 1, column_cnt - 1 do
-            table.insert(horizontal_group, j + inserted + 1, vertical_sep)
-            inserted = inserted + 1
+            inserted = 0
+            for j = 1, column_cnt - 1 do
+                    table_insert(horizontal_group, j + inserted + 1, vertical_sep)
+                inserted = inserted + 1
+            end
         end
 
-        table.insert(self.container, horizontal_group)
+        table_insert(self.container, horizontal_group)
         if not self.no_bottom_spacer then
             self:addVerticalSpan()
             if i < row_cnt then
@@ -122,7 +125,7 @@ function ButtonTable:init()
         end
         if not self.no_bottom_spacer and column_cnt > 0 then
             --* Only add lines that are not separator to the focusmanager
-            table.insert(self.buttons_layout, buttons_layout_line)
+            table_insert(self.buttons_layout, buttons_layout_line)
         end
         -- #((shrink button row))
         --* width used here was computed in call to ((ButtonTable#generateButton)) above > ((compute min needed button width)):
@@ -156,14 +159,14 @@ function ButtonTable:init()
 end
 
 function ButtonTable:addVerticalSpan()
-    table.insert(self.container, VerticalSpan:new{
+    table_insert(self.container, VerticalSpan:new{
         width = Size.span.vertical_default,
     })
 end
 
 function ButtonTable:addVerticalSeparator(black_line)
-    table.insert(self.container, LineWidget:new{
-        background = black_line and Blitbuffer.COLOR_BLACK or Blitbuffer.COLOR_GRAY,
+    table_insert(self.container, LineWidget:new{
+        background = black_line and KOR.colors.black or KOR.colors.separator_vertical_color,
         dimen = Geom:new{
             w = self.width,
             h = self.sep_width,
@@ -175,7 +178,7 @@ function ButtonTable:setupGridScrollBehaviour()
     --* So that the last row get the same height as all others,
     --* we add an invisible separator below it
     self.container:resetLayout()
-    table.insert(self.container, VerticalSpan:new{
+    table_insert(self.container, VerticalSpan:new{
         width = self.sep_width,
     })
     self.container:getSize() --* have it recompute its offsets and size
@@ -184,22 +187,22 @@ function ButtonTable:setupGridScrollBehaviour()
     self:getStepScrollGrid()
 
     --* Insert 2 lines off-dimensions in VerticalGroup (that will show only when overflowing)
-    table.insert(self.container, 1, LineWidget:new{
-        background = Blitbuffer.COLOR_BLACK,
+    table_insert(self.container, 1, LineWidget:new{
+        background = KOR.colors.black,
         dimen = Geom:new{
             w = self.width,
             h = self.sep_width,
         },
     })
-    table.insert(self.container._offsets, 1, { x = self.width, y = -self.sep_width })
-    table.insert(self.container, LineWidget:new{
-        background = Blitbuffer.COLOR_BLACK,
+    table_insert(self.container._offsets, 1, { x = self.width, y = -self.sep_width })
+    table_insert(self.container, LineWidget:new{
+        background = KOR.colors.black,
         dimen = Geom:new{
             w = self.width,
             h = self.sep_width,
         },
     })
-    table.insert(self.container._offsets, { x = self.width, y = self.container._size.h + self.sep_width })
+    table_insert(self.container._offsets, { x = self.width, y = self.container._size.h + self.sep_width })
 end
 
 function ButtonTable:getStepScrollGrid()
@@ -222,7 +225,7 @@ function ButtonTable:getStepScrollGrid()
                     --* columns = { array of similar info about each button in that row's HorizontalGroup }
                     --* Its absence means free scrolling on the x-axis (if scroll ends up being needed)
                 }
-                table.insert(step_rows, row)
+                table_insert(step_rows, row)
                 row_num = row_num + 1
             end
             idx = idx + 4
@@ -240,7 +243,7 @@ end
 --* ==================== SMARTSCRIPTS =====================
 
 function ButtonTable:generateButton(btn_entry, max_button_height, default_button_width, min_needed_button_width)
-    local DEFAULT_COLOR = not self.readonly and Blitbuffer.COLOR_BLACK or Blitbuffer.COLOR_WHITE
+    local DEFAULT_COLOR = not self.readonly and KOR.colors.black or KOR.colors.white
     local min_width, button_dim, config
 
     local is_bold = self.button_font_weight == "bold"
@@ -259,6 +262,7 @@ function ButtonTable:generateButton(btn_entry, max_button_height, default_button
         config.width = default_button_width
     end
     config.align = btn_entry.align or "center"
+    config.background = self.background or KOR.colors.background
     config.button_lines = self.button_lines
     config.text_font_size = btn_entry.font_size or self.button_font_size
     config.decrease_top_padding = self.decrease_top_padding

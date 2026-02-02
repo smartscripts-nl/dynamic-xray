@@ -33,6 +33,7 @@ local SeriesManager = WidgetContainer:extend{
     separator_with_extra_spacing = "  •  ",
     series = {},
     series_context_dialog_index = "series_manager_for_current_book",
+    serieslist = nil,
     series_ratings = nil,
     series_table_indexed = {},
     series_resultsets = {},
@@ -267,8 +268,8 @@ end
 --- @private
 function SeriesManager:showContextDialog(item, full_path, is_non_series_item)
 
-    if not full_path then
-        full_path = DX.m.current_ebook_full_path
+    if not full_path and item.path then
+        full_path = item.path
     end
 
     self.is_non_series_item = is_non_series_item
@@ -285,7 +286,7 @@ function SeriesManager:showContextDialog(item, full_path, is_non_series_item)
         local box_item = self:generateSingleBoxItem(is_current_ebook, item)
         table_insert(self.boxes, box_item)
     else
-        self:generateBoxItems(item, full_path)
+        self:generateBoxItems(item)
     end
     local title = self:formatDialogTitle(item)
     self.context_dialog = KOR.dialogs:filesBox({
@@ -294,15 +295,15 @@ function SeriesManager:showContextDialog(item, full_path, is_non_series_item)
         items = self.boxes,
         non_series_box = self.is_non_series_item and self.boxes[1],
         top_buttons_left = {
-            KOR.buttoninfopopup:forXraySettings({
-                callback = function()
-                    DX.s.showSettingsManager()
-                end
-            }),
             KOR.buttoninfopopup:forAllSeries({
                 callback = function()
                     UIManager:close(self.context_dialog)
                     DX.c:onShowSeriesManager()
+                end
+            }),
+            KOR.buttoninfopopup:forXraySettings({
+                callback = function()
+                    DX.s.showSettingsManager()
                 end
             }),
         },
@@ -310,7 +311,7 @@ function SeriesManager:showContextDialog(item, full_path, is_non_series_item)
 end
 
 ---  @private
-function SeriesManager:generateBoxItems(item, full_path)
+function SeriesManager:generateBoxItems(item)
     local descriptions = KOR.strings:split(item.descriptions, self.separator)
     local pages = KOR.strings:split(item.pages, self.separator)
     local publication_years = KOR.strings:split(item.publication_years, self.separator)
@@ -321,21 +322,22 @@ function SeriesManager:generateBoxItems(item, full_path)
     local series_titles = KOR.strings:split(item.series_titles, self.separator)
 
     local total_buttons = #series_paths
-    local is_current_ebook
+    local is_current_ebook, data
     self.active_item_no = 0
     self.boxes = {}
     for i = 1, total_buttons do
-        is_current_ebook = full_path == series_paths[i]
-        self:generateBoxItem(i, is_current_ebook, {
+        is_current_ebook = series_paths[i] == DX.s.current_ebook_full_path
+        data = {
             description = descriptions[i],
             finished_path = finished_paths[i],
             pages = pages[i],
             publication_year = publication_years[i],
             rating_goodreads = self.series_ratings and self.series_ratings[i],
-            series_number = series_numbers and series_numbers[i],
+            series_number = series_numbers and series_numbers[i] or i,
             path = series_paths[i],
             title = series_titles[i],
-        })
+        }
+        self:generateBoxItem(i, is_current_ebook, data)
         if is_current_ebook then
             self.active_item_no = i
         end
@@ -359,15 +361,16 @@ function SeriesManager:formatDialogTitle(item)
 end
 
 --- @private
-function SeriesManager:generateBoxItem(i, is_current_ebook, d)
-    local series_number = self:getSeriesNumber(d, i)
-    table_insert(self.boxes, {
-        path = d.path,
-        title_info = self:formatEbookTitle(d.title, series_number),
-        meta_info = self:getMetaInformation(d),
-        description = d.description,
+function SeriesManager:generateBoxItem(i, is_current_ebook, data)
+    local series_number = self:getSeriesNumber(data, i)
+    local generated_data = {
+        path = data.path,
+        title_info = self:formatEbookTitle(data.title, series_number),
+        meta_info = self:getMetaInformation(data),
+        description = data.description,
         is_current_ebook = is_current_ebook,
-    })
+    }
+    table_insert(self.boxes, generated_data)
 end
 
 --* compare ((FilesBox#generateBoxes)) for regular series boxes:
@@ -411,9 +414,9 @@ end
 --- @private
 function SeriesManager:formatEbookTitle(title, series_number)
     --* reduce a title like "Destroyermen 05 - Storm Surge" to "Storm Surge":
-    title = title:gsub("^.+ %- ", "")
+    title = title:gsub("^.+%d %- ", "")
     --* reduce a title like "[Lux 03] Opal" to "Opal":
-    title = title:gsub("^.+%] ", "")
+    title = title:gsub("^.+%d%] ", "")
     --* reduce a title like "Seventh Carier.title" to "title":
     title = title:gsub("^.+%. ?", "")
     --* series_number is not available for a non-series book:
@@ -427,13 +430,13 @@ function SeriesManager:formatEbookTitle(title, series_number)
 end
 
 --- @private
-function SeriesManager:getSeriesNumber(d, i)
-    local series_number = d.series_number
-    if d.series_number == "-" then
+function SeriesManager:getSeriesNumber(data, i)
+    local series_number = data.series_number
+    if data.series_number == "-" then
         return i .. "."
         --* don't add point to serie numbers like 4.5:
-    elseif not d.series_number:match("%.") then
-        return d.series_number .. "."
+    elseif not data.series_number:match("%.") then
+        return data.series_number .. "."
     end
     return series_number
 end

@@ -50,9 +50,13 @@ return {
 
     scrollbar_color = Blitbuffer.COLOR_LIGHT_GRAY,
 
+    separator_vertical_color = Blitbuffer.COLOR_GRAY,
+
     title_bar_bottom_line = Blitbuffer.COLOR_GRAY,
     title_bar_with_submenu_bottom_line = Blitbuffer.COLOR_GRAY_9,
     title_bar_bottom_line_light = Blitbuffer.COLOR_LIGHT_GRAY,
+
+    white = Blitbuffer.COLOR_WHITE,
 
     xray_item_status_indicators_color = Blitbuffer.COLOR_GRAY_5,
     xray_page_or_paragraph_match_marker = Blitbuffer.COLOR_GRAY_9,

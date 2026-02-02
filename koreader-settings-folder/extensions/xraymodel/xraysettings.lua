@@ -156,7 +156,7 @@ local XraySettings = WidgetContainer:new{
                 default_value = 0.22,
                 value_step = 0.01,
             },
-            explanation = _("Page Navitator: this setting, a fraction between 0.1 and 0.8, determines the height of the bottom info panel relative to the screen height."),
+            explanation = _("Page Navigator: this setting, a fraction between 0.1 and 0.8, determines the height of the bottom info panel relative to the screen height."),
             locked = 0,
             type = "number",
         },
@@ -174,17 +174,26 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
             type = "number",
         },
+        SeriesManager_columns_count = {
+            value = 2,
+            options = { 2, 3 },
+            explanation = "Series Manager: determines in how many columns the items will be shown. The larger value can result in some lay-out issues",
+            locked = 0,
+            type = "number",
+            after_change_callback = "series_manager_reload",
+        },
         SeriesManager_mark_active_title_with_border = {
             value = true,
             explanation = _("Series Manager: if set to true, the current book will be highlighted with a border around it."),
             locked = 0,
-            after_change_callback = "series_manager_active_marker_toggled",
+            after_change_callback = "series_manager_reload",
         },
         SeriesManager_max_title_length = {
             value = 30,
             explanation = _("Series Manager: if a title is longer than this value, it will be truncated with an ellipsis to this max length."),
             locked = 0,
             type = "number",
+            after_change_callback = "series_manager_reload",
         },
         UI_mode = {
             value = "page",
@@ -223,7 +232,7 @@ local XraySettings = WidgetContainer:new{
         "3. " .. _("system"),
     },
     after_change_callbacks = {
-        series_manager_active_marker_toggled = function()
+        series_manager_reload = function()
             KOR.seriesmanager:reloadContextDialog()
         end,
     },
