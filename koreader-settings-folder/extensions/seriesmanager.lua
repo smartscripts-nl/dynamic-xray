@@ -5,6 +5,7 @@ local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
+--local logger = require("logger")
 local md5 = require("ffi/sha2").md5
 
 local DX = DX
@@ -34,6 +35,7 @@ local SeriesManager = WidgetContainer:extend{
     series = {},
     series_context_dialog_index = "series_manager_for_current_book",
     serieslist = nil,
+    series_bookmarks = nil,
     series_ratings = nil,
     series_table_indexed = {},
     series_resultsets = {},
@@ -48,6 +50,7 @@ function SeriesManager:searchSerieMembers(full_path)
         i.series AS series_name,
         COALESCE(SUM(i.pages), 0) AS series_total_pages,
         GROUP_CONCAT(i.directory || i.filename, '%s') AS series_paths,
+        GROUP_CONCAT(COALESCE(i.bookmarks, '-'), '%s') AS series_bookmarks,
         GROUP_CONCAT(COALESCE(i.rating_goodreads, '-'), '%s') AS series_ratings,
         GROUP_CONCAT(COALESCE(i.title, '-'), '%s') AS series_titles,
         GROUP_CONCAT(COALESCE(f.path, '-'), '%s')  AS finished_paths,
@@ -71,7 +74,7 @@ function SeriesManager:searchSerieMembers(full_path)
     --* use this cast to sort naturally:
     subquery = subquery .. " ORDER BY CAST(series_index AS DECIMAL)"
     local s = self.separator
-    sql = string.format(sql, s, s, s, s, s, s, s, s, subquery)
+    sql = string.format(sql, s, s, s, s, s, s, s, s, s, subquery)
     local result = conn:exec(sql)
     conn = KOR.databases:closeInfoConnections(conn)
     if not full_path and not result then
@@ -92,6 +95,7 @@ function SeriesManager:getNonSeriesData(full_path)
     local conn = KOR.databases:getDBconnForBookInfo("SeriesManager:getNonSeriesData")
     local sql = [[
         SELECT authors,
+        bookmarks,
         rating_goodreads,
         title,
         pages,
@@ -137,6 +141,7 @@ function SeriesManager:populateSeries(result)
                 sort_index = result["authors"][i] .. " " .. show_title,
                 descriptions = result["descriptions"][i],
                 series_paths = result["series_paths"][i],
+                series_bookmarks = result["series_bookmarks"][i],
                 series_ratings = result["series_ratings"][i],
                 series_titles = result["series_titles"][i],
                 finished_paths = result["finished_paths"][i],
@@ -220,6 +225,8 @@ function SeriesManager:onShowSeriesDialog(full_path)
             pages = self.series[nr].pages,
             series_total_pages = self.series[nr].series_total_pages,
             series_paths = self.series[nr].series_paths,
+            series_bookmarks = self.series[nr].series_bookmarks,
+            series_ratings = self.series[nr].series_ratings,
             series_numbers = self.series[nr].series_numbers,
             series_titles = self.series[nr].series_titles,
             publication_years = self.series[nr].publication_years,
@@ -257,6 +264,7 @@ function SeriesManager:showContextDialogForNonSeriesBook(full_path)
         authors = result["authors"][1],
         publication_year = result["publication_year"][1],
         pages = result["pages"][1],
+        bookmarks = result["bookmarks"][1],
         rating_goodreads = result["rating_goodreads"][1],
         path = full_path,
         title = result["title"][1],
@@ -317,6 +325,7 @@ function SeriesManager:generateBoxItems(item)
     local publication_years = KOR.strings:split(item.publication_years, self.separator)
     local finished_paths = KOR.strings:split(item.finished_paths, self.separator)
     local series_paths = KOR.strings:split(item.series_paths, self.separator)
+    self.series_bookmarks = item.series_bookmarks and KOR.strings:split(item.series_bookmarks, self.separator)
     self.series_ratings = item.series_ratings and KOR.strings:split(item.series_ratings, self.separator)
     local series_numbers = item.series_numbers and KOR.strings:split(item.series_numbers, self.separator)
     local series_titles = KOR.strings:split(item.series_titles, self.separator)
@@ -332,6 +341,7 @@ function SeriesManager:generateBoxItems(item)
             finished_path = finished_paths[i],
             pages = pages[i],
             publication_year = publication_years[i],
+            bookmarks = self.series_bookmarks and self.series_bookmarks[i],
             rating_goodreads = self.series_ratings and self.series_ratings[i],
             series_number = series_numbers and series_numbers[i] or i,
             path = series_paths[i],
@@ -400,6 +410,9 @@ function SeriesManager:getMetaInformation(d)
         table_insert(meta_items, d.pages .. "pp")
     else
         table_insert(meta_items, "?pp")
+    end
+    if self:isValidEntry(d.bookmarks) then
+        table_insert(meta_items, KOR.icons.bookmark_bare .. d.bookmarks)
     end
     if self:isValidEntry(d.rating_goodreads) then
         table_insert(meta_items, KOR.icons.rating_bare .. d.rating_goodreads)
@@ -512,6 +525,15 @@ function SeriesManager:setBookFinishedStatus(full_path)
     sql = KOR.databases:injectSafePath(sql, full_path)
     conn:exec(sql)
     conn = KOR.databases:closeInfoConnections(conn)
+end
+
+function SeriesManager:setBookmarksCount(full_path, bcount)
+    local conn = KOR.databases:getDBconnForBookInfo("SeriesManager:setBookmarksCount")
+    local sql = "UPDATE bookinfo SET bookmarks = ? WHERE directory || filename = 'safe_path';"
+    sql = KOR.databases:injectSafePath(sql, full_path)
+    local stmt = conn:prepare(sql)
+    stmt:reset():bind(bcount):step()
+    conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 end
 
 return SeriesManager

@@ -451,6 +451,14 @@ ReaderHighlight.onHold = function(self, arg, ges)
     return orig_onHold(self, arg, ges)
 end
 
+local orig_saveHighlight = ReaderHighlight.saveHighlight
+-- #((ReaderHighlight#saveHighlight))
+ReaderHighlight.saveHighlight = function(self, extend_to_sentence)
+    orig_saveHighlight(self, extend_to_sentence)
+    local bcount = self.ui.annotation.annotations and #self.ui.annotation.annotations
+    KOR.seriesmanager:setBookmarksCount(DX.m.current_ebook_full_path, bcount)
+end
+
 
 --- PATCH READERSEARCH
 -- #((PATCH READERSEARCH))
