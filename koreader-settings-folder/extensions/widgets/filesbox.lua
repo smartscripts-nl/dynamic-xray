@@ -113,7 +113,7 @@ function FilesBox:generateBoxes()
         box = self:generateBox({
             title_info = self.items[i].title_info,
             meta_info = self.items[i].meta_info,
-            is_current_ebook = self.items[i].is_current_ebook,
+            is_current_ebook = self.items[i].path == DX.m.current_ebook_full_path,
             path = self.items[i].path,
             callback = self.items[i].callback,
             hold_callback = self.items[i].hold_callback,
