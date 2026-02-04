@@ -132,6 +132,7 @@ SRELL_ERROR_CODES[666] = _("Expression may lead to an extremely long search time
 -- #((PATCH CREDOCUMENT))
 
 CreDocument.empty_line = " <br/>"
+CreDocument.paragraphs_cached = {}
 CreDocument.text_indent = "     "
 
 function CreDocument:setDocument()
@@ -145,11 +146,20 @@ end
 --* populates self.paragraphs, to be used in ((ReaderView#paintTo)) > ((XrayUI#ReaderViewGenerateXrayInformation)):
 function CreDocument:storeCurrentPageParagraphs(page_xp, starting_page)
 
+    self.start_page_no = starting_page or self:getPageFromXPointer(page_xp)
+    if self.paragraphs_cached[self.start_page_no] then
+        self.paragraphs = self.paragraphs_cached[self.start_page_no]
+        return
+    end
+
     self.paragraphs = {}
 
-    self.start_page_no = starting_page or self:getPageFromXPointer(page_xp)
-
     self.paragraphs = KOR.html:getAllHtmlContainersInPage(page_xp, self.start_page_no)
+    self.paragraphs_cached[self.start_page_no] = self.paragraphs
+end
+
+function CreDocument:resetParagraphsCache()
+    self.paragraphs_cached = {}
 end
 
 --* pattern %f[%w_] ... %f[^%w_] in normal matches emulates word boundaries, but this doesn't work in CreDocument context:

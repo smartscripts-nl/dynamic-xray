@@ -200,6 +200,7 @@ function Html:addContainerToContainers(paragraphs, texts)
             pos0 = self.paragraph_start,
             pos1 = self.paragraph_end,
             text = paragraph_text,
+            element_no = self.current_elem_no,
         })
         table_insert(texts, paragraph_text)
     end
@@ -226,6 +227,36 @@ function Html:getHtmlElementIndex(position)
     /body/DocFragment[12]/body/p[179]/text().157
     or
     /body/DocFragment[13]/body/section/section[1]/p[18]/sup[5]/a/text().0
+    or
+    /body/DocFragment[13]/body/div[1]/p[16]/text()[1].0
+    ]]
+
+    position = position
+        :gsub("^/body.+/body/", "", 1)
+        :gsub("su[bp]%[%d+%]/", "", 1)
+        :gsub("/text%(%)%[%d+%]", "", 1)
+        :gsub("/text%(%)", "", 1)
+    --* previous replacements reduce above markers to:
+    --[[
+    section/section[1]/p[8].93,
+    or
+    p[179].157
+    or
+    section/section[1]/p[18]/a/.0
+    or
+    div[1]/p[16].0
+    ]]
+    --* so if there are 3 numerical indices, then we have a container element, so we remove the container index number here:
+    position = position:gsub("%[%d+%](/[a-zA-Z0-9]+%[%d+%])", "%1", 1)
+    --* result:
+    --[[
+    section/section/p[8].93,
+    or
+    p[179].157
+    or
+    section/section/p[18]/a/.0
+    or
+    div/p[16].0
     ]]
 
     local element_type, element_number = position:match("([piv])%[(%d+)")

@@ -569,6 +569,7 @@ function XrayController:resetDynamicXray(is_prepared)
     local full_path = KOR.document.file
     DX.m:setTitleAndSeries(full_path)
     --! don't call DX.u:reset() here, because then Xray markers in page would disappear...
+    KOR.document:resetParagraphsCache()
     DX.pn:resetCache()
     DX.sp:resetActiveSideButtons("XrayController:resetDynamicXray")
     DX.vd:resetAllFilters()
