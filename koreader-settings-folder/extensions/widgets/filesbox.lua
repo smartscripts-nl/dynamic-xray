@@ -67,12 +67,14 @@ local FilesBox = InputContainer:extend{
     non_series_box = nil,
     padding_horizontal = nil,
     padding_vertical = nil,
+    padding_vertical_height = Size.padding.fullscreen,
     row_spacer = nil,
     row_spacer_height = nil,
     subtitle = nil,
     thumbnail_width = nil,
     title = nil,
     titlebar = nil,
+    titlebar_height = nil,
     window_size = "fullscreen",
     word_line_height = nil,
 }
@@ -345,7 +347,6 @@ end
 function FilesBox:onClose()
     KOR.dialogs:unregisterWidget(self)
     UIManager:close(self)
-    KOR.dialogs:closeAllOverlays()
 
     return true
 end
@@ -362,7 +363,7 @@ function FilesBox:finalizeWidget()
         self.cropping_widget = ScrollableContainer:new{
             dimen = Geom:new{
                 w = self.region.w,
-                h = self.screen_height - self.titlebar:getSize().h,
+                h = self.screen_height - self.titlebar_height,
             },
             show_parent = self,
             --ignore_events = { "swipe" },
@@ -414,9 +415,15 @@ function FilesBox:generateWidget()
         },
         self.padding_vertical,
     }
+    local total_height = self.titlebar_height + self.separator:getSize().h + 2 * self.padding_vertical_height + content_height
+    local diff = self.screen_height - total_height
+    if diff > 0 then
+        table_insert(elements, VerticalSpan:new{ width = diff })
+    end
 
-    elements.align = "left"
-    table.insert(frame, elements)
+    elements.align = "center"
+    table_insert(frame, elements)
+    frame.padding = 0
     self.box_frame = FrameContainer:new(frame)
 end
 
@@ -473,7 +480,7 @@ end
 
 --- @private
 function FilesBox:setPadding()
-    self.padding_vertical = VerticalSpan:new{ width = Size.padding.fullscreen }
+    self.padding_vertical = VerticalSpan:new{ width = self.padding_vertical_height }
     self.padding_horizontal = VerticalSpan:new{ width = Size.padding.small }
 end
 
@@ -491,7 +498,7 @@ end
 --- @private
 function FilesBox:generateTitleBar()
     local config = {
-        width = self.width,
+        width = self.screen_width,
         title = self.title,
         subtitle = self.subtitle,
         title_face = Font:getFace("smallinfofontbold"),
@@ -510,6 +517,7 @@ function FilesBox:generateTitleBar()
         top_buttons_left = self.top_buttons_left,
     }
     self.titlebar = TitleBar:new(config)
+    self.titlebar_height = self.titlebar:getSize().h
 end
 
 --- @private

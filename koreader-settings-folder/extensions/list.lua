@@ -36,17 +36,14 @@ function List:create(args)
         with_bottom_line = true,
         perpage = caller.items_per_page,
         menu_name = "xray_settings",
+        no_overlay = true,
         top_buttons_left = args.top_buttons_left,
-        after_close_callback = function()
-            KOR.dialogs:closeOverlay()
-        end,
         onMenuHold = menu_manager.onMenuHoldSettings,
         _manager = menu_manager,
     }
     table.insert(self.dialog, self.menu)
     self.menu.close_callback = function()
         UIManager:close(self.dialog)
-        KOR.dialogs:closeOverlay()
     end
     self.menu:switchItemTable(args.list_title, menu_manager.item_table)
 

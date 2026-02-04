@@ -36,6 +36,7 @@ local SeriesManager = WidgetContainer:extend{
     series_context_dialog_index = "series_manager_for_current_book",
     serieslist = nil,
     series_annotations = nil,
+    series_stars = nil,
     series_ratings = nil,
     series_table_indexed = {},
     series_resultsets = {},
@@ -52,6 +53,7 @@ function SeriesManager:searchSerieMembers(full_path)
         GROUP_CONCAT(i.directory || i.filename, '%s') AS series_paths,
         GROUP_CONCAT(COALESCE(i.annotations, '-'), '%s') AS series_annotations,
         GROUP_CONCAT(COALESCE(i.rating_goodreads, '-'), '%s') AS series_ratings,
+        GROUP_CONCAT(COALESCE(i.stars, '-'), '%s') AS series_stars,
         GROUP_CONCAT(COALESCE(i.title, '-'), '%s') AS series_titles,
         GROUP_CONCAT(COALESCE(f.path, '-'), '%s')  AS finished_paths,
         GROUP_CONCAT(COALESCE(i.series_index, '-'), '%s') AS series_numbers,
@@ -74,7 +76,7 @@ function SeriesManager:searchSerieMembers(full_path)
     --* use this cast to sort naturally:
     subquery = subquery .. " ORDER BY CAST(series_index AS DECIMAL)"
     local s = self.separator
-    sql = string.format(sql, s, s, s, s, s, s, s, s, s, subquery)
+    sql = string.format(sql, s, s, s, s, s, s, s, s, s, s, subquery)
     local result = conn:exec(sql)
     conn = KOR.databases:closeInfoConnections(conn)
     if not full_path and not result then
@@ -96,6 +98,7 @@ function SeriesManager:getNonSeriesData(full_path)
     local sql = [[
         SELECT authors,
         bookmarks,
+        stars,
         rating_goodreads,
         title,
         pages,
@@ -142,6 +145,7 @@ function SeriesManager:populateSeries(result)
                 descriptions = result["descriptions"][i],
                 series_paths = result["series_paths"][i],
                 series_annotations = result["series_annotations"][i],
+                series_stars = result["series_stars"][i],
                 series_ratings = result["series_ratings"][i],
                 series_titles = result["series_titles"][i],
                 finished_paths = result["finished_paths"][i],
@@ -164,15 +168,18 @@ function SeriesManager:closeDialog()
     UIManager:close(self.series_dialog)
 end
 
+function SeriesManager:getCacheIndex(full_path)
+    return md5(full_path)
+end
+
 function SeriesManager:onShowSeriesDialog(full_path)
     self.path = full_path
     --* this var will be set in ((SeriesManager#searchSerieMembers)):
     local cached_result = full_path and KOR.registry:getOnce("series_members") or KOR.registry:get("all_series")
-    KOR.dialogs:closeOverlay()
 
     local cache_index
     if full_path then
-        cache_index = md5(full_path)
+        cache_index = self:getCacheIndex(full_path)
     end
     local result
     if cached_result then
@@ -195,7 +202,6 @@ function SeriesManager:onShowSeriesDialog(full_path)
         self:_cache_resultset(cache_index, result)
     end
 
-    KOR.dialogs:closeOverlay()
     if full_path and not result then
         self:showNoSeriesFoundMessage()
         return
@@ -226,6 +232,7 @@ function SeriesManager:onShowSeriesDialog(full_path)
             series_total_pages = self.series[nr].series_total_pages,
             series_paths = self.series[nr].series_paths,
             series_annotations = self.series[nr].series_annotations,
+            series_stars = self.series[nr].series_stars,
             series_ratings = self.series[nr].series_ratings,
             series_numbers = self.series[nr].series_numbers,
             series_titles = self.series[nr].series_titles,
@@ -234,7 +241,6 @@ function SeriesManager:onShowSeriesDialog(full_path)
         }
         item.callback = function()
             UIManager:close(self.series_dialog)
-            KOR.dialogs:closeOverlay()
             self:showContextDialog(item, self.series[nr].path)
         end
         table_insert(self.item_table, item)
@@ -253,6 +259,20 @@ function SeriesManager:reloadContextDialog()
         UIManager:close(self.context_dialog)
         self:showContextDialog(self.item, self.full_path)
     end
+end
+
+function SeriesManager:resetData()
+    local cache_index = self:getCacheIndex(DX.m.current_ebook_full_path)
+    self.all_series_resultset = nil
+    self.boxes = {}
+    self.series = {}
+    self.serieslist = nil
+    self.series_annotations = nil
+    self.series_stars = nil
+    self.series_ratings = nil
+    self.series_table_indexed = {}
+    self.series_resultsets[cache_index] = nil
+    KOR.registry:unset("series_members", "all_series")
 end
 
 function SeriesManager:showContextDialogForNonSeriesBook(full_path)
@@ -285,7 +305,6 @@ function SeriesManager:showContextDialog(item, full_path, is_non_series_item)
     self.full_path = full_path
 
     KOR.registry:set(self.series_context_dialog_index, true)
-    KOR.dialogs:showOverlay()
 
     if self.is_non_series_item then
         self.boxes = {}
@@ -326,6 +345,7 @@ function SeriesManager:generateBoxItems(item)
     local finished_paths = KOR.strings:split(item.finished_paths, self.separator)
     local series_paths = KOR.strings:split(item.series_paths, self.separator)
     self.series_annotations = item.series_annotations and KOR.strings:split(item.series_annotations, self.separator)
+    self.series_stars = item.series_stars and KOR.strings:split(item.series_stars, self.separator)
     self.series_ratings = item.series_ratings and KOR.strings:split(item.series_ratings, self.separator)
     local series_numbers = item.series_numbers and KOR.strings:split(item.series_numbers, self.separator)
     local series_titles = KOR.strings:split(item.series_titles, self.separator)
@@ -342,6 +362,7 @@ function SeriesManager:generateBoxItems(item)
             pages = pages[i],
             publication_year = publication_years[i],
             annotations = self.series_annotations and self.series_annotations[i],
+            stars = self.series_stars and self.series_stars[i],
             rating_goodreads = self.series_ratings and self.series_ratings[i],
             series_number = series_numbers and series_numbers[i] or i,
             path = series_paths[i],
@@ -416,6 +437,9 @@ function SeriesManager:getMetaInformation(d)
     end
     if self:isValidEntry(d.rating_goodreads) then
         table_insert(meta_items, KOR.icons.rating_bare .. d.rating_goodreads)
+    end
+    if self:isValidEntry(d.stars) then
+        table_insert(meta_items, KOR.icons.star_bare .. d.stars)
     end
     if has_items(meta_items) then
         return table_concat(meta_items, self.separator)
@@ -511,7 +535,6 @@ function SeriesManager:showSeriesForEbookPath(full_path)
 
     local series_members = self:searchSerieMembers(full_path)
     if series_members and full_path then
-        KOR.dialogs:closeOverlay()
         self:closeDialog()
     end
 
@@ -525,6 +548,7 @@ function SeriesManager:setBookFinishedStatus(full_path)
     sql = KOR.databases:injectSafePath(sql, full_path)
     conn:exec(sql)
     conn = KOR.databases:closeInfoConnections(conn)
+    self:resetData()
 end
 
 function SeriesManager:setAnnotationsCount(full_path, acount)
@@ -534,6 +558,20 @@ function SeriesManager:setAnnotationsCount(full_path, acount)
     local stmt = conn:prepare(sql)
     stmt:reset():bind(acount):step()
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
+    self:resetData()
+end
+
+function SeriesManager:setStars(full_path, num)
+    if num == 0 then
+        num = nil
+    end
+    local conn = KOR.databases:getDBconnForBookInfo("SeriesManager:setBookmarksCount")
+    local sql = "UPDATE bookinfo SET stars = ? WHERE directory || filename = 'safe_path';"
+    sql = KOR.databases:injectSafePath(sql, full_path)
+    local stmt = conn:prepare(sql)
+    stmt:reset():bind(num):step()
+    conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
+    self:resetData()
 end
 
 return SeriesManager

@@ -93,6 +93,8 @@ return {
     seriesmanager = "\u{ED18}" .. spacer,
     seriesmanager_bare = "\u{ED18}",
     spacer = "\u{2002}",
+    star = " ☆",
+    star_bare = "☆",
     today = "\u{E7EE}" .. spacer,
     today_bare = "\u{E7EE}",
     xray_add_item_bare = "\u{E713}",

@@ -1025,6 +1025,11 @@ BookStatusWidget.onChangeBookStatus = function(self, option_name, option_value)
     end
     orig_onChangeBookStatus(self, option_name, option_value)
 end
+local orig_setStar = BookStatusWidget.setStar
+BookStatusWidget.setStar = function(self, num)
+    orig_setStar(self, num)
+    KOR.seriesmanager:setStars(DX.m.current_ebook_full_path, num)
+end
 
 
 --- PATCH MOVABLECONTAINER

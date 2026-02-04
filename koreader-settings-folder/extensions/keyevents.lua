@@ -5,6 +5,7 @@ local Input = Device.input
 local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
+local logger = require("logger")
 
 local DX = DX
 local has_items = has_items
@@ -106,7 +107,7 @@ function KeyEvents:addHotkeysForReaderUI(parent)
 
     readerui.key_events.ShowSeriesManager = { { "Shift", { "M" } } }
     readerui.onShowSeriesManager = function()
-        KOR.seriesmanager:showSeriesForEbookPath()
+        KOR.seriesmanager:showContextDialogForCurrentEbook(DX.m.current_ebook_full_path)
     end
 
     readerui.onShowPageNavigator = function()
@@ -596,7 +597,7 @@ function KeyEvents:addHotkeysForXrayPageNavigatorPopupMenu(parent)
         ShowSeriesManager = {
             { { "Shift", { "M" } } }, function()
                 parent:closePopupMenu()
-                KOR.seriesmanager:showSeriesForEbookPath()
+                KOR.seriesmanager:showContextDialogForCurrentEbook(DX.m.current_ebook_full_path)
                 return true
             end
         },
@@ -858,7 +859,7 @@ function KeyEvents:addSeriesManagerHotkey(actions)
         label = "show_serie",
         hotkey = { { "Shift", { "M" } } },
         callback = function()
-            KOR.seriesmanager:showSeriesForEbookPath()
+            KOR.seriesmanager:showContextDialogForCurrentEbook(DX.m.current_ebook_full_path)
             return true
         end,
     })
