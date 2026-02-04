@@ -202,6 +202,9 @@ local XrayDataSaver = WidgetContainer:new{
         [[
             ALTER TABLE bookinfo ADD COLUMN bookmarks INTEGER;]],
 
+        [[
+            ALTER TABLE bookinfo RENAME COLUMN bookmarks TO annotations;]],
+
     },
     scheme_version_name = "database_scheme_version",
 }

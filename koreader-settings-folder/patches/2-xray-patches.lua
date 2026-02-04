@@ -455,8 +455,8 @@ local orig_saveHighlight = ReaderHighlight.saveHighlight
 -- #((ReaderHighlight#saveHighlight))
 ReaderHighlight.saveHighlight = function(self, extend_to_sentence)
     orig_saveHighlight(self, extend_to_sentence)
-    local bcount = self.ui.annotation.annotations and #self.ui.annotation.annotations
-    KOR.seriesmanager:setBookmarksCount(DX.m.current_ebook_full_path, bcount)
+    local acount = self.ui.annotation.annotations and #self.ui.annotation.annotations
+    KOR.seriesmanager:setAnnotationsCount(DX.m.current_ebook_full_path, acount)
 end
 
 

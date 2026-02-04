@@ -35,7 +35,7 @@ local SeriesManager = WidgetContainer:extend{
     series = {},
     series_context_dialog_index = "series_manager_for_current_book",
     serieslist = nil,
-    series_bookmarks = nil,
+    series_annotations = nil,
     series_ratings = nil,
     series_table_indexed = {},
     series_resultsets = {},
@@ -50,7 +50,7 @@ function SeriesManager:searchSerieMembers(full_path)
         i.series AS series_name,
         COALESCE(SUM(i.pages), 0) AS series_total_pages,
         GROUP_CONCAT(i.directory || i.filename, '%s') AS series_paths,
-        GROUP_CONCAT(COALESCE(i.bookmarks, '-'), '%s') AS series_bookmarks,
+        GROUP_CONCAT(COALESCE(i.annotations, '-'), '%s') AS series_annotations,
         GROUP_CONCAT(COALESCE(i.rating_goodreads, '-'), '%s') AS series_ratings,
         GROUP_CONCAT(COALESCE(i.title, '-'), '%s') AS series_titles,
         GROUP_CONCAT(COALESCE(f.path, '-'), '%s')  AS finished_paths,
@@ -141,7 +141,7 @@ function SeriesManager:populateSeries(result)
                 sort_index = result["authors"][i] .. " " .. show_title,
                 descriptions = result["descriptions"][i],
                 series_paths = result["series_paths"][i],
-                series_bookmarks = result["series_bookmarks"][i],
+                series_annotations = result["series_annotations"][i],
                 series_ratings = result["series_ratings"][i],
                 series_titles = result["series_titles"][i],
                 finished_paths = result["finished_paths"][i],
@@ -225,7 +225,7 @@ function SeriesManager:onShowSeriesDialog(full_path)
             pages = self.series[nr].pages,
             series_total_pages = self.series[nr].series_total_pages,
             series_paths = self.series[nr].series_paths,
-            series_bookmarks = self.series[nr].series_bookmarks,
+            series_annotations = self.series[nr].series_annotations,
             series_ratings = self.series[nr].series_ratings,
             series_numbers = self.series[nr].series_numbers,
             series_titles = self.series[nr].series_titles,
@@ -325,7 +325,7 @@ function SeriesManager:generateBoxItems(item)
     local publication_years = KOR.strings:split(item.publication_years, self.separator)
     local finished_paths = KOR.strings:split(item.finished_paths, self.separator)
     local series_paths = KOR.strings:split(item.series_paths, self.separator)
-    self.series_bookmarks = item.series_bookmarks and KOR.strings:split(item.series_bookmarks, self.separator)
+    self.series_annotations = item.series_annotations and KOR.strings:split(item.series_annotations, self.separator)
     self.series_ratings = item.series_ratings and KOR.strings:split(item.series_ratings, self.separator)
     local series_numbers = item.series_numbers and KOR.strings:split(item.series_numbers, self.separator)
     local series_titles = KOR.strings:split(item.series_titles, self.separator)
@@ -341,7 +341,7 @@ function SeriesManager:generateBoxItems(item)
             finished_path = finished_paths[i],
             pages = pages[i],
             publication_year = publication_years[i],
-            bookmarks = self.series_bookmarks and self.series_bookmarks[i],
+            annotations = self.series_annotations and self.series_annotations[i],
             rating_goodreads = self.series_ratings and self.series_ratings[i],
             series_number = series_numbers and series_numbers[i] or i,
             path = series_paths[i],
@@ -411,8 +411,8 @@ function SeriesManager:getMetaInformation(d)
     else
         table_insert(meta_items, "?pp")
     end
-    if self:isValidEntry(d.bookmarks) then
-        table_insert(meta_items, KOR.icons.bookmark_bare .. d.bookmarks)
+    if self:isValidEntry(d.annotations) then
+        table_insert(meta_items, KOR.icons.bookmark_bare .. d.annotations)
     end
     if self:isValidEntry(d.rating_goodreads) then
         table_insert(meta_items, KOR.icons.rating_bare .. d.rating_goodreads)
@@ -527,12 +527,12 @@ function SeriesManager:setBookFinishedStatus(full_path)
     conn = KOR.databases:closeInfoConnections(conn)
 end
 
-function SeriesManager:setBookmarksCount(full_path, bcount)
+function SeriesManager:setAnnotationsCount(full_path, acount)
     local conn = KOR.databases:getDBconnForBookInfo("SeriesManager:setBookmarksCount")
-    local sql = "UPDATE bookinfo SET bookmarks = ? WHERE directory || filename = 'safe_path';"
+    local sql = "UPDATE bookinfo SET annotations = ? WHERE directory || filename = 'safe_path';"
     sql = KOR.databases:injectSafePath(sql, full_path)
     local stmt = conn:prepare(sql)
-    stmt:reset():bind(bcount):step()
+    stmt:reset():bind(acount):step()
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 end
 
