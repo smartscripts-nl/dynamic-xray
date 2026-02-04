@@ -252,9 +252,7 @@ function FilesBox:injectRows()
     for i = 1, count do
         row_completed = i > 1 and (i % self.columns == 0 or i == count)
         if not row then
-            row = HorizontalGroup:new{
-                self.padding,
-            }
+            row = HorizontalGroup:new{}
         end
         table_insert(row, CenterContainer:new{
             dimen = dimen,
@@ -265,7 +263,6 @@ function FilesBox:injectRows()
             table_insert(self.content_widget, CenterContainer:new{
                 dimen = { w = self.screen_width, h = self.thumbnail_width + self.row_spacer_height },
                 row,
-                self.row_spacer,
             })
             row = nil
         end
@@ -354,40 +351,16 @@ end
 --- @private
 function FilesBox:finalizeWidget()
 
-    local refresh_target
-    if self.box_frame:getSize().h > self.screen_height then
-        -- Our scrollable container needs to be known as widget.cropping_widget in
-        -- the widget that is passed to UIManager:show() for UIManager to ensure
-        -- proper interception of inner widget self repainting/invert (mostly used
-        -- when flashing for UI feedback that we want to limit to the cropped area).
-        self.cropping_widget = ScrollableContainer:new{
-            dimen = Geom:new{
-                w = self.region.w,
-                h = self.screen_height - self.titlebar_height,
-            },
-            show_parent = self,
-            --ignore_events = { "swipe" },
-            self.box_frame,
-        }
-        refresh_target = self.cropping_widget
-        --* self.region was set in ((FilesBox#computeThumbnailDimensions)):
-        self[1] = WidgetContainer:new{
-            align = "top",
-            dimen = self.region,
-            self.cropping_widget,
-        }
-    else
     --* self.region was set in ((FilesBox#computeThumbnailDimensions)):
     self[1] = WidgetContainer:new{
-            align = "top",
-            dimen = self.region,
-            self.box_frame,
-        }
-        refresh_target = self.box_frame
-    end
+        align = "top",
+        dimen = self.region,
+        --* box_frame was generated in ((FilesBox#generateWidget)):
+        self.box_frame,
+    }
 
     UIManager:setDirty(self, function()
-        return "partial", refresh_target.dimen
+        return "partial", self.refresh_target.dimen
     end)
 
     --* make FilesBox widget closeable with ((Dialogs#closeAllWidgets)):
@@ -402,29 +375,54 @@ function FilesBox:generateWidget()
     local content_height = self.content_widget:getSize().h
 
     local elements = VerticalGroup:new{
+        align = "center",
         self.titlebar,
         self.separator,
-        self.padding_vertical,
-        --* content
-        CenterContainer:new{
-            dimen = Geom:new{
-                w = self.width,
-                h = content_height,
-            },
-            self.content_widget,
-        },
         self.padding_vertical,
     }
     local total_height = self.titlebar_height + self.separator:getSize().h + 2 * self.padding_vertical_height + content_height
     local diff = self.screen_height - total_height
+    local scrollbar_width = ScrollableContainer:getScrollbarWidth()
+    local width = diff < 0 and self.width - scrollbar_width or self.width
+    local main_content = CenterContainer:new{
+            dimen = Geom:new{
+            w = width,
+                h = content_height,
+            },
+            self.content_widget,
+    }
+    if diff >= 0 then
+        table_insert(elements, main_content)
+        table_insert(elements, self.padding_vertical)
+    end
     if diff > 0 then
         table_insert(elements, VerticalSpan:new{ width = diff })
-    end
 
-    elements.align = "center"
+    --* when the content does not fit in the available height, show a scrollbar:
+    elseif diff < 0 then
+        -- Our scrollable container needs to be known as widget.cropping_widget in
+        -- the widget that is passed to UIManager:show() for UIManager to ensure
+        -- proper interception of inner widget self repainting/invert (mostly used
+        -- when flashing for UI feedback that we want to limit to the cropped area).
+        self.cropping_widget = ScrollableContainer:new{
+            dimen = Geom:new{
+                w = width + scrollbar_width,
+                h = self.screen_height - self.titlebar_height - 2 * self.padding_vertical_height,
+            },
+            show_parent = self,
+            --ignore_events = { "swipe" },
+            main_content,
+        }
+        table_insert(elements, self.cropping_widget)
+        table_insert(elements, self.padding_vertical)
+
+        self.refresh_target = self.cropping_widget
+    end
     table_insert(frame, elements)
-    frame.padding = 0
     self.box_frame = FrameContainer:new(frame)
+    if diff >= 0 then
+        self.refresh_target = self.box_frame
+    end
 end
 
 --- @private
@@ -522,9 +520,7 @@ end
 
 --- @private
 function FilesBox:setWidth()
-    self.scrollbar_width = ScrollableContainer:getScrollbarWidth()
-    self.width = self.screen_width - self.scrollbar_width
-    self.inner_width = self.width
+    self.width = self.screen_width
 end
 
 function FilesBox:getBookCover(bookinfo, full_path, width, height, is_deleted)
