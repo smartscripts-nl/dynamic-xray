@@ -10,7 +10,6 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 local Screen = Device.screen
 
-local math_floor = math.floor
 local table = table
 
 --- @class List
@@ -25,14 +24,11 @@ function List:create(args)
         dimen = dimen,
         modal = true,
     }
-    caller.width = math_floor(dimen.w * 0.8)
     self.menu = Menu:new{
         show_parent = KOR.ui,
-        height = math_floor(dimen.h * 0.8),
-        width = caller.width,
-        is_borderless = false,
-        is_popout = true,
-        fullscreen = false,
+        is_borderless = true,
+        is_popout = false,
+        fullscreen = true,
         with_bottom_line = true,
         perpage = caller.items_per_page,
         menu_name = "xray_settings",
