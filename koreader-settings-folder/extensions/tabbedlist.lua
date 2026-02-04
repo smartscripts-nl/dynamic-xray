@@ -29,7 +29,7 @@ function TabbedList:create(args)
     local tab_label_fontsize = 16
     self.tabbed_menu = Menu:new{
         title_submenu_buttontable = KOR.tabfactory:generateTabButtons(args.caller_method, caller.active_tab, caller.tab_labels, caller.width, tab_label_fontsize),
-        show_parent = KOR.ui,
+        show_parent = self.tabbed_dialog,
         height = math_floor(dimen.h * 0.8),
         width = caller.width,
         is_borderless = false,
@@ -52,7 +52,7 @@ function TabbedList:create(args)
     end
     --* makes the menu_parent via the caller update it items:
     args.populate_tab_items_callback()
-    self.tabbed_menu:switchItemTable(caller.list_title, menu_manager.item_table)
+    self.tabbed_menu:switchItemTable(caller.list_title, menu_manager.item_table, self.tabbed_menu.page)
 
     return self.tabbed_dialog
 end
