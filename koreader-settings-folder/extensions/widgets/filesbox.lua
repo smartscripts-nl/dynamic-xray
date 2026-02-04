@@ -115,6 +115,7 @@ function FilesBox:generateBoxes()
         box = self:generateBox({
             title_info = self.items[i].title_info,
             meta_info = self.items[i].meta_info,
+            description = self.items[i].description,
             is_current_ebook = self.items[i].path == DX.m.current_ebook_full_path,
             path = self.items[i].path,
             callback = self.items[i].callback,
@@ -130,7 +131,7 @@ function FilesBox:generateBox(params)
     local thumbnail, title_info, meta_info = self:getBoxElements(params, bookinfo)
 
     self.column_width = math_floor(self.avail_width / self.columns)
-    local button_table = self:getBoxButtons(params, bookinfo)
+    local button_table = self:getBoxButtons(params)
 
     return self:getBoxContainer(params, thumbnail, title_info, meta_info, button_table)
 end
@@ -156,18 +157,13 @@ function FilesBox:getBoxElements(params, bookinfo)
 end
 
 --- @private
-function FilesBox:getBoxButtons(params, bookinfo)
+function FilesBox:getBoxButtons(params)
     local buttons = {{
           KOR.buttoninfopopup:forBookDescription({
               callback = function()
-                  local description = params.description or bookinfo.description
-                  if has_no_text(description) then
-                      KOR.messages:notify(_("no description found"))
-                      return true
-                  end
                   KOR.dialogs:textOrHtmlBox({
                       title = params.title_info,
-                      content = description,
+                      content = params.description,
                       no_buttons_row = true,
                       use_computed_height = true,
                   })
@@ -195,6 +191,9 @@ function FilesBox:getBoxButtons(params, bookinfo)
       }}
     if params.is_current_ebook then
         table_remove(buttons[1])
+    end
+    if params.description == "-" or has_no_text(params.description) then
+        table_remove(buttons[1], 1)
     end
     local buttons_count = #buttons[1]
     local generic_icon_size = 40

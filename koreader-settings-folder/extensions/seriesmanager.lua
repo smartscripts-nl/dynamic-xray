@@ -29,6 +29,7 @@ local SeriesManager = WidgetContainer:extend{
     boxes = {},
     context_dialog = nil,
     is_non_series_item = false,
+    items = {},
     path = nil,
     separator = " • ",
     separator_with_extra_spacing = "  •  ",
@@ -36,6 +37,7 @@ local SeriesManager = WidgetContainer:extend{
     series_context_dialog_index = "series_manager_for_current_book",
     serieslist = nil,
     series_annotations = nil,
+    series_descriptions = nil,
     series_stars = nil,
     series_ratings = nil,
     series_table_indexed = {},
@@ -51,6 +53,7 @@ function SeriesManager:searchSerieMembers(full_path)
         i.series AS series_name,
         COALESCE(SUM(i.pages), 0) AS series_total_pages,
         GROUP_CONCAT(i.directory || i.filename, '%s') AS series_paths,
+        GROUP_CONCAT(COALESCE(i.description, '-'), '%s') AS series_descriptions,
         GROUP_CONCAT(COALESCE(i.annotations, '-'), '%s') AS series_annotations,
         GROUP_CONCAT(COALESCE(i.rating_goodreads, '-'), '%s') AS series_ratings,
         GROUP_CONCAT(COALESCE(i.stars, '-'), '%s') AS series_stars,
@@ -58,7 +61,6 @@ function SeriesManager:searchSerieMembers(full_path)
         GROUP_CONCAT(COALESCE(f.path, '-'), '%s')  AS finished_paths,
         GROUP_CONCAT(COALESCE(i.series_index, '-'), '%s') AS series_numbers,
         GROUP_CONCAT(COALESCE(i.pages, '-'), '%s') AS pages,
-        GROUP_CONCAT(COALESCE(i.description, '-'), '%s') AS descriptions,
         GROUP_CONCAT(COALESCE(i.publication_year, '-'), '%s') AS publication_years,
         COUNT(i.title) AS series_count
         FROM (%s) i LEFT OUTER JOIN finished_books f ON i.directory || i.filename = f.path
@@ -97,6 +99,7 @@ function SeriesManager:getNonSeriesData(full_path)
     local conn = KOR.databases:getDBconnForBookInfo("SeriesManager:getNonSeriesData")
     local sql = [[
         SELECT authors,
+        description,
         bookmarks,
         stars,
         rating_goodreads,
@@ -142,8 +145,8 @@ function SeriesManager:populateSeries(result)
                 index = i,
                 authors = result["authors"][i],
                 sort_index = result["authors"][i] .. " " .. show_title,
-                descriptions = result["descriptions"][i],
                 series_paths = result["series_paths"][i],
+                series_descriptions = result["series_descriptions"][i],
                 series_annotations = result["series_annotations"][i],
                 series_stars = result["series_stars"][i],
                 series_ratings = result["series_ratings"][i],
@@ -227,7 +230,7 @@ function SeriesManager:onShowSeriesList(full_path)
             deletable = false,
             series_count = self.series[nr].series_count,
             series_name = self.series[nr].series_name,
-            descriptions = self.series[nr].descriptions,
+            series_descriptions = self.series[nr].series_descriptions,
             pages = self.series[nr].pages,
             series_total_pages = self.series[nr].series_total_pages,
             series_paths = self.series[nr].series_paths,
@@ -264,10 +267,11 @@ end
 function SeriesManager:resetData()
     local cache_index = self:getCacheIndex(DX.m.current_ebook_full_path)
     self.all_series_resultset = nil
-    self.boxes = {}
+    self.items = {}
     self.series = {}
     self.serieslist = nil
     self.series_annotations = nil
+    self.series_descriptions = nil
     self.series_stars = nil
     self.series_ratings = nil
     self.series_table_indexed = {}
@@ -282,6 +286,7 @@ function SeriesManager:showContextDialogForNonSeriesBook(full_path)
     end
     local item = {
         authors = result["authors"][1],
+        description = result["description"][1],
         publication_year = result["publication_year"][1],
         pages = result["pages"][1],
         bookmarks = result["bookmarks"][1],
@@ -308,11 +313,11 @@ function SeriesManager:showContextDialog(item, full_path, is_non_series_item)
     KOR.registry:set(self.series_context_dialog_index, true)
 
     if self.is_non_series_item then
-        self.boxes = {}
+        self.items = {}
         local is_current_ebook = full_path == DX.m.current_ebook_full_path
         item.text = item.authors .. ": " .. item.title
-        local box_item = self:generateSingleBoxItem(is_current_ebook, item)
-        table_insert(self.boxes, box_item)
+        local bitem = self:generateSingleBoxItem(is_current_ebook, item)
+        table_insert(self.items, bitem)
     else
         self:generateBoxItems(item)
     end
@@ -320,8 +325,8 @@ function SeriesManager:showContextDialog(item, full_path, is_non_series_item)
     self.context_dialog = KOR.dialogs:filesBox({
         title = title,
         key_events_module = self.series_context_dialog_index,
-        items = self.boxes,
-        non_series_box = self.is_non_series_item and self.boxes[1],
+        items = self.items,
+        non_series_box = self.is_non_series_item and self.items[1],
         top_buttons_left = {
             KOR.buttoninfopopup:forAllSeries({
                 callback = function()
@@ -343,11 +348,11 @@ end
 
 ---  @private
 function SeriesManager:generateBoxItems(item)
-    local descriptions = KOR.strings:split(item.descriptions, self.separator)
     local pages = KOR.strings:split(item.pages, self.separator)
     local publication_years = KOR.strings:split(item.publication_years, self.separator)
     local finished_paths = KOR.strings:split(item.finished_paths, self.separator)
     local series_paths = KOR.strings:split(item.series_paths, self.separator)
+    local series_descriptions = KOR.strings:split(item.series_descriptions, self.separator)
     self.series_annotations = item.series_annotations and KOR.strings:split(item.series_annotations, self.separator)
     self.series_stars = item.series_stars and KOR.strings:split(item.series_stars, self.separator)
     self.series_ratings = item.series_ratings and KOR.strings:split(item.series_ratings, self.separator)
@@ -357,12 +362,12 @@ function SeriesManager:generateBoxItems(item)
     local total_buttons = #series_paths
     local is_current_ebook, data
     self.active_item_no = 0
-    self.boxes = {}
+    self.items = {}
     for i = 1, total_buttons do
         is_current_ebook = series_paths[i] == DX.s.current_ebook_full_path
         data = {
-            description = descriptions[i],
             finished_path = finished_paths[i],
+            description = series_descriptions[i],
             pages = pages[i],
             publication_year = publication_years[i],
             annotations = self.series_annotations and self.series_annotations[i],
@@ -405,7 +410,7 @@ function SeriesManager:generateBoxItem(i, is_current_ebook, data)
         description = data.description,
         is_current_ebook = is_current_ebook,
     }
-    table_insert(self.boxes, generated_data)
+    table_insert(self.items, generated_data)
 end
 
 --* compare ((FilesBox#generateBoxes)) for regular series boxes:
@@ -442,7 +447,7 @@ function SeriesManager:getMetaInformation(d)
     if self:isValidEntry(d.rating_goodreads) then
         table_insert(meta_items, KOR.icons.rating_bare .. d.rating_goodreads)
     end
-    if self:isValidEntry(d.stars) then
+    if self:isValidEntry(d.stars) and tonumber(d.stars) > 0 then
         table_insert(meta_items, KOR.icons.star_bare .. d.stars)
     end
     if has_items(meta_items) then
