@@ -115,7 +115,7 @@ function XrayInformation:getPageNavigatorHotkeysInfo()
             .. ("show Xray List")
             .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+M</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
-            .. ("show Series Manager")
+            .. ("show current series books or Metadata of a non-series book")
             .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+X</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
             .. ("show Xray Page Navigator")

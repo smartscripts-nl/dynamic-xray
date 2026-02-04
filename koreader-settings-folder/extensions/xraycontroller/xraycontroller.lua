@@ -270,18 +270,18 @@ function XrayController:onShowList(focus_item, dont_show, select_mode)
     DX.d:showList(focus_item, dont_show, select_mode)
 end
 
-function XrayController:onShowCurrentSeries()
-    KOR.seriesmanager:showContextDialogForCurrentEbook()
-    return true
-end
-
 function XrayController:onShowPageNavigator()
     self:showPageNavigator()
     return true
 end
 
 function XrayController:onShowSeriesManager()
-    KOR.seriesmanager:onShowSeriesDialog()
+    KOR.seriesmanager:onShowSeriesList()
+    return true
+end
+
+function XrayController:onShowCurrentSeries()
+    KOR.seriesmanager:showContextDialogForCurrentEbook()
     return true
 end
 

@@ -95,25 +95,26 @@ function KeyEvents:addHotkeysForReaderUI(parent)
     end
     local readerui = parent.ui
 
-    readerui.key_events.ShowXrayHelp = { { "Shift", { "H" } } }
-    readerui.onShowXrayHelp = function()
+    local readerui = parent.ui
+    readerui.key_events.ShowXrayHelpUI = { { "Shift", { "H" } } }
+    readerui.onShowXrayHelpUI = function()
         return DX.i:showPageNavigatorHelp(parent, 3)
     end
 
-    readerui.key_events.ShowXrayList = { { "Shift", { "L" } } }
-    readerui.onShowXrayList = function()
+    readerui.key_events.ShowXrayListUI = { { "Shift", { "L" } } }
+    readerui.onShowXrayListUI = function()
         DX.c:onShowList()
     end
 
-    readerui.key_events.ShowSeriesManager = { { "Shift", { "M" } } }
-    readerui.onShowSeriesManager = function()
-        KOR.seriesmanager:showContextDialogForCurrentEbook(DX.m.current_ebook_full_path)
+    readerui.key_events.ShowCurrentSeriesUI = { { "Shift", { "M" } } }
+    readerui.onShowCurrentSeriesUI = function()
+        DX.c:onShowCurrentSeries()
     end
 
-    readerui.onShowPageNavigator = function()
+    readerui.key_events.ShowPageNavigatorUI = { { "Shift", { "X" } } }
+    readerui.onShowPageNavigatorUI = function()
         DX.c:onShowPageNavigator()
     end
-    readerui.key_events.ShowPageNavigator = { { "Shift", { "X" } } }
 end
 
 --* here we add generic hotkeys for ScrollTextWidget, but a caller might already have added specific hotkeys for that module:

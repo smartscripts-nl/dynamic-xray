@@ -172,7 +172,7 @@ function SeriesManager:getCacheIndex(full_path)
     return md5(full_path)
 end
 
-function SeriesManager:onShowSeriesDialog(full_path)
+function SeriesManager:onShowSeriesList(full_path)
     self.path = full_path
     --* this var will be set in ((SeriesManager#searchSerieMembers)):
     local cached_result = full_path and KOR.registry:getOnce("series_members") or KOR.registry:get("all_series")
@@ -278,7 +278,7 @@ end
 function SeriesManager:showContextDialogForNonSeriesBook(full_path)
     local result = self:getNonSeriesData(full_path)
     if not result then
-        return
+        return false
     end
     local item = {
         authors = result["authors"][1],
@@ -290,6 +290,7 @@ function SeriesManager:showContextDialogForNonSeriesBook(full_path)
         title = result["title"][1],
     }
     self:showContextDialog(item, full_path, "is_non_series_item")
+    return true
 end
 
 --* data for item were retrieved in ((SeriesManager#populateSeries)):
@@ -334,6 +335,9 @@ function SeriesManager:showContextDialog(item, full_path, is_non_series_item)
                 end
             }),
         },
+        after_close_callback = function()
+            KOR.registry:unset(self.series_context_dialog_index)
+        end,
     })
 end
 
@@ -483,6 +487,9 @@ function SeriesManager:showContextDialogForCurrentEbook(result, full_path)
     if not full_path then
         full_path = DX.m.current_ebook_full_path
     end
+    if not DX.m.current_series then
+        return self:showContextDialogForNonSeriesBook(full_path)
+    end
     if not result then
         result = self:searchSerieMembers(full_path)
     end
@@ -539,7 +546,7 @@ function SeriesManager:showSeriesForEbookPath(full_path)
     end
 
     --* by adding param full_path, we make the manager display the series dialog for that particular file only:
-    self:onShowSeriesDialog(full_path)
+    self:onShowSeriesList(full_path)
 end
 
 function SeriesManager:setBookFinishedStatus(full_path)
