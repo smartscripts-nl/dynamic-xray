@@ -6,6 +6,7 @@ local DataStorage = require("datastorage")
 local KOR = require("extensions/kor")
 local SQ3 = require("lua-ljsqlite3/init")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
+local T = require("ffi/util").template
 
 local pairs = pairs
 local table = table
@@ -59,6 +60,15 @@ end
 function Databases:_getConn()
     self.database_folder = self.database_folder or DataStorage:getSettingsDir()
     return SQ3.open(self.database_folder .. "/" .. self.database_filename)
+end
+
+function Databases:attachStatisticsDB(conn)
+    local statistics_path = self.database_folder .. "/statistics.sqlite3"
+    conn:exec(T("ATTACH DATABASE '%1' AS statistics;", statistics_path))
+end
+
+function Databases:detachStatisticsDB(conn)
+    conn:exec("DETACH DATABASE statistics;")
 end
 
 function Databases:getDBconnForBookInfo()

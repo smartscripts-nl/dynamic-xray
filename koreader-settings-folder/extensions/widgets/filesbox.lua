@@ -12,6 +12,7 @@ local ImageWidget = require("ui/widget/imagewidget")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")
+local ProgressWidget = require("ui/widget/progresswidget")
 local ScrollableContainer = require("ui/widget/container/scrollablecontainer")
 local Size = require("extensions/modules/size")
 local TextWidget = require("extensions/widgets/textwidget")
@@ -65,7 +66,6 @@ local FilesBox = InputContainer:extend{
     key_events_module = nil,
     modal = true,
     non_series_box = nil,
-    padding_horizontal = nil,
     padding_vertical = nil,
     padding_vertical_height = Size.padding.fullscreen,
     row_spacer = nil,
@@ -90,6 +90,7 @@ function FilesBox:init()
     self:generateTitleBar()
     self:computeLineHeight()
     self:computeWindowRegion()
+    self:setColumnWidth()
     self:computeThumbnailDimensions()
     self:generateBoxes()
     if self.non_series_box then
@@ -115,6 +116,7 @@ function FilesBox:generateBoxes()
         box = self:generateBox({
             title_info = self.items[i].title_info,
             meta_info = self.items[i].meta_info,
+            percentage_read = self.items[i].percentage_read,
             description = self.items[i].description,
             is_current_ebook = self.items[i].path == DX.m.current_ebook_full_path,
             path = self.items[i].path,
@@ -128,23 +130,24 @@ end
 --- @private
 function FilesBox:generateBox(params)
     local bookinfo = KOR.bookinfomanager:getBookInfo(params.path, true)
-    local thumbnail, title_info, meta_info = self:getBoxElements(params, bookinfo)
 
-    self.column_width = math_floor(self.avail_width / self.columns)
+    local thumbnail, title_info, meta_info, progress_bar = self:getBoxElements(params, bookinfo)
+
     local button_table = self:getBoxButtons(params)
 
-    return self:getBoxContainer(params, thumbnail, title_info, meta_info, button_table)
+    return self:getBoxContainer(params, thumbnail, title_info, meta_info, progress_bar, button_table)
 end
 
 --- @private
 function FilesBox:getBoxElements(params, bookinfo)
     local thumbnail = self:getBookCover(bookinfo, params.path, nil, self.thumbnail_width, false, 0)
 
-    local font_size = params.is_current_ebook and self.font_size + 1 or self.font_size
+    local mark_by_text = params.is_current_ebook and not DX.s.SeriesManager_mark_active_title_with_border
+    local font_size = mark_by_text and self.font_size + 1 or self.font_size
     local face = Font:getFace(self.font_face, font_size)
     local title_info = TextWidget:new{
         text = params.title_info,
-        bold = params.is_current_ebook,
+        bold = mark_by_text,
         face = face,
         padding = 0,
     }
@@ -153,7 +156,18 @@ function FilesBox:getBoxElements(params, bookinfo)
         face = face,
         padding = 0,
     }
-    return thumbnail, title_info, meta_info
+    local progress_bar
+    if params.percentage_read then
+        progress_bar = ProgressWidget:new{
+            width = math_floor((self.column_width - self.thumbnail_width) * 0.7),
+            height = Screen:scaleBySize(10),
+            percentage = params.percentage_read,
+            ticks = nil,
+            last = nil,
+        }
+    end
+
+    return thumbnail, title_info, meta_info, progress_bar
 end
 
 --- @private
@@ -208,11 +222,19 @@ function FilesBox:getBoxButtons(params)
 end
 
 --- @private
-function FilesBox:getBoxContainer(params, thumbnail, title_info, meta_info, button_table)
+function FilesBox:getBoxContainer(params, thumbnail, title_info, meta_info, progress_bar, button_table)
     dimen = Geom:new{
         w = self.column_width,
         h = self.thumbnail_width
     }
+    local elements = VerticalGroup:new{
+        title_info,
+        meta_info,
+        button_table,
+    }
+    if progress_bar then
+        table_insert(elements, #elements, progress_bar)
+    end
     local box = CenterContainer:new{
         dimen = dimen,
         HorizontalGroup:new{
@@ -222,11 +244,7 @@ function FilesBox:getBoxContainer(params, thumbnail, title_info, meta_info, butt
                     w = self.column_width - self.thumbnail_width,
                     h = self.thumbnail_width,
                 },
-                VerticalGroup:new{
-                    title_info,
-                    meta_info,
-                    button_table,
-                }
+                elements,
             },
         },
     }
@@ -271,16 +289,15 @@ end
 --- @private
 function FilesBox:injectSingleRow()
     self.content_widget = VerticalGroup:new{}
-    local row = HorizontalGroup:new{
-        self.padding_horizontal,
-    }
+    local row = HorizontalGroup:new{}
+    local half_width = math_floor(self.screen_width / 2)
+    dimen.w = half_width
     table_insert(row, CenterContainer:new{
         dimen = dimen,
         self.boxes[1],
     })
-    table_insert(row, self.padding_horizontal)
     table_insert(self.content_widget, CenterContainer:new{
-        dimen = { w = self.screen_width, h = self.thumbnail_width + self.row_spacer_height },
+        dimen = { w = half_width, h = self.thumbnail_width + self.row_spacer_height },
         row,
         self.row_spacer,
     })
@@ -435,12 +452,11 @@ function FilesBox:computeWindowRegion()
         w = self.screen_width,
         h = self.avail_height,
     }
+end
 
-    local rows
-    local items_count = #self.items
-    rows = math_ceil(items_count / self.columns)
-
-    self.thumbnail_width = math_floor(self.screen_width / (3 * self.columns))
+--- @private
+function FilesBox:setColumnWidth()
+    self.column_width = math_floor(self.avail_width / self.columns)
 end
 
 --- @private
@@ -450,7 +466,7 @@ function FilesBox:computeThumbnailDimensions()
     rows = math_ceil(items_count / self.columns)
 
     --* the thumbnail should be 1/4 of the available box width and the text should take 3/4 of it:
-    self.thumbnail_width = self.non_series_box and math_floor(self.avail_width / 1.9) or math_floor(self.avail_width / (self.columns * 4))
+    self.thumbnail_width = math_floor(self.avail_width / (self.columns * 4))
 end
 
 --- @private
@@ -470,15 +486,11 @@ function FilesBox:setModuleProps()
         factor = DX.s.SeriesManager_mark_active_title_with_border and 5 or 2
     end
     self.avail_width = DX.s.SeriesManager_columns_count == 2 and self.screen_width - factor * Size.padding.default or self.screen_width - factor * Size.padding.button
-    if self.non_series_box then
-        self.columns = 1
-    end
 end
 
 --- @private
 function FilesBox:setPadding()
     self.padding_vertical = VerticalSpan:new{ width = self.padding_vertical_height }
-    self.padding_horizontal = VerticalSpan:new{ width = Size.padding.small }
 end
 
 --- @private

@@ -84,6 +84,8 @@ return {
     lock_bare = "\u{F023}",
     mark_current = "\u{F140}" .. spacer,
     mark_current_bare = "\u{F140}",
+    page = "\u{F016}" .. spacer,
+    page_bare = "\u{F016}",
     rating = "\u{EC13}" .. spacer,
     rating_bare = "\u{EC13}",
     reset = "\u{EB58}" .. spacer,

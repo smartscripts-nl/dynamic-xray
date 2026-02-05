@@ -189,7 +189,7 @@ local XraySettings = WidgetContainer:new{
             after_change_callback = "series_manager_reload",
         },
         SeriesManager_max_title_length = {
-            value = 30,
+            value = 40,
             explanation = _("Series Manager: if a title is longer than this value, it will be truncated with an ellipsis to this max length."),
             locked = 0,
             type = "number",

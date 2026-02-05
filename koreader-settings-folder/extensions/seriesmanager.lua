@@ -7,6 +7,7 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 --local logger = require("logger")
 local md5 = require("ffi/sha2").md5
+local Math = require("optmath")
 
 local DX = DX
 local has_content = has_content
@@ -47,10 +48,31 @@ local SeriesManager = WidgetContainer:extend{
 function SeriesManager:searchSerieMembers(full_path)
 
     local conn = KOR.databases:getDBconnForBookInfo("SeriesManager:searchSerieMembers")
+    KOR.databases:attachStatisticsDB(conn)
     local sql = [[
-        SELECT i.directory || i.filename AS path,
+    WITH latest_progress AS (
+        SELECT
+            p.page || '/' || p.total_pages AS progress,
+            b.title,
+            b.series
+        FROM statistics.page_stat_data p
+        JOIN (
+            SELECT id_book, MAX(start_time) AS max_time
+            FROM statistics.page_stat_data
+            GROUP BY id_book
+        ) lp
+          ON lp.id_book = p.id_book
+         AND lp.max_time = p.start_time
+         JOIN book b ON b.id = p.id_book
+        WHERE p.total_pages IS NOT NULL
+          AND p.total_pages != 0
+    )
+
+    SELECT
+        i.directory || i.filename AS path,
         i.authors,
         i.series AS series_name,
+        i.rating_goodreads,
         COALESCE(SUM(i.pages), 0) AS series_total_pages,
         GROUP_CONCAT(i.directory || i.filename, '%s') AS series_paths,
         GROUP_CONCAT(COALESCE(i.description, '-'), '%s') AS series_descriptions,
@@ -58,15 +80,20 @@ function SeriesManager:searchSerieMembers(full_path)
         GROUP_CONCAT(COALESCE(i.rating_goodreads, '-'), '%s') AS series_ratings,
         GROUP_CONCAT(COALESCE(i.stars, '-'), '%s') AS series_stars,
         GROUP_CONCAT(COALESCE(i.title, '-'), '%s') AS series_titles,
-        GROUP_CONCAT(COALESCE(f.path, '-'), '%s')  AS finished_paths,
+        GROUP_CONCAT(COALESCE(f.path, '-'), '%s') AS finished_paths,
         GROUP_CONCAT(COALESCE(i.series_index, '-'), '%s') AS series_numbers,
         GROUP_CONCAT(COALESCE(i.pages, '-'), '%s') AS pages,
         GROUP_CONCAT(COALESCE(i.publication_year, '-'), '%s') AS publication_years,
+        GROUP_CONCAT(COALESCE(lp.progress, '-'), '%s') AS series_percentages,
         COUNT(i.title) AS series_count
-        FROM (%s) i LEFT OUTER JOIN finished_books f ON i.directory || i.filename = f.path
-        WHERE i.series IS NOT NULL AND i.series != ''
-        GROUP BY i.authors, i.series
-        ORDER BY i.authors, i.series
+    FROM (%s) i
+    LEFT OUTER JOIN finished_books f
+        ON i.directory || i.filename = f.path
+    LEFT OUTER JOIN latest_progress lp
+        ON lp.title = i.title AND lp.series = i.series
+    WHERE i.series IS NOT NULL AND i.series != ''
+    GROUP BY i.authors, i.series
+    ORDER BY i.authors, i.series;
     ]]
     -- AND i.series_index IS NOT NULL AND i.series_index != ''
     --! this subquery needed to order the group_concat items:
@@ -78,8 +105,10 @@ function SeriesManager:searchSerieMembers(full_path)
     --* use this cast to sort naturally:
     subquery = subquery .. " ORDER BY CAST(series_index AS DECIMAL)"
     local s = self.separator
-    sql = string.format(sql, s, s, s, s, s, s, s, s, s, s, subquery)
+    sql = string.format(sql, s, s, s, s, s, s, s, s, s, s, s, subquery)
+    --logger.warn("query", sql:gsub("\n", " "))
     local result = conn:exec(sql)
+    KOR.databases:detachStatisticsDB(conn)
     conn = KOR.databases:closeInfoConnections(conn)
     if not full_path and not result then
         self:showNoSeriesFoundMessage()
@@ -98,16 +127,20 @@ function SeriesManager:getNonSeriesData(full_path)
 
     local conn = KOR.databases:getDBconnForBookInfo("SeriesManager:getNonSeriesData")
     local sql = [[
-        SELECT authors,
-        description,
-        bookmarks,
-        stars,
-        rating_goodreads,
-        title,
-        pages,
-        publication_year
-        FROM bookinfo
-        WHERE directory || filename = 'safe_path';
+        SELECT
+        i.authors,
+        i.description,
+        i.annotations,
+        i.stars,
+        i.rating_goodreads,
+        i.title,
+        i.publication_year,
+        COALESCE(f.path, '-') AS finished_path
+        FROM bookinfo i
+        LEFT OUTER JOIN finished_books f
+            ON i.directory || i.filename = f.path
+
+        WHERE i.directory || i.filename = 'safe_path';
     ]]
     sql = KOR.databases:injectSafePath(sql, full_path)
     local result = conn:exec(sql)
@@ -152,6 +185,7 @@ function SeriesManager:populateSeries(result)
                 series_ratings = result["series_ratings"][i],
                 series_titles = result["series_titles"][i],
                 finished_paths = result["finished_paths"][i],
+                series_percentages = result["series_percentages"][i],
                 series_numbers = result["series_numbers"][i],
                 publication_years = result["publication_years"][i],
                 pages = result["pages"][i],
@@ -177,7 +211,7 @@ end
 
 function SeriesManager:onShowSeriesList(full_path)
 
-    local result = self:getCachedResultset()
+    local result = self:getCachedResultset(full_path)
 
     if full_path and not result then
         self:showNoSeriesFoundMessage()
@@ -283,12 +317,21 @@ function SeriesManager:showContextDialogForNonSeriesBook(full_path)
     if not result then
         return false
     end
+    local percentage = "-"
+    local current_page = KOR.ui:getCurrentPage()
+    local pages = KOR.document:getPageCount()
+    if current_page and pages and pages > 0 then
+        --* this is the format expected by ((SeriesManager#getMetaInformation)):
+        percentage = current_page .. "/" .. pages
+    end
     local item = {
         authors = result["authors"][1],
         description = result["description"][1],
+        finished_path = result["finished_path"][1],
         publication_year = result["publication_year"][1],
-        pages = result["pages"][1],
-        bookmarks = result["bookmarks"][1],
+        pages = pages,
+        percentage = percentage,
+        annotations = result["annotations"][1],
         rating_goodreads = result["rating_goodreads"][1],
         path = full_path,
         title = result["title"][1],
@@ -355,26 +398,34 @@ function SeriesManager:generateBoxItems(item)
     self.series_annotations = item.series_annotations and KOR.strings:split(item.series_annotations, self.separator)
     self.series_stars = item.series_stars and KOR.strings:split(item.series_stars, self.separator)
     self.series_ratings = item.series_ratings and KOR.strings:split(item.series_ratings, self.separator)
+    local series_percentages = item.series_percentages and KOR.strings:split(item.series_percentages, self.separator)
     local series_numbers = item.series_numbers and KOR.strings:split(item.series_numbers, self.separator)
     local series_titles = KOR.strings:split(item.series_titles, self.separator)
 
     local total_buttons = #series_paths
-    local is_current_ebook, data
+    local is_current_ebook, data, title
     self.active_item_no = 0
     self.items = {}
     for i = 1, total_buttons do
         is_current_ebook = series_paths[i] == DX.s.current_ebook_full_path
+        title = series_titles[i]
+        if self:isValidEntry(publication_years[i]) then
+            title = title .. " - " .. publication_years[i]
+        end
+        if series_paths[i]:match("_Finished/") then
+            title = title .. " " .. KOR.icons.finished_bare
+        end
         data = {
             finished_path = finished_paths[i],
             description = series_descriptions[i],
             pages = pages[i],
-            publication_year = publication_years[i],
             annotations = self.series_annotations and self.series_annotations[i],
             stars = self.series_stars and self.series_stars[i],
             rating_goodreads = self.series_ratings and self.series_ratings[i],
+            percentage = series_percentages and series_percentages[i],
             series_number = series_numbers and series_numbers[i] or i,
             path = series_paths[i],
-            title = series_titles[i],
+            title = title,
         }
         self:generateBoxItem(i, is_current_ebook, data)
         if is_current_ebook then
@@ -402,10 +453,12 @@ end
 --- @private
 function SeriesManager:generateBoxItem(i, is_current_ebook, data)
     local series_number = self:getSeriesNumber(data, i)
+    local meta_info, percentage_read = self:getMetaInformation(data)
     local generated_data = {
         path = data.path,
         title_info = self:formatEbookTitle(data.title, series_number),
-        meta_info = self:getMetaInformation(data),
+        meta_info = meta_info,
+        percentage_read = percentage_read,
         description = data.description,
         is_current_ebook = is_current_ebook,
     }
@@ -415,9 +468,11 @@ end
 --* compare ((FilesBox#generateBoxes)) for regular series boxes:
 --- @private
 function SeriesManager:generateSingleBoxItem(is_current_ebook, item)
+    local meta_info, percentage_read = self:getMetaInformation(item)
     local box_item = {
         title_info = self:formatEbookTitle(item.title),
-        meta_info = self:getMetaInformation(item),
+        meta_info = meta_info,
+        percentage_read = percentage_read,
         is_current_ebook = is_current_ebook,
         path = item.path,
     }
@@ -425,35 +480,39 @@ function SeriesManager:generateSingleBoxItem(is_current_ebook, item)
 end
 
 --- @private
-function SeriesManager:getMetaInformation(d)
-    local read_marker = " " .. KOR.icons.finished_bare
+function SeriesManager:getMetaInformation(data)
     local meta_items = {}
 
-    if self:isValidEntry(d.publication_year) then
-        table_insert(meta_items, d.publication_year)
-    end
-    if self:isValidEntry(d.finished_path) then
-        table_insert(meta_items, read_marker)
-    end
-    if self:isValidEntry(d.pages) then
-        table_insert(meta_items, d.pages .. "pp")
+    local percentage
+    local has_valid_percentage = self:isValidEntry(data.percentage)
+    if not has_valid_percentage then
+        if self:isValidEntry(data.pages) then
+            table_insert(meta_items, data.pages .. "pp")
+        else
+            table_insert(meta_items, "?pp")
+        end
     else
-        table_insert(meta_items, "?pp")
+        local page, total_pages = data.percentage:match("^(%d+)/(%d+)")
+        page = tonumber(page)
+        total_pages = tonumber(total_pages)
+        percentage = page / total_pages
+        local display_percentage = Math.round(percentage * 100)
+        table_insert(meta_items, KOR.icons.page_bare .. " " .. data.percentage .. " " .. display_percentage .. "%")
     end
-    if self:isValidEntry(d.annotations) then
-        table_insert(meta_items, KOR.icons.bookmark_bare .. d.annotations)
+    if self:isValidEntry(data.annotations) and tonumber(data.annotations) > 0 then
+        table_insert(meta_items, KOR.icons.bookmark_bare .. data.annotations)
     end
-    if self:isValidEntry(d.rating_goodreads) then
-        table_insert(meta_items, KOR.icons.rating_bare .. d.rating_goodreads)
+    if self:isValidEntry(data.rating_goodreads) then
+        table_insert(meta_items, KOR.icons.rating_bare .. data.rating_goodreads)
     end
-    if self:isValidEntry(d.stars) and tonumber(d.stars) > 0 then
-        table_insert(meta_items, KOR.icons.star_bare .. d.stars)
+    if self:isValidEntry(data.stars) and tonumber(data.stars) > 0 then
+        table_insert(meta_items, KOR.icons.star_bare .. data.stars)
     end
     if has_items(meta_items) then
-        return table_concat(meta_items, self.separator)
+        return table_concat(meta_items, self.separator), percentage
     end
 
-    return ""
+    return "", nil
 end
 
 --- @private
