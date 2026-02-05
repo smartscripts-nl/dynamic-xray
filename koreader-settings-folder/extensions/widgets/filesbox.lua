@@ -291,9 +291,10 @@ function FilesBox:injectSingleRow()
     self.content_widget = VerticalGroup:new{}
     local row = HorizontalGroup:new{}
     local half_width = math_floor(self.screen_width / 2)
-    dimen.w = half_width
+    local sdimen = KOR.tables:shallowCopy(dimen)
+    sdimen.w = half_width
     table_insert(row, CenterContainer:new{
-        dimen = dimen,
+        dimen = sdimen,
         self.boxes[1],
     })
     table_insert(self.content_widget, CenterContainer:new{
