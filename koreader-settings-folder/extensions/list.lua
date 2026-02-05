@@ -41,7 +41,7 @@ function List:create(args)
     self.menu.close_callback = function()
         UIManager:close(self.dialog)
     end
-    self.menu:switchItemTable(args.list_title, menu_manager.item_table)
+    self.menu:switchItemTable(args.list_title, args.item_table)
 
     return self.dialog
 end

@@ -176,7 +176,39 @@ function SeriesManager:getCacheIndex(full_path)
 end
 
 function SeriesManager:onShowSeriesList(full_path)
-    self.path = full_path
+
+    local result = self:getCachedResultset()
+
+    if full_path and not result then
+        self:showNoSeriesFoundMessage()
+        return true
+    end
+
+    if full_path and self:showContextDialogForCurrentEbook(result, full_path) then
+        return true
+    end
+
+    self:populateSeries(result)
+    count = #self.series
+    if count == 0 then
+        self:showNoSeriesFoundMessage()
+        return
+    end
+
+    self.series_dialog = KOR.list:create({
+        list_title = _("All series"),
+        item_table = self:generateListMenuItems(),
+        parent = self,
+        menu_name = "all_series_menu",
+        menu_manager = self,
+    })
+    UIManager:show(self.series_dialog)
+
+    return true
+end
+
+--- @private
+function SeriesManager:getCachedResultset(full_path)
     --* this var will be set in ((SeriesManager#searchSerieMembers)):
     local cached_result = full_path and KOR.registry:getOnce("series_members") or KOR.registry:get("all_series")
 
@@ -187,74 +219,41 @@ function SeriesManager:onShowSeriesList(full_path)
     local result
     if cached_result then
         result = cached_result
-        self:_cache_resultset(cache_index, result)
 
     elseif not cached_result and cache_index and not self.series_resultsets[cache_index] then
         result = self:searchSerieMembers(full_path)
-        self:_cache_resultset(cache_index, result)
 
     elseif cache_index and self.series_resultsets[cache_index] then
-        result = self.series_resultsets[cache_index]
+        return self.series_resultsets[cache_index]
 
     elseif self.all_series_resultset then
-        result = self.all_series_resultset
+        return self.all_series_resultset
 
     --* for "normal", show all series case (no path and cache_index given):
     else
         result = self:searchSerieMembers()
-        self:_cache_resultset(cache_index, result)
     end
 
-    if full_path and not result then
-        self:showNoSeriesFoundMessage()
-        return
-    end
+    self:_cache_resultset(cache_index, result)
 
-    if full_path and self:showContextDialogForCurrentEbook(result, full_path) then
-        return
-    end
+    return result
+end
 
-    self:populateSeries(result)
-    count = #self.series
-    if count == 0 then
-        self:showNoSeriesFoundMessage()
-        return
-    end
-    self.item_table = {}
+--- @private
+function SeriesManager:generateListMenuItems()
+    local item_table = {}
     for nr = 1, count do
-        local current_nr = nr
-        local item = {
-            text = KOR.strings:formatListItemNumber(current_nr, self.series[nr].text),
-            path = self.series[nr].path,
-            editable = true,
-            deletable = false,
-            series_count = self.series[nr].series_count,
-            series_name = self.series[nr].series_name,
-            series_descriptions = self.series[nr].series_descriptions,
-            pages = self.series[nr].pages,
-            series_total_pages = self.series[nr].series_total_pages,
-            series_paths = self.series[nr].series_paths,
-            series_annotations = self.series[nr].series_annotations,
-            series_stars = self.series[nr].series_stars,
-            series_ratings = self.series[nr].series_ratings,
-            series_numbers = self.series[nr].series_numbers,
-            series_titles = self.series[nr].series_titles,
-            publication_years = self.series[nr].publication_years,
-            finished_paths = self.series[nr].finished_paths,
-        }
+        local item = KOR.tables:shallowCopy(self.series[nr])
+        item.text = KOR.strings:formatListItemNumber(nr, item.text)
+        item.editable = true
+        item.deletable = false
         item.callback = function()
             UIManager:close(self.series_dialog)
-            self:showContextDialog(item, self.series[nr].path)
+            self:showContextDialog(item, item.path)
         end
-        table_insert(self.item_table, item)
+        table_insert(item_table, item)
     end
-    self.series_dialog = KOR.list:create({
-        list_title = _("All series"),
-        parent = self,
-        menu_name = "all_series_menu",
-        menu_manager = self,
-    })
-    UIManager:show(self.series_dialog)
+    return item_table
 end
 
 function SeriesManager:reloadContextDialog()
