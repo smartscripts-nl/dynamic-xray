@@ -412,7 +412,7 @@ function SeriesManager:generateBoxItems(item)
         if self:isValidEntry(publication_years[i]) then
             title = title .. " - " .. publication_years[i]
         end
-        if series_paths[i]:match("_Finished/") then
+        if self:isValidEntry(finished_paths[i]) then
             title = title .. " " .. KOR.icons.finished_bare
         end
         data = {
