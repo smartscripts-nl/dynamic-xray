@@ -315,8 +315,9 @@ function SeriesManager:importAllData(upon_ready_callback)
             return
         end
         local bcids = result.bcid --* this is a table of bcids
-        local stmt_stars = conn:prepare("UPDATE bookinfo SET stars = ? WHERE bcid = ?;")
-        local stmt_finished = "INSERT OR IGNORE INTO finished_books (path) VALUES ('safe_path')"
+        self.import_annotations = conn:prepare("UPDATE bookinfo SET annotations = ? WHERE bcid = ?;")
+        self.import_stars = conn:prepare("UPDATE bookinfo SET stars = ? WHERE bcid = ?;")
+        self.import_finished = "INSERT OR IGNORE INTO finished_books (path) VALUES ('safe_path')"
         count = #result["path"]
 
         local import_notification = KOR.messages:notify("import started: 0% imported...")
@@ -325,25 +326,35 @@ function SeriesManager:importAllData(upon_ready_callback)
         self:processBooksInBatches(conn, bcids, DX.s.batch_count_for_import, function(i)
             local bcid = result.bcid[i]
             local full_path = result.path[i]
-            local finished_sql
-
-            local data = KOR.sidecar:get(full_path, "summary")
-            if data and data.summary then
-                if data.summary.status == "complete" then
-                    finished_sql = KOR.databases:injectSafePath(stmt_finished, full_path)
-                    conn:exec(finished_sql)
-                end
-                if has_items(data.summary.rating) then
-                    stmt_stars:reset():bind(data.summary.rating, bcid):step()
-                end
+            local data = KOR.sidecar:get(full_path, "summary", "bookmarks", "annotations")
+            if data then
+                self:runImportStatements(conn, data, bcid, full_path)
             end
         end)
 
-        conn, stmt_stars = KOR.databases:closeConnAndStmt(conn, stmt_stars)
+        self.import_annotations, self.import_stars = KOR.databases:closeInfoStmts(self.import_annotations, self.import_stars)
+        conn = KOR.databases:closeInfoConnections(conn)
         DX.s:saveSetting("SeriesManager_all_data_imported", true)
         self:resetData()
         upon_ready_callback()
     end)
+end
+
+--- @private
+function SeriesManager:runImportStatements(conn, data, bcid, full_path)
+    if data.summary then
+        if data.summary.status == "complete" then
+            local finished_sql = KOR.databases:injectSafePath(self.import_finished, full_path)
+            conn:exec(finished_sql)
+        end
+        if has_items(data.summary.rating) then
+            self.import_stars:reset():bind(data.summary.rating, bcid):step()
+        end
+    end
+    if data.bookmarks or data.annotations then
+        local annotations = data.bookmarks or data.annotations
+        self.import_annotations:reset():bind(#annotations, bcid):step()
+    end
 end
 
 --- @private
