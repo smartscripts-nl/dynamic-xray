@@ -1148,7 +1148,7 @@ function XrayDialogs:switchFocusFieldLoop(input_fields, last_field_no, focus_fie
 
     --* unfocus all fields, except the focus_field_no field:
     for i = 1, last_field_no do
-        if i ~= focus_field_no then
+        if i ~= focus_field_no and input_fields[i] then
             input_fields[i]:onUnfocus()
         end
     end

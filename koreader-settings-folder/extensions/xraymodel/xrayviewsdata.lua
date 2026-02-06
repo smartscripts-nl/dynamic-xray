@@ -518,10 +518,13 @@ function XrayViewsData:_doWeakMatchCheck(t, needle, partial_matches, for_relatio
 
     local needles = {
         item.name,
-        item.aliases,
     }
+    local loops_count = 1
+    if has_text(item.aliases) then
+        table_insert(needles, item.aliases)
+        loops_count = 2
+    end
     local haystack, uc_haystack, is_lower_haystack, indicator
-    local loops_count = item.aliases and 2 or 1
     for i = 1, loops_count do
         haystack = needles[i]
         uc_haystack, is_lower_haystack = getNameVariants(haystack)
