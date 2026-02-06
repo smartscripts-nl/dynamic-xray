@@ -247,8 +247,6 @@ function SettingsManager:updateItemTableForTab()
                 after_change_callback = setting.after_change_callback,
                 validator = setting.validator,
                 type = setting.type,
-                editable = true,
-                deletable = false,
                 callback = function()
                     if setting.locked == 1 then
                         self:showParentDialog()

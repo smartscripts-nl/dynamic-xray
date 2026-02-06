@@ -30,6 +30,7 @@ local pairs = pairs
 --- @field screenhelpers ScreenHelpers
 --- @field seriesmanager SeriesManager
 --- @field settingsmanager SettingsManager
+--- @field statisticshelpers StatisticsHelpers
 --- @field strings Strings
 --- @field system System
 --- @field tabbedlist TabbedList
@@ -117,6 +118,7 @@ local KOR = WidgetContainer:new{
 		"messages",
 		"screenhelpers",
 		"seriesmanager",
+		"statisticshelpers",
 		"strings",
 		"system",
 		"tabfactory",

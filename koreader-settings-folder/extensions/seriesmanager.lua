@@ -279,8 +279,6 @@ function SeriesManager:generateListMenuItems()
     for nr = 1, count do
         local item = KOR.tables:shallowCopy(self.series[nr])
         item.text = KOR.strings:formatListItemNumber(nr, item.text)
-        item.editable = true
-        item.deletable = false
         item.callback = function()
             UIManager:close(self.series_dialog)
             self:showContextDialog(item, item.path)
@@ -317,20 +315,17 @@ function SeriesManager:showContextDialogForNonSeriesBook(full_path)
     if not result then
         return false
     end
-    local percentage = "-"
-    local current_page = KOR.ui:getCurrentPage()
-    local pages = KOR.document:getPageCount()
-    if current_page and pages and pages > 0 then
-        --* this is the format expected by ((SeriesManager#getMetaInformation)):
-        percentage = current_page .. "/" .. pages
-    end
+
+    local percentage, percentage_fraction, current_ebook_page_count = KOR.statisticshelpers:getPagesReadPercentage(full_path)
+
     local item = {
         authors = result["authors"][1],
         description = result["description"][1],
         finished_path = result["finished_path"][1],
         publication_year = result["publication_year"][1],
-        pages = pages,
+        pages = current_ebook_page_count,
         percentage = percentage,
+        percentage_fraction = percentage_fraction,
         annotations = result["annotations"][1],
         rating_goodreads = result["rating_goodreads"][1],
         path = full_path,
@@ -403,7 +398,7 @@ function SeriesManager:generateBoxItems(item)
     local series_titles = KOR.strings:split(item.series_titles, self.separator)
 
     local total_buttons = #series_paths
-    local is_current_ebook, data, title
+    local is_current_ebook, data, title, percentage, percentage_fraction, current_ebook_page_count
     self.active_item_no = 0
     self.items = {}
     for i = 1, total_buttons do
@@ -415,14 +410,16 @@ function SeriesManager:generateBoxItems(item)
         if self:isValidEntry(finished_paths[i]) then
             title = title .. " " .. KOR.icons.finished_bare
         end
+        percentage, percentage_fraction, current_ebook_page_count = KOR.statisticshelpers:getPagesReadPercentage(series_paths[i], series_percentages and series_percentages[i])
         data = {
             finished_path = finished_paths[i],
             description = series_descriptions[i],
-            pages = pages[i],
+            pages = current_ebook_page_count or pages[i],
             annotations = self.series_annotations and self.series_annotations[i],
             stars = self.series_stars and self.series_stars[i],
             rating_goodreads = self.series_ratings and self.series_ratings[i],
-            percentage = series_percentages and series_percentages[i],
+            percentage = percentage,
+            percentage_fraction = percentage_fraction,
             series_number = series_numbers and series_numbers[i] or i,
             path = series_paths[i],
             title = title,
@@ -453,12 +450,13 @@ end
 --- @private
 function SeriesManager:generateBoxItem(i, is_current_ebook, data)
     local series_number = self:getSeriesNumber(data, i)
-    local meta_info, percentage_read = self:getMetaInformation(data)
+    local meta_info = self:getMetaInformation(data)
     local generated_data = {
         path = data.path,
         title_info = self:formatEbookTitle(data.title, series_number),
         meta_info = meta_info,
-        percentage_read = percentage_read,
+        percentage = data.percentage,
+        percentage_read = data.percentage_fraction,
         description = data.description,
         is_current_ebook = is_current_ebook,
     }
@@ -468,11 +466,12 @@ end
 --* compare ((FilesBox#generateBoxes)) for regular series boxes:
 --- @private
 function SeriesManager:generateSingleBoxItem(is_current_ebook, item)
-    local meta_info, percentage_read = self:getMetaInformation(item)
+    local meta_info = self:getMetaInformation(item)
     local box_item = {
         title_info = self:formatEbookTitle(item.title),
         meta_info = meta_info,
-        percentage_read = percentage_read,
+        percentage = item.percentage,
+        percentage_read = item.percentage_fraction,
         is_current_ebook = is_current_ebook,
         path = item.path,
     }
@@ -483,21 +482,14 @@ end
 function SeriesManager:getMetaInformation(data)
     local meta_items = {}
 
-    local percentage
-    local has_valid_percentage = self:isValidEntry(data.percentage)
-    if not has_valid_percentage then
-        if self:isValidEntry(data.pages) then
-            table_insert(meta_items, data.pages .. "pp")
-        else
-            table_insert(meta_items, "?pp")
-        end
-    else
-        local page, total_pages = data.percentage:match("^(%d+)/(%d+)")
-        page = tonumber(page)
-        total_pages = tonumber(total_pages)
-        percentage = page / total_pages
-        local display_percentage = Math.round(percentage * 100)
+    local pages = self:isValidEntry(data.pages) and data.pages
+    if self:isValidEntry(data.percentage) then
+        local display_percentage = Math.round(data.percentage_fraction * 100)
         table_insert(meta_items, KOR.icons.page_bare .. " " .. data.percentage .. " " .. display_percentage .. "%")
+    elseif pages then
+        table_insert(meta_items, pages .. "pp")
+    else
+        table_insert(meta_items, "?pp")
     end
     if self:isValidEntry(data.annotations) and tonumber(data.annotations) > 0 then
         table_insert(meta_items, KOR.icons.bookmark_bare .. data.annotations)
@@ -509,10 +501,10 @@ function SeriesManager:getMetaInformation(data)
         table_insert(meta_items, KOR.icons.star_bare .. data.stars)
     end
     if has_items(meta_items) then
-        return table_concat(meta_items, self.separator), percentage
+        return table_concat(meta_items, self.separator)
     end
 
-    return "", nil
+    return ""
 end
 
 --- @private
