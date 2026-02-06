@@ -516,9 +516,14 @@ end
 function XrayViewsData:_doWeakMatchCheck(t, needle, partial_matches, for_relations)
     local item = self.items[t]
 
+    local needles = {
+        item.name,
+        item.aliases,
+    }
     local haystack, uc_haystack, is_lower_haystack, indicator
-    for i = 1, 2 do
-        haystack = i == 1 and item.name or item.aliases
+    local loops_count = item.aliases and 2 or 1
+    for i = 1, loops_count do
+        haystack = needles[i]
         uc_haystack, is_lower_haystack = getNameVariants(haystack)
         indicator = self:haystackItemPartlyMatches(needle, haystack, uc_haystack, is_lower_haystack)
         if indicator then
@@ -530,6 +535,7 @@ function XrayViewsData:_doWeakMatchCheck(t, needle, partial_matches, for_relatio
             return true
         end
     end
+    return false
 end
 
 --* upgrade a placeholder needle_item derived from tapped text (needle_item.name) in the ebook to a regular xray item, if the name or aliases of that xray item match the tapped text; but this method also called from xray item forms:

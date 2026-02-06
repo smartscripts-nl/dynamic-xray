@@ -33,6 +33,9 @@ local SeriesManager = WidgetContainer:extend{
     arg = nil,
     boxes = {},
     context_dialog = nil,
+    import_annotations = nil,
+    import_finished_books = nil,
+    import_stars = nil,
     is_non_series_item = false,
     items = {},
     path = nil,
@@ -317,7 +320,7 @@ function SeriesManager:importAllData(upon_ready_callback)
         local bcids = result.bcid --* this is a table of bcids
         self.import_annotations = conn:prepare("UPDATE bookinfo SET annotations = ? WHERE bcid = ?;")
         self.import_stars = conn:prepare("UPDATE bookinfo SET stars = ? WHERE bcid = ?;")
-        self.import_finished = "INSERT OR IGNORE INTO finished_books (path) VALUES ('safe_path')"
+        self.import_finished_books = "INSERT OR IGNORE INTO finished_books (path) VALUES ('safe_path')"
         count = #result["path"]
 
         local import_notification = KOR.messages:notify("import started: 0% imported...")
@@ -344,7 +347,7 @@ end
 function SeriesManager:runImportStatements(conn, data, bcid, full_path)
     if data.summary then
         if data.summary.status == "complete" then
-            local finished_sql = KOR.databases:injectSafePath(self.import_finished, full_path)
+            local finished_sql = KOR.databases:injectSafePath(self.import_finished_books, full_path)
             conn:exec(finished_sql)
         end
         if has_items(data.summary.rating) then
