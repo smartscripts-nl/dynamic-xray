@@ -30,6 +30,7 @@ local pairs = pairs
 --- @field screenhelpers ScreenHelpers
 --- @field seriesmanager SeriesManager
 --- @field settingsmanager SettingsManager
+--- @field sidecar Sidecar
 --- @field statisticshelpers StatisticsHelpers
 --- @field strings Strings
 --- @field system System
@@ -84,6 +85,7 @@ local KOR = WidgetContainer:new{
 	screenhelpers = nil,
 	seriesmanager = nil,
 	settingsmanager = nil,
+	sidecar = nil,
 	statisticshelpers = nil,
 	strings = nil,
 	system = nil,
@@ -118,6 +120,7 @@ local KOR = WidgetContainer:new{
 		"messages",
 		"screenhelpers",
 		"seriesmanager",
+		"sidecar",
 		"statisticshelpers",
 		"strings",
 		"system",

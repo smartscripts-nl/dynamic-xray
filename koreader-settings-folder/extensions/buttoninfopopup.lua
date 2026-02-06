@@ -501,6 +501,15 @@ Alternate hotkey %1 %2]]), KOR.icons.arrow_bare, DX.s.hk_goto_previous_item),
 	}, props)
 end
 
+function ButtonInfoPopup:forSeriesManagerDataImport(props)
+	return KOR.buttonprops:set({
+		icon = "fill",
+		info = _("fill icon | Import data (finished status, percentage read, stars rating) of all known books into Series Manager data."),
+		callback_label = _("import"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forXraySettings(props)
 	return KOR.buttonprops:set({
 		icon = "appbar.settings",

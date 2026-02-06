@@ -222,7 +222,7 @@ function XrayController:onDispatcherRegisterActions()
     Dispatcher:registerAction("show_series_manager_current_ebook", { category = "none", event = "ShowCurrentSeries", title = _("Show series and/or metadata for current e-book"), reader = true })
 end
 
-function XrayController:doBatchImport(count, callback)
+function XrayController:doBatchImport(count, callback, is_non_dx_module)
     local percentage, loop_end
     local start = 1
     local loops = 0
@@ -243,6 +243,9 @@ function XrayController:doBatchImport(count, callback)
         if percentage:match("100") or loops > limit then
             break
         end
+    end
+    if is_non_dx_module then
+        return
     end
     --* by forcing refresh, we reload items from the database:
     DX.vd.initData("force_refresh")

@@ -13,6 +13,10 @@ local DX = DX
 local has_content = has_content
 local has_items = has_items
 local has_text = has_text
+local math_ceil = math.ceil
+local math_floor = math.floor
+local math_max = math.max
+local math_min = math.min
 local pairs = pairs
 local string = string
 local table_concat = table.concat
@@ -229,13 +233,25 @@ function SeriesManager:onShowSeriesList(full_path)
         return
     end
 
-    self.series_dialog = KOR.list:create({
+    local args = {
         list_title = _("All series"),
         item_table = self:generateListMenuItems(),
         parent = self,
         menu_name = "all_series_menu",
         menu_manager = self,
-    })
+    }
+    if not DX.s.SeriesManager_all_data_imported then
+        args.top_buttons_left = {
+            KOR.buttoninfopopup:forSeriesManagerDataImport({
+                callback = function()
+                    self:importAllData(function()
+                        UIManager:close(self.series_dialog)
+                    end)
+                end,
+            })
+        }
+    end
+    self.series_dialog = KOR.list:create(args)
     UIManager:show(self.series_dialog)
 
     return true
@@ -288,8 +304,73 @@ function SeriesManager:generateListMenuItems()
     return item_table
 end
 
-function SeriesManager:reloadContextDialog()
-    if KOR.registry:get(self.series_context_dialog_index) then
+function SeriesManager:importAllData(upon_ready_callback)
+    KOR.dialogs:confirm(_("Do you indeed want to import all data (will take some time)?"), function()
+        local conn = KOR.databases:getDBconnForBookInfo("SeriesManager:importAllData")
+        local sql = "SELECT bcid, directory || filename AS path FROM bookinfo ORDER BY directory || filename"
+        local result = conn:exec(sql)
+        if not result then
+            conn = KOR.databases:closeInfoConnections(conn)
+            KOR.messages:notify(_("no files to update found in database"))
+            return
+        end
+        local bcids = result.bcid --* this is a table of bcids
+        local stmt_stars = conn:prepare("UPDATE bookinfo SET stars = ? WHERE bcid = ?;")
+        local stmt_finished = "INSERT OR IGNORE INTO finished_books (path) VALUES ('safe_path')"
+        count = #result["path"]
+
+        local import_notification = KOR.messages:notify("import started: 0% imported...")
+        UIManager:forceRePaint()
+        KOR.registry:set("import_notification", import_notification)
+        self:processBooksInBatches(conn, bcids, DX.s.batch_count_for_import, function(i)
+            local bcid = result.bcid[i]
+            local full_path = result.path[i]
+            local finished_sql
+
+            local data = KOR.sidecar:get(full_path, "summary")
+            if data and data.summary then
+                if data.summary.status == "complete" then
+                    finished_sql = KOR.databases:injectSafePath(stmt_finished, full_path)
+                    conn:exec(finished_sql)
+                end
+                if has_items(data.summary.rating) then
+                    stmt_stars:reset():bind(data.summary.rating, bcid):step()
+                end
+            end
+        end)
+
+        conn, stmt_stars = KOR.databases:closeConnAndStmt(conn, stmt_stars)
+        DX.s:saveSetting("SeriesManager_all_data_imported", true)
+        self:resetData()
+        upon_ready_callback()
+    end)
+end
+
+--- @private
+function SeriesManager:processBooksInBatches(conn, item_ids, batch_count, process_item)
+    count = #item_ids
+    if count == 0 then
+        return
+    end
+
+    local items_per_batch = math_max(1, math_floor(count / batch_count))
+
+    DX.c:doBatchImport(count, function(start, icount)
+        conn:exec("BEGIN IMMEDIATE")
+
+        local loop_end = math_min(start + items_per_batch - 1, icount)
+        for i = start, loop_end do
+            process_item(i, item_ids[i])
+        end
+
+        conn:exec("COMMIT")
+        local percentage = math_ceil(loop_end / icount * 100) .. "%"
+        return start + items_per_batch, loop_end, percentage
+    end, "is_non_dx_module")
+end
+
+function SeriesManager:reloadContextDialog(force_reload)
+    if KOR.registry:get(self.series_context_dialog_index) or force_reload then
         UIManager:close(self.context_dialog)
         self:showContextDialog(self.item, self.full_path)
     end
@@ -358,25 +439,35 @@ function SeriesManager:showContextDialog(item, full_path, is_non_series_item)
     else
         self:generateBoxItems(item)
     end
+    local top_buttons_left = {
+        KOR.buttoninfopopup:forAllSeries({
+            callback = function()
+                UIManager:close(self.context_dialog)
+                DX.c:onShowSeriesManager()
+            end
+        }),
+        KOR.buttoninfopopup:forXraySettings({
+            callback = function()
+                DX.s.showSettingsManager()
+            end
+        }),
+    }
+    if not DX.s.SeriesManager_all_data_imported then
+        table_insert(top_buttons_left, 2, KOR.buttoninfopopup:forSeriesManagerDataImport({
+            callback = function()
+                self:importAllData(function()
+                    self:reloadContextDialog("force_reload")
+                end)
+            end,
+        }))
+    end
     local title = self:formatDialogTitle(item)
     self.context_dialog = KOR.dialogs:filesBox({
         title = title,
         key_events_module = self.series_context_dialog_index,
         items = self.items,
         non_series_box = self.is_non_series_item and self.items[1],
-        top_buttons_left = {
-            KOR.buttoninfopopup:forAllSeries({
-                callback = function()
-                    UIManager:close(self.context_dialog)
-                    DX.c:onShowSeriesManager()
-                end
-            }),
-            KOR.buttoninfopopup:forXraySettings({
-                callback = function()
-                    DX.s.showSettingsManager()
-                end
-            }),
-        },
+        top_buttons_left = top_buttons_left,
         after_close_callback = function()
             KOR.registry:unset(self.series_context_dialog_index)
         end,

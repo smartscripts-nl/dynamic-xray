@@ -8,6 +8,7 @@ local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 
+local DX = DX
 local pairs = pairs
 local type = type
 
@@ -174,6 +175,12 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
             type = "number",
         },
+        SeriesManager_all_data_imported = {
+            value = false,
+            explanation = "Series Manager: this value will be set to true after you imported all ebooks data into the Series Manager (via the import icon in the top left of Series Manager dialogs). You can reset this to false if you wish to re-import the data.",
+            locked = 0,
+            after_change_callback = "series_manager_reload",
+        },
         SeriesManager_columns_count = {
             value = 2,
             options = { 2, 3 },
@@ -311,6 +318,7 @@ function XraySettings:toggleSetting(key, alternatives)
 end
 
 function XraySettings:saveSetting(key, value)
+    local self = DX.s
     self.settings_manager:saveSetting(key, value)
 end
 

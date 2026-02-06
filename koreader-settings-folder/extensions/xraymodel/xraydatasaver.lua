@@ -16,6 +16,10 @@ local T = require("ffi/util").template
 local DX = DX
 local has_text = has_text
 local math = math
+local math_ceil = math.ceil
+local math_floor = math.floor
+local math_max = math.max
+local math_min = math.min
 local pairs = pairs
 local string = string
 local table = table
@@ -435,18 +439,18 @@ function XrayDataSaver:processItemsInBatches(conn, item_ids, batch_count, proces
         return
     end
 
-    local items_per_batch = math.max(1, math.floor(count / batch_count))
+    local items_per_batch = math_max(1, math_floor(count / batch_count))
 
     DX.c:doBatchImport(count, function(start, icount)
         conn:exec("BEGIN IMMEDIATE")
 
-        local loop_end = math.min(start + items_per_batch - 1, icount)
+        local loop_end = math_min(start + items_per_batch - 1, icount)
         for i = start, loop_end do
             process_item(i, item_ids[i])
         end
 
         conn:exec("COMMIT")
-        local percentage = math.ceil(loop_end / icount * 100) .. "%"
+        local percentage = math_ceil(loop_end / icount * 100) .. "%"
         return start + items_per_batch, loop_end, percentage
     end)
 end
