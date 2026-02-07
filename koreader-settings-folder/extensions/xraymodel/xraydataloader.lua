@@ -78,8 +78,8 @@ local XrayDataLoader = WidgetContainer:new{
            x.xray_type,
            x.aliases,
            x.linkwords,
-           s.book_hits,
-           s.chapter_hits,
+           x.book_hits,
+           x.chapter_hits,
            SUM(x.book_hits) AS series_hits,
 
            GROUP_CONCAT(b.series_index || '. ' || b.title || ' (' || COALESCE(x.book_hits, 0) || ')', '|' ORDER BY b.series_index) AS mentioned_in,
@@ -87,7 +87,7 @@ local XrayDataLoader = WidgetContainer:new{
 
         FROM bookinfo b
          LEFT JOIN xray_items x ON x.ebook = b.filename
-         LEFT JOIN (SELECT x2.name, x2.book_hits, x2.chapter_hits, x2.ebook, b2.title
+         LEFT JOIN (SELECT x2.name, x2.ebook, b2.title
             FROM xray_items x2
             LEFT JOIN bookinfo b2 ON b2.filename = x2.ebook
             WHERE x2.ebook = 'safe_path'
