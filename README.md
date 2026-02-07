@@ -12,7 +12,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 * All interface texts can be translated by the user.
 * Some hotkeys for buttons in DX dialogs can be configured by the user, from within KOReader. The Page Navigator can be called while reading an ebook, with Shift+X.
 * The Page Navigator module now offers an extra side tab to quickly inspect Xray items which are linked to the items named in the page. From there can then edit them, view more details about them or search all their locations in the current ebook. You can see this feature in action in the [videos section](#videos).
-* DX has a Series Manager for listing the books in a series. The items in this Manager have action buttons, for viewing large covers, descriptions, opening the e-book, etc. An example of this manager can be seen in the last image under [Images](#images).
+* DX has a Series Manager for listing the books in a series. The items in this Manager have action buttons, for viewing large covers, descriptions, reading progress, annotations count, opening the e-book, etc. An example of this manager can be seen in the last image under [Images](#images).
 
 ## Table of contents in this readme
 - [Use cases](#use-cases)
