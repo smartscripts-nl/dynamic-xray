@@ -99,31 +99,6 @@ local XrayDataSaver = WidgetContainer:new{
             )
             AND name = ?;]],
 
-        --* we need name AND aliases and short_names, to really find all text occurrences of an item:
-        get_items_for_hits_update =
-            "SELECT name, aliases, short_names, description, id FROM xray_items WHERE ebook = '%1' AND (book_hits IS NULL OR book_hits = 0) ORDER BY name;",
-
-        get_items_for_import_from_other_series =
-            "SELECT DISTINCT(x.name), x.short_names, x.description, x.xray_type, x.aliases, x.linkwords FROM xray_items x LEFT OUTER JOIN bookinfo b ON x.ebook = b.filename WHERE b.series = 'safe_path' ORDER BY x.name;",
-
-        get_series_hits =
-            [[
-            SELECT SUM(x.book_hits) AS series_hits
-            FROM xray_items x
-            JOIN bookinfo b ON b.filename = x.ebook
-            WHERE x.name = '%1' AND b.series = '%2';]],
-
-        import_items_from_other_books_in_series =
-            [[SELECT DISTINCT(x.name), x.short_names, x.description, x.xray_type, x.aliases, x.linkwords,
-            (
-                SELECT SUM(x2.book_hits)
-                FROM xray_items x2
-                JOIN bookinfo b2 ON b2.filename = x2.ebook
-                WHERE b2.series = b.series
-                  AND x2.name = x.name
-            ) AS series_hits
-            FROM xray_items x LEFT OUTER JOIN bookinfo b ON x.ebook = b.filename WHERE b.series = '%1' AND name NOT IN (SELECT name FROM xray_items WHERE ebook = '%2') ORDER BY x.name;]],
-
         insert_imported_items =
             "INSERT OR IGNORE INTO xray_items (ebook, name, short_names, description, xray_type, aliases, linkwords, book_hits, chapter_hits, hits_determined) VALUES ('%1', ?, ?, ?, ?, ?, ?, ?, ?, 1);",
 
@@ -288,8 +263,7 @@ function XrayDataSaver.storeImportedItems(series)
 
     local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver:storeImportedItems")
     KOR.registry:set("db_conn", conn)
-    local sql = KOR.databases:injectSafePath(self.queries.get_items_for_import_from_other_series, series)
-    local result = conn:exec(sql)
+    local result = DX.dl:getItemsForImportFromOtherSeries(conn, series)
     if not result then
         conn = KOR.databases:closeInfoConnections(conn)
         KOR.messages:notify(T(_("the series %1 was not found..."), series))
@@ -334,7 +308,7 @@ function XrayDataSaver.storeItemHits(item)
     if has_text(parent.current_series) then
         local name = KOR.databases:escape(item.name)
         local series = KOR.databases:escape(parent.current_series)
-        item.series_hits = conn:rowexec(T(self.queries.get_series_hits, name, series)) or 0
+        item.series_hits = DX.dl:getSeriesHits(conn, series, name)
     end
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 end
@@ -458,8 +432,7 @@ end
 --* compare ((XrayDataSaver#setSeriesHitsForImportedItems)):
 --- @private
 function XrayDataSaver:setBookHitsForImportedItems(conn, current_ebook_basename)
-    local sql = T(self.queries.get_items_for_hits_update, current_ebook_basename)
-    local result = conn:exec(sql)
+    local result = DX.dl:getItemsForHitsUpdate(conn, current_ebook_basename)
     if not result then
         return
     end
@@ -488,9 +461,7 @@ end
 --* compare ((XrayDataSaver#setBookHitsForImportedItems)):
 --- @private
 function XrayDataSaver:setSeriesHitsForImportedItems(conn, current_ebook_basename)
-    local series = KOR.databases:escape(parent.current_series)
-    local sql = T(self.queries.import_items_from_other_books_in_series, series, current_ebook_basename)
-    local result = conn:exec(sql)
+    local result = DX.dl:importItemsFromOtherBooksInSeries(conn, current_ebook_basename)
     if not result then
         return
     end
