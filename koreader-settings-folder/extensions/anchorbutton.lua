@@ -3,11 +3,13 @@
 
 local require = require
 
+local KOR = require("extensions/kor")
 local Size = require("extensions/modules/size")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local Screen = require("device").screen
 
 local DX = DX
+local math_ceil = math.ceil
 
 --- @class AnchorButton
 local AnchorButton = WidgetContainer:extend{
@@ -31,20 +33,21 @@ function AnchorButton:increaseParentYposWith(elements_height)
     self.parent_y = self.parent_y + elements_height
 end
 
-function AnchorButton:setAnchorButtonFromPopupMenuHeight(popup_menu_height)
-    local parent_y = self.parent_y - (self.buttons_count - 1) * self.height
+function AnchorButton:setAnchorButtonCoordinates(popup_menu_height, popup_buttons_count)
+    --* "button_tap_pos" was set in ((Button#onTapSelectButton)):
+    local parent_y = KOR.registry:get("button_tap_pos").y
     local x = self.button_no * self.width
     --* Ubuntu is a bit wacky with handling positions:
     if DX.s.is_ubuntu then
         --* Size.line.medium is the width of the separator lines in the ButtonTable:
         x = x - self.button_no * Size.line.medium
     end
-    local correction_factor = DX.s.is_ubuntu and 1 or 2
 
     --* this computed "button" will be used as anchor point by ((MovableContainer#moveToAnchor)):
+    local single_button_height = math_ceil(popup_menu_height / popup_buttons_count)
     self.button = {
         x = x,
-        y = parent_y - popup_menu_height + correction_factor * self.height - Screen:scaleBySize(2),
+        y = parent_y - math_ceil(popup_menu_height / 2) - single_button_height - Screen:scaleBySize(2),
         w = self.width,
         h = self.height,
     }

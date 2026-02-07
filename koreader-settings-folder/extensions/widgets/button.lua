@@ -703,6 +703,8 @@ end
 
 function Button:onTapSelectButton(irr, pos)
     irr = pos
+    --* e.g. for consumption in ((AnchorButton#setAnchorButtonCoordinates)):
+    KOR.registry:set("button_tap_pos", pos.pos)
     if self.enabled or self.allow_tap_when_disabled then
         if self.callback then
             if G_reader_settings:isFalse("flash_ui") then

@@ -118,6 +118,8 @@ local HtmlBox = InputContainer:extend{
     tabs_table_buttons = nil,
     title = nil,
     title_alignment = "left",
+    titlebar = nil,
+    titlebar_height = nil,
     title_tab_buttons_left = nil,
     title_tab_callbacks = nil,
     top_buttons_left = nil,
@@ -355,6 +357,7 @@ function HtmlBox:generateInfoButtons()
         },
         buttons,
     }
+    self.info_panel_nav_buttons_height = self.info_panel_nav_buttons:getSize().h
 end
 
 --- @private
@@ -387,7 +390,7 @@ function HtmlBox:generateInfoPanel()
             h = Size.line.thick,
         }
     }
-    height = height - self.info_panel:getSize().h - 2 * self.info_panel_separator:getSize().h - self.info_panel_nav_buttons:getSize().h
+    height = height - self.info_panel:getSize().h - 2 * self.info_panel_separator:getSize().h - self.info_panel_nav_buttons_height
     --* for consumption in ((HtmlBox#generateScrollWidget)):
     self.swidth = self.info_panel_width
     self.sheight = height
@@ -652,7 +655,7 @@ function HtmlBox:computeHeights()
     local buttons_height = self.button_table and self.button_table:getSize().h or 0
     local others_height =
         self.frame_bordersize * 2
-        + self.box_title:getHeight()
+        + self.titlebar_height
         + Size.line.thick
         + 2 * self.content_top_margin:getSize().h
         + buttons_height
@@ -766,7 +769,7 @@ function HtmlBox:generateSidePanel()
         - 2 * self.content_top_margin:getSize().h
         - self.side_buttons_table:getSize().h
         - (generate_tab_activators and self.side_panel_tab_activators:getSize().h or 0)
-        - self.box_title:getSize().h
+        - self.titlebar_height
         - 2 * self.side_buttons_table_separator:getSize().h
 
     local has_side_buttons = #self.side_buttons > 0
@@ -963,14 +966,14 @@ function HtmlBox:generateWidget()
     local content_height = self.content_widget:getSize().h
     if self.has_anchor_button then
         KOR.anchorbutton:increaseParentYposWith(
-        self.box_title:getSize().h
+        self.titlebar_height
         + self.separator:getSize().h
         + self.content_top_margin:getSize().h
             + content_height)
     end
 
     local elements = VerticalGroup:new{
-        self.box_title,
+        self.titlebar,
         self.separator,
         self.content_top_margin,
         --* content
@@ -1128,7 +1131,8 @@ function HtmlBox:generateTitleBar()
     if self.tabs_table_buttons then
         config.with_bottom_line = true
     end
-    self.box_title = TitleBar:new(config)
+    self.titlebar = TitleBar:new(config)
+    self.titlebar_height = self.titlebar:getSize().h
 end
 
 --- @private

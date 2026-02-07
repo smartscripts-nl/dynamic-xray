@@ -408,7 +408,6 @@ function XrayPageNavigator:createPopupMenu()
         --* these buttons were populated in ((XrayButtons#forPageNavigatorPopupButtons)):
         buttons = self.popup_buttons,
     }
-    KOR.anchorbutton:setAnchorButtonFromPopupMenuHeight(self.popup_menu.inner_height)
 end
 
 --* called via hotkey "M" in ((KeyEvents#addHotkeysForXrayPageNavigator)) or button in ((XrayButtons#forPageNavigator)) > ((XrayCallbacks#execShowPopupButtonsCallback)):
@@ -417,7 +416,7 @@ function XrayPageNavigator:showPopupMenu()
         self.popup_menu,
         dimen = Screen:getSize(),
     }
-
+    KOR.anchorbutton:setAnchorButtonCoordinates(self.popup_menu.inner_height, #self.popup_buttons)
     self.movable_popup_menu:moveToAnchor()
     UIManager:show(self.movable_popup_menu)
 end
