@@ -216,7 +216,7 @@ function XrayPages:jumpToPage()
             end
             DX.sp:resetActiveSideButtons("XrayPages:jumpToPage")
             DX.pn.navigator_page_no = value
-            DX.pn:showNavigator(DX.pn.initial_browsing_page)
+            DX.pn:restoreNavigator()
         end,
     })
 end
@@ -254,7 +254,7 @@ end
 function XrayPages:toCurrentNavigatorPage()
     DX.sp:resetActiveSideButtons("XrayPages:toCurrentNavigatorPage")
     DX.pn.navigator_page_no = DX.pn.initial_browsing_page
-    DX.pn:showNavigator(DX.pn.initial_browsing_page)
+    DX.pn:restoreNavigator()
 end
 
 function XrayPages:toNextNavigatorPage(goto_next_item)
@@ -274,7 +274,7 @@ function XrayPages:toNextNavigatorPage(goto_next_item)
         self:showNoNextPreviousOccurrenceMessage(direction)
         return
     end
-    DX.pn:showNavigator(DX.pn.initial_browsing_page)
+    DX.pn:restoreNavigator()
 end
 
 function XrayPages:toPrevNavigatorPage(goto_prev_item)
@@ -293,7 +293,7 @@ function XrayPages:toPrevNavigatorPage(goto_prev_item)
         self:showNoNextPreviousOccurrenceMessage(direction)
         return
     end
-    DX.pn:showNavigator(DX.pn.initial_browsing_page)
+    DX.pn:restoreNavigator()
 end
 
 function XrayPages:toPrevOrNextNavigatorPage(goto_item)
@@ -400,7 +400,7 @@ end
 function XrayPages:handleItemHitFound(page)
     DX.pn:setProp("navigator_page_no", page)
     DX.sp.active_side_button_by_name = DX.pn.active_filter_name
-    DX.pn:showNavigator(DX.pn.initial_browsing_page)
+    DX.pn:restoreNavigator()
 end
 
 --- @private

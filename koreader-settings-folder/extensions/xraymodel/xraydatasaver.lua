@@ -463,8 +463,10 @@ end
 function XrayDataSaver:setSeriesHitsForImportedItems(conn, current_ebook_basename)
     local result = DX.dl:importItemsFromOtherBooksInSeries(conn, current_ebook_basename)
     if not result then
+        KOR.messages:notify(_("no items found which needed importing"), 4)
         return
     end
+    KOR.messages:notify(_("items to be imported:") .. " " .. #result[1])
 
     local items = KOR.databases:resultsetToItemset(result)
     local stmt = conn:prepare(T(self.queries.insert_imported_items, current_ebook_basename))

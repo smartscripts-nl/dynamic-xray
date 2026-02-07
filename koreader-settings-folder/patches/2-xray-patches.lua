@@ -765,7 +765,7 @@ function ReaderSearch:showHitWithContext(item, not_cached)
                         -- #((jump from ReaderSearch to Xray Page Navigator))
                         DX.sp:resetActiveSideButtons("ReaderSearch:showHitWithContext")
                         DX.pn:setProp("navigator_page_no", page)
-                        DX.pn:showNavigator(DX.pn.initial_browsing_page)
+                        DX.pn:restoreNavigator()
                     end,
                 }),
                 {

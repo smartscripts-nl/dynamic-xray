@@ -139,14 +139,13 @@ end
 --! needed for ((XrayCallbacks#execShowPageBrowserCallback)) > show PageBrowserWidget > tap on a page > ((PageBrowserWidget#onClose)) > call laucher:onClose():
 function XrayCallbacks:onClose()
     DX.pn:closePageNavigator()
-    local initial_page = DX.pn.initial_browsing_page
 
     --* use PageBrowserWidget taps to navigate in Page Navigator, but reset location in reader to previous page:
     UIManager:nextTick(function()
         DX.pn:setProp("navigator_page_no", DX.u:getCurrentPage())
         --* undo page jump in the e-reader:
         KOR.link:onGoBackLink()
-        DX.pn:showNavigator(initial_page)
+        DX.pn:restoreNavigator()
     end)
 end
 

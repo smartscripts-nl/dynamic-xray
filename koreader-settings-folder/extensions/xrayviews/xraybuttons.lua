@@ -272,6 +272,14 @@ end
 
 --- @param parent XrayPageNavigator
 function XrayButtons:forPageNavigatorPopupButtons(parent)
+    local dialog_close_callback = function()
+        parent:closePopupMenu()
+        parent:closePageNavigator()
+    end
+    local upon_ready_callback = function()
+        parent:restoreNavigator()
+        self:showImportReadyNotification()
+    end
     return {
         {
             KOR.buttoninfopopup:forSeriesCurrentBook({
@@ -294,6 +302,16 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
                 callback = function()
                     parent:closePopupMenu()
                     return DX.cb:execExportXrayItemsCallback()
+                end
+            })
+        },
+        {
+            KOR.buttonchoicepopup:forXrayItemsImport({
+                callback = function()
+                    DX.d:showRefreshHitsForCurrentEbookConfirmation(dialog_close_callback, upon_ready_callback)
+                end,
+                hold_callback = function()
+                    DX.d:showImportFromOtherSeriesDialog(dialog_close_callback, upon_ready_callback)
                 end
             })
         },
@@ -952,7 +970,14 @@ end
 
 --* compare buttons for Item Viewer ((XrayButtons#forItemViewer)):
 --* compare ((XrayButtons#forListFooterLeft)):
-function XrayButtons:forListFooterRight()
+function XrayButtons:forListFooterRight(parent)
+    local dialog_close_callback = function()
+        UIManager:close(parent.xray_items_chooser_dialog)
+    end
+    local upon_ready_callback = function()
+        parent:showListWithRestoredArguments()
+        self:showImportReadyNotification()
+    end
     return {
         KOR.buttoninfopopup:forXrayExport({
             callback = function()
@@ -963,10 +988,10 @@ function XrayButtons:forListFooterRight()
         KOR.buttoninfopopup:forXrayPageNavigator(),
         KOR.buttonchoicepopup:forXrayItemsImport({
             callback = function()
-                DX.d:showRefreshHitsForCurrentEbookConfirmation()
+                DX.d:showRefreshHitsForCurrentEbookConfirmation(dialog_close_callback, upon_ready_callback)
             end,
             hold_callback = function()
-                DX.d:showImportFromOtherSeriesDialog()
+                DX.d:showImportFromOtherSeriesDialog(dialog_close_callback, upon_ready_callback)
             end
         }),
         KOR.buttoninfopopup:forXrayItemAdd({
@@ -1413,6 +1438,10 @@ function XrayButtons:forListTopLeft(parent)
             end
         }),
     }
+end
+
+function XrayButtons:showImportReadyNotification()
+    KOR.messages:notify(_("import completed"))
 end
 
 --- @private

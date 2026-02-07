@@ -129,15 +129,17 @@ function XrayDialogs:closeForm(mode)
     return false
 end
 
-function XrayDialogs:showRefreshHitsForCurrentEbookConfirmation()
+function XrayDialogs:showRefreshHitsForCurrentEbookConfirmation(dialog_close_callback, upon_ready_callback)
     self.import_items_dialog = KOR.dialogs:confirm(_("Do you want to import Xray items from the other books in the series and compute their occurrence in the current book?\n\nNB: this is a heavy, computation-intensive function; the import therefor will take some time (you will be notified about the progress)..."), function()
         UIManager:close(self.import_items_dialog)
+        dialog_close_callback()
         UIManager:close(self.xray_items_chooser_dialog)
         local import_notification = KOR.messages:notify("import started: 0% imported...")
         UIManager:forceRePaint()
         KOR.registry:set("import_notification", import_notification)
         --* the import will be processed and the user notified about the progress in ((XrayDataSaver#setSeriesHitsForImportedItems)) > ((XrayController#doBatchImport)):
         DX.c:refreshItemHitsForCurrentEbook()
+        upon_ready_callback()
     end)
 end
 
@@ -306,14 +308,16 @@ Enter with only lowercase characters [a-z], because then searches for these item
 end
 
 --* compare ((XrayController#refreshItemHitsForCurrentEbook)):
-function XrayDialogs:showImportFromOtherSeriesDialog()
+function XrayDialogs:showImportFromOtherSeriesDialog(dialog_close_callback, upon_ready_callback)
     local question
     question = KOR.dialogs:prompt({
         title = _("Import from another series"),
         input_hint = _("name series..."),
         callback = function(series)
             UIManager:close(question)
+            dialog_close_callback()
             DX.ds.storeImportedItems(series)
+            upon_ready_callback()
         end
     })
 end
@@ -663,7 +667,7 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
         filter = self:getListFilter(),
         title_submenu_buttontable = DX.b:forListSubmenu(),
         footer_buttons_left = not self.select_mode and DX.b:forListFooterLeft(focus_item, dont_show, base_icon_size),
-        footer_buttons_right = not self.select_mode and DX.b:forListFooterRight(),
+        footer_buttons_right = not self.select_mode and DX.b:forListFooterRight(self),
         --! don't use after_close_callback or call ((XrayController#resetFilteredItems)), because then filtering items will not work at all!
         onMenuHold = self.onMenuHold,
         items_per_page = self.items_per_page,
