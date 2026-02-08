@@ -327,6 +327,9 @@ end
 --- PATCH READERTOC
 -- #((PATCH READERTOC))
 
+ReaderToc.cached_titles = {}
+ReaderToc.cached_titles_index = nil
+
 function ReaderToc:getChapterStartPage(pn_or_xp)
     pn_or_xp = tonumber(pn_or_xp) or KOR.document:getPageFromXPointer(pn_or_xp)
     local ticks = self:getTocTicksFlattened(true)
@@ -391,6 +394,26 @@ function ReaderToc:getPageFromItemTitle(title)
             return self.toc[i].page
         end
     end
+end
+
+function ReaderToc:getTocTitles(file)
+    local index = file and KOR.tables:normalizeTableIndex(file)
+    if index and self.cached_titles_index == index then
+        return self.cached_titles[index]
+    end
+    self.cached_titles_index = index
+    self.cached_titles[index] = {}
+    if not self.toc then
+        self:fillToc()
+    end
+    if not self.toc then
+        return
+    end
+    count = #self.toc
+    for i = 1, count do
+        table_insert(self.cached_titles[index], self.toc[i].title)
+    end
+    return self.cached_titles[index]
 end
 
 

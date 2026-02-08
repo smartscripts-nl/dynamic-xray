@@ -5,6 +5,7 @@ local require = require
 
 local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
+local json = require("json")
 local T = require("ffi/util").template
 
 local DX = DX
@@ -59,9 +60,12 @@ local XrayDataLoader = WidgetContainer:new{
                       AND x2.name = x.name
                 ) AS series_hits,
                 x.chapter_hits,
-                x.hits_determined,
+                x.chapter_hits_data,
+                o.chapters,
                 GROUP_CONCAT(b.series_index || '. ' || b.title, ', ' ORDER BY b.series_index) AS mentioned_in
-            FROM xray_items x JOIN bookinfo b ON x.ebook = b.filename
+            FROM xray_items x
+                JOIN bookinfo b ON x.ebook = b.filename
+                LEFT OUTER JOIN xray_books o ON x.ebook = o.ebook
             WHERE x.ebook = '%1'
             GROUP BY %2
             ORDER BY (x.xray_type = 2 or x.xray_type = 4) DESC, %3;]],
@@ -83,9 +87,11 @@ local XrayDataLoader = WidgetContainer:new{
              x.book_hits,
              x.chapter_hits,
              x.chapter_hits_data,
-             b.title
+             b.title,
+             o.chapters
             FROM xray_items x
             JOIN bookinfo b ON b.filename = x.ebook
+            LEFT OUTER JOIN xray_books o ON b.filename = o.ebook
             WHERE x.ebook = 'safe_path'),
 
             series_data AS (
@@ -115,6 +121,7 @@ local XrayDataLoader = WidgetContainer:new{
                x.xray_type,
 
                x.book_hits,
+               x.chapters,
                x.chapter_hits,
                x.chapter_hits_data,
                x.ebook,
@@ -227,6 +234,8 @@ function XrayDataLoader:_loadAllData(mode)
         return
     end
 
+    self:_populateViewsDataBookChapters(result)
+
     --* loop over 1 or multiple books (in series mode):
     if mode == "series" then
         self:_loadDataForSeries(result)
@@ -250,6 +259,18 @@ function XrayDataLoader:_loadDataForBook(result)
     for i = 1, count do
         self:_addBookItem(result, i, book_index)
     end
+end
+
+--- @private
+function XrayDataLoader:_populateViewsDataBookChapters(result)
+    local chapters
+    if not result["chapters"][1] then
+        chapters = KOR.toc:getTocTitles(parent.current_ebook_full_path)
+        DX.ds.storeChapters(chapters)
+    else
+        chapters = json.decode(result["chapters"][1])
+    end
+    views_data:setProp("book_chapters", chapters)
 end
 
 --- @private

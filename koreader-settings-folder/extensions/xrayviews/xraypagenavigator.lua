@@ -98,7 +98,7 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
         info_panel_text = DX.ip:getInfoPanelText(),
         chapters_count = chapters_count,
         occurrences_per_chapter = occurrences_per_chapter,
-        occurrences_subject = item.name,
+        occurrences_subject = item and item.name,
         ratio_per_chapter = ratio_per_chapter,
         window_size = "fullscreen",
         --* no computations needed when popup_menu was already created:
@@ -140,7 +140,7 @@ function XrayPageNavigator:computeHistogramData()
         DX.ds.storeChapterHitsData(item)
     end
 
-    if not item.chapter_hits_data then
+    if not item or not item.chapter_hits_data then
         return
     end
 

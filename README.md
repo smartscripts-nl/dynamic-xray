@@ -233,7 +233,6 @@ PT_bookinfo_cache.sqlite3". In that case:
 * Currently none?
 
 ## Todos
-* Make info popups upon taps on the bars of the occurrences-per-chapter histogram in Page Navigator show the associated chapter title.
 * Update the demo movies in the GitHub releases section.
 * Base custom translations on indices instead of the texts they translate → continued usability of translations by the user much better protected, even when the actual text to be translated changes.
 

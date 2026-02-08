@@ -386,7 +386,9 @@ end
 
 --- @private
 function HtmlBox:showChapterInformation(n)
-    KOR.dialogs:niceAlert(self.occurrences_subject, T(_("Chapter %1/%2%3Occurrences: %4"), n, self.chapters_count, "\n\n", self.occurrences_per_chapter[n]))
+    --* DX.vd.book_chapters was populated in ((XrayDataLoader#_populateViewsDataBookChapters)):
+    local chapter_title = DX.vd.book_chapters[n] or "-"
+    KOR.dialogs:niceAlert(self.occurrences_subject, T(_("Chapter %1/%2%3%4%5Occurrences: %6"), n, self.chapters_count, "\n", chapter_title, "\n\n", self.occurrences_per_chapter[n]))
 
     return true
 end

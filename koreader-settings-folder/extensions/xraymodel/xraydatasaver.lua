@@ -11,6 +11,7 @@ local Device = require("device")
 local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
+local json = require("json")
 local T = require("ffi/util").template
 
 local DX = DX
@@ -107,6 +108,9 @@ local XrayDataSaver = WidgetContainer:new{
         insert_item =
             "INSERT INTO xray_items (ebook, name, short_names, description, xray_type, aliases, linkwords) VALUES (?, ?, ?, ?, ?, ?, ?);",
 
+        store_book_chapters =
+            "INSERT OR IGNORE INTO xray_books (ebook, chapters) VALUES (?, ?);",
+
         update_chapter_hits_data = [[
             UPDATE xray_items
             SET
@@ -197,6 +201,15 @@ local XrayDataSaver = WidgetContainer:new{
 
         [[
             ALTER TABLE xray_items ADD COLUMN chapter_hits_data;]],
+
+        [[
+            CREATE TABLE IF NOT EXISTS xray_books
+            (
+                ebook TEXT not null,
+                chapters TEXT
+                    constraint xray_books_unique_book
+                    unique
+            );]],
     },
     scheme_version_name = "database_scheme_version",
 }
@@ -265,6 +278,16 @@ function XrayDataSaver.storeDeletedItem(current_series, delete_item)
         stmt = conn:prepare(sql)
         stmt:reset():bind(delete_item.id):step()
     end
+    conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
+end
+
+function XrayDataSaver.storeChapters(chapters)
+    local self = DX.ds
+
+    chapters = json.encode(chapters)
+    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver.storeChapters")
+    local stmt = conn:prepare(self.queries.store_book_chapters)
+    stmt:reset():bind(parent.current_ebook_basename, chapters):step()
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 end
 
