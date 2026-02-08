@@ -11,7 +11,6 @@ local Math = require("optmath")
 
 local math = math
 local table = table
-local tostring = tostring
 
 --* here extend InputContainer instead of Widget class, so clicks on histogram bars will be detected:
 --- @class HistogramWidget
@@ -67,9 +66,9 @@ function HistogramWidget:init()
 end
 
 --* compare ((HistogramWidget#setBarTapHandlers)):
+--* in current method i_h is set by caller to self.height, so tabs above the bars will not trigger an event elsewhere:
 function HistogramWidget:setBarTapGestures(xp, i_x, yp, i_y, i_w, i_h, n)
     if self.is_touch_device then
-
         if self.histogram_type == "months" then
             local dimen = Geom:new{ x = xp + i_x, y = yp + i_y, w = i_w, h = i_h }
             self.ges_events["ShowMonth" .. n] = {
@@ -215,7 +214,7 @@ function HistogramWidget:paintTo(bb, xp, yp)
                 or
                 self.histogram_bar_light
             bb:paintRoundedRect(xp + i_x, yp + i_y, i_w, i_h, color, r)
-            self:setBarTapGestures(xp, i_x, yp, i_y, i_w, i_h, n)
+            self:setBarTapGestures(xp, i_x, yp, i_y, i_w, self.height, n)
 
             --* mark bar with next target of epages by painting a light bar of 5px height above it:
             if n == self.next_reading_target_epages_index then

@@ -412,12 +412,9 @@ function HtmlBox:showChapterInformation(n)
                     text = " " .. _("navigator"),
                 },
                 callback = function()
-                    UIManager:close(self.chapter_information)
-                    if not page then
-                        KOR.messages:notify(_("page number of chapter could not be determined"))
+                    if not self:handleBeforeGotoPageRequest(page) then
                         return
                     end
-                    DX.pn:closePageNavigator()
                     DX.sp:resetActiveSideButtons("HtmlBox:showChapterInformation")
                     DX.pn.navigator_page_no = page
                     DX.pn:restoreNavigator()
@@ -429,19 +426,26 @@ function HtmlBox:showChapterInformation(n)
                     text = " " .. KOR.icons.arrow_bare .. " " .. _("book"),
                 },
                 callback = function()
-                    UIManager:close(self.chapter_information)
-                    if not page then
-                        KOR.messages:notify(_("page number of chapter could not be determined"))
+                    if not self:handleBeforeGotoPageRequest(page) then
                         return
                     end
-                    DX.pn:closePageNavigator()
                     KOR.ui.link:addCurrentLocationToStack()
                     KOR.ui:handleEvent(Event:new("GotoPage", page))
                 end
             },
         }}
     })
+    return true
+end
 
+--- @private
+function HtmlBox:handleBeforeGotoPageRequest(page)
+    UIManager:close(self.chapter_information)
+    if not page then
+        KOR.messages:notify(_("page number of chapter could not be determined"))
+        return false
+    end
+    DX.pn:closePageNavigator()
     return true
 end
 
