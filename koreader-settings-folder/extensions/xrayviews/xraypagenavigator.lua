@@ -83,6 +83,8 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
     self:closePageNavigator()
     local html = self:loadDataForPage()
 
+    local chapters_count, ratio_per_chapter = self:computeHistogramData()
+
     local key_events_module = "XrayPageNavigator"
     KOR.anchorbutton:initButtonProps(2, #self.popup_buttons)
     self.page_navigator = KOR.dialogs:htmlBox({
@@ -91,6 +93,8 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
         html = html,
         modal = false,
         info_panel_text = DX.ip:getInfoPanelText(),
+        chapters_count = chapters_count,
+        ratio_per_chapter = ratio_per_chapter,
         window_size = "fullscreen",
         --* no computations needed when popup_menu was already created:
         has_anchor_button = not self.popup_menu,
@@ -117,6 +121,32 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
 
     --! have the popup menu available immediately, so we can compute its height in this method, for correct positioning above the anchor button:
     self:createPopupMenu()
+end
+
+--* calls ((XrayViewsData#generateChapterHitsData)) when no chapter_hits_data found for item:
+--- @private
+function XrayPageNavigator:computeHistogramData()
+
+    local item = DX.sp:getCurrentTabItem()
+
+    --* for best speed do this only for current / actual item in the info panel, and not for all items in the side panel:
+    if item and not item.chapter_hits_data then
+        item.chapter_hits_data = DX.vd:getChapterHitsData(item)
+        DX.ds.storeChapterHitsData(item)
+    end
+
+    if not item.chapter_hits_data then
+        return
+    end
+
+    local chapter_hits_data = item.chapter_hits_data
+    local chapters_count = #chapter_hits_data
+    local max_value = KOR.tables:getMaxValue(chapter_hits_data)
+    local ratios = {}
+    for i = 1, chapters_count do
+        table_insert(ratios, chapter_hits_data[i] / max_value)
+    end
+    return chapters_count, ratios
 end
 
 --* this info will be consumed for the info panel in ((HtmlBox#generateScrollWidget)):

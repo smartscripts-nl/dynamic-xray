@@ -11,6 +11,7 @@ local Font = require("extensions/modules/font")
 local FrameContainer = require("ui/widget/container/framecontainer")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
+local HistogramWidget = require("extensions.widgets/histogramwidget")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local KOR = require("extensions/kor")
@@ -88,6 +89,8 @@ local HtmlBox = InputContainer:extend{
     after_close_callback = nil,
     align = "center",
     buttons_table = nil,
+    chapter_occurrences_histogram = nil,
+    chapters_count = nil,
     content_padding = nil,
     --* this is the default, but some widgets can set the content_type to "text" for a specific tab; e.g. see ((XrayButtons#getItemViewerTabs)):
     content_type = "html",
@@ -96,6 +99,8 @@ local HtmlBox = InputContainer:extend{
     fullscreen = false,
     has_anchor_button = false,
     height = nil,
+    histogram_bottom_line_height = 0,
+    histogram_height = 0,
     html = nil,
     info_panel_buttons = nil,
     info_panel_text = nil,
@@ -109,6 +114,7 @@ local HtmlBox = InputContainer:extend{
     --* optional list of full_paths, to open books retrieved on base of the current html content of the box:
     paths = nil,
     prev_item_callback = nil,
+    ratio_per_chapter = nil,
     screen_height = nil,
     screen_width = nil,
     side_buttons = nil,
@@ -147,7 +153,7 @@ function HtmlBox:init()
     self:setSeparator()
     self:computeHeights()
     self:generateInfoButtons()
-    self:generateInfoPanel()
+    self:generateInfoPanelAndHistogram()
     self:generateScrollWidget()
     self:generateSidePanel()
     self:addFrameToContentWidget()
@@ -333,6 +339,39 @@ function HtmlBox:getHtmlBoxCss()
 end
 
 --- @private
+function HtmlBox:generateChapterOccurrencesHistogram()
+    if not self.ratio_per_chapter or not DX.s.PN_show_chapter_hits_histogram then
+        return
+    end
+
+    local bottom_line = LineWidget:new{
+        background = KOR.colors.histogram_bar_light,
+        dimen = Geom:new{
+            w = self.info_panel_width,
+            h = self.histogram_bottom_line_height,
+        }
+    }
+    --* at about 50 items will give a nice distribution of not too wide histogram bars; if there are significantly less chapters, we reduce the width of the histogram, so the bars will not get too wide:
+    local histogram_width = self.info_panel_width
+    if self.chapters_count <= 45 then
+        histogram_width = math_floor(self.chapters_count / 50 * histogram_width)
+    end
+
+    self.chapter_occurrences_histogram = CenterContainer:new{
+        dimen = Geom:new{ w = self.info_panel_width, h = self.histogram_height + self.histogram_bottom_line_height },
+        VerticalGroup:new{
+            HistogramWidget:new{
+                width = histogram_width,
+                height = self.histogram_height,
+                nb_items = self.chapters_count,
+                ratios = self.ratio_per_chapter,
+            },
+            bottom_line,
+        }
+    }
+end
+
+--- @private
 function HtmlBox:generateInfoButtons()
     --? for some reason self.side_buttons_table not available when we click on the Item Viewer button; because then self.side_buttons not set at the start of ((XraySidePanels#generateSidePanelButtons)) and the script returns, without generating the side buttons:
     self.info_panel_width = self.side_buttons_table and self.content_width - self.side_buttons_table:getSize().w or self.content_width
@@ -361,7 +400,7 @@ function HtmlBox:generateInfoButtons()
 end
 
 --- @private
-function HtmlBox:generateInfoPanel()
+function HtmlBox:generateInfoPanelAndHistogram()
     if not self.side_buttons_table then
         --* for consumption in ((HtmlBox#generateScrollWidget)):
         self.swidth = self.content_width
@@ -369,9 +408,14 @@ function HtmlBox:generateInfoPanel()
         return
     end
 
+    if DX.s.PN_show_chapter_hits_histogram then
+        self:generateChapterOccurrencesHistogram()
+    end
+
     local height = self.content_height
     --* info_text was generated in ((XrayPageNavigator#showNavigator)) > ((XrayPages#markItemsFoundInPageHtml)) > ((XrayPages#markItem)) > ((XrayPageNavigator#getItemInfoText)):
     local info_text = self.info_panel_text or " "
+    local info_panel_height = math_floor(self.screen_height * DX.s.PN_info_panel_height)
     self.info_panel = ScrollTextWidget:new{
         text = info_text,
         face = Font:getFace("x_smallinfofont", DX.s.PN_panels_font_size or 14),
@@ -381,7 +425,7 @@ function HtmlBox:generateInfoPanel()
         dialog = self,
         --* info_panel_width was computed in ((HtmlBox#generateInfoButtons)):
         width = self.info_panel_width,
-        height = math_floor(self.screen_height * DX.s.PN_info_panel_height),
+        height = info_panel_height,
     }
     self.info_panel_separator = LineWidget:new{
         background = KOR.colors.line_separator,
@@ -394,6 +438,9 @@ function HtmlBox:generateInfoPanel()
     --* for consumption in ((HtmlBox#generateScrollWidget)):
     self.swidth = self.info_panel_width
     self.sheight = height
+    if self.ratio_per_chapter then
+        self.sheight = self.sheight - self.histogram_height - self.histogram_bottom_line_height
+    end
 end
 
 --* Used in init & update to instantiate the Scroll*Widget that self.html_widget points to
@@ -907,6 +954,17 @@ function HtmlBox:addFrameToContentWidget()
     if has_side_buttons then
         self.spacer_width = self.spacer_width - self.side_buttons_table_separator:getSize().h
     end
+    local main_content = VerticalGroup:new{
+        align = "left",
+        self.html_widget,
+        self.info_panel_separator,
+        self.info_panel_nav_buttons,
+        self.info_panel_separator,
+        self.info_panel,
+    }
+    if DX.s.PN_show_chapter_hits_histogram then
+        table_insert(main_content, self.chapter_occurrences_histogram)
+    end
     self.content_widget = FrameContainer:new{
         padding = 0,
         padding_left = self.content_padding_h,
@@ -920,14 +978,7 @@ function HtmlBox:addFrameToContentWidget()
             },
             HorizontalGroup:new{
                 align = "center",
-                VerticalGroup:new{
-                    align = "left",
-                    self.html_widget,
-                    self.info_panel_separator,
-                    self.info_panel_nav_buttons,
-                    self.info_panel_separator,
-                    self.info_panel,
-                },
+                main_content,
                 FrameContainer:new{
                     padding = 0,
                     margin = 0,
@@ -1062,6 +1113,11 @@ function HtmlBox:setModuleProps()
         self.title_alignment = "center"
     end
     KOR.tabnavigator:broadcastActivatedTab()
+
+    if DX.s.PN_show_chapter_hits_histogram then
+        self.histogram_height = Screen:scaleBySize(25)
+        self.histogram_bottom_line_height = Size.line.thin
+    end
 
     self.box_font_size = DX.s.is_mobile_device and 26 or 18
     self.content_face = Font:getFace("x_smallinfofont", self.box_font_size)

@@ -9,6 +9,7 @@ local math_ceil = math.ceil
 local pairs = pairs
 local table = table
 local table_insert = table.insert
+local tonumber = tonumber
 local tostring = tostring
 local type = type
 local unpack = unpack
@@ -60,6 +61,17 @@ function Tables:merge(t1, t2, add_indices)
         t1[i].index = i
     end
     return t1
+end
+
+function Tables:populateWithPlaceholders(items_count, default_value)
+    local temp = {}
+    local value
+    for i = 1, items_count do
+        value = default_value or i
+        --* these values MUST be replaced by the calling routine:
+        table_insert(temp, value)
+    end
+    return temp
 end
 
 function Tables:concatField(itable, prop, separator)
@@ -200,6 +212,27 @@ function Tables:sortByPropDescending(subject, prop)
         end
         return v1[prop] > v2[prop]
     end)
+end
+
+--* this method requires a numerical table with numerical values:
+function Tables:makeItemsNumerical(subject)
+    count = #subject
+    for i = 1, count do
+        subject[i] = tonumber(subject[i])
+    end
+    return subject
+end
+
+--* this method requires a numerical table with numerical values:
+function Tables:getMaxValue(subject)
+    local max = 0
+    count = #subject
+    for i = 1, count do
+        if subject[i] > max then
+            max = subject[i]
+        end
+    end
+    return max
 end
 
 function Tables:tableHas(itable, needle)

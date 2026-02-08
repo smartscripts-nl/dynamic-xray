@@ -210,9 +210,10 @@ function XrayViewsData:setItemHits(item, args)
         return self:_returnCachedHits(item, for_display_mode)
     end
 
-    local book_hits, chapter_hits = self:getAllTextHits(item)
+    local book_hits, chapter_hits, chapter_hits_data = self:getAllTextHits(item)
     item.book_hits = book_hits
     item.chapter_hits = chapter_hits
+    item.chapter_hits_data = chapter_hits_data
     --* chapter_hits could be zero after query, so here we signal the current method that in that case the query shouldn't be repeated:
     item.chapter_query_done = true
 
@@ -405,6 +406,7 @@ function XrayViewsData:setChapterHits(chapter_stats, chapters_ordered, chapter_t
     end
 end
 
+--! this method will only be called upon creating a new or updating an existing item:
 function XrayViewsData:getAllTextHits(search_text_or_item)
 
     local aliases = {}
@@ -434,30 +436,108 @@ function XrayViewsData:getAllTextHits(search_text_or_item)
 
     --* initialize containers
     local chapter_stats = {}
-    local chapters_ordered = {}
+    local chapter_titles_ordered = {}
 
     --* process all search terms (main + aliases):
     local total_count = 0
     count = #search_terms
     for s = 1, count do
-        total_count = self:getChapterHitsPerTerm(search_terms[s], chapter_stats, chapters_ordered, total_count)
+        total_count = self:getChapterHitsPerTerm(search_terms[s], chapter_stats, chapter_titles_ordered, total_count)
     end
 
-    --* chapter_info used in 4 places, to populate the chapter_hits prop of items:
+    --* chapter_info used in 4 places, to populate the chapter_hits html prop of items:
     local chapter_info
-    local chapters_found = #chapters_ordered
+    local chapters_found = #chapter_titles_ordered
     if chapters_found > 0 then
         local present_as_table = not DX.s.is_mobile_device
         local chapter_items = {}
+        local current_chapter_title, current_chapter_stats
         local max_hits = 0
         -- #((generate chapter info))
         for i = 1, chapters_found do
-            max_hits = self:addChapterToChapterStats(chapters_ordered, chapter_items, chapter_stats, present_as_table, i, max_hits)
+            current_chapter_title = chapter_titles_ordered[i]
+            current_chapter_stats = chapter_stats[current_chapter_title]
+            max_hits = self:addChapterToChapterStats(current_chapter_title, chapter_items, current_chapter_stats, present_as_table, i, max_hits)
         end
         chapter_info = self:generateChaptersListHtml(chapter_items, present_as_table, max_hits)
     end
 
-    return total_count, chapter_info
+    local chapter_hits_data = self:generateChapterHitsData(chapter_titles_ordered, chapter_stats)
+
+    return total_count, chapter_info, chapter_hits_data
+end
+
+--* these data will be used for generating a chapter-occurrences-histogram in the PN info panel; current method called from ((XrayPageNavigator#setCurrentItem)):
+function XrayViewsData:getChapterHitsData(item, debug)
+
+    local aliases = {}
+    local short_names = {}
+    local main_name = item
+
+    if type(item) == "table" then
+        main_name = item.name
+        if has_text(item.aliases) then
+            aliases = parent:splitByCommaOrSpace(item.aliases)
+        end
+        if has_text(item.short_names) then
+            short_names = parent:splitByCommaOrSpace(item.short_names)
+        end
+    end
+
+    --* build unified list of search terms:
+    local search_terms = { main_name }
+    count = #aliases
+    for i = 1, count do
+        table_insert(search_terms, aliases[i])
+    end
+    count = #short_names
+    for i = 1, count do
+        table_insert(search_terms, short_names[i])
+    end
+
+    --* initialize containers:
+    local chapter_stats = {}
+    local chapter_titles_ordered = {}
+
+    --* process all search terms (main + aliases):
+    local total_count = 0
+    count = #search_terms
+    for s = 1, count do
+        total_count = self:getChapterHitsPerTerm(search_terms[s], chapter_stats, chapter_titles_ordered, total_count)
+    end
+
+    return self:generateChapterHitsData(chapter_titles_ordered, chapter_stats, debug)
+end
+
+--- @private
+function XrayViewsData:generateChapterHitsData(chapter_titles_ordered, chapter_stats, debug)
+    local toc = KOR.toc.toc
+    if has_no_items(toc) then
+        return {}
+    end
+
+    local chapters_count = #toc
+    local hits_per_chapter = KOR.tables:populateWithPlaceholders(chapters_count, 0)
+
+    if debug then
+        KOR.debug:alertTable("XrayViewsData:getChapterHitsData", "toc", toc)
+        --* ordered titles only contain items with hits, so have gaps, but are in correct document sequence:
+        KOR.debug:alertTable("XrayViewsData:getChapterHitsData", "chapter_titles_ordered", chapter_titles_ordered)
+        --* chapter_stats is a relational table with chapter titles as index and count as one of their props:
+        KOR.debug:alertTable("XrayViewsData:getChapterHitsData", "chapter_stats", chapter_stats)
+    end
+
+    count = #chapter_titles_ordered
+    local title
+    for i = 1, count do
+        title = chapter_titles_ordered[i]
+        hits_per_chapter[chapter_stats[title].index] = chapter_stats[title].count
+    end
+    if debug then
+        KOR.debug:alertTable("XrayViewsData:getChapterHitsData", "hits_per_chapter", hits_per_chapter)
+    end
+
+    return hits_per_chapter
 end
 
 --- @private
@@ -902,6 +982,7 @@ function XrayViewsData:addMentionedInHtml(meta_info_html, item)
     table_insert(meta_info_html, T(self.item_meta_info_template, _("Mentioned in") .. ":", list))
 end
 
+--! hits html has only been generated and stored in database upon creating a new or updating an existing item:
 --- @private
 --- @param meta_info_html table
 function XrayViewsData:addHitsHtml(meta_info_html, item)
@@ -1126,22 +1207,21 @@ function XrayViewsData:filterAndPopulateItemTables(data_items)
 end
 
 --- @private
-function XrayViewsData:addChapterToChapterStats(chapters_ordered, chapter_items, chapter_stats, present_as_table, i, max_hits)
+function XrayViewsData:addChapterToChapterStats(current_chapter_title, chapter_items, current_chapter_stats, present_as_table, i, max_hits)
     local chapter_start_page
-    local chapter = chapters_ordered[i]
     --* in the viewer this will be a list under an ul; using ul for this sublist yields ugly big open bullets, so here no list tags used:
     --* chapter_stats[chapter].count was set in ((XrayViewsData#setChapterHits)):
     if present_as_table then
-        chapter_start_page = chapter_stats[chapter].start_page
-                and T(self.chapter_page_number_format, chapter_stats[chapter].start_page)
+        chapter_start_page = current_chapter_stats.start_page
+                and T(self.chapter_page_number_format, current_chapter_stats.start_page)
                 or ""
         table_insert(chapter_items, "<tr><td>" ..
-                i .. ". <i>" .. chapter .. "</i>" .. chapter_start_page .. "</td><td>&nbsp;&nbsp;</td><td>" .. chapter_stats[chapter].count .. "</td></tr>")
+                i .. ". <i>" .. current_chapter_title .. "</i>" .. chapter_start_page .. "</td><td>&nbsp;&nbsp;</td><td>" .. current_chapter_stats.count .. "</td></tr>")
     else
-        table_insert(chapter_items, chapter .. " " .. KOR.icons.arrow_bare .. " " .. chapter_stats[chapter].count .. "<br>")
+        table_insert(chapter_items, current_chapter_title .. " " .. KOR.icons.arrow_bare .. " " .. current_chapter_stats.count .. "<br>")
     end
-    if chapter_stats[chapter].count > max_hits then
-        max_hits = chapter_stats[chapter].count
+    if current_chapter_stats.count > max_hits then
+        max_hits = current_chapter_stats.count
     end
     return max_hits
 end

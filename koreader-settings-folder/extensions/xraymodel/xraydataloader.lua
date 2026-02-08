@@ -30,7 +30,7 @@ aliases,
 linkwords,
 book_hits, -- an integer
 chapter_hits, -- a string, containing a html list of all hits in the chapters of an ebook
-hits_determined -- an integer
+chapter_hits_data -- a comma delimited string of number, indicating item hits per chapter
 
 series_hits is NOT a db field, it is computed dynamically by queries XrayDataLoader.queries.get_all_book_items and XrayDataLoader.queries.get_all_series_items
 ]]
@@ -68,38 +68,66 @@ local XrayDataLoader = WidgetContainer:new{
 
         --* s.ebook, s.title, s.book_hits and s.chapter_hits will be null when the xray item only is found in one or more OTHER books in the series, but not in the current ebook:
         get_all_series_items = [[
-        SELECT x.id,
-           x.name,
-           b.series,
-           s.ebook,
-           s.title,
-           x.short_names,
-           x.description,
-           x.xray_type,
-           x.aliases,
-           x.linkwords,
-           x.book_hits,
-           x.chapter_hits,
-           SUM(x.book_hits) AS series_hits,
+           WITH
 
-           GROUP_CONCAT(b.series_index || '. ' || b.title || ' (' || COALESCE(x.book_hits, 0) || ')', '|' ORDER BY b.series_index) AS mentioned_in,
-           x.hits_determined
+           book_xray_data AS (
+            SELECT
+             x.id,
+             x.name,
+             x.xray_type,
+             x.aliases,
+             x.short_names,
+             x.linkwords,
+             x.description,
+             x.ebook,
+             x.book_hits,
+             x.chapter_hits,
+             x.chapter_hits_data,
+             b.title
+            FROM xray_items x
+            JOIN bookinfo b ON b.filename = x.ebook
+            WHERE x.ebook = 'safe_path'),
 
-        FROM bookinfo b
-         LEFT JOIN xray_items x ON x.ebook = b.filename
-         LEFT JOIN (SELECT x2.name, x2.ebook, b2.title
-            FROM xray_items x2
-            LEFT JOIN bookinfo b2 ON b2.filename = x2.ebook
-            WHERE x2.ebook = 'safe_path'
-            GROUP BY x2.name) s ON s.name = x.name
+            series_data AS (
+                SELECT
+                x.name,
+                b.series,
+                SUM(x.book_hits) AS series_hits,
+                GROUP_CONCAT(
+                    b.series_index || '. ' || b.title || ' (' || COALESCE(x.book_hits, 0) || ')',
+                    '|'
+                    ORDER BY b.series_index
+                ) AS mentioned_in
+             FROM xray_items x
+               JOIN bookinfo b ON b.filename = x.ebook
+             WHERE b.series = '%1'
+               AND x.name IS NOT NULL
+               AND x.name != ''
+             GROUP BY x.name, x.xray_type, b.series)
 
-        WHERE b.series = '%1'
-          AND x.name IS NOT NULL
-          AND x.name != ''
+            SELECT
+               x.id,
+               x.name,
+               x.aliases,
+               x.short_names,
+               x.linkwords,
+               x.description,
+               x.xray_type,
 
-        GROUP BY x.name, x.xray_type
-        ORDER BY (x.xray_type = 2 or x.xray_type = 4) DESC, %2, x.ebook;
-        ]],
+               x.book_hits,
+               x.chapter_hits,
+               x.chapter_hits_data,
+               x.ebook,
+               x.title,
+
+               s.series,
+               s.series_hits,
+               s.mentioned_in
+
+            FROM series_data s
+            LEFT JOIN book_xray_data x ON x.name = s.name
+
+            ORDER BY (x.xray_type = 2 OR x.xray_type = 4) DESC, %2, x.name;]],
 
         get_series_name =
             "SELECT series FROM bookinfo WHERE directory || filename = 'safe_path' LIMIT 1;",
@@ -175,7 +203,7 @@ function XrayDataLoader:_getAllDataSql(mode)
     local sort
     if mode == "series" then
         local current_series = KOR.databases:escape(parent.current_series)
-        sort = parent.sorting_method == "hits" and "series_hits DESC" or "x.name"
+        sort = parent.sorting_method == "hits" and "s.series_hits DESC" or "s.name"
 
         return T(KOR.databases:injectSafePath(self.queries.get_all_series_items, parent.current_ebook_basename), current_series, sort)
     end
@@ -254,15 +282,13 @@ function XrayDataLoader:_addBookItem(result, i, book_index)
         book_hits = tonumber(result["book_hits"][i]),
         series_hits = tonumber(result["series_hits"][i]),
         chapter_hits = result["chapter_hits"][i],
+        chapter_hits_data = self:convertChapterHitsData(result["chapter_hits_data"][i]),
     })
 end
 
 --- @private
 function XrayDataLoader:_addSeriesItem(result, i, series_index)
-    local name = result["name"][i]
-    --* unique key (i.e. name) per item in the series:
-    local item = parent.series[series_index][name]
-            or {
+    local item = {
         id = tonumber(result["id"][i]),
         series = result["series"][i],
         name = result["name"][i],
@@ -274,12 +300,43 @@ function XrayDataLoader:_addSeriesItem(result, i, series_index)
         series_hits = tonumber(result["series_hits"][i]) or 0,
         book_hits = tonumber(result["book_hits"][i]) or 0,
         chapter_hits = result["chapter_hits"][i],
+        chapter_hits_data = self:convertChapterHitsData(result["chapter_hits_data"][i]),
         mentioned_in = result["mentioned_in"][i] or "",
-        hits_determined = tonumber(result["hits_determined"][i]),
     }
 
     -- #((set xray item props))
     table.insert(parent.series[series_index], item)
+end
+
+--* compare ((XrayDataSaver#getChapterHitsDataForStorage)), where these data are prepared for storage:
+--- @private
+function XrayDataLoader:convertChapterHitsData(chapter_hits)
+    if not chapter_hits then
+        --* don't return an empty table here, because of check for empty chapter_hits_data at start of ((XrayPageNavigator#computeHistogramData)):
+        return
+    end
+    local hits = KOR.strings:split(chapter_hits, ",")
+    return KOR.tables:makeItemsNumerical(hits)
+end
+
+function XrayDataLoader:getItemsCountForBook(file_basename)
+    --* to get the number of xray items only for the this book:
+    local conn = KOR.databases:getDBconnForBookInfo("XrayDataLoader:getItemsCountForBook")
+    local sql = KOR.databases:injectSafePath(self.queries.get_book_items_count, file_basename)
+    local xray_items_count = conn:rowexec(sql, nil, "XrayDataLoader:getItemsCountForBook")
+    conn = KOR.databases:closeInfoConnections(conn)
+
+    return xray_items_count
+end
+
+--! file_base_name can be an "external" book, when we call this method for creating an ebook abstract:
+function XrayDataLoader:getItemsForEbook(file_basename)
+    local conn = KOR.databases:getDBconnForBookInfo("XrayDataLoader:getItemsForEbook")
+    file_basename = KOR.databases:escape(file_basename)
+    local sql = T(self.queries.get_items_for_ebook_abstract, file_basename)
+    local result = conn:exec(sql)
+    conn = KOR.databases:closeInfoConnections(conn)
+    return result
 end
 
 function XrayDataLoader:getItemsForHitsUpdate(conn, current_ebook_basename)

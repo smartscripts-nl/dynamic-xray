@@ -14,6 +14,7 @@ local _ = KOR:initCustomTranslations()
 local T = require("ffi/util").template
 
 local DX = DX
+local has_no_items = has_no_items
 local has_text = has_text
 local math = math
 local math_ceil = math.ceil
@@ -23,6 +24,8 @@ local math_min = math.min
 local pairs = pairs
 local string = string
 local table = table
+local table_concat = table.concat
+local table_insert = table.insert
 local type = type
 local unpack = unpack
 
@@ -44,7 +47,7 @@ aliases,
 linkwords,
 book_hits, -- an integer
 chapter_hits, -- a string, containing a html list of all hits in the chapters of an ebook
-hits_determined -- an integer
+chapter_hits_data -- a comma delimited string of number, indicating item hits per chapter
 
 series_hits is NOT a db field, it is computed dynamically by queries XrayDataLoader.queries.get_all_book_items and XrayDataLoader.queries.get_all_series_items
 ]]
@@ -65,7 +68,6 @@ local XrayDataSaver = WidgetContainer:new{
                 "linkwords",
                 "book_hits" INTEGER,
                 "chapter_hits",
-                "hits_determined" INTEGER NOT NULL DEFAULT 0,
                 CONSTRAINT "ebook_xray_name_unique" UNIQUE("ebook","name"),
                 PRIMARY KEY("id" AUTOINCREMENT)
             );]],
@@ -100,24 +102,30 @@ local XrayDataSaver = WidgetContainer:new{
             AND name = ?;]],
 
         insert_imported_items =
-            "INSERT OR IGNORE INTO xray_items (ebook, name, short_names, description, xray_type, aliases, linkwords, book_hits, chapter_hits, hits_determined) VALUES ('%1', ?, ?, ?, ?, ?, ?, ?, ?, 1);",
+            "INSERT OR IGNORE INTO xray_items (ebook, name, short_names, description, xray_type, aliases, linkwords, book_hits, chapter_hits, chapter_hits_data) VALUES ('%1', ?, ?, ?, ?, ?, ?, ?, ?, ?);",
 
         insert_item =
             "INSERT INTO xray_items (ebook, name, short_names, description, xray_type, aliases, linkwords) VALUES (?, ?, ?, ?, ?, ?, ?);",
 
-        update_hits =
-            [[UPDATE xray_items
+        update_chapter_hits_data = [[
+            UPDATE xray_items
+            SET
+            chapter_hits_data = ?
+            WHERE id = ?;]],
+
+        update_hits = [[
+            UPDATE xray_items
             SET
             book_hits = ?,
             chapter_hits = ?,
-            hits_determined = 1
+            chapter_hits_data = ?
             WHERE id = ?;]],
 
         update_item =
             "UPDATE xray_items SET name = ?, short_names = ?, description = ?, xray_type = ?, aliases = ?, linkwords = ?, book_hits = ?, chapter_hits = ? WHERE id = ?;",
 
-        update_item_for_entire_series =
-            [[UPDATE xray_items
+        update_item_for_entire_series = [[
+            UPDATE xray_items
             SET
             name = ?,
             short_names = ?,
@@ -140,7 +148,7 @@ local XrayDataSaver = WidgetContainer:new{
           );]],
 
         update_item_hits =
-            "UPDATE xray_items SET book_hits = ?, chapter_hits = ?, hits_determined = 1 WHERE id = ?;",
+            "UPDATE xray_items SET book_hits = ?, chapter_hits = ?, chapter_hits_data = ? WHERE id = ?;",
 
         update_item_type =
             "UPDATE xray_items SET xray_type = ? WHERE id = ?;",
@@ -162,7 +170,7 @@ local XrayDataSaver = WidgetContainer:new{
         update_translation =
             "UPDATE xray_translations SET msgstr = ? WHERE md5 = ?;",
     },
-    --* these table modifications are run and depending on the setting "database_scheme_version" in ((XraySettings)), for the public version of DX:
+    --* these table modifications for table bookinfo are run and depending on the setting "database_scheme_version" in ((XraySettings)), for the public version of DX:
     scheme_alter_queries = {
         [[
             CREATE TABLE IF NOT EXISTS finished_books
@@ -186,6 +194,9 @@ local XrayDataSaver = WidgetContainer:new{
 
         [[
             ALTER TABLE bookinfo ADD COLUMN stars INTEGER;]],
+
+        [[
+            ALTER TABLE xray_items ADD COLUMN chapter_hits_data;]],
     },
     scheme_version_name = "database_scheme_version",
 }
@@ -257,6 +268,24 @@ function XrayDataSaver.storeDeletedItem(current_series, delete_item)
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 end
 
+function XrayDataSaver.storeChapterHitsData(item)
+    local self = DX.ds
+
+    local chapter_hits_data = self:getChapterHitsDataForStorage(item.chapter_hits_data)
+    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver.storeChapterHitsData")
+    local stmt = conn:prepare(self.queries.update_chapter_hits_data)
+    stmt:reset():bind(chapter_hits_data, item.id):step()
+    conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
+end
+
+--* compare ((XrayDataLoader#convertChapterHitsData)), where the data are retrieved from the database:
+function XrayDataSaver:getChapterHitsDataForStorage(chapter_hits_data)
+    if has_no_items(chapter_hits_data) then
+        return nil
+    end
+    return table_concat(chapter_hits_data, ",")
+end
+
 function XrayDataSaver.storeImportedItems(series)
 
     local self = DX.ds
@@ -282,7 +311,7 @@ function XrayDataSaver.storeImportedItems(series)
             result["aliases"][i],
             result["linkwords"][i],
             0, --* book_hits (integer)
-            0 --* chapter_hits (html)
+            nil --* chapter_hits (html)
         ):step()
     end
     stmt = KOR.databases:closeInfoStmts(stmt)
@@ -298,8 +327,9 @@ function XrayDataSaver.storeItemHits(item)
 
     local id = item.id
     local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver:updateBookHits")
+    local chapter_hits_data = self:getChapterHitsDataForStorage(item.chapter_hits_data)
     local stmt = conn:prepare(self.queries.update_hits)
-    stmt:reset():bind(item.book_hits, item.chapter_hits, id):step()
+    stmt:reset():bind(item.book_hits, item.chapter_hits, chapter_hits_data, id):step()
     --! hotfix, should not be necessary:
     if not parent then
         parent = DX.m
@@ -447,11 +477,12 @@ function XrayDataSaver:setBookHitsForImportedItems(conn, current_ebook_basename)
             chapter_query_done = false,
         }
 
-        local book_hits, chapter_hits = views_data:getAllTextHits(item)
+        local book_hits, chapter_hits, chapter_hits_data = views_data:getAllTextHits(item)
         if book_hits == 0 then
             conn:exec(T(self.queries.delete_item_book, ids[i]))
         else
-            stmt:reset():bind(book_hits, chapter_hits, ids[i]):step()
+            chapter_hits_data = self:getChapterHitsDataForStorage(chapter_hits_data)
+            stmt:reset():bind(book_hits, chapter_hits, chapter_hits_data, ids[i]):step()
         end
     end)
 
@@ -477,8 +508,9 @@ function XrayDataSaver:setSeriesHitsForImportedItems(conn, current_ebook_basenam
             aliases = src.aliases,
         }
 
-        local book_hits, chapter_hits = views_data:getAllTextHits(item)
+        local book_hits, chapter_hits, chapter_hits_data = views_data:getAllTextHits(item)
         if book_hits > 0 then
+            chapter_hits_data = self:getChapterHitsDataForStorage(chapter_hits_data)
             stmt:reset():bind(
                 src.name,
                 src.short_names,
@@ -487,7 +519,8 @@ function XrayDataSaver:setSeriesHitsForImportedItems(conn, current_ebook_basenam
                 src.aliases,
                 src.linkwords,
                 book_hits,
-                chapter_hits
+                chapter_hits,
+                chapter_hits_data
             ):step()
         else
             conn:exec(T(self.queries.delete_item_book, src.id))
@@ -550,7 +583,7 @@ function XrayDataSaver.deleteItem(delete_item, remove_all_instances_in_series)
     for nr = 1, count do
         xray_item = views_data.items[nr]
         if xray_item.id ~= delete_item.id then
-            table.insert(xray_items, xray_item)
+            table_insert(xray_items, xray_item)
         else
             position = nr
         end

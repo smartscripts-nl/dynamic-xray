@@ -147,7 +147,7 @@ local XraySettings = WidgetContainer:new{
             type = "number",
         },
         PN_info_panel_height = {
-            --* this value is used in ((HtmlBox#generateInfoPanel)):
+            --* this value is used in ((HtmlBox#generateInfoPanelAndHistogram)):
             value = 0.22,
             --* this validator references a function included in self.validators:
             validator = {
@@ -174,6 +174,11 @@ local XraySettings = WidgetContainer:new{
             explanation = _("Page Navigator: with this setting you can determine the font size of the side and bottom panels."),
             locked = 0,
             type = "number",
+        },
+        PN_show_chapter_hits_histogram = {
+            value = true,
+            explanation = _("Page Navigator: if set to true, at the bottom of the info panel a histogram will be added to show the hits per chapter for the Xray item currently shown in the info panel."),
+            locked = 0,
         },
         SeriesManager_all_data_imported = {
             value = false,

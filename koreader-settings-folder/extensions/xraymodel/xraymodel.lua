@@ -44,6 +44,7 @@ local XrayModel = WidgetContainer:new{
     items_prepared_for_basename = nil,
     min_match_word_length = 4,
     previous_series = nil,
+    --* this table will be populated by ((XrayDataLoader#_addSeriesItem)):
     series = {},
     --* by default sort xray items by number of occurrences:
     sorting_method = "hits",
