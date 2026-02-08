@@ -388,6 +388,7 @@ function ReaderToc:getTocPathInfoForText(pos0, context_info, has_own_title)
 end
 
 function ReaderToc:getPageFromItemTitle(title)
+    self:fillToc()
     count = #self.toc
     for i = 1, count do
         if self.toc[i].title == title then
@@ -403,9 +404,7 @@ function ReaderToc:getTocTitles(file)
     end
     self.cached_titles_index = index
     self.cached_titles[index] = {}
-    if not self.toc then
-        self:fillToc()
-    end
+    self:fillToc()
     if not self.toc then
         return
     end

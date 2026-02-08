@@ -7,6 +7,7 @@ local BD = require("ui/bidi")
 local ButtonTable = require("extensions/widgets/buttontable")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Device = require("device")
+local Event = require("ui/event")
 local Font = require("extensions/modules/font")
 local FrameContainer = require("ui/widget/container/framecontainer")
 local Geom = require("ui/geometry")
@@ -110,6 +111,8 @@ local HtmlBox = InputContainer:extend{
     modal = true,
     next_item_callback = nil,
     no_buttons_row = false,
+    occurrences_subject = nil,
+    occurrences_per_chapter = nil,
     page_navigator = nil,
     --* to inform the parent about a newly activated tab, via ((TabNavigator#broadcastActivatedTab)):
     parent = nil,
@@ -388,7 +391,56 @@ end
 function HtmlBox:showChapterInformation(n)
     --* DX.vd.book_chapters was populated in ((XrayDataLoader#_populateViewsDataBookChapters)):
     local chapter_title = DX.vd.book_chapters[n] or "-"
-    KOR.dialogs:niceAlert(self.occurrences_subject, T(_("Chapter %1/%2%3%4%5Occurrences: %6"), n, self.chapters_count, "\n", chapter_title, "\n\n", self.occurrences_per_chapter[n]))
+    local page
+    local display_page = ""
+    if chapter_title ~= "-" then
+        page = KOR.toc:getPageFromItemTitle(chapter_title)
+        display_page = ", " .. _("page") .. " " .. page
+    end
+
+    self.chapter_information = KOR.dialogs:niceAlert(self.occurrences_subject, T(_("Chapter %1/%2%3%4\"%5\"%6Occurrences: %7"), n, self.chapters_count, display_page, "\n", chapter_title, "\n\n", self.occurrences_per_chapter[n]), {
+        buttons = {{
+            {
+                icon = "back",
+                callback = function()
+                    UIManager:close(self.chapter_information)
+                end
+            },
+            {
+                icon_text = {
+                    icon = "goto-location",
+                    text = " " .. _("navigator"),
+                },
+                callback = function()
+                    UIManager:close(self.chapter_information)
+                    if not page then
+                        KOR.messages:notify(_("page number of chapter could not be determined"))
+                        return
+                    end
+                    DX.pn:closePageNavigator()
+                    DX.sp:resetActiveSideButtons("HtmlBox:showChapterInformation")
+                    DX.pn.navigator_page_no = page
+                    DX.pn:restoreNavigator()
+                end
+            },
+            {
+                icon_text = {
+                    icon = "goto-location",
+                    text = " " .. KOR.icons.arrow_bare .. " " .. _("book"),
+                },
+                callback = function()
+                    UIManager:close(self.chapter_information)
+                    if not page then
+                        KOR.messages:notify(_("page number of chapter could not be determined"))
+                        return
+                    end
+                    DX.pn:closePageNavigator()
+                    KOR.ui.link:addCurrentLocationToStack()
+                    KOR.ui:handleEvent(Event:new("GotoPage", page))
+                end
+            },
+        }}
+    })
 
     return true
 end
