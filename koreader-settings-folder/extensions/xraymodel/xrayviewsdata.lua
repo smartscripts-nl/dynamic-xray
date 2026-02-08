@@ -468,7 +468,7 @@ function XrayViewsData:getAllTextHits(search_text_or_item)
 end
 
 --* these data will be used for generating a chapter-occurrences-histogram in the PN info panel; current method called from ((XrayPageNavigator#setCurrentItem)):
-function XrayViewsData:getChapterHitsData(item, debug)
+function XrayViewsData:getChapterHitsData(item)
 
     local aliases = {}
     local short_names = {}
@@ -506,11 +506,11 @@ function XrayViewsData:getChapterHitsData(item, debug)
         total_count = self:getChapterHitsPerTerm(search_terms[s], chapter_stats, chapter_titles_ordered, total_count)
     end
 
-    return self:generateChapterHitsData(chapter_titles_ordered, chapter_stats, debug)
+    return self:generateChapterHitsData(chapter_titles_ordered, chapter_stats)
 end
 
 --- @private
-function XrayViewsData:generateChapterHitsData(chapter_titles_ordered, chapter_stats, debug)
+function XrayViewsData:generateChapterHitsData(chapter_titles_ordered, chapter_stats)
     local toc = KOR.toc.toc
     if has_no_items(toc) then
         return {}
@@ -519,22 +519,11 @@ function XrayViewsData:generateChapterHitsData(chapter_titles_ordered, chapter_s
     local chapters_count = #toc
     local hits_per_chapter = KOR.tables:populateWithPlaceholders(chapters_count, 0)
 
-    if debug then
-        KOR.debug:alertTable("XrayViewsData:getChapterHitsData", "toc", toc)
-        --* ordered titles only contain items with hits, so have gaps, but are in correct document sequence:
-        KOR.debug:alertTable("XrayViewsData:getChapterHitsData", "chapter_titles_ordered", chapter_titles_ordered)
-        --* chapter_stats is a relational table with chapter titles as index and count as one of their props:
-        KOR.debug:alertTable("XrayViewsData:getChapterHitsData", "chapter_stats", chapter_stats)
-    end
-
     count = #chapter_titles_ordered
     local title
     for i = 1, count do
         title = chapter_titles_ordered[i]
         hits_per_chapter[chapter_stats[title].index] = chapter_stats[title].count
-    end
-    if debug then
-        KOR.debug:alertTable("XrayViewsData:getChapterHitsData", "hits_per_chapter", hits_per_chapter)
     end
 
     return hits_per_chapter
