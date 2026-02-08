@@ -83,10 +83,13 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
     self:closePageNavigator()
     local html = self:loadDataForPage()
 
-    local chapters_count, ratio_per_chapter = self:computeHistogramData()
+    local chapters_count, ratio_per_chapter, occurrences_per_chapter = self:computeHistogramData()
+
+    local item = DX.sp:getCurrentTabItem()
 
     local key_events_module = "XrayPageNavigator"
     KOR.anchorbutton:initButtonProps(2, #self.popup_buttons)
+
     self.page_navigator = KOR.dialogs:htmlBox({
         title = DX.m.current_title .. " - p." .. self.navigator_page_no,
         page_navigator = self,
@@ -94,6 +97,8 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
         modal = false,
         info_panel_text = DX.ip:getInfoPanelText(),
         chapters_count = chapters_count,
+        occurrences_per_chapter = occurrences_per_chapter,
+        occurrences_subject = item.name,
         ratio_per_chapter = ratio_per_chapter,
         window_size = "fullscreen",
         --* no computations needed when popup_menu was already created:
@@ -139,14 +144,14 @@ function XrayPageNavigator:computeHistogramData()
         return
     end
 
-    local chapter_hits_data = item.chapter_hits_data
-    local chapters_count = #chapter_hits_data
-    local max_value = KOR.tables:getMaxValue(chapter_hits_data)
+    local occurrences_per_chapter = item.chapter_hits_data
+    local chapters_count = #occurrences_per_chapter
+    local max_value = KOR.tables:getMaxValue(occurrences_per_chapter)
     local ratios = {}
     for i = 1, chapters_count do
-        table_insert(ratios, chapter_hits_data[i] / max_value)
+        table_insert(ratios, occurrences_per_chapter[i] / max_value)
     end
-    return chapters_count, ratios
+    return chapters_count, ratios, occurrences_per_chapter
 end
 
 --* this info will be consumed for the info panel in ((HtmlBox#generateScrollWidget)):

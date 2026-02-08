@@ -29,6 +29,8 @@ local VerticalSpan = require("ui/widget/verticalspan")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 --local logger = require("logger")
 local Screen = Device.screen
+local _ = KOR:initCustomTranslations()
+local T = require("ffi/util").template
 
 local DX = DX
 local G_reader_settings = G_reader_settings
@@ -361,14 +363,32 @@ function HtmlBox:generateChapterOccurrencesHistogram()
         dimen = Geom:new{ w = self.info_panel_width, h = self.histogram_height + self.histogram_bottom_line_height },
         VerticalGroup:new{
             HistogramWidget:new{
+                histogram_type = "chapterpages",
                 width = histogram_width,
                 height = self.histogram_height,
+                occurrences_per_chapter = self.occurrences_per_chapter,
                 nb_items = self.chapters_count,
                 ratios = self.ratio_per_chapter,
+                show_parent = self,
             },
             bottom_line,
         }
     }
+end
+
+function HtmlBox:chapterTapCallback(n)
+    return self:showChapterInformation(n)
+end
+
+function HtmlBox:chapterHoldCallback(n)
+    return self:showChapterInformation(n)
+end
+
+--- @private
+function HtmlBox:showChapterInformation(n)
+    KOR.dialogs:niceAlert(self.occurrences_subject, T(_("Chapter %1/%2%3Occurrences: %4"), n, self.chapters_count, "\n\n", self.occurrences_per_chapter[n]))
+
+    return true
 end
 
 --- @private

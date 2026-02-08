@@ -13,32 +13,8 @@ local math = math
 local table = table
 local tostring = tostring
 
---* Alex: show vertical bars to indicate reading activity per hour:
---[[
-
-for more info: ((HISTOGRAMS))
-
-CalendarView:_populateItems()
->
-local ratio_per_hour_by_day = self.reader_statistics:getReadingRatioPerHourByDay(self.cur_month)
->
-ReaderStatistics:getReadingRatioPerHourByDay(month)
->
-CalendarDay:init()
->
-self.histo_w = BottomContainer:new{
-            dimen = Geom:new{w = inner_w, h = inner_h},
-            HistogramWidget:new{
-                width = inner_w,
-                height = self.histo_height,
-                nb_items = 24,
-                ratios = self.ratio_per_hour,
-            }
-        }
-]]
 --* here extend InputContainer instead of Widget class, so clicks on histogram bars will be detected:
 --- @class HistogramWidget
---- @field show_parent HistogramViewer
 local HistogramWidget = InputContainer:extend{
     day_ts = nil,
     height = nil,
@@ -75,6 +51,16 @@ function HistogramWidget:init()
     end
     if BD.mirroredUILayout() then
         self.do_mirror = true
+    end
+
+    if self.is_touch_device then
+        self.ges_events.EmptySpacetap = {
+            GestureRange:new {
+                ges = "tap",
+                range = self.dimen,
+            },
+            doc = "Nullify taps on empty space in the widget.",
+        }
     end
 
     self:setBarTapHandlers()
@@ -134,6 +120,23 @@ function HistogramWidget:setBarTapGestures(xp, i_x, yp, i_y, i_w, i_h, n)
                 },
                 doc = "Show reading calendar for this day.",
             }
+
+        elseif self.histogram_type == "chapterpages" then
+            local dimen = Geom:new{ x = xp + i_x, y = yp + i_y, w = i_w, h = i_h }
+            self.ges_events["ShowChapter" .. n] = {
+                GestureRange:new{
+                    ges = "tap",
+                    range = dimen,
+                },
+                doc = "Show ocurrences per chapter.",
+            }
+            self.ges_events["ShowChapterHold" .. n] = {
+                GestureRange:new{
+                    ges = "hold",
+                    range = dimen,
+                },
+                doc = "Show ocurrences per chapter.",
+            }
         end
     end
 end
@@ -145,49 +148,58 @@ function HistogramWidget:setBarTapHandlers()
     if self.histogram_type == "months" then
         for n = 1, KOR.histogramcontroller.histogram_months do
             self["onShowMonth" .. n] = function()
-                self.show_parent:monthTapCallback(n)
+                return self.show_parent:monthTapCallback(n)
             end
             self["onShowMonthHold" .. n] = function()
-                self.show_parent:monthHoldCallback(n)
+                return self.show_parent:monthHoldCallback(n)
             end
         end
 
     elseif self.histogram_type == "days" then
         for n = 1, KOR.histogramcontroller.histogram_days do
             self["onShowDay" .. n] = function()
-                self.show_parent:dayTapCallback(n)
+                return self.show_parent:dayTapCallback(n)
             end
             self["onShowDayHold" .. n] = function()
-                self.show_parent:dayHoldCallback(n)
+                return self.show_parent:dayHoldCallback(n)
             end
         end
 
     elseif self.histogram_type == "day" then
         for n = 1, 24 do
             self["onShowHour" .. n] = function()
-                self.show_parent:hourTapCallback()
+                return self.show_parent:hourTapCallback()
             end
             self["onShowHourHold" .. n] = function()
-                self.show_parent:hourHoldCallback()
+                return self.show_parent:hourHoldCallback()
+            end
+        end
+
+    elseif self.histogram_type == "chapterpages" then
+        for n = 1, self.nb_items do
+            self["onShowChapter" .. n] = function()
+                return self.show_parent:chapterTapCallback(n)
+            end
+            self["onShowChapterHold" .. n] = function()
+                return self.show_parent:chapterHoldCallback(n)
             end
         end
     end
 end
 
+function HistogramWidget:onEmptySpacetap()
+    return true
+end
+
 function HistogramWidget:paintTo(bb, xp, yp)
     local i_x = 0
     local r = self.rounded_bars and 6 or nil
-    local debug = false
     for n = 1, self.nb_items do
         if self.do_mirror then
             n = self.nb_items - n + 1
         end
-        if debug then
-            KOR.debug:table("HistogramWidget:paintTo", tostring(n), self.ratios)
-        end
 
         local i_w = self.item_widths[n]
-        --* ratios were computed in ((ReadingHistograms#onShowHistogramForDays)) > ((HistogramController#forDays)) ((HistogramModel#getDaysData)):
         local ratio = self.ratios and self.ratios[n] or 0
         local i_h = Math.round(ratio * self.height)
         if i_h == 0 and ratio > 0 then
