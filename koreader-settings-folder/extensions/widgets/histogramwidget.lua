@@ -61,6 +61,7 @@ end
 
 --* compare ((HistogramWidget#setBarTapHandlers)):
 --* in current method i_h is set by caller to self.height, so tabs above the bars will not trigger an event elsewhere:
+--- @private
 function HistogramWidget:setBarTapGestures(xp, i_x, yp, i_y, i_w, i_h, n)
     if self.is_touch_device then
         if self.histogram_type == "months" then
@@ -135,6 +136,7 @@ function HistogramWidget:setBarTapGestures(xp, i_x, yp, i_y, i_w, i_h, n)
 end
 
 --! compare ((HistogramWidget#setBarTapGestures)); there the handlers defined below must be linked!:
+--- @private
 function HistogramWidget:setBarTapHandlers()
     --* handle clicks on histogram bars:
     --* these dynamically defined methods have to be called from ((HistogramWidget#setBarTapGestures)):
@@ -195,28 +197,33 @@ function HistogramWidget:paintTo(bb, xp, yp)
             --* show at least 1px
             i_h = 1
         end
-        local i_y = self.height - i_h
         if i_h > 0 then
-            -- #((paint histogram bar))
-            --* indicate columns with most read pages by darker color:
-            local color = #self.max_ratio_indices > 0 and KOR.tables:tableHas(self.max_ratio_indices, n)
-                and self.histogram_bar_dark
-                or
-                self.histogram_bar_light
-            bb:paintRoundedRect(xp + i_x, yp + i_y, i_w, i_h, color, r)
-            self:setBarTapGestures(xp, i_x, yp, i_y, i_w, self.height, n)
-
-            --* mark bar with next target of epages by painting a light bar of 5px height above it:
-            if
-                n == self.next_reading_target_epages_index
-                or
-                (self.is_chapter_pages_histogram and n == self.current_chapter_index)
-            then
-                local thickness = self.is_chapter_pages_histogram and 2 or 5
-                bb:paintRoundedRect(xp + i_x, yp, i_w, thickness, self.histogram_bar_light, r)
-            end
+            self:paintBar(n, r, bb, xp, yp, i_x, i_w, i_h)
         end
         i_x = i_x + i_w
+    end
+end
+
+--- @private
+function HistogramWidget:paintBar(n, r, bb, xp, yp, i_x, i_w, i_h)
+    local i_y = self.height - i_h
+    --* indicate columns with most read pages by darker color:
+    local color = #self.max_ratio_indices > 0 and KOR.tables:tableHas(self.max_ratio_indices, n)
+        and self.histogram_bar_dark
+        or
+        self.histogram_bar_light
+    bb:paintRoundedRect(xp + i_x, yp + i_y, i_w, i_h, color, r)
+    self:setBarTapGestures(xp, i_x, yp, i_y, i_w, self.height, n)
+
+    --* mark bar with next target of epages by painting a light bar of 5px height above it:
+    if
+        n == self.next_reading_target_epages_index
+        or
+        (self.is_chapter_pages_histogram and n == self.current_chapter_index)
+    then
+        local thickness = self.is_chapter_pages_histogram and 2 or 5
+        local marker_color = self.is_chapter_pages_histogram and KOR.colors.black or KOR.colors.histogram_bar_light
+        bb:paintRoundedRect(xp + i_x, yp, i_w, thickness, marker_color, r)
     end
 end
 
