@@ -912,7 +912,7 @@ function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, 
     local linked_items_info
     local linked_items = DX.vd:getLinkedItems(needle_item)
     if linked_items then
-        linked_items_info = DX.vd:generateXrayItemsOverview(linked_items)
+        linked_items_info = DX.ex:generateXrayItemsOverview(linked_items)
     end
 
     --* this sometimes happens when we only just added a new item from the ebook text and want to view it immediately:

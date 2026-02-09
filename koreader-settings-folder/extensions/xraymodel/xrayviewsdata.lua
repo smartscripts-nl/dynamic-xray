@@ -1110,26 +1110,6 @@ function XrayViewsData:generateXrayItemInfo(items, xray_explanations, i, name, i
     return info, xray_type_icon, xray_match_reliability_icon
 end
 
-function XrayViewsData:generateXrayItemsOverview(items)
-    local paragraphs = {}
-    local paragraphs_icon_less = {}
-    local paragraph, paragraph_icon_less
-    count = #items
-    for i = 1, count do
-        paragraph, paragraph_icon_less = self:generateXrayItemInfo(items, nil, i, items[i].name, i, "for_all_items_list")
-        if i == 1 then
-            paragraph = paragraph:gsub(DX.vd.info_indent, "", 1)
-            paragraph_icon_less = paragraph_icon_less:gsub(DX.vd.info_indent, "", 1)
-        end
-        table_insert(paragraphs, paragraph)
-        table_insert(paragraphs_icon_less, paragraph_icon_less)
-    end
-    local info = table_concat(paragraphs, "")
-    local info_icon_less = table_concat(paragraphs_icon_less, "")
-
-    return info, info_icon_less
-end
-
 --* generate list item texts for ((XrayDialogs#showList)):
 function XrayViewsData:generateListItemText(item, reliability_indicator)
 
