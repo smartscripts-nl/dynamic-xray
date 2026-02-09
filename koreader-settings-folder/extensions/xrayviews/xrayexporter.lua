@@ -90,7 +90,6 @@ function XrayExporter:initData()
     return true
 end
 
---- @private
 function XrayExporter:showExportXrayItemsDialog()
     if not self:initData() then
         return
@@ -103,19 +102,19 @@ function XrayExporter:showExportXrayItemsDialog()
         end,
         tabs = {
             {
-                tab = "alles",
+                tab = _("all"),
                 info = function()
                     return self:getExportDialogInfo(1)
                 end,
             },
             {
-                tab = "personen",
+                tab = self.export_nouns[2],
                 info = function()
                     return self:getExportDialogInfo(2)
                 end,
             },
             {
-                tab = "termen",
+                tab = self.export_nouns[3],
                 info = function()
                     return self:getExportDialogInfo(3)
                 end,
