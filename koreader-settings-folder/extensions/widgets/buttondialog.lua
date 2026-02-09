@@ -204,7 +204,8 @@ function ButtonDialog:init()
 
     -- make ButtonDialog dialogs closeable with ((Dialogs#closeAllWidgets)):
     KOR.dialogs:registerWidget(self)
-    -- prevent footer showing through upon showing a ButtonDialog instance. Footer will be made visible again in ((ButtonDialog#onCloseWidget)):
+
+    return self
 end
 
 function ButtonDialog:getButtonById(id)

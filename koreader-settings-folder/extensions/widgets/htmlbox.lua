@@ -1,19 +1,14 @@
 
---* derived from ((DictQuickLookup))
-
 local require = require
 
 local BD = require("ui/bidi")
 local ButtonTable = require("extensions/widgets/buttontable")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Device = require("device")
-local Event = require("ui/event")
 local Font = require("extensions/modules/font")
-local FrameContainer = require("ui/widget/container/framecontainer")
+local FrameContainer = require("extensions/widgets/container/framecontainer")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
-local HistogramWidget = require("extensions.widgets/histogramwidget")
-local HorizontalGroup = require("ui/widget/horizontalgroup")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")
@@ -31,12 +26,8 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 --local logger = require("logger")
 local Screen = Device.screen
 local _ = KOR:initCustomTranslations()
-local T = require("ffi/util").template
 
 local DX = DX
-local G_reader_settings = G_reader_settings
-local has_items = has_items
-local has_text = has_text
 local math = math
 local math_floor = math.floor
 local pairs = pairs
@@ -92,28 +83,18 @@ local HtmlBox = InputContainer:extend{
     after_close_callback = nil,
     align = "center",
     buttons_table = nil,
-    chapter_occurrences_histogram = nil,
-    chapters_count = nil,
     content_padding = nil,
     --* this is the default, but some widgets can set the content_type to "text" for a specific tab; e.g. see ((XrayButtons#getItemViewerTabs)):
     content_type = "html",
     frame_content_fullscreen = nil,
     frame_content_windowed = nil,
     fullscreen = false,
-    has_anchor_button = false,
     height = nil,
-    histogram_bottom_line_height = 0,
-    histogram_height = 0,
     html = nil,
-    info_panel_buttons = nil,
-    info_panel_text = nil,
     key_events_module = nil,
     modal = true,
     next_item_callback = nil,
     no_buttons_row = false,
-    occurrences_subject = nil,
-    occurrences_per_chapter = nil,
-    page_navigator = nil,
     --* to inform the parent about a newly activated tab, via ((TabNavigator#broadcastActivatedTab)):
     parent = nil,
     --* optional list of full_paths, to open books retrieved on base of the current html content of the box:
@@ -122,9 +103,6 @@ local HtmlBox = InputContainer:extend{
     ratio_per_chapter = nil,
     screen_height = nil,
     screen_width = nil,
-    side_buttons = nil,
-    side_buttons_width = Screen:scaleBySize(135),
-    side_panel_tab_activators = nil,
     --* this table will be populated by ((TabFactory#setTabButtonAndContent)):
     tabs_table_buttons = nil,
     title = nil,
@@ -150,17 +128,13 @@ function HtmlBox:init()
     self:generateTitleBar()
     self:setPaddingAndSpacing()
     self:computeLineHeight()
-    self:generateSidePanelButtons()
     self:generateButtonTables()
     self:setMargins()
     self:computeAvailableHeight()
     self:generateTabsTable()
     self:setSeparator()
     self:computeHeights()
-    self:generateInfoButtons()
-    self:generateInfoPanelAndHistogram()
     self:generateScrollWidget()
-    self:generateSidePanel()
     self:addFrameToContentWidget()
     self:generateWidget()
     if not self.is_fullscreen then
@@ -269,261 +243,13 @@ function HtmlBox:initTouch()
     end
 end
 
---- @private
-function HtmlBox:getHtmlBoxCss()
-    --* Using Noto Sans because Nimbus doesn't contain the IPA symbols.
-    --* 'line-height: 1.3' to have it similar to textboxwidget,
-    --* and follow user's choice on justification
-    local css_justify = G_reader_settings:nilOrTrue("dict_justify") and "text-align: justify;" or ""
-    local css = [[
-        @page {
-            margin: 0;
-            font-family: 'Noto Sans';
-        }
-
-        body {
-            margin: 0;
-            line-height: 1.3;
-            ]]..css_justify..[[
-        }
-
-        div.redhat, div.redhat * {
-            font-family: 'Red Hat Text' !important;
-        }
-
-        blockquote, dd {
-            margin: 0 1em;
-        }
-
-        ol, ul, menu {
-            margin: 0; padding: 0 1.7em;
-        }
-
-        p {
-            margin: 0;
-        }
-
-        p + p {
-            text-indent: 1.5em;
-        }
-
-        p.whitespace + p {
-            text-indent: 0;
-        }
-
-        div.poezie p {
-            text-indent: 0 !important;
-        }
-    ]]
-    --* For reference, MuPDF declarations with absolute units:
-    --*  "blockquote{margin:1em 40px}"
-    --*  "dd{margin:0 0 0 40px}"
-    --*  "ol,ul,menu {margin:1em 0;padding:0 0 0 30pt}"
-    --*  "hr{border-width:1px;}"
-    --*  "td,th{padding:1px}"
-    --*
-    --* MuPDF doesn't currently scale CSS pixels, so we have to use a font-size based measurement.
-    --* Unfortunately MuPDF doesn't properly support `rem` either, which it bases on a hard-coded
-    --* value of `16px`, so we have to go with `em` (or `%`).
-    --*
-    --* These `em`-based margins can vary slightly, but it's the best available compromise.
-    --*
-    --* We also keep left and right margin the same so it'll display as expected in RTL.
-    --* Because MuPDF doesn't currently support `margin-start`, this results in a slightly
-    --* unconventional but hopefully barely noticeable right margin for <dd>.
-    --*
-    --* For <ul> and <ol>, bullets and numbers are displayed in the margin/padding, so
-    --* we need a bit more for them to not get truncated (1.7em allows for 2 digits list
-    --* item numbers). Unfortunately, because we want this also for RTL, this space is
-    --* wasted on the other side...
-
-    if self.css then
-        return css .. self.css
-    end
-    return css
-end
-
---- @private
-function HtmlBox:generateChapterOccurrencesHistogram()
-    if not self.ratio_per_chapter or not DX.s.PN_show_chapter_hits_histogram then
-        return
-    end
-
-    local bottom_line = LineWidget:new{
-        background = KOR.colors.histogram_bar_light,
-        dimen = Geom:new{
-            w = self.info_panel_width,
-            h = self.histogram_bottom_line_height,
-        }
-    }
-    --* at about 50 items will give a nice distribution of not too wide histogram bars; if there are significantly less chapters, we reduce the width of the histogram, so the bars will not get too wide:
-    local histogram_width = self.info_panel_width
-    if self.chapters_count <= 45 then
-        histogram_width = math_floor(self.chapters_count / 50 * histogram_width)
-    end
-
-    self.chapter_occurrences_histogram = CenterContainer:new{
-        dimen = Geom:new{ w = self.info_panel_width, h = self.histogram_height + self.histogram_bottom_line_height },
-        VerticalGroup:new{
-            HistogramWidget:new{
-                histogram_type = "chapterpages",
-                width = histogram_width,
-                height = self.histogram_height,
-                occurrences_per_chapter = self.occurrences_per_chapter,
-                nb_items = self.chapters_count,
-                ratios = self.ratio_per_chapter,
-                show_parent = self,
-            },
-            bottom_line,
-        }
-    }
-end
-
-function HtmlBox:chapterTapCallback(n)
-    return self:showChapterInformation(n)
-end
-
-function HtmlBox:chapterHoldCallback(n)
-    return self:showChapterInformation(n)
-end
-
---- @private
-function HtmlBox:showChapterInformation(n)
-    --* DX.vd.book_chapters was populated in ((XrayDataLoader#_populateViewsDataBookChapters)):
-    local chapter_title = DX.vd.book_chapters[n] or "-"
-    local page
-    local display_page = ""
-    if chapter_title ~= "-" then
-        page = KOR.toc:getPageFromItemTitle(chapter_title)
-        display_page = ", " .. _("page") .. " " .. page
-    end
-
-    self.chapter_information = KOR.dialogs:niceAlert(self.occurrences_subject, T(_("Chapter %1/%2%3%4\"%5\"%6Occurrences: %7"), n, self.chapters_count, display_page, "\n", chapter_title, "\n\n", self.occurrences_per_chapter[n]), {
-        buttons = {{
-            {
-                icon = "back",
-                callback = function()
-                    UIManager:close(self.chapter_information)
-                end
-            },
-            {
-                icon_text = {
-                    icon = "goto-location",
-                    text = " " .. _("navigator"),
-                },
-                callback = function()
-                    if not self:handleBeforeGotoPageRequest(page) then
-                        return
-                    end
-                    DX.sp:resetActiveSideButtons("HtmlBox:showChapterInformation")
-                    DX.pn.navigator_page_no = page
-                    DX.pn:restoreNavigator()
-                end
-            },
-            {
-                icon_text = {
-                    icon = "goto-location",
-                    text = " " .. KOR.icons.arrow_bare .. " " .. _("book"),
-                },
-                callback = function()
-                    if not self:handleBeforeGotoPageRequest(page) then
-                        return
-                    end
-                    KOR.ui.link:addCurrentLocationToStack()
-                    KOR.ui:handleEvent(Event:new("GotoPage", page))
-                end
-            },
-        }}
-    })
-    return true
-end
-
---- @private
-function HtmlBox:handleBeforeGotoPageRequest(page)
-    UIManager:close(self.chapter_information)
-    if not page then
-        KOR.messages:notify(_("page number of chapter could not be determined"))
-        return false
-    end
-    DX.pn:closePageNavigator()
-    return true
-end
-
---- @private
-function HtmlBox:generateInfoButtons()
-    --? for some reason self.side_buttons_table not available when we click on the Item Viewer button; because then self.side_buttons not set at the start of ((XraySidePanels#generateSidePanelButtons)) and the script returns, without generating the side buttons:
-    self.info_panel_width = self.side_buttons_table and self.content_width - self.side_buttons_table:getSize().w or self.content_width
-
-    local buttons = ButtonTable:new{
-        width = self.info_panel_width,
-        --* these buttons were generated in ((XrayButtons#forPageNavigator)):
-        buttons = self.info_panel_buttons,
-        show_parent = self,
-        button_font_weight = "normal",
-    }
-
-    if self.has_anchor_button then
-        KOR.anchorbutton:setHeight(buttons:getSize().h)
-    end
-
-    local buttons_height = buttons:getSize().h
-    self.info_panel_nav_buttons = CenterContainer:new{
-        dimen = Geom:new{
-            w = self.info_panel_width,
-            h = buttons_height,
-        },
-        buttons,
-    }
-    self.info_panel_nav_buttons_height = self.info_panel_nav_buttons:getSize().h
-end
-
---- @private
-function HtmlBox:generateInfoPanelAndHistogram()
-    if not self.side_buttons_table then
-        --* for consumption in ((HtmlBox#generateScrollWidget)):
-        self.swidth = self.content_width
-        self.sheight = self.content_height
-        return
-    end
-
-    if DX.s.PN_show_chapter_hits_histogram then
-        self:generateChapterOccurrencesHistogram()
-    end
-
-    local height = self.content_height
-    --* info_text was generated in ((XrayPageNavigator#showNavigator)) > ((XrayPages#markItemsFoundInPageHtml)) > ((XrayPages#markItem)) > ((XrayPageNavigator#getItemInfoText)):
-    local info_text = self.info_panel_text or " "
-    local info_panel_height = math_floor(self.screen_height * DX.s.PN_info_panel_height)
-    self.info_panel = ScrollTextWidget:new{
-        text = info_text,
-        face = Font:getFace("x_smallinfofont", DX.s.PN_panels_font_size or 14),
-        line_height = 0.16,
-        alignment = "left",
-        justified = false,
-        dialog = self,
-        --* info_panel_width was computed in ((HtmlBox#generateInfoButtons)):
-        width = self.info_panel_width,
-        height = info_panel_height,
-    }
-    self.info_panel_separator = LineWidget:new{
-        background = KOR.colors.line_separator,
-        dimen = Geom:new{
-            w = self.info_panel_width,
-            h = Size.line.thick,
-        }
-    }
-    height = height - self.info_panel:getSize().h - 2 * self.info_panel_separator:getSize().h - self.info_panel_nav_buttons_height
-    --* for consumption in ((HtmlBox#generateScrollWidget)):
-    self.swidth = self.info_panel_width
-    self.sheight = height
-    if self.ratio_per_chapter then
-        self.sheight = self.sheight - self.histogram_height - self.histogram_bottom_line_height
-    end
-end
-
 --* Used in init & update to instantiate the Scroll*Widget that self.html_widget points to
 --- @private
 function HtmlBox:generateScrollWidget()
+
+    self.swidth = self.content_width
+    self.sheight = self.content_height
+
     --* this is the default, but some widgets can set the content_type to "text" for a specific tab; e.g. see ((XrayButtons#getItemViewerTabs)):
     if self.content_type == "text" then
         self.html_widget = ScrollTextWidget:new{
@@ -541,7 +267,7 @@ function HtmlBox:generateScrollWidget()
 
     self.html_widget = ScrollHtmlWidget:new{
         html_body = self.html,
-        css = self:getHtmlBoxCss(),
+        css = KOR.html:getHtmlBoxCss(self.css),
         default_font_size = Screen:scaleBySize(self.box_font_size),
         width = self.swidth,
         height = self.sheight,
@@ -752,10 +478,6 @@ function HtmlBox:generateTabsTable()
     KOR.tabnavigator:broadcastActivatedTab()
 end
 
-function HtmlBox:onReadPrevItemWithShiftSpace()
-    return self:onReadPrevItem()
-end
-
 --* add support for navigating to previous tab with hardware keys:
 function HtmlBox:onToNextTab()
     return KOR.tabnavigator:onToNextTab()
@@ -865,72 +587,6 @@ function HtmlBox:computeLineHeight()
 end
 
 --- @private
-function HtmlBox:generateSidePanel()
-
-    local pn = self.page_navigator
-    if not pn then
-        return
-    end
-
-    --* self.page_navigator.current_item is set from the callback of a side_button in ((XraySidePanels#addSideButton)) and when marking the active button in ((XraySidePanels#markActiveSideButton)):
-    --! the linked_items prop for the current_item were set in ((XraySidePanels#computeLinkedItems)):
-    local has_linked_items =
-        DX.sp.active_side_tab == 1
-        and pn.current_item
-        and (
-            has_text(pn.current_item.linkwords)
-            or
-            has_items(pn.current_item.linked_items)
-        )
-
-    local generate_tab_activators = has_linked_items or DX.sp.active_side_tab == 2
-    if generate_tab_activators then
-        self.side_panel_tab_activators = DX.sp:generateSidePanelTabActivators(has_linked_items, self.side_buttons_width)
-    end
-
-    --* self.avail_height was computed in ((HtmlBox#computeAvailableHeight)):
-    self.spacer_width = self.avail_height
-        --* for top and bottom margin:
-        - 2 * self.content_top_margin:getSize().h
-        - self.side_buttons_table:getSize().h
-        - (generate_tab_activators and self.side_panel_tab_activators:getSize().h or 0)
-        - self.titlebar_height
-        - 2 * self.side_buttons_table_separator:getSize().h
-
-    local has_side_buttons = #self.side_buttons > 0
-    local bottom_padding = VerticalSpan:new{
-        width = self.spacer_width
-    }
-    self.side_panel = has_side_buttons and VerticalGroup:new{
-        align = "left",
-        --* these buttons (or a spacer in case of no buttons) were generated in ((HtmlBox#generateSidePanelButtons)):
-        self.side_buttons_table,
-        self.side_buttons_table_separator,
-        bottom_padding,
-        self.side_buttons_table_separator,
-        self.side_panel_tab_activators,
-    }
-    or
-    VerticalGroup:new{
-        align = "left",
-        self.side_buttons_table,
-        bottom_padding,
-        self.side_buttons_table_separator,
-        self.side_panel_tab_activators,
-    }
-end
-
---- @private
-function HtmlBox:generateSidePanelButtons()
-    --* these side panel buttons were generated in ((XrayPages#markItemsFoundInPageHtml)) > ((XrayPages#markedItemRegister)):
-    if not self.page_navigator or not self.side_buttons then
-        return
-    end
-
-    self.side_buttons_table, self.side_buttons_table_separator = DX.sp:generateSidePanelButtons(self.side_buttons_width, self.screen_height)
-end
-
---- @private
 function HtmlBox:generateButtonTables()
 
     if self.no_buttons_row then
@@ -1016,7 +672,6 @@ end
 
 --- @private
 function HtmlBox:addFrameToContentWidget()
-    if not self.page_navigator then
         self.content_widget = FrameContainer:new{
             padding = 0,
             padding_left = self.content_padding_h,
@@ -1024,48 +679,6 @@ function HtmlBox:addFrameToContentWidget()
             margin = 0,
             bordersize = 0,
             self.html_widget,
-        }
-        return
-    end
-
-    local has_side_buttons = #self.side_buttons > 0
-    if has_side_buttons then
-        self.spacer_width = self.spacer_width - self.side_buttons_table_separator:getSize().h
-    end
-    local main_content = VerticalGroup:new{
-        align = "left",
-        self.html_widget,
-        self.info_panel_separator,
-        self.info_panel_nav_buttons,
-        self.info_panel_separator,
-        self.info_panel,
-    }
-    if DX.s.PN_show_chapter_hits_histogram then
-        table_insert(main_content, self.chapter_occurrences_histogram)
-    end
-    self.content_widget = FrameContainer:new{
-        padding = 0,
-        padding_left = self.content_padding_h,
-        padding_right = 0,
-        margin = 0,
-        bordersize = 0,
-        CenterContainer:new{
-            dimen = Geom:new{
-                w = self.content_width,
-                h = self.content_height,
-            },
-            HorizontalGroup:new{
-                align = "center",
-                main_content,
-                FrameContainer:new{
-                    padding = 0,
-                    margin = 0,
-                    color = KOR.colors.line_separator,
-                    bordersize = Size.line.medium,
-                    self.side_panel,
-                }
-            }
-        },
     }
 end
 
@@ -1093,13 +706,6 @@ function HtmlBox:generateWidget()
     local frame = self.is_fullscreen and self.frame_content_fullscreen or self.frame_content_windowed
 
     local content_height = self.content_widget:getSize().h
-    if self.has_anchor_button then
-        KOR.anchorbutton:increaseParentYposWith(
-        self.titlebar_height
-        + self.separator:getSize().h
-        + self.content_top_margin:getSize().h
-            + content_height)
-    end
 
     local elements = VerticalGroup:new{
         self.titlebar,
@@ -1118,18 +724,12 @@ function HtmlBox:generateWidget()
 
     if self.tabs_table then
         table_insert(elements, 2, self.tabs_table)
-        if self.has_anchor_button then
-            KOR.anchorbutton:increaseParentYposWith(self.tabs_table:getSize().h)
-        end
     end
 
     --? I don't know why I need this hack on my Bigme phone:
     if self.is_fullscreen and DX.s.is_mobile_device then
         local spacer = VerticalSpan:new{ width = Size.padding.large }
         table.insert(elements, 2, spacer)
-        if self.has_anchor_button then
-            KOR.anchorbutton:increaseParentYposWith(spacer:getSize().h)
-        end
     end
 
     if not self.no_buttons_row then

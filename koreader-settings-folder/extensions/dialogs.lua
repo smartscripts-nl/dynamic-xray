@@ -12,6 +12,7 @@ local InfoMessage = require("extensions/widgets/infomessage")
 local InputDialog = require("extensions/widgets/inputdialog")
 local KOR = require("extensions/kor")
 local MultiInputDialog = require("extensions/widgets/multiinputdialog")
+local NavigatorBox = require("extensions/widgets/navigatorbox")
 local NiceAlert = require("extensions/widgets/nicealert")
 local TextViewer = require("extensions/widgets/textviewer")
 local UIManager = require("ui/uimanager")
@@ -167,6 +168,33 @@ function Dialogs:htmlBoxTabbed(active_tab, args)
     self:registerWidget(self.tabbed_htmlbox)
 
     return self.tabbed_htmlbox
+end
+
+function Dialogs:navigatorBox(args)
+
+    --* args/config.window_size can be: "fullscreen":
+    --* you also can set args.title_tab_buttons_left and args.title_tab_callbacks:
+    --! use shallowCopy to prevent unintentional overwriting of original options:
+    local config = KOR.tables:shallowCopy(args)
+    config.content_type = "html"
+    if config.tabs then
+        for i = 1, #config.tabs do
+            if config.tabs[i].is_active_tab then
+                --* content_type can be set to "text" for the linked items info in ((XrayButtons#getItemViewerTabs)); this content_type prop will be used in
+                config.content_type = config.tabs[i].content_type
+                break
+            end
+        end
+    end
+    if config.content_type == "html" then
+        config.html = config.html
+            :gsub("%[%[%[", "<b>")
+            :gsub("%]%]%]", "</b>")
+    end
+    local box = NavigatorBox:new(config)
+    UIManager:show(box)
+
+    return box
 end
 
 function Dialogs:confirm(question, callback, cancel_callback, wide_dialog, show_icon, face)

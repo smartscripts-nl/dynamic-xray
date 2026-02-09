@@ -5,7 +5,6 @@ local Input = Device.input
 local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
-local logger = require("logger")
 
 local DX = DX
 local has_items = has_items
@@ -85,6 +84,27 @@ function KeyEvents:addHotkeysForHtmlBox(parent, key_events_module)
     self:addAdditionalHotkeysHtmlBox(parent)
 end
 
+--* here we add generic hotkeys for NavigatorBox, but a caller might already have added specific hotkeys for that module:
+--- @param parent NavigatorBox
+function KeyEvents:addHotkeysForNavigatorBox(parent, key_events_module)
+    if not Device:hasKeys() then
+        return
+    end
+    if not key_events_module then
+        key_events_module = "NavigatorBox"
+    end
+
+    parent.key_events = {
+        ReadPrevItem = { { Input.group.PgBack }, doc = "read prev item" },
+        ReadPrevItemWithShiftSpace = Input.group.ShiftSpace,
+        ReadNextItem = { { Input.group.PgFwd }, doc = "read next item" },
+        ForceNextItem = { { Input.group.TabNext }, doc = "forceer volgend item" },
+        ForcePrevItem = { { Input.group.TabPrevious }, doc = "forceer vorige item" },
+    }
+    self:addCloseHotkey(parent)
+    self:addAdditionalHotkeysNavigatorBox(parent)
+end
+
 --* here we add global hotkeys for ReaderUI:
 --- @param parent XrayController
 function KeyEvents:addHotkeysForReaderUI(parent)
@@ -95,7 +115,6 @@ function KeyEvents:addHotkeysForReaderUI(parent)
     end
     local readerui = parent.ui
 
-    local readerui = parent.ui
     readerui.key_events.ShowXrayHelpUI = { { "Shift", { "H" } } }
     readerui.onShowXrayHelpUI = function()
         return DX.i:showPageNavigatorHelp(parent, 3)
@@ -779,6 +798,23 @@ end
 --* these additional_key_events might have been set by the caller of HtmlBox:
 --- @param parent HtmlBox
 function KeyEvents:addAdditionalHotkeysHtmlBox(parent)
+    if parent.additional_key_events then
+        for label, hk_data in pairs(parent.additional_key_events) do
+            local close_box = hk_data[3] and true or false
+            if close_box then
+                UIManager:close(parent)
+            end
+            parent["on" .. label .. "HB"] = function()
+                return hk_data[2]()
+            end
+            parent.key_events[label] = hk_data[1]
+        end
+    end
+end
+
+--* these additional_key_events might have been set by the caller of NavigatorBox:
+--- @param parent NavigatorBox
+function KeyEvents:addAdditionalHotkeysNavigatorBox(parent)
     if parent.additional_key_events then
         for label, hk_data in pairs(parent.additional_key_events) do
             local close_box = hk_data[3] and true or false

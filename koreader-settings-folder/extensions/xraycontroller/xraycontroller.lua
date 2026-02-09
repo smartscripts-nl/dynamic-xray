@@ -14,6 +14,7 @@ The views layer has three main streams:
     a) XraySidePanels (DX.sp): responsible for the sidepanel (tabs) of the PageNavigator
     b) XrayInfoPanel (DX.ip): responsible for the information panel at the bottom of the PageNavigator
     c) XrayPages (DX.p): responsible for the main content op the Navigator, its pages. Handles navigation through these and marking of Xray items in them.
+    d) NavigatorBox: responsible for drawing the Page Navigator and handling user interaction with the Navigator.
 4) Also mentionable is the fact that some DX dialogs have shared hotkeys, in which case the hotkeys of the top most dialog will be used, not that same hotkey for an underlying dialog. See ((XRAY_DIALOGS_SHARED_HOTKEYS)) for an explanation.
 5) DX has a ((SeriesManager)) for listing the books in a series. The items in this Manager have action buttons, for viewing large covers, descriptions, opening the e-book, etc. The user can also edit the metadata of ebooks from the Manager: authors, titles, series name, series index, page count, publication year, book description. The Manager uses ((Dialogs#filesBox)) > ((FilesBox)) to generate its dialog. The user can call it by tapping on the series manager icon in some DX dialogs, or by pressing Shift+M.
 

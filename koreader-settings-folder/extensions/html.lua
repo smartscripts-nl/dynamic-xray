@@ -5,6 +5,7 @@ local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local util = require("util")
 
+local G_reader_settings = G_reader_settings
 local has_no_text = has_no_text
 local has_text = has_text
 local table = table
@@ -368,6 +369,79 @@ function Html:formatHtmlLine(line, result)
 
     table_insert(result, self:paragraph(line, is_blank))
     self.in_poetry = 0
+end
+
+function Html:getHtmlBoxCss(additional_css)
+    --* Using Noto Sans because Nimbus doesn't contain the IPA symbols.
+    --* 'line-height: 1.3' to have it similar to textboxwidget,
+    --* and follow user's choice on justification
+    local css_justify = G_reader_settings:nilOrTrue("dict_justify") and "text-align: justify;" or ""
+    local css = [[
+        @page {
+            margin: 0;
+            font-family: 'Noto Sans';
+        }
+
+        body {
+            margin: 0;
+            line-height: 1.3;
+            ]] .. css_justify .. [[
+        }
+
+        div.redhat, div.redhat * {
+            font-family: 'Red Hat Text' !important;
+        }
+
+        blockquote, dd {
+            margin: 0 1em;
+        }
+
+        ol, ul, menu {
+            margin: 0; padding: 0 1.7em;
+        }
+
+        p {
+            margin: 0;
+        }
+
+        p + p {
+            text-indent: 1.5em;
+        }
+
+        p.whitespace + p {
+            text-indent: 0;
+        }
+
+        div.poezie p {
+            text-indent: 0 !important;
+        }
+    ]]
+    --* For reference, MuPDF declarations with absolute units:
+    --*  "blockquote{margin:1em 40px}"
+    --*  "dd{margin:0 0 0 40px}"
+    --*  "ol,ul,menu {margin:1em 0;padding:0 0 0 30pt}"
+    --*  "hr{border-width:1px;}"
+    --*  "td,th{padding:1px}"
+    --*
+    --* MuPDF doesn't currently scale CSS pixels, so we have to use a font-size based measurement.
+    --* Unfortunately MuPDF doesn't properly support `rem` either, which it bases on a hard-coded
+    --* value of `16px`, so we have to go with `em` (or `%`).
+    --*
+    --* These `em`-based margins can vary slightly, but it's the best available compromise.
+    --*
+    --* We also keep left and right margin the same so it'll display as expected in RTL.
+    --* Because MuPDF doesn't currently support `margin-start`, this results in a slightly
+    --* unconventional but hopefully barely noticeable right margin for <dd>.
+    --*
+    --* For <ul> and <ol>, bullets and numbers are displayed in the margin/padding, so
+    --* we need a bit more for them to not get truncated (1.7em allows for 2 digits list
+    --* item numbers). Unfortunately, because we want this also for RTL, this space is
+    --* wasted on the other side...
+
+    if additional_css then
+        return css .. additional_css
+    end
+    return css
 end
 
 return Html

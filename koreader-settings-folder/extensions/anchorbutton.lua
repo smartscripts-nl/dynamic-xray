@@ -33,21 +33,36 @@ function AnchorButton:increaseParentYposWith(elements_height)
     self.parent_y = self.parent_y + elements_height
 end
 
-function AnchorButton:setAnchorButtonCoordinates(popup_menu_height, popup_buttons_count)
-    --* "button_tap_pos" was set in ((Button#onTapSelectButton)):
-    local parent_y = KOR.registry:get("button_tap_pos").y
+function AnchorButton:setAnchorButtonCoordinates(popup_menu, popup_buttons_count)
+
+    local index = "anchor_button_y_pos"
+    local computed_y_pos = KOR.registry:get(index)
+
     local x = self.button_no * self.width
-    --* Ubuntu is a bit wacky with handling positions:
+    --* Ubuntu is a bit wacky in its handling of positions:
     if DX.s.is_ubuntu then
         --* Size.line.medium is the width of the separator lines in the ButtonTable:
         x = x - self.button_no * Size.line.medium
     end
 
-    --* this computed "button" will be used as anchor point by ((MovableContainer#moveToAnchor)):
-    local single_button_height = math_ceil(popup_menu_height / popup_buttons_count)
+    if not computed_y_pos then
+        local popup_menu_height = popup_menu.inner_width or popup_menu:getSize().h
+        --* "button_tap_pos" was set in ((Button#onTapSelectButton)):
+        --* but when menu called with hotkey "M", fallback to self.parent_y:
+        local was_tapped = KOR.registry:get("button_tap_pos")
+        local parent_y = was_tapped and was_tapped.y or self.parent_y
+
+        --* this computed "button" will be used as anchor point by ((MovableContainer#moveToAnchor)):
+        local single_button_height = math_ceil(popup_menu_height / popup_buttons_count)
+        local factor = was_tapped and 2 or 2.8
+        computed_y_pos = parent_y - math_ceil(popup_menu_height / factor) - single_button_height - Screen:scaleBySize(2)
+
+        KOR.registry:set(index, computed_y_pos)
+    end
+
     self.button = {
         x = x,
-        y = parent_y - math_ceil(popup_menu_height / 2) - single_button_height - Screen:scaleBySize(2),
+        y = computed_y_pos,
         w = self.width,
         h = self.height,
     }

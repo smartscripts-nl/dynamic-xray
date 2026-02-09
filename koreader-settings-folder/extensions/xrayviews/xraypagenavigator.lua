@@ -89,8 +89,7 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
 
     local key_events_module = "XrayPageNavigator"
     KOR.anchorbutton:initButtonProps(2, #self.popup_buttons)
-
-    self.page_navigator = KOR.dialogs:htmlBox({
+    self.page_navigator = KOR.dialogs:navigatorBox({
         title = DX.m.current_title .. " - p." .. self.navigator_page_no,
         page_navigator = self,
         html = html,
@@ -451,7 +450,7 @@ function XrayPageNavigator:showPopupMenu()
         self.popup_menu,
         dimen = Screen:getSize(),
     }
-    KOR.anchorbutton:setAnchorButtonCoordinates(self.popup_menu.inner_height, #self.popup_buttons)
+    KOR.anchorbutton:setAnchorButtonCoordinates(self.popup_menu, #self.popup_buttons)
     self.movable_popup_menu:moveToAnchor()
     UIManager:show(self.movable_popup_menu)
 end
