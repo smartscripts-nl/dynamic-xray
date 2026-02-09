@@ -22,6 +22,9 @@ local XrayExporter = WidgetContainer:new{
     cached_export_info_all = nil,
     cached_export_info_persons = nil,
     cached_export_info_terms = nil,
+    cached_export_info_iconless_all = nil,
+    cached_export_info_iconless_persons = nil,
+    cached_export_info_iconless_terms = nil,
     export_nouns = {
         _("items"),
         _("persons"),
@@ -33,9 +36,9 @@ function XrayExporter:resetCache()
     self.cached_export_info_all = nil
     self.cached_export_info_persons = nil
     self.cached_export_info_terms = nil
-    self.cached_export_info_icon_less_all = nil
-    self.cached_export_info_icon_less_persons = nil
-    self.cached_export_info_icon_less_terms = nil
+    self.cached_export_info_iconless_all = nil
+    self.cached_export_info_iconless_persons = nil
+    self.cached_export_info_iconless_terms = nil
 end
 
 --- @private
@@ -46,30 +49,37 @@ end
 
 --- @private
 function XrayExporter:getExportDialogInfo(active_tab)
-    local info_texts = {
+    local title = self:getTitle(active_tab)
+    local export_title = title:gsub(": ([^\n]+)", " " .. _("in") .. " \"" .. DX.m.current_title .. "\" (%1)") .. "\n" .. _("List generated") .. ": " .. os_date("%Y-%m-%d") .. "\n\n"
+
+    return export_title .. self:getInfoText(active_tab)
+end
+
+--- @private
+function XrayExporter:getInfoText(active_tab, iconless)
+    local info_texts = iconless and
+        {
+            self.cached_export_info_iconless_all,
+            self.cached_export_info_iconless_persons,
+            self.cached_export_info_iconless_terms,
+        }
+    or
+        {
         self.cached_export_info_all,
         self.cached_export_info_persons,
         self.cached_export_info_terms,
     }
-
-    local title = self:getTitle(active_tab)
-    local export_title = title:gsub(": ([^\n]+)", " " .. _("in") .. " \"" .. DX.m.current_title .. "\" (%1)") .. "\n" .. _("List generated") .. ": " .. os_date("%d-%m-%Y") .. "\n\n"
-
-    return export_title .. info_texts[active_tab]
+    return info_texts[active_tab]
 end
 
 --- @private
 function XrayExporter:exportInfoToFile()
-    local title = self:getTitle(self.active_tab)
+    local info =
+        self:getTitle(self.active_tab)
+        .. "\n" .. _("List generated") .. ": " ..
+        os_date("%Y-%m-%d") .. "\n\n" ..
+        self:getInfoText(self.active_tab, "iconless")
 
-    local info_texts = {
-        self.cached_export_info_all,
-        self.cached_export_info_persons,
-        self.cached_export_info_terms,
-    }
-    local data = info_texts[self.active_tab]
-
-    local info = title .. "\n" .. _("List generated") .. ": " .. os_date("%d-%m-%Y") .. "\n\n" .. data
     KOR.files:filePutcontents(DataStorage:getDataDir() .. "/xray-items.txt", info)
 
     KOR.messages:notify(_("list exported to xray-items.txt..."))
@@ -85,31 +95,31 @@ function XrayExporter:initData()
         return false
     end
 
-    self.cached_export_info_all, self.cached_export_info_icon_less_all = self:generateXrayItemsOverview(items)
-    self.cached_export_info_persons, self.cached_export_info_icon_less_persons = self:generateXrayItemsOverview(DX.vd.persons)
-    self.cached_export_info_terms, self.cached_export_info_icon_less_terms = self:generateXrayItemsOverview(DX.vd.terms)
+    self.cached_export_info_all, self.cached_export_info_iconless_all = self:generateXrayItemsOverview(items)
+    self.cached_export_info_persons, self.cached_export_info_iconless_persons = self:generateXrayItemsOverview(DX.vd.persons)
+    self.cached_export_info_terms, self.cached_export_info_iconless_terms = self:generateXrayItemsOverview(DX.vd.terms)
 
     return true
 end
 
 function XrayExporter:generateXrayItemsOverview(items)
     local paragraphs = {}
-    local paragraphs_icon_less = {}
-    local paragraph, paragraph_icon_less
+    local paragraphs_iconless = {}
+    local paragraph, paragraph_iconless
     count = #items
     for i = 1, count do
-        paragraph, paragraph_icon_less = DX.vd:generateXrayItemInfo(items, nil, i, items[i].name, i, "for_all_items_list")
+        paragraph, paragraph_iconless = DX.vd:generateXrayItemInfo(items, nil, i, items[i].name, i, "for_all_items_list")
         if i == 1 then
             paragraph = paragraph:gsub(DX.vd.info_indent, "", 1)
-            paragraph_icon_less = paragraph_icon_less:gsub(DX.vd.info_indent, "", 1)
+            paragraph_iconless = paragraph_iconless:gsub(DX.vd.info_indent, "", 1)
         end
         table_insert(paragraphs, paragraph)
-        table_insert(paragraphs_icon_less, paragraph_icon_less)
+        table_insert(paragraphs_iconless, paragraph_iconless)
     end
     local info = table_concat(paragraphs, "")
-    local info_icon_less = table_concat(paragraphs_icon_less, "")
+    local info_iconless = table_concat(paragraphs_iconless, "")
 
-    return info, info_icon_less
+    return info, info_iconless
 end
 
 function XrayExporter:showExportXrayItemsDialog()
@@ -144,7 +154,7 @@ function XrayExporter:showExportXrayItemsDialog()
         },
         parent = self,
         fullscreen = true,
-        copy_icon_less_text = true,
+        copy_iconless_text = true,
         extra_button = KOR.buttoninfopopup:forXrayItemsExportToFile({
             callback = function()
                 self:exportInfoToFile()

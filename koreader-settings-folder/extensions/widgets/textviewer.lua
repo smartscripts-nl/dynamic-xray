@@ -137,7 +137,7 @@ local TextViewer = InputContainer:extend{
     --* this table will be populated by ((TabFactory#setTabButtonAndContent)):
     tabs_table_buttons = nil,
     text = nil,
-    --* for generating an icon-less copy of TextViewer.text; will be copied when parent did set self.copy_icon_less_text to true:
+    --* for generating an icon-less copy of TextViewer.text; will be copied when parent did set self.copy_iconless_text to true:
     text_for_copy = nil,
     text_margin = Size.margin.small,
     text_padding = Size.padding.large,
@@ -1143,7 +1143,7 @@ function TextViewer:getDefaultButtons()
         KOR.buttoninfopopup:forTextViewerCopy({
             callback = function()
                 self:onClose()
-                local copy_text = self.copy_icon_less_text and self.text_for_copy or self.text
+                local copy_text = self.copy_iconless_text and self.text_for_copy or self.text
                 Device.input.setClipboardText(copy_text)
                 KOR.messages:notify(tr("text copied to clipboard..."))
             end,
