@@ -15,11 +15,13 @@ local table = table
 --* here extend InputContainer instead of Widget class, so clicks on histogram bars will be detected:
 --- @class HistogramWidget
 local HistogramWidget = InputContainer:extend{
+    current_chapter_index = nil,
     day_ts = nil,
     height = nil,
     histogram_bar_dark = KOR.colors.histogram_bar_dark,
     histogram_bar_light = KOR.colors.histogram_bar_light,
     histogram_type = nil,
+    is_chapter_pages_histogram = false,
     is_touch_device = Device:isTouchDevice(),
     max_ratio_indices = {},
     next_reading_target_epages_index = nil,
@@ -52,15 +54,7 @@ function HistogramWidget:init()
         self.do_mirror = true
     end
 
-    if self.is_touch_device then
-        self.ges_events.EmptySpacetap = {
-            GestureRange:new {
-                ges = "tap",
-                range = self.dimen,
-            },
-            doc = "Nullify taps on empty space in the widget.",
-        }
-    end
+    self.is_chapter_pages_histogram = self.histogram_type == "chapterpages"
 
     self:setBarTapHandlers()
 end
@@ -120,7 +114,7 @@ function HistogramWidget:setBarTapGestures(xp, i_x, yp, i_y, i_w, i_h, n)
                 doc = "Show reading calendar for this day.",
             }
 
-        elseif self.histogram_type == "chapterpages" then
+        elseif self.is_chapter_pages_histogram then
             local dimen = Geom:new{ x = xp + i_x, y = yp + i_y, w = i_w, h = i_h }
             self.ges_events["ShowChapter" .. n] = {
                 GestureRange:new{
@@ -174,7 +168,7 @@ function HistogramWidget:setBarTapHandlers()
             end
         end
 
-    elseif self.histogram_type == "chapterpages" then
+    elseif self.is_chapter_pages_histogram then
         for n = 1, self.nb_items do
             self["onShowChapter" .. n] = function()
                 return self.show_parent:chapterTapCallback(n)
@@ -184,10 +178,6 @@ function HistogramWidget:setBarTapHandlers()
             end
         end
     end
-end
-
-function HistogramWidget:onEmptySpacetap()
-    return true
 end
 
 function HistogramWidget:paintTo(bb, xp, yp)
@@ -217,8 +207,13 @@ function HistogramWidget:paintTo(bb, xp, yp)
             self:setBarTapGestures(xp, i_x, yp, i_y, i_w, self.height, n)
 
             --* mark bar with next target of epages by painting a light bar of 5px height above it:
-            if n == self.next_reading_target_epages_index then
-                bb:paintRoundedRect(xp + i_x, yp, i_w, 5, self.histogram_bar_light, r)
+            if
+                n == self.next_reading_target_epages_index
+                or
+                (self.is_chapter_pages_histogram and n == self.current_chapter_index)
+            then
+                local thickness = self.is_chapter_pages_histogram and 2 or 5
+                bb:paintRoundedRect(xp + i_x, yp, i_w, thickness, self.histogram_bar_light, r)
             end
         end
         i_x = i_x + i_w

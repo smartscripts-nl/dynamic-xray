@@ -90,30 +90,31 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
     local key_events_module = "XrayPageNavigator"
     KOR.anchorbutton:initButtonProps(2, #self.popup_buttons)
     self.page_navigator = KOR.dialogs:navigatorBox({
-        title = DX.m.current_title .. " - p." .. self.navigator_page_no,
-        page_navigator = self,
-        html = html,
-        modal = false,
-        info_panel_text = DX.ip:getInfoPanelText(),
         chapters_count = chapters_count,
-        occurrences_per_chapter = occurrences_per_chapter,
-        occurrences_subject = item and item.name,
-        ratio_per_chapter = ratio_per_chapter,
-        window_size = "fullscreen",
+        current_chapter_index = KOR.toc:getTocIndexByPage(DX.u:getCurrentPage()),
         --* no computations needed when popup_menu was already created:
         has_anchor_button = not self.popup_menu,
+        html = html,
         key_events_module = key_events_module,
+        info_panel_buttons = DX.b:forPageNavigator(self),
+        info_panel_text = DX.ip:getInfoPanelText(),
+        modal = false,
         no_buttons_row = true,
-        top_buttons_left = DX.b:forPageNavigatorTopLeft(self),
+        occurrences_per_chapter = occurrences_per_chapter,
+        occurrences_subject = item and item.name,
+        page_navigator = self,
+        ratio_per_chapter = ratio_per_chapter,
         --* side_buttons were generated via ((XrayPages#markedItemRegister)) > ((XraySidePanels#addSideButton)):
         side_buttons = DX.sp.side_buttons,
-        info_panel_buttons = DX.b:forPageNavigator(self),
-        hotkeys_configurator = function()
-            KOR.keyevents.addHotkeysForXrayPageNavigator(self, key_events_module)
-        end,
+        title = DX.m.current_title .. " - p." .. self.navigator_page_no,
+        top_buttons_left = DX.b:forPageNavigatorTopLeft(self),
+        window_size = "fullscreen",
         after_close_callback = function()
             KOR.registry:unset("add_parent_hotkeys")
             KOR.keyevents:unregisterSharedHotkeys(key_events_module)
+        end,
+        hotkeys_configurator = function()
+            KOR.keyevents.addHotkeysForXrayPageNavigator(self, key_events_module)
         end,
         next_item_callback = function()
             DX.p:toNextNavigatorPage()

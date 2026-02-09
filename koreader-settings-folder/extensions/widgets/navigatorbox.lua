@@ -74,6 +74,7 @@ local NavigatorBox = InputContainer:extend{
     content_padding = nil,
     --* this is the default, but some widgets can set the content_type to "text" for a specific tab; e.g. see ((XrayButtons#getItemViewerTabs)):
     content_type = "html",
+    current_chapter_index = nil,
     frame_content_fullscreen = nil,
     fullscreen = false,
     has_anchor_button = false,
@@ -123,7 +124,8 @@ function NavigatorBox:init()
     self:setSeparator()
     self:computeHeights()
     self:generateInfoButtons()
-    self:generateInfoPanelAndHistogram()
+    self:generateChapterOccurrencesHistogram()
+    self:generateInfoPanel()
     self:generateScrollWidget()
     self:generateSidePanel()
     self:addFrameToContentWidget()
@@ -180,13 +182,14 @@ function NavigatorBox:generateChapterOccurrencesHistogram()
         dimen = Geom:new{ w = self.info_panel_width, h = self.histogram_height + self.histogram_bottom_line_height },
         VerticalGroup:new{
             HistogramWidget:new{
-                histogram_type = "chapterpages",
-                width = histogram_width,
+                current_chapter_index = self.current_chapter_index,
                 height = self.histogram_height,
-                occurrences_per_chapter = self.occurrences_per_chapter,
+                histogram_type = "chapterpages",
                 nb_items = self.chapters_count,
+                occurrences_per_chapter = self.occurrences_per_chapter,
                 ratios = self.ratio_per_chapter,
                 show_parent = self,
+                width = histogram_width,
             },
             bottom_line,
         }
@@ -292,17 +295,7 @@ function NavigatorBox:generateInfoButtons()
 end
 
 --- @private
-function NavigatorBox:generateInfoPanelAndHistogram()
-    if not self.side_buttons_table then
-        --* for consumption in ((NavigatorBox#generateScrollWidget)):
-        self.swidth = self.content_width
-        self.sheight = self.content_height
-        return
-    end
-
-    if DX.s.PN_show_chapter_hits_histogram then
-        self:generateChapterOccurrencesHistogram()
-    end
+function NavigatorBox:generateInfoPanel()
 
     local height = self.content_height
     --* info_text was generated in ((XrayPageNavigator#showNavigator)) > ((XrayPages#markItemsFoundInPageHtml)) > ((XrayPages#markItem)) > ((XrayPageNavigator#getItemInfoText)):
