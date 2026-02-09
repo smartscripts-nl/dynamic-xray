@@ -175,6 +175,19 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
             type = "number",
         },
+        PN_popup_menu_y_offset = {
+            value = 4,
+            validator = {
+                name = "popup_menu_y_offset",
+                min_value = 2,
+                max_value = 16,
+                default_value = 4,
+                value_step = 1,
+            },
+            explanation = _("Page Navigator: determine the vertical positioning relative to the main PN buttons. Valid values: 2 - 16."),
+            locked = 0,
+            type = "number",
+        },
         PN_show_chapter_hits_histogram = {
             value = true,
             explanation = _("Page Navigator: if set to true, at the bottom of the info panel a histogram will be added to show the hits per chapter for the Xray item currently shown in the info panel."),

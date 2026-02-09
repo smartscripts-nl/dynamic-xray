@@ -130,6 +130,7 @@ function NavigatorBox:init()
     self:generateSidePanel()
     self:addFrameToContentWidget()
     self:generateWidget()
+    self:registerAnchorButtonYPos()
     self:finalizeWidget()
 end
 
@@ -319,7 +320,9 @@ function NavigatorBox:generateInfoPanel()
             h = Size.line.thick,
         }
     }
-    height = height - self.info_panel:getSize().h - 2 * self.info_panel_separator:getSize().h - self.info_panel_nav_buttons_height
+    self.info_panel_height = self.info_panel:getSize().h
+    self.info_panel_separator_height = self.info_panel_separator:getSize().h
+    height = height - self.info_panel_height - self.info_panel_separator_height - self.info_panel_nav_buttons_height
     --* for consumption in ((NavigatorBox#generateScrollWidget)):
     self.swidth = self.info_panel_width
     self.sheight = height
@@ -615,16 +618,7 @@ end
 function NavigatorBox:generateWidget()
 
     local frame = self.frame_content_fullscreen
-
     local content_height = self.content_widget:getSize().h
-    if self.has_anchor_button then
-        KOR.anchorbutton:increaseParentYposWith(
-        self.titlebar_height
-            + self.separator:getSize().h
-            + self.content_padding_v
-            + content_height)
-    end
-
     local elements = VerticalGroup:new{
         self.titlebar,
         self.separator,
@@ -644,14 +638,21 @@ function NavigatorBox:generateWidget()
     if self.is_fullscreen and DX.s.is_mobile_device then
         local spacer = VerticalSpan:new{ width = Size.padding.large }
         table.insert(elements, 2, spacer)
-        if self.has_anchor_button then
-            KOR.anchorbutton:increaseParentYposWith(spacer:getSize().h)
-        end
     end
 
     elements.align = "left"
     table.insert(frame, elements)
     self.box_frame = FrameContainer:new(frame)
+end
+
+--- @private
+function NavigatorBox:registerAnchorButtonYPos()
+    --? strange that we don't have to subtract self.info_panel_height here to get the correct result:
+    --* but y pos computation is a bit wacky; compare comment in ((MovableContainer#moveToAnchor)):
+    local scale_factor = DX.s.PN_popup_menu_y_offset + 8
+    local computed_y_pos = self.screen_height - self.content_padding_v - self.info_panel_nav_buttons_height - self.histogram_height - self.histogram_bottom_line_height - Screen:scaleBySize(scale_factor)
+
+    KOR.registry:set("anchor_button_y_pos", computed_y_pos)
 end
 
 --- @private

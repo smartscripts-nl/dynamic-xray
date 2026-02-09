@@ -381,7 +381,7 @@ function XrayFormsData.saveNewItem(new_item)
     views_data:setItemHits(new_item, { store_book_hits = true, mode = "add" })
 
     --! don't call views_data:updateAndSortAllItemTables(item, "add") here, because then all previous items in list gone from view...
-    --* we force refresh of data here, because it could be that list of items hasn't been shown yet:
+    --* we force refresh of data here, because it could be that Items List hasn't been shown yet:
     views_data:registerNewItem(new_item)
 end
 

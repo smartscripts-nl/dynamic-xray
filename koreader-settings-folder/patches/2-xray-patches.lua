@@ -1078,6 +1078,11 @@ function MovableContainer:moveToAnchor()
     self._orig_y = math_floor((self.screen_height - anchor.h) / 2)
     self._orig_x = math_floor((self.screen_width - anchor.w) / 2)
 
+    --! very hacky: upon first call anchor.y for some reason is negative; var "button_dialog_table_height" was set in ((set button_dialog_table_height)):
+    if anchor.y < 0 then
+        anchor.y = KOR.registry:get("anchor_button_y_pos") - KOR.registry:get("button_dialog_table_height") - Screen:scaleBySize(DX.s.PN_popup_menu_y_offset)
+    end
+
     local move_by_x = anchor.x - math_floor(anchor.w / 2) - self._orig_x
     local move_by_y = math_floor(anchor.y - self._orig_y)
     self:_moveBy(move_by_x, move_by_y)

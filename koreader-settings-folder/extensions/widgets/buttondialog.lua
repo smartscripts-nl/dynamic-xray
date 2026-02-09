@@ -198,7 +198,12 @@ function ButtonDialog:init()
                 padding_bottom = 0,
             }
     }
-    self.inner_height = scontainer and scontainer:getSize().h or self.buttontable:getSize().h
+    local button_table_height = self.buttontable:getSize().h + 2 * Size.border.window
+    self.inner_height = scontainer and scontainer:getSize().h or button_table_height
+
+    -- #((set button_dialog_table_height))
+    --! very hacky, this is needed to position the Page Navigator popup menu correctly upon first call; consumed in ((MovableContainer#moveToAnchor)):
+    KOR.registry:set("button_dialog_table_height", button_table_height)
 
     self:positionButtonTable()
 

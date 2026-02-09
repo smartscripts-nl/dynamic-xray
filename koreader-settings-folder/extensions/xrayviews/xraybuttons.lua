@@ -1371,7 +1371,7 @@ Continue?]])
                 info = _("Close form and show Page Navigator."),
             }),
             edit_or_type_change_button,
-            --* button to save and then force redirection to either the list of items (opened if it wasn't open already) or the Page Navigator:
+            --* button to save and then force redirection to either the Items List (opened if it wasn't open already) or the Page Navigator:
             KOR.buttoninfopopup:forXrayItemSaveAndShowModule({
                 icon = return_icon,
                 icon2_name = icon2_name,

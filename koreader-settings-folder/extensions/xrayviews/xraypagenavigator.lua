@@ -88,7 +88,6 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
     local item = DX.sp:getCurrentTabItem()
 
     local key_events_module = "XrayPageNavigator"
-    KOR.anchorbutton:initButtonProps(2, #self.popup_buttons)
     self.page_navigator = KOR.dialogs:navigatorBox({
         chapters_count = chapters_count,
         current_chapter_index = KOR.toc:getTocIndexByPage(DX.u:getCurrentPage()),
@@ -154,7 +153,7 @@ function XrayPageNavigator:computeHistogramData()
     return chapters_count, ratios, occurrences_per_chapter
 end
 
---* this info will be consumed for the info panel in ((HtmlBox#generateScrollWidget)):
+--* this info will be consumed for the info panel in ((NavigatorBox#generateScrollWidget)):
 --- @private
 function XrayPageNavigator:getItemInfoText(item)
     --* the reliability_indicators were added in ((XrayUI#getXrayItemsFoundInText)) > ((XrayUI#matchNameInPageOrParagraph)) and ((XrayUI#matchAliasesToParagraph)):
@@ -443,15 +442,15 @@ function XrayPageNavigator:createPopupMenu()
         return
     end
     self.popup_menu = ButtonDialog:new{
-        forced_width = KOR.anchorbutton.width,
+        additional_key_events = KOR.keyevents:addHotkeysForXrayPageNavigatorPopupMenu(self),
         bordercolor = KOR.colors.line_separator,
         borderradius = Size.radius.default,
-        additional_key_events = KOR.keyevents:addHotkeysForXrayPageNavigatorPopupMenu(self),
+        --* these buttons were populated in ((XrayButtons#forPageNavigatorPopupButtons)):
+        buttons = self.popup_buttons,
+        forced_width = KOR.anchorbutton.width,
         tap_close_callback = function()
             self:closePopupMenu()
         end,
-        --* these buttons were populated in ((XrayButtons#forPageNavigatorPopupButtons)):
-        buttons = self.popup_buttons,
     }
 end
 
@@ -461,7 +460,7 @@ function XrayPageNavigator:showPopupMenu()
         self.popup_menu,
         dimen = Screen:getSize(),
     }
-    KOR.anchorbutton:setAnchorButtonCoordinates(self.popup_menu, #self.popup_buttons)
+    KOR.anchorbutton:setAnchorButtonCoordinates(2, self.popup_menu)
     self.movable_popup_menu:moveToAnchor()
     UIManager:show(self.movable_popup_menu)
 end

@@ -360,7 +360,7 @@ function XrayController:saveNewItem(return_modus)
     DX.d:closeForm("add")
     DX.fd.saveNewItem(new_item)
     self:resetDynamicXray()
-    --* to force an update of the list of items in ((XrayDialogs#showList)):
+    --* to force an update of the Items List in ((XrayDialogs#showList)):
     KOR.registry:set("new_item", new_item)
 
     if return_modus == "return_to_navigator_page" then

@@ -278,7 +278,7 @@ function XrayViewsData:updateAndSortAllItemTables(item)
     --* this call is also needed to add reliability and xray type icons:
     self:applyFilters()
 
-    --* display the new item in its proper place in the list of items (placeImportantItemsAtTop wil also add corresponding "index" prop to each item):
+    --* display the new item in its proper place in the Items List (placeImportantItemsAtTop wil also add corresponding "index" prop to each item):
     self.items = parent:placeImportantItemsAtTop(self.items, -1)
     self.item_table[1] = parent:placeImportantItemsAtTop(self.item_table[1], -1)
     if item.xray_type <= 2 then

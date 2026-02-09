@@ -406,7 +406,7 @@ function XrayDataSaver.storeUpdatedItem(updated_item)
     --* set empty texts to nil; these might have been generated in ((MultiInputDialog#registerFieldValues)), when the user never opened a particular form tab for left the fields empty:
     self:setEmptyPropsToNil(x)
     --! when a xray item is defined for a series of books, all instances per book of that same item will ALL be updated!:
-    --* this query will be used in both the series AND in current book display mode of the list of items, BUT ONLY IF a series for the current ebook is defined (so parent.current_series set):
+    --* this query will be used in both the series AND in current book display mode of the Items List, BUT ONLY IF a series for the current ebook is defined (so parent.current_series set):
     if parent.current_series then
         --! don't store hits here, because otherwise this count will be saved for all same items in ebooks in the series, but they should normally differ!:
         stmt:reset():bind(x.name, x.short_names, x.description, x.xray_type, x.aliases, x.linkwords, x.id, x.id):step()
