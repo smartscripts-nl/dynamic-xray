@@ -294,6 +294,7 @@ function XrayPages:toPrevNavigatorPage(goto_prev_item)
         return
     end
     DX.pn:restoreNavigator()
+    DX.pn:scrollToBottom()
 end
 
 function XrayPages:toPrevOrNextNavigatorPage(goto_item)

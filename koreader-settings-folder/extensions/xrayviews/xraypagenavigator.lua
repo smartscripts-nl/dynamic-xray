@@ -304,6 +304,16 @@ function XrayPageNavigator:restoreActiveScrollPage()
     end
 end
 
+--* compare ((XrayPageNavigator#restoreActiveScrollPage)), where self.scroll_to_page is used to scroll to a specific scroll subpage; current method is called at the end of ((XrayPages#toPrevNavigatorPage)) when browsing with Shift+Space and then jumping to a previous page:
+function XrayPageNavigator:scrollToBottom()
+    local scroll_pages_count = self.page_navigator.html_widget.htmlbox_widget.page_count
+    if scroll_pages_count then
+        for i = 1, scroll_pages_count - 1 do
+            self.page_navigator.html_widget:onScrollDown(i)
+        end
+    end
+end
+
 --- @private
 function XrayPageNavigator:loadDataForPage()
 
