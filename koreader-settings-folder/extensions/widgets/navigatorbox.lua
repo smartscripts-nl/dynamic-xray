@@ -424,6 +424,23 @@ function NavigatorBox:onReadPrevItemWithShiftSpace()
     return self:onReadPrevItem()
 end
 
+--! this method and the next one are needed to jump to a next or previous page when pressing Space and Shift+Space on a (BT) keyboard:
+function NavigatorBox:onForceNextItem()
+    if not self.next_item_callback then
+        return false
+    end
+    self:next_item_callback()
+    return true
+end
+
+function NavigatorBox:onForcePrevItem()
+    if not self.prev_item_callback then
+        return false
+    end
+    self:prev_item_callback()
+    return true
+end
+
 --- @private
 function NavigatorBox:computeHeights()
     local buttons_height = self.button_table and self.button_table:getSize().h or 0

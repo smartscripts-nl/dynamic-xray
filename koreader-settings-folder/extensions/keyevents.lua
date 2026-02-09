@@ -821,7 +821,7 @@ function KeyEvents:addAdditionalHotkeysNavigatorBox(parent)
             if close_box then
                 UIManager:close(parent)
             end
-            parent["on" .. label .. "HB"] = function()
+            parent["on" .. label .. "NB"] = function()
                 return hk_data[2]()
             end
             parent.key_events[label] = hk_data[1]

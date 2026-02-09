@@ -77,7 +77,6 @@ ScrollHtmlWidget.scrollToPage = function(self, page_num)
 end
 
 --- @class HtmlBox
---- @field page_navigator XrayPageNavigator
 local HtmlBox = InputContainer:extend{
     additional_key_events = nil,
     after_close_callback = nil,
@@ -452,6 +451,7 @@ function HtmlBox:onReadPrevItemWithShiftSpace()
     return self:onReadPrevItem()
 end
 
+--! this method and the next one are needed to jump to a next or previous page when pressing Space and Shift+Space on a (BT) keyboard:
 function HtmlBox:onForceNextItem()
     if not self.next_item_callback then
         return false
@@ -672,13 +672,13 @@ end
 
 --- @private
 function HtmlBox:addFrameToContentWidget()
-        self.content_widget = FrameContainer:new{
-            padding = 0,
-            padding_left = self.content_padding_h,
-            padding_right = self.content_padding_h,
-            margin = 0,
-            bordersize = 0,
-            self.html_widget,
+    self.content_widget = FrameContainer:new{
+        padding = 0,
+        padding_left = self.content_padding_h,
+        padding_right = self.content_padding_h,
+        margin = 0,
+        bordersize = 0,
+        self.html_widget,
     }
 end
 
