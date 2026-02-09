@@ -21,12 +21,12 @@ end
 function XrayInfo:TABS()
     -- for tabbed dialogs: ((Dialogs#htmlBoxTabbed)) or ((Dialogs#textBoxTabbed)) > ((TabFactory#setTabButtonAndContent))
 
-    -- for navigating through these tabs: e.g. ((HtmlBox#initKeyEvents)) > ((TabNavigator#init)) > ((generate tab navigation event handlers))
+    -- for navigating through these tabs: e.g. ((KeyEvents#addHotkeysForHtmlBox)) > ((TabNavigator#init)) > ((generate tab navigation event handlers))
     -- edge case: when we navigate back in a scrolling html widget, ((ScrollHtmlWidget#scrollText)) > code below direction < 0 ensures we activate the previous tab if we navigate back from the top of the content
 
     -- for tabbed submenu in dialogs: ((ButtonTableFactory#getTabsTable))
 
-    -- Menu instance with sub tabbuttons: ((XrayDialogs#initListDialog)) with tab_labels and activate_tab_callback > ((Menu#registerTabHotkeys)). These buttons were generated in ((XrayButtons#forListSubmenu)) > ((XrayButtons#getListSubmenuButton)) and the callback for pressing the start characters of tab items is ((XrayModel#activateListTabCallback))
+    -- Menu instance with sub tabbuttons: ((XrayDialogs#initListDialog)) with tab_labels and activate_tab_callback > ((KeyEvents#registerTabHotkeys)). These buttons were generated in ((XrayButtons#forListSubmenu)) > ((XrayButtons#getListSubmenuButton)) and the callback for pressing the start characters of tab items is ((XrayModel#activateListTabCallback))
 end
 
 function XrayInfo:TAPPED_WORD_MATCHES()
@@ -35,15 +35,15 @@ end
 
 function XrayInfo:XRAY_DIALOGS_SHARED_HOTKEYS()
 
-    -- DX supports shared hotkeys, e.g. like "N" and "P" to navigate to the next/previous page or item in resp. XrayPageNavigator or the Xray item viewer.
-    -- this means that when the XrayPageNavigator is active, N and P will navigate to the next or previous page; but when we load the Xray item viewer from the Navigator, then N and P will navigate to the next and previous item in the viewer.
+    -- DX supports shared hotkeys, e.g. like "N" and "P" to navigate to the next/previous page or item in resp. XrayPageNavigator or the Xray Item Viewer.
+    -- this means that when the XrayPageNavigator is active, N and P will navigate to the next or previous page; but when we load the Xray Item Viewer from the Navigator, then N and P will navigate to the next and previous item in the viewer.
     -- also: in the Navigator the hotkey "E" opens the Xray item editor, but when the viewer is loaded from the Navigator, the same hotkey will trigger still the same functionality, but WITHOUT the viewer loosing focus. De facto is now triggered on the viewer instance (or to be precise: its HtmlBoxWidget instance).
     -- when the user closes the viewer, the Navigator hotkeys take over once again.
 
     --* setting up this functionality (always in combination with a HtmlBox):
         -- 1 the caller instantiates HtmlBox, with props hotkeys_configurator and after_close_callback. See ((XrayPageNavigator#showNavigator)) for an example.
         -- 2 the hotkeys_configurator is called from ((HtmlBox#initHotkeys)).
-        -- 3 e.g. for the Navigator this configuator calls ((KeyEvents#setHotkeyForXrayPageNavigator)), which registers shared hotkeys with ((KeyEvents#registerSharedHotkeys)) and ((KeyEvents#registerSharedHotkey)) > set registry var "add_parent_hotkeys" > read this var in ((HtmlBoxWidget#initHotkeys)), which uses it to add additional hotkeys (of the parent) to the HtmlBoxWidget instance
+        -- 3 e.g. for the Navigator this configuator calls ((KeyEvents#addHotkeysForXrayPageNavigator)), which registers shared hotkeys with ((KeyEvents#registerSharedHotkeys)) and ((KeyEvents#registerSharedHotkey)) > set registry var "add_parent_hotkeys" > read this var in ((HtmlBoxWidget#initHotkeys)), which uses it to add additional hotkeys (of the parent) to the HtmlBoxWidget instance
         -- 4 the HtmlBox instance calls it's after_close_callback, to unset the registry var "add_parent_hotkeys" and to unset only its own shared hotkeys (but not those same shared hotkeys attached to other modules!) via ((KeyEvents#unregisterSharedHotkeys))
 end
 
@@ -53,7 +53,7 @@ function XrayInfo:XRAY_INFO_TOC_ADD_LINKED_ITEM_BUTTONS()
 
     -- automatic move of toc popup to top of screen: prop "move_to_top" true in ((Dialogs#showButtonDialog)), called from ((TextViewer#showToc)) > ((move ButtonDialogTitle to top))
 
-    -- adding button to popup toc for closing toc AND paragraph info dialog: ((TextViewer toc popup: add close button for popup and info dialog))
+    -- adding button to popup toc for closing toc AND Page/Paragraph Info Popup: ((TextViewer toc popup: add close button for popup and info dialog))
 
     -- list: ((XrayController#onShowList)) > ((XrayDialogs#showList))
 
@@ -70,7 +70,7 @@ function XrayInfo:XRAY_ITEMS()
 
     -- drawing rects for xray info: ((ReaderView#paintTo)) > ((XrayUI#setParagraphsFromDocument)) > ((XrayUI#ReaderViewGenerateXrayInformation)) > here callbacks are attached to the info rects > ((XrayUI#ReaderViewInitParaOrPageData)) > ((XrayUI#ReaderViewLoopThroughParagraphOrPage)) > ((xray page marker set target line for icon)) in page mode
 
-    -- adding match reliability indicators for the page/paragraph info popup: ((XrayUI#matchNameInPageOrParagraph))
+    -- adding match reliability indicators for the Page/Paragraph Info Popup: ((XrayUI#matchNameInPageOrParagraph))
     -- using these indicators: ((XrayUI#showParagraphInformation)) > ((xray items dialog add match reliability explanations)) & ((use xray match reliability indicators))
 
     -- show paragraph matches: ((ReaderView#paintTo)) > ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#getParaMarker)) and ((CreDocument#storeCurrentPageParagraphs)) > ((XrayUI#getXrayItemsFoundInText)): here matches on page or paragraphs evaluated > ((XrayUI#drawMarker)) > ((set xray page info rects)) KOR.registry:set("xray_page_info_rects") > ((ReaderHighlight#onTapXPointerSavedHighlight)) > here the information in the popup gets combined: ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)) > ((XrayDialogs#showUiPageInfo))
@@ -86,7 +86,7 @@ function XrayInfo:XRAY_ITEMS()
 
     --- PAGE NAVIGATOR
 
-    -- ((XrayPageNavigator#showNavigator)) > ((CreDocument#getPageHtml)) > ((XrayPageNavigator#markItemsFoundInPageHtml)) for html and buttons > ((XrayUI#getXrayItemsFoundInText)) > ((XrayPageNavigator#markItemsInHtml)) > ((XrayPageNavigator#markItem)) > ((XrayPageNavigator#markedItemRegister)) here callback and hold_callback are attached > ((XrayViewsData#getItemInfoText)) > ((Dialogs#htmlBox)) > ((HtmlBox#generateSidePanelButtons)) > ((HtmlBox#generateInfoPanel))
+    -- ((XrayPageNavigator#showNavigator)) > ((CreDocument#getPageHtml)) > ((XrayPages#markItemsFoundInPageHtml)) for html and buttons > ((XrayUI#getXrayItemsFoundInText)) > ((XrayPages#markItemsInHtml)) > ((XrayPages#markItem)) > ((XrayPages#markedItemRegister)) here callback and hold_callback are attached > ((XrayPageNavigator#getItemInfoText)) > ((Dialogs#htmlBox)) > ((NavigatorBox#generateSidePanelButtons)) > ((NavigatorBox#generateInfoPanelAndHistogram))
 
     --- FILTERING
 
