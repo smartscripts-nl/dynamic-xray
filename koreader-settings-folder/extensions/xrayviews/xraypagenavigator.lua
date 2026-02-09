@@ -4,7 +4,6 @@
 local require = require
 
 local ButtonDialog = require("extensions/widgets/buttondialog")
-local DataStorage = require("datastorage")
 local KOR = require("extensions/kor")
 local MovableContainer = require("ui/widget/container/movablecontainer")
 local UIManager = require("ui/uimanager")
@@ -17,7 +16,6 @@ local T = require("ffi/util").template
 local DX = DX
 local has_content = has_content
 local has_text = has_text
-local os_date = os.date
 local table_concat = table.concat
 local table_insert = table.insert
 local tonumber = tonumber
@@ -29,7 +27,6 @@ local parent
 local XrayPageNavigator = WidgetContainer:new{
     active_filter_name = nil,
     alias_indent = "   ",
-    cached_export_info = nil,
     cached_hits_by_needle = {},
     cached_html_and_buttons_by_page_no = {},
     cached_items = {},
@@ -357,7 +354,6 @@ function XrayPageNavigator:loadDataForPage()
 end
 
 function XrayPageNavigator:resetCache()
-    self.cached_export_info = nil
     self.cached_html_and_buttons_by_page_no = {}
     self.cached_hits_by_needle = {}
     self.cached_items = {}
@@ -409,31 +405,6 @@ function XrayPageNavigator:returnToNavigator()
     end
 
     return false
-end
-
---- @private
-function XrayPageNavigator:showExportXrayItemsDialog()
-    local top_buttons_left = DX.b:forExportItemsTopLeft()
-    local title = parent.current_series and _("All Xray items: series mode") or _("All Xray items: book mode")
-
-    KOR.dialogs:textBox({
-        title = title,
-        info = self.cached_export_info,
-        info_icon_less = self.cached_export_info_icon_less,
-        fullscreen = true,
-        copy_icon_less_text = true,
-        extra_button = KOR.buttoninfopopup:forXrayItemsExportToFile({
-            callback = function()
-                title = title:gsub(": ([^\n]+)", " in \"" .. parent.current_title .. "\" (%1)")
-                local info = title .. "\n" .. _("List generated") .. ": " .. os_date("%Y-%m-%d") .. "\n\n" .. self.cached_export_info_icon_less
-                KOR.files:filePutcontents(DataStorage:getDataDir() .. "/xray-items.txt", info)
-                KOR.messages:notify(_("list exported to xray-items.txt..."))
-            end,
-        }),
-        extra_button_position = 3,
-        top_buttons_left = top_buttons_left,
-    })
-    KOR.screenhelpers:refreshScreen()
 end
 
 --- @private

@@ -47,21 +47,7 @@ end
 
 --* compare ((XrayDialogs#showUiPageInfo))
 function XrayCallbacks:execExportXrayItemsCallback()
-
-    if DX.pn.cached_export_info then
-        DX.pn:showExportXrayItemsDialog()
-        return true
-    end
-
-    local items = DX.vd.items
-    if not items then
-        return true
-    end
-    local cached_export_info, cached_export_info_icon_less = DX.vd:generateXrayItemsOverview(items)
-    DX.pn:setProp("cached_export_info", cached_export_info)
-    DX.pn:setProp("cached_export_info_icon_less", cached_export_info_icon_less)
-
-    DX.pn:showExportXrayItemsDialog()
+    DX.ex:showExportXrayItemsDialog()
     return true
 end
 

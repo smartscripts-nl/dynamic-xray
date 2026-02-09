@@ -137,6 +137,9 @@ function KOR:initDX()
 
 	DX.s = require("extensions/xraymodel/xraysettings")
 	DX.s:setUp()
+	if not DX.ex then
+		DX.ex = require("extensions/xrayviews/xrayexporter")
+	end
 	DX.m = require("extensions/xraymodel/xraymodel")
 	--* only for repository version set database_filename (so DON'T set this var yourself!):
 	if DX.m:isPublicDXversion() then

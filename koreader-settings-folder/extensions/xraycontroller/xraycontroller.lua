@@ -123,6 +123,7 @@ KOR:initBaseExtensions()
 --- @field d XrayDialogs
 --- @field dl XrayDataLoader
 --- @field ds XrayDataSaver
+--- @field ex XrayExporter
 --- @field fd XrayFormsData
 --- @field i XrayInformation
 --- @field ip XrayInfoPanel
@@ -149,6 +150,8 @@ DX = {
     dl = nil,
     --* shorthand notation for DataStore; this module will be initialized in ((XrayModel#initDataHandlers)):
     ds = nil,
+    --* shorthand notation for Exporter; this module will be initialized in ((KOR#initDX)):
+    ex = nil,
     --* shorthand notation for FormsData; this module will be initialized in ((XrayModel#initDataHandlers)):
     fd = nil,
     --* shorthand notation for Information; this module will be initialized in ((KOR#initDX)):
@@ -575,6 +578,11 @@ function XrayController:resetDynamicXray(is_prepared)
     --! don't call DX.u:reset() here, because then Xray markers in page would disappear...
     KOR.document:resetParagraphsCache()
     DX.pn:resetCache()
+    --? I don't know why we need this:
+    if not DX.ex then
+        DX.ex = require("extensions/xrayviews/xrayexporter")
+    end
+    DX.ex:resetCache()
     DX.sp:resetActiveSideButtons("XrayController:resetDynamicXray")
     DX.vd:resetAllFilters()
     DX.p:resetCache()

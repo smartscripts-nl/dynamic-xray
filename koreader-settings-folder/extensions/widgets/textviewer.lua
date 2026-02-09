@@ -1533,6 +1533,10 @@ function TextViewer:initTitleBar()
         end
     end
 
+    if self.title_func then
+        self.title = self.title_func()
+    end
+
     -- #((TitleBar for TextViewer))
     --* compare ((TitleBar for Menu)), e.g. for Collections:
     local title_bar_config = {
