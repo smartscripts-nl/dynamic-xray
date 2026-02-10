@@ -25,6 +25,7 @@ local HistogramWidget = InputContainer:extend{
     is_chapter_pages_histogram = false,
     is_touch_device = Device:isTouchDevice(),
     max_ratio_indices = {},
+    minimal_active_marker_gap = Screen:scaleBySize(3),
     next_reading_target_epages_index = nil,
     nb_items = nil,
     ratios = nil, --* table of 1...nb_items items, each with (0 <= value <= 1)
@@ -232,12 +233,14 @@ function HistogramWidget:markCurrentBar(n, bb, xp, i_x, yp, i_w, i_h, r)
         return
     end
 
-    local thickness = self.is_chapter_pages_histogram and 2 or 5
+    local thickness = self.is_chapter_pages_histogram and 1 or 2
+    thickness = Screen:scaleBySize(thickness)
 
     --* if bar and top marker would overlap or (nearly) touch each other, mark the current bar instead with a white dot written on top of it:
     local dot_size = Screen:scaleBySize(4)
     local x_pos = xp + i_x
-    if self.height - i_h < thickness + 3 and i_w >= 2 * dot_size then
+
+    if self.height - i_h < thickness + self.minimal_active_marker_gap and i_w >= 2 * dot_size then
         local radius = math_floor(dot_size / 2)
         yp = yp + math_floor(i_h / 2) - radius
 
