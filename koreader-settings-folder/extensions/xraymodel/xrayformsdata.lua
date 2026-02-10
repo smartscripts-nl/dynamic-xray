@@ -34,6 +34,7 @@ local XrayFormsData = WidgetContainer:new{
     form_item_id = nil,
     --* used to determine whether an item should be displayed bold in the list or not; and also used in ((XrayViewsData#storeItemHits)) to store the (updated) book_hits for an item in the database:
     last_modified_item_id = nil,
+    other_fields_face = Font:getFace("x_smallinfofont", 19),
 }
 
 --- @param xray_model XrayModel
@@ -502,10 +503,10 @@ Through aliases:
         description = "Tags:",
         info_popup_title = "veld: Tags",
         --* splitting of items done by ((XrayModel#splitByCommaOrSpace)):
-        info_popup_text = _("This field has space or comma separated terms. Tags will (very soon) be used: 1) in Page Navigator, to only accentuate items which have a certain tag and to quickly jump between their occurrences; 2) in XrayExporter, to export a list groups of items which share a tag."),
+        info_popup_text = _("This field has space or comma separated terms. Tags will (very soon) be used: 1) in Page Navigator, to only accentuate items which have a certain tag and to quickly jump between their occurrences; 2) in XrayExporter, to export a list of groups of items which share a tag."),
         tab = 2,
         cursor_at_end = true,
-        input_face = DX.d.other_fields_face,
+        input_face = self.other_fields_face,
         scroll = true,
         allow_newline = false,
         force_one_line_height = true,

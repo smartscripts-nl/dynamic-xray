@@ -62,7 +62,6 @@ local XrayDialogs = WidgetContainer:new{
     list_is_opened = false,
     list_title = nil,
     needle_name_for_list_page = "",
-    other_fields_face = Font:getFace("x_smallinfofont", 19),
     -- #((Xray-item edit dialog: tab buttons in TitleBar))
     title_tab_buttons_left = { _(" xray-item "), _(" metadata ") },
     xray_item_chooser = nil,
@@ -212,7 +211,7 @@ function XrayDialogs:showNewItemForm(args)
         end,
         --* to store the fields created in a corresponding Registry prop; see ((MultiInputDialog#registerInputFields)):
         input_registry = "xray_item",
-        description_face = self.other_fields_face,
+        description_face = DX.fd.other_fields_face,
         fullscreen = true,
         covers_fullscreen = true,
         is_borderless = true,
@@ -276,7 +275,7 @@ function XrayDialogs:showEditItemForm(args)
         end,
         --* to store the fields created in a corresponding Registry prop; see ((MultiInputDialog#registerInputFields))
         input_registry = "xray_item",
-        description_face = self.other_fields_face,
+        description_face = DX.fd.other_fields_face,
         fullscreen = true,
         titlebar_alignment = "center",
         covers_fullscreen = true,
