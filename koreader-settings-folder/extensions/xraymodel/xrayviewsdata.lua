@@ -1481,6 +1481,7 @@ function XrayViewsData:setItems(items)
     self.items = items
 end
 
+--* compare getting keywords via ((XrayModel#splitByCommaOrSpace)):
 --- @private
 function XrayViewsData:getKeywordsCount(text)
     if not text:match(",") then

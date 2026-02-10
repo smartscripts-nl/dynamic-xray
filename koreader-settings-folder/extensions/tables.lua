@@ -9,6 +9,8 @@ local math_ceil = math.ceil
 local pairs = pairs
 local table = table
 local table_insert = table.insert
+local table_remove = table.remove
+local table_sort = table.sort
 local tonumber = tonumber
 local tostring = tostring
 local type = type
@@ -18,6 +20,21 @@ local count
 
 --- @class Tables
 local Tables = WidgetContainer:extend{}
+
+function Tables:getSortedRelationalTable(subject)
+    --* change a relational table into a numerical one, with each new item having a table { key, value }:
+    local keys = {}
+    for key in pairs(subject) do
+        table_insert(keys, key)
+    end
+    table_sort(keys)
+    local ordered = {}
+    count = #keys
+    for k = 1, count do
+        table_insert(ordered, { keys[k], subject[keys[k]] })
+    end
+    return ordered
+end
 
 function Tables:filter(tbl, callback)
     local filtered = {}
@@ -34,10 +51,10 @@ end
 function Tables:filterIpairsTable(itable, key_or_value, by_key)
     for i = #itable, 1, -1 do
         if not by_key and itable[i] == key_or_value then
-            table.remove(itable, i)
+            table_remove(itable, i)
             break
         elseif by_key and i == key_or_value then
-            table.remove(itable, i)
+            table_remove(itable, i)
             break
         end
     end
@@ -122,7 +139,7 @@ function Tables:slice(subject, startpos, icount)
 end
 
 function Tables:sortByPropAscending(subject, prop)
-    table.sort(subject, function(v1, v2)
+    table_sort(subject, function(v1, v2)
         if v1[prop] == nil and v2[prop] == nil then
             if v1.text and v2.text then
                 return v1.text < v2.text
@@ -196,7 +213,7 @@ end
 --* was used in ((XrayViewsData#indexItems)), but since sorting already done in query in ((XrayDataLoader#_loadAllData)), not needed anymore:
 --- @return table
 function Tables:sortByPropDescending(subject, prop)
-    table.sort(subject, function(v1, v2)
+    table_sort(subject, function(v1, v2)
         if v1[prop] == nil and v2[prop] == nil then
             if v1.text and v2.text then
                 return v1.text < v2.text

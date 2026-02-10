@@ -503,7 +503,7 @@ Through aliases:
         description = "Tags:",
         info_popup_title = "veld: Tags",
         --* splitting of items done by ((XrayModel#splitByCommaOrSpace)):
-        info_popup_text = _("This field has space or comma separated terms. Tags will (very soon) be used: 1) in Page Navigator, to only accentuate items which have a certain tag and to quickly jump between their occurrences; 2) in XrayExporter, to export a list of groups of items which share a tag."),
+        info_popup_text = _("This field has space or comma separated terms. Tags will be used: 1) (coming soon) in Page Navigator, to only accentuate items which have a certain tag and to quickly jump between their occurrences; 2) in XrayExporter, to export a list of groups of items which share a tag."),
         tab = 2,
         cursor_at_end = true,
         input_face = self.other_fields_face,
