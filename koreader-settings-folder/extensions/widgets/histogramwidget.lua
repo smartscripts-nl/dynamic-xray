@@ -236,7 +236,7 @@ function HistogramWidget:markCurrentBar(n, bb, xp, i_x, yp, i_w, i_h, r)
     local thickness = self.is_chapter_pages_histogram and 1 or 2
     thickness = Screen:scaleBySize(thickness)
 
-    --* if bar and top marker would overlap or (nearly) touch each other, mark the current bar instead with a white dot written on top of it:
+    --* if bar and top marker would overlap or (nearly) touch each other, mark the current bar instead with a white dot painted on top of it:
     local dot_size = Screen:scaleBySize(4)
     local x_pos = xp + i_x
 

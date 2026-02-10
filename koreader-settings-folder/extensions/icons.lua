@@ -97,6 +97,8 @@ return {
     spacer = "\u{2002}",
     star = " ☆",
     star_bare = "☆",
+    tag_open = "\u{F412}" .. spacer,
+    tag_open_bare = "\u{F412}",
     today = "\u{E7EE}" .. spacer,
     today_bare = "\u{E7EE}",
     xray_add_item_bare = "\u{E713}",

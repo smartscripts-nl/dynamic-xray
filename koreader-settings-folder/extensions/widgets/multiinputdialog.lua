@@ -103,6 +103,7 @@ function MultiInputDialog:getAllTabsFieldsValues()
     local field
     count = #self.input_fields
     for i = 1, count do
+        --* these values were set in ((MultiInputDialog#fieldAddToInputs)):
         field = self.input_fields[i]
         local value_index = field.value_index
         self.field_values[value_index] = field:getText()
@@ -143,15 +144,21 @@ function MultiInputDialog:onFocus(inputbox)
 end
 
 --- @private
-function MultiInputDialog:generateRows(field_source, is_field_row)
-    self.fields_count = is_field_row and #field_source or 1
+function MultiInputDialog:generateRows(field_config, is_field_row)
+    self.fields_count = is_field_row and #field_config or 1
     local is_two_field_row = is_field_row and self.fields_count > 1
     self.force_one_line_field = is_field_row
 
     if is_two_field_row then
-        self:insertTwoFieldRow(field_source)
+        for i = 1, 2 do
+            self.field_nr = self.field_nr + 1
+            field_config[i].field_nr = self.field_nr
+        end
+        self:insertTwoFieldRow(field_config)
     else
-        self:insertSingleFieldRow(field_source)
+        self.field_nr = self.field_nr + 1
+        field_config.field_nr = self.field_nr
+        self:insertSingleFieldRow(field_config)
     end
 end
 
@@ -211,9 +218,6 @@ end
 --- @private
 --- @param field_side number 1 if left side, 2 if right side
 function MultiInputDialog:fieldAddToInputs(field_config, field_side)
-
-    --* this prop is needed for self:setFieldProps:
-    self.field_nr = self.field_nr + 1
 
     self:setFieldWidth(field_config)
     self:setFieldProps(field_config, field_side)
@@ -321,7 +325,7 @@ function MultiInputDialog:setFieldProps(field, field_side)
 
     self.field_config = {
         value_index =
-            self.field_nr,
+            field.field_nr,
         text =
             self:setFieldProp(field.text, ""),
         hint =
@@ -334,7 +338,7 @@ function MultiInputDialog:setFieldProps(field, field_side)
             field.info_popup_text,
         tab =
             field.tab,
-        --* e.g. used to insert a button for setting xray_type of an Xray item in ((XrayDialogs#getFormFields)):
+        --* e.g. used to insert a button for setting xray_type of an Xray item in ((XrayFormsData#getFormFields)):
         custom_edit_button =
             field.custom_edit_button,
         disable_paste =
@@ -417,7 +421,7 @@ function MultiInputDialog:insertSingleFieldRow(field_config)
     if field_config.description then
         local desc_container = self:getDescriptionContainer(field, field_config)
         self:insertIntoTargetContainer(HorizontalGroup:new(desc_container))
-end
+    end
 
     local field_height = field:getSize().h
     local group = CenterContainer:new{
@@ -490,9 +494,9 @@ function MultiInputDialog:getDescription(field, field_config, width)
     local text = field_config.info_popup_text and
         Button:new{
         text_icon = {
-                text = self.description_prefix .. " " .. field_config.description .. " ",
+            text = self.description_prefix .. " " .. field_config.description .. " ",
             text_font_bold = false,
-                text_font_face = "x_smallinfofont",
+            text_font_face = "x_smallinfofont",
             font_size = 18,
             icon = "info-slender",
             icon_size_ratio = 0.48,
@@ -509,7 +513,7 @@ function MultiInputDialog:getDescription(field, field_config, width)
         callback = function() --ypos
             -- #((focus field upon click on info label))
             self:onSwitchFocus(field)
-            --* info_popup_title and info_popup_text e.g. defined in ((XrayDialogs#getFormFields)):
+                --* info_popup_title and info_popup_text e.g. defined in ((XrayFormsData#getFormFields)):
             KOR.dialogs:niceAlert(field_config.info_popup_title, field_config.info_popup_text)
         end,
     }

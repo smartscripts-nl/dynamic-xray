@@ -8,6 +8,7 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 
 local DX = DX
+local has_no_text = has_no_text
 local has_text = has_text
 local pairs = pairs
 local table = table
@@ -75,7 +76,7 @@ function XrayTappedWords:getXrayItemAsDictionaryEntry(tapped_word)
         if items_found then
 
             -- #((xray_item as dictionary plugin pre dialog))
-            --* we only want to show the popup if there are more than one item found, because in case of only one item we can immediately show that in the item viewer:
+            --* we only want to show the popup if there are more than one item found, because in case of only one item we can immediately show that in the Item Viewer:
             if #items_found > 1 then
                 --* items will already be sorted by name or hits...
                 local buttons, buttons_count = DX.b:forItemsCollectionPopup(items_found, tapped_word)
@@ -146,7 +147,7 @@ function XrayTappedWords:buildItemIndex()
         return self._item_index
     end
     local index = {}
-    local name, item, alias_norm
+    local name, item
     count = #views_data.items
     for i = 1, count do
         item = views_data.items[i]
@@ -155,19 +156,26 @@ function XrayTappedWords:buildItemIndex()
             index[name] = index[name] or {}
             table_insert(index[name], item)
         end
-        if item.aliases then
-            for alias in item.aliases:gmatch("[^,]+") do
-                alias_norm = KOR.tables:normalizeTableIndex(alias)
-                if alias_norm then
-                    index[alias_norm] = index[alias_norm] or {}
-                    table_insert(index[alias_norm], item)
-                end
-            end
-        end
+        self:addToItemIndexFromAlias(item)
     end
     self._item_index = index
 
     return index
+end
+
+--- @private
+function XrayTappedWords:addToItemIndexFromAlias(item, index)
+    if has_no_text(item.aliases) then
+        return
+    end
+    local alias_norm
+    for alias in item.aliases:gmatch("[^,]+") do
+        alias_norm = KOR.tables:normalizeTableIndex(alias)
+        if alias_norm then
+            index[alias_norm] = index[alias_norm] or {}
+            table_insert(index[alias_norm], item)
+        end
+    end
 end
 
 --* store the metadata of related items (derived from buttons metadata in ), for use when generating the text prop for those items in the list, in ((XrayTappedWords#getCurrentListTabItems)):
@@ -220,6 +228,7 @@ function XrayTappedWords:itemExists(needle_name, tapped_word, is_exists_check)
         name = needle_name,
         short_names = "",
         aliases = "",
+        tags = "",
         linkwords = "",
         xray_type = 1,
     }
@@ -323,7 +332,6 @@ function XrayTappedWords:collectionSortAndPurge(needle_items, needle_matches_ful
     for i = 1, count do
         local item = items_collection[i]
         is_full_match = false
-
         if needle_matches_fullname then
             for n = 1, needle_count do
                 needle = needle_items[n]
@@ -475,7 +483,6 @@ function XrayTappedWords:getTypeAndReliabilityIcons(item)
     local alias_matches_with_tapped_word = self.tapped_word and (item.aliases:find(self.tapped_word, 1, true) or item.short_names:find(self.tapped_word, 1, true))
 
     local text = KOR.strings:lower(item.name)
-
     local ri = DX.i.match_reliability_indicators
 
     --* reliability_icons were added using ((xray match reliability indicators)):

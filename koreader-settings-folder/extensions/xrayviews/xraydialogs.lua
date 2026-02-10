@@ -23,7 +23,6 @@ local UIManager = require("ui/uimanager")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local Screen = require("device").screen
-local Size = require("ui/size")
 local _ = KOR:initCustomTranslations()
 local T = require("ffi/util").template
 
@@ -48,7 +47,6 @@ local XrayDialogs = WidgetContainer:new{
     called_from_list = false,
     change_xray_type = nil,
     current_tab_items = nil,
-    description_field_face = Font:getFace("x_smallinfofont", 19),
     description_field_height = DX.s.is_ubuntu and 180 or 420,
     edit_item_description_dialog = nil,
     edit_item_input = nil,
@@ -159,152 +157,6 @@ function XrayDialogs:showEditDescriptionDialog(description_field, callback, canc
     }
     UIManager:show(self.edit_item_description_dialog)
     self.edit_item_description_dialog:onShowKeyboard()
-end
-
---* compare ((XrayDialogs#showEditItemForm)):
---- @private
-function XrayDialogs:getFormFields(item_copy, prefilled_field, name_from_selected_text)
-    local aliases = DX.fd:getAliasesText(item_copy)
-    local linkwords = DX.fd:getLinkwordsText(item_copy)
-    local icon = DX.vd:getItemTypeIcon(item_copy, "bare")
-    local aliases_field = {
-        text = item_copy.aliases,
-        input_type = "text",
-        description = "Aliassen:",
-        info_popup_title = _("field: Aliases"),
-        --* splitting of items done by ((XrayModel#splitByCommaOrSpace)):
-        info_popup_text = _([[This field has space or comma separated terms, as aliases (of the main item name in the first tab). Can e.g. be a title or a nickname of a person.
-
-Through aliases:
-1) main names will be found in the Xray overview of items in paragraphs on the current page;
-2) the main item will be shown if the user longpresses an alias in the ebook text.]]),
-        tab = 2,
-        cursor_at_end = true,
-        input_face = self.other_fields_face,
-        scroll = true,
-        allow_newline = false,
-        force_one_line_height = true,
-        margin = Size.margin.small,
-    }
-    local linkwords_field = {
-        text = item_copy.linkwords,
-        input_type = "text",
-        description = _("Link terms") .. ":",
-        info_popup_title = _("field") .. ": " .. _("Link terms"),
-        --* splitting of items done by ((XrayModel#splitByCommaOrSpace)):
-        info_popup_text = _([[This field has space or comma separated (partial) names of other Xray items, to link the current item to those other items.
-
-If such an other item is longpressed in the book, the linked items will be shown as extra buttons in the popup dialog.]]),
-        tab = 2,
-        cursor_at_end = true,
-        input_face = self.other_fields_face,
-        scroll = true,
-        allow_newline = false,
-        force_one_line_height = true,
-        margin = Size.margin.small,
-    }
-    local xray_type_field = {
-        text = tostring(item_copy.xray_type) or "1",
-        input_type = "number",
-        --description = DX.fd:getTypeLabel(item_copy) .. "\n  " .. DX.vd.xray_type_description,
-        description = "Xray-type:",
-        --* splitting of items done by ((XrayModel#splitByCommaOrSpace)):
-        info_popup_text = _("Set Xray type with numbers 1 through 4. If you use the button at the right side of the field for this, you'll see an explanation of these types."),
-        tab = 2,
-        input_face = self.other_fields_face,
-        cursor_at_end = true,
-        scroll = false,
-        allow_newline = false,
-        force_one_line_height = true,
-        disable_paste = true,
-        custom_edit_button = DX.b:forItemEditorTypeSwitch(item_copy, {
-            fgcolor = KOR.colors.button_light,
-            bordercolor = KOR.colors.button_light,
-            radius = Size.radius.button,
-            bordersize = Size.border.button,
-            padding = Size.padding.buttonvertical,
-        }),
-        margin = Size.margin.small,
-    }
-    local short_names_field = {
-        text = item_copy.short_names,
-        input_type = "text",
-        description = _("Short names") .. ":",
-        info_popup_title = _("field") .. ": " .. _("Short names"),
-        info_popup_text = _([[Comparable with aliases, but in this case comma separated short variants of the main item name in the first tab. Handy when those shorter names are sometimes used in the book instead of the longer main name.
-
-For Xray overviews of (paragraphs in) the current page the scripts initially will firstly search for whole instances of these short names, or otherwise for first and surnames derived from these.]]),
-        tab = 2,
-        input_face = self.other_fields_face,
-        cursor_at_end = true,
-        scroll = true,
-        allow_newline = false,
-        force_one_line_height = true,
-        margin = Size.margin.small,
-    }
-    local fields = {
-        {
-            text = prefilled_field == "description" and name_from_selected_text or item_copy.description or "",
-            input_type = "text",
-            description = linkwords and _("Description") .. T(" (%1):", linkwords) or _("Description"),
-            info_popup_title = _("field") .. ": " .. _("Description"),
-            info_popup_text = T(_([[If it is your intention that a Xray item should be filterable with a term in its description, you should ensure that that term in case of:
-
-NAMES OF PERSONS %1
-is mentioned with uppercase characters at start of first and surname in the description;
-
-TERMS %2
-only has lower case characters in the description.]]), KOR.icons.xray_person_important_bare .. "/" .. KOR.icons.xray_person_bare, KOR.icons.xray_term_important_bare .. "/" .. KOR.icons.xray_term_bare),
-            tab = 1,
-            height = "auto",
-            input_face = self.description_field_face,
-            scroll = true,
-            scroll_by_pan = true,
-            allow_newline = true,
-            cursor_at_end = true,
-            is_edit_button_target = true,
-            margin = Size.margin.small,
-        },
-        {
-            text = prefilled_field == "name" and name_from_selected_text or item_copy.name or "",
-            input_type = "text",
-            description = aliases and _("Name") .. " (" .. aliases .. "):  " .. icon or _("Name") .. ": " .. icon,
-            info_popup_title = _("field") .. ": " .. _("Name"),
-            info_popup_text = _([[PERSONS
-Enter person names including uppercase starting characters [A-Za-z]. Because in that case the search for Xray items in the book will be done CASE SENSITIVE. By default when searching for Xray items, Dynamic Xray will search for first names in the text. If you want the plugin to search for occurrences/hits for the surname instead (because these references are more frequent in the text), use this format: "surname, first name".
-
-TERMS
-Enter with only lowercase characters [a-z], because then searches for these items will be executed CASE INSENSITIVE. So as to find hits in format "term" as well as "Term".]]),
-            tab = 1,
-            input_face = self.other_fields_face,
-            cursor_at_end = true,
-            scroll = true,
-            --* force fixed height for this field in ((force one line field height)):
-            force_one_line_height = true,
-            allow_newline = false,
-            margin = Size.margin.small,
-        },
-    }
-
-    --* on mobile devices we don't want two field rows (not enough space):
-    if DX.s.is_mobile_device then
-        table_insert(fields, aliases_field)
-        table_insert(fields, linkwords_field)
-        table_insert(fields, xray_type_field)
-        table_insert(fields, short_names_field)
-    else
-        --* insert 2 two field rows:
-        table_insert(fields, {
-            aliases_field,
-            linkwords_field,
-        })
-        table_insert(fields, {
-            short_names_field,
-            xray_type_field,
-        })
-    end
-
-    return fields
 end
 
 --* compare ((XrayController#refreshItemHitsForCurrentEbook)):
@@ -418,7 +270,7 @@ function XrayDialogs:showEditItemForm(args)
         --* tab_callback can be called from ((InputDialog#init)); activate_tab_callback as used in several KeyEvents definitions not needed here:
         tab_callback = DX.fd:getFormTabCallback("edit", active_form_tab, item_copy),
         has_field_rows = true,
-        fields = self:getFormFields(item_copy),
+        fields = DX.fd:getFormFields(item_copy),
         close_callback = function()
             self:closeForm("edit")
         end,
@@ -515,8 +367,8 @@ function XrayDialogs:showUiPageInfo(hits_info, headings, matches_count, extra_bu
         local subject = DX.s.UI_mode == "paragraph" and _(" in this paragraph") or _(" on this page")
         local target = DX.s.UI_mode == "paragraph" and _("the ENTIRE PAGE") or _("PARAGRAPHS")
         local new_trigger = DX.s.UI_mode == "paragraph" and _("the first line marked with a lightning icon") or _("a paragraph marked with a star")
-        local key_events_module = "XrayUIpageInfoViewer"
         --* the data below was populated in ((XrayUI#ReaderViewGenerateXrayInformation)):
+        local key_events_module = "XrayUIpageInfoViewer"
         self.xray_ui_info_dialog = KOR.dialogs:textBox({
             title = matches_count_info .. subject,
             info = info,
@@ -928,7 +780,7 @@ function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, 
 
     self.item_viewer = KOR.dialogs:htmlBoxTabbed(1, {
         title = title,
-        top_buttons_left = DX.b:forItemViewerTopLeft(self),
+        top_buttons_left = DX.b:forItemViewerTopLeft(self, needle_item),
         tabs = tabs,
         window_size = "max",
         button_font_weight = "normal",
@@ -996,7 +848,7 @@ function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_wo
     local tabs = DX.b:getItemViewerTabs(main_info, hits_info)
     self.item_viewer = KOR.dialogs:htmlBoxTabbed(1, {
         title = title,
-        top_buttons_left = DX.b:forItemViewerTopLeft(self),
+        top_buttons_left = DX.b:forItemViewerTopLeft(self, needle_item),
         tabs = tabs,
         window_size = "max",
         button_font_weight = "normal",
@@ -1188,39 +1040,6 @@ end
 
 
 --- ================= HELP INFORMATION =================
-
-function XrayDialogs:showReliabilityIndicatorsExplanation()
-    KOR.dialogs:textBoxTabbed(1, {
-        title = _("Explanation for this dialog"),
-        is_standard_tabbed_dialog_lower = true,
-        tabs = {
-            {
-                tab = _("reliability icons"),
-                info = DX.i:getMatchReliabilityExplanation()
-            },
-            {
-                tab = _("viewer buttons"),
-                info = _([[PAGE OR PARAGRAPH ICON TOP LEFT
-
-toggle between xray markers for entire page or per paragraph
-
-FOOTER ICONS
-
-* list: go to list of xray-items in current book
-* signpost: tappable index of items
-]])
-            },
-            {
-                tab = _("index buttons"),
-                info = _([[Tap on an item to jump to that.
-
-For editing an item: longpress the button and choose "Edit".
-]])
-            },
-        }
-    })
-    return true
-end
 
 function XrayDialogs:setHelpText(key, help_info)
     self.help_texts[key] = help_info

@@ -11,7 +11,7 @@ local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 local Screen = require("device").screen
-local Size = require("ui/size")
+local Size = require("extensions/modules/size")
 local T = require("ffi/util").template
 
 local DX = DX

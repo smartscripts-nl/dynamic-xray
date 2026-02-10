@@ -66,6 +66,7 @@ local XrayDataSaver = WidgetContainer:new{
                 "description",
                 "xray_type"	INTEGER NOT NULL DEFAULT 1,
                 "aliases",
+                "tags",
                 "linkwords",
                 "book_hits" INTEGER,
                 "chapter_hits",
@@ -93,8 +94,8 @@ local XrayDataSaver = WidgetContainer:new{
         delete_item_book =
             "DELETE FROM xray_items WHERE id = ?;",
 
-        delete_item_series =
-            [[DELETE FROM xray_items
+        delete_item_series = [[
+            DELETE FROM xray_items
             WHERE ebook IN (
               SELECT filename
               FROM bookinfo
@@ -103,10 +104,10 @@ local XrayDataSaver = WidgetContainer:new{
             AND name = ?;]],
 
         insert_imported_items =
-            "INSERT OR IGNORE INTO xray_items (ebook, name, short_names, description, xray_type, aliases, linkwords, book_hits, chapter_hits, chapter_hits_data) VALUES ('%1', ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+            "INSERT OR IGNORE INTO xray_items (ebook, name, short_names, description, xray_type, aliases, tags, linkwords, book_hits, chapter_hits, chapter_hits_data) VALUES ('%1', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
 
         insert_item =
-            "INSERT INTO xray_items (ebook, name, short_names, description, xray_type, aliases, linkwords) VALUES (?, ?, ?, ?, ?, ?, ?);",
+            "INSERT INTO xray_items (ebook, name, short_names, description, xray_type, aliases, tags, linkwords) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
 
         store_book_chapters =
             "INSERT OR IGNORE INTO xray_books (ebook, chapters) VALUES (?, ?);",
@@ -126,8 +127,9 @@ local XrayDataSaver = WidgetContainer:new{
             WHERE id = ?;]],
 
         update_item =
-            "UPDATE xray_items SET name = ?, short_names = ?, description = ?, xray_type = ?, aliases = ?, linkwords = ?, book_hits = ?, chapter_hits = ? WHERE id = ?;",
+            "UPDATE xray_items SET name = ?, short_names = ?, description = ?, xray_type = ?, aliases = ?, tags = ?, linkwords = ?, book_hits = ?, chapter_hits = ? WHERE id = ?;",
 
+        --* this will similtanuously update the item in all ebooks of the series:
         update_item_for_entire_series = [[
             UPDATE xray_items
             SET
@@ -136,6 +138,7 @@ local XrayDataSaver = WidgetContainer:new{
             description = ?,
             xray_type = ?,
             aliases = ?,
+            tags = ?,
             linkwords = ?
             WHERE name = (SELECT xi.name
               FROM xray_items xi
@@ -210,6 +213,9 @@ local XrayDataSaver = WidgetContainer:new{
                     constraint xray_books_unique_book
                     unique
             );]],
+
+        [[
+            ALTER TABLE xray_items ADD COLUMN tags;]],
     },
     scheme_version_name = "database_scheme_version",
 }
@@ -332,6 +338,7 @@ function XrayDataSaver.storeImportedItems(series)
             result["description"][i],
             result["xray_type"][i],
             result["aliases"][i],
+            result["tags"][i],
             result["linkwords"][i],
             0, --* book_hits (integer)
             nil --* chapter_hits (html)
@@ -380,7 +387,7 @@ function XrayDataSaver.storeNewItem(new_item)
     local x = new_item
     --* set empty texts to nil; these might have been generated in ((MultiInputDialog#registerFieldValues)), when the user never opened a particular form tab for left the fields empty:
     self:setEmptyPropsToNil(x)
-    stmt:reset():bind(parent.current_ebook_basename, x.name, x.short_names, x.description, x.xray_type, x.aliases, x.linkwords):step()
+    stmt:reset():bind(parent.current_ebook_basename, x.name, x.short_names, x.description, x.xray_type, x.aliases, x.tags, x.linkwords):step()
 
     --* retrieve the id of the newly added item, needed for ((XrayViewsData#updateAndSortAllItemTables)):
     new_item.id = KOR.databases:getNewItemId(conn)
@@ -391,10 +398,10 @@ end
 
 -- #((XrayDataSaver#storeUpdatedItem))
 --- @private
-function XrayDataSaver.storeUpdatedItem(updated_item)
+function XrayDataSaver.storeUpdatedItem(item)
 
     local self = DX.ds
-    if self:itemPropWasMissing(updated_item, { "id", "name" }) then
+    if self:itemPropWasMissing(item, { "id", "name" }) then
         return
     end
 
@@ -402,29 +409,29 @@ function XrayDataSaver.storeUpdatedItem(updated_item)
     local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver#storeUpdatedItem")
     local sql = parent.current_series and self.queries.update_item_for_entire_series or self.queries.update_item
     local stmt = conn:prepare(sql)
-    local x = updated_item
+    local x = item
     --* set empty texts to nil; these might have been generated in ((MultiInputDialog#registerFieldValues)), when the user never opened a particular form tab for left the fields empty:
     self:setEmptyPropsToNil(x)
     --! when a xray item is defined for a series of books, all instances per book of that same item will ALL be updated!:
     --* this query will be used in both the series AND in current book display mode of the Items List, BUT ONLY IF a series for the current ebook is defined (so parent.current_series set):
     if parent.current_series then
         --! don't store hits here, because otherwise this count will be saved for all same items in ebooks in the series, but they should normally differ!:
-        stmt:reset():bind(x.name, x.short_names, x.description, x.xray_type, x.aliases, x.linkwords, x.id, x.id):step()
+        stmt:reset():bind(x.name, x.short_names, x.description, x.xray_type, x.aliases, x.tags, x.linkwords, x.id, x.id):step()
     else
-        stmt:reset():bind(x.name, x.short_names, x.description, x.xray_type, x.aliases, x.linkwords, x.book_hits, x.chapter_hits, x.id):step()
+        stmt:reset():bind(x.name, x.short_names, x.description, x.xray_type, x.aliases, x.tags, x.linkwords, x.book_hits, x.chapter_hits, x.id):step()
     end
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 end
 
-function XrayDataSaver.storeUpdatedItemType(updated_item)
+function XrayDataSaver.storeUpdatedItemType(item)
     local self = DX.ds
-    if self:itemPropWasMissing(updated_item, { "id", "xray_type" }) then
+    if self:itemPropWasMissing(item, { "id", "xray_type" }) then
         return
     end
     local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver#updateXrayItemType")
     local sql = self.queries.update_item_type
     local stmt = conn:prepare(sql)
-    stmt:reset():bind(updated_item.xray_type, updated_item.id):step()
+    stmt:reset():bind(item.xray_type, item.id):step()
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 end
 
@@ -496,6 +503,7 @@ function XrayDataSaver:setBookHitsForImportedItems(conn, current_ebook_basename)
         local item = {
             name = result.name[i],
             aliases = result.aliases[i],
+            tags = result.tags[i],
             short_names = result.short_names[i],
             chapter_query_done = false,
         }
@@ -540,6 +548,7 @@ function XrayDataSaver:setSeriesHitsForImportedItems(conn, current_ebook_basenam
                 src.description,
                 src.xray_type,
                 src.aliases,
+                src.tags,
                 src.linkwords,
                 book_hits,
                 chapter_hits,

@@ -10,7 +10,7 @@ local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 local Screen = require("device").screen
-local Size = require("ui/size")
+local Size = require("extensions/modules/size")
 local T = require("ffi/util").template
 
 local DX = DX
@@ -182,6 +182,7 @@ function XrayPageNavigator:getItemInfoText(item)
     self.alias_indent_corrected = DX.s.is_mobile_device and self.alias_indent .. self.alias_indent .. self.alias_indent .. self.alias_indent or self.alias_indent
     self:itemInfoAddPropInfo(item, "aliases", KOR.icons.xray_alias_bare, info_table, indent)
     self:itemInfoAddPropInfo(item, "linkwords", KOR.icons.xray_link_bare, info_table, indent)
+    self:itemInfoAddPropInfo(item, "tags", KOR.icons.tag_open_bare, info_table, indent)
     if #info_table > 0 then
         info = info .. " \n" .. table_concat(info_table, "")
     end

@@ -746,6 +746,7 @@ function XrayViewsData:filterAndAddItemToItemTables(items, n, search_needles, li
             short_names = item.short_names,
             linkwords = item.linkwords,
             aliases = item.aliases,
+            tags = item.tags,
             book_hits = item.book_hits,
             series_hits = item.series_hits,
             chapter_hits = item.chapter_hits,
@@ -896,11 +897,33 @@ function XrayViewsData:addAliasesInfo(info, item, has_aliases, has_linkwords)
     if item.linkwords:match(" ") then
         suffix = suffix .. "   "
     end
-    local noun = item.aliases:match(" ") and _("aliases: ") or _("alias: ")
+    local noun = item.aliases:match(" ") and _("aliases") or _("alias")
+    noun = noun .. ": "
     local aliases = noun .. suffix .. item.aliases
     aliases = KOR.strings:splitLinesToMaxLength(aliases, self.max_line_length, self.alias_indent)
 
     return info .. "\n\n" .. aliases
+end
+
+--- @private
+function XrayViewsData:addTagsInfo(info, item, has_tags, has_linkwords)
+    if not has_tags then
+        return info
+    end
+
+    local suffix = ""
+    if has_linkwords then
+        suffix = item.tags:match(" ") and " " or "     "
+    end
+    if item.linkwords:match(" ") then
+        suffix = suffix .. "   "
+    end
+    local noun = item.aliases:match(" ") and _("tags") or _("tag")
+    noun = noun .. ": "
+    local tags = noun .. suffix .. item.tags
+    tags = KOR.strings:splitLinesToMaxLength(tags, self.max_line_length, self.alias_indent)
+
+    return info .. "\n\n" .. tags
 end
 
 --- @private
@@ -909,7 +932,8 @@ function XrayViewsData:addLinkWordsInfo(info, item, has_linkwords, has_aliases)
         return info
     end
 
-    local noun = item.linkwords:match(" ") and _("link terms: ") or _("link term: ")
+    local noun = item.linkwords:match(" ") and _("link-terms") or _("link-term")
+    noun = noun .. ": "
     local linkwords = noun .. item.linkwords
     local info_spacer = has_aliases and "\n" or "\n\n"
     linkwords = KOR.strings:splitLinesToMaxLength(linkwords, self.max_line_length, self.alias_indent)
@@ -933,34 +957,35 @@ end
 function XrayViewsData:getItemInfo(item, ucfirst)
     local info = ucfirst and KOR.strings:ucfirst(item.description) .. "\n" or "\n" .. item.description .. "\n"
 
-    local has_aliases, has_linkwords, mentioned_in = has_text(item.aliases), has_text(item.linkwords), has_text(item.mentioned_in)
+    local has_aliases, has_tags, has_linkwords, mentioned_in = has_text(item.aliases), has_text(item.tags), has_text(item.linkwords), has_text(item.mentioned_in)
     info = self:addAliasesInfo(info, item, has_aliases, has_linkwords)
+    info = self:addTagsInfo(info, item, has_tags, has_linkwords)
     info = self:addLinkWordsInfo(info, item, has_linkwords, has_aliases)
 
     return self:addMentionedInInfo(info, item, mentioned_in, has_aliases, has_linkwords)
 end
 
 --- @private
---- @param meta_info_html table
-function XrayViewsData:addAliasesHtml(meta_info_html, item)
+--- @param meta_info table
+function XrayViewsData:addAliasesHtml(meta_info, item)
     if has_no_text(item.aliases) then
         return
     end
-    table_insert(meta_info_html, T(self.item_meta_info_template, item.aliases:match(" ") and "Aliassen:" or "Alias:", item.aliases))
+    table_insert(meta_info, T(self.item_meta_info_template, item.aliases:match(" ") and _("Aliases") .. ": " or _("Alias") .. ": ", item.aliases))
 end
 
 --- @private
---- @param meta_info_html table
-function XrayViewsData:addLinkWordsHtml(meta_info_html, item)
+--- @param meta_info table
+function XrayViewsData:addLinkWordsHtml(meta_info, item)
     if has_no_text(item.linkwords) then
         return
     end
-    table_insert(meta_info_html, T(self.item_meta_info_template, item.linkwords:match(" ") and "Link-termen:" or "Link-term:", item.linkwords))
+    table_insert(meta_info, T(self.item_meta_info_template, item.linkwords:match(" ") and _("Link-terms") .. ": " or _("Link-term") .. ": ", item.linkwords))
 end
 
 --- @private
---- @param meta_info_html table
-function XrayViewsData:addMentionedInHtml(meta_info_html, item)
+--- @param meta_info table
+function XrayViewsData:addMentionedInHtml(meta_info, item)
     local mentioned_in_multiple_books = item.book_hits and item.series_hits and item.book_hits ~= item.series_hits
     if has_no_text(item.mentioned_in) or not mentioned_in_multiple_books then
         return
@@ -968,18 +993,27 @@ function XrayViewsData:addMentionedInHtml(meta_info_html, item)
     --* "|" was used for GROUP_CONCAT in query:
     local list = KOR.strings:split(item.mentioned_in, "|")
     list = table_concat(list, "<br>")
-    table_insert(meta_info_html, T(self.item_meta_info_template, _("Mentioned in") .. ":", list))
+    table_insert(meta_info, T(self.item_meta_info_template, _("Mentioned in") .. ":", list))
+end
+
+--- @private
+--- @param meta_info table
+function XrayViewsData:addTagsHtml(meta_info, item)
+    if has_no_text(item.tags) then
+        return
+    end
+    table_insert(meta_info, T(self.item_meta_info_template, item.tags:match(" ") and _("Tags") .. ": " or _("Tag") .. ": ", item.tags))
 end
 
 --! hits html has only been generated and stored in database upon creating a new or updating an existing item:
 --- @private
---- @param meta_info_html table
-function XrayViewsData:addHitsHtml(meta_info_html, item)
+--- @param meta_info table
+function XrayViewsData:addHitsHtml(meta_info, item)
     if parent.current_series and item.series_hits then
-        table_insert(meta_info_html, T(self.item_meta_info_template, _("Hits in series") .. ":", tonumber(item.series_hits)))
+        table_insert(meta_info, T(self.item_meta_info_template, _("Hits in series") .. ":", tonumber(item.series_hits)))
     end
     if item.book_hits then
-        table_insert(meta_info_html, T(self.item_meta_info_template, _("Hits in book") .. ":", tonumber(item.book_hits)))
+        table_insert(meta_info, T(self.item_meta_info_template, _("Hits in book") .. ":", tonumber(item.book_hits)))
     end
 end
 
@@ -987,14 +1021,15 @@ function XrayViewsData:getItemInfoHtml(item, ucfirst)
     local separator = "<br>"
     local info = ucfirst and KOR.strings:ucfirst(item.description) .. separator or separator .. item.description .. separator
 
-    local meta_info_html = { "<table style='margin-top: 2.5em'>" }
-    self:addAliasesHtml(meta_info_html, item)
-    self:addLinkWordsHtml(meta_info_html, item)
-    self:addHitsHtml(meta_info_html, item)
-    self:addMentionedInHtml(meta_info_html, item)
-    if #meta_info_html > 1 then
-        table_insert(meta_info_html, "</table>")
-        info = info .. table_concat(meta_info_html, "")
+    local meta_info = { "<table style='margin-top: 2.5em'>" }
+    self:addAliasesHtml(meta_info, item)
+    self:addLinkWordsHtml(meta_info, item)
+    self:addTagsHtml(meta_info, item)
+    self:addHitsHtml(meta_info, item)
+    self:addMentionedInHtml(meta_info, item)
+    if #meta_info > 1 then
+        table_insert(meta_info, "</table>")
+        info = info .. table_concat(meta_info, "")
     end
 
     --* only return general info:
@@ -1036,6 +1071,7 @@ function XrayViewsData:generateXrayItemInfo(item, ui_explanation, information_le
     --* suffix "fc" stands for "for copy":
     local aliases, aliases_fc = self:generateAliasesInfo(item, iindent, aindent, for_all_items_list)
     local linkwords, linkwords_fc = self:generateLinkwordsInfo(item, iindent, aindent, for_all_items_list)
+    local tags, tags_fc = self:generateTagsInfo(item, iindent, aindent, for_all_items_list)
 
     -- #((use xray match reliability indicators))
     local xray_match_reliability_icon = DX.i:getMatchReliabilityIndicator("full_name")
@@ -1059,6 +1095,7 @@ function XrayViewsData:generateXrayItemInfo(item, ui_explanation, information_le
         "\n",
         aliases,
         linkwords,
+        tags,
     })
     local info_fc
     if for_all_items_list then
@@ -1074,6 +1111,7 @@ function XrayViewsData:generateXrayItemInfo(item, ui_explanation, information_le
             "\n",
             aliases_fc,
             linkwords_fc,
+            tags_fc,
         })
         --* for copyable list (without icons) of all items:
         return info, info_fc
@@ -1106,6 +1144,28 @@ function XrayViewsData:generateAliasesInfo(item, iindent, aindent, for_all_items
 end
 
 --- @private
+function XrayViewsData:generateTagsInfo(item, iindent, aindent, for_all_items_list)
+    if not has_text(item.tags) then
+        return "", ""
+    end
+    local tags, tags_fc = "", ""
+
+    local icon = KOR.icons.tag_open_bare .. " "
+    tags = KOR.strings:splitLinesToMaxLength(item.tags, self.max_line_length, iindent, icon) .. "\n"
+    if for_all_items_list then
+        local noun = self:getKeywordsCount(item.tags) == 1 and _("tag") .. ": " or _("tags") .. ": "
+        tags_fc = KOR.strings:splitLinesToMaxLength(item.tags, self.max_line_length, iindent, noun) .. "\n"
+    end
+    if has_text(tags) then
+        tags = aindent .. tags
+    end
+    if has_text(tags_fc) then
+        tags_fc = aindent .. tags_fc
+    end
+    return tags, tags_fc
+end
+
+--- @private
 function XrayViewsData:generateLinkwordsInfo(item, iindent, aindent, for_all_items_list)
     if not has_text(item.linkwords) then
         return "", ""
@@ -1114,7 +1174,7 @@ function XrayViewsData:generateLinkwordsInfo(item, iindent, aindent, for_all_ite
     local icon = KOR.icons.xray_link_bare .. " "
     linkwords = KOR.strings:splitLinesToMaxLength(item.linkwords, self.max_line_length, iindent, icon) .. "\n"
     if for_all_items_list then
-        local noun = self:getKeywordsCount(item.linkwords) == 1 and _("link term") .. ": " or _("link terms") .. ": "
+        local noun = self:getKeywordsCount(item.linkwords) == 1 and _("link-term") .. ": " or _("link-terms") .. ": "
         linkwords_fc = KOR.strings:splitLinesToMaxLength(item.linkwords, self.max_line_length, iindent, noun) .. "\n"
     end
     if has_text(linkwords) then

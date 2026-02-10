@@ -28,6 +28,7 @@ short_names,
 description,
 xray_type, -- value here determines whether an item is important (xray_type 2 or 4) or not (xray_type 1 or 3), and whether it is a person (1-2) or a term (3-4)
 aliases,
+tags,
 linkwords,
 book_hits, -- an integer
 chapter_hits, -- a string, containing a html list of all hits in the chapters of an ebook
@@ -41,7 +42,8 @@ series_hits is NOT a db field, it is computed dynamically by queries XrayDataLoa
 local XrayDataLoader = WidgetContainer:new{
     queries = {
         get_all_book_items = [[
-            SELECT x.id,
+            SELECT
+                x.id,
                 x.name,
                 b.series,
                 x.ebook,
@@ -50,6 +52,7 @@ local XrayDataLoader = WidgetContainer:new{
                 x.description,
                 x.xray_type,
                 x.aliases,
+                x.tags,
                 x.linkwords,
                 x.book_hits,
                 (
@@ -80,6 +83,7 @@ local XrayDataLoader = WidgetContainer:new{
              x.name,
              x.xray_type,
              x.aliases,
+             x.tags,
              x.short_names,
              x.linkwords,
              x.description,
@@ -115,6 +119,7 @@ local XrayDataLoader = WidgetContainer:new{
                x.id,
                x.name,
                x.aliases,
+               x.tags,
                x.short_names,
                x.linkwords,
                x.description,
@@ -144,7 +149,7 @@ local XrayDataLoader = WidgetContainer:new{
             "SELECT name, aliases, short_names, description, id FROM xray_items WHERE ebook = '%1' AND (book_hits IS NULL OR book_hits = 0) ORDER BY name;",
 
         get_items_for_import_from_other_series =
-            "SELECT DISTINCT(x.name), x.short_names, x.description, x.xray_type, x.aliases, x.linkwords FROM xray_items x LEFT OUTER JOIN bookinfo b ON x.ebook = b.filename WHERE b.series = 'safe_path' ORDER BY x.name;",
+            "SELECT DISTINCT(x.name), x.short_names, x.description, x.xray_type, x.aliases, x.tags, x.linkwords FROM xray_items x LEFT OUTER JOIN bookinfo b ON x.ebook = b.filename WHERE b.series = 'safe_path' ORDER BY x.name;",
 
         get_series_hits = [[
             SELECT SUM(x.book_hits) AS series_hits
@@ -153,7 +158,7 @@ local XrayDataLoader = WidgetContainer:new{
             WHERE x.name = '%1' AND b.series = '%2';]],
 
         import_items_from_other_books_in_series = [[
-            SELECT DISTINCT(x.name), x.short_names, x.description, x.xray_type, x.aliases, x.linkwords,
+            SELECT DISTINCT(x.name), x.short_names, x.description, x.xray_type, x.aliases, x.tags, x.linkwords,
             (
                 SELECT SUM(x2.book_hits)
                 FROM xray_items x2
@@ -298,6 +303,7 @@ function XrayDataLoader:_addBookItem(result, i, book_index)
         description = result["description"][i] or "",
         xray_type = tonumber(result["xray_type"][i]) or 1,
         aliases = result["aliases"][i] or "",
+        tags = result["tags"][i] or "",
         linkwords = result["linkwords"][i] or "",
         mentioned_in = result["ebook"][i],
         book_hits = tonumber(result["book_hits"][i]),
@@ -317,6 +323,7 @@ function XrayDataLoader:_addSeriesItem(result, i, series_index)
         description = result["description"][i] or "",
         xray_type = tonumber(result["xray_type"][i]) or 1,
         aliases = result["aliases"][i] or "",
+        tags = result["tags"][i] or "",
         linkwords = result["linkwords"][i] or "",
         series_hits = tonumber(result["series_hits"][i]) or 0,
         book_hits = tonumber(result["book_hits"][i]) or 0,
