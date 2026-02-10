@@ -8,8 +8,9 @@ local GestureRange = require("ui/gesturerange")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local KOR = require("extensions/kor")
 local Math = require("optmath")
+local Screen = require("device").screen
 
-local math = math
+local math_floor = math.floor
 local table = table
 
 --* here extend InputContainer instead of Widget class, so clicks on histogram bars will be detected:
@@ -38,9 +39,9 @@ function HistogramWidget:init()
     if self.is_touch_device then
         self.ges_events = {}
     end
-    local item_width = math.floor(self.width / self.nb_items)
+    local item_width = math_floor(self.width / self.nb_items)
     local nb_item_width_add1 = self.width - self.nb_items * item_width
-    local nb_item_width_add1_mod = math.floor(self.nb_items / nb_item_width_add1)
+    local nb_item_width_add1_mod = math_floor(self.nb_items / nb_item_width_add1)
     self.item_widths = {}
     for n = 1, self.nb_items do
         local w = item_width
@@ -209,22 +210,43 @@ function HistogramWidget:paintBar(n, r, bb, xp, yp, i_x, i_w, i_h)
     local i_y = self.height - i_h
     --* indicate columns with most read pages by darker color:
     local color = #self.max_ratio_indices > 0 and KOR.tables:tableHas(self.max_ratio_indices, n)
-        and self.histogram_bar_dark
-        or
-        self.histogram_bar_light
+            and self.histogram_bar_dark
+            or
+            self.histogram_bar_light
+    --* calls ((paintRoundedRect)):
     bb:paintRoundedRect(xp + i_x, yp + i_y, i_w, i_h, color, r)
     self:setBarTapGestures(xp, i_x, yp, i_y, i_w, self.height, n)
 
-    --* mark bar with next target of epages by painting a light bar of 5px height above it:
+    self:markCurrentBar(n, bb, xp, i_x, yp, i_w, i_h, r)
+end
+
+--- @private
+function HistogramWidget:markCurrentBar(n, bb, xp, i_x, yp, i_w, i_h, r)
     if
-        n == self.next_reading_target_epages_index
-        or
-        (self.is_chapter_pages_histogram and n == self.current_chapter_index)
+    n ~= self.next_reading_target_epages_index
+            and
+            (not self.is_chapter_pages_histogram or n ~= self.current_chapter_index)
     then
-        local thickness = self.is_chapter_pages_histogram and 2 or 5
-        local marker_color = self.is_chapter_pages_histogram and KOR.colors.black or KOR.colors.histogram_bar_light
-        bb:paintRoundedRect(xp + i_x, yp, i_w, thickness, marker_color, r)
+        return
     end
+
+    local thickness = self.is_chapter_pages_histogram and 2 or 5
+
+    --* if bar and top marker would overlap or (nearly) touch each other, mark the current bar instead with a white dot written on top of it:
+    local dot_size = Screen:scaleBySize(4)
+    local x_pos = xp + i_x
+    if self.height - i_h < thickness + 3 and i_w >= 2 * dot_size then
+        local radius = math_floor(dot_size / 2)
+        yp = yp + math_floor(i_h / 2) - radius
+
+        x_pos = x_pos + math_floor(i_w / 2) - radius
+        bb:paintRoundedRect(x_pos, yp, dot_size, dot_size, KOR.colors.white, 0)
+        return
+    end
+
+    --* mark bar with next target of epages by painting a light bar above it:
+    local marker_color = self.is_chapter_pages_histogram and KOR.colors.black or KOR.colors.histogram_bar_light
+    bb:paintRoundedRect(xp + i_x, yp, i_w, thickness, marker_color, r)
 end
 
 return HistogramWidget

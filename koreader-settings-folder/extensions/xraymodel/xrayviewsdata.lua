@@ -1090,7 +1090,7 @@ function XrayViewsData:generateAliasesInfo(item, iindent, aindent, for_all_items
     end
     local aliases, aliases_fc = "", ""
 
-    local icon = KOR.icons.xray_alias_bare
+    local icon = KOR.icons.xray_alias_bare .. " "
     aliases = KOR.strings:splitLinesToMaxLength(item.aliases, self.max_line_length, iindent, icon) .. "\n"
     if for_all_items_list then
         local noun = self:getKeywordsCount(item.aliases) == 1 and _("alias") .. ": " or _("aliases") .. ": "
@@ -1111,7 +1111,7 @@ function XrayViewsData:generateLinkwordsInfo(item, iindent, aindent, for_all_ite
         return "", ""
     end
     local linkwords, linkwords_fc = "", ""
-    local icon = KOR.icons.xray_link_bare
+    local icon = KOR.icons.xray_link_bare .. " "
     linkwords = KOR.strings:splitLinesToMaxLength(item.linkwords, self.max_line_length, iindent, icon) .. "\n"
     if for_all_items_list then
         local noun = self:getKeywordsCount(item.linkwords) == 1 and _("link term") .. ": " or _("link terms") .. ": "
