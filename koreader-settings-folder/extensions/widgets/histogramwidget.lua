@@ -199,25 +199,27 @@ function HistogramWidget:paintTo(bb, xp, yp)
             i_h = 1
         end
         if i_h > 0 then
-            self:paintBar(n, r, bb, xp, yp, i_x, i_w, i_h)
+            local i_y = self.height - i_h
+            self:paintBar(n, r, bb, xp, yp, i_x, i_y, i_w, i_h)
+            self:setBarTapGestures(xp, i_x, yp, i_y, i_w, self.height, n)
+            self:markCurrentBar(n, bb, xp, i_x, yp, i_w, i_h, r)
         end
         i_x = i_x + i_w
     end
 end
 
 --- @private
-function HistogramWidget:paintBar(n, r, bb, xp, yp, i_x, i_w, i_h)
-    local i_y = self.height - i_h
+function HistogramWidget:paintBar(n, r, bb, xp, yp, i_x, i_y, i_w, i_h)
     --* indicate columns with most read pages by darker color:
-    local color = #self.max_ratio_indices > 0 and KOR.tables:tableHas(self.max_ratio_indices, n)
-            and self.histogram_bar_dark
-            or
-            self.histogram_bar_light
+    local color =
+            #self.max_ratio_indices > 0
+            and KOR.tables:tableHas(self.max_ratio_indices, n)
+            and
+        self.histogram_bar_dark
+        or
+        self.histogram_bar_light
     --* calls ((paintRoundedRect)):
     bb:paintRoundedRect(xp + i_x, yp + i_y, i_w, i_h, color, r)
-    self:setBarTapGestures(xp, i_x, yp, i_y, i_w, self.height, n)
-
-    self:markCurrentBar(n, bb, xp, i_x, yp, i_w, i_h, r)
 end
 
 --- @private
