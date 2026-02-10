@@ -95,7 +95,6 @@ local TextViewer = InputContainer:extend{
     --* Optional callback called on CloseWidget, set by the widget which showed us (e.g., to request a full-screen refresh)
     close_callback = nil,
     convert_big_dialogs_to_fullscreen = true,
-    copy_icon_less_text = false,
     covers_fullscreen = false,
     default_hold_callback = nil, --* on each default button
     event_after_close = nil,
@@ -137,7 +136,7 @@ local TextViewer = InputContainer:extend{
     --* this table will be populated by ((TabFactory#setTabButtonAndContent)):
     tabs_table_buttons = nil,
     text = nil,
-    --* for generating an icon-less copy of TextViewer.text; will be copied when parent did set self.copy_iconless_text to true:
+    --* for generating an icon-less copy of TextViewer.text:
     text_for_copy = nil,
     text_margin = Size.margin.small,
     text_padding = Size.padding.large,
@@ -1143,7 +1142,12 @@ function TextViewer:getDefaultButtons()
         KOR.buttoninfopopup:forTextViewerCopy({
             callback = function()
                 self:onClose()
-                local copy_text = self.copy_iconless_text and self.text_for_copy or self.text
+                local copy_text = self.text
+                if self.text_for_copy and type(self.text_for_copy) == "function" then
+                    copy_text = self.text_for_copy()
+                elseif self.text_for_copy then
+                    copy_text = self.text_for_copy
+                end
                 Device.input.setClipboardText(copy_text)
                 KOR.messages:notify(tr("text copied to clipboard..."))
             end,
@@ -1631,7 +1635,7 @@ function TextViewer:initTouch()
 end
 
 
---* ==================== SMARTSCRIPTS =====================
+--* ================= SMARTSCRIPTS ===================
 
 function TextViewer:onToPreviousTabWithShiftSpace()
     return self:onToPreviousTab()

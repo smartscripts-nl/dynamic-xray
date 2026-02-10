@@ -241,7 +241,7 @@ function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanation
     if self.info_use_upper_case_names then
         name = KOR.strings:upper(name)
     end
-    local match_block, xray_type_icon, xray_match_reliability_icon = DX.vd:generateXrayItemInfo(items, xray_explanations, i, name, injected_nr)
+    local match_block, xray_type_icon, xray_match_reliability_icon = DX.vd:generateXrayItemInfo(items[i], xray_explanations[i], injected_nr)
     paragraph_hits_info = paragraph_hits_info .. match_block
 
     -- #((headings for use in TextViewer))

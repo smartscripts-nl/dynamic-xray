@@ -147,7 +147,7 @@ local XraySettings = WidgetContainer:new{
             type = "number",
         },
         PN_info_panel_height = {
-            --* this value is used in ((HtmlBox#generateInfoPanelAndHistogram)):
+            --* this value is used in ((NavigatorBox#generateInfoPanel)):
             value = 0.22,
             --* this validator references a function included in self.validators:
             validator = {

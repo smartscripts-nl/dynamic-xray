@@ -1020,68 +1020,41 @@ function XrayViewsData:getItemTypeIcon(item, bare)
     return self.xray_type_icons[item.xray_type]
 end
 
-function XrayViewsData:generateXrayItemInfo(items, xray_explanations, i, name, injected_nr, for_all_items_list)
+function XrayViewsData:generateXrayItemInfo(item, ui_explanation, information_level, for_all_items_list)
 
-    local first_line, first_line_fc, description, icon
+    local iindent = self.info_indent
+    local aindent = self.alias_indent
 
-    local prefix = injected_nr == 1 and "" or "\n"
-    description = KOR.strings:splitLinesToMaxLength(items[i].description, DX.vd.max_line_length, self.info_indent)
+    local linebreak = information_level == 1 and "" or "\n"
+    local first_line = {
+        linebreak
+    }
+    local first_line_fc = {
+        linebreak
+    }
+    local description = KOR.strings:splitLinesToMaxLength(item.description, self.max_line_length, iindent)
     --* suffix "fc" stands for "for copy":
-    local aliases, linkwords, aliases_fc, linkwords_fc, explanation, noun = "", "", "", "", "", ""
-    if has_text(items[i].aliases) then
-        icon = KOR.icons.xray_alias_bare
-        aliases = KOR.strings:splitLinesToMaxLength(items[i].aliases, DX.vd.max_line_length, self.info_indent, icon) .. "\n"
-        if for_all_items_list then
-            noun = self:getKeywordsCount(items[i].aliases) == 1 and _("alias") .. ": " or _("aliases") .. ": "
-            aliases_fc = KOR.strings:splitLinesToMaxLength(items[i].aliases, DX.vd.max_line_length, self.info_indent, noun) .. "\n"
-        end
-    end
-    if has_text(items[i].linkwords) then
-        icon = KOR.icons.xray_link_bare
-        linkwords = KOR.strings:splitLinesToMaxLength(items[i].linkwords, DX.vd.max_line_length, self.info_indent, icon) .. "\n"
-        if for_all_items_list then
-            noun = self:getKeywordsCount(items[i].linkwords) == 1 and _("link term") .. ": " or _("link terms") .. ": "
-            linkwords_fc = KOR.strings:splitLinesToMaxLength(items[i].linkwords, DX.vd.max_line_length, self.info_indent, noun) .. "\n"
-        end
-    end
+    local aliases, aliases_fc = self:generateAliasesInfo(item, iindent, aindent, for_all_items_list)
+    local linkwords, linkwords_fc = self:generateLinkwordsInfo(item, iindent, aindent, for_all_items_list)
+
     -- #((use xray match reliability indicators))
     local xray_match_reliability_icon = DX.i:getMatchReliabilityIndicator("full_name")
+
     --! don't use has_text here, because for full name hits we don't add a text (i.e. the full name) after the reliability weight icon)! Under Ubuntu this is not a problem, but using has_text under Android causes explanation not to be shown:
-    if xray_explanations and has_content(xray_explanations[i]) then
-        explanation = xray_explanations[i]
-        xray_match_reliability_icon = explanation:match(self.separator .. "([^ ]+)")
+    if has_content(ui_explanation) then
+        xray_match_reliability_icon = ui_explanation:match(self.separator .. "([^ ]+)")
     end
 
-    local xray_type_icon = DX.vd:getItemTypeIcon(items[i])
-    local hits = DX.pn:itemInfoAddHits(items[i])
+    local xray_type_icon = DX.vd:getItemTypeIcon(item)
+    local hits = DX.pn:itemInfoAddHits(item)
+    first_line, first_line_fc = self:generateFirstLines(first_line, first_line_fc, item, xray_type_icon, ui_explanation, iindent, for_all_items_list)
 
-    --* here the info gets combined:
-    -- #((xray items dialog add match reliability explanations))
-    first_line = prefix .. xray_type_icon .. name .. explanation
-    first_line = KOR.strings:splitLinesToMaxLength(first_line, DX.vd.max_line_length, self.info_indent) .. "\n"
-    if for_all_items_list then
-        first_line_fc = prefix .. name .. explanation
-        first_line_fc = KOR.strings:splitLinesToMaxLength(first_line_fc, DX.vd.max_line_length, self.info_indent) .. "\n"
-    end
-    if has_text(aliases) then
-        aliases = self.alias_indent .. aliases
-    end
-    if has_text(linkwords) then
-        linkwords = self.alias_indent .. linkwords
-    end
-    if has_text(aliases_fc) then
-        aliases_fc = self.alias_indent .. aliases_fc
-    end
-    if has_text(linkwords_fc) then
-        linkwords_fc = self.alias_indent .. linkwords_fc
-    end
-
-    local info = KOR.strings:concatMulti({
+    local info = table_concat({
         first_line,
         description,
         "\n",
-        self.info_indent,
-        self.alias_indent,
+        iindent,
+        aindent,
         hits,
         "\n",
         aliases,
@@ -1089,12 +1062,12 @@ function XrayViewsData:generateXrayItemInfo(items, xray_explanations, i, name, i
     })
     local info_fc
     if for_all_items_list then
-        info_fc = KOR.strings:concatMulti({
+        info_fc = table_concat({
             first_line_fc,
             description,
             "\n",
-            self.info_indent,
-            self.alias_indent,
+            iindent,
+            aindent,
             _("mentions"),
             ": ",
             hits:gsub(KOR.icons.graph_bare .. " ", "", 1),
@@ -1108,6 +1081,75 @@ function XrayViewsData:generateXrayItemInfo(items, xray_explanations, i, name, i
 
     --* for Xray Page Information popup:
     return info, xray_type_icon, xray_match_reliability_icon
+end
+
+--- @private
+function XrayViewsData:generateAliasesInfo(item, iindent, aindent, for_all_items_list)
+    if not has_text(item.aliases) then
+        return "", ""
+    end
+    local aliases, aliases_fc = "", ""
+
+    local icon = KOR.icons.xray_alias_bare
+    aliases = KOR.strings:splitLinesToMaxLength(item.aliases, self.max_line_length, iindent, icon) .. "\n"
+    if for_all_items_list then
+        local noun = self:getKeywordsCount(item.aliases) == 1 and _("alias") .. ": " or _("aliases") .. ": "
+        aliases_fc = KOR.strings:splitLinesToMaxLength(item.aliases, self.max_line_length, iindent, noun) .. "\n"
+    end
+    if has_text(aliases) then
+        aliases = aindent .. aliases
+    end
+    if has_text(aliases_fc) then
+        aliases_fc = aindent .. aliases_fc
+    end
+    return aliases, aliases_fc
+end
+
+--- @private
+function XrayViewsData:generateLinkwordsInfo(item, iindent, aindent, for_all_items_list)
+    if not has_text(item.linkwords) then
+        return "", ""
+    end
+    local linkwords, linkwords_fc = "", ""
+    local icon = KOR.icons.xray_link_bare
+    linkwords = KOR.strings:splitLinesToMaxLength(item.linkwords, self.max_line_length, iindent, icon) .. "\n"
+    if for_all_items_list then
+        local noun = self:getKeywordsCount(item.linkwords) == 1 and _("link term") .. ": " or _("link terms") .. ": "
+        linkwords_fc = KOR.strings:splitLinesToMaxLength(item.linkwords, self.max_line_length, iindent, noun) .. "\n"
+    end
+    if has_text(linkwords) then
+        linkwords = aindent .. linkwords
+    end
+    if has_text(linkwords_fc) then
+        linkwords_fc = aindent .. linkwords_fc
+    end
+
+    return linkwords, linkwords_fc
+end
+
+--- @private
+function XrayViewsData:generateFirstLines(first_line, first_line_fc, item, xray_type_icon, ui_explanation, iindent, for_all_items_list)
+    local name = item.name
+
+    --* here the info gets combined:
+    -- #((xray items dialog add match reliability explanations))
+    table_insert(first_line, xray_type_icon)
+    table_insert(first_line, name)
+    if ui_explanation then
+        table_insert(first_line, ui_explanation)
+    end
+    first_line = table_concat(first_line)
+    first_line = KOR.strings:splitLinesToMaxLength(first_line, self.max_line_length, iindent) .. "\n"
+    if for_all_items_list then
+        local important_marker = (item.xray_type == 2 or item.xray_type == 4) and "!" or ""
+        table_insert(first_line_fc, important_marker)
+        table_insert(first_line_fc, name)
+        table_insert(first_line_fc, ui_explanation)
+        first_line_fc = table_concat(first_line_fc)
+        first_line_fc = KOR.strings:splitLinesToMaxLength(first_line_fc, self.max_line_length, iindent) .. "\n"
+    end
+
+    return first_line, first_line_fc
 end
 
 --* generate list item texts for ((XrayDialogs#showList)):

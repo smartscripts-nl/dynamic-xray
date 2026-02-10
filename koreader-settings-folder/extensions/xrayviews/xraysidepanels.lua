@@ -170,7 +170,7 @@ function XraySidePanels:populateLinkedItemsPanel()
     local lcount = #self.linked_items
     local info_panel_text
     for i = 1, lcount do
-        info_panel_text = DX.vd:generateXrayItemInfo(self.linked_items, nil, i, self.linked_items[i].name, 2, "for_all_items_list")
+        info_panel_text = DX.vd:generateXrayItemInfo(self.linked_items[i], nil, 2, "for_all_items_list")
         if i == 1 then
             DX.pn:setProp("first_info_panel_text", info_panel_text)
         end
@@ -277,7 +277,7 @@ function XraySidePanels:computeLinkedItems()
         return
     end
 
-    --* the linked_items prop of self.current_item will be used in ((HtmlBox#generateSidePanel)) to determine whether the side panel tab activator buttons should be shown...
+    --* the linked_items prop of self.current_item will be used in ((NavigatorBox#generateSidePanel)) to determine whether the side panel tab activator buttons should be shown...
     --! shallowCopy used twice in this method, to ensure that table_insert(linked_items... farther below doesn't modify this prop (and so would make it contain ever more duplicated items)!
     self.linked_items = linked_items_were_determined and KOR.tables:shallowCopy(DX.pn.parent_item.linked_items) or DX.vd:getLinkedItems(DX.pn.parent_item)
     if not linked_items_were_determined then

@@ -56,10 +56,6 @@ function Strings:cleanup(text)
     return text:gsub("[”“‘’\"'—.,:;!¡?¿<>]", "")
 end
 
-function Strings:concatMulti(parts)
-    return table_concat(parts)
-end
-
 function Strings:getKeywordsForMatchingFrom(subject, no_lower_case, add_singulars)
     if not subject then
         return {}

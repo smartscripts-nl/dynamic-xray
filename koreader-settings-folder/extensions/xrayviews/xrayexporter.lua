@@ -108,7 +108,7 @@ function XrayExporter:generateXrayItemsOverview(items)
     local paragraph, paragraph_iconless
     count = #items
     for i = 1, count do
-        paragraph, paragraph_iconless = DX.vd:generateXrayItemInfo(items, nil, i, items[i].name, i, "for_all_items_list")
+        paragraph, paragraph_iconless = DX.vd:generateXrayItemInfo(items[i], nil, i, "for_all_items_list")
         if i == 1 then
             paragraph = paragraph:gsub(DX.vd.info_indent, "", 1)
             paragraph_iconless = paragraph_iconless:gsub(DX.vd.info_indent, "", 1)
@@ -154,7 +154,9 @@ function XrayExporter:showExportXrayItemsDialog()
         },
         parent = self,
         fullscreen = true,
-        copy_iconless_text = true,
+        text_for_copy = function()
+            return self:getInfoText(self.active_tab, "iconless")
+        end,
         extra_button = KOR.buttoninfopopup:forXrayItemsExportToFile({
             callback = function()
                 self:exportInfoToFile()
