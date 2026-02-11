@@ -10,6 +10,7 @@ local _ = KOR:initCustomTranslations()
 local T = require("ffi/util").template
 
 local DX = DX
+local has_no_items = has_no_items
 local has_text = has_text
 local os_date = os.date
 local table_concat = table.concat
@@ -20,15 +21,19 @@ local count
 --- @class XrayExporter
 local XrayExporter = WidgetContainer:new{
     active_tab = 1,
-    cached_export_info_all = nil,
-    cached_export_info_persons = nil,
-    cached_export_info_terms = nil,
-    cached_export_info_iconless_all = nil,
-    cached_export_info_iconless_persons = nil,
-    cached_export_info_iconless_terms = nil,
+    items = nil,
+    persons = nil,
+    terms = nil,
+    iconless_items = nil,
+    iconless_persons = nil,
+    iconless_terms = nil,
 
-    cached_export_info_tag_groups = nil,
-    cached_export_info_iconless_tag_groups = nil,
+    tag_groups = nil,
+    iconless_tag_groups = nil,
+
+    tags = nil,
+    tags_concatenated = nil,
+
     export_nouns = {
         _("items"),
         _("persons"),
@@ -38,14 +43,18 @@ local XrayExporter = WidgetContainer:new{
 }
 
 function XrayExporter:resetCache()
-    self.cached_export_info_all = nil
-    self.cached_export_info_persons = nil
-    self.cached_export_info_terms = nil
-    self.cached_export_info_iconless_all = nil
-    self.cached_export_info_iconless_persons = nil
-    self.cached_export_info_iconless_terms = nil
-    self.cached_export_info_tag_groups = nil
-    self.cached_export_info_iconless_tag_groups = nil
+    self.items = nil
+    self.persons = nil
+    self.terms = nil
+    self.iconless_items = nil
+    self.iconless_persons = nil
+    self.iconless_terms = nil
+
+    self.tag_groups = nil
+    self.iconless_tag_groups = nil
+
+    self.tags = nil
+    self.tags_concatenated = nil
 end
 
 --- @private
@@ -60,7 +69,8 @@ function XrayExporter:getExportDialogInfo(active_tab)
     local data = self:getInfoText(active_tab)
     local export_title = title:gsub(": ([^\n]+)", " " .. _("in") .. " \"" .. DX.m.current_title .. "\" (%1)") .. "\n" .. _("List generated") .. ": " .. os_date("%Y-%m-%d") .. "\n\n"
 
-    return export_title .. data
+    local info = export_title .. data
+    return self:addTagsOverview(info, active_tab)
 end
 
 --- @private
@@ -68,19 +78,35 @@ function XrayExporter:getInfoText(active_tab, iconless)
     --* these collections were generated in ((XrayExporter#initData)):
     local info_texts = iconless and
         {
-            self.cached_export_info_iconless_all,
-            self.cached_export_info_iconless_persons,
-            self.cached_export_info_iconless_terms,
-            self.cached_export_info_iconless_tag_groups,
+            self.iconless_items,
+            self.iconless_persons,
+            self.iconless_terms,
+            self.iconless_tag_groups,
         }
     or
         {
-        self.cached_export_info_all,
-        self.cached_export_info_persons,
-        self.cached_export_info_terms,
-        self.cached_export_info_tag_groups,
+            self.items,
+            self.persons,
+            self.terms,
+            self.tag_groups,
     }
+
     return info_texts[active_tab]
+end
+
+--- @private
+function XrayExporter:addTagsOverview(info, active_tab)
+    if active_tab < 4 or has_no_items(self.tags) then
+        return info
+    end
+
+    local tags = self.tags_concatenated or table_concat(self.tags)
+    self.tags_concatenated = tags
+
+    info = KOR.strings:split(info, "\n", "capture_empty_entity")
+    table_insert(info, 2, _("Tags in this overview") .. ": " .. self.tags_concatenated)
+
+    return table_concat(info, "\n")
 end
 
 --- @private
@@ -91,6 +117,8 @@ function XrayExporter:exportInfoToFile()
         os_date("%Y-%m-%d") .. "\n\n" ..
         self:getInfoText(self.active_tab, "iconless")
 
+    self:addTagsOverview(info, self.active_tab)
+
     KOR.files:filePutcontents(DataStorage:getDataDir() .. "/xray-items.txt", info)
 
     KOR.messages:notify(_("list exported to xray-items.txt..."))
@@ -98,17 +126,17 @@ end
 
 --- @private
 function XrayExporter:initData()
-    if self.cached_export_info_all then
+    if self.items then
         return true
     end
     if not DX.vd.items then
         return false
     end
 
-    self.cached_export_info_all, self.cached_export_info_iconless_all = self:generateXrayItemsOverview(DX.vd.items)
-    self.cached_export_info_persons, self.cached_export_info_iconless_persons = self:generateXrayItemsOverview(DX.vd.persons)
-    self.cached_export_info_terms, self.cached_export_info_iconless_terms = self:generateXrayItemsOverview(DX.vd.terms)
-    self.cached_export_info_tag_groups, self.cached_export_info_iconless_tag_groups = self:generateTagGroupsOverview(DX.vd.items)
+    self.items, self.iconless_items = self:generateXrayItemsOverview(DX.vd.items)
+    self.persons, self.iconless_persons = self:generateXrayItemsOverview(DX.vd.persons)
+    self.terms, self.iconless_terms = self:generateXrayItemsOverview(DX.vd.terms)
+    self.tag_groups, self.iconless_tag_groups = self:generateTagGroupsOverview(DX.vd.items)
 
     return true
 end
@@ -138,6 +166,7 @@ function XrayExporter:generateTagGroupsOverview(items)
     local paragraphs = {}
     local paragraphs_iconless = {}
     local tag_groups = {}
+    self.tags = {}
     count = #items
     for i = 1, count do
         if has_text(items[i].tags) then
@@ -148,6 +177,7 @@ function XrayExporter:generateTagGroupsOverview(items)
     local otable = KOR.tables:getSortedRelationalTable(tag_groups)
     count = #otable
     for i = 1, count do
+        table_insert(self.tags, otable[i][1])
         data = otable[i][2]
         KOR.tables:merge(paragraphs, data.paras)
         KOR.tables:merge(paragraphs_iconless, data.paras_iconless)
@@ -207,7 +237,7 @@ function XrayExporter:showExportXrayItemsDialog()
         end,
         tabs = {
             {
-                tab = _("all"),
+                tab = self.export_nouns[1],
                 info = function()
                     return self:getExportDialogInfo(1)
                 end,
