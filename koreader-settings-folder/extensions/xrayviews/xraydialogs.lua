@@ -204,7 +204,7 @@ function XrayDialogs:showNewItemForm(args)
         --* tab_callback can be called from ((InputDialog#init)); activate_tab_callback as used in several KeyEvents definitions not needed here:
         tab_callback = DX.fd:getFormTabCallback("add", active_form_tab, item_copy),
         has_field_rows = true,
-        fields = self:getFormFields(item_copy, args and args.prefilled_field, args and args.name_from_selected_text),
+        fields = DX.fd:getFormFields(item_copy, args and args.prefilled_field, args and args.name_from_selected_text),
         focus_field = args and args.focus_field or 1,
         close_callback = function()
             self:closeForm("add")
