@@ -100,7 +100,7 @@ function XrayExporter:addTagsOverview(info, active_tab)
         return info
     end
 
-    local tags = self.tags_concatenated or table_concat(self.tags)
+    local tags = self.tags_concatenated or table_concat(self.tags, " - ")
     self.tags_concatenated = tags
 
     info = KOR.strings:split(info, "\n", "capture_empty_entity")
