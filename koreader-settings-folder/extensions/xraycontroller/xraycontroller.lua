@@ -582,6 +582,7 @@ function XrayController:resetDynamicXray(is_prepared, do_full_update)
         KOR.document:resetParagraphsCache()
         DX.sp:resetActiveSideButtons("XrayController:resetDynamicXray")
         DX.pn:resetCache()
+        DX.p:resetCache()
     end
     --* to force a refresh of the texts in the bottom info panel:
     DX.sp:resetInfoTexts()
@@ -591,7 +592,6 @@ function XrayController:resetDynamicXray(is_prepared, do_full_update)
     end
     DX.ex:resetCache()
     DX.vd:resetAllFilters()
-    DX.p:resetCache()
     --* when current method called after saving an item from a form:
     if is_prepared then
         return

@@ -36,7 +36,7 @@ local XrayPageNavigator = WidgetContainer:new{
     first_info_panel_text = nil,
     initial_browsing_page = nil,
     key_events = {},
-    max_line_length = 80,
+    max_line_length = DX.s.PN_info_panel_max_line_length,
     navigator_page_no = nil,
     movable_popup_menu = nil,
     page_navigator_filter_item = nil,
@@ -177,8 +177,6 @@ function XrayPageNavigator:getItemInfoText(item, for_info_panel)
         local info = prefix .. reliability_indicator .. self.cached_items_info[item.name]
         return info:gsub("^\n\n", "\n")
     end
-
-    self.max_line_length = DX.s.is_mobile_device and 40 or self.max_line_length
 
     local reliability_indicator_placeholder = item.reliability_indicator and "  " or ""
     self.sub_info_separator = ""

@@ -100,7 +100,7 @@ local XraySettings = WidgetContainer:new{
         },
         hk_show_item_occurrences = {
             value = "S",
-            explanation = _("To show the occurrences in the ebook of the current item.") .. hotkeys_warning,
+            explanation = _("To show the occurrences in the ebook of the current item in the Item Viewer, of in the Tapped Word Popup.") .. hotkeys_warning,
             locked = 0,
         },
         hk_show_list_filter_dialog = {
@@ -161,6 +161,13 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
             type = "number",
         },
+        PN_info_panel_max_line_length = {
+            value = 70,
+            explanation = "Page Navigator: this setting determines the max line length for information in the bottom info panel. You can use this to prevent ugly soft line wraps.",
+            locked = 0,
+            type = "number",
+            after_change_callback = "reset_page_navigator_cache",
+        },
         -- #((non_filtered_items_layout))
         --* consumed in ((XrayPages#activateNonFilteredItemsLayout)):
         PN_non_filtered_items_layout = {
@@ -195,7 +202,7 @@ local XraySettings = WidgetContainer:new{
         },
         SeriesManager_all_data_imported = {
             value = false,
-            explanation = "Series Manager: this value will be set to true after you imported all ebooks data into the Series Manager (via the import icon in the top left of Series Manager dialogs). You can reset this to false if you wish to re-import the data.",
+            explanation = _("Series Manager: this value will be set to true after you imported all ebooks data into the Series Manager (via the import icon in the top left of Series Manager dialogs). You can reset this to false if you wish to re-import the data."),
             locked = 0,
             after_change_callback = "series_manager_reload",
         },
@@ -257,6 +264,14 @@ local XraySettings = WidgetContainer:new{
         "3. " .. _("system"),
     },
     after_change_callbacks = {
+        reset_page_navigator_cache = function()
+            DX.pn:setProp("max_line_length", DX.s.PN_info_panel_max_line_length)
+            DX.c:resetDynamicXray()
+            DX.pn:closePageNavigator()
+            KOR.dialogs:closeAllOverlays()
+            --KOR.ui:handleEvent(Event:new("Restart"))
+            KOR.dialogs:niceAlert(_("NB"), _("The new setting will be activated after a resart of KOReader..."))
+        end,
         series_manager_reload = function()
             KOR.seriesmanager:reloadContextDialog()
         end,
@@ -336,6 +351,7 @@ function XraySettings:toggleSetting(key, alternatives)
 end
 
 function XraySettings:saveSetting(key, value)
+    KOR.dialogs:closeAllOverlays()
     local self = DX.s
     self.settings_manager:saveSetting(key, value)
 end
