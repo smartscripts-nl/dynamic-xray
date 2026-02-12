@@ -144,10 +144,6 @@ local XrayDataLoader = WidgetContainer:new{
         get_series_name =
             "SELECT series FROM bookinfo WHERE directory || filename = 'safe_path' LIMIT 1;",
 
-        --* we need name AND aliases and short_names, to really find all text occurrences of an item:
-        get_items_for_hits_update =
-            "SELECT name, aliases, short_names, description, id FROM xray_items WHERE ebook = '%1' AND (book_hits IS NULL OR book_hits = 0) ORDER BY name;",
-
         get_items_for_import_from_other_series =
             "SELECT DISTINCT(x.name), x.short_names, x.description, x.xray_type, x.aliases, x.tags, x.linkwords FROM xray_items x LEFT OUTER JOIN bookinfo b ON x.ebook = b.filename WHERE b.series = 'safe_path' ORDER BY x.name;",
 
@@ -156,17 +152,6 @@ local XrayDataLoader = WidgetContainer:new{
             FROM xray_items x
             JOIN bookinfo b ON b.filename = x.ebook
             WHERE x.name = '%1' AND b.series = '%2';]],
-
-        import_items_from_other_books_in_series = [[
-            SELECT DISTINCT(x.name), x.short_names, x.description, x.xray_type, x.aliases, x.tags, x.linkwords,
-            (
-                SELECT SUM(x2.book_hits)
-                FROM xray_items x2
-                JOIN bookinfo b2 ON b2.filename = x2.ebook
-                WHERE b2.series = b.series
-                  AND x2.name = x.name
-            ) AS series_hits
-            FROM xray_items x LEFT OUTER JOIN bookinfo b ON x.ebook = b.filename WHERE b.series = '%1' AND name NOT IN (SELECT name FROM xray_items WHERE ebook = '%2') ORDER BY x.name;]],
     },
     queries_external = {
         --* used in ((XrayTranslations#loadAllTranslations)):
@@ -295,8 +280,9 @@ function XrayDataLoader:_addBookItem(result, i, book_index)
     end
 
     -- #((set xray item props))
-    table.insert(parent.ebooks[book_index], {
-        id = tonumber(result["id"][i]),
+    local id = tonumber(result["id"][i])
+    local item = {
+        id = id,
         series = result["series"][i],
         name = result["name"][i],
         short_names = result["short_names"][i] or "",
@@ -310,13 +296,17 @@ function XrayDataLoader:_addBookItem(result, i, book_index)
         series_hits = tonumber(result["series_hits"][i]),
         chapter_hits = result["chapter_hits"][i],
         chapter_hits_data = self:convertChapterHitsData(result["chapter_hits_data"][i]),
-    })
+    }
+    table.insert(parent.ebooks[book_index], item)
+
+    parent:updateStaticReferenceCollections(id, item)
 end
 
 --- @private
 function XrayDataLoader:_addSeriesItem(result, i, series_index)
+    local id = tonumber(result["id"][i])
     local item = {
-        id = tonumber(result["id"][i]),
+        id = id,
         series = result["series"][i],
         name = result["name"][i],
         short_names = result["short_names"][i] or "",
@@ -331,6 +321,7 @@ function XrayDataLoader:_addSeriesItem(result, i, series_index)
         chapter_hits_data = self:convertChapterHitsData(result["chapter_hits_data"][i]),
         mentioned_in = result["mentioned_in"][i] or "",
     }
+    parent:updateStaticReferenceCollections(id, item)
 
     -- #((set xray item props))
     table.insert(parent.series[series_index], item)
@@ -367,11 +358,6 @@ function XrayDataLoader:getItemsForEbook(file_basename)
     return result
 end
 
-function XrayDataLoader:getItemsForHitsUpdate(conn, current_ebook_basename)
-    local sql = T(self.queries.get_items_for_hits_update, current_ebook_basename)
-    return conn:exec(sql)
-end
-
 function XrayDataLoader:getItemsForImportFromOtherSeries(conn, series)
     local sql = KOR.databases:injectSafePath(self.queries.get_items_for_import_from_other_series, series)
     return conn:exec(sql)
@@ -379,12 +365,6 @@ end
 
 function XrayDataLoader:getSeriesHits(conn, series, name)
     return conn:rowexec(T(self.queries.get_series_hits, name, series)) or 0
-end
-
-function XrayDataLoader:importItemsFromOtherBooksInSeries(conn, current_ebook_basename)
-    local series = KOR.databases:escape(parent.current_series)
-    local sql = T(self.queries.import_items_from_other_books_in_series, series, current_ebook_basename)
-    return conn:exec(sql)
 end
 
 function XrayDataLoader:getSeriesName()

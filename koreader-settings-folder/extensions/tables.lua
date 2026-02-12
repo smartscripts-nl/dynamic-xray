@@ -1,6 +1,7 @@
 
 local require = require
 
+local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local md5 = require("ffi/sha2").md5
 
@@ -73,9 +74,12 @@ function Tables:merge(t1, t2, add_indices)
         return t1
     end
 
+    --* this is a correction set in ((XrayViewsData#getLinkedItems)) for linked items, because on top of the linked items the parent item will be injected, which should have index 1:
+    local starting_index = KOR.registry:getOnce("starting_sorting_index")
+    local correction = starting_index and starting_index - 1 or 0
     count = #t1
     for i = 1, count do
-        t1[i].index = i
+        t1[i].index = i + correction
     end
     return t1
 end

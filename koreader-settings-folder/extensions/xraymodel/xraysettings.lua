@@ -267,7 +267,7 @@ local XraySettings = WidgetContainer:new{
         end,
         item_info_indent = function(value)
             --* so we immediately will see the new indentation:
-            DX.pn:resetCache()
+            DX.pn:resetCache("do_limited_refresh")
             return type(value) == "number" and value >= 4 and value <= 14 or _("a valid value should lie between 4 and 14...")
         end,
     },

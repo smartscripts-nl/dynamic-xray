@@ -31,7 +31,6 @@ local has_no_items = has_no_items
 local has_no_text = has_no_text
 local has_text = has_text
 local math = math
-local select = select
 local table = table
 local table_insert = table.insert
 local tostring = tostring
@@ -62,6 +61,7 @@ local XrayDialogs = WidgetContainer:new{
     list_is_opened = false,
     list_title = nil,
     needle_name_for_list_page = "",
+    select_mode = false,
     -- #((Xray-item edit dialog: tab buttons in TitleBar))
     title_tab_buttons_left = { _(" xray-item "), _(" metadata ") },
     xray_item_chooser = nil,
@@ -135,7 +135,7 @@ function XrayDialogs:showRefreshHitsForCurrentEbookConfirmation(dialog_close_cal
         UIManager:forceRePaint()
         KOR.registry:set("import_notification", import_notification)
         --* the import will be processed and the user notified about the progress in ((XrayDataSaver#setSeriesHitsForImportedItems)) > ((XrayController#doBatchImport)):
-        DX.c:refreshItemHitsForCurrentEbook()
+        DX.ds.storeImportedItemsFromOtherSeries(DX.m.current_series)
         upon_ready_callback()
     end)
 end
@@ -158,7 +158,6 @@ function XrayDialogs:showEditDescriptionDialog(description_field, callback, canc
     self.edit_item_description_dialog:onShowKeyboard()
 end
 
---* compare ((XrayController#refreshItemHitsForCurrentEbook)):
 function XrayDialogs:showImportFromOtherSeriesDialog(dialog_close_callback, upon_ready_callback)
     local question
     question = KOR.dialogs:prompt({
@@ -167,7 +166,7 @@ function XrayDialogs:showImportFromOtherSeriesDialog(dialog_close_callback, upon
         callback = function(series)
             UIManager:close(question)
             dialog_close_callback()
-            DX.ds.storeImportedItems(series)
+            DX.ds.storeImportedItemsFromOtherSeries(series)
             upon_ready_callback()
         end
     })
@@ -474,7 +473,7 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
     local select_number = focus_item and focus_item.index or 1
 
     --* optionally items are filtered here also:
-    local title = self.select_mode and _("Select an item to search:") or select(2, DX.vd:updateItemsTable(select_number))
+    local title = self.select_mode and _("Select an item to search:") or DX.vd:updateItemsTable(select_number)
     self.list_title = title
     if not title then
         return

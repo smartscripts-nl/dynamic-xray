@@ -23,12 +23,29 @@ function XrayInfoPanel:formatInfoPanelText(info_panel_text)
 end
 
 --- @private
+function XrayInfoPanel:returnEditedInfoPanelText(side_button)
+    local id = side_button.xray_item.id
+    side_button.xray_item.description = DX.m.items_by_id[id].description
+    --? don't know why we need this to update info texts for linked items:
+    DX.sp:resetInfoTexts()
+    DX.pn:resetCachedInfoFor(side_button.xray_item)
+    side_button.info_text = DX.pn:getItemInfoText(side_button.xray_item, "for_info_panel") or " "
+
+    return side_button.info_text
+end
+
+--- @private
 function XrayInfoPanel:getInfoPanelText()
     if #DX.sp.side_buttons == 0 then
         return " "
     end
 
     local active_side_button = DX.sp.active_side_buttons[DX.sp.active_side_tab]
+    local side_button = DX.sp:getSideButton(active_side_button)
+
+    if KOR.registry:getOnce("edited_xray_item") and side_button then
+        return self:returnEditedInfoPanelText(side_button)
+    end
 
     --* the info panel texts per button were computed in ((XraySidePanels#addSideButton)):
     if has_text(DX.sp.info_panel_texts[DX.sp.active_side_tab][active_side_button]) then
@@ -40,11 +57,9 @@ function XrayInfoPanel:getInfoPanelText()
         return DX.pn.first_info_panel_text
     end
 
-    local side_button = DX.sp:getSideButton(active_side_button)
-
     --* xray_item.info_text for first button was generated in ((XraySidePanels#markActiveSideButton)) > ((XraySidePanels#generateInfoTextForFirstSideButton)):
     --* info_text for each button generated via ((XrayPages#markedItemRegister)) > ((XrayPageNavigator#getItemInfoText)) > ((XraySidePanels#addSideButton)):
-    return side_button and (side_button.info_text or DX.pn:getItemInfoText(side_button.xray_item)) or " "
+    return side_button and (side_button.info_text or DX.pn:getItemInfoText(side_button.xray_item, "for_info_panel")) or " "
 end
 
 return XrayInfoPanel

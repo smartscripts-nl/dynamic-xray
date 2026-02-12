@@ -44,9 +44,11 @@ function XraySidePanels:addSideButton(item, info_text)
         label = self.active_item_marker .. label
     end
     table_insert(self.info_panel_texts[self.active_side_tab], info_text)
+    local id = item.id
     table_insert(self.side_buttons, {{
       text = label,
-      xray_item = item,
+      --! we only reference a static item here, so buttons don't have to be reset after item updates:
+      xray_item = DX.m.items_by_id[id],
       index = index,
       align = "left",
       --* force_item will be set when we return to the Page Navigator from ((XrayPageNavigator#returnToNavigator)):
@@ -89,17 +91,18 @@ function XraySidePanels:setActiveSideButton(context, active_side_button)
 end
 
 --* compare ((XraySidePanels#setActiveSideButton)):
-function XraySidePanels:resetActiveSideButtons(context, dont_reset_active_side_buttons)
+function XraySidePanels:resetActiveSideButtons(context)
 
     self.active_side_tab = 1
-    --! this will be truthy when current method called from ((XrayPageNavigator#setFilter)); in this way we prevent XrayPageNavigator.current_item being reset, because we need that to be unchanged in ((XrayPageNavigator#loadDataForPage)) > ((XraySidePanels#populateLinkedItemsPanel)):
-    if not dont_reset_active_side_buttons then
-        self.active_side_buttons = { 1, 1 }
-    end
+    self.active_side_buttons = { 1, 1 }
     self.info_panel_texts = { {}, {} }
 
     --* context was given here only for debugging:
     self.garbage = context
+end
+
+function XraySidePanels:resetInfoTexts()
+    self.info_panel_texts = { {}, {} }
 end
 
 --* these side panel buttons were generated in ((XrayPages#markItemsFoundInPageHtml)) > ((XrayPages#markedItemRegister)):
@@ -155,7 +158,7 @@ end
 
 --- @private
 function XraySidePanels:generateInfoTextForFirstSideButton(button)
-    --* the xray_item prop of these buttons was set in ((XrayPages#markedItemRegister)):
+    --* the xray_item prop of these buttons was set in ((XrayPages#markedItemRegister)) > ((XraySidePanels#addSideButton)):
     local info_text = DX.pn:getItemInfoText(button.xray_item)
     button.xray_item.info_text = info_text
     DX.pn:setProp("first_info_panel_text", info_text)
@@ -163,8 +166,10 @@ function XraySidePanels:generateInfoTextForFirstSideButton(button)
 end
 
 --* this method is only called for side panel no.2:
+--* see for computation and indexing of linked items at the end of ((XrayViewsData#getLinkedItems)):
 function XraySidePanels:populateLinkedItemsPanel()
-    local parent_item = DX.pn.parent_item
+    local parent_item = KOR.tables:shallowCopy(DX.pn.parent_item)
+    parent_item.index = 1
     --* self.linked_items was computed in ((XraySidePanels#computeLinkedItems)):
     table_insert(self.linked_items, 1, parent_item)
     local lcount = #self.linked_items

@@ -662,7 +662,7 @@ function XrayTappedWords:setPopupResult(sorted_items, popup_icons)
     for i = 1, count do
         item = self.popup_items[i]
         item.icons = popup_icons[i]
-        if item.xray_type <= 2 then
+        if DX.m:isPerson(item) then
             table_insert(self.popup_persons, item)
         else
             table_insert(self.popup_terms, item)

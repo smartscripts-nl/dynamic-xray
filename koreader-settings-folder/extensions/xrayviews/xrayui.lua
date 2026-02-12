@@ -694,7 +694,9 @@ end
 
 --- @private
 function XrayUI:registerParagraphMatch(hits, explanations, item, message)
-    table_insert(hits, item)
+    local id = item.id
+    --! register a reference to the static collection of items, so more flexible after item updates:
+    table_insert(hits, DX.m.items_by_id[id])
     table_insert(explanations, message)
 end
 

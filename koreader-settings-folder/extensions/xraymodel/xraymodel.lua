@@ -41,6 +41,11 @@ local XrayModel = WidgetContainer:new{
     current_series = nil,
     current_title = nil,
     ebooks = {},
+    --! these 3 collections are reference collections that never will be fully reset after item updates or additions; e.g. used for Page Navigator side buttons:
+    --* updates to these collections will be done through ((XrayModel#updateStaticReferenceCollections)):
+    items_by_id = {},
+    persons_by_id = {},
+    terms_by_id = {},
     items_prepared_for_basename = nil,
     min_match_word_length = 4,
     previous_series = nil,
@@ -455,6 +460,27 @@ function XrayModel:resetData(force_refresh, full_path)
     if self.current_series then
         self.series[self.current_series] = {}
     end
+end
+
+function XrayModel:updateStaticReferenceCollections(id, item)
+    item = item and KOR.tables:shallowCopy(item)
+    self.items_by_id[id] = item
+    --* if we want to delete an item:
+    if not item then
+        self.persons_by_id[id] = nil
+        self.terms_by_id[id] = nil
+        return
+    end
+    if self:isPerson(item) then
+        self.persons_by_id[id] = item
+    else
+        self.terms_by_id[id] = item
+    end
+end
+
+--- @private
+function XrayModel:isPerson(item)
+    return item.xray_type <= 2
 end
 
 function XrayModel:setProp(prop, value)

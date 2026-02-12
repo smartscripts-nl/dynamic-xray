@@ -600,7 +600,7 @@ end
 function XrayPages:markPartialHits(html, item, uc, i, was_marked_for_full)
     local is_term, lc, needle
 
-    local is_lowercase_person = item.xray_type < 3 and not uc:match("[A-Z]")
+    local is_lowercase_person = DX.m:isPerson(item) and not uc:match("[A-Z]") and not uc:match("[A-Z]")
     is_term = item.xray_type > 2
     if (is_term or is_lowercase_person) and i == 1 then
         uc = KOR.strings:ucfirst(uc)

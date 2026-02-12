@@ -113,8 +113,6 @@ function XrayViewsData:resetData()
         {}, --* persons
         {}, --* terms
     }
-    --! crucial to prevent seemingly duplicated items upon adding new items:
-    self.item_table = { {}, {}, {} }
     self.current_tab_items = nil
     self:resetAllFilters()
 end
@@ -167,7 +165,7 @@ function XrayViewsData:updateItemsTable(select_number, reset_item_table_for_filt
 
     elseif self.filtered_count > 0 and self.filter_string and self.filter_string:len() >= 3 then
         --* when no xray_items found with the current filter:
-        if #self.item_table == 0 then
+        if #self.items == 0 then
             --select_number, title = self:noItemsFoundWithFilterHandler("niets gevonden met \"" .. self.filter_string .. "\"...")
             return nil, false
         else
@@ -176,11 +174,11 @@ function XrayViewsData:updateItemsTable(select_number, reset_item_table_for_filt
     else
         title = source
     end
-    if #self.item_table == 0 then
+    if #self.items == 0 then
         return {}, _("Xray items")
     end
 
-    return self.item_table, title
+    return title
 end
 
 --- @private
@@ -235,12 +233,10 @@ end
 --- @private
 function XrayViewsData:addItemToPersonsOrTerms(item)
     local item_copy = KOR.tables:shallowCopy(item)
-    if item.xray_type <= 2 then
-        table_insert(self.item_table[2], item_copy)
+    if DX.m:isPerson(item) then
         item_copy.index = #self.persons + 1
         table_insert(self.persons, item_copy)
     else
-        table_insert(self.item_table[3], item_copy)
         item_copy.index = #self.terms + 1
         table_insert(self.terms, item_copy)
     end
@@ -281,7 +277,7 @@ function XrayViewsData:updateAndSortAllItemTables(item)
     --* display the new item in its proper place in the Items List (placeImportantItemsAtTop wil also add corresponding "index" prop to each item):
     self.items = parent:placeImportantItemsAtTop(self.items, -1)
     self.item_table[1] = parent:placeImportantItemsAtTop(self.item_table[1], -1)
-    if item.xray_type <= 2 then
+    if DX.m:isPerson(item) then
         self.item_table[2] = parent:placeImportantItemsAtTop(self.item_table[2], -1)
         self.persons = parent:placeImportantItemsAtTop(self.persons, -1)
         return
@@ -301,10 +297,10 @@ end
 function XrayViewsData:getCurrentListTabItems(needle_item)
     --* this will sometimes be the case when we first call up a definition through ReaderHighlight, before calling the Items List:
     if has_no_items(self.current_tab_items) then
-        if has_items(self.item_table[1]) then
-            self.items = KOR.tables:shallowCopy(self.item_table[1])
-            self.persons = KOR.tables:shallowCopy(self.item_table[2])
-            self.terms = KOR.tables:shallowCopy(self.item_table[3])
+        if has_items(DX.m.items_by_id) then
+            self.items = KOR.tables:shallowCopy(DX.m.items_by_id)
+            self.persons = KOR.tables:shallowCopy(DX.m.persons_by_id)
+            self.terms = KOR.tables:shallowCopy(DX.m.terms_by_id)
         else
             self.initData("force_refresh")
             self.prepareData()
@@ -652,7 +648,7 @@ end
 --- @private
 function XrayViewsData:addMenuItemToItemTables(menu_item)
     table_insert(self.item_table_for_filter[1], menu_item)
-    if menu_item.xray_type <= 2 then
+    if DX.m:isPerson(menu_item) then
         table_insert(self.item_table_for_filter[2], menu_item)
     else
         table_insert(self.item_table_for_filter[3], menu_item)
@@ -805,11 +801,14 @@ function XrayViewsData:getLinkedItems(needle_item)
         if needle_item_has_linkwords then
             self:addLinkedItem(needle_item, haystack_item, linked_names_index, linked_items)
         end
+        --* add items which link to the parent item:
         if not linked_names_index[haystack_item.name] and has_text(haystack_item.linkwords) then
-            self:addBackLinkedItem(needle_item, haystack_item, linked_names_index, linked_items)
+            self:addItemsWhichPointToParent(needle_item, haystack_item, linked_names_index, linked_items)
         end
     end
     if #linked_items > 1 then
+        --* for consumption in ((Tables#merge)); we shift the starting index to 2, because the parent item with index 1 will be injected at the start of this collection of items, in ((XraySidePanels#populateLinkedItemsPanel)):
+        KOR.registry:set("starting_sorting_index", 2)
         linked_items = parent:placeImportantItemsAtTop(linked_items, -1)
     end
     return linked_items, linked_names_index
@@ -837,6 +836,8 @@ function XrayViewsData:addLinkedItem(needle_item, haystack_item, linked_names_in
             )
             and not linked_names_index[haystack_item.name]
         then
+            --! don't inadvertently change the parent item in self.items:
+            haystack_item = KOR.tables:shallowCopy(haystack_item)
             table_insert(linked_items, haystack_item)
             linked_names_index[haystack_item.name] = true
         end
@@ -844,7 +845,7 @@ function XrayViewsData:addLinkedItem(needle_item, haystack_item, linked_names_in
 end
 
 --- @private
-function XrayViewsData:addBackLinkedItem(needle_item, haystack_item, linked_names_index, linked_items)
+function XrayViewsData:addItemsWhichPointToParent(needle_item, haystack_item, linked_names_index, linked_items)
     if haystack_item.name == needle_item.name then
         return
     end
@@ -866,6 +867,8 @@ function XrayViewsData:addBackLinkedItem(needle_item, haystack_item, linked_name
             )
             and not linked_names_index[haystack_item.name]
         then
+            --! don't inadvertently change the parent item in self.items:
+            haystack_item = KOR.tables:shallowCopy(haystack_item)
             table_insert(linked_items, haystack_item)
             linked_names_index[haystack_item.name] = true
             break
@@ -1394,7 +1397,7 @@ function XrayViewsData.initData(force_refresh, override_mode, full_path)
     parent:setProp("current_ebook_basename", KOR.filedirnames:basename(full_path or KOR.registry.current_ebook))
 
     --* force book display mode for books which are not part of a series:
-    --* DX.m.current_series should have been set, when list_display_mode is "series", from the doc_props in ((XrayController#resetDynamicXray)) > ((XrayModel#setTitleAndSeries)):
+    --* DX.m.current_series should have been set, when list_display_mode is "series", from the doc_props in ((XrayController#onReaderReady)) > ((XrayController#resetDynamicXray)) > ((XrayModel#setTitleAndSeries)):
     if not parent.current_series then
         override_mode = "book"
     end
@@ -1449,7 +1452,7 @@ function XrayViewsData:populateTypeTables()
     count = #self.items
     for i = 1, count do
         xray_item = self.items[i]
-        if xray_item.xray_type <= 2 then
+        if DX.m:isPerson(xray_item) then
             table_insert(self.persons, xray_item)
         else
             table_insert(self.terms, xray_item)
@@ -1459,8 +1462,8 @@ end
 
 --* compare ((XrayViewsData#registerNewItem)):
 function XrayViewsData:registerUpdatedItem(updated_item)
-    --* these props nr, icons and text are needed so we get no crash because of one of these props missing when generating list items in ((XrayViewsData#generateListItemText)) and ((Strings#formatListItemNumber)):
-    updated_item.nr = updated_item.index
+
+    --* the props icons and text are needed so we get no crash because of one of these props missing when generating list items in ((XrayViewsData#generateListItemText)) and ((Strings#formatListItemNumber)):
     local old_icons = self.items[updated_item.index].icons
     updated_item.icons = old_icons or ""
     updated_item.text = self:generateListItemText(updated_item)
@@ -1472,6 +1475,7 @@ function XrayViewsData:registerUpdatedItem(updated_item)
     end
     self.current_item = updated_item
     self.items[updated_item.index] = updated_item
+    DX.m:updateStaticReferenceCollections(updated_item.id, updated_item)
 
     self:updateAndSortAllItemTables(updated_item)
 end

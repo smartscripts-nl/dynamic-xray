@@ -32,6 +32,7 @@ local XrayFormsData = WidgetContainer:new{
     description_field_face = Font:getFace("x_smallinfofont", 19),
     edit_item_index = nil,
     form_item_id = nil,
+    item_before_edit = nil,
     --* used to determine whether an item should be displayed bold in the list or not; and also used in ((XrayViewsData#storeItemHits)) to store the (updated) book_hits for an item in the database:
     last_modified_item_id = nil,
     other_fields_face = Font:getFace("x_smallinfofont", 19),
@@ -175,6 +176,8 @@ function XrayFormsData:initEditFormProps(item, reload_manager, active_form_tab)
     end
     local item_copy = KOR.tables:shallowCopy(item)
     self.edit_item_index = item.index
+
+    self.item_before_edit = item
 
     return item, item_copy
 end
@@ -429,7 +432,7 @@ function XrayFormsData:toggleIsPersonOrTerm(toggle_item)
     for nr = 1, count do
         item = views_data.items[nr]
         if item.id == toggle_item.id then
-            if toggle_item.xray_type <= 2 then
+            if DX.m:isPerson(toggle_item) then
                 item.xray_type = item.xray_type + 2
             else
                 item.xray_type = item.xray_type - 2
@@ -442,6 +445,23 @@ function XrayFormsData:toggleIsPersonOrTerm(toggle_item)
     self:storeItemUpdates("toggle_type", toggle_item)
 
     return position, toggle_item
+end
+
+--- @private
+function XrayFormsData:isNotSameFieldValue(a, b)
+    return a ~= b and not (has_no_text(a) and has_no_text(b))
+end
+
+function XrayFormsData:needsFullUpdate(item)
+    --* item_before_edit was set in ((XrayFormsData#initEditFormProps)):
+
+    item = KOR.tables:shallowCopy(item)
+    return
+        self:isNotSameFieldValue(item.name, self.item_before_edit.name)
+        or self:isNotSameFieldValue(item.linkwords, self.item_before_edit.linkwords)
+        or self:isNotSameFieldValue(item.aliases, self.item_before_edit.aliases)
+        or self:isNotSameFieldValue(item.short_names, self.item_before_edit.short_names)
+        or self:isNotSameFieldValue(item.xray_type, self.item_before_edit.xray_type)
 end
 
 --* this method called upon rename/edit, toggle importance, toggle person/term of Xray item:

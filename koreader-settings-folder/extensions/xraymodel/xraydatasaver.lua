@@ -45,6 +45,7 @@ short_names,
 description,
 xray_type, -- value here determines whether an item is important (xray_type 2 or 4) or not (xray_type 1 or 3), and whether it is a person (1-2) or a term (3-4)
 aliases,
+tags,
 linkwords,
 book_hits, -- an integer
 chapter_hits, -- a string, containing a html list of all hits in the chapters of an ebook
@@ -274,6 +275,7 @@ function XrayDataSaver.storeDeletedItem(current_series, delete_item)
 
     local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver:storeDeletedItem")
     local sql, stmt
+    local id = delete_item.id
     --! this argument CAN be nil!, so don't use parent.current_series here:
     if has_text(current_series) then
         sql = self.queries.delete_item_series
@@ -285,6 +287,8 @@ function XrayDataSaver.storeDeletedItem(current_series, delete_item)
         stmt:reset():bind(delete_item.id):step()
     end
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
+
+    parent:updateStaticReferenceCollections(id, nil)
 end
 
 function XrayDataSaver.storeChapters(chapters)
@@ -315,23 +319,35 @@ function XrayDataSaver:getChapterHitsDataForStorage(chapter_hits_data)
     return table_concat(chapter_hits_data, ",")
 end
 
-function XrayDataSaver.storeImportedItems(series)
+function XrayDataSaver.storeImportedItemsFromOtherSeries(series)
 
     local self = DX.ds
 
-    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver:storeImportedItems")
-    KOR.registry:set("db_conn", conn)
+    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver:storeImportedItems", nil, "is_initial_connection")
     local result = DX.dl:getItemsForImportFromOtherSeries(conn, series)
-    if not result then
+    count = result and #result["name"] or 0
+    if count == 0 then
         conn = KOR.databases:closeInfoConnections(conn)
         KOR.messages:notify(T(_("the series %1 was not found..."), series))
         return
     end
+
     local current_ebook_basename = KOR.databases:escape(parent.current_ebook_basename)
     local stmt = conn:prepare(T(self.queries.insert_imported_items, current_ebook_basename))
-
-    count = #result["name"]
+    local item, id
+    local imported_items = {}
     for i = 1, count do
+        item = {
+            name = result["name"][i],
+            short_names = result["short_names"][i],
+            description = result["description"][i],
+            xray_type = result["xray_type"][i],
+            aliases = result["aliases"][i],
+            tags = result["tags"][i],
+            linkwords = result["linkwords"][i],
+            book_hits = 0,
+            chapter_hits = nil,
+        }
         stmt:reset():bind(
             result["name"][i],
             result["short_names"][i],
@@ -343,11 +359,13 @@ function XrayDataSaver.storeImportedItems(series)
             0, --* book_hits (integer)
             nil --* chapter_hits (html)
         ):step()
+        id = KOR.databases:getNewItemId(conn)
+        item.id = id
+        table_insert(imported_items, item)
     end
     stmt = KOR.databases:closeInfoStmts(stmt)
-    --* above statementa were only concerned with metadata; actual hits update wil now be done in the model: ((XrayDataSaver#refreshItemHitsForCurrentEbook)):
-    --* we don't close conn here, because it will be used there:
-    DX.c:refreshItemHitsForCurrentEbook()
+    --* above stmt was only concerned with metadata; actual hits update wil now be done in this method:
+    self.setItemHitsForImportedItems(imported_items, conn)
 end
 
 -- #((XrayViewsData#storeItemHits))
@@ -410,17 +428,20 @@ function XrayDataSaver.storeUpdatedItem(item)
     local sql = parent.current_series and self.queries.update_item_for_entire_series or self.queries.update_item
     local stmt = conn:prepare(sql)
     local x = item
+    local id = item.id
     --* set empty texts to nil; these might have been generated in ((MultiInputDialog#registerFieldValues)), when the user never opened a particular form tab for left the fields empty:
     self:setEmptyPropsToNil(x)
     --! when a xray item is defined for a series of books, all instances per book of that same item will ALL be updated!:
     --* this query will be used in both the series AND in current book display mode of the Items List, BUT ONLY IF a series for the current ebook is defined (so parent.current_series set):
     if parent.current_series then
         --! don't store hits here, because otherwise this count will be saved for all same items in ebooks in the series, but they should normally differ!:
-        stmt:reset():bind(x.name, x.short_names, x.description, x.xray_type, x.aliases, x.tags, x.linkwords, x.id, x.id):step()
+        stmt:reset():bind(x.name, x.short_names, x.description, x.xray_type, x.aliases, x.tags, x.linkwords, id, id):step()
     else
-        stmt:reset():bind(x.name, x.short_names, x.description, x.xray_type, x.aliases, x.tags, x.linkwords, x.book_hits, x.chapter_hits, x.id):step()
+        stmt:reset():bind(x.name, x.short_names, x.description, x.xray_type, x.aliases, x.tags, x.linkwords, x.book_hits, x.chapter_hits, id):step()
     end
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
+
+    parent:updateStaticReferenceCollections(id, item)
 end
 
 function XrayDataSaver.storeUpdatedItemType(item)
@@ -428,11 +449,14 @@ function XrayDataSaver.storeUpdatedItemType(item)
     if self:itemPropWasMissing(item, { "id", "xray_type" }) then
         return
     end
+    local id = item.id
     local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver#updateXrayItemType")
     local sql = self.queries.update_item_type
     local stmt = conn:prepare(sql)
-    stmt:reset():bind(item.xray_type, item.id):step()
+    stmt:reset():bind(item.xray_type, id):step()
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
+
+    parent:updateStaticReferenceCollections(id, item)
 end
 
 function XrayDataSaver:itemPropWasMissing(updated_item, check_props)
@@ -446,41 +470,39 @@ function XrayDataSaver:itemPropWasMissing(updated_item, check_props)
     return false
 end
 
--- #((XrayDataSaver#refreshItemHitsForCurrentEbook))
+-- #((XrayDataSaver#setItemHitsForImportedItems))
 --* compare ((XrayDialogs#showImportFromOtherSeriesDialog)):
-function XrayDataSaver.refreshItemHitsForCurrentEbook()
+function XrayDataSaver.setItemHitsForImportedItems(imported_items, conn)
     local self = DX.ds
 
     --* recount all occurrences and save to database; if count = 0, then save as 0 for current book.
     --* if book is part of series, then import all items which are not in the current book, search for their occurrences in current book and only if found store that occurrence for the current book
 
-    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver:refreshItemHitsForCurrentEbook")
     local current_ebook_basename = KOR.databases:escape(parent.current_ebook_basename)
 
     --* determine whether there are items in the series which are not in the current ebook:
     if parent.current_series then
-        self:setSeriesHitsForImportedItems(conn, current_ebook_basename)
+        self:setSeriesHitsForImportedItems(conn, current_ebook_basename, imported_items)
     else
-        self:setBookHitsForImportedItems(conn, current_ebook_basename)
+        self:setBookHitsForImportedItems(conn, imported_items)
     end
-    conn = KOR.databases:closeInfoConnections(conn)
 end
 
 --- @private
-function XrayDataSaver:processItemsInBatches(conn, item_ids, batch_count, process_item)
-    count = #item_ids
+function XrayDataSaver:processItemsInBatches(conn, stmt, items, batch_count, process_item)
+    count = #items
     if count == 0 then
         return
     end
 
     local items_per_batch = math_max(1, math_floor(count / batch_count))
 
-    DX.c:doBatchImport(count, function(start, icount)
+    conn = DX.c:doBatchImport(conn, stmt, count, function(start, icount)
         conn:exec("BEGIN IMMEDIATE")
 
         local loop_end = math_min(start + items_per_batch - 1, icount)
         for i = start, loop_end do
-            process_item(i, item_ids[i])
+            process_item(items[i])
         end
 
         conn:exec("COMMIT")
@@ -491,75 +513,60 @@ end
 
 --* compare ((XrayDataSaver#setSeriesHitsForImportedItems)):
 --- @private
-function XrayDataSaver:setBookHitsForImportedItems(conn, current_ebook_basename)
-    local result = DX.dl:getItemsForHitsUpdate(conn, current_ebook_basename)
-    if not result then
-        return
-    end
+function XrayDataSaver:setBookHitsForImportedItems(conn, imported_items)
 
     local stmt = conn:prepare(self.queries.update_item_hits)
-    local ids = result.id --* this is a table of ids
-    self:processItemsInBatches(conn, ids, DX.s.batch_count_for_import, function(i)
-        local item = {
-            name = result.name[i],
-            aliases = result.aliases[i],
-            tags = result.tags[i],
-            short_names = result.short_names[i],
-            chapter_query_done = false,
-        }
+    conn, stmt = self:processItemsInBatches(conn, stmt, imported_items, DX.s.batch_count_for_import, function(item)
+        if not item then
+            return
+        end
 
         local book_hits, chapter_hits, chapter_hits_data = views_data:getAllTextHits(item)
         if book_hits == 0 then
-            conn:exec(T(self.queries.delete_item_book, ids[i]))
+            conn:exec(T(self.queries.delete_item_book, item.id))
+            parent:updateStaticReferenceCollections(item.id, nil)
         else
             chapter_hits_data = self:getChapterHitsDataForStorage(chapter_hits_data)
-            stmt:reset():bind(book_hits, chapter_hits, chapter_hits_data, ids[i]):step()
+            stmt:reset():bind(book_hits, chapter_hits, chapter_hits_data, item.id):step()
+            item.book_hits = book_hits
+            item.chapter_hits = chapter_hits
+            item.chapter_hits_data = chapter_hits_data
+            item.chapter_query_done = true
+            parent:updateStaticReferenceCollections(item.id, item)
         end
     end)
-
-    KOR.databases:closeInfoStmts(stmt)
 end
 
 --* compare ((XrayDataSaver#setBookHitsForImportedItems)):
 --- @private
-function XrayDataSaver:setSeriesHitsForImportedItems(conn, current_ebook_basename)
-    local result = DX.dl:importItemsFromOtherBooksInSeries(conn, current_ebook_basename)
-    if not result then
-        KOR.messages:notify(_("no items found which needed importing"), 4)
-        return
-    end
-    KOR.messages:notify(_("items to be imported:") .. " " .. #result[1])
+function XrayDataSaver:setSeriesHitsForImportedItems(conn, current_ebook_basename, imported_items)
+    count = #imported_items
 
-    local items = KOR.databases:resultsetToItemset(result)
     local stmt = conn:prepare(T(self.queries.insert_imported_items, current_ebook_basename))
-
-    self:processItemsInBatches(conn, items, DX.s.batch_count_for_import, function(_, src)
-        local item = {
-            name = src.name,
-            aliases = src.aliases,
-        }
+    conn, stmt = self:processItemsInBatches(conn, stmt, imported_items, DX.s.batch_count_for_import, function(item)
+        local id = item.id
 
         local book_hits, chapter_hits, chapter_hits_data = views_data:getAllTextHits(item)
         if book_hits > 0 then
             chapter_hits_data = self:getChapterHitsDataForStorage(chapter_hits_data)
             stmt:reset():bind(
-                src.name,
-                src.short_names,
-                src.description,
-                src.xray_type,
-                src.aliases,
-                src.tags,
-                src.linkwords,
+                item.name,
+                item.short_names,
+                item.description,
+                item.xray_type,
+                item.aliases,
+                item.tags,
+                item.linkwords,
                 book_hits,
                 chapter_hits,
                 chapter_hits_data
             ):step()
+            parent:updateStaticReferenceCollections(id, item)
         else
-            conn:exec(T(self.queries.delete_item_book, src.id))
+            conn:exec(T(self.queries.delete_item_book, item.id))
+            parent:updateStaticReferenceCollections(id, nil)
         end
     end)
-
-    KOR.databases:closeInfoStmts(stmt)
 end
 
 -- #((XrayDataSaver#createAndModifyTables))

@@ -19,6 +19,7 @@ local has_text = has_text
 local table_concat = table.concat
 local table_insert = table.insert
 local tonumber = tonumber
+local unpack = unpack
 
 --- @type XrayModel parent
 local parent
@@ -27,10 +28,12 @@ local parent
 local XrayPageNavigator = WidgetContainer:new{
     active_filter_name = nil,
     alias_indent = "   ",
+    cached_histogram_data = {},
     cached_hits_by_needle = {},
     cached_html_and_buttons_by_page_no = {},
-    cached_items = {},
+    cached_items_info = {},
     current_item = nil,
+    first_info_panel_text = nil,
     initial_browsing_page = nil,
     key_events = {},
     max_line_length = 80,
@@ -79,10 +82,8 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
     self.initial_browsing_page = initial_browsing_page or DX.u:getCurrentPage()
     self:closePageNavigator()
     local html = self:loadDataForPage()
-
-    local chapters_count, ratio_per_chapter, occurrences_per_chapter = self:computeHistogramData()
-
     local item = DX.sp:getCurrentTabItem()
+    local chapters_count, ratio_per_chapter, occurrences_per_chapter = self:computeHistogramData(item)
 
     local key_events_module = "XrayPageNavigator"
     self.page_navigator = KOR.dialogs:navigatorBox({
@@ -126,9 +127,17 @@ end
 
 --* calls ((XrayViewsData#generateChapterHitsData)) when no chapter_hits_data found for item:
 --- @private
-function XrayPageNavigator:computeHistogramData()
+function XrayPageNavigator:computeHistogramData(item)
 
-    local item = DX.sp:getCurrentTabItem()
+    local index = KOR.tables:normalizeTableIndex(item.name)
+    local data = self.cached_histogram_data[index]
+    local chapters_count, ratio_per_chapter, occurrences_per_chapter
+    if data then
+        chapters_count, ratio_per_chapter, occurrences_per_chapter = unpack(data)
+        return chapters_count, ratio_per_chapter, occurrences_per_chapter
+    end
+
+    item = item or DX.sp:getCurrentTabItem()
 
     --* for best speed do this only for current / actual item in the info panel, and not for all items in the side panel:
     if item and not item.chapter_hits_data then
@@ -140,24 +149,33 @@ function XrayPageNavigator:computeHistogramData()
         return
     end
 
-    local occurrences_per_chapter = item.chapter_hits_data
-    local chapters_count = #occurrences_per_chapter
+    occurrences_per_chapter = item.chapter_hits_data
+    chapters_count = #occurrences_per_chapter
     local max_value = KOR.tables:getMaxValue(occurrences_per_chapter)
-    local ratios = {}
+    ratio_per_chapter = {}
     for i = 1, chapters_count do
-        table_insert(ratios, occurrences_per_chapter[i] / max_value)
+        table_insert(ratio_per_chapter, occurrences_per_chapter[i] / max_value)
     end
-    return chapters_count, ratios, occurrences_per_chapter
+
+    self.cached_histogram_data[index] = {
+        chapters_count,
+        ratio_per_chapter,
+        occurrences_per_chapter
+    }
+
+    return chapters_count, ratio_per_chapter, occurrences_per_chapter
 end
 
 --* this info will be consumed for the info panel in ((NavigatorBox#generateScrollWidget)):
---- @private
-function XrayPageNavigator:getItemInfoText(item)
+function XrayPageNavigator:getItemInfoText(item, for_info_panel)
     --* the reliability_indicators were added in ((XrayUI#getXrayItemsFoundInText)) > ((XrayUI#matchNameInPageOrParagraph)) and ((XrayUI#matchAliasesToParagraph)):
     local reliability_indicator = item.reliability_indicator and item.reliability_indicator .. " " or ""
 
-    if self.cached_items[item.name] then
-        return "\n" .. reliability_indicator .. self.cached_items[item.name]
+    if self.cached_items_info[item.name] then
+        --* if an item was cached, don't add linebreaks to the linebreak already present in the cached info:
+        local prefix = for_info_panel and "" or "\n"
+        local info = prefix .. reliability_indicator .. self.cached_items_info[item.name]
+        return info:gsub("^\n\n", "\n")
     end
 
     self.max_line_length = DX.s.is_mobile_device and 40 or self.max_line_length
@@ -188,9 +206,10 @@ function XrayPageNavigator:getItemInfoText(item)
     end
 
     --* remove reliability_indicator_placeholder:
-    self.cached_items[item.name] = info:gsub("\n  ", "", 1)
+    self.cached_items_info[item.name] = info:gsub("\n  ", "", 1)
 
-    return "\n" .. reliability_indicator .. self.cached_items[item.name]
+    --* prefix "\n" removed here:
+    return reliability_indicator .. self.cached_items_info[item.name]
 end
 
 --- @private
@@ -268,10 +287,12 @@ end
 
 --- @private
 function XrayPageNavigator:setCurrentItem(item)
-    self.current_item = item
     if not item then
         return
     end
+    local id = item.id
+    --! reference static items collection, to be more flexible after item updates:
+    self.current_item = parent.items_by_id[id]
     --* we need this item for computing linked item buttons in side panel no 2:
     self.parent_item = KOR.tables:shallowCopy(item)
 end
@@ -355,12 +376,13 @@ function XrayPageNavigator:loadDataForPage()
 end
 
 function XrayPageNavigator:resetCache()
+    self.cached_histogram_data = {}
     self.cached_html_and_buttons_by_page_no = {}
     self.cached_hits_by_needle = {}
-    self.cached_items = {}
-    self.popup_menu = nil
-    DX.sp:resetActiveSideButtons("XrayPageNavigator:resetCache")
-    self.current_item = nil
+end
+
+function XrayPageNavigator:resetCachedInfoFor(item)
+    self.cached_items_info[item.name] = nil
 end
 
 function XrayPageNavigator:closePageNavigator()
