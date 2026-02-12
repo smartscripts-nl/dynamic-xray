@@ -765,6 +765,10 @@ function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, 
         linked_items_info = DX.ex:generateXrayItemsOverview(linked_items)
     end
 
+    --! we need this when opening an item in the Item Viewer from Page Navigator:
+    if not needle_item.index then
+        needle_item.index = DX.vd:getItemIndexById(needle_item.id)
+    end
     --* this sometimes happens when we only just added a new item from the ebook text and want to view it immediately:
     if needle_item.index > current_items_count then
         needle_item.index = current_items_count
