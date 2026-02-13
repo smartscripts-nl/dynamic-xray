@@ -421,6 +421,18 @@ end
 
 --- @private
 function XrayDialogs:getListFilter()
+    if self.filter_tag then
+        return {
+            state = "filtered",
+            callback = function()
+                self:showFilterDialog()
+            end,
+            reset_callback = function()
+                DX.c:resetFilteredItems()
+                self:showListWithRestoredArguments()
+            end,
+        }
+    end
     return {
         state = self.filter_state,
         callback = function()
@@ -468,6 +480,23 @@ function XrayDialogs:_prepareItemsForList(current_tab_items, items_for_select)
 end
 
 --- @private
+function XrayDialogs:filterItemsByTag()
+    if not self.filter_tag then
+        return
+    end
+
+    local items = DX.vd.items
+    local filtered = {}
+    count = #items
+    for i = 1, count do
+        if has_text(items[i].tags) and items[i].tags:match(self.filter_tag) then
+            table_insert(filtered, items[i])
+        end
+    end
+    return filtered
+end
+
+--- @private
 function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, items_for_select, key_events_module)
 
     local select_number = focus_item and focus_item.index or 1
@@ -477,6 +506,10 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
     self.list_title = title
     if not title then
         return
+    end
+
+    if self.filter_tag then
+        title = title .. " - " .. _("tag") .. ": " .. self.filter_tag
     end
 
     --* goto page where recently displayed xray_item can be found in the manager:
@@ -610,6 +643,10 @@ function XrayDialogs:showList(focus_item, dont_show, select_mode)
 
     --! this condition is needed to prevent this call from triggering ((XrayViewsData#prepareData)) > ((XrayViewsData#indexItems)), because that last call will be done at the proper time via ((XrayDialogs#showList)) > ((XrayModel#getCurrentItemsForView)) > ((XrayViewsData#getCurrentListTabItems)) > ((XrayViewsData#prepareData)) > ((XrayViewsData#indexItems)):
     local current_tab_items = not new_item and DX.m:getCurrentItemsForView()
+
+    self.filter_tag = KOR.registry:getOnce("immediate_filter_tag")
+    current_tab_items = self:filterItemsByTag(current_tab_items)
+
     local items_for_select = {}
     --* this will occur after a filter reset from ((XrayController#resetFilteredItems)) and sometimes when we first call up a definition through ReaderHighlight:
     if new_item or has_no_items(current_tab_items) then

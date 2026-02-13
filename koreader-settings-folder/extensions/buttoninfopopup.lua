@@ -500,6 +500,15 @@ function ButtonInfoPopup:forXrayPageNavigatorShowPageBrowser(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forXrayPageNavigatorShowTagsDialog(props)
+	return KOR.buttonprops:set({
+		icon = "tags",
+		info = _("tags icon | Show popup for tag filters."),
+		callback_label = _("show"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forXrayPreviousItem(props)
 	return KOR.buttonprops:set({
 		text = KOR.icons.previous_bare,

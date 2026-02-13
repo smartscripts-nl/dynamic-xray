@@ -16,8 +16,10 @@ local T = require("ffi/util").template
 
 local DX = DX
 local has_items = has_items
+local has_no_items = has_no_items
 local has_no_text = has_no_text
 local has_text = has_text
+local math_floor = math.floor
 local table = table
 local table_insert = table.insert
 
@@ -207,6 +209,44 @@ function XrayButtons:forPageNavigator(parent)
                 return DX.cb:execShowPopupButtonsCallback(parent)
             end
         }),
+        KOR.buttoninfopopup:forXrayPageNavigatorShowTagsDialog({
+            callback = function()
+                local tags = DX.m.tags
+                if has_no_items(tags) then
+                    KOR.messages:notify(_("you haven't defined any tags yet"))
+                    return
+                end
+                local buttons_per_row = 4
+                local buttons = { {} }
+                local row = 1
+                local tags_dialog
+                local button_width = math_floor(Screen:getWidth() / 6)
+                count = #tags
+                local dialog_width = count < buttons_per_row and count * button_width or buttons_per_row * button_width
+                for i = 1, count do
+                    table_insert(buttons[row], {
+                        text = tags[i],
+                        font_bold = false,
+                        width = button_width,
+                        callback = function()
+                            UIManager:close(tags_dialog)
+                            DX.c:filterItemsByTag(tags[i], "filter_immediately")
+                        end,
+                    })
+                    if i > 1 and i % buttons_per_row == 0 then
+                        table_insert(buttons, {})
+                        row = row + 1
+                    end
+                end
+                tags_dialog = ButtonDialogTitle:new {
+                    title = _("tag groups"),
+                    subtitle = _("the tags listed here can be used to filter the Items List") .. "...",
+                    width = dialog_width,
+                    buttons = buttons,
+                }
+                UIManager:show(tags_dialog)
+            end,
+        }),
         KOR.buttoninfopopup:forXrayPageNavigatorSearchItem({
             callback = function()
                 return DX.cb:execPageNavigatorSearchItemCallback()
@@ -286,6 +326,11 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
                 parent:closePopupMenu()
             end
         },
+        KOR.buttoninfopopup:forXrayPageNavigatorSearchItem({
+            callback = function()
+                return DX.cb:execPageNavigatorSearchItemCallback()
+            end,
+        }),
         KOR.buttoninfopopup:forXrayList({
             callback = function()
                 parent:closePopupMenu()

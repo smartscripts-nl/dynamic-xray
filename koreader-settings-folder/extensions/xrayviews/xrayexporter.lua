@@ -96,11 +96,11 @@ end
 
 --- @private
 function XrayExporter:addTagsOverview(info, active_tab)
-    if active_tab < 4 or has_no_items(self.tags) then
+    if active_tab < 4 or has_no_items(DX.m.tags) then
         return info
     end
 
-    local tags = self.tags_concatenated or table_concat(self.tags, " - ")
+    local tags = self.tags_concatenated or table_concat(DX.m.tags, " - ")
     self.tags_concatenated = tags
 
     info = KOR.strings:split(info, "\n", "capture_empty_entity")
@@ -166,7 +166,6 @@ function XrayExporter:generateTagGroupsOverview(items)
     local paragraphs = {}
     local paragraphs_iconless = {}
     local tag_groups = {}
-    self.tags = {}
     count = #items
     for i = 1, count do
         if has_text(items[i].tags) then
@@ -177,7 +176,6 @@ function XrayExporter:generateTagGroupsOverview(items)
     local otable = KOR.tables:getSortedRelationalTable(tag_groups)
     count = #otable
     for i = 1, count do
-        table_insert(self.tags, otable[i][1])
         data = otable[i][2]
         KOR.tables:merge(paragraphs, data.paras)
         KOR.tables:merge(paragraphs_iconless, data.paras_iconless)

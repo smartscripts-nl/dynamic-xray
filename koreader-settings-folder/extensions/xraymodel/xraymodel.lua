@@ -16,7 +16,9 @@ local has_no_text = has_no_text
 local has_text = has_text
 local pairs = pairs
 local table = table
+local table_concat = table.concat
 local table_insert = table.insert
+local table_sort = table.sort
 local type = type
 
 local count
@@ -55,6 +57,8 @@ local XrayModel = WidgetContainer:new{
     sorting_method = "hits",
     switch_first_and_sur_name = false,
     tab_display_counts = { 0, 0, 0 },
+    tags = {},
+    tags_relational = {},
     use_tapped_word_data = false,
 }
 
@@ -146,6 +150,24 @@ function XrayModel:placeImportantItemsAtTop(items, sorting_direction)
     return KOR.tables:sortByPropDescendingAndSetTopItems(items, sorting_prop, function(item)
         return item.xray_type == 2 or item.xray_type == 4
     end)
+end
+
+function XrayModel:addTags(tags)
+    local tag
+    local items = DX.m:splitByCommaOrSpace(tags)
+    for i = 1, #items do
+        tag = items[i]
+        if not self.tags_relational[tag] then
+            self.tags_relational[tag] = true
+        end
+    end
+end
+
+function XrayModel:sortTags()
+    for key in pairs(self.tags_relational) do
+        table_insert(self.tags, key)
+    end
+    table_sort(self.tags)
 end
 
 function XrayModel:addLinkedItemsAsContextButtonsForViewer(buttons, needle_item, max_per_row, context_buttons_max_buttons, tapped_word)
@@ -261,7 +283,7 @@ function XrayModel:switchFirstAndSurName(name)
             table_insert(parts, name_parts[nr])
         end
     end
-    return table.concat(parts, " ")
+    return table_concat(parts, " ")
 end
 
 function XrayModel:getCurrentItemsForView()
