@@ -323,6 +323,13 @@ function XrayController:filterItemsByImportantTypes()
     DX.d:showListWithRestoredArguments()
 end
 
+function XrayController:filterItemsByTag(filter_tag)
+    DX.vd:setProp("filter_tag", filter_tag)
+    --! this reset is essential to make filtering possible:
+    DX.vd:updateItemsTable(nil, "reset_item_table_for_filter")
+    DX.d:showListWithRestoredArguments()
+end
+
 function XrayController:filterItemsByText(filter_string)
     DX.vd:setProp("filter_string", filter_string)
     --! this reset is essential to make filtering possible:

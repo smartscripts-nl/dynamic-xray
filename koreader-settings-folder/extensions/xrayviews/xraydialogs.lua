@@ -345,7 +345,7 @@ end
 function XrayDialogs:notifyFilterResult(filter_active, filtered_count)
     self.filter_state = filtered_count == 0 and "unfiltered" or "filtered"
     if filter_active and filtered_count == 0 then
-        local message = has_text(DX.m.filter_string) and T(_("geen items gevonden met filter \"%1\"..."), DX.m.filter_string) or _("no items found with this filter...")
+        local message = has_text(DX.vd.filter_string) and T(_("geen items gevonden met filter \"%1\"..."), DX.vd.filter_string) or _("no items found with this filter...")
         self:setActionResultMessage(message)
     end
 end

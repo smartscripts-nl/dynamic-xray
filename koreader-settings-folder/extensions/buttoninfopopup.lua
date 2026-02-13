@@ -3,7 +3,6 @@
 
 local require = require
 
-local Blitbuffer = require("ffi/blitbuffer")
 local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
@@ -279,9 +278,20 @@ end
 function ButtonInfoPopup:forXrayFilterByImportantType(props)
 	return KOR.buttonprops:set({
 		text = KOR.icons.xray_person_important_bare .. "/" .. KOR.icons.xray_term_important_bare,
-		fgcolor = Blitbuffer.COLOR_GRAY_3,
+		fgcolor = KOR.colors.button_label,
 		font_bold = false,
 		info = _("dark icons | Filter the Xray items for important persons and terms."),
+		callback_label = _("filter"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forXrayFilterByTag(props)
+	return KOR.buttonprops:set({
+		text = KOR.icons.tag_open_bare,
+		fgcolor = KOR.colors.button_label,
+		font_bold = false,
+		info = _("tag icon | Filter the Xray items by a tag."),
 		callback_label = _("filter"),
 		--! callback defined by calling module
 	}, props)
@@ -533,7 +543,7 @@ end
 
 function ButtonInfoPopup:forXrayToggleImportantItem(props)
 	return KOR.buttonprops:set({
-		fgcolor = Blitbuffer.COLOR_GRAY_3,
+		fgcolor = KOR.colors.button_label,
 		font_bold = false,
 		info = _("dark icons | Toggle to mark this xray-item as important or regular item."),
 		callback_label = _("toggle"),
@@ -560,7 +570,7 @@ end
 
 function ButtonInfoPopup:forXrayTogglePersonOrTerm(props)
 	return KOR.buttonprops:set({
-		fgcolor = Blitbuffer.COLOR_GRAY_3,
+		fgcolor = KOR.colors.button_label,
 		font_bold = false,
 		info = _("user of bulb icon | Toggle to mark this xray-item as person or term."),
 		callback_label = _("toggle"),
@@ -619,7 +629,7 @@ function ButtonInfoPopup:forXrayTypeSet(props, add_horizontal_button_padding)
 	end
 	return KOR.buttonprops:set({
 		text = label,
-		fgcolor = Blitbuffer.COLOR_GRAY_3,
+		fgcolor = KOR.colors.button_label,
 		font_bold = false,
 		info = _("user/bulb icons | Set Xray type."),
 		callback_label = ("set"),

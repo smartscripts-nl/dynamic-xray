@@ -450,29 +450,31 @@ function XrayUI:getXrayItemsFoundInText(page_or_paragraph_text) --, for_navigato
     for i = 1, count do
         -- #((get xray_item for XrayUI))
         xray_item = DX.vd.items[i]
-        short_names = has_text(xray_item.short_names)
-        xray_name = xray_item.name
-        names = { xray_name }
-        if short_names then
-            parts = KOR.strings:split(short_names, ", +")
-            KOR.tables:merge(names, parts)
-        end
-
-        --* for case insensitive matching:
-        local lower_text = KOR.strings:lower(page_or_paragraph_text)
-        names_count = #names
-        for nr = 1, names_count do
-            xname = names[nr]
-            hit_found = self:matchNameInPageOrParagraph(page_or_paragraph_text, lower_text, xname, hits, partial_hits, explanations, xray_item, nr)
-            if hit_found then
-                a_name_matched = true
-                break
+        if xray_item then
+            short_names = has_text(xray_item.short_names)
+            xray_name = xray_item.name
+            names = { xray_name }
+            if short_names then
+                parts = KOR.strings:split(short_names, ", +")
+                KOR.tables:merge(names, parts)
             end
-            if has_text(xray_item.aliases) then
-                alias_match_found = self:matchAliasesToParagraph(page_or_paragraph_text, hits, explanations, xray_item)
-                if alias_match_found then
-                    an_alias_matched = true
+
+            --* for case insensitive matching:
+            local lower_text = KOR.strings:lower(page_or_paragraph_text)
+            names_count = #names
+            for nr = 1, names_count do
+                xname = names[nr]
+                hit_found = self:matchNameInPageOrParagraph(page_or_paragraph_text, lower_text, xname, hits, partial_hits, explanations, xray_item, nr)
+                if hit_found then
+                    a_name_matched = true
                     break
+                end
+                if has_text(xray_item.aliases) then
+                    alias_match_found = self:matchAliasesToParagraph(page_or_paragraph_text, hits, explanations, xray_item)
+                    if alias_match_found then
+                        an_alias_matched = true
+                        break
+                    end
                 end
             end
         end

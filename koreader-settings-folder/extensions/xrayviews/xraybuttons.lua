@@ -1158,6 +1158,16 @@ function XrayButtons:forFilterDialog()
                     DX.c:filterItemsByImportantTypes()
                 end,
             }),
+            KOR.buttoninfopopup:forXrayFilterByTag({
+                callback = function()
+                    --* items de facto filtered by text in ((XrayViewsData#filterAndPopulateItemTables)):
+                    local form = DX.d.filter_xray_items_input
+                    local filter_tag = form:getInputText()
+                    KOR.dialogs:closeOverlay()
+                    UIManager:close(DX.d.filter_xray_items_input)
+                    DX.c:filterItemsByTag(filter_tag)
+                end,
+            }),
             KOR.buttoninfopopup:forXrayFilterByText({
                 icon_size_ratio = icon_size_ratio,
                 is_enter_default = true,

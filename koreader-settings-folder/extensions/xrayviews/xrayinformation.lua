@@ -22,6 +22,7 @@ local XrayInformation = WidgetContainer:extend {
         last_name = KOR.icons.xray_half_right_bare,
         partial_match = KOR.icons.xray_partial_bare,
         linked_item = KOR.icons.xray_link_bare,
+        tag = KOR.icons.tag_open_bare,
     },
 }
 

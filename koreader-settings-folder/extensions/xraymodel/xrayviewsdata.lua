@@ -41,6 +41,7 @@ local XrayViewsData = WidgetContainer:new{
     filtered_count = 0,
     filter_state = "unfiltered",
     filter_string = "",
+    filter_tag = "",
     filter_xray_types = nil,
     info_indent = "     ",
     item_meta_info_template = "<tr><td><ul><li>%1</li></ul></td><td>&nbsp;</td><td>%2</td></tr>",
@@ -122,6 +123,7 @@ end
 function XrayViewsData:resetAllFilters()
     self.filter_xray_types = nil
     self.filter_string = ""
+    self.filter_tag = ""
     self.filter_state = "unfiltered"
 end
 
@@ -172,6 +174,15 @@ function XrayViewsData:updateItemsTable(select_number, reset_item_table_for_filt
             return nil, false
         else
             title = source .. " - " .. self.filter_string
+        end
+
+    elseif self.filter_tag and self.filter_tag:len() >= 3 then
+        --* when no xray_items found with the current filter:
+        if #self.items == 0 then
+            --select_number, title = self:noItemsFoundWithFilterHandler("niets gevonden met \"" .. self.filter_string .. "\"...")
+            return nil, false
+        else
+            title = source .. " - tag: " .. self.filter_tag
         end
     else
         title = source
@@ -726,14 +737,35 @@ end
 --- @private
 function XrayViewsData:filterAndAddItemToItemTables(items, n, search_needles, linked_item_needles, hits_registry)
 
-    local list_item, matched, reliability_indicator
+    local list_item, matched, tag_matched, reliability_indicator
+
+    local has_filter_tag = has_text(self.filter_tag)
+    if has_filter_tag then
+        self.filter_string = nil
+    end
 
     local item = items[n]
+    if not has_filter_tag then
     self.type_matched = self:applyTypeFilters(item)
+    else
+        self.type_matched = false
+    end
 
-    matched, reliability_indicator, hits_registry = self:applyTextFilters(item, linked_item_needles, hits_registry)
+    if not has_filter_tag then
+        matched, reliability_indicator, hits_registry = self:applyTextFilters(item, linked_item_needles, hits_registry)
+    elseif has_text(item.tags) then
+        tag_matched = item.tags and item.tags:match(self.filter_tag)
+        if tag_matched then
+            reliability_indicator = DX.i.match_reliability_indicators.tag
+            self.filtered_count = self.filtered_count + 1
+        end
+    end
 
-    local insert_item = (not search_needles and not self.filter_xray_types) or (search_needles and matched) or (self.filter_xray_types and self.type_matched)
+    local insert_item =
+        (not search_needles and has_no_text(self.filter_tag) and not self.filter_xray_types)
+        or (search_needles and matched)
+        or tag_matched
+        or (self.filter_xray_types and self.type_matched)
 
     --* now: build menu row if this subject list is active and (no filter or matched)
     if insert_item then
@@ -1266,7 +1298,7 @@ function XrayViewsData:filterAndPopulateItemTables(data_items)
     end
 
     --* loop for items which had full or partial matching AND had linkwords; now we search for those linkwords, to get all items linked to these main items:
-    if not self.search_simple then
+    if not self.search_simple and has_no_text(self.filter_tag) then
         self:populateItemTableFromLinkWords(linked_item_needles, items, hits_registry)
     end
 
@@ -1556,7 +1588,7 @@ end
 
 function XrayViewsData:setProp(prop, value)
     self[prop] = value
-    if prop == "filter_string" then
+    if prop == "filter_string" or prop == "filter_tag" then
         self.filter_state = has_text(value) and "filtered" or "unfiltered"
     end
 end
