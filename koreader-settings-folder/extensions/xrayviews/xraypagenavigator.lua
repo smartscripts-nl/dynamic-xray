@@ -34,6 +34,8 @@ local XrayPageNavigator = WidgetContainer:new{
     cached_items_info = {},
     current_item = nil,
     first_info_panel_text = nil,
+    --* this prop will be set from ((NavigatorBox#generateInfoButtons)):
+    info_panel_width = nil,
     initial_browsing_page = nil,
     key_events = {},
     max_line_length = DX.s.PN_info_panel_max_line_length,
@@ -44,6 +46,7 @@ local XrayPageNavigator = WidgetContainer:new{
     parent_item = nil,
     popup_buttons = nil,
     popup_menu = nil,
+    popup_menu_y_pos_computed = false,
     return_to_current_item = nil,
     return_to_item_no = nil,
     return_to_page = nil,
@@ -89,8 +92,6 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
     self.page_navigator = KOR.dialogs:navigatorBox({
         chapters_count = chapters_count,
         current_chapter_index = KOR.toc:getTocIndexByPage(DX.u:getCurrentPage()),
-        --* no computations needed when popup_menu was already created:
-        has_anchor_button = not self.popup_menu,
         html = html,
         key_events_module = key_events_module,
         info_panel_buttons = DX.b:forPageNavigator(self),
@@ -295,7 +296,6 @@ function XrayPageNavigator:setCurrentItem(item)
     self.parent_item = KOR.tables:shallowCopy(item)
 end
 
---- @private
 function XrayPageNavigator:reloadPageNavigator()
     --* this might be the case when current method called after adding/updating an Xray item, from ((XrayController#resetDynamicXray)):
     if not self.page_navigator then
@@ -428,6 +428,7 @@ function XrayPageNavigator:returnToNavigator()
     return false
 end
 
+--* this menu is created AFTER ((XrayPageNavigator#showNavigator)) has been called, so info_panel_width is available here:
 --- @private
 function XrayPageNavigator:createPopupMenu()
     if self.popup_menu then
@@ -439,7 +440,7 @@ function XrayPageNavigator:createPopupMenu()
         borderradius = Size.radius.default,
         --* these buttons were populated in ((XrayButtons#forPageNavigatorPopupButtons)):
         buttons = self.popup_buttons,
-        forced_width = KOR.anchorbutton.width,
+        forced_width = self.info_panel_width,
         tap_close_callback = function()
             self:closePopupMenu()
         end,
@@ -452,8 +453,12 @@ function XrayPageNavigator:showPopupMenu()
         self.popup_menu,
         dimen = Screen:getSize(),
     }
-    KOR.anchorbutton:setAnchorButtonCoordinates(2, self.popup_menu)
-    self.movable_popup_menu:moveToAnchor()
+    if not self.popup_menu_y_pos_computed then
+        local coords = KOR.registry:get("popup_menu_coords")
+        coords.y = coords.y - self.popup_menu.inner_height
+        self.popup_menu_y_pos_computed = true
+    end
+    self.movable_popup_menu:movePopupMenuToAboveParent()
     UIManager:show(self.movable_popup_menu)
 end
 

@@ -7,7 +7,6 @@ local pairs = pairs
 
 --* initialization of extensions, plugins etc. below is done through ((ExtensionsInit)), called from reader.lua or the init methods of plugins
 --- @class KOR
---- @field anchorbutton AnchorButton
 --- @field bookinfomanager BookInfoManager
 --- @field buttonchoicepopup ButtonChoicePopup
 --- @field buttoninfopopup ButtonInfoPopup
@@ -63,7 +62,6 @@ local KOR = WidgetContainer:new{
 
 	--* EXTENSIONS THROUGH ((ExtensionsInit)):
 
-	anchorbutton = nil,
 	bookinfomanager = nil,
 	buttonprops = nil,
 	buttontablefactory = nil,
@@ -106,7 +104,6 @@ local KOR = WidgetContainer:new{
 		"tables",
 		"keyevents",
 
-		"anchorbutton",
 		"bookinfomanager",
 		"buttonprops",
 		"buttontablefactory",

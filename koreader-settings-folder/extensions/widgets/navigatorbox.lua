@@ -20,6 +20,7 @@ local TextWidget = require("extensions/widgets/textwidget")
 local TitleBar = require("extensions/widgets/titlebar")
 local UIManager = require("ui/uimanager")
 local VerticalGroup = require("ui/widget/verticalgroup")
+local VerticalScrollBar = require("ui/widget/verticalscrollbar")
 local VerticalSpan = require("ui/widget/verticalspan")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 --local logger = require("logger")
@@ -77,13 +78,13 @@ local NavigatorBox = InputContainer:extend{
     current_chapter_index = nil,
     frame_content_fullscreen = nil,
     fullscreen = false,
-    has_anchor_button = false,
     height = nil,
     histogram_bottom_line_height = 0,
     histogram_height = 0,
     html = nil,
     info_panel_buttons = nil,
     info_panel_text = nil,
+    info_panel_width = nil,
     --* set by ((XrayPageNavigator#showNavigator)):
     key_events_module = nil,
     modal = true,
@@ -130,7 +131,7 @@ function NavigatorBox:init()
     self:generateSidePanel()
     self:addFrameToContentWidget()
     self:generateWidget()
-    self:registerAnchorButtonYPos()
+    self:registerPopupMenuCoords()
     self:finalizeWidget()
 end
 
@@ -272,6 +273,8 @@ function NavigatorBox:generateInfoButtons()
     --? for some reason self.side_buttons_table not available when we click on the Item Viewer button; because then self.side_buttons not set at the start of ((XraySidePanels#generateSidePanelButtons)) and the script returns, without generating the side buttons:
     self.info_panel_width = self.side_buttons_table and self.content_width - self.side_buttons_table:getSize().w or self.content_width
 
+    self.page_navigator.info_panel_width = self.info_panel_width
+
     local buttons = ButtonTable:new{
         width = self.info_panel_width,
         --* these buttons were generated in ((XrayButtons#forPageNavigator)):
@@ -279,10 +282,6 @@ function NavigatorBox:generateInfoButtons()
         show_parent = self,
         button_font_weight = "normal",
     }
-
-    if self.has_anchor_button then
-        KOR.anchorbutton:setHeight(buttons:getSize().h)
-    end
 
     local buttons_height = buttons:getSize().h
     self.info_panel_nav_buttons = CenterContainer:new{
@@ -632,13 +631,15 @@ function NavigatorBox:generateWidget()
 end
 
 --- @private
-function NavigatorBox:registerAnchorButtonYPos()
-    --? strange that we don't have to subtract self.info_panel_height here to get the correct result:
-    --* but y pos computation is a bit wacky; compare comment in ((MovableContainer#moveToAnchor)):
-    local scale_factor = DX.s.PN_popup_menu_y_offset + 8
-    local computed_y_pos = self.screen_height - self.content_padding_v - self.info_panel_nav_buttons_height - self.histogram_height - self.histogram_bottom_line_height - Screen:scaleBySize(scale_factor)
+function NavigatorBox:registerPopupMenuCoords()
+    local computed_y_pos = self.screen_height - self.content_padding_v - self.histogram_height + self.histogram_bottom_line_height - self.info_panel_height + math_floor(self.info_panel_nav_buttons_height / 2) + Size.line.thin
 
-    KOR.registry:set("anchor_button_y_pos", computed_y_pos)
+    local computed_x_pos = self.content_padding_h + VerticalScrollBar:getSize().w + Size.line.medium
+
+    KOR.registry:set("popup_menu_coords", {
+        x = computed_x_pos,
+        y = computed_y_pos,
+    })
 end
 
 --- @private

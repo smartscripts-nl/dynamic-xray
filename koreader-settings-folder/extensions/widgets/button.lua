@@ -106,7 +106,6 @@ local Button = InputContainer:extend {
     indicator_max_width = 60,
     info_callback = nil,
     is_active_tab = false,
-    is_anchor_button = false,
     is_tab_button = false,
     label_max_width = nil,
     readonly = false,
@@ -128,7 +127,6 @@ function Button:init()
     self:setWidgetContent()
     self:adaptPaddings()
     self:finalizeWidget()
-    self:setAnchorButtonWidth()
 end
 
 --- @private
@@ -232,7 +230,7 @@ end
 
 --- @private
 function Button:setTextProps()
-    --? for which case is this used: close button?:
+    --? for which case is this used; close button?:
     if self.text == "X" and self.icon then
         self.icon = nil
     end
@@ -275,6 +273,8 @@ end
 
 --- @private
 function Button:setWidgetContent()
+    --- set FrameContainer content
+
     local widget
     if not self._min_needed_additional_width then
         widget = HorizontalGroup:new{ self.label_widget }
@@ -703,8 +703,6 @@ end
 
 function Button:onTapSelectButton(irr, pos)
     irr = pos
-    --* e.g. for consumption in ((AnchorButton#setAnchorButtonCoordinates)):
-    KOR.registry:set("button_tap_pos", pos.pos)
     if self.enabled or self.allow_tap_when_disabled then
         if self.callback then
             if G_reader_settings:isFalse("flash_ui") then
@@ -1028,12 +1026,6 @@ function Button:addTitleBarTabButtonProps(props, active_condition_true)
     props.margin = Size.margin.fine_tune
     props.fgcolor = active_condition_true and KOR.colors.active_tab or KOR.colors.inactive_tab
     props.bordercolor = active_condition_true and KOR.colors.button_default or KOR.colors.inactive_tab
-end
-
-function Button:setAnchorButtonWidth()
-    if self.is_anchor_button then
-        KOR.anchorbutton:setWidth(self.width)
-    end
 end
 
 return Button

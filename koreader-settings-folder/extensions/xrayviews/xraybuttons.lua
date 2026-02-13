@@ -203,7 +203,6 @@ function XrayButtons:forPageNavigator(parent)
              end
          },
         KOR.buttoninfopopup:forXrayButtonsPopup({
-            is_anchor_button = true,
             callback = function()
                 return DX.cb:execShowPopupButtonsCallback(parent)
             end
@@ -280,59 +279,53 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
         parent:restoreNavigator()
         self:showImportReadyNotification()
     end
-    return {
+    return {{
         {
-            KOR.buttoninfopopup:forSeriesCurrentBook({
-                callback = function()
-                    parent:closePopupMenu()
-                    KOR.seriesmanager:showSeriesForEbookPath()
-                end
-            })
+            icon = "back",
+            callback = function()
+                parent:closePopupMenu()
+            end
         },
-        {
-            KOR.buttoninfopopup:forXrayList({
-                callback = function()
-                    parent:closePopupMenu()
-                    return DX.cb:execShowListCallback()
-                end
-            })
-        },
-        {
-            KOR.buttoninfopopup:forXrayExport({
-                callback = function()
-                    parent:closePopupMenu()
-                    return DX.cb:execExportXrayItemsCallback()
-                end
-            })
-        },
-        {
-            KOR.buttonchoicepopup:forXrayItemsImport({
-                callback = function()
-                    DX.d:showRefreshHitsForCurrentEbookConfirmation(dialog_close_callback, upon_ready_callback)
-                end,
-                hold_callback = function()
-                    DX.d:showImportFromOtherSeriesDialog(dialog_close_callback, upon_ready_callback)
-                end
-            })
-        },
-        {
-            KOR.buttoninfopopup:forSearchAllLocations({
-                info = _("search-list-icon | Show all occurrences in the book of the item currently displayed below."),
-                callback = function()
-                    parent:closePopupMenu()
-                    return DX.cb:execShowItemOccurrencesCallback()
-                end
-            }),
-        },
-        {
-            KOR.buttoninfopopup:forXrayPageNavigatorShowPageBrowser({
-                callback = function()
-                    parent:closePopupMenu()
-                    return DX.cb:execShowPageBrowserCallback(parent)
-                end,
-            }),
-        },
-    }
+        KOR.buttoninfopopup:forXrayList({
+            callback = function()
+                parent:closePopupMenu()
+                return DX.cb:execShowListCallback()
+            end
+        }),
+        KOR.buttoninfopopup:forXrayExport({
+            callback = function()
+                parent:closePopupMenu()
+                return DX.cb:execExportXrayItemsCallback()
+            end
+        }),
+        KOR.buttonchoicepopup:forXrayItemsImport({
+            callback = function()
+                DX.d:showRefreshHitsForCurrentEbookConfirmation(dialog_close_callback, upon_ready_callback)
+            end,
+            hold_callback = function()
+                DX.d:showImportFromOtherSeriesDialog(dialog_close_callback, upon_ready_callback)
+            end
+        }),
+        KOR.buttoninfopopup:forSearchAllLocations({
+            info = _("search-list-icon | Show all occurrences in the book of the item currently displayed below."),
+            callback = function()
+                parent:closePopupMenu()
+                return DX.cb:execShowItemOccurrencesCallback()
+            end
+        }),
+        KOR.buttoninfopopup:forXrayPageNavigatorShowPageBrowser({
+            callback = function()
+                parent:closePopupMenu()
+                return DX.cb:execShowPageBrowserCallback(parent)
+            end,
+        }),
+        KOR.buttoninfopopup:forSeriesCurrentBook({
+            callback = function()
+                parent:closePopupMenu()
+                KOR.seriesmanager:showSeriesForEbookPath()
+            end
+        }),
+    }}
 end
 
 --- @param parent XrayPageNavigator
