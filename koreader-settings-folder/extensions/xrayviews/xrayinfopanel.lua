@@ -72,7 +72,7 @@ function XrayInfoPanel:generateInfoPanel(info_text, height, width, parent)
     --* info_text was generated in ((XrayPageNavigator#showNavigator)) > ((XrayPages#markItemsFoundInPageHtml)) > ((XrayPages#markItem)) > ((XrayPageNavigator#getItemInfoText)):
     return ScrollTextWidget:new{
         text = info_text,
-        face = Font:getFace("redhat", DX.s.PN_panels_font_size or 14),
+        face = Font:getFace("x_smallinfofont", DX.s.PN_panels_font_size or 14),
         line_height = 0.16,
         alignment = "left",
         justified = false,
