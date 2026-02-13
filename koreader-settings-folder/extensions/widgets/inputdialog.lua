@@ -123,6 +123,7 @@ local T = require("ffi/util").template
 local util = require("util")
 local _ = require("gettext")
 
+local DX = DX
 local has_no_text = has_no_text
 local has_text = has_text
 local math = math
@@ -637,6 +638,8 @@ function InputDialog:isTextEdited()
 end
 
 function InputDialog:onShow()
+    --* disable global hotkeys; they will be re-instated in ((InputDialog#onCloseWidget)):
+    KOR.keyevents:disableHotkeysForReaderUI()
     UIManager:setDirty(self, function()
         return "ui", self.dialog_frame.dimen
     end)
@@ -644,6 +647,8 @@ end
 
 function InputDialog:onCloseWidget()
     self:onClose()
+    --* re-instate global hotkeys which were disabled in ((InputDialog#onShow)):
+    DX.c:addGlobalHotkeys()
     UIManager:setDirty(nil, self.fullscreen and "full" or function()
         return "ui", self.dialog_frame.dimen
     end)

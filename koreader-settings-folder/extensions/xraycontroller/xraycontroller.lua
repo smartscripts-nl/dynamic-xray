@@ -301,8 +301,12 @@ function XrayController:onReaderReady()
         KOR.messages:notify("dynamic xray could not be initiated...")
         return
     end
-    KOR.keyevents:addHotkeysForReaderUI(self)
+    self:addGlobalHotkeys()
     self:resetDynamicXray(false, "do_full_update")
+end
+
+function XrayController:addGlobalHotkeys()
+    KOR.keyevents:addHotkeysForReaderUI(self)
 end
 
 function XrayController:onSetRotationMode()

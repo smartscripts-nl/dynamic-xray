@@ -109,13 +109,13 @@ function XrayViewsData:resetData()
     self.persons = {}
     self.terms = {}
     self.filtered_count = 0
+    --! crucial to prevent seemingly duplicated items upon adding new items:
+    self.item_table = { {}, {}, {} }
     self.item_table_for_filter = {
         {}, --* all
         {}, --* persons
         {}, --* terms
     }
-    --! crucial to prevent seemingly duplicated items upon adding new items:
-    self.item_table = { {}, {}, {} }
     self.current_tab_items = nil
     self:resetAllFilters()
 end

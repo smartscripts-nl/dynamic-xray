@@ -108,13 +108,13 @@ end
 --* here we add global hotkeys for ReaderUI:
 --- @param parent XrayController
 function KeyEvents:addHotkeysForReaderUI(parent)
-    parent.is_docless = parent.ui == nil or parent.ui.document == nil
-    --* first condition: don't create the method anew every time you open another ebook:
-    if parent.ui.ShowXrayHelp or parent.is_docless or not Device:hasKeys() then
+    local is_docless = KOR.ui == nil or KOR.ui.document == nil
+    --* first condition: points to the event handler: don't create the method anew every time you open another ebook:
+    if is_docless or KOR.ui.ShowXrayHelpUI or not Device:hasKeys() then
         return
     end
-    local readerui = parent.ui
 
+    local readerui = KOR.ui
     readerui.key_events.ShowXrayHelpUI = { { "Shift", { "H" } } }
     readerui.onShowXrayHelpUI = function()
         return DX.i:showPageNavigatorHelp(parent, 3)
@@ -134,6 +134,28 @@ function KeyEvents:addHotkeysForReaderUI(parent)
     readerui.onShowPageNavigatorUI = function()
         DX.c:onShowPageNavigator()
     end
+end
+
+--* disable
+function KeyEvents:disableHotkeysForReaderUI()
+    local is_docless = KOR.ui == nil or KOR.document == nil
+    --* first condition: points to the event handler: don't create the method anew every time you open another ebook:
+    if is_docless or not Device:hasKeys() then
+        return
+    end
+
+    local readerui = KOR.ui
+    readerui.key_events.ShowXrayHelpUI = nil
+    readerui.onShowXrayHelpUI = nil
+
+    readerui.key_events.ShowXrayListUI = nil
+    readerui.onShowXrayListUI = nil
+
+    readerui.key_events.ShowCurrentSeriesUI = nil
+    readerui.onShowCurrentSeriesUI = nil
+
+    readerui.key_events.ShowPageNavigatorUI = nil
+    readerui.onShowPageNavigatorUI = nil
 end
 
 --* here we add generic hotkeys for ScrollTextWidget, but a caller might already have added specific hotkeys for that module:
