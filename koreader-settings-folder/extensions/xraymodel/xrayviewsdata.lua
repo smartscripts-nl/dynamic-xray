@@ -113,6 +113,8 @@ function XrayViewsData:resetData()
         {}, --* persons
         {}, --* terms
     }
+    --! crucial to prevent seemingly duplicated items upon adding new items:
+    self.item_table = { {}, {}, {} }
     self.current_tab_items = nil
     self:resetAllFilters()
 end
@@ -234,9 +236,11 @@ end
 function XrayViewsData:addItemToPersonsOrTerms(item)
     local item_copy = KOR.tables:shallowCopy(item)
     if DX.m:isPerson(item) then
+        table_insert(self.item_table[2], item_copy)
         item_copy.index = #self.persons + 1
         table_insert(self.persons, item_copy)
     else
+        table_insert(self.item_table[3], item_copy)
         item_copy.index = #self.terms + 1
         table_insert(self.terms, item_copy)
     end
@@ -297,10 +301,10 @@ end
 function XrayViewsData:getCurrentListTabItems(needle_item)
     --* this will sometimes be the case when we first call up a definition through ReaderHighlight, before calling the Items List:
     if has_no_items(self.current_tab_items) then
-        if has_items(DX.m.items_by_id) then
-            self.items = KOR.tables:shallowCopy(DX.m.items_by_id)
-            self.persons = KOR.tables:shallowCopy(DX.m.persons_by_id)
-            self.terms = KOR.tables:shallowCopy(DX.m.terms_by_id)
+        if has_items(self.item_table[1]) then
+            self.items = KOR.tables:shallowCopy(self.item_table[1])
+            self.persons = KOR.tables:shallowCopy(self.item_table[2])
+            self.terms = KOR.tables:shallowCopy(self.item_table[3])
         else
             self.initData("force_refresh")
             self.prepareData()
