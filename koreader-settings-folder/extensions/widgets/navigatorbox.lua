@@ -302,24 +302,10 @@ function NavigatorBox:generateInfoPanel()
     --* info_text was generated in ((XrayPageNavigator#showNavigator)) > ((XrayPages#markItemsFoundInPageHtml)) > ((XrayPages#markItem)) > ((XrayPageNavigator#getItemInfoText)):
     local info_text = self.info_panel_text or " "
     local info_panel_height = math_floor(self.screen_height * DX.s.PN_info_panel_height)
-    self.info_panel = ScrollTextWidget:new{
-        text = info_text,
-        face = Font:getFace("x_smallinfofont", DX.s.PN_panels_font_size or 14),
-        line_height = 0.16,
-        alignment = "left",
-        justified = false,
-        dialog = self,
-        --* info_panel_width was computed in ((NavigatorBox#generateInfoButtons)):
-        width = self.info_panel_width,
-        height = info_panel_height,
-    }
-    self.info_panel_separator = LineWidget:new{
-        background = KOR.colors.line_separator,
-        dimen = Geom:new{
-            w = self.info_panel_width,
-            h = Size.line.thick,
-        }
-    }
+
+    self.info_panel = DX.ip:generateInfoPanel(info_text, info_panel_height, self.info_panel_width, self)
+    self.info_panel_separator = DX.ip:generateInfoPanelSeparator(self.info_panel_width)
+
     self.info_panel_height = self.info_panel:getSize().h
     self.info_panel_separator_height = self.info_panel_separator:getSize().h
     height = height - self.info_panel_height - self.info_panel_separator_height - self.info_panel_nav_buttons_height

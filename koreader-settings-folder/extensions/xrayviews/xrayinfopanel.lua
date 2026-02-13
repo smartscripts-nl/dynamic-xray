@@ -3,8 +3,13 @@
 
 local require = require
 
+local Font = require("extensions/modules/font")
+local Geom = require("ui/geometry")
 local KOR = require("extensions/kor")
+local LineWidget = require("ui/widget/linewidget")
+local ScrollTextWidget = require("extensions/widgets/scrolltextwidget")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
+local Size = require("extensions/modules/size")
 
 local DX = DX
 local has_text = has_text
@@ -60,6 +65,32 @@ function XrayInfoPanel:getInfoPanelText()
     --* xray_item.info_text for first button was generated in ((XraySidePanels#markActiveSideButton)) > ((XraySidePanels#generateInfoTextForFirstSideButton)):
     --* info_text for each button generated via ((XrayPages#markedItemRegister)) > ((XrayPageNavigator#getItemInfoText)) > ((XraySidePanels#addSideButton)):
     return side_button and (side_button.info_text or DX.pn:getItemInfoText(side_button.xray_item, "for_info_panel")) or " "
+end
+
+function XrayInfoPanel:generateInfoPanel(info_text, height, width, parent)
+
+    --* info_text was generated in ((XrayPageNavigator#showNavigator)) > ((XrayPages#markItemsFoundInPageHtml)) > ((XrayPages#markItem)) > ((XrayPageNavigator#getItemInfoText)):
+    return ScrollTextWidget:new{
+        text = info_text,
+        face = Font:getFace("redhat", DX.s.PN_panels_font_size or 14),
+        line_height = 0.16,
+        alignment = "left",
+        justified = false,
+        dialog = parent,
+        --* info_panel_width was computed in ((NavigatorBox#generateInfoButtons)):
+        width = width,
+        height = height,
+    }
+end
+
+function XrayInfoPanel:generateInfoPanelSeparator(width)
+    return LineWidget:new{
+        background = KOR.colors.line_separator,
+        dimen = Geom:new{
+            w = width,
+            h = Size.line.thick,
+        }
+    }
 end
 
 return XrayInfoPanel
