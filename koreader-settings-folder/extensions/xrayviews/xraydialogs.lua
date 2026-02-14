@@ -480,17 +480,16 @@ function XrayDialogs:_prepareItemsForList(current_tab_items, items_for_select)
 end
 
 --- @private
-function XrayDialogs:filterItemsByTag()
+function XrayDialogs:filterItemsByTag(current_tab_items)
     if not self.filter_tag then
-        return DX.vd.items
+        return current_tab_items
     end
 
-    local items = DX.vd.items
     local filtered = {}
-    count = #items
+    count = #current_tab_items
     for i = 1, count do
-        if has_text(items[i].tags) and items[i].tags:match(self.filter_tag) then
-            table_insert(filtered, items[i])
+        if has_text(current_tab_items[i].tags) and current_tab_items[i].tags:match(self.filter_tag) then
+            table_insert(filtered, current_tab_items[i])
         end
     end
     DX.vd:setProp("items", filtered)
