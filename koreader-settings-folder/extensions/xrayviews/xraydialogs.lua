@@ -280,7 +280,7 @@ function XrayDialogs:showEditItemForm(args)
         covers_fullscreen = true,
         is_borderless = true,
         is_popout = false,
-        --* saving edits: ((XrayController#saveUpdatedItem)) > ((XrayFormsData#getAndStoreEditedItem))
+        --* saving edits: ((XrayController#saveUpdatedItem)) > ((XrayFormsData#saveUpdatedItem))
         buttons = DX.b:forItemEditor("edit", active_form_tab, args.reload_manager, item_copy),
     }
 

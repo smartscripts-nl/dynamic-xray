@@ -182,7 +182,8 @@ function XrayFormsData:initEditFormProps(item, reload_manager, active_form_tab)
     return item, item_copy
 end
 
-function XrayFormsData:getAndStoreEditedItem(item_copy, field_values)
+--* compare ((XrayFormsData#saveNewItem)):
+function XrayFormsData:saveUpdatedItem(item_copy, field_values)
     if not self.edit_item_index then
         KOR.messages:notify(_("edit_item_index has not been set for this item..."))
         return
@@ -223,6 +224,7 @@ function XrayFormsData:getAndStoreEditedItem(item_copy, field_values)
     end
     edited_item.book_hits = hits_in_book_for_store
     self:storeItemUpdates("edit", edited_item)
+    parent:updateTags(edited_item)
 
     --* no filter was set, so return simply edited_item:
     if views_data.filter_state == "unfiltered" then
@@ -364,6 +366,7 @@ function XrayFormsData:getNeedleName(item)
 end
 
 --* called from add dialog and ReaderDictionary and other plugins:
+--* compare ((XrayFormsData#saveUpdatedItem)):
 -- #((XrayFormsData#saveNewItem))
 function XrayFormsData.saveNewItem(new_item)
 
@@ -390,6 +393,7 @@ function XrayFormsData.saveNewItem(new_item)
     --* always reset filters when adding a new item, to prevent problems:
     DX.c:resetFilteredItems()
     DX.ds.storeNewItem(new_item)
+    parent:updateTags(new_item, "is_new_item")
 
     --* set and store props book_hits etc. for this new item:
     views_data:setItemHits(new_item, { store_book_hits = true, mode = "add" })

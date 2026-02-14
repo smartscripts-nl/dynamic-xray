@@ -64,9 +64,9 @@ E.g. ((ReaderDictionary#onLookupWord)) > ((XrayController#saveNewItem)) > ((Xray
 
 ((XrayButtons#forItemEditor)) and then:
 
-for existing items: ((XrayController#saveUpdatedItem)) > ((XrayFormsData#getAndStoreEditedItem)) > ((XrayFormsData#storeItemUpdates)) > ((XrayDataSaver#storeUpdatedItem))
+for existing items: ((XrayController#saveUpdatedItem)) > ((XrayFormsData#saveUpdatedItem)) > ((XrayFormsData#storeItemUpdates)) > ((XrayDataSaver#storeUpdatedItem))
 
-for new items: ((XrayController#saveNewItem)) > ((XrayDataSaver#storeNewItem))
+for new items: ((XrayController#saveNewItem)) > ((XrayFormsData#saveNewItem)) > ((XrayDataSaver#storeNewItem))
 
 --* UPDATE ITEMS IN MEMORY AFTER EDITS AND ADDITIONS
 
@@ -399,7 +399,7 @@ function XrayController:saveUpdatedItem(item_copy, return_modus, reload_manager)
     end
     local field_values = DX.d.edit_item_input:getAllTabsFieldsValues()
     --* here the edited item will also be saved to the db:
-    local updated_item = DX.fd:getAndStoreEditedItem(item_copy, field_values)
+    local updated_item = DX.fd:saveUpdatedItem(item_copy, field_values)
     DX.fd:setProp("edit_item_index", nil)
 
     if not updated_item then

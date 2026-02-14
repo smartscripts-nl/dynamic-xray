@@ -41,6 +41,7 @@ series_hits is NOT a db field, it is computed dynamically by queries XrayDataLoa
 --- @class XrayDataLoader
 local XrayDataLoader = WidgetContainer:new{
     queries = {
+        --* querying series information, because this query will be used when DX is set in book display mode, but the individual books data can still contain series information:
         get_all_book_items = [[
             SELECT
                 x.id,
@@ -226,7 +227,6 @@ function XrayDataLoader:_loadAllData(mode)
 
     self:_populateViewsDataBookChapters(result)
 
-    parent.tags = {}
     parent.tags_relational = {}
     --* loop over 1 or multiple books (in series mode):
     if mode == "series" then
@@ -254,7 +254,7 @@ function XrayDataLoader:_loadDataForBook(result)
         end
         self:_addBookItem(result, i, book_index)
     end
-    parent:sortTags()
+    parent:sortAndSetTags()
 end
 
 --- @private
@@ -279,7 +279,7 @@ function XrayDataLoader:_loadDataForSeries(result)
         end
         self:_addSeriesItem(result, i, series_index)
     end
-    parent:sortTags()
+    parent:sortAndSetTags()
 end
 
 --- @private

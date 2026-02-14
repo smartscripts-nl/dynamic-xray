@@ -207,7 +207,7 @@ function XrayViewsData:getItem(item_no)
 end
 
 function XrayViewsData:setItemHits(item, args)
-    --* store_book_hits - which triggers saving of book_hits to database - will only be true when current method is called from ((XrayController#saveNewItem)) or ((XrayFormsData#getAndStoreEditedItem)):
+    --* store_book_hits - which triggers saving of book_hits to database - will only be true when current method is called from ((XrayController#saveNewItem)) or ((XrayFormsData#saveUpdatedItem)):
     local store_book_hits, for_display_mode
     if args then
         store_book_hits, for_display_mode = args.store_book_hits, args.for_display_mode
@@ -247,6 +247,7 @@ end
 --- @private
 function XrayViewsData:addItemToPersonsOrTerms(item)
     local item_copy = KOR.tables:shallowCopy(item)
+    --* item_table tables and self.items, self.persons and self.terms will be sorted later on in ((XrayViewsData#updateAndSortAllItemTables)):
     if DX.m:isPerson(item) then
         table_insert(self.item_table[2], item_copy)
         item_copy.index = #self.persons + 1
@@ -279,6 +280,7 @@ function XrayViewsData:repopulateItemsPersonsTerms(item)
                 end
             end
             self.items[i].index = i
+            table_insert(self.item_table[1], self.items[i])
             self:addItemToPersonsOrTerms(self.items[i])
         end
     end
@@ -286,6 +288,7 @@ end
 
 --* only called from ((XrayController#saveUpdatedItem)), but not for newly added items; for those we call ((XrayViewsData#registerNewItem)):
 function XrayViewsData:updateAndSortAllItemTables(item)
+    --* here we also populate self.item_table[1] etc.:
     self:repopulateItemsPersonsTerms(item)
     --* this call is also needed to add reliability and xray type icons:
     self:applyFilters()

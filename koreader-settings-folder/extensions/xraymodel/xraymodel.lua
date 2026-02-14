@@ -153,17 +153,43 @@ function XrayModel:placeImportantItemsAtTop(items, sorting_direction)
 end
 
 function XrayModel:addTags(tags)
-    local tag
-    local items = DX.m:splitByCommaOrSpace(tags)
-    for i = 1, #items do
-        tag = items[i]
-        if not self.tags_relational[tag] then
-            self.tags_relational[tag] = true
-        end
-    end
+    return self:addRelationalTags(tags)
 end
 
-function XrayModel:sortTags()
+function XrayModel:updateTags(item, is_new_item)
+    if is_new_item and has_no_text(item.tags) then
+        return
+    end
+
+    --* if an edited item has no tags, then still we must loop through all items, because a tag might have been removed from the updated item:
+    self.tags_relational = {}
+    --* take UNFILTERED items as subject:
+    local items = DX.vd.item_table[1]
+    count = #items
+    for i = 1, count do
+        self:addTags(items[i].tags)
+    end
+    self:sortAndSetTags()
+end
+
+--- @private
+function XrayModel:addRelationalTags(tags)
+    local tag
+    local tag_items = DX.m:splitByCommaOrSpace(tags)
+    local a_tag_was_added = false
+    for i = 1, #tag_items do
+        tag = tag_items[i]
+        if not self.tags_relational[tag] then
+            self.tags_relational[tag] = true
+            a_tag_was_added = true
+        end
+    end
+    return a_tag_was_added
+end
+
+--- @private
+function XrayModel:sortAndSetTags()
+    self.tags = {}
     for key in pairs(self.tags_relational) do
         table_insert(self.tags, key)
     end
