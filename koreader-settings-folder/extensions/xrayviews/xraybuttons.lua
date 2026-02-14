@@ -1188,6 +1188,13 @@ function XrayButtons:forFilterDialog()
     local icon_size_ratio = 0.45
     return {
         {
+            {
+                icon = "back",
+                callback = function()
+                    KOR.dialogs:closeOverlay()
+                    UIManager:close(DX.d.filter_xray_items_input)
+                end,
+            },
             --* filter reset button will never be needed here, because we reset filters with the filter reset button in the dialog footer; see ((XrayDialogs#getListFilter)) > ((XrayController#resetFilteredItems)):
             KOR.buttoninfopopup:forXrayFilterByImportantType({
                 callback = function()
@@ -1221,13 +1228,6 @@ function XrayButtons:forFilterDialog()
                     DX.c:filterItemsByText(filter_string)
                 end,
             }),
-            {
-                icon = "back",
-                callback = function()
-                    KOR.dialogs:closeOverlay()
-                    UIManager:close(DX.d.filter_xray_items_input)
-                end,
-            }
         }
     }
 end

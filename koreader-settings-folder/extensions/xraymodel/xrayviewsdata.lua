@@ -46,6 +46,7 @@ local XrayViewsData = WidgetContainer:new{
     info_indent = "     ",
     item_meta_info_template = "<tr><td><ul><li>%1</li></ul></td><td>&nbsp;</td><td>%2</td></tr>",
     item_table = { {}, {}, {} },
+    item_table_for_filter = { {}, {}, {} },
     --* items, persons and terms props act as some kind of temporary data store (not influenced by filters etc.) for the current ebook xray items:
     items = {},
     list_display_mode = "series", --* or "book"
@@ -679,8 +680,12 @@ function XrayViewsData:applyTextFilters(item, linked_item_needles, hits_registry
     local is_first_loop = linked_item_needles
     local is_loop_for_linked_items = not is_first_loop
 
-    if self.type_matched and has_text(self.filter_string) then
+    --* when a linked item was already found as main item, don't add it a second time as linked item:
+    if is_loop_for_linked_items and hits_registry:find(item.name, 1, true) then
+        return false, nil, hits_registry
+    end
 
+    if self.type_matched and has_text(self.filter_string) then
         if self.search_simple then
             score, reliability_indicator = tapped_words:doSimpleSearchScoreMatch(item)
         else
@@ -738,31 +743,33 @@ end
 function XrayViewsData:filterAndAddItemToItemTables(items, n, search_needles, linked_item_needles, hits_registry)
 
     local list_item, matched, tag_matched, reliability_indicator
-
     local has_filter_tag = has_text(self.filter_tag)
+    local no_filters_active = not search_needles and not has_filter_tag and not self.filter_xray_types
     if has_filter_tag then
         self.filter_string = nil
     end
-
     local item = items[n]
-    if not has_filter_tag then
-    self.type_matched = self:applyTypeFilters(item)
-    else
-        self.type_matched = false
-    end
 
-    if not has_filter_tag then
-        matched, reliability_indicator, hits_registry = self:applyTextFilters(item, linked_item_needles, hits_registry)
-    elseif has_text(item.tags) then
-        tag_matched = item.tags and item.tags:match(self.filter_tag)
-        if tag_matched then
-            reliability_indicator = DX.i.match_reliability_indicators.tag
-            self.filtered_count = self.filtered_count + 1
+    if not no_filters_active then
+        if not has_filter_tag then
+            self.type_matched = self:applyTypeFilters(item)
+        else
+            self.type_matched = false
+        end
+        if not has_filter_tag then
+            --* in first loop linked_items_needles are only populated, but in the second loop they themselves become the needles and arg linked_item_needles is nil:
+            matched, reliability_indicator, hits_registry = self:applyTextFilters(item, linked_item_needles, hits_registry)
+        elseif has_text(item.tags) then
+            tag_matched = item.tags and item.tags:match(self.filter_tag)
+            if tag_matched then
+                reliability_indicator = DX.i.match_reliability_indicators.tag
+                self.filtered_count = self.filtered_count + 1
+            end
         end
     end
 
     local insert_item =
-        (not search_needles and has_no_text(self.filter_tag) and not self.filter_xray_types)
+        no_filters_active
         or (search_needles and matched)
         or tag_matched
         or (self.filter_xray_types and self.type_matched)
@@ -802,7 +809,7 @@ end
 function XrayViewsData:populateItemTableFromLinkWords(linked_item_needles, items, hits_registry)
 
     if #linked_item_needles == 0 then
-        return
+        return hits_registry
     end
 
     linked_item_needles = table_concat(linked_item_needles, " ")
@@ -818,8 +825,10 @@ function XrayViewsData:populateItemTableFromLinkWords(linked_item_needles, items
 
     count = #items
     for n = 1, count do
-        self:filterAndAddItemToItemTables(items, n, needles)
+        hits_registry = self:filterAndAddItemToItemTables(items, n, needles, nil, hits_registry)
     end
+
+    return hits_registry
 end
 
 --* ((XrayViewsData#upgradeNeedleItem)) has to be called in the caller context, before calling getRelatedItems:
@@ -1270,7 +1279,7 @@ end
 
 --- @private
 function XrayViewsData:isFilterActive()
-    return has_text(parent.filter_string) or parent.filter_xray_types
+    return has_text(self.filter_string) or has_text(self.filter_tag) or self.filter_xray_types
 end
 
 --* filter list by text; compare finding matching items for tapped text ((TAPPED_WORD_MATCHES)) & ((XrayTappedWords#getXrayItemAsDictionaryEntry)):

@@ -288,9 +288,7 @@ end
 
 function ButtonInfoPopup:forXrayFilterByTag(props)
 	return KOR.buttonprops:set({
-		text = KOR.icons.tag_open_bare,
-		fgcolor = KOR.colors.button_label,
-		font_bold = false,
+		icon = "tags",
 		info = _("tag icon | Filter the Xray items by a tag."),
 		callback_label = _("filter"),
 		--! callback defined by calling module

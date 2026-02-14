@@ -421,7 +421,7 @@ end
 
 --- @private
 function XrayDialogs:getListFilter()
-    if self.filter_tag then
+    if has_text(self.filter_tag) then
         return {
             state = "filtered",
             callback = function()
@@ -482,7 +482,7 @@ end
 --- @private
 function XrayDialogs:filterItemsByTag()
     if not self.filter_tag then
-        return
+        return DX.vd.items
     end
 
     local items = DX.vd.items
@@ -493,6 +493,8 @@ function XrayDialogs:filterItemsByTag()
             table_insert(filtered, items[i])
         end
     end
+    DX.vd:setProp("items", filtered)
+    DX.vd:setProp("filtered_count", #filtered)
     return filtered
 end
 
@@ -644,7 +646,7 @@ function XrayDialogs:showList(focus_item, dont_show, select_mode)
     --! this condition is needed to prevent this call from triggering ((XrayViewsData#prepareData)) > ((XrayViewsData#indexItems)), because that last call will be done at the proper time via ((XrayDialogs#showList)) > ((XrayModel#getCurrentItemsForView)) > ((XrayViewsData#getCurrentListTabItems)) > ((XrayViewsData#prepareData)) > ((XrayViewsData#indexItems)):
     local current_tab_items = not new_item and DX.m:getCurrentItemsForView()
 
-    self.filter_tag = KOR.registry:getOnce("immediate_filter_tag")
+    self.filter_tag = KOR.registry:get("persistent_filter_tag")
     current_tab_items = self:filterItemsByTag(current_tab_items)
 
     local items_for_select = {}
