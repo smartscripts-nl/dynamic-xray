@@ -86,7 +86,11 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
     self:closePageNavigator()
     local html = self:loadDataForPage()
     local item = DX.sp:getCurrentTabItem()
-    local chapters_count, ratio_per_chapter, occurrences_per_chapter = self:computeHistogramData(item)
+    local chapters_count, ratio_per_chapter, occurrences_per_chapter
+    --* if there were no Xray items found in the page, item will be nil:
+    if item then
+        chapters_count, ratio_per_chapter, occurrences_per_chapter = self:computeHistogramData(item)
+    end
 
     local key_events_module = "XrayPageNavigator"
     self.page_navigator = KOR.dialogs:navigatorBox({
