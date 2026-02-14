@@ -30,7 +30,7 @@ local DX = DX
 local has_no_items = has_no_items
 local has_no_text = has_no_text
 local has_text = has_text
-local math = math
+local math_floor = math.floor
 local table = table
 local table_insert = table.insert
 local tostring = tostring
@@ -327,7 +327,7 @@ search for hits in the name, aliases or short names and show linked items for th
             DX.vd:setProp("search_simple", self.check_button_descriptions.checked)
         end,
     }
-    local checkbox_shift = math.floor((self.filter_xray_items_input.width - self.filter_xray_items_input._input_widget.width) / 2 + 0.5)
+    local checkbox_shift = math_floor((self.filter_xray_items_input.width - self.filter_xray_items_input._input_widget.width) / 2 + 0.5)
     local check_buttons = HorizontalGroup:new{
         HorizontalSpan:new{ width = checkbox_shift },
         VerticalGroup:new{
@@ -609,7 +609,7 @@ function XrayDialogs:showJumpToChapterDialog()
         title = "Jump to chapter",
         description = _("Enter number as seen at the front of the items in the chapter list in tab 2 (current location will be added to location stack):"),
         input_type = "number",
-        width = math.floor(Screen:getWidth() * 2.3 / 5),
+        width = math_floor(Screen:getWidth() * 2.3 / 5),
         callback = function(chapter_no)
             if not chapter_no then
                 KOR.messages:notify(_("please enter a valid page number..."))
@@ -963,6 +963,43 @@ end
 function XrayDialogs:viewPreviousTappedWordItem()
     self:closeViewer()
     self:viewTappedWordItem(DX.tw:getPreviousItem())
+end
+
+function XrayDialogs:showTagSelector()
+    local tags = DX.m.tags
+    if has_no_items(tags) then
+        KOR.messages:notify("je hebt nog geen tags aan items toegekend…")
+        return
+    end
+    local buttons_per_row = 4
+    local buttons = { {} }
+    local row = 1
+    local tags_dialog
+    local button_width = math_floor(Screen:getWidth() / 6)
+    count = #tags
+    local dialog_width = count < buttons_per_row and count * button_width or buttons_per_row * button_width
+    for i = 1, count do
+        table_insert(buttons[row], {
+            text = tags[i],
+            font_bold = false,
+            width = button_width,
+            callback = function()
+                UIManager:close(tags_dialog)
+                DX.c:filterItemsByTag(tags[i], "filter_immediately")
+            end,
+        })
+        if i > 1 and i % buttons_per_row == 0 then
+            table_insert(buttons, {})
+            row = row + 1
+        end
+    end
+    tags_dialog = ButtonDialogTitle:new {
+        title = "tag-groepen",
+        subtitle = "deze groepsnamen kunnen gebruikt worden om de Items Lijst te filteren op deze tags…",
+        width = dialog_width,
+        buttons = buttons,
+    }
+    UIManager:show(tags_dialog)
 end
 
 --* compare ((XrayButtons#handleMoreButtonClick)), for the popup after the user tapped on the "More..." button:
