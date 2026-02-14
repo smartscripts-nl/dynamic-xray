@@ -117,6 +117,7 @@ function XrayDialogs:closeForm(mode)
     --* edit mode:
     UIManager:close(self.edit_item_input)
     self.edit_item_input = nil
+    KOR.screenhelpers:refreshScreen()
 
     --* this prop can be set in ((XrayButtons#forItemViewer)) > ((enable return to viewer)), when the user opens an edit form:
     if DX.c.return_to_viewer and DX.vd.current_item then
@@ -442,6 +443,7 @@ function XrayDialogs:getListFilter()
                 self:showFilterDialog()
             end,
             reset_callback = function()
+                --* force_data_update doesn't involve reloading of data from database:
                 DX.c:resetFilteredItems("force_data_update")
                 self:showListWithRestoredArguments()
             end,
@@ -453,6 +455,7 @@ function XrayDialogs:getListFilter()
             self:showFilterDialog()
         end,
         reset_callback = function()
+            --* force_data_update doesn't involve reloading of data from database:
             DX.c:resetFilteredItems("force_data_update")
             self:showListWithRestoredArguments()
         end,
