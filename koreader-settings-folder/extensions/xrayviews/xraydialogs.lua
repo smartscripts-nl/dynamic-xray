@@ -442,7 +442,7 @@ function XrayDialogs:getListFilter()
                 self:showFilterDialog()
             end,
             reset_callback = function()
-                DX.c:resetFilteredItems()
+                DX.c:resetFilteredItems("force_data_update")
                 self:showListWithRestoredArguments()
             end,
         }
@@ -453,7 +453,7 @@ function XrayDialogs:getListFilter()
             self:showFilterDialog()
         end,
         reset_callback = function()
-            DX.c:resetFilteredItems()
+            DX.c:resetFilteredItems("force_data_update")
             self:showListWithRestoredArguments()
         end,
     }
