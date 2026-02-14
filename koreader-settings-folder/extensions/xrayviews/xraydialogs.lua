@@ -350,6 +350,20 @@ function XrayDialogs:notifyFilterResult(filter_active, filtered_count)
     end
 end
 
+function XrayDialogs:notifyFilterResult(filter_active, filtered_count)
+    self.filter_state = filtered_count == 0 and "unfiltered" or "filtered"
+    if filter_active and filtered_count == 0 then
+        local message
+        if DX.vd.filter_tag then
+            message = T(_("no items found with tag \"%1\"..."), DX.vd.filter_tag)
+            self:setActionResultMessage(message)
+            return
+        end
+        message = has_text(DX.vd.filter_string) and T(_("no items found with filter \"%1\""), DX.vd.filter_string) .. "..." or _("no items found with this filter") .. "..."
+        self:setActionResultMessage(message)
+    end
+end
+
 --* information for this dialog was generated in ((ReaderView#paintTo)) > ((XrayUI#ReaderViewGenerateXrayInformation))
 --* extra buttons (from xray items) were populated in ((XrayUI#ReaderHighlightGenerateXrayInformation))
 --* current method called from callback in ((xray paragraph info callback)):
@@ -510,7 +524,12 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
     end
 
     if self.filter_tag then
-        title = title .. " - " .. _("tag") .. ": " .. self.filter_tag
+        if DX.vd.filtered_count == 0 then
+            DX.c:resetFilteredItems()
+            self.filter_tag = nil
+        else
+            title = title .. " - " .. _("tag") .. ": " .. self.filter_tag
+        end
     end
 
     --* goto page where recently displayed xray_item can be found in the manager:

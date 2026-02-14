@@ -39,7 +39,6 @@ local XrayViewsData = WidgetContainer:new{
     current_item = nil,
     current_tab_items = nil,
     filtered_count = 0,
-    filter_state = "unfiltered",
     filter_string = "",
     filter_tag = "",
     filter_xray_types = nil,
@@ -160,9 +159,9 @@ function XrayViewsData:updateItemsTable(select_number, reset_item_table_for_filt
     local title
 
     if self.filter_xray_types then
-        --* when no xray_items found with the current filter:
+        --* when no xray_items found with the current xray_type filter:
         if self.filtered_count == 0 then
-            self:handleNoItemsFoundWithFilter(_("no items of this type were found..."))
+            self:handleNoXrayTypeItemsFoundWithFilter(_("no items of this type were found..."))
             return false
         else
             title = DX.d.filter_icon .. " " .. source
@@ -177,7 +176,7 @@ function XrayViewsData:updateItemsTable(select_number, reset_item_table_for_filt
             title = source .. " - " .. self.filter_string
         end
 
-    elseif self.filter_tag and self.filter_tag:len() >= 3 then
+    elseif self.filtered_count > 0 and self.filter_tag and self.filter_tag:len() >= 3 then
         --* when no xray_items found with the current filter:
         if #self.items == 0 then
             --select_number, title = self:noItemsFoundWithFilterHandler("niets gevonden met \"" .. self.filter_string .. "\"...")
@@ -196,7 +195,7 @@ function XrayViewsData:updateItemsTable(select_number, reset_item_table_for_filt
 end
 
 --- @private
-function XrayViewsData:handleNoItemsFoundWithFilter(message)
+function XrayViewsData:handleNoXrayTypeItemsFoundWithFilter(message)
     KOR.messages:notify(message, 4)
     DX.c:resetFilteredItems()
 end
@@ -1600,9 +1599,6 @@ end
 
 function XrayViewsData:setProp(prop, value)
     self[prop] = value
-    if prop == "filter_string" or prop == "filter_tag" then
-        self.filter_state = has_text(value) and "filtered" or "unfiltered"
-    end
 end
 
 return XrayViewsData

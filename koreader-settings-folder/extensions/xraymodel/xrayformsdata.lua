@@ -390,8 +390,8 @@ function XrayFormsData.saveNewItem(new_item)
     new_item.name = needle_name
 
     --* this call also adds an id prop to item, needed for ((XrayViewsData#updateAndSortAllItemTables)):
-    --* always reset filters when adding a new item, to prevent problems:
-    DX.c:resetFilteredItems()
+    --* always reset filters when adding a new item, to prevent problems; disabled, because already run upon showing add new item form; see e.g. ((XrayButtons#forItemViewer)) or ((XrayCallbacks#execAddCallback)):
+    --DX.c:resetFilteredItems()
     DX.ds.storeNewItem(new_item)
     parent:updateTags(new_item, "is_new_item")
 

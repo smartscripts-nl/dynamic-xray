@@ -397,9 +397,6 @@ function XrayDataSaver.storeNewItem(new_item)
 
     local self = DX.ds
 
-    --* always reset filters when adding a new item, to prevent problems:
-    DX.c:resetFilteredItems()
-
     local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver#storeNewItem")
     local stmt = conn:prepare(self.queries.insert_item)
     local x = new_item

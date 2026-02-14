@@ -348,17 +348,16 @@ function XrayController:filterItemsByText(filter_string)
     DX.d:showListWithRestoredArguments()
 end
 
-function XrayController:resetFilteredItems()
-    --* otherwise data would be reset and retrieved many times:
-    if self.filter_state == "unfiltered" then
-        return
-    end
+function XrayController:resetFilteredItems(force_data_update)
 
-    DX.vd:setProp("filter_tag", nil)
+    DX.vd:resetAllFilters()
     DX.d:setProp("filter_icon", nil)
     DX.d:setProp("filter_state", "unfiltered")
     KOR.registry:unset("persistent_filter_tag")
-    DX.m:resetData("force_refresh")
+
+    if force_data_update then
+        DX.m:resetData("force_refresh")
+    end
 end
 
 function XrayController:saveNewItem(return_modus)
