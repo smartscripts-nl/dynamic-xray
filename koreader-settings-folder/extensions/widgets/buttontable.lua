@@ -14,6 +14,7 @@ local Geom = require("ui/geometry")
 local Screen = Device.screen
 
 local math = math
+local table = table
 local table_insert = table.insert
 
 --* compare ((ButtonTableFactory)) for easy construction of horizontally or vertically arranged button tables (to be called before generating the ButtonTable, so we can deliver an arranged button set):
@@ -46,6 +47,7 @@ local ButtonTable = FocusManager:extend{
     button_lines = 2,
     button_font_weight = "bold",
     decrease_top_padding = nil,
+    generate_active_icon = false,
     increase_top_padding = nil,
     no_bottom_spacer = false,
     no_separators = false,
@@ -263,21 +265,17 @@ function ButtonTable:generateButton(btn_entry, max_button_height, default_button
     end
     config.align = btn_entry.align or "center"
     config.background = self.background or KOR.colors.background
-    config.button_lines = self.button_lines
-    config.text_font_size = btn_entry.font_size or self.button_font_size
-    config.decrease_top_padding = self.decrease_top_padding
-    config.increase_top_padding = self.increase_top_padding
-
-    config.text_font_face = btn_entry.text_font_face or self.button_font_face
-    config.is_active_tab = btn_entry.is_active_tab
-    config.is_tab_button = btn_entry.is_tab_button
-    config.text_font_size = btn_entry.text_font_size
-    config.text_font_bold = is_bold
-
     config.bordersize = 0
+    config.button_lines = self.button_lines
+    config.decrease_top_padding = self.decrease_top_padding
+    config.generate_active_icon = self.generate_active_icon
+    config.increase_top_padding = self.increase_top_padding
     config.margin = 0
     config.padding = Size.padding.buttontable --* a bit taller than standalone buttons, for easier tap
     config.padding_h = btn_entry.align == "left" and Size.padding.large or Size.padding.button
+    config.text_font_bold = is_bold
+    config.text_font_face = btn_entry.text_font_face or self.button_font_face
+    config.text_font_size = btn_entry.font_size or self.button_font_size
     --* if avoid_text_truncation prop is set: allow text to take more of the horizontal space if centered...
     --* show_parent can also be set...
 

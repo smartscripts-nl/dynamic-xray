@@ -25,6 +25,7 @@ local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local IconWidget = require("ui/widget/iconwidget")
+local IconWidgetActive = require("extensions/widgets/iconwidgetactive")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local KOR = require("extensions/kor")
 local LeftContainer = require("ui/widget/container/leftcontainer")
@@ -69,6 +70,7 @@ local Button = InputContainer:extend{
     font_bold = nil,
     font_cache = {},
     for_titlebar = false,
+    generate_active_icon = false,
     hidden = false,
     hold_callback = nil,
     inhibit_input_after_click = false,
@@ -466,6 +468,15 @@ end
 --- @private
 function Button:getIcon(icon)
     self:ensureIconSize()
+    if self.generate_active_icon then
+        return IconWidgetActive:new{
+            icon = icon,
+            rotation_angle = self.icon_rotation_angle,
+            dim = not self.enabled,
+            width = self.icon_width,
+            height = self.icon_height,
+        }
+    end
     return IconWidget:new{
         icon = icon,
         rotation_angle = self.icon_rotation_angle,

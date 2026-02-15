@@ -216,6 +216,7 @@ function FilesBox:getBoxButtons(params)
     return ButtonTable:new{
         no_separators = true,
         background = params.is_current_ebook and self.active_item_background or KOR.colors.white,
+        generate_active_icon = params.is_current_ebook,
         width = buttons_count * icon_size,
         buttons = buttons,
     }
