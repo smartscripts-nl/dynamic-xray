@@ -393,7 +393,6 @@ function XrayFormsData.saveNewItem(new_item)
     --* always reset filters when adding a new item, to prevent problems; disabled, because already run upon showing add new item form; see e.g. ((XrayButtons#forItemViewer)) or ((XrayCallbacks#execAddCallback)):
     --DX.c:resetFilteredItems()
     DX.ds.storeNewItem(new_item)
-    parent:updateTags(new_item, "is_new_item")
 
     --* set and store props book_hits etc. for this new item:
     views_data:setItemHits(new_item, { store_book_hits = true, mode = "add" })
@@ -401,6 +400,7 @@ function XrayFormsData.saveNewItem(new_item)
     --! don't call views_data:updateAndSortAllItemTables(item, "add") here, because then all previous items in list gone from view...
     --* we force refresh of data here, because it could be that Items List hasn't been shown yet:
     views_data:registerNewItem(new_item)
+    parent:updateTags(new_item, "is_new_item")
 end
 
 --- @private

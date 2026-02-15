@@ -239,6 +239,7 @@ function XrayDialogs:showDeleteItemConfirmation(delete_item, dialog, remove_all_
         DX.ds.deleteItem(delete_item, remove_all_instances_in_series)
         local message = remove_all_instances_in_series and _(" deleted for the entire series...") or _(" deleted for the current book...")
         self:refreshItemsList(delete_item.name .. message)
+        DX.m:updateTags(delete_item, "is_deleted_item")
         self:showListWithRestoredArguments()
     end,
     function()

@@ -156,8 +156,9 @@ function XrayModel:addTags(tags)
     return self:addRelationalTags(tags)
 end
 
-function XrayModel:updateTags(item, is_new_item)
-    if is_new_item and has_no_text(item.tags) then
+--! this method must be called AFTER a parent has initiated storage of the data into the database and in XrayViewsData:
+function XrayModel:updateTags(item, mode)
+    if (mode == "is_new_item" or mode == "is_deleted_item") and has_no_text(item.tags) then
         return
     end
 
