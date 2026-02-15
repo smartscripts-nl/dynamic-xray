@@ -20,7 +20,7 @@ local require = require
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Device = require("device")
 local Font = require("extensions/modules/font")
-local FrameContainer = require("ui/widget/container/framecontainer")
+local FrameContainer = require("extensions/widgets/container/framecontainer")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
@@ -39,8 +39,10 @@ local Screen = Device.screen
 local logger = require("logger")
 
 local DX = DX
+local G_defaults = G_defaults
 local G_reader_settings = G_reader_settings
 local math = math
+local table = table
 local table_insert = table.insert
 local tostring = tostring
 local type = type
@@ -48,70 +50,111 @@ local type = type
 local DGENERIC_ICON_SIZE = G_defaults:readSetting("DGENERIC_ICON_SIZE")
 
 --- @class Button
-local Button = InputContainer:extend {
-    text = nil, --* mandatory (unless icon is provided)
-    text_func = nil,
-    lang = nil,
-    icon = nil,
-    icon_width = nil,
-    icon_height = nil,
-    icon_rotation_angle = 0,
+local Button = InputContainer:extend{
+    additional_label_widget_icon = nil,
     align = "center", --* or "left"
-    preselect = false,
-    callback = nil,
-    hold_callback = nil,
-    show_hold_callback_indicator = false,
-    enabled = true,
-    hidden = false,
     allow_hold_when_disabled = false,
-    margin = 0,
-    bordersize = Size.border.button,
-    bordercolor = KOR.colors.button_default,
+    alpha = nil,
+    avoid_text_truncation = true,
+    bordersize = nil,
     background = KOR.colors.background,
-    radius = nil,
+    bordercolor = KOR.colors.button_default,
+    bordersize = Size.border.button,
+    button_lines = 2,
+    callback = nil,
+    decrease_top_padding = 0,
+    enabled = true,
+    fgcolor = nil,
+    --* alias for text_font_bold:
+    font_bold = nil,
+    font_cache = {},
+    for_titlebar = false,
+    hidden = false,
+    hold_callback = nil,
+    inhibit_input_after_click = false,
+    icon = nil,
+    icon_height = nil,
+    icon_icon = nil,
+    icon_rotation_angle = 0,
+    icon_size_ratio = nil,
+    icon_text = nil,
+    icon_width = nil,
+    increase_top_padding = 0,
+    indicator_color = KOR.colors.lighter_indicator_color,
+    indicator_color_darker = KOR.colors.darker_indicator_color,
+    indicator_max_width = 60,
+    info_callback = nil,
+    is_active = false,
+    is_active_tab = false,
+    is_tab_button = false,
+    label_max_width = nil,
+    lang = nil,
+    margin = 0,
+    max_width = nil,
     padding = Size.padding.button,
     padding_h = nil,
     --* these two for buttons at the end of footer buttons, to make them more easily selectable:
     padding_left = nil,
     padding_right = nil,
     padding_v = nil,
+    preselect = false,
+    radius = nil,
+    readonly = false,
+    readonly_inverted = false,
+    show_hold_callback_indicator = false,
+    text = nil, --* mandatory (unless icon is provided)
+    text_font_bold = true,
+    text_font_face = "cfont",
+    text_font_size = 18,
+    text_func = nil,
+    text_icon = nil,
+    texticon_text = nil,
+    texts_to_icons = {
+        Akkoord = "yes",
+        Beheer = "list-dark",
+        Beschrijving = "description",
+        Bladwijzers = "bookmark",
+        Boekinformatie = "info-slender",
+        Boekstatus = "book-status",
+        Cancel = "back",
+        Citaat = "quote",
+        Cover = "image",
+        Dagen = "days",
+        Delete = "dustbin",
+        Edit = "edit",
+        Erase = "dustbin",
+        Help = "help",
+        Hernoem = "rename",
+        Hulp = "help",
+        Idee = "idea",
+        Ignore = "dustbin",
+        Ja = "yes",
+        Kaart = "book-map",
+        Kies = "yes",
+        Kiezen = "yes",
+        Lijst = "list",
+        List = "list",
+        Metadata = "metadata",
+        Nee = "back",
+        No = "back",
+        Omslag = "image",
+        Remove = "dustbin",
+        Save = "save",
+        Search = "appbar.search",
+        Sluit = "back",
+        Status = "book-status",
+        Tip = "tip",
+        Toevoegen = "yes",
+        Verplaats = "move",
+        Verwijder = "dustbin",
+        Weergeven = "view",
+        Yes = "yes",
+        Zoek = "appbar.search",
+    },
+    vsync = nil, --* when "flash_ui" is enabled, allow bundling the highlight with the callback, and fence that batch away from the unhighlight. Avoid delays when callback requires a "partial" on Kobo Mk. 7, c.f., ffi/framebuffer_mxcfb for more details.
     --* Provide only one of these two: 'width' to get a fixed width,
     --* 'max_width' to allow it to be smaller if text or icon is smaller.
     width = nil,
-    max_width = nil,
-    avoid_text_truncation = true,
-    text_font_face = "cfont",
-    text_font_size = 18,
-    text_font_bold = true,
-    fgcolor = nil,
-    vsync = nil, --* when "flash_ui" is enabled, allow bundling the highlight with the callback, and fence that batch away from the unhighlight. Avoid delays when callback requires a "partial" on Kobo Mk. 7, c.f., ffi/framebuffer_mxcfb for more details.
-
-    --* SmartScripts:
-    additional_label_widget_icon = nil,
-    alpha = nil,
-    bordersize = nil,
-    button_lines = 2,
-    decrease_top_padding = 0,
-    increase_top_padding = 0,
-    --* alias for text_font_bold:
-    font_bold = nil,
-    font_cache = {},
-    for_titlebar = false,
-    inhibit_input_after_click = false,
-    icon_icon = nil,
-    icon_size_ratio = nil,
-    icon_text = nil,
-    indicator_color = KOR.colors.lighter_indicator_color,
-    indicator_color_darker = KOR.colors.darker_indicator_color,
-    indicator_max_width = 60,
-    info_callback = nil,
-    is_active_tab = false,
-    is_tab_button = false,
-    label_max_width = nil,
-    readonly = false,
-    readonly_inverted = false,
-    text_icon = nil,
-    texticon_text = nil,
 }
 
 function Button:init()
@@ -158,6 +201,11 @@ function Button:setBasicButtonProps()
     --* Prefer an optional text_func over text
     if self.text_func and type(self.text_func) == "function" then
         self.text = self.text_func()
+    end
+
+    --* mark status buttons as active; these buttons best should have text icons, so no white svg background is shown:
+    if self.is_active then
+        self.background = KOR.colors.button_light
     end
 
     --* to prevent errors in the match in the next code block when self.text is delivered as a number:
@@ -624,7 +672,7 @@ end
 
 function Button:hide()
     if self.icon and not self.hidden then
-        self.frame.orig_background = self.frame.background
+        self.frame.orig_background = self.background
         self.frame.background = nil
         self.label_widget.hide = true
         self.hidden = true
@@ -867,9 +915,9 @@ function Button:generateTextLabel(label)
         is_bold = false
     end
 
-    --local index = self.text_font_face .. font_size
-    local face = Font:getFace(self.text_font_face, font_size) --self.font_cache[index] or
-    --self.font_cache[index] = face
+    local index = self.text_font_face .. font_size
+    local face = self.font_cache[index] or Font:getFace(self.text_font_face, font_size)
+    self.font_cache[index] = face
 
     local label_widget = TextWidget:new{
         text = label.text,
@@ -908,7 +956,7 @@ function Button:doTruncationTweaks(label_widget, label, label_color, is_bold)
             if new_size <= font_size_2_lines then
                 --* Switch to a 2-lines TextBoxWidget
                 label_widget:free(true)
-                label_widget = TextBoxWidget:new{
+                label_widget = TextBoxWidget:new {
                     text = label.text,
                     lang = self.lang,
                     line_height = 0,
@@ -933,7 +981,7 @@ function Button:doTruncationTweaks(label_widget, label, label_color, is_bold)
                 break
             end
             label_widget:free(true)
-            label_widget = TextWidget:new{
+            label_widget = TextWidget:new {
                 text = label.text,
                 lang = self.lang,
                 padding = 0,
