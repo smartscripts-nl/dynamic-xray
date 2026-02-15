@@ -28,6 +28,7 @@ local Strings = WidgetContainer:extend{
     curly_apo_r = "’",
     curly_quote_l = "“",
     curly_quote_r = "”",
+    ellipsis = "…",
     indent = "     ",
     m_dash = "—",
     n_dash = "–",

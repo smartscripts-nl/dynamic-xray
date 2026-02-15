@@ -283,15 +283,14 @@ function NavigatorBox:generateInfoButtons()
         button_font_weight = "normal",
     }
 
-    local buttons_height = buttons:getSize().h
-    self.info_panel_nav_buttons = CenterContainer:new{
-        dimen = Geom:new{
+    self.info_panel_nav_buttons_height = buttons:getSize().h
+    self.info_panel_nav_buttons = CenterContainer:new {
+        dimen = Geom:new {
             w = self.info_panel_width,
-            h = buttons_height,
+            h = self.info_panel_nav_buttons_height,
         },
         buttons,
     }
-    self.info_panel_nav_buttons_height = self.info_panel_nav_buttons:getSize().h
 end
 
 --- @private
@@ -300,6 +299,7 @@ function NavigatorBox:generateInfoPanel()
     local height = self.content_height
     --* info_text was generated in ((XrayPageNavigator#showNavigator)) > ((XrayPages#markItemsFoundInPageHtml)) > ((XrayPages#markItem)) > ((XrayPageNavigator#getItemInfoText)):
     local info_text = self.info_panel_text or " "
+    --* set the info panel height as a fraction of the screen height:
     local info_panel_height = math_floor(self.screen_height * DX.s.PN_info_panel_height)
 
     self.info_panel = DX.ip:generateInfoPanel(info_text, info_panel_height, self.info_panel_width, self)
@@ -632,13 +632,22 @@ end
 
 --- @private
 function NavigatorBox:registerPopupMenuCoords()
-    local computed_y_pos = self.screen_height - self.content_padding_v - self.histogram_height + self.histogram_bottom_line_height - self.info_panel_height + math_floor(self.info_panel_nav_buttons_height / 2) + Size.line.thin
+    local y_pos =
+        self.screen_height
+        - self.content_padding_v
+        --* histogram height props were set in ((NavigatorBox#setModuleProps)):
+        - self.histogram_height
+        + self.histogram_bottom_line_height
+        --* info panel heights were computed in ((NavigatorBox#generateInfoPanel)):
+        - self.info_panel_height
+        + math_floor(self.info_panel_nav_buttons_height / 2)
+        + self.info_panel_separator_height
 
-    local computed_x_pos = self.content_padding_h + VerticalScrollBar:getSize().w + Size.line.medium
+    local x_pos = self.content_padding_h + VerticalScrollBar:getSize().w + Size.line.medium
 
     KOR.registry:set("popup_menu_coords", {
-        x = computed_x_pos,
-        y = computed_y_pos,
+        x = x_pos,
+        y = y_pos,
     })
 end
 
