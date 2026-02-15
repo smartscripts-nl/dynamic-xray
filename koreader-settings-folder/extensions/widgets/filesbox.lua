@@ -213,10 +213,11 @@ function FilesBox:getBoxButtons(params)
     local generic_icon_size = 40
     local icon_size = math_floor(Screen:scaleBySize(generic_icon_size) * 0.9)
 
-    return ButtonTable:new{
+    local mark_active = DX.s.SeriesManager_mark_active_title_with_border and params.is_current_ebook
+    return ButtonTable:new {
         no_separators = true,
-        background = params.is_current_ebook and self.active_item_background or KOR.colors.white,
-        generate_active_icon = params.is_current_ebook,
+        background = mark_active and self.active_item_background or KOR.colors.white,
+        generate_active_icon = mark_active,
         width = buttons_count * icon_size,
         buttons = buttons,
     }
