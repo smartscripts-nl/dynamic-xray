@@ -328,6 +328,9 @@ function InputText:init()
             self.hint = tostring(self.hint)
         end
     end
+    if type(self.text) == "number" then
+        self.text = tostring(self.text)
+    end
     self:initTextBox(self.text)
     self:checkTextEditability()
     if self.readonly ~= true then
