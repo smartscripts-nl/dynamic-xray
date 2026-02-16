@@ -214,7 +214,7 @@ function ImageWidgetActive:_loadfile()
                     --- @note: Should match the background color. Which is currently hard-coded as white ;).
                     ---        See the note below in paintTo for how to make the dim flag behave in case
                     ---        this no longer actually is white ;).
-                    icon_bb:fill(KOR.colors.background_gray_light)
+                    icon_bb:fill(KOR.colors.button_active)
 
                     -- And now simply compose the icon on top of that, with dithering if necessary
                     -- Remembering that NanoSVG feeds us straight alpha, unlike MµPDF

@@ -156,8 +156,10 @@ function Html:loopThroughContainerWords(include_punctuation)
         if not next_word_end and include_punctuation and add_text_by == "word" then
             add_text_by = "char"
             next_word_end = KOR.document:getNextVisibleChar(self.paragraph_end)
+        end
 
-        elseif not next_word_end then
+        if not next_word_end then
+            self:setParagraphStart()
             --* we're ready looping through this container, so break out of the loop:
             return
         end

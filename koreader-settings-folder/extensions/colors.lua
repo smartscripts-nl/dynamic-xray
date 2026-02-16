@@ -20,6 +20,7 @@ return {
 
     bold_button_text_color = Blitbuffer.COLOR_DARK_GRAY,
 
+    button_active = Blitbuffer.COLOR_GRAY_D,
     button_default = Blitbuffer.COLOR_BLACK,
     button_disabled = Blitbuffer.COLOR_GRAY_B,
     button_invisible = Blitbuffer.COLOR_WHITE,

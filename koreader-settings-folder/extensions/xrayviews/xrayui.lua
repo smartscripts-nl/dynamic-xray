@@ -47,7 +47,6 @@ local XrayUI = WidgetContainer:new{
     hits = {},
     info_extra_button_rows = {},
     info_use_upper_case_names = false,
-    info_extra_indent = "    ",
     page = nil,
     page_text = nil,
     paragraph_explanations = nil,
@@ -359,7 +358,6 @@ function XrayUI:ReaderViewLoopThroughParagraphOrPage(p)
         --* this context table with props was set in ((set xray info for paragraphs)):
         local c = self.xray_context_props
         if c.bb then
-            --* call ((CreDocument#getScreenBoxesFromPositions)):
             local lines = KOR.document:getScreenBoxesFromPositions(self.paragraphs[p].pos0, self.paragraphs[p].pos1, true)
             local lines_count = #lines
             -- #((xray page marker set target line for icon))
@@ -368,7 +366,6 @@ function XrayUI:ReaderViewLoopThroughParagraphOrPage(p)
             -- #((set half screen width))
             if not KOR.registry.half_screen_width then
                 self.screen_width = Screen:getWidth()
-                --* this Registry var can be updated upon rotation in ((ReaderView#onRotationUpdate)):
                 KOR.registry.half_screen_width = math.floor(self.screen_width / 2)
             end
 
@@ -438,7 +435,7 @@ end
 
 --* these hits are to be consumed in ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((XrayDialogs#showUiPageInfo))
 --- @private
-function XrayUI:getXrayItemsFoundInText(page_or_paragraph_text) --, for_navigator
+function XrayUI:getXrayItemsFoundInText(page_or_paragraph_text, tagged_items)
 
     local partial_hits, hits, explanations = {}, {}, {}
     --local multiple_parts_count = 0
@@ -446,35 +443,34 @@ function XrayUI:getXrayItemsFoundInText(page_or_paragraph_text) --, for_navigato
     self.families_matched_by_multiple_parts = {}
 
     local xray_item, xname, hit_found, alias_match_found, names, short_names, xray_name, names_count, parts
-    count = #DX.vd.items
+    local subject = tagged_items or DX.vd.items
+    count = #subject
     for i = 1, count do
         -- #((get xray_item for XrayUI))
-        xray_item = DX.vd.items[i]
-        if xray_item then
-            short_names = has_text(xray_item.short_names)
-            xray_name = xray_item.name
-            names = { xray_name }
-            if short_names then
-                parts = KOR.strings:split(short_names, ", +")
-                KOR.tables:merge(names, parts)
-            end
+        xray_item = subject[i]
+        short_names = has_text(xray_item.short_names)
+        xray_name = xray_item.name
+        names = { xray_name }
+        if short_names then
+            parts = KOR.strings:split(short_names, ", +")
+            KOR.tables:merge(names, parts)
+        end
 
-            --* for case insensitive matching:
-            local lower_text = KOR.strings:lower(page_or_paragraph_text)
-            names_count = #names
-            for nr = 1, names_count do
-                xname = names[nr]
-                hit_found = self:matchNameInPageOrParagraph(page_or_paragraph_text, lower_text, xname, hits, partial_hits, explanations, xray_item, nr)
-                if hit_found then
-                    a_name_matched = true
+        --* for case insensitive matching:
+        local lower_text = KOR.strings:lower(page_or_paragraph_text)
+        names_count = #names
+        for nr = 1, names_count do
+            xname = names[nr]
+            hit_found = self:matchNameInPageOrParagraph(page_or_paragraph_text, lower_text, xname, hits, partial_hits, explanations, xray_item, nr)
+            if hit_found then
+                a_name_matched = true
+                break
+            end
+            if has_text(xray_item.aliases) then
+                alias_match_found = self:matchAliasesToParagraph(page_or_paragraph_text, hits, explanations, xray_item)
+                if alias_match_found then
+                    an_alias_matched = true
                     break
-                end
-                if has_text(xray_item.aliases) then
-                    alias_match_found = self:matchAliasesToParagraph(page_or_paragraph_text, hits, explanations, xray_item)
-                    if alias_match_found then
-                        an_alias_matched = true
-                        break
-                    end
                 end
             end
         end

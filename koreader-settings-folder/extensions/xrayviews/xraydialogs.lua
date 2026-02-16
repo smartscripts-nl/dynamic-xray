@@ -347,21 +347,13 @@ end
 function XrayDialogs:notifyFilterResult(filter_active, filtered_count)
     self.filter_state = filtered_count == 0 and "unfiltered" or "filtered"
     if filter_active and filtered_count == 0 then
-        local message = has_text(DX.vd.filter_string) and T(_("geen items gevonden met filter \"%1\"..."), DX.vd.filter_string) or _("no items found with this filter...")
-        self:setActionResultMessage(message)
-    end
-end
-
-function XrayDialogs:notifyFilterResult(filter_active, filtered_count)
-    self.filter_state = filtered_count == 0 and "unfiltered" or "filtered"
-    if filter_active and filtered_count == 0 then
         local message
         if DX.vd.filter_tag then
             message = T(_("no items found with tag \"%1\"..."), DX.vd.filter_tag)
             self:setActionResultMessage(message)
             return
         end
-        message = has_text(DX.vd.filter_string) and T(_("no items found with filter \"%1\""), DX.vd.filter_string) .. "..." or _("no items found with this filter") .. "..."
+        message = has_text(DX.vd.filter_string) and T(_("no items found with filter \"%1\""), DX.vd.filter_string) .. KOR.strings.ellipsis or _("no items found with this filter") .. KOR.strings.ellipsis
         self:setActionResultMessage(message)
     end
 end
@@ -437,19 +429,6 @@ end
 
 --- @private
 function XrayDialogs:getListFilter()
-    if has_text(self.filter_tag) then
-        return {
-            state = "filtered",
-            callback = function()
-                self:showFilterDialog()
-            end,
-            reset_callback = function()
-                --* force_data_update doesn't involve reloading of data from database:
-                DX.c:resetFilteredItems("force_data_update")
-                self:showListWithRestoredArguments()
-            end,
-        }
-    end
     return {
         state = self.filter_state,
         callback = function()
@@ -498,24 +477,6 @@ function XrayDialogs:_prepareItemsForList(current_tab_items, items_for_select)
 end
 
 --- @private
-function XrayDialogs:filterItemsByTag(current_tab_items)
-    if not self.filter_tag then
-        return current_tab_items
-    end
-
-    local filtered = {}
-    count = #current_tab_items
-    for i = 1, count do
-        if has_text(current_tab_items[i].tags) and current_tab_items[i].tags:match(self.filter_tag) then
-            table_insert(filtered, current_tab_items[i])
-        end
-    end
-    DX.vd:setProp("items", filtered)
-    DX.vd:setProp("filtered_count", #filtered)
-    return filtered
-end
-
---- @private
 function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, items_for_select, key_events_module)
 
     local select_number = focus_item and focus_item.index or 1
@@ -525,15 +486,6 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
     self.list_title = title
     if not title then
         return
-    end
-
-    if self.filter_tag then
-        if DX.vd.filtered_count == 0 then
-            DX.c:resetFilteredItems()
-            self.filter_tag = nil
-        else
-            title = title .. " - " .. _("tag") .. ": " .. self.filter_tag
-        end
     end
 
     --* goto page where recently displayed xray_item can be found in the manager:
@@ -667,9 +619,6 @@ function XrayDialogs:showList(focus_item, dont_show, select_mode)
 
     --! this condition is needed to prevent this call from triggering ((XrayViewsData#prepareData)) > ((XrayViewsData#indexItems)), because that last call will be done at the proper time via ((XrayDialogs#showList)) > ((XrayModel#getCurrentItemsForView)) > ((XrayViewsData#getCurrentListTabItems)) > ((XrayViewsData#prepareData)) > ((XrayViewsData#indexItems)):
     local current_tab_items = not new_item and DX.m:getCurrentItemsForView()
-
-    self.filter_tag = KOR.registry:get("persistent_filter_tag")
-    current_tab_items = self:filterItemsByTag(current_tab_items)
 
     local items_for_select = {}
     --* this will occur after a filter reset from ((XrayController#resetFilteredItems)) and sometimes when we first call up a definition through ReaderHighlight:
@@ -966,10 +915,10 @@ function XrayDialogs:viewPreviousTappedWordItem()
     self:viewTappedWordItem(DX.tw:getPreviousItem())
 end
 
-function XrayDialogs:showTagSelector()
+function XrayDialogs:showTagSelector(mode)
     local tags = DX.m.tags
     if has_no_items(tags) then
-        KOR.messages:notify("je hebt nog geen tags aan items toegekend…")
+        KOR.messages:notify(_("you haven't assigned any tags to items yet"))
         return
     end
     local buttons_per_row = 4
@@ -986,7 +935,17 @@ function XrayDialogs:showTagSelector()
             width = button_width,
             callback = function()
                 UIManager:close(tags_dialog)
-                DX.c:filterItemsByTag(tags[i], "filter_immediately")
+                if mode == "list" then
+                    DX.c:filterItemsByTag(tags[i])
+
+                else
+                    DX.pn:betweenTagsNavigationActivate(tags[i])
+                    if DX.s.PN_show_tagged_items_navigation_alert then
+                        KOR.dialogs:niceAlert(_("Tag group navigation"), T(_("You can now browse:\n\n* with the arrow buttons\n* or with N and P on your keyboard\n\nfrom page with tagged items to next/previous page with tagged items%1\n\nDisable this popup by setting PN_show_tagged_items_navigation_alert to false%2"), KOR.strings.ellipsis, KOR.strings.ellipsis), {
+                        delay = 7,
+                    })
+                    end
+                end
             end,
         })
         if i > 1 and i % buttons_per_row == 0 then
@@ -994,9 +953,10 @@ function XrayDialogs:showTagSelector()
             row = row + 1
         end
     end
+    local subtitle = mode == "page_navigator" and _("browse between occurrences of tag group members") or _("filter the List by a tag")
     tags_dialog = ButtonDialogTitle:new {
-        title = "tag-groepen",
-        subtitle = "deze groepsnamen kunnen gebruikt worden om de Items Lijst te filteren op deze tags…",
+        title = _("tag groups"),
+        subtitle = subtitle .. KOR.strings.ellipsis,
         width = dialog_width,
         buttons = buttons,
     }

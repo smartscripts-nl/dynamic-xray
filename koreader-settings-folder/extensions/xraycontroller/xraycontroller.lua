@@ -327,17 +327,11 @@ function XrayController:filterItemsByImportantTypes()
     DX.d:showListWithRestoredArguments()
 end
 
-function XrayController:filterItemsByTag(filter_tag, filter_immediately)
+function XrayController:filterItemsByTag(filter_tag)
     DX.vd:setProp("filter_tag", filter_tag)
-    KOR.registry:set("persistent_filter_tag", filter_tag)
     --! this reset is essential to make filtering possible:
     DX.vd:updateItemsTable(nil, "reset_item_table_for_filter")
-
-    if filter_immediately then
-        DX.d:showList()
-        return
-    end
-
+    DX.d:closeListDialog()
     DX.d:showListWithRestoredArguments()
 end
 
@@ -353,7 +347,6 @@ function XrayController:resetFilteredItems(force_data_update)
     DX.vd:resetAllFilters()
     DX.d:setProp("filter_icon", nil)
     DX.d:setProp("filter_state", "unfiltered")
-    KOR.registry:unset("persistent_filter_tag")
 
     if force_data_update then
         DX.m:resetData("force_refresh")

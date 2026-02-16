@@ -47,7 +47,6 @@ local ButtonTable = FocusManager:extend{
     button_lines = 2,
     button_font_weight = "bold",
     decrease_top_padding = nil,
-    generate_active_icon = false,
     increase_top_padding = nil,
     no_bottom_spacer = false,
     no_separators = false,
@@ -268,7 +267,7 @@ function ButtonTable:generateButton(btn_entry, max_button_height, default_button
     config.bordersize = 0
     config.button_lines = self.button_lines
     config.decrease_top_padding = self.decrease_top_padding
-    config.generate_active_icon = self.generate_active_icon
+    config.generate_active_icon = btn_entry.generate_active_icon
     config.increase_top_padding = self.increase_top_padding
     config.margin = 0
     config.padding = Size.padding.buttontable --* a bit taller than standalone buttons, for easier tap

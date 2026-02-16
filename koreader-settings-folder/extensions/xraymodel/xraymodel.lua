@@ -152,8 +152,8 @@ function XrayModel:placeImportantItemsAtTop(items, sorting_direction)
     end)
 end
 
-function XrayModel:addTags(tags)
-    return self:addRelationalTags(tags)
+function XrayModel:addTags(tags, id)
+    return self:addRelationalTags(tags, id)
 end
 
 --! this method must be called AFTER a parent has initiated storage of the data into the database and in XrayViewsData:
@@ -168,21 +168,26 @@ function XrayModel:updateTags(item, mode)
     local items = DX.vd.item_table[1]
     count = #items
     for i = 1, count do
-        self:addTags(items[i].tags)
+        self:addTags(items[i].tags, items[i].id)
     end
     self:sortAndSetTags()
 end
 
 --- @private
-function XrayModel:addRelationalTags(tags)
+function XrayModel:addRelationalTags(tags, id)
     local tag
     local tag_items = DX.m:splitByCommaOrSpace(tags)
     local a_tag_was_added = false
     for i = 1, #tag_items do
         tag = tag_items[i]
+        --* this collection will e.g. be used for filtering the Items List:
         if not self.tags_relational[tag] then
-            self.tags_relational[tag] = true
+            self.tags_relational[tag] = {
+                id,
+            }
             a_tag_was_added = true
+        else
+            table_insert(self.tags_relational[tag], id)
         end
     end
     return a_tag_was_added

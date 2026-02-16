@@ -34,8 +34,8 @@ function Messages:notify(message, timeout, dont_inhibit_input, at_right_top)
     if not KOR.registry:getOnce("notify_case_sensitive") then
         message = message:lower()
     end
-    if not message:match("%.%.%.$") then
-        message = message .. "..."
+    if not message:match("%.%.%.$") and not message:match("…$") then
+        message = message .. KOR.strings.ellipsis
     end
 
     --* to prevent inadvertent cancellation of the notification because of a hold action:

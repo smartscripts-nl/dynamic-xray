@@ -291,7 +291,7 @@ function XraySidePanels:computeLinkedItems()
 end
 
 function XraySidePanels:setSideButtons(buttons)
-    self.side_buttons = buttons
+    self.side_buttons = KOR.tables:shallowCopy(buttons)
 end
 
 function XraySidePanels:resetSideButtons()

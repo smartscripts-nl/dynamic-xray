@@ -21,6 +21,7 @@ local table_insert = table.insert
 local tonumber = tonumber
 local unpack = unpack
 
+local count
 --- @type XrayModel parent
 local parent
 
@@ -41,6 +42,9 @@ local XrayPageNavigator = WidgetContainer:new{
     max_line_length = DX.s.PN_info_panel_max_line_length,
     navigator_page_no = nil,
     movable_popup_menu = nil,
+    navigation_tag = nil,
+    navigator_page_html = nil,
+    navigator_side_buttons = nil,
     page_navigator_filter_item = nil,
     --* we need this item for computing linked item buttons in side panel no 2:
     parent_item = nil,
@@ -180,6 +184,9 @@ function XrayPageNavigator:getItemInfoText(item, for_info_panel)
         --* if an item was cached, don't add linebreaks to the linebreak already present in the cached info:
         local prefix = for_info_panel and "" or "\n"
         local info = prefix .. reliability_indicator .. self.cached_items_info[item.name]
+        if not info:match("^\n") then
+            return "\n" .. info
+        end
         return info:gsub("^\n\n", "\n")
     end
 
@@ -210,6 +217,12 @@ function XrayPageNavigator:getItemInfoText(item, for_info_panel)
 
     --* remove reliability_indicator_placeholder:
     self.cached_items_info[item.name] = info:gsub("\n  ", "", 1)
+
+    if self.navigation_tag then
+        --? for some reason we only need this correction if a navitation tag is active:
+        reliability_indicator = reliability_indicator:gsub("^\n+", "")
+        return "\n" .. reliability_indicator .. self.cached_items_info[item.name]
+    end
 
     --* prefix "\n" removed here:
     return reliability_indicator .. self.cached_items_info[item.name]
@@ -335,10 +348,65 @@ function XrayPageNavigator:scrollToBottom()
     end
 end
 
+function XrayPageNavigator:getTaggedItems()
+    if not self.navigation_tag then
+        return nil
+    end
+    local ids = DX.m.tags_relational[self.navigation_tag]
+    local tagged_items = {}
+    count = #ids
+    for i = 1, count do
+        table_insert(tagged_items, DX.m.items_by_id[ids[i]])
+    end
+    return tagged_items
+end
+
+function XrayPageNavigator:betweenTagsNavigationActivate(tag)
+    self.navigation_tag = tag
+    self.current_item = nil
+    --* disable regular filter when we are using tag groups to navigate:
+    self.active_filter_name = nil
+    self:reloadPageNavigator()
+end
+
+function XrayPageNavigator:betweenTagsNavigationDisable()
+    self.navigation_tag = nil
+    KOR.messages:notify(_("tag group navigation disabled"))
+    self:reloadPageNavigator()
+end
+
+--- @private
+function XrayPageNavigator:setButtonsAndReturnHtmlFromCache()
+    --* get html and side_buttons from cache; these were stored in ((XrayPages#markItemsFoundInPageHtml)):
+    if
+        not self.navigator_page_no
+        or not self.cached_html_and_buttons_by_page_no[self.navigator_page_no]
+        --* don't use cache if a filtered item was set (with its additional html):
+        or self.active_filter_name
+        or self.navigation_tag
+    then
+        return
+    end
+
+    if DX.sp.active_side_tab == 1 then
+        DX.sp:setSideButtons(self.cached_html_and_buttons_by_page_no[self.navigator_page_no].side_buttons)
+        DX.sp:markActiveSideButton()
+    end
+
+    return self.cached_html_and_buttons_by_page_no[self.navigator_page_no].html
+end
+
 --- @private
 function XrayPageNavigator:loadDataForPage()
 
     DX.sp:resetSideButtons()
+
+    if self.navigation_tag and self.navigator_side_buttons and DX.sp.active_side_tab == 1 then
+        DX.sp:setSideButtons(self.navigator_side_buttons)
+        self:setCurrentItem(self.navigator_side_buttons[1][1].xray_item)
+        self.navigator_side_buttons = nil
+    end
+
     if self.current_item then
         DX.sp:computeLinkedItems()
         if DX.sp.active_side_tab == 2 and not self.active_filter_name then
@@ -346,28 +414,17 @@ function XrayPageNavigator:loadDataForPage()
         end
     end
 
-    --* get html and side_buttons from cache; these were stored in ((XrayPages#markItemsFoundInPageHtml)):
-    if self.navigator_page_no and self.cached_html_and_buttons_by_page_no[self.navigator_page_no]
-
-        --* don't use cache if a filtered item was set (with its additional html):
-        and not self.active_filter_name
-    then
-
-        if DX.sp.active_side_tab == 1 then
-            DX.sp:setSideButtons(self.cached_html_and_buttons_by_page_no[self.navigator_page_no].side_buttons)
-            DX.sp:markActiveSideButton()
-        end
-
-        return self.cached_html_and_buttons_by_page_no[self.navigator_page_no].html
+    local html = self:setButtonsAndReturnHtmlFromCache()
+    if html then
+        return html
     end
 
-    local html = DX.p:getPageHtmlForPage(self.navigator_page_no)
-    --* self.cached_html_and_buttons_by_page_no will be updated here:
-    --* side_buttons FOR SIDE PANEL TAB NO.1 de facto populated in ((XrayPages#markedItemRegister)) > ((XraySidePanels#addSideButton)):
-    html = DX.p:markItemsFoundInPageHtml(html, self.navigator_page_no)
+    --* when we initiated browsing between tagged items, via ((XrayPages#getPageHtmlForPage)) and ((XrayPages#getPageHtmlForPage)) PageNavigator.navigator_page_html can be populated with html containing the tagged items:
+    html = self.navigation_tag and self.navigator_page_html or DX.p:getPageHtmlAndMarkItems(self.navigator_page_no)
+    self.navigator_page_html = nil
 
-    --? eilas, when a filter has been set, linked items for side panel no 2 have to be recomputed for some reason:
-    if DX.sp.active_side_tab == 2 and self.active_filter_name then
+    --? eilas, when an item filter or a tag filter has been set, linked items for side panel no 2 have to be recomputed for some reason:
+    if DX.sp.active_side_tab == 2 and (self.active_filter_name or self.navigation_tag) then
         DX.sp:computeLinkedItems()
         DX.sp:populateLinkedItemsPanel()
     end
@@ -458,6 +515,7 @@ function XrayPageNavigator:showPopupMenu()
         dimen = Screen:getSize(),
     }
     if not self.popup_menu_y_pos_computed then
+        --* these coords were set in ((NavigatorBox#registerPopupMenuCoords)):
         local coords = KOR.registry:get("popup_menu_coords")
         coords.y = coords.y - self.popup_menu.inner_height
         self.popup_menu_y_pos_computed = true

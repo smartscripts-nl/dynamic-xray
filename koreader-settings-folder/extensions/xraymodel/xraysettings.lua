@@ -187,6 +187,11 @@ local XraySettings = WidgetContainer:new{
             explanation = _("Page Navigator: if set to true, at the bottom of the info panel a histogram will be added to show the hits per chapter for the Xray item currently shown in the info panel."),
             locked = 0,
         },
+        PN_show_tagged_items_navigation_alert = {
+            value = true,
+            explanation = _("Page Navigator: if this setting is false, no popup will be shown when you activate tagged items navigation in Page Navigator."),
+            locked = 0,
+        },
         SeriesManager_all_data_imported = {
             value = false,
             explanation = _("Series Manager: this value will be set to true after you imported all ebooks data into the Series Manager (via the import icon in the top left of Series Manager dialogs). You can reset this to false if you wish to re-import the data."),

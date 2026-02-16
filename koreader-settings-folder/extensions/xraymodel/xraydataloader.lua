@@ -250,7 +250,7 @@ function XrayDataLoader:_loadDataForBook(result)
     count = #result["name"]
     for i = 1, count do
         if has_text(result["tags"][i]) then
-            parent:addTags(result["tags"][i])
+            parent:addTags(result["tags"][i], tonumber(result["id"][i]))
         end
         self:_addBookItem(result, i, book_index)
     end
@@ -275,7 +275,7 @@ function XrayDataLoader:_loadDataForSeries(result)
     local series_index = result["series"][1]
     for i = 1, count do
         if has_text(result["tags"][i]) then
-            parent:addTags(result["tags"][i])
+            parent:addTags(result["tags"][i], tonumber(result["id"][i]))
         end
         self:_addSeriesItem(result, i, series_index)
     end

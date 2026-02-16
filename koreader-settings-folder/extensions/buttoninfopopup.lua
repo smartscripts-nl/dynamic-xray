@@ -286,15 +286,6 @@ function ButtonInfoPopup:forXrayFilterByImportantType(props)
 	}, props)
 end
 
-function ButtonInfoPopup:forXrayFilterByTag(props)
-	return KOR.buttonprops:set({
-		icon = "tags",
-		info = _("tag icon | Filter the Xray items by a tag."),
-		callback_label = _("filter"),
-		--! callback defined by calling module
-	}, props)
-end
-
 function ButtonInfoPopup:forXrayFilterByText(props)
 	return KOR.buttonprops:set({
 		icon = "filter",
@@ -498,11 +489,26 @@ function ButtonInfoPopup:forXrayPageNavigatorShowPageBrowser(props)
 	}, props)
 end
 
-function ButtonInfoPopup:forXrayPageNavigatorShowTagsDialog(props)
+function ButtonInfoPopup:forXrayPageNavigatorShowTagsDialogForList(props)
 	return KOR.buttonprops:set({
 		icon = "tags",
 		info = _("tags icon | Show popup for tag filters."),
 		callback_label = _("show"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forXrayPageNavigatorShowTagsDialogForPN(props)
+	--* the minus sign is a n_dash:
+	local state_marker = DX.pn.navigation_tag and "–" or "+"
+	return KOR.buttonprops:set({
+		icon_text = {
+			icon = "tags",
+			text = " " .. state_marker,
+		},
+		icon = "tags",
+		info = _("tags icon | Activate (+) or disabled (-) browsing between members of a tag group"),
+		callback_label = _("browse") .. " " .. state_marker,
 		--! callback defined by calling module
 	}, props)
 end

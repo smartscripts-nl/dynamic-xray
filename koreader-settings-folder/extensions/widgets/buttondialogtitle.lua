@@ -134,13 +134,12 @@ function ButtonDialogTitle:init()
         bordersize = 0,
         padding_bottom = Size.padding.fullscreen,
         VerticalGroup:new{
-            align = "center",
             titlebar,
             TextBoxWidget:new{
                 text = self.subtitle,
                 face = Font:getFace("x_smallinfofont", font_size),
                 width = math.floor(math.min(Screen:getWidth(), Screen:getHeight()) * 0.8),
-                alignment = self.title_align or "left",
+                alignment = self.title_align or "center",
             }
         },
     }
@@ -168,7 +167,6 @@ function ButtonDialogTitle:init()
             show_parent = self,
         },
     }
-
     self.movable = MovableContainer:new{
         alpha = self.alpha,
         FrameContainer:new{

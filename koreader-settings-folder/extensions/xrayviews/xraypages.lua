@@ -224,7 +224,8 @@ end
 --- @private
 function XrayPages:pageHasItemName(page_no)
     local html = self:getPageHtmlForPage(page_no)
-    local hits = DX.u:getXrayItemsFoundInText(html, "for_navigator")
+    local tagged_items = DX.pn:getTaggedItems()
+    local hits = DX.u:getXrayItemsFoundInText(html, tagged_items)
     if not hits then
         return false
     end
@@ -238,7 +239,10 @@ function XrayPages:pageHasItemName(page_no)
 end
 
 --- @private
-function XrayPages:getPageHtmlForPage(page_no)
+function XrayPages:getPageHtmlForPage(page_no, skip_cache)
+    if skip_cache then
+        return KOR.document:getPageHtml(page_no)
+    end
     if self.cached_html_by_page_no[page_no] then
         return self.cached_html_by_page_no[page_no]
     end
@@ -251,6 +255,13 @@ function XrayPages:resetCache()
     self.cached_html_by_page_no = {}
 end
 
+function XrayPages:getPageHtmlAndMarkItems(navigator_page_no, for_tagged_items)
+    local html = self:getPageHtmlForPage(navigator_page_no, for_tagged_items)
+    --* self.cached_html_and_buttons_by_page_no will be updated here:
+    --* side_buttons FOR SIDE PANEL TAB NO.1 de facto populated in ((XrayPages#markedItemRegister)) > ((XraySidePanels#addSideButton)):
+    return self:markItemsFoundInPageHtml(html, navigator_page_no)
+end
+
 function XrayPages:toCurrentNavigatorPage()
     DX.sp:resetActiveSideButtons("XrayPages:toCurrentNavigatorPage")
     DX.pn.navigator_page_no = DX.pn.initial_browsing_page
@@ -260,8 +271,13 @@ end
 function XrayPages:toNextNavigatorPage(goto_next_item)
     DX.sp:resetActiveSideButtons("XrayPages:toNextNavigatorPage")
     local direction = 1
+    --* navigation to next tagged item hit:
+    if DX.pn.navigation_tag then
+        --* via ((XrayPages#getPageHtmlForPage)) and ((XrayPages#getPageHtmlForPage)) PageNavigator.navigator_page_html can be populated with html containing the tagged items:
+        self:gotoPageHitForTaggedItem(direction)
+        return
     --* navigation to next filtered item hit:
-    if DX.pn.page_navigator_filter_item or goto_next_item then
+    elseif DX.pn.page_navigator_filter_item or goto_next_item then
         self:gotoPageHitForItem(goto_next_item, direction)
         return
     end
@@ -280,8 +296,12 @@ end
 function XrayPages:toPrevNavigatorPage(goto_prev_item)
     DX.sp:resetActiveSideButtons("XrayPages:toPrevNavigatorPage")
     local direction = -1
+    --* navigation to previous tagged item hit:
+    if DX.pn.navigation_tag then
+        self:gotoPageHitForTaggedItem(direction)
+        return
     --* navigation to previous filtered item hit:
-    if DX.pn.page_navigator_filter_item or goto_prev_item then
+    elseif DX.pn.page_navigator_filter_item or goto_prev_item then
         self:gotoPageHitForItem(goto_prev_item, direction)
         return
     end
@@ -365,6 +385,49 @@ function XrayPages:gotoPageHitForItem(goto_item, direction)
 end
 
 --- @private
+function XrayPages:notifyNoNextOccurrences()
+    KOR.messages:notify(_("no later occurrences found"))
+end
+
+--- @private
+function XrayPages:notifyNoPreviousOccurrences()
+    KOR.messages:notify(_("no previous occurrences found"))
+end
+
+--- @private
+function XrayPages:gotoPageHitForTaggedItem(direction)
+    local page = DX.pn.navigator_page_no
+    local page_count = KOR.document:getPageCount()
+    if page == 1 and direction == -1 then
+        self:notifyNoPreviousOccurrences()
+        return
+    elseif page == page_count and direction == 1 then
+        self:notifyNoNextOccurrences()
+        return
+    end
+    local html
+    while page > 0 and page <= page_count do
+        if direction == 1 then
+            page = page + 1
+        else
+            page = page - 1
+        end
+        html = page > 0 and page <= page_count and self:getPageHtmlAndMarkItems(page, "for_tagged_items")
+
+        if html and html:find("<strong", 1, true) then
+            self:handleItemHitFound(page, html)
+            return
+        elseif page == page_count and direction == 1 then
+            self:notifyNoNextOccurrences()
+            return
+        elseif page == 1 and direction == - 1 then
+            self:notifyNoPreviousOccurrences()
+            return
+        end
+    end
+end
+
+--- @private
 function XrayPages:invalidItemPageHitHandled(direction, goto_item)
     --* this prop should be set by ((XrayPages#setValidNextBrowsingPage)):
     if
@@ -373,7 +436,9 @@ function XrayPages:invalidItemPageHitHandled(direction, goto_item)
         or direction == 1 and self.browsing_page_new < DX.pn.navigator_page_no
         or direction == -1 and self.browsing_page_new > DX.pn.navigator_page_no
     then
-        self:undoTemporaryFilterItem(goto_item)
+        if goto_item then
+            self:undoTemporaryFilterItem(goto_item)
+        end
         self:showNoNextPreviousOccurrenceMessage(direction)
         return true
     end
@@ -398,9 +463,13 @@ function XrayPages:searchNextOrPreviousAliasHit(item, needle, results, case_inse
 end
 
 --- @private
-function XrayPages:handleItemHitFound(page)
+function XrayPages:handleItemHitFound(page, html)
     DX.pn:setProp("navigator_page_no", page)
-    DX.sp.active_side_button_by_name = DX.pn.active_filter_name
+    DX.pn:setProp("navigator_page_html", html)
+    DX.pn:setProp("navigator_side_buttons", DX.sp.side_buttons)
+    if not DX.pn.navigation_tag then
+        DX.sp.active_side_button_by_name = DX.pn.active_filter_name
+    end
     DX.pn:restoreNavigator()
 end
 
@@ -438,19 +507,23 @@ function XrayPages:markItemsFoundInPageHtml(html, navigator_page_no)
         self:activateNonFilteredItemsLayout()
     end
 
-    local hits = DX.u:getXrayItemsFoundInText(html, "for_navigator")
-    if not hits then
-        return html
+    local hits = {}
+    local tagged_items = DX.pn:getTaggedItems()
+    if has_items(tagged_items) then
+        hits = DX.u:getXrayItemsFoundInText(html, tagged_items)
+        if not hits then
+            return html
+        end
     end
 
     count = #hits
     self.prev_marked_item = nil
     self:initNonFilteredItemsLayout()
     for i = 1, count do
-        html = self:markItemsInHtml(html, hits[i])
+        html = self:markItemsInHtml(html, hits[i], count)
     end
     --* don't use cache if a filtered item was set (with its additional html):
-    if not DX.pn.active_filter_name then
+    if not DX.pn.active_filter_name and not DX.pn.navigation_tag then
         DX.pn.cached_html_and_buttons_by_page_no[DX.pn.navigator_page_no] = {
             html = html,
             side_buttons = DX.sp.side_buttons,
@@ -511,11 +584,13 @@ function XrayPages:markNeedleInHtml(html, needle, derived_name)
 end
 
 --- @private
-function XrayPages:markItemsInHtml(html, item)
-    if item.name == self.prev_marked_item then
-        return html
+function XrayPages:markItemsInHtml(html, item, items_count)
+    if items_count > 1 then
+        if item.name == self.prev_marked_item then
+            return html
+        end
+        self.prev_marked_item = item.name
     end
-    self.prev_marked_item = item.name
     self.is_filter_item = DX.pn.active_filter_name == item.name
 
     local subjects = {
@@ -600,7 +675,7 @@ end
 function XrayPages:markPartialHits(html, item, uc, i, was_marked_for_full)
     local is_term, lc, needle
 
-    local is_lowercase_person = DX.m:isPerson(item) and not uc:match("[A-Z]") and not uc:match("[A-Z]")
+    local is_lowercase_person = DX.m:isPerson(item) and not uc:match("[A-Z]")
     is_term = item.xray_type > 2
     if (is_term or is_lowercase_person) and i == 1 then
         uc = KOR.strings:ucfirst(uc)

@@ -86,7 +86,6 @@ local Button = InputContainer:extend{
     indicator_color_darker = KOR.colors.darker_indicator_color,
     indicator_max_width = 60,
     info_callback = nil,
-    is_active = false,
     is_active_tab = false,
     is_tab_button = false,
     label_max_width = nil,
@@ -206,8 +205,8 @@ function Button:setBasicButtonProps()
     end
 
     --* mark status buttons as active; these buttons best should have text icons, so no white svg background is shown:
-    if self.is_active then
-        self.background = KOR.colors.button_light
+    if self.generate_active_icon then
+        self.background = KOR.colors.button_active
     end
 
     --* to prevent errors in the match in the next code block when self.text is delivered as a number:

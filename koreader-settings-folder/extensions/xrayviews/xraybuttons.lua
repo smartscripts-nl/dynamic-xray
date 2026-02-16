@@ -207,9 +207,14 @@ function XrayButtons:forPageNavigator(parent)
                 return DX.cb:execShowPopupButtonsCallback(parent)
             end
         }),
-        KOR.buttoninfopopup:forXrayPageNavigatorShowTagsDialog({
+        KOR.buttoninfopopup:forXrayPageNavigatorShowTagsDialogForPN({
+            generate_active_icon = DX.pn.navigation_tag,
             callback = function()
-                DX.d:showTagSelector()
+                if DX.pn.navigation_tag then
+                    DX.pn:betweenTagsNavigationDisable()
+                    return
+                end
+                DX.d:showTagSelector("page_navigator")
             end,
         }),
         KOR.buttoninfopopup:forXrayPageNavigatorSearchItem({
@@ -950,24 +955,21 @@ Current sorting mode: %1.]]), current_sorting_mode:upper()),
         }))
     }
     if DX.m.current_series then
-        table_insert(buttons, 1, Button:new(KOR.buttoninfopopup:forXrayToggleBookOrSeriesMode({
+        table_insert(buttons, 2, Button:new(KOR.buttoninfopopup:forXrayToggleBookOrSeriesMode({
             icon_size_ratio = base_icon_size + 0.1,
-            info = T([[book-icon | Switch between display of Xray items in %1 book or %2 series mode. In series mode all items for the entires series will be shown.
-
-Current mode: %3 %4.]], KOR.icons.xray_book_mode_bare, KOR.icons.xray_series_mode_bare, notify_list_display_icon, notify_list_display_mode),
+            info = T("book-icon | Switch between display of Xray items in %1 book or %2 series mode. In series mode all items for the entires series will be shown.\n\nCurrent mode: %3 %4" .. " " .. notify_list_display_mode .. ".", KOR.icons.xray_book_mode_bare, KOR.icons.xray_series_mode_bare, notify_list_display_icon),
             callback_label = notify_list_display_mode == _("book") and _("series mode") or _("book mode"),
             callback = function()
                 DX.d:showToggleBookOrSeriesModeDialog(focus_item, dont_show)
             end,
             show_parent = KOR.ui,
         })))
-        table_insert(buttons, 1, Button:new(KOR.buttoninfopopup:forSeriesCurrentBook({
-            icon_size_ratio = base_icon_size + 0.1,
-            callback = function()
-                KOR.seriesmanager:showSeriesForEbookPath()
-            end
-        })))
     end
+    table_insert(buttons, Button:new(KOR.buttoninfopopup:forXrayPageNavigatorShowTagsDialogForList({
+        callback = function()
+            DX.d:showTagSelector("list")
+        end,
+    })))
     return buttons
 end
 
@@ -982,19 +984,14 @@ function XrayButtons:forListFooterRight(parent)
         parent:showListWithRestoredArguments()
         self:showImportReadyNotification()
     end
-    return {
-        KOR.buttoninfopopup:forXrayPageNavigatorShowTagsDialog({
-            callback = function()
-                parent:showTagSelector()
-            end,
-        }),
+    local buttons = {
+        KOR.buttoninfopopup:forXrayPageNavigator(),
         KOR.buttoninfopopup:forXrayExport({
             callback = function()
                 DX.pn:closePopupMenu()
                 return DX.cb:execExportXrayItemsCallback()
             end
         }),
-        KOR.buttoninfopopup:forXrayPageNavigator(),
         KOR.buttonchoicepopup:forXrayItemsImport({
             callback = function()
                 DX.d:showRefreshHitsForCurrentEbookConfirmation(dialog_close_callback, upon_ready_callback)
@@ -1010,6 +1007,14 @@ function XrayButtons:forListFooterRight(parent)
             end,
         }),
     }
+    if DX.m.current_series then
+        table_insert(buttons, 1, Button:new(KOR.buttoninfopopup:forSeriesCurrentBook({
+            callback = function()
+                KOR.descriptiondialog:showSeriesForEbookPath()
+            end
+        })))
+    end
+    return buttons
 end
 
 --- @private
@@ -1172,16 +1177,6 @@ function XrayButtons:forFilterDialog()
                     KOR.dialogs:closeOverlay()
                     UIManager:close(DX.d.filter_xray_items_input)
                     DX.c:filterItemsByImportantTypes()
-                end,
-            }),
-            KOR.buttoninfopopup:forXrayFilterByTag({
-                callback = function()
-                    --* items de facto filtered by text in ((XrayViewsData#filterAndPopulateItemTables)):
-                    local form = DX.d.filter_xray_items_input
-                    local filter_tag = form:getInputText()
-                    KOR.dialogs:closeOverlay()
-                    UIManager:close(DX.d.filter_xray_items_input)
-                    DX.c:filterItemsByTag(filter_tag)
                 end,
             }),
             KOR.buttoninfopopup:forXrayFilterByText({

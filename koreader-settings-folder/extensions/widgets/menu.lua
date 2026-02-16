@@ -1739,7 +1739,7 @@ function Menu:gotoCharacter(input)
                 return
             end
         end
-        KOR.messages:notify("geen items gevonden, beginnend met " .. letter)
+        KOR.messages:notify(_("no items found starting with ") .. letter)
     end
 end
 
@@ -1769,11 +1769,13 @@ function Menu:getFilterButton(callback, reset_callback, hold_callback)
         end,
     }
     if not filter_active then
-        filter_button_config.info = "filter-ikoon | Geef een term op waarop deze lijst gefilterd moet worden."
+        filter_button_config.info = _("filter icon | Provide a needle for filtering this list.")
     elseif hold_callback then
-        filter_button_config.info = "filter-reset-ikoon | hoofdfunctie arrow reset het filter\nnevenfunctie arrow geef een nieuw filter op"
-        filter_button_config.hold_callback_label = "nieuw filter"
+        filter_button_config.info = _("filter reset icon | hoofdfunctie arrow reset the filter\nnevenfunctie arrow provide a new filter")
+        filter_button_config.hold_callback_label = _("new filter")
         filter_button_config.hold_callback = hold_callback
+    elseif filter_active then
+        filter_button_config.info = _("filter reset icon | Reset the filters for this list.")
     end
     return Button:new(KOR.buttoninfopopup:forMenuFilterButton(filter_button_config))
 end

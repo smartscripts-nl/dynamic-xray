@@ -207,7 +207,7 @@ function CreDocument:getPageHtml(page_no, mark_text)
     if has_text(next_page_xp) then
         html = self:getPageTextFromXPs(xp, next_page_xp, "for_html")
         if mark_text then
-            html = html:gsub(mark_text, "<strong>" .. mark_text .. "</strong>")
+            return html:gsub(mark_text, "<strong>" .. mark_text .. "</strong>")
         end
         return html
     end
