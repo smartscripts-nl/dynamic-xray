@@ -223,8 +223,10 @@ function XrayPageNavigator:getItemInfoText(item, for_info_panel)
         reliability_indicator = reliability_indicator:gsub("^\n+", "")
         return "\n" .. reliability_indicator .. self.cached_items_info[item.name]
     end
+    if not reliability_indicator:match("^\n") then
+        reliability_indicator = "\n" .. reliability_indicator
+    end
 
-    --* prefix "\n" removed here:
     return reliability_indicator .. self.cached_items_info[item.name]
 end
 

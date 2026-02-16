@@ -444,6 +444,7 @@ function XrayUI:getXrayItemsFoundInText(page_or_paragraph_text, tagged_items)
 
     local xray_item, xname, hit_found, alias_match_found, names, short_names, xray_name, names_count, parts
     local subject = tagged_items or DX.vd.items
+    subject = KOR.tables:shallowCopy(subject)
     count = #subject
     for i = 1, count do
         -- #((get xray_item for XrayUI))
@@ -692,9 +693,7 @@ end
 
 --- @private
 function XrayUI:registerParagraphMatch(hits, explanations, item, message)
-    local id = item.id
-    --! register a reference to the static collection of items, so more flexible after item updates:
-    table_insert(hits, DX.m.items_by_id[id])
+    table_insert(hits, item)
     table_insert(explanations, message)
 end
 
