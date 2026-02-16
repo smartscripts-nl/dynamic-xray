@@ -13,6 +13,7 @@ local T = require("ffi/util").template
 
 local DX = DX
 local has_items = has_items
+local has_no_items = has_no_items
 local has_no_text = has_no_text
 local has_text = has_text
 local math_ceil = math.ceil
@@ -507,13 +508,20 @@ function XrayPages:markItemsFoundInPageHtml(html, navigator_page_no)
         self:activateNonFilteredItemsLayout()
     end
 
-    local hits = {}
+    local hits
     local tagged_items = DX.pn:getTaggedItems()
-    if has_items(tagged_items) then
+    if DX.pn.navigation_tag and has_items(tagged_items) then
         hits = DX.u:getXrayItemsFoundInText(html, tagged_items)
         if not hits then
             return html
         end
+    elseif DX.pn.navigation_tag then
+        return html
+    else
+        hits = DX.u:getXrayItemsFoundInText(html)
+    end
+    if has_no_items(hits) then
+        return html
     end
 
     count = #hits

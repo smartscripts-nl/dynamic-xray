@@ -286,6 +286,7 @@ end
 
 --* only called from ((XrayController#saveUpdatedItem)), but not for newly added items; for those we call ((XrayViewsData#registerNewItem)):
 function XrayViewsData:updateAndSortAllItemTables(item)
+
     --* here we also populate self.item_table[1] etc.:
     self:repopulateItemsPersonsTerms(item)
     --* this call is also needed to add reliability and xray type icons:
@@ -674,11 +675,12 @@ end
 
 --- @private
 function XrayViewsData:applyTagFilter(item, hits_registry)
-    if has_text(item.tags) and item.tags:find(self.filter_tag, 1, true) then
-        self.filtered_count = self.filtered_count + 1
-        return false, true, DX.i:getMatchReliabilityIndicator("tag"), hits_registry .. item.name .. " "
+    if has_no_text(item.tags) or not item.tags:find(self.filter_tag) then
+        return false, false, nil, hits_registry
     end
-    return false, false, nil, hits_registry
+
+    self.filtered_count = self.filtered_count + 1
+    return false, true, DX.i:getMatchReliabilityIndicator("tag"), hits_registry .. item.name .. " "
 end
 
 --- @private
@@ -752,17 +754,19 @@ end
 --* returns matched, tag_matched, reliability_indicator, hits_registry (in that exact sequence):
 --- @private
 function XrayViewsData:evaluateFilters(item, linked_item_needles, hits_registry)
+    local matched, reliability_indicator
+    local tag_matched = false
     if self.filter_tag then
-        return self:applyTagFilter(item, hits_registry)
+        matched, tag_matched, reliability_indicator, hits_registry = self:applyTagFilter(item, hits_registry)
+        return matched, tag_matched, reliability_indicator, hits_registry
     end
 
-    local matched, reliability_indicator
     self.type_matched = self:applyTypeFilters(item)
 
     --* in first loop linked_items_needles are only populated, but in the second loop they themselves become the needles and arg linked_item_needles is nil:
     matched, reliability_indicator, hits_registry = self:applyTextFilters(item, linked_item_needles, hits_registry)
 
-    return matched, false, reliability_indicator, hits_registry
+    return matched, tag_matched, reliability_indicator, hits_registry
 end
 
 --- @private
