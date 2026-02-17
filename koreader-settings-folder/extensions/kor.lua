@@ -146,6 +146,8 @@ function KOR:initDX()
 	DX.m:initDataHandlers()
 
 	local modules = {
+		--! this module must be initiatialized before XrayInfoPanel:
+		oh = "extensions/xrayviews/xrayoccurrenceshistogram",
 		b = "extensions/xrayviews/xraybuttons",
 		cb = "extensions/xrayviews/xraycallbacks",
 		d = "extensions/xrayviews/xraydialogs",

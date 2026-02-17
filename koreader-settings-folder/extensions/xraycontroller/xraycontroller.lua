@@ -128,6 +128,7 @@ KOR:initBaseExtensions()
 --- @field i XrayInformation
 --- @field ip XrayInfoPanel
 --- @field m XrayModel
+--- @field oh XrayOccurrencesHistogram
 --- @field pn XrayPageNavigator
 --- @field s XraySettings
 --- @field sp XraySidePanels
@@ -160,6 +161,8 @@ DX = {
     ip = nil,
     --* shorthand notation for Model:
     m = nil,
+    --* shorthand notation for OccurrencesHistogram; this module will be initialized in ((KOR#initDX)):
+    oh = nil,
     --* shorthand notation for Pages; this module will be initialized in ((KOR#initDX)):
     p = nil,
     --* shorthand notation for PageNavigator; this module will be initialized in ((XrayModel#initDataHandlers)):
