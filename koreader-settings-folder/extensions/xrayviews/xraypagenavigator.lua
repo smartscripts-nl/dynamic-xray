@@ -50,7 +50,7 @@ local XrayPageNavigator = WidgetContainer:new{
     parent_item = nil,
     popup_buttons = nil,
     popup_menu = nil,
-    popup_menu_y_pos_computed = false,
+    popup_menu_coords = nil,
     return_to_current_item = nil,
     return_to_item_no = nil,
     return_to_page = nil,
@@ -219,7 +219,7 @@ function XrayPageNavigator:getItemInfoText(item, for_info_panel)
     self.cached_items_info[item.name] = info:gsub("\n  ", "", 1)
 
     if self.navigation_tag then
-        --? for some reason we only need this correction if a navitation tag is active:
+        --? for some reason we only need this correction if a navigation tag is active:
         reliability_indicator = reliability_indicator:gsub("^\n+", "")
         return "\n" .. reliability_indicator .. self.cached_items_info[item.name]
     end
@@ -440,6 +440,8 @@ function XrayPageNavigator:resetCache()
     self.cached_histogram_data = {}
     self.cached_html_and_buttons_by_page_no = {}
     self.cached_hits_by_needle = {}
+    self.popup_menu_coords = nil
+    KOR.registry:unset("popup_menu_coords")
 end
 
 function XrayPageNavigator:resetCachedInfoFor(item)
@@ -492,6 +494,7 @@ function XrayPageNavigator:returnToNavigator()
 end
 
 --* this menu is created AFTER ((XrayPageNavigator#showNavigator)) has been called, so info_panel_width is available here:
+--* positioning of the menu is done via ((NavigatorBox#init)) > ((NavigatorBox#registerPopupMenuCoords)) and ((XrayPageNavigator#showPopupMenu)):
 --- @private
 function XrayPageNavigator:createPopupMenu()
     if self.popup_menu then
@@ -516,13 +519,13 @@ function XrayPageNavigator:showPopupMenu()
         self.popup_menu,
         dimen = Screen:getSize(),
     }
-    if not self.popup_menu_y_pos_computed then
+    if not self.popup_menu_coords then
         --* these coords were set in ((NavigatorBox#registerPopupMenuCoords)):
         local coords = KOR.registry:get("popup_menu_coords")
         coords.y = coords.y - self.popup_menu.inner_height
-        self.popup_menu_y_pos_computed = true
+        self.popup_menu_coords = coords
     end
-    self.movable_popup_menu:movePopupMenuToAboveParent()
+    self.movable_popup_menu:movePopupMenuToAboveParent(self.popup_menu_coords)
     UIManager:show(self.movable_popup_menu)
 end
 

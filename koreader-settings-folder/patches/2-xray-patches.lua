@@ -1072,12 +1072,11 @@ function MovableContainer:moveToYPos(target_y_pos)
     self:_moveBy(0, move_by, "restrict_to_screen")
 end
 
-function MovableContainer:movePopupMenuToAboveParent()
+--* param coords was set via ((NavigatorBox#registerPopupMenuCoords)) and ((XrayPageNavigator#showPopupMenu)):
+function MovableContainer:movePopupMenuToAboveParent(coords)
     self._orig_y = math_floor(self.screen_height / 2)
     self._orig_x = math_floor(self.screen_width / 2)
 
-    --* these coords were set in ((NavigatorBox#registerPopupMenuCoords)):
-    local coords = KOR.registry:get("popup_menu_coords")
     --* this width was set in ((set button_dialog_table_width)):
     local dialog_width = KOR.registry:get("button_dialog_table_width")
 
