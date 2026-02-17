@@ -488,6 +488,9 @@ function XrayUI:getXrayItemsFoundInText(page_or_paragraph_text, tagged_items)
     if #hits == 0 then
         return
     end
+
+    DX.pn:cacheReliabilityIndicators(hits)
+
     return hits, explanations, skip_items
 end
 

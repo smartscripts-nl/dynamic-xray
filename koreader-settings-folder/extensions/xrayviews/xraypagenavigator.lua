@@ -33,6 +33,7 @@ local XrayPageNavigator = WidgetContainer:new{
     cached_hits_by_needle = {},
     cached_html_and_buttons_by_page_no = {},
     cached_items_info = {},
+    cached_reliability_indicators = {},
     current_item = nil,
     first_info_panel_text = nil,
     --* this prop will be set from ((NavigatorBox#generateInfoButtons)):
@@ -175,11 +176,38 @@ function XrayPageNavigator:computeHistogramData(item)
     return chapters_count, ratio_per_chapter, occurrences_per_chapter
 end
 
+--- @private
+function XrayPageNavigator:cacheReliabilityIndicator(item, page_no)
+    if not item.name or not item.reliability_indicator then
+        return
+    end
+
+    if not self.cached_reliability_indicators[item.name] then
+        self.cached_reliability_indicators[item.name] = {}
+    end
+    self.cached_reliability_indicators[item.name][page_no] = item.reliability_indicator
+end
+
+function XrayPageNavigator:cacheReliabilityIndicators(hits)
+    local item
+    local page_no = DX.u:getCurrentPage()
+    count = #hits
+    for i = 1, count do
+        item = hits[i]
+        self:cacheReliabilityIndicator(item, page_no)
+    end
+end
+
 --* this info will be consumed for the info panel in ((NavigatorBox#generateScrollWidget)):
 function XrayPageNavigator:getItemInfoText(item, for_info_panel)
-    --* the reliability_indicators were added in ((XrayUI#getXrayItemsFoundInText)) > ((XrayUI#matchNameInPageOrParagraph)) and ((XrayUI#matchAliasesToParagraph)):
-    local reliability_indicator = item.reliability_indicator and item.reliability_indicator .. " " or ""
+    --* the reliability_indicators were added and cached via ((XrayUI#getXrayItemsFoundInText)) > ((XrayUI#matchNameInPageOrParagraph)) and ((XrayUI#matchAliasesToParagraph)) > ((XrayPageNavigator#cacheReliabilityIndicators)), or via this statement:
+    self:cacheReliabilityIndicator(item, self.navigator_page_no)
 
+    local reliability_indicator = item.reliability_indicator or self.cached_reliability_indicators[item.name] and self.cached_reliability_indicators[item.name][self.navigator_page_no]
+
+    reliability_indicator = reliability_indicator and reliability_indicator .. " " or ""
+
+    --* this cached info was set farther below in the current method:
     if self.cached_items_info[item.name] then
         --* if an item was cached, don't add linebreaks to the linebreak already present in the cached info:
         local prefix = for_info_panel and "" or "\n"
@@ -440,8 +468,8 @@ function XrayPageNavigator:resetCache()
     self.cached_histogram_data = {}
     self.cached_html_and_buttons_by_page_no = {}
     self.cached_hits_by_needle = {}
+    self.cached_reliability_indicators = {}
     self.popup_menu_coords = nil
-    KOR.registry:unset("popup_menu_coords")
 end
 
 function XrayPageNavigator:resetCachedInfoFor(item)
