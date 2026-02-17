@@ -218,7 +218,9 @@ end
 
 --- @private
 function XrayPageNavigator:setCurrentItem(item)
+    --* when a page has no Xray items, set self.current_item to nil (so e.g. no occurrences histogram will be shown in the PN info panel):
     if not item then
+        self.current_item = nil
         return
     end
     local id = item.id
