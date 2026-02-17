@@ -786,7 +786,7 @@ function ReaderSearch:showHitWithContext(item, not_cached)
                         local page = KOR.document:getPageFromXPointer(item.start)
                         -- #((jump from ReaderSearch to Xray Page Navigator))
                         DX.sp:resetActiveSideButtons("ReaderSearch:showHitWithContext")
-                        DX.pn:setProp("navigator_page_no", page)
+                        DX.pn:setProp("page_no", page)
                         DX.pn:restoreNavigator()
                     end,
                 }),

@@ -19,7 +19,7 @@ local XrayCallbacks = WidgetContainer:new{}
 
 --- @param iparent XrayPageNavigator
 function XrayCallbacks:execAddCallback(iparent)
-    iparent.return_to_page = iparent.navigator_page_no
+    iparent.return_to_page = iparent.page_no
     iparent:closePageNavigator()
     DX.c:resetFilteredItems()
     DX.c:onShowNewItemForm()
@@ -36,7 +36,7 @@ function XrayCallbacks:execEditCallback(iparent)
     iparent:closePageNavigator()
     DX.c:setProp("return_to_viewer", false)
     --* to to be consumed in ((XrayButtons#forItemEditor)) > ((XrayPageNavigator#returnToNavigator)):
-    iparent:setProp("return_to_page", iparent.navigator_page_no)
+    iparent:setProp("return_to_page", iparent.page_no)
     if #DX.sp.side_buttons > 0 then
         iparent:setProp("return_to_item_no", DX.sp.active_side_button)
         iparent:setProp("return_to_current_item", iparent.current_item)
@@ -77,7 +77,7 @@ end
 function XrayCallbacks:execJumpToCurrentPageInEbookCallback(iparent)
     iparent:closePageNavigator()
     KOR.ui.link:addCurrentLocationToStack()
-    KOR.ui:handleEvent(Event:new("GotoPage", iparent.navigator_page_no))
+    KOR.ui:handleEvent(Event:new("GotoPage", iparent.page_no))
     return true
 end
 
@@ -128,7 +128,7 @@ function XrayCallbacks:onClose()
 
     --* use PageBrowserWidget taps to navigate in Page Navigator, but reset location in reader to previous page:
     UIManager:nextTick(function()
-        DX.pn:setProp("navigator_page_no", DX.u:getCurrentPage())
+        DX.pn:setProp("page_no", DX.u:getCurrentPage())
         --* undo page jump in the e-reader:
         KOR.link:onGoBackLink()
         DX.pn:restoreNavigator()
@@ -137,7 +137,7 @@ end
 
 --- @param iparent XrayPageNavigator
 function XrayCallbacks:execShowPageBrowserCallback(iparent)
-    if not iparent.navigator_page_no then
+    if not iparent.page_no then
         return true
     end
     local PageBrowserWidget = require("ui/widget/pagebrowserwidget")
@@ -145,8 +145,8 @@ function XrayCallbacks:execShowPageBrowserCallback(iparent)
         --! via this prop PageBrowserWidget can call ((XrayCallbacks#onClose)):
         launcher = DX.cb,
         ui = KOR.ui,
-        focus_page = iparent.navigator_page_no,
-        cur_page = iparent.navigator_page_no,
+        focus_page = iparent.page_no,
+        cur_page = iparent.page_no,
     }
     UIManager:show(iparent.page_browser)
     iparent.page_browser:update()

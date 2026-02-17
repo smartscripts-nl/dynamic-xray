@@ -216,7 +216,7 @@ function XrayPages:jumpToPage()
                 return
             end
             DX.sp:resetActiveSideButtons("XrayPages:jumpToPage")
-            DX.pn.navigator_page_no = value
+            DX.pn.page_no = value
             DX.pn:restoreNavigator()
         end,
     })
@@ -256,16 +256,16 @@ function XrayPages:resetCache()
     self.cached_html_by_page_no = {}
 end
 
-function XrayPages:getPageHtmlAndMarkItems(navigator_page_no, for_tagged_items)
-    local html = self:getPageHtmlForPage(navigator_page_no, for_tagged_items)
+function XrayPages:getPageHtmlAndMarkItems(page_no, for_tagged_items)
+    local html = self:getPageHtmlForPage(page_no, for_tagged_items)
     --* self.cached_html_and_buttons_by_page_no will be updated here:
     --* side_buttons FOR SIDE PANEL TAB NO.1 de facto populated in ((XrayPages#markedItemRegister)) > ((XraySidePanels#addSideButton)):
-    return self:markItemsFoundInPageHtml(html, navigator_page_no)
+    return self:markItemsFoundInPageHtml(html, page_no)
 end
 
 function XrayPages:toCurrentNavigatorPage()
     DX.sp:resetActiveSideButtons("XrayPages:toCurrentNavigatorPage")
-    DX.pn.navigator_page_no = DX.pn.initial_browsing_page
+    DX.pn.page_no = DX.pn.initial_browsing_page
     DX.pn:restoreNavigator()
 end
 
@@ -284,10 +284,10 @@ function XrayPages:toNextNavigatorPage(goto_next_item)
     end
 
     --* regular navigation:
-    DX.pn.navigator_page_no = DX.pn.navigator_page_no + 1
+    DX.pn.page_no = DX.pn.page_no + 1
     local epages = KOR.document:getPageCount()
-    if DX.pn.navigator_page_no >= epages then
-        DX.pn:setProp("navigator_page_no", epages)
+    if DX.pn.page_no >= epages then
+        DX.pn:setProp("page_no", epages)
         self:showNoNextPreviousOccurrenceMessage(direction)
         return
     end
@@ -308,9 +308,9 @@ function XrayPages:toPrevNavigatorPage(goto_prev_item)
     end
 
     --* regular navigation:
-    DX.pn.navigator_page_no = DX.pn.navigator_page_no - 1
-    if DX.pn.navigator_page_no < 1 then
-        DX.pn:setProp("navigator_page_no", 1)
+    DX.pn.page_no = DX.pn.page_no - 1
+    if DX.pn.page_no < 1 then
+        DX.pn:setProp("page_no", 1)
         self:showNoNextPreviousOccurrenceMessage(direction)
         return
     end
@@ -345,7 +345,7 @@ function XrayPages:gotoPageHitForItem(goto_item, direction)
         DX.pn.cached_hits_by_needle[needle] = results
 
         self.browsing_page_new = nil
-        self.browsing_page_current = DX.pn.navigator_page_no
+        self.browsing_page_current = DX.pn.page_no
 
         local next_page = direction == 1
             and self:getNextPageFrom(results)
@@ -397,7 +397,7 @@ end
 
 --- @private
 function XrayPages:gotoPageHitForTaggedItem(direction)
-    local page = DX.pn.navigator_page_no
+    local page = DX.pn.page_no
     local page_count = KOR.document:getPageCount()
     if page == 1 and direction == -1 then
         self:notifyNoPreviousOccurrences()
@@ -433,9 +433,9 @@ function XrayPages:invalidItemPageHitHandled(direction, goto_item)
     --* this prop should be set by ((XrayPages#setValidNextBrowsingPage)):
     if
         not self.browsing_page_new
-        or self.browsing_page_new == DX.pn.navigator_page_no
-        or direction == 1 and self.browsing_page_new < DX.pn.navigator_page_no
-        or direction == -1 and self.browsing_page_new > DX.pn.navigator_page_no
+        or self.browsing_page_new == DX.pn.page_no
+        or direction == 1 and self.browsing_page_new < DX.pn.page_no
+        or direction == -1 and self.browsing_page_new > DX.pn.page_no
     then
         if goto_item then
             self:undoTemporaryFilterItem(goto_item)
@@ -448,13 +448,13 @@ function XrayPages:invalidItemPageHitHandled(direction, goto_item)
 end
 
 --- @private
-function XrayPages:searchNextOrPreviousAliasHit(item, needle, results, case_insensitive, direction)
-        local aliases = DX.m:splitByCommaOrSpace(item.aliases)
-        local aliases_count = #aliases
-    local next_page
+function XrayPages:searchNextOrPreviousAliasHit(item, needle, case_insensitive, direction)
+    local aliases = DX.m:splitByCommaOrSpace(item.aliases)
+    local aliases_count = #aliases
+    local next_page, results
         for a = 1, aliases_count do
             results = DX.pn.cached_hits_by_needle[needle] or KOR.document:findAllTextWholeWords(aliases[a], case_insensitive, 0, 3000, false)
-            DX.pn.cached_hits_by_needle[needle] = results
+            DX.pn:setCachedHitsByNeedle(needle, results)
             next_page = direction == 1 and self:getNextPageFrom(results) or self:getPreviousPageFrom(results)
             if not next_page and self.search_also_in_opposite_direction then
                 next_page = self:getNextPageFrom(results)
@@ -465,9 +465,11 @@ end
 
 --- @private
 function XrayPages:handleItemHitFound(page, html)
-    DX.pn:setProp("navigator_page_no", page)
-    DX.pn:setProp("navigator_page_html", html)
-    DX.pn:setProp("navigator_side_buttons", DX.sp.side_buttons)
+    DX.pn:setProps(
+        { "page_no", page },
+        { "navigator_page_html", html },
+        { "navigator_side_buttons", DX.sp.side_buttons }
+    )
     if not DX.pn.navigation_tag then
         DX.sp.active_side_button_by_name = DX.pn.active_filter_name
     end
@@ -498,10 +500,10 @@ function XrayPages:showNoNextPreviousOccurrenceMessage(direction)
     KOR.messages:notify(T(_("no %1 occurrence of this item found..."), adjective))
 end
 
-function XrayPages:markItemsFoundInPageHtml(html, navigator_page_no)
+function XrayPages:markItemsFoundInPageHtml(html, page_no)
     DX.sp:resetSideButtons()
     self.button_labels_injected = {}
-    DX.pn:setProp("navigator_page_no", navigator_page_no)
+    DX.pn:setProp("page_no", page_no)
     DX.pn:setProp("first_info_panel_text", nil)
 
     if not self.non_active_layout then
@@ -532,7 +534,7 @@ function XrayPages:markItemsFoundInPageHtml(html, navigator_page_no)
     end
     --* don't use cache if a filtered item was set (with its additional html):
     if not DX.pn.active_filter_name and not DX.pn.navigation_tag then
-        DX.pn.cached_html_and_buttons_by_page_no[DX.pn.navigator_page_no] = {
+        DX.pn.cached_html_and_buttons_by_page_no[DX.pn.page_no] = {
             html = html,
             side_buttons = DX.sp.side_buttons,
         }

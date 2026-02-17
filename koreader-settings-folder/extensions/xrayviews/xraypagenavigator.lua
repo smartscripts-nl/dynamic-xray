@@ -41,7 +41,7 @@ local XrayPageNavigator = WidgetContainer:new{
     initial_browsing_page = nil,
     key_events = {},
     max_line_length = DX.s.PN_info_panel_max_line_length,
-    navigator_page_no = nil,
+    page_no = nil,
     movable_popup_menu = nil,
     navigation_tag = nil,
     navigator_page_html = nil,
@@ -78,11 +78,11 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
 
     self.popup_buttons = self.popup_buttons or DX.b:forPageNavigatorPopupButtons(self)
 
-    --! watch out: this is another var than navigator_page_no on the next line; if you make their names identical, then browsing to next or previous page is not possible anymore:
-    --* initial_browsing_page is the page on which you started using the Navigator, while self.navigator_page_no is the actual page you are viewing in the Navigator after browsing to other pages:
-    if not self.navigator_page_no or (initial_browsing_page and self.initial_browsing_page ~= initial_browsing_page) then
-        self.navigator_page_no = DX.u:getCurrentPage()
-        if not self.navigator_page_no then
+    --! watch out: this is another var than page_no on the next line; if you make their names identical, then browsing to next or previous page is not possible anymore:
+    --* initial_browsing_page is the page on which you started using the Navigator, while self.page_no is the actual page you are viewing in the Navigator after browsing to other pages:
+    if not self.page_no or (initial_browsing_page and self.initial_browsing_page ~= initial_browsing_page) then
+        self.page_no = DX.u:getCurrentPage()
+        if not self.page_no then
             KOR.messages:notify("pagina kon niet worden bepaald")
             return
         end
@@ -113,7 +113,7 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
         ratio_per_chapter = ratio_per_chapter,
         --* side_buttons were generated via ((XrayPages#markedItemRegister)) > ((XraySidePanels#addSideButton)):
         side_buttons = DX.sp.side_buttons,
-        title = DX.m.current_title .. " - p." .. self.navigator_page_no,
+        title = DX.m.current_title .. " - p." .. self.page_no,
         top_buttons_left = DX.b:forPageNavigatorTopLeft(self),
         window_size = "fullscreen",
         after_close_callback = function()
@@ -201,9 +201,9 @@ end
 --* this info will be consumed for the info panel in ((NavigatorBox#generateScrollWidget)):
 function XrayPageNavigator:getItemInfoText(item, for_info_panel)
     --* the reliability_indicators were added and cached via ((XrayUI#getXrayItemsFoundInText)) > ((XrayUI#matchNameInPageOrParagraph)) and ((XrayUI#matchAliasesToParagraph)) > ((XrayPageNavigator#cacheReliabilityIndicators)), or via this statement:
-    self:cacheReliabilityIndicator(item, self.navigator_page_no)
+    self:cacheReliabilityIndicator(item, self.page_no)
 
-    local reliability_indicator = item.reliability_indicator or self.cached_reliability_indicators[item.name] and self.cached_reliability_indicators[item.name][self.navigator_page_no]
+    local reliability_indicator = item.reliability_indicator or self.cached_reliability_indicators[item.name] and self.cached_reliability_indicators[item.name][self.page_no]
 
     reliability_indicator = reliability_indicator and reliability_indicator .. " " or ""
 
@@ -409,8 +409,8 @@ end
 function XrayPageNavigator:setButtonsAndReturnHtmlFromCache()
     --* get html and side_buttons from cache; these were stored in ((XrayPages#markItemsFoundInPageHtml)):
     if
-        not self.navigator_page_no
-        or not self.cached_html_and_buttons_by_page_no[self.navigator_page_no]
+        not self.page_no
+        or not self.cached_html_and_buttons_by_page_no[self.page_no]
         --* don't use cache if a filtered item was set (with its additional html):
         or self.active_filter_name
         or self.navigation_tag
@@ -419,11 +419,11 @@ function XrayPageNavigator:setButtonsAndReturnHtmlFromCache()
     end
 
     if DX.sp.active_side_tab == 1 then
-        DX.sp:setSideButtons(self.cached_html_and_buttons_by_page_no[self.navigator_page_no].side_buttons)
+        DX.sp:setSideButtons(self.cached_html_and_buttons_by_page_no[self.page_no].side_buttons)
         DX.sp:markActiveSideButton()
     end
 
-    return self.cached_html_and_buttons_by_page_no[self.navigator_page_no].html
+    return self.cached_html_and_buttons_by_page_no[self.page_no].html
 end
 
 --- @private
@@ -450,7 +450,7 @@ function XrayPageNavigator:loadDataForPage()
     end
 
     --* when we initiated browsing between tagged items, via ((XrayPages#getPageHtmlForPage)) and ((XrayPages#getPageHtmlForPage)) PageNavigator.navigator_page_html can be populated with html containing the tagged items:
-    html = self.navigation_tag and self.navigator_page_html or DX.p:getPageHtmlAndMarkItems(self.navigator_page_no)
+    html = self.navigation_tag and self.navigator_page_html or DX.p:getPageHtmlAndMarkItems(self.page_no)
     self.navigator_page_html = nil
 
     --? eilas, when an item filter or a tag filter has been set, linked items for side panel no 2 have to be recomputed for some reason:
@@ -474,6 +474,10 @@ end
 
 function XrayPageNavigator:resetCachedInfoFor(item)
     self.cached_items_info[item.name] = nil
+end
+
+function XrayPageNavigator:setCachedHitsByNeedle(needle, hits)
+    self.cached_hits_by_needle[needle] = hits
 end
 
 function XrayPageNavigator:closePageNavigator()
@@ -500,7 +504,7 @@ function XrayPageNavigator:returnToNavigator()
     --* set by ((XrayCallbacks#execEditCallback)):
     if self.return_to_page then
         --* this is needed so we can return to the page we were looking at:
-        self.navigator_page_no = self.return_to_page
+        self.page_no = self.return_to_page
         self:restoreNavigator()
         local active_side_button = self.return_to_item_no or 1
         DX.sp:setActiveSideButton("XrayPageNavigator:returnToNavigator", active_side_button)
@@ -559,6 +563,17 @@ end
 
 function XrayPageNavigator:setProp(prop, value)
     self[prop] = value
+end
+
+--* props must be tables with first item for name and second item for value:
+function XrayPageNavigator:setProps(prop, ...)
+    self[prop[1]] = prop[2]
+
+    local others = { ... }
+    count = #others
+    for i = 1, count do
+        self[others[i][1]] = others[i][2]
+    end
 end
 
 return XrayPageNavigator

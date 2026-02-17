@@ -235,7 +235,7 @@ function NavigatorBox:showChapterInformation(n)
                         return
                     end
                     DX.sp:resetActiveSideButtons("NavigatorBox:showChapterInformation")
-                    DX.pn.navigator_page_no = page
+                    DX.pn.page_no = page
                     DX.pn:restoreNavigator()
                 end
             },
