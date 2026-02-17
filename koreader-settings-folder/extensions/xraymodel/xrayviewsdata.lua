@@ -1145,7 +1145,7 @@ function XrayViewsData:generateXrayItemInfo(item, ui_explanation, information_le
     end
 
     local xray_type_icon = DX.vd:getItemTypeIcon(item)
-    local hits = DX.pn:itemInfoAddHits(item)
+    local hits = DX.ip:itemInfoAddHits(item)
     first_line, first_line_fc = self:generateFirstLines(first_line, first_line_fc, item, xray_type_icon, ui_explanation, iindent, for_all_items_list)
 
     local info = table_concat({

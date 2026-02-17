@@ -147,7 +147,7 @@ local XraySettings = WidgetContainer:new{
             type = "number",
         },
         PN_info_panel_height = {
-            --* this value is used in ((NavigatorBox#generateInfoPanel)):
+            --* this value is used in ((XrayInfoPanel#generateInfoPanel)):
             value = 0.22,
             --* this validator references a function included in self.validators:
             validator = {
@@ -257,7 +257,7 @@ local XraySettings = WidgetContainer:new{
     },
     after_change_callbacks = {
         reset_page_navigator_cache = function()
-            DX.pn:setProp("max_line_length", DX.s.PN_info_panel_max_line_length)
+            DX.ip:setProp("max_line_length", self.PN_info_panel_max_line_length)
             DX.c:resetDynamicXray()
             DX.pn:closePageNavigator()
             KOR.dialogs:closeAllOverlays()

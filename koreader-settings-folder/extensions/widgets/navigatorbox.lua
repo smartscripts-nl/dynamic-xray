@@ -84,6 +84,7 @@ local NavigatorBox = InputContainer:extend{
     html = nil,
     info_panel_buttons = nil,
     info_panel_text = nil,
+    --* this prop will be set from ((NavigatorBox#generateInfoButtons)):
     info_panel_width = nil,
     --* set by ((XrayPageNavigator#showNavigator)):
     key_events_module = nil,
@@ -159,6 +160,24 @@ function NavigatorBox:initHotkeys()
     if self.hotkeys_configurator then
         self.hotkeys_configurator()
     end
+end
+
+--- @private
+function NavigatorBox:generateInfoPanel()
+    self.info_panel, self.info_panel_separator, self.info_panel_height, self.info_panel_separator_height, self.sheight =
+        DX.ip:generateInfoPanel({
+          info_panel_text = self.info_panel_text,
+          info_panel_width = self.info_panel_width,
+          screen_height = self.screen_height,
+          content_height = self.content_height,
+          info_panel_nav_buttons_height = self.info_panel_nav_buttons_height,
+          histogram_height = self.histogram_height,
+          histogram_bottom_line_height = self.histogram_bottom_line_height,
+          ratio_per_chapter = self.ratio_per_chapter,
+        })
+
+    --* for consumption in ((NavigatorBox#generateScrollWidget)):
+    self.swidth = self.info_panel_width
 end
 
 --- @private
@@ -291,29 +310,6 @@ function NavigatorBox:generateInfoButtons()
         },
         buttons,
     }
-end
-
---- @private
-function NavigatorBox:generateInfoPanel()
-
-    local height = self.content_height
-    --* info_text was generated in ((XrayPageNavigator#showNavigator)) > ((XrayPages#markItemsFoundInPageHtml)) > ((XrayPages#markItem)) > ((XrayPageNavigator#getItemInfoText)):
-    local info_text = self.info_panel_text or " "
-    --* set the info panel height as a fraction of the screen height:
-    local info_panel_height = math_floor(self.screen_height * DX.s.PN_info_panel_height)
-
-    self.info_panel = DX.ip:generateInfoPanel(info_text, info_panel_height, self.info_panel_width, self)
-    self.info_panel_separator = DX.ip:generateInfoPanelSeparator(self.info_panel_width)
-
-    self.info_panel_height = self.info_panel:getSize().h
-    self.info_panel_separator_height = self.info_panel_separator:getSize().h
-    height = height - self.info_panel_height - self.info_panel_separator_height - self.info_panel_nav_buttons_height
-    --* for consumption in ((NavigatorBox#generateScrollWidget)):
-    self.swidth = self.info_panel_width
-    self.sheight = height
-    if self.ratio_per_chapter then
-        self.sheight = self.sheight - self.histogram_height - self.histogram_bottom_line_height
-    end
 end
 
 --* Used in init & update to instantiate the Scroll*Widget that self.html_widget points to
@@ -638,7 +634,7 @@ function NavigatorBox:registerPopupMenuCoords()
         --* histogram height props were set in ((NavigatorBox#setModuleProps)):
         - self.histogram_height
         + self.histogram_bottom_line_height
-        --* info panel heights were computed in ((NavigatorBox#generateInfoPanel)):
+        --* info panel heights were computed in ((XrayInfoPanel#generateInfoPanel)):
         - self.info_panel_height
         + math_floor(self.info_panel_nav_buttons_height / 2)
         + self.info_panel_separator_height

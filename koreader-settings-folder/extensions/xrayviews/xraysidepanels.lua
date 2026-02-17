@@ -159,10 +159,9 @@ end
 --- @private
 function XraySidePanels:generateInfoTextForFirstSideButton(button)
     --* the xray_item prop of these buttons was set in ((XrayPages#markedItemRegister)) > ((XraySidePanels#addSideButton)):
-    local info_text = DX.pn:getItemInfoText(button.xray_item)
+    local info_text = DX.ip:getItemInfoText(button.xray_item)
     button.xray_item.info_text = info_text
-    DX.pn:setProp("first_info_panel_text", info_text)
-    DX.pn:setProp("first_info_panel_item_name", button.xray_item.name)
+    DX.ip:setProp("first_info_panel_text", info_text)
 end
 
 --* this method is only called for side panel no.2:
@@ -177,7 +176,7 @@ function XraySidePanels:populateLinkedItemsPanel()
     for i = 1, lcount do
         info_panel_text = DX.vd:generateXrayItemInfo(self.linked_items[i], nil, 2, "for_all_items_list")
         if i == 1 then
-            DX.pn:setProp("first_info_panel_text", info_panel_text)
+            DX.ip:setProp("first_info_panel_text", info_panel_text)
         end
         --* apply some hacks to get a correct, uniform lay-out for the info in the bottom panel (apparently we need this for side panel no 2, but not for side panel 1):
         info_panel_text = DX.ip:formatInfoPanelText(info_panel_text)

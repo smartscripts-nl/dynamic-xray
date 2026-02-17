@@ -14,11 +14,7 @@ local Size = require("extensions/modules/size")
 local T = require("ffi/util").template
 
 local DX = DX
-local has_content = has_content
-local has_text = has_text
-local table_concat = table.concat
 local table_insert = table.insert
-local tonumber = tonumber
 local unpack = unpack
 
 local count
@@ -28,19 +24,16 @@ local parent
 --- @class XrayPageNavigator
 local XrayPageNavigator = WidgetContainer:new{
     active_filter_name = nil,
-    alias_indent = "   ",
     cached_histogram_data = {},
     cached_hits_by_needle = {},
     cached_html_and_buttons_by_page_no = {},
     cached_items_info = {},
     cached_reliability_indicators = {},
     current_item = nil,
-    first_info_panel_text = nil,
     --* this prop will be set from ((NavigatorBox#generateInfoButtons)):
     info_panel_width = nil,
     initial_browsing_page = nil,
     key_events = {},
-    max_line_length = DX.s.PN_info_panel_max_line_length,
     page_no = nil,
     movable_popup_menu = nil,
     navigation_tag = nil,
@@ -196,114 +189,6 @@ function XrayPageNavigator:cacheReliabilityIndicators(hits)
         item = hits[i]
         self:cacheReliabilityIndicator(item, page_no)
     end
-end
-
---* this info will be consumed for the info panel in ((NavigatorBox#generateScrollWidget)):
-function XrayPageNavigator:getItemInfoText(item, for_info_panel)
-    --* the reliability_indicators were added and cached via ((XrayUI#getXrayItemsFoundInText)) > ((XrayUI#matchNameInPageOrParagraph)) and ((XrayUI#matchAliasesToParagraph)) > ((XrayPageNavigator#cacheReliabilityIndicators)), or via this statement:
-    self:cacheReliabilityIndicator(item, self.page_no)
-
-    local reliability_indicator = item.reliability_indicator or self.cached_reliability_indicators[item.name] and self.cached_reliability_indicators[item.name][self.page_no]
-
-    reliability_indicator = reliability_indicator and reliability_indicator .. " " or ""
-
-    --* this cached info was set farther below in the current method:
-    if self.cached_items_info[item.name] then
-        --* if an item was cached, don't add linebreaks to the linebreak already present in the cached info:
-        local prefix = for_info_panel and "" or "\n"
-        local info = prefix .. reliability_indicator .. self.cached_items_info[item.name]
-        if not info:match("^\n") then
-            return "\n" .. info
-        end
-        return info:gsub("^\n\n", "\n")
-    end
-
-    local reliability_indicator_placeholder = item.reliability_indicator and "  " or ""
-    self.sub_info_separator = ""
-
-    local icon = DX.vd:getItemTypeIcon(item, "bare")
-    --* alias_indent suffixed with 2 spaces, because of icon .. " ":
-    local description = item.description
-    description = KOR.strings:splitLinesToMaxLength(icon .. " " .. item.name .. ": " .. description, self.max_line_length, self.alias_indent .. "  ", nil, "dont_indent_first_line")
-    local info = "\n" .. reliability_indicator_placeholder .. description .. "\n"
-
-    local info_table = {}
-    local indent = self:getItemInfoIndentation()
-
-    local hits_info = self:itemInfoAddHits(item, indent)
-    if has_text(hits_info) then
-        table_insert(info_table, hits_info .. "\n")
-    end
-    --* for use with ((XrayPageNavigator#splitLinesToMaxLength)):
-    self.alias_indent_corrected = DX.s.is_mobile_device and self.alias_indent .. self.alias_indent .. self.alias_indent .. self.alias_indent or self.alias_indent
-    self:itemInfoAddPropInfo(item, "aliases", KOR.icons.xray_alias_bare, info_table, indent)
-    self:itemInfoAddPropInfo(item, "linkwords", KOR.icons.xray_link_bare, info_table, indent)
-    self:itemInfoAddPropInfo(item, "tags", KOR.icons.tag_open_bare, info_table, indent)
-    if #info_table > 0 then
-        info = info .. " \n" .. table_concat(info_table, "")
-    end
-
-    --* remove reliability_indicator_placeholder:
-    self.cached_items_info[item.name] = info:gsub("\n  ", "", 1)
-
-    if self.navigation_tag then
-        --? for some reason we only need this correction if a navigation tag is active:
-        reliability_indicator = reliability_indicator:gsub("^\n+", "")
-        return "\n" .. reliability_indicator .. self.cached_items_info[item.name]
-    end
-    if not reliability_indicator:match("^\n") then
-        reliability_indicator = "\n" .. reliability_indicator
-    end
-
-    return reliability_indicator .. self.cached_items_info[item.name]
-end
-
---- @private
-function XrayPageNavigator:getItemInfoIndentation()
-    local indent = " "
-    return indent:rep(DX.s.item_info_indent)
-end
-
---- @private
-function XrayPageNavigator:itemInfoAddHits(item, indent)
-    --* when called from ((XrayViewsData#generateXrayItemInfo)) - so when generating an overview of all Xray items -, add no additional indentation:
-    if not indent then
-        indent = ""
-    end
-    local hits = ""
-    local series_hits_added = false
-    if parent.current_series and has_content(item.series_hits) then
-        series_hits_added = true
-        hits = KOR.icons.graph_bare .. " " .. _("series") .. " " .. tonumber(item.series_hits)
-    end
-    if has_content(item.book_hits) then
-        local separator = series_hits_added and ", " or KOR.icons.graph_bare .. " "
-        hits = hits .. separator .. _("book") .. " " .. tonumber(item.book_hits)
-    end
-    if has_text(hits) then
-        return indent .. hits
-    end
-    return hits
-end
-
---- @private
-function XrayPageNavigator:itemInfoAddPropInfo(item, prop, icon, info_table, indent)
-    if not item[prop] then
-        return
-    end
-
-    local prop_info = self:splitLinesToMaxLength(item[prop], icon .. " " .. item[prop])
-    if has_text(prop_info) then
-        table_insert(info_table, indent .. prop_info .. "\n")
-    end
-end
-
---- @private
-function XrayPageNavigator:splitLinesToMaxLength(prop, text)
-    if not has_text(prop) then
-        return ""
-    end
-    return KOR.strings:splitLinesToMaxLength(text, self.max_line_length - DX.s.item_info_indent, self.alias_indent_corrected, nil, "dont_indent_first_line")
 end
 
 function XrayPageNavigator:resetFilter()
@@ -474,6 +359,10 @@ end
 
 function XrayPageNavigator:resetCachedInfoFor(item)
     self.cached_items_info[item.name] = nil
+end
+
+function XrayPageNavigator:setCachedInfoFor(item, info)
+    self.cached_items_info[item.name] = info
 end
 
 function XrayPageNavigator:setCachedHitsByNeedle(needle, hits)

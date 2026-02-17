@@ -373,7 +373,7 @@ function XrayPages:gotoPageHitForItem(goto_item, direction)
             return
             end
 
-        self:searchNextOrPreviousAliasHit(item, needle, results, case_insensitive, direction)
+        self:searchNextOrPreviousAliasHit(item, needle, case_insensitive, direction)
 
         if self:invalidItemPageHitHandled(direction, goto_item) then
             return
@@ -504,7 +504,7 @@ function XrayPages:markItemsFoundInPageHtml(html, page_no)
     DX.sp:resetSideButtons()
     self.button_labels_injected = {}
     DX.pn:setProp("page_no", page_no)
-    DX.pn:setProp("first_info_panel_text", nil)
+    DX.ip:setProp("first_info_panel_text", nil)
 
     if not self.non_active_layout then
         self:activateNonFilteredItemsLayout()
@@ -552,10 +552,9 @@ function XrayPages:markedItemRegister(item, html, word)
     local needle = DX.vd:getNeedleString(word, "for_substitution")
     html = self:markNeedleInHtml(html, needle)
 
-    local info_text = DX.pn:getItemInfoText(item)
-    if info_text and not DX.pn.first_info_panel_text then
-        DX.pn:setProp("first_info_panel_text", info_text)
-        DX.pn:setProp("first_info_panel_item_name", item.name)
+    local info_text = DX.ip:getItemInfoText(item)
+    if info_text and not DX.ip.first_info_panel_text then
+        DX.ip:setProp("first_info_panel_text", info_text)
     end
 
     --* linked item buttons (when DX.sp.active_side_tab == 2) are added in ((XrayPageNavigator#loadDataForPage)) > ((XraySidePanels#computeLinkedItems)):
