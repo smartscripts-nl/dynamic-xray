@@ -42,14 +42,12 @@ local XrayViewsData = WidgetContainer:new{
     filter_string = "",
     filter_tag = nil,
     filter_xray_types = nil,
-    info_indent = "     ",
     item_meta_info_template = "<tr><td><ul><li>%1</li></ul></td><td>&nbsp;</td><td>%2</td></tr>",
     item_table = { {}, {}, {} },
     item_table_for_filter = { {}, {}, {} },
     --* items, persons and terms props act as some kind of temporary data store (not influenced by filters etc.) for the current ebook xray items:
     items = {},
     list_display_mode = "series", --* or "book"
-    max_line_length = 64,
     new_item_hits = nil,
     persons = {},
     --* this prop can be modified with the checkbox in ((XrayDialogs#showFilterDialog)):
@@ -963,7 +961,7 @@ function XrayViewsData:addAliasesInfo(info, item, has_aliases, has_linkwords)
     local noun = item.aliases:match(" ") and _("aliases") or _("alias")
     noun = noun .. ": "
     local aliases = noun .. suffix .. item.aliases
-    aliases = KOR.strings:splitLinesToMaxLength(aliases, self.max_line_length, self.alias_indent)
+    aliases = KOR.strings:splitLinesToMaxLength(aliases, DX.ip.max_line_length, DX.ip.alias_indent)
 
     return info .. "\n\n" .. aliases
 end
@@ -984,7 +982,7 @@ function XrayViewsData:addTagsInfo(info, item, has_tags, has_linkwords)
     local noun = item.aliases:match(" ") and _("tags") or _("tag")
     noun = noun .. ": "
     local tags = noun .. suffix .. item.tags
-    tags = KOR.strings:splitLinesToMaxLength(tags, self.max_line_length, self.alias_indent)
+    tags = KOR.strings:splitLinesToMaxLength(tags, DX.ip.max_line_length, DX.ip.alias_indent)
 
     return info .. "\n\n" .. tags
 end
@@ -999,7 +997,7 @@ function XrayViewsData:addLinkWordsInfo(info, item, has_linkwords, has_aliases)
     noun = noun .. ": "
     local linkwords = noun .. item.linkwords
     local info_spacer = has_aliases and "\n" or "\n\n"
-    linkwords = KOR.strings:splitLinesToMaxLength(linkwords, self.max_line_length, self.alias_indent)
+    linkwords = KOR.strings:splitLinesToMaxLength(linkwords, DX.ip.max_line_length, DX.ip.alias_indent)
 
     return info .. info_spacer .. linkwords
 end
@@ -1118,10 +1116,12 @@ function XrayViewsData:getItemTypeIcon(item, bare)
     return self.xray_type_icons[item.xray_type]
 end
 
-function XrayViewsData:generateXrayItemInfo(item, ui_explanation, information_level, for_all_items_list)
+--* only used for linked items and for XrayExporter:
+--* compare for generation of info_text for found-in-page side panel items: ((XrayInfoPanel#getItemInfoText)):
+function XrayViewsData:generateXrayExportOrLinkedItemItemInfo(item, ui_explanation, information_level, for_all_items_list)
 
-    local iindent = self.info_indent
-    local aindent = self.alias_indent
+    local iindent = for_all_items_list and DX.ip.info_indent or DX.ip.alias_indent .. "  "
+    local aindent = DX.ip.alias_indent
 
     local linebreak = information_level == 1 and "" or "\n"
     local first_line = {
@@ -1130,11 +1130,12 @@ function XrayViewsData:generateXrayItemInfo(item, ui_explanation, information_le
     local first_line_fc = {
         linebreak
     }
-    local description = KOR.strings:splitLinesToMaxLength(item.description, self.max_line_length, iindent)
+    local meta_indent = for_all_items_list and aindent or aindent .. aindent .. " "
+    local description = KOR.strings:splitLinesToMaxLength(item.description, DX.ip.max_line_length, iindent)
     --* suffix "fc" stands for "for copy":
-    local aliases, aliases_fc = self:generateAliasesInfo(item, iindent, aindent, for_all_items_list)
-    local linkwords, linkwords_fc = self:generateLinkwordsInfo(item, iindent, aindent, for_all_items_list)
-    local tags, tags_fc = self:generateTagsInfo(item, iindent, aindent, for_all_items_list)
+    local aliases, aliases_fc = self:generateAliasesInfo(item, iindent, meta_indent, for_all_items_list)
+    local linkwords, linkwords_fc = self:generateLinkwordsInfo(item, iindent, meta_indent, for_all_items_list)
+    local tags, tags_fc = self:generateTagsInfo(item, iindent, meta_indent, for_all_items_list)
 
     -- #((use xray match reliability indicators))
     local xray_match_reliability_icon = DX.i:getMatchReliabilityIndicator("full_name")
@@ -1142,18 +1143,27 @@ function XrayViewsData:generateXrayItemInfo(item, ui_explanation, information_le
     --! don't use has_text here, because for full name hits we don't add a text (i.e. the full name) after the reliability weight icon)! Under Ubuntu this is not a problem, but using has_text under Android causes explanation not to be shown:
     if has_content(ui_explanation) then
         xray_match_reliability_icon = ui_explanation:match(self.separator .. "([^ ]+)")
-    end
 
+    --* when we want to populated the linked items side panel:
+    elseif not for_all_items_list then
+        --* this indicator for the parent item in the first side panel tab was set via ((XraySidePanels#activatePageNavigatorPanelTab)) > ((XrayInfoPanel#setParentReliabilityIndicator)):
+        local parent_item_indicator = KOR.registry:getOnce("parent_reliability_indicator")
+        if parent_item_indicator then
+            table_insert(first_line, parent_item_indicator .. " ")
+        else
+            table_insert(first_line, DX.i:getMatchReliabilityIndicator("linked_item") .. " ")
+        end
+    end
     local xray_type_icon = DX.vd:getItemTypeIcon(item)
     local hits = DX.ip:itemInfoAddHits(item)
-    first_line, first_line_fc = self:generateFirstLines(first_line, first_line_fc, item, xray_type_icon, ui_explanation, iindent, for_all_items_list)
+    first_line, first_line_fc = self:generateFirstLines(first_line, first_line_fc, item, xray_type_icon, ui_explanation, for_all_items_list)
 
     local info = table_concat({
         first_line,
         description,
         "\n",
         iindent,
-        aindent,
+        meta_indent,
         hits,
         "\n",
         aliases,
@@ -1192,10 +1202,10 @@ function XrayViewsData:generateAliasesInfo(item, iindent, aindent, for_all_items
     local aliases, aliases_fc = "", ""
 
     local icon = KOR.icons.xray_alias_bare .. " "
-    aliases = KOR.strings:splitLinesToMaxLength(item.aliases, self.max_line_length, iindent, icon) .. "\n"
+    aliases = KOR.strings:splitLinesToMaxLength(item.aliases, DX.ip.max_line_length, iindent, icon) .. "\n"
     if for_all_items_list then
         local noun = self:getKeywordsCount(item.aliases) == 1 and _("alias") .. ": " or _("aliases") .. ": "
-        aliases_fc = KOR.strings:splitLinesToMaxLength(item.aliases, self.max_line_length, iindent, noun) .. "\n"
+        aliases_fc = KOR.strings:splitLinesToMaxLength(item.aliases, DX.ip.max_line_length, iindent, noun) .. "\n"
     end
     if has_text(aliases) then
         aliases = aindent .. aliases
@@ -1214,10 +1224,10 @@ function XrayViewsData:generateTagsInfo(item, iindent, aindent, for_all_items_li
     local tags, tags_fc = "", ""
 
     local icon = KOR.icons.tag_open_bare .. " "
-    tags = KOR.strings:splitLinesToMaxLength(item.tags, self.max_line_length, iindent, icon) .. "\n"
+    tags = KOR.strings:splitLinesToMaxLength(item.tags, DX.ip.max_line_length, iindent, icon) .. "\n"
     if for_all_items_list then
         local noun = self:getKeywordsCount(item.tags) == 1 and _("tag") .. ": " or _("tags") .. ": "
-        tags_fc = KOR.strings:splitLinesToMaxLength(item.tags, self.max_line_length, iindent, noun) .. "\n"
+        tags_fc = KOR.strings:splitLinesToMaxLength(item.tags, DX.ip.max_line_length, iindent, noun) .. "\n"
     end
     if has_text(tags) then
         tags = aindent .. tags
@@ -1235,10 +1245,10 @@ function XrayViewsData:generateLinkwordsInfo(item, iindent, aindent, for_all_ite
     end
     local linkwords, linkwords_fc = "", ""
     local icon = KOR.icons.xray_link_bare .. " "
-    linkwords = KOR.strings:splitLinesToMaxLength(item.linkwords, self.max_line_length, iindent, icon) .. "\n"
+    linkwords = KOR.strings:splitLinesToMaxLength(item.linkwords, DX.ip.max_line_length, iindent, icon) .. "\n"
     if for_all_items_list then
         local noun = self:getKeywordsCount(item.linkwords) == 1 and _("link-term") .. ": " or _("link-terms") .. ": "
-        linkwords_fc = KOR.strings:splitLinesToMaxLength(item.linkwords, self.max_line_length, iindent, noun) .. "\n"
+        linkwords_fc = KOR.strings:splitLinesToMaxLength(item.linkwords, DX.ip.max_line_length, iindent, noun) .. "\n"
     end
     if has_text(linkwords) then
         linkwords = aindent .. linkwords
@@ -1251,7 +1261,7 @@ function XrayViewsData:generateLinkwordsInfo(item, iindent, aindent, for_all_ite
 end
 
 --- @private
-function XrayViewsData:generateFirstLines(first_line, first_line_fc, item, xray_type_icon, ui_explanation, iindent, for_all_items_list)
+function XrayViewsData:generateFirstLines(first_line, first_line_fc, item, xray_type_icon, ui_explanation, for_all_items_list)
     local name = item.name
 
     --* here the info gets combined:
@@ -1262,14 +1272,14 @@ function XrayViewsData:generateFirstLines(first_line, first_line_fc, item, xray_
         table_insert(first_line, ui_explanation)
     end
     first_line = table_concat(first_line)
-    first_line = KOR.strings:splitLinesToMaxLength(first_line, self.max_line_length, iindent) .. "\n"
+    first_line = KOR.strings:splitLinesToMaxLength(first_line, DX.ip.max_line_length, DX.ip.alias_indent .. "  ") .. "\n"
     if for_all_items_list then
         local important_marker = (item.xray_type == 2 or item.xray_type == 4) and "!" or ""
         table_insert(first_line_fc, important_marker)
         table_insert(first_line_fc, name)
         table_insert(first_line_fc, ui_explanation)
         first_line_fc = table_concat(first_line_fc)
-        first_line_fc = KOR.strings:splitLinesToMaxLength(first_line_fc, self.max_line_length, iindent) .. "\n"
+        first_line_fc = KOR.strings:splitLinesToMaxLength(first_line_fc, DX.ip.max_line_length, DX.ip.alias_indent .. "  ") .. "\n"
     end
 
     return first_line, first_line_fc

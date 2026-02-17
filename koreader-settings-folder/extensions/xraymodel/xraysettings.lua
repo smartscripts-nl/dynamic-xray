@@ -257,7 +257,8 @@ local XraySettings = WidgetContainer:new{
     },
     after_change_callbacks = {
         reset_page_navigator_cache = function()
-            DX.ip:setProp("max_line_length", self.PN_info_panel_max_line_length)
+            --! we have to use DX.s here, because self is not yet available:
+            DX.ip:setProp("max_line_length", DX.s.PN_info_panel_max_line_length)
             DX.c:resetDynamicXray()
             DX.pn:closePageNavigator()
             KOR.dialogs:closeAllOverlays()

@@ -23,48 +23,47 @@ local tonumber = tonumber
 local XrayInfoPanel = WidgetContainer:new{
     alias_indent = "   ",
     alias_indent_corrected = nil,
-    first_info_panel_text = nil,
+    info_indent = "     ",
+    info_panel_text = nil,
     max_line_length = DX.s.PN_info_panel_max_line_length,
+    upon_load_panel_text = nil,
 }
 
 function XrayInfoPanel:generateInfoPanel(data)
 
-    local info_panel_text = data.info_panel_text
-    local info_panel_width = data.info_panel_width
+    self.info_panel_text = data.info_panel_text
+    local screen_height = data.screen_height
+    --* set the info panel height as a fraction of the screen height:
+    self.info_panel_height = math_floor(screen_height * DX.s.PN_info_panel_height)
+    self.info_panel_width = data.info_panel_width
     local content_height = data.content_height
     local info_panel_nav_buttons_height = data.info_panel_nav_buttons_height
     local histogram_height = data.histogram_height
     local histogram_bottom_line_height = data.histogram_bottom_line_height
-    local screen_height = data.screen_height
     local ratio_per_chapter = data.ratio_per_chapter
 
     --* info_text was generated in ((XrayPageNavigator#showNavigator)) > ((XrayPages#markItemsFoundInPageHtml)) > ((XrayPages#markItem)) > ((XrayInfoPanel#getItemInfoText)):
-    local info_text = info_panel_text or " "
-    --* set the info panel height as a fraction of the screen height:
-    local info_panel_height = math_floor(screen_height * DX.s.PN_info_panel_height)
+    local info_text = self.info_panel_text or " "
 
-    local info_panel = self:generateInfoPanelContent(info_text, info_panel_height, info_panel_width, self)
-    local info_panel_separator = self:generateInfoPanelSeparator(info_panel_width)
+    local info_panel = self:generateInfoPanelContent(info_text)
+    local info_panel_separator = self:generateInfoPanelSeparator()
 
     --self.info_panel_height = self.info_panel:getSize().h
     local info_panel_separator_height = info_panel_separator:getSize().h
-    content_height = content_height - info_panel_height - info_panel_separator_height - info_panel_nav_buttons_height
+    content_height = content_height - self.info_panel_height - info_panel_separator_height - info_panel_nav_buttons_height
     local sheight = content_height
     if ratio_per_chapter then
         sheight = sheight - histogram_height - histogram_bottom_line_height
     end
 
-    return info_panel, info_panel_separator, info_panel_height, info_panel_separator_height, sheight
+    return info_panel, info_panel_separator, self.info_panel_height, info_panel_separator_height, sheight
 end
 
---* called from ((XraySidePanels#populateLinkedItemsPanel)):
-function XrayInfoPanel:formatInfoPanelText(info_panel_text)
-    return info_panel_text
-    --* apply some hacks to get a correct, uniform lay-out for the info of linked items in the bottom panel:
-        :gsub(DX.vd.info_indent, DX.vd.alias_indent)
-        :gsub(DX.vd.alias_indent, "", 1)
-        :gsub("\n" .. DX.vd.alias_indent, ": ", 1)
-        :gsub(DX.vd.alias_indent .. KOR.icons.graph_bare, "\n" .. DX.vd.alias_indent .. DX.vd.alias_indent .. KOR.icons.graph_bare, 1)
+--* this method will be called by ((XraySidePanels#activatePageNavigatorPanelTab)), when the use activated the side panel for linked items there:
+function XrayInfoPanel:setParentReliabilityIndicator()
+    local reliability_indicator = self.info_panel_text:match("^\n([^ ]+) ")
+    --* for consumption in ((XrayViewsData#generateXrayExportOrLinkedItemItemInfo)):
+    KOR.registry:set("parent_reliability_indicator", reliability_indicator)
 end
 
 --- @private
@@ -97,9 +96,9 @@ function XrayInfoPanel:getInfoPanelText()
         return DX.sp.info_panel_texts[DX.sp.active_side_tab][active_side_button]
     end
 
-    if has_text(self.first_info_panel_text) and active_side_button == 1 then
+    if has_text(self.upon_load_panel_text) and active_side_button == 1 then
         --* this text was generated for the first item via ((XraySidePanels#markActiveSideButton)) > ((XraySidePanels#generateInfoTextForFirstSideButton))
-        return self.first_info_panel_text
+        return self.upon_load_panel_text
     end
 
     --* xray_item.info_text for first button was generated in ((XraySidePanels#markActiveSideButton)) > ((XraySidePanels#generateInfoTextForFirstSideButton)):
@@ -108,7 +107,7 @@ function XrayInfoPanel:getInfoPanelText()
 end
 
 --- @private
-function XrayInfoPanel:generateInfoPanelContent(info_text, height, width, parent)
+function XrayInfoPanel:generateInfoPanelContent(info_text)
 
     --* info_text was generated in ((XrayPageNavigator#showNavigator)) > ((XrayPages#markItemsFoundInPageHtml)) > ((XrayPages#markItem)) > ((XrayInfoPanel#getItemInfoText)):
     return ScrollTextWidget:new{
@@ -117,18 +116,18 @@ function XrayInfoPanel:generateInfoPanelContent(info_text, height, width, parent
         line_height = 0.16,
         alignment = "left",
         justified = false,
-        dialog = parent,
+        dialog = self,
         --* info_panel_width was computed in ((NavigatorBox#generateInfoButtons)):
-        width = width,
-        height = height,
+        width = self.info_panel_width,
+        height = self.info_panel_height,
     }
 end
 
-function XrayInfoPanel:generateInfoPanelSeparator(width)
+function XrayInfoPanel:generateInfoPanelSeparator()
     return LineWidget:new{
         background = KOR.colors.line_separator,
         dimen = Geom:new{
-            w = width,
+            w = self.info_panel_width,
             h = Size.line.thick,
         }
     }
@@ -142,7 +141,7 @@ end
 
 --- @private
 function XrayInfoPanel:itemInfoAddHits(item, indent)
-    --* when called from ((XrayViewsData#generateXrayItemInfo)) - so when generating an overview of all Xray items -, add no additional indentation:
+    --* when called from ((XrayViewsData#generateXrayExportOrLinkedItemItemInfo)) - so when generating an overview of all Xray items -, add no additional indentation:
     if not indent then
         indent = ""
     end
@@ -183,6 +182,7 @@ function XrayInfoPanel:splitLinesToMaxLength(prop, text)
 end
 
 --* this info will be consumed for the info panel in ((NavigatorBox#generateScrollWidget)):
+--* compare for generation of info_text for linked items: ((XrayViewsData#generateXrayExportOrLinkedItemItemInfo)):
 function XrayInfoPanel:getItemInfoText(item, for_info_panel)
     --* the reliability_indicators were added and cached via ((XrayUI#getXrayItemsFoundInText)) > ((XrayUI#matchNameInPageOrParagraph)) and ((XrayUI#matchAliasesToParagraph)) > ((XrayPageNavigator#cacheReliabilityIndicators)), or via this statement:
     DX.pn:cacheReliabilityIndicator(item, DX.pn.page_no)
@@ -207,9 +207,10 @@ function XrayInfoPanel:getItemInfoText(item, for_info_panel)
 
     local icon = DX.vd:getItemTypeIcon(item, "bare")
     --* alias_indent suffixed with 2 spaces, because of icon .. " ":
+    local info = icon .. " " .. item.name .. "\n"
     local description = item.description
-    description = KOR.strings:splitLinesToMaxLength(icon .. " " .. item.name .. ": " .. description, self.max_line_length, self.alias_indent .. "  ", nil, "dont_indent_first_line")
-    local info = "\n" .. reliability_indicator_placeholder .. description .. "\n"
+    description = KOR.strings:splitLinesToMaxLength(self.alias_indent .. "  " .. description, self.max_line_length, self.alias_indent .. "  ", nil, "dont_indent_first_line")
+    info = info .. "\n" .. reliability_indicator_placeholder .. description
 
     local info_table = {}
     local indent = self:getItemInfoIndentation()

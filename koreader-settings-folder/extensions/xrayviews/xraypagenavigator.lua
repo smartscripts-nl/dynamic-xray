@@ -314,23 +314,38 @@ function XrayPageNavigator:setButtonsAndReturnHtmlFromCache()
 end
 
 --- @private
-function XrayPageNavigator:loadDataForPage()
-
-    DX.sp:resetSideButtons()
-
+function XrayPageNavigator:setSideButtonsForTaggedItemsNavigation()
     if self.navigation_tag and self.navigator_side_buttons and DX.sp.active_side_tab == 1 then
         DX.sp:setSideButtons(self.navigator_side_buttons)
         self:setCurrentItem(self.navigator_side_buttons[1][1].xray_item)
         self.navigator_side_buttons = nil
     end
+end
 
-    if self.current_item then
-        DX.sp:computeLinkedItems()
-        if DX.sp.active_side_tab == 2 and not self.active_filter_name then
-            DX.sp:populateLinkedItemsPanel()
-        end
+--- @private
+function XrayPageNavigator:setSideButtonsForLinkedItemsPanel()
+    if not self.current_item and DX.sp.active_side_tab == 1 then
+        return
     end
 
+    DX.sp:computeLinkedItems()
+    if DX.sp.active_side_tab == 2 and not self.active_filter_name then
+        --* here self.current_item is inserted at the top of the list of its linked items:
+        DX.sp:populateLinkedItemsPanel()
+
+    --? eilas, when an item filter or a tag filter has been set, linked items for side panel no 2 have to be recomputed for some reason:
+    elseif DX.sp.active_side_tab == 2 and (self.active_filter_name or self.navigation_tag) then
+        DX.sp:computeLinkedItems()
+        DX.sp:populateLinkedItemsPanel()
+    end
+end
+
+--- @private
+function XrayPageNavigator:loadDataForPage()
+
+    DX.sp:resetSideButtons()
+    self:setSideButtonsForTaggedItemsNavigation()
+    self:setSideButtonsForLinkedItemsPanel()
     local html = self:setButtonsAndReturnHtmlFromCache()
     if html then
         return html
@@ -341,11 +356,7 @@ function XrayPageNavigator:loadDataForPage()
     self.navigator_page_html = nil
 
     --? eilas, when an item filter or a tag filter has been set, linked items for side panel no 2 have to be recomputed for some reason:
-    if DX.sp.active_side_tab == 2 and (self.active_filter_name or self.navigation_tag) then
-        DX.sp:computeLinkedItems()
-        DX.sp:populateLinkedItemsPanel()
-    end
-
+    self:setSideButtonsForLinkedItemsPanel()
     DX.sp:markActiveSideButton()
 
     return html

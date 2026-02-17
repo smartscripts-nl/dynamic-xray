@@ -147,10 +147,10 @@ function XrayExporter:generateXrayItemsOverview(items)
     local paragraph, paragraph_iconless
     count = #items
     for i = 1, count do
-        paragraph, paragraph_iconless = DX.vd:generateXrayItemInfo(items[i], nil, i, "for_all_items_list")
+        paragraph, paragraph_iconless = DX.vd:generateXrayExportOrLinkedItemItemInfo(items[i], nil, i, "for_all_items_list")
         if i == 1 then
-            paragraph = paragraph:gsub(DX.vd.info_indent, "", 1)
-            paragraph_iconless = paragraph_iconless:gsub(DX.vd.info_indent, "", 1)
+            paragraph = paragraph:gsub(DX.ip.info_indent, "", 1)
+            paragraph_iconless = paragraph_iconless:gsub(DX.ip.info_indent, "", 1)
         end
         table_insert(paragraphs, paragraph)
         table_insert(paragraphs_iconless, paragraph_iconless)
@@ -209,10 +209,10 @@ function XrayExporter:populateTagGroups(tag_groups, item)
                 },
             }
         end
-        local paragraph, paragraph_iconless = DX.vd:generateXrayItemInfo(item, nil, i, "for_all_items_list")
+        local paragraph, paragraph_iconless = DX.vd:generateXrayExportOrLinkedItemItemInfo(item, nil, i, "for_all_items_list")
         if i == 1 then
-            paragraph = paragraph:gsub(DX.vd.info_indent, "", 1)
-            paragraph_iconless = paragraph_iconless:gsub(DX.vd.info_indent, "", 1)
+            paragraph = paragraph:gsub(DX.ip.info_indent, "", 1)
+            paragraph_iconless = paragraph_iconless:gsub(DX.ip.info_indent, "", 1)
         end
         if add_spacer then
             table_insert(tag_groups[tag].paras, "\n")
