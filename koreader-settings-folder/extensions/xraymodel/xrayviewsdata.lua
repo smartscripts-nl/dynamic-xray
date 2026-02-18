@@ -1120,26 +1120,25 @@ end
 --* compare for generation of info_text for found-in-page side panel items: ((XrayInfoPanel#getItemInfoText)):
 function XrayViewsData:generateXrayExportOrLinkedItemItemInfo(item, ui_explanation, information_level, for_all_items_list)
 
-    local iindent = for_all_items_list and DX.ip.info_indent or DX.ip.alias_indent .. "  "
-    local aindent = DX.ip.alias_indent
-
     local linebreak = information_level == 1 and "" or "\n"
     local first_line = {
         linebreak
     }
+    --* suffix "fc" stands for "for copy":
     local first_line_fc = {
         linebreak
     }
+    local iindent
     local description_indent, meta_indent
     local description = item.description
     if for_all_items_list then
-        meta_indent = aindent
+        iindent = DX.ip.info_indent
+        meta_indent = DX.ip.alias_indent
     else
         description_indent, meta_indent = DX.ip:getConfiguredInfoPanelIndentation()
         iindent = meta_indent
     end
     description = KOR.strings:splitLinesToMaxLength(description, DX.s.PN_info_panel_max_line_length, description_indent)
-    --* suffix "fc" stands for "for copy":
     local aliases, aliases_fc = self:generateAliasesInfo(item, iindent, for_all_items_list)
     local linkwords, linkwords_fc = self:generateLinkwordsInfo(item, iindent, for_all_items_list)
     local tags, tags_fc = self:generateTagsInfo(item, iindent, for_all_items_list)
@@ -1275,6 +1274,9 @@ function XrayViewsData:generateFirstLines(first_line, first_line_fc, item, xray_
 
     --* here the info gets combined:
     -- #((xray items dialog add match reliability explanations))
+    if for_all_items_list then
+        table_insert(first_line, meta_indent)
+    end
     table_insert(first_line, xray_type_icon)
     table_insert(first_line, name)
     if ui_explanation then
