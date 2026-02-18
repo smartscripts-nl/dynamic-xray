@@ -175,6 +175,9 @@ end
 
 --- @private
 function XrayModel:addRelationalTags(tags, id)
+    if not has_text(tags) then
+        return false
+    end
     local tag
     local tag_items = DX.m:splitByCommaOrSpace(tags)
     local a_tag_was_added = false
