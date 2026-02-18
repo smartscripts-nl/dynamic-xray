@@ -1130,12 +1130,20 @@ function XrayViewsData:generateXrayExportOrLinkedItemItemInfo(item, ui_explanati
     local first_line_fc = {
         linebreak
     }
-    local meta_indent = for_all_items_list and aindent or aindent .. aindent .. " "
-    local description = KOR.strings:splitLinesToMaxLength(item.description, DX.s.PN_info_panel_max_line_length, iindent)
+    local description_indent, meta_indent
+    local description = item.description
+    if for_all_items_list then
+        meta_indent = aindent
+    else
+        description_indent, meta_indent = DX.ip:getConfiguredInfoPanelIndentation()
+        iindent = meta_indent
+    end
+    description = KOR.strings:splitLinesToMaxLength(description, DX.s.PN_info_panel_max_line_length, description_indent)
     --* suffix "fc" stands for "for copy":
-    local aliases, aliases_fc = self:generateAliasesInfo(item, iindent, meta_indent, for_all_items_list)
-    local linkwords, linkwords_fc = self:generateLinkwordsInfo(item, iindent, meta_indent, for_all_items_list)
-    local tags, tags_fc = self:generateTagsInfo(item, iindent, meta_indent, for_all_items_list)
+    local aliases, aliases_fc = self:generateAliasesInfo(item, iindent, for_all_items_list)
+    local linkwords, linkwords_fc = self:generateLinkwordsInfo(item, iindent, for_all_items_list)
+    local tags, tags_fc = self:generateTagsInfo(item, iindent, for_all_items_list)
+    local hits, hits_fc = self:generateHitsInfo(item, iindent, for_all_items_list)
 
     -- #((use xray match reliability indicators))
     local xray_match_reliability_icon = DX.i:getMatchReliabilityIndicator("full_name")
@@ -1155,15 +1163,12 @@ function XrayViewsData:generateXrayExportOrLinkedItemItemInfo(item, ui_explanati
         end
     end
     local xray_type_icon = DX.vd:getItemTypeIcon(item)
-    local hits = DX.ip:itemInfoAddHits(item)
-    first_line, first_line_fc = self:generateFirstLines(first_line, first_line_fc, item, xray_type_icon, ui_explanation, for_all_items_list)
+    first_line, first_line_fc = self:generateFirstLines(first_line, first_line_fc, item, xray_type_icon, ui_explanation, meta_indent, for_all_items_list)
 
     local info = table_concat({
         first_line,
         description,
         "\n",
-        iindent,
-        meta_indent,
         hits,
         "\n",
         aliases,
@@ -1176,11 +1181,10 @@ function XrayViewsData:generateXrayExportOrLinkedItemItemInfo(item, ui_explanati
             first_line_fc,
             description,
             "\n",
-            iindent,
-            aindent,
+            meta_indent,
             _("mentions"),
             ": ",
-            hits:gsub(KOR.icons.graph_bare .. " ", "", 1),
+            hits_fc,
             "\n",
             aliases_fc,
             linkwords_fc,
@@ -1195,7 +1199,7 @@ function XrayViewsData:generateXrayExportOrLinkedItemItemInfo(item, ui_explanati
 end
 
 --- @private
-function XrayViewsData:generateAliasesInfo(item, iindent, aindent, for_all_items_list)
+function XrayViewsData:generateAliasesInfo(item, iindent, for_all_items_list)
     if not has_text(item.aliases) then
         return "", ""
     end
@@ -1207,17 +1211,33 @@ function XrayViewsData:generateAliasesInfo(item, iindent, aindent, for_all_items
         local noun = self:getKeywordsCount(item.aliases) == 1 and _("alias") .. ": " or _("aliases") .. ": "
         aliases_fc = KOR.strings:splitLinesToMaxLength(item.aliases, DX.s.PN_info_panel_max_line_length, iindent, noun) .. "\n"
     end
-    if has_text(aliases) then
-        aliases = aindent .. aliases
-    end
-    if has_text(aliases_fc) then
-        aliases_fc = aindent .. aliases_fc
-    end
     return aliases, aliases_fc
 end
 
 --- @private
-function XrayViewsData:generateTagsInfo(item, iindent, aindent, for_all_items_list)
+function XrayViewsData:generateHitsInfo(item, iindent, for_all_items_list)
+    local hits, hits_fc = "", ""
+
+    local series_hits_added = false
+    if DX.m.current_series and has_content(item.series_hits) then
+        series_hits_added = true
+        hits = KOR.icons.graph_bare .. " serie " .. tonumber(item.series_hits)
+    end
+    if has_content(item.book_hits) then
+        local separator = series_hits_added and ", " or KOR.icons.graph_bare .. " "
+        hits = iindent .. hits .. separator .. "boek " .. tonumber(item.book_hits)
+    end
+
+    if for_all_items_list then
+        local noun = "vermeldingen: "
+        hits_fc = iindent .. noun .. hits
+    end
+
+    return hits, hits_fc
+end
+
+--- @private
+function XrayViewsData:generateTagsInfo(item, iindent, for_all_items_list)
     if not has_text(item.tags) then
         return "", ""
     end
@@ -1229,17 +1249,12 @@ function XrayViewsData:generateTagsInfo(item, iindent, aindent, for_all_items_li
         local noun = self:getKeywordsCount(item.tags) == 1 and _("tag") .. ": " or _("tags") .. ": "
         tags_fc = KOR.strings:splitLinesToMaxLength(item.tags, DX.s.PN_info_panel_max_line_length, iindent, noun) .. "\n"
     end
-    if has_text(tags) then
-        tags = aindent .. tags
-    end
-    if has_text(tags_fc) then
-        tags_fc = aindent .. tags_fc
-    end
+
     return tags, tags_fc
 end
 
 --- @private
-function XrayViewsData:generateLinkwordsInfo(item, iindent, aindent, for_all_items_list)
+function XrayViewsData:generateLinkwordsInfo(item, iindent, for_all_items_list)
     if not has_text(item.linkwords) then
         return "", ""
     end
@@ -1250,18 +1265,12 @@ function XrayViewsData:generateLinkwordsInfo(item, iindent, aindent, for_all_ite
         local noun = self:getKeywordsCount(item.linkwords) == 1 and _("link-term") .. ": " or _("link-terms") .. ": "
         linkwords_fc = KOR.strings:splitLinesToMaxLength(item.linkwords, DX.s.PN_info_panel_max_line_length, iindent, noun) .. "\n"
     end
-    if has_text(linkwords) then
-        linkwords = aindent .. linkwords
-    end
-    if has_text(linkwords_fc) then
-        linkwords_fc = aindent .. linkwords_fc
-    end
 
     return linkwords, linkwords_fc
 end
 
 --- @private
-function XrayViewsData:generateFirstLines(first_line, first_line_fc, item, xray_type_icon, ui_explanation, for_all_items_list)
+function XrayViewsData:generateFirstLines(first_line, first_line_fc, item, xray_type_icon, ui_explanation, meta_indent, for_all_items_list)
     local name = item.name
 
     --* here the info gets combined:
@@ -1272,14 +1281,14 @@ function XrayViewsData:generateFirstLines(first_line, first_line_fc, item, xray_
         table_insert(first_line, ui_explanation)
     end
     first_line = table_concat(first_line)
-    first_line = KOR.strings:splitLinesToMaxLength(first_line, DX.s.PN_info_panel_max_line_length, DX.ip.alias_indent .. "  ") .. "\n"
+    first_line = KOR.strings:splitLinesToMaxLength(first_line, DX.s.PN_info_panel_max_line_length, meta_indent) .. "\n"
     if for_all_items_list then
         local important_marker = (item.xray_type == 2 or item.xray_type == 4) and "!" or ""
         table_insert(first_line_fc, important_marker)
         table_insert(first_line_fc, name)
         table_insert(first_line_fc, ui_explanation)
         first_line_fc = table_concat(first_line_fc)
-        first_line_fc = KOR.strings:splitLinesToMaxLength(first_line_fc, DX.s.PN_info_panel_max_line_length, DX.ip.alias_indent .. "  ") .. "\n"
+        first_line_fc = KOR.strings:splitLinesToMaxLength(first_line_fc, DX.s.PN_info_panel_max_line_length, meta_indent) .. "\n"
     end
 
     return first_line, first_line_fc
