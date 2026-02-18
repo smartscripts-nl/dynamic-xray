@@ -228,7 +228,7 @@ function XrayInfoPanel:generateItemMetaInfo(item, reliability_indicator)
     local description_indent, meta_indent = self:getConfiguredInfoPanelIndentation()
 
     local description = item.description
-    description = KOR.strings:splitLinesToMaxLength(description_indent .. description, DX.s.PN_info_panel_max_line_length, self.alias_indent .. "  ", nil, "dont_indent_first_line")
+    description = KOR.strings:splitLinesToMaxLength(description_indent .. description, DX.s.PN_info_panel_max_line_length, meta_indent, nil, "dont_indent_first_line")
     info = info .. "\n" .. reliability_indicator_placeholder .. description
 
     local info_table = {}
