@@ -156,7 +156,7 @@ function XrayTappedWords:buildItemIndex()
             index[name] = index[name] or {}
             table_insert(index[name], item)
         end
-        self:addToItemIndexFromAlias(item)
+        self:addToItemIndexFromAlias(item, index)
     end
     self._item_index = index
 
@@ -170,8 +170,8 @@ function XrayTappedWords:addToItemIndexFromAlias(item, index)
     end
     local alias_norm
     for alias in item.aliases:gmatch("[^,]+") do
-        alias_norm = KOR.tables:normalizeTableIndex(alias)
-        if alias_norm then
+        if has_text(alias) then
+            alias_norm = KOR.tables:normalizeTableIndex(alias)
             index[alias_norm] = index[alias_norm] or {}
             table_insert(index[alias_norm], item)
         end

@@ -188,7 +188,6 @@ function XrayInfoPanel:getItemInfoText(item, for_info_panel)
     DX.pn:cacheReliabilityIndicator(item, DX.pn.page_no)
 
     local reliability_indicator = item.reliability_indicator or DX.pn.cached_reliability_indicators[item.name] and DX.pn.cached_reliability_indicators[item.name][DX.pn.page_no]
-
     reliability_indicator = reliability_indicator and reliability_indicator .. " " or ""
 
     --* this cached info was set farther below in the current method:
@@ -202,6 +201,16 @@ function XrayInfoPanel:getItemInfoText(item, for_info_panel)
         return info:gsub("^\n\n", "\n")
     end
 
+    reliability_indicator = self:generateItemMetaInfo(item, reliability_indicator)
+    if DX.pn.navigation_tag then
+        return reliability_indicator
+    end
+
+    return reliability_indicator .. DX.pn.cached_items_info[item.name]
+end
+
+--- @private
+function XrayInfoPanel:generateItemMetaInfo(item, reliability_indicator)
     local reliability_indicator_placeholder = item.reliability_indicator and "  " or ""
     DX.pn:setProp("sub_info_separator", "")
 
@@ -238,10 +247,9 @@ function XrayInfoPanel:getItemInfoText(item, for_info_panel)
         return "\n" .. reliability_indicator .. DX.pn.cached_items_info[item.name]
     end
     if not reliability_indicator:match("^\n") then
-        reliability_indicator = "\n" .. reliability_indicator
+        return "\n" .. reliability_indicator
     end
-
-    return reliability_indicator .. DX.pn.cached_items_info[item.name]
+    return reliability_indicator
 end
 
 function XrayInfoPanel:setProp(prop, value)

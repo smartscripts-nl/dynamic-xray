@@ -2,7 +2,7 @@
 --[[--
 This is the controller for the Dynamic Xray plugin. It has been structured in kind of a MVC structure:
 M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
-V = ((XrayUI)), ((XrayPageNavigator)) and ((XrayCallbacks)) and ((XrayPages)) and ((XraySidePanels)) and ((XrayInfoPanel)), ((XrayTranslations)) and ((XrayTranslationsManager)), ((XrayDialogs)) and ((XrayButtons)), ((XrayCallbacks)), ((XrayInformation))
+V = ((XrayUI)), ((XrayPageNavigator)) and ((XrayCallbacks)) and ((XrayPages)) and ((XraySidePanels)) and ((XrayInfoPanel)) and ((XrayOccurrencesHistogram)), ((XrayTranslations)) and ((XrayTranslationsManager)), ((XrayDialogs)) and ((XrayButtons)), ((XrayCallbacks)), ((XrayInformation))
 C = ((XrayController))
 
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database. XrayTappedWords handles data requests resulting from users longpressing (partial) names of Xray items in the e-book text.
