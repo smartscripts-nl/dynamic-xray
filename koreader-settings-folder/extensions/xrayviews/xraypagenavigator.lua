@@ -216,7 +216,6 @@ function XrayPageNavigator:setFilter(item)
     return true
 end
 
---- @private
 function XrayPageNavigator:setCurrentItem(item)
     --* when a page has no Xray items, set self.current_item to nil (so e.g. no occurrences histogram will be shown in the PN info panel):
     if not item then
@@ -364,6 +363,7 @@ end
 
 function XrayPageNavigator:resetCache()
     self.cached_histogram_data = {}
+    self.cached_items_info = {}
     self.cached_html_and_buttons_by_page_no = {}
     self.cached_hits_by_needle = {}
     self.cached_reliability_indicators = {}

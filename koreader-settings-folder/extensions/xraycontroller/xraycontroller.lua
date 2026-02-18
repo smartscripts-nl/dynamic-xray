@@ -587,37 +587,38 @@ function XrayController:addToMainMenu(menu_items)
 end
 
 --* @param do_full_update string will be not nill when called from onReaderReady or when an item was added or when ((XrayController#saveUpdatedItem)) determined via ((XrayFormsData#needsFullUpdate)) that critical data were edited, which could impact the item marking in the html:
---- @private
 function XrayController:resetDynamicXray(is_prepared, do_full_update)
+    --KOR.debug:hoera("resetDynamicXray", "hoera")
     --? this method is not always called from a plugin context, but mostly (or even always?) from an extension context; that's the reason to use KOR.document, instead of self.view.document:
     local full_path = KOR.document.file
     if do_full_update then
         DX.m:setTitleAndSeries(full_path)
         --! don't call DX.u:reset() here, because then Xray markers in page would disappear...
         KOR.document:resetParagraphsCache()
-        DX.sp:resetActiveSideButtons("XrayController:resetDynamicXray")
-        DX.pn:resetCache()
         DX.p:resetCache()
     end
     --* to force a refresh of the texts in the bottom info panel:
     DX.sp:resetInfoTexts()
+    DX.ip:resetProps()
+    DX.sp:resetActiveSideButtons("XrayController:resetDynamicXray")
+    DX.sp:resetSideButtons()
+    DX.pn:resetCache()
+    DX.pn:setCurrentItem(nil)
     --? I don't know why we need this:
     if not DX.ex then
         DX.ex = require("extensions/xrayviews/xrayexporter")
     end
     DX.ex:resetCache()
     DX.vd:resetAllFilters()
-    --* when current method called after saving an item from a form:
-    if is_prepared then
+    --* e.g. when current method called after saving an item from a form:
+    if is_prepared or not do_full_update then
         return
     end
 
-    if do_full_update then
-        DX.m:resetData("force_refresh", full_path)
-        --* make data available for display of xray items on page or in paragraphs:
-        DX.vd.initData(true, false, full_path)
-        DX.vd.prepareData()
-    end
+    DX.m:resetData("force_refresh", full_path)
+    --* make data available for display of xray items on page or in paragraphs:
+    DX.vd.initData(true, false, full_path)
+    DX.vd.prepareData()
 end
 
 function XrayController:setProp(prop, value)

@@ -29,6 +29,12 @@ local XrayInfoPanel = WidgetContainer:new{
     upon_load_panel_text = nil,
 }
 
+function XrayInfoPanel:resetProps()
+    self.info_panel_text = nil
+    self.upon_load_panel_text = nil
+    self.max_line_length = DX.s.PN_info_panel_max_line_length
+end
+
 function XrayInfoPanel:generateInfoPanel(data)
 
     self.info_panel_text = data.info_panel_text
@@ -134,9 +140,12 @@ function XrayInfoPanel:generateInfoPanelSeparator()
 end
 
 --- @private
-function XrayInfoPanel:getItemInfoIndentation()
-    local indent = " "
-    return indent:rep(DX.s.item_info_indent)
+function XrayInfoPanel:getConfiguredInfoPanelIndentation()
+    local space = " "
+    local description_indent = space:rep(DX.s.PN_infopanel_description_indent)
+    local meta_indent = space:rep(DX.s.PN_infopanel_meta_indent)
+
+    return description_indent, meta_indent
 end
 
 --- @private
@@ -178,7 +187,7 @@ function XrayInfoPanel:splitLinesToMaxLength(prop, text)
     if not has_text(prop) then
         return ""
     end
-    return KOR.strings:splitLinesToMaxLength(text, self.max_line_length - DX.s.item_info_indent, self.alias_indent_corrected, nil, "dont_indent_first_line")
+    return KOR.strings:splitLinesToMaxLength(text, self.max_line_length - DX.s.PN_infopanel_meta_indent, self.alias_indent_corrected, nil, "dont_indent_first_line")
 end
 
 --* this info will be consumed for the info panel in ((NavigatorBox#generateScrollWidget)):
@@ -217,22 +226,23 @@ function XrayInfoPanel:generateItemMetaInfo(item, reliability_indicator)
     local icon = DX.vd:getItemTypeIcon(item, "bare")
     --* alias_indent suffixed with 2 spaces, because of icon .. " ":
     local info = icon .. " " .. item.name .. "\n"
+
+    local description_indent, meta_indent = self:getConfiguredInfoPanelIndentation()
+
     local description = item.description
-    description = KOR.strings:splitLinesToMaxLength(self.alias_indent .. "  " .. description, self.max_line_length, self.alias_indent .. "  ", nil, "dont_indent_first_line")
+    description = KOR.strings:splitLinesToMaxLength(description_indent .. "  " .. description, self.max_line_length, self.alias_indent .. "  ", nil, "dont_indent_first_line")
     info = info .. "\n" .. reliability_indicator_placeholder .. description
 
     local info_table = {}
-    local indent = self:getItemInfoIndentation()
-
-    local hits_info = self:itemInfoAddHits(item, indent)
+    local hits_info = self:itemInfoAddHits(item, meta_indent)
     if has_text(hits_info) then
         table_insert(info_table, hits_info .. "\n")
     end
     --* for use with ((XrayInfoPanel#splitLinesToMaxLength)):
     self.alias_indent_corrected = DX.s.is_mobile_device and self.alias_indent .. self.alias_indent .. self.alias_indent .. self.alias_indent or self.alias_indent
-    self:itemInfoAddPropInfo(item, "aliases", KOR.icons.xray_alias_bare, info_table, indent)
-    self:itemInfoAddPropInfo(item, "linkwords", KOR.icons.xray_link_bare, info_table, indent)
-    self:itemInfoAddPropInfo(item, "tags", KOR.icons.tag_open_bare, info_table, indent)
+    self:itemInfoAddPropInfo(item, "aliases", KOR.icons.xray_alias_bare, info_table, meta_indent)
+    self:itemInfoAddPropInfo(item, "linkwords", KOR.icons.xray_link_bare, info_table, meta_indent)
+    self:itemInfoAddPropInfo(item, "tags", KOR.icons.tag_open_bare, info_table, meta_indent)
     if #info_table > 0 then
         info = info .. " \n" .. table_concat(info_table, "")
     end

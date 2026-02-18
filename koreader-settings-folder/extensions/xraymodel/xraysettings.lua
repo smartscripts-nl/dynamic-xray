@@ -133,18 +133,33 @@ local XraySettings = WidgetContainer:new{
             explanation = _("This variables enables a number of default settings for KOReader onder Ubuntu, e.g. that the user can close some dialogs with ESC."),
             locked = 0,
         },
-        item_info_indent = {
+        PN_infopanel_description_indent = {
             value = 10,
-            explanation = "This variables enables the numbers of spaces used to indent the item information in e.g. the PN item info panel at the bottom.",
+            explanation = _("This variables enables the numbers of spaces used to indent the item description in the PN item info panel at the bottom."),
             locked = 0,
             validator = {
-                name = "item_info_indent",
-                min_value = 4,
-                max_value = 14,
+                name = "infopanel_description_indent",
+                min_value = 1,
+                max_value = 20,
                 default_value = 10,
                 value_step = 1,
             },
             type = "number",
+            after_change_callback = "reset_page_navigator_cache",
+        },
+        PN_infopanel_meta_indent = {
+            value = 10,
+            explanation = _("This variables enables the numbers of spaces used to indent the item meta information (hits, aliases etc.) in the PN item info panel at the bottom."),
+            locked = 0,
+            validator = {
+                name = "infopanel_meta_indent",
+                min_value = 1,
+                max_value = 20,
+                default_value = 12,
+                value_step = 1,
+            },
+            type = "number",
+            after_change_callback = "reset_page_navigator_cache",
         },
         PN_info_panel_height = {
             --* this value is used in ((XrayInfoPanel#generateInfoPanel)):
@@ -160,6 +175,7 @@ local XraySettings = WidgetContainer:new{
             explanation = _("Page Navigator: this setting, a fraction between 0.1 and 0.8, determines the height of the bottom info panel relative to the screen height."),
             locked = 0,
             type = "number",
+            after_change_callback = "reload_page_navigator",
         },
         PN_info_panel_max_line_length = {
             value = 70,
@@ -256,14 +272,13 @@ local XraySettings = WidgetContainer:new{
         "3. " .. _("system"),
     },
     after_change_callbacks = {
+        reload_page_navigator = function()
+            DX.pn:reloadPageNavigator()
+        end,
         reset_page_navigator_cache = function()
-            --! we have to use DX.s here, because self is not yet available:
-            DX.ip:setProp("max_line_length", DX.s.PN_info_panel_max_line_length)
             DX.c:resetDynamicXray()
             DX.pn:closePageNavigator()
             KOR.dialogs:closeAllOverlays()
-            --KOR.ui:handleEvent(Event:new("Restart"))
-            KOR.dialogs:niceAlert(_("NB"), _("The new setting will be activated after a resart of KOReader..."))
         end,
         series_manager_reload = function()
             KOR.seriesmanager:reloadContextDialog()

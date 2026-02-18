@@ -295,6 +295,7 @@ function XraySidePanels:setSideButtons(buttons)
 end
 
 function XraySidePanels:resetSideButtons()
+    self.linked_items = {}
     self.side_buttons = {}
 end
 
