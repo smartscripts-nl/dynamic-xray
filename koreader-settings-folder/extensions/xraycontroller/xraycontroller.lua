@@ -588,7 +588,6 @@ end
 
 --* @param do_full_update string will be not nill when called from onReaderReady or when an item was added or when ((XrayController#saveUpdatedItem)) determined via ((XrayFormsData#needsFullUpdate)) that critical data were edited, which could impact the item marking in the html:
 function XrayController:resetDynamicXray(is_prepared, do_full_update)
-    --KOR.debug:hoera("resetDynamicXray", "hoera")
     --? this method is not always called from a plugin context, but mostly (or even always?) from an extension context; that's the reason to use KOR.document, instead of self.view.document:
     local full_path = KOR.document.file
     if do_full_update then

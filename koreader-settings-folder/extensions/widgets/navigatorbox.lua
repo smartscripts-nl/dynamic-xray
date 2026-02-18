@@ -163,6 +163,7 @@ end
 function NavigatorBox:generateInfoPanel()
     self.info_panel, self.info_panel_separator, self.info_panel_height, self.info_panel_separator_height, self.sheight =
         DX.ip:generateInfoPanel({
+          parent = self,
           info_panel_text = self.info_panel_text,
           info_panel_width = self.info_panel_width,
           screen_height = self.screen_height,

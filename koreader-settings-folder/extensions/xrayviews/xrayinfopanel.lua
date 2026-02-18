@@ -25,18 +25,18 @@ local XrayInfoPanel = WidgetContainer:new{
     alias_indent_corrected = nil,
     info_indent = "     ",
     info_panel_text = nil,
-    max_line_length = DX.s.PN_info_panel_max_line_length,
+    parent = nil,
     upon_load_panel_text = nil,
 }
 
 function XrayInfoPanel:resetProps()
     self.info_panel_text = nil
     self.upon_load_panel_text = nil
-    self.max_line_length = DX.s.PN_info_panel_max_line_length
 end
 
 function XrayInfoPanel:generateInfoPanel(data)
 
+    self.parent = data.parent
     self.info_panel_text = data.info_panel_text
     local screen_height = data.screen_height
     --* set the info panel height as a fraction of the screen height:
@@ -122,7 +122,7 @@ function XrayInfoPanel:generateInfoPanelContent(info_text)
         line_height = 0.16,
         alignment = "left",
         justified = false,
-        dialog = self,
+        dialog = self.parent,
         --* info_panel_width was computed in ((NavigatorBox#generateInfoButtons)):
         width = self.info_panel_width,
         height = self.info_panel_height,
@@ -187,7 +187,7 @@ function XrayInfoPanel:splitLinesToMaxLength(prop, text)
     if not has_text(prop) then
         return ""
     end
-    return KOR.strings:splitLinesToMaxLength(text, self.max_line_length - DX.s.PN_infopanel_meta_indent, self.alias_indent_corrected, nil, "dont_indent_first_line")
+    return KOR.strings:splitLinesToMaxLength(text, DX.s.PN_info_panel_max_line_length - DX.s.PN_infopanel_meta_indent, self.alias_indent_corrected, nil, "dont_indent_first_line")
 end
 
 --* this info will be consumed for the info panel in ((NavigatorBox#generateScrollWidget)):
@@ -210,12 +210,10 @@ function XrayInfoPanel:getItemInfoText(item, for_info_panel)
         return info:gsub("^\n\n", "\n")
     end
 
-    reliability_indicator = self:generateItemMetaInfo(item, reliability_indicator)
-    if DX.pn.navigation_tag then
-        return reliability_indicator
-    end
+    local info
+    info, reliability_indicator = self:generateItemMetaInfo(item, reliability_indicator)
 
-    return reliability_indicator .. DX.pn.cached_items_info[item.name]
+    return reliability_indicator .. info
 end
 
 --- @private
@@ -230,7 +228,7 @@ function XrayInfoPanel:generateItemMetaInfo(item, reliability_indicator)
     local description_indent, meta_indent = self:getConfiguredInfoPanelIndentation()
 
     local description = item.description
-    description = KOR.strings:splitLinesToMaxLength(description_indent .. "  " .. description, self.max_line_length, self.alias_indent .. "  ", nil, "dont_indent_first_line")
+    description = KOR.strings:splitLinesToMaxLength(description_indent .. description, DX.s.PN_info_panel_max_line_length, self.alias_indent .. "  ", nil, "dont_indent_first_line")
     info = info .. "\n" .. reliability_indicator_placeholder .. description
 
     local info_table = {}
@@ -254,12 +252,11 @@ function XrayInfoPanel:generateItemMetaInfo(item, reliability_indicator)
     if DX.pn.navigation_tag then
         --? for some reason we only need this correction if a navigation tag is active:
         reliability_indicator = reliability_indicator:gsub("^\n+", "")
-        return "\n" .. reliability_indicator .. DX.pn.cached_items_info[item.name]
+        return info, "\n" .. reliability_indicator
+    elseif not reliability_indicator:match("^\n") then
+        return info, "\n" .. reliability_indicator
     end
-    if not reliability_indicator:match("^\n") then
-        return "\n" .. reliability_indicator
-    end
-    return reliability_indicator
+    return info, reliability_indicator
 end
 
 function XrayInfoPanel:setProp(prop, value)
