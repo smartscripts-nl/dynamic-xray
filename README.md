@@ -78,13 +78,17 @@ As of 2025-12-25 translations are now stored in the table xray_translations in t
 
 This will make the code and updates much easier to maintain for me _and_ for cloners... Users can translate texts in the TranslationsManager, which is reachable from the bubbles icon in the:
 * top left corner of the list of Xray items
-* top left corner of the information popup called with a tap on an Xray marker (lightning or star) in the ebook text
-* top left corner of the Xray item viewer dialog
+* top left corner of the information popup called with a tap on a Xray marker (lightning or star) in the ebook text
+* top left corner of the Xray Item Viewer dialog
 * the most left main menu item → Dynamic Xray → Translate interface
 
 **⚠️ The folder frontend/extensions/translations with in it a .po-file has therefore now been removed.**
 
 ## Usage tips
+
+### Item Viewer: quotes tab
+
+Via ReaderHighlight the user will soon be able to select texts as quotes to be displayed in the fourth tab of the Item Viewer. This feature can be used to add a book index, or to read quickly especially moving or important passages, or for storing definitions from the book. I've added a  preview of this feature in the [Images](#images) section (image 05b...).
 
 ### Global hotkeys
 
@@ -157,11 +161,14 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 ![03 List of Xray items](images/03-list-of-xray-items.png)
 03 List of Xray items
 
-![04 Xray item viewer tab 1](images/04-xray-item-viewer-tab-1.png)
-04 Xray item viewer tab 1
+![04 Xray Item Viewer tab 1](images/04-xray-item-viewer-tab-1.png)
+04 Xray Item Viewer tab 1
 
-![05 Xray item viewer tab 2](images/05-xray-item-viewer-tab-2.png)
-05 Xray item viewer tab 2
+![05 Xray Item Viewer tab 2](images/05-xray-item-viewer-tab-2.png)
+05 Xray Item Viewer tab 2
+
+![05b Xray Item Viewer quotes tab](images/05b-xray-item-viewer-quotes-tab-in-item-viewer.png)
+05b Xray Item Viewer: quotes tab
 
 ![06 Xray item editor tab 1](images/06-xray-item-editor-tab-1.png)
 06 Xray item editor tab 1
@@ -209,7 +216,7 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
   to navigate to the next subpage) → Settings
 * This same settings menu is also reachable through the cog icon at the top left of these four dialogs:
     * the Xray items list
-    * the Xray item viewer
+    * the Xray Item Viewer
     * the Xray Page Navigator
     * the popup dialog after you clicked upon a lightning or a star marker in the text of the e-book
 
