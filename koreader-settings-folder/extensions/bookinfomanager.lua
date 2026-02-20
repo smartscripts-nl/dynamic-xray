@@ -679,7 +679,7 @@ function BookInfoManager:deleteBookInfo(full_path)
     local stmt = self.db_conn:prepare(query)
     stmt:bind(directory, filename)
     stmt:step() --* commited
-    stmt = KOR.databases:closeStmts(stmt)
+    stmt = KOR.databases:closeInfoStmts(stmt)
     self:closeDbConnection()
 end
 
