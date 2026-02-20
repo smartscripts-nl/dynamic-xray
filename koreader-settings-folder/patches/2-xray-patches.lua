@@ -436,6 +436,7 @@ ReaderHighlight.init = function(self)
     self:addToHighlightDialog("41_add_xray_quote", function(this)
         return {
             text = tr("+ Xray quote"),
+            enabled = DX.vd:getBaseItemsCount() > 0,
             callback = function()
                 if DX.vd:getBaseItemsCount() == 0 then
                     this:onClose()
