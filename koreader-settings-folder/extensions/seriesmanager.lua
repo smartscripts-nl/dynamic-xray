@@ -54,7 +54,7 @@ local SeriesManager = WidgetContainer:extend{
 
 function SeriesManager:searchSerieMembers(full_path)
 
-    local conn = KOR.databases:getDBconnForBookInfo("SeriesManager:searchSerieMembers")
+    local conn = KOR.databases:getDBconn("SeriesManager:searchSerieMembers")
     KOR.databases:attachStatisticsDB(conn)
     local sql = [[
     WITH latest_progress AS (
@@ -116,7 +116,7 @@ function SeriesManager:searchSerieMembers(full_path)
     --logger.warn("query", sql:gsub("\n", " "))
     local result = conn:exec(sql)
     KOR.databases:detachStatisticsDB(conn)
-    conn = KOR.databases:closeInfoConnections(conn)
+    conn = KOR.databases:closeConnections(conn)
     if not full_path and not result then
         self:showNoSeriesFoundMessage()
         return
@@ -132,7 +132,7 @@ end
 --- @private
 function SeriesManager:getNonSeriesData(full_path)
 
-    local conn = KOR.databases:getDBconnForBookInfo("SeriesManager:getNonSeriesData")
+    local conn = KOR.databases:getDBconn("SeriesManager:getNonSeriesData")
     local sql = [[
         SELECT
         i.authors,
@@ -151,7 +151,7 @@ function SeriesManager:getNonSeriesData(full_path)
     ]]
     sql = KOR.databases:injectSafePath(sql, full_path)
     local result = conn:exec(sql)
-    conn = KOR.databases:closeInfoConnections(conn)
+    conn = KOR.databases:closeConnections(conn)
     if not result then
         KOR.messages:notify(_("no data found for this ebook"))
         return
@@ -309,11 +309,11 @@ end
 
 function SeriesManager:importAllData(upon_ready_callback)
     KOR.dialogs:confirm(_("Do you indeed want to import all data (will take some time)?"), function()
-        local conn = KOR.databases:getDBconnForBookInfo("SeriesManager:importAllData")
+        local conn = KOR.databases:getDBconn("SeriesManager:importAllData")
         local sql = "SELECT bcid, directory || filename AS path FROM bookinfo ORDER BY directory || filename"
         local result = conn:exec(sql)
         if not result then
-            conn = KOR.databases:closeInfoConnections(conn)
+            conn = KOR.databases:closeConnections(conn)
             KOR.messages:notify(_("no files to update found in database"))
             return
         end
@@ -335,8 +335,8 @@ function SeriesManager:importAllData(upon_ready_callback)
             end
         end)
 
-        self.import_annotations, self.import_stars = KOR.databases:closeInfoStmts(self.import_annotations, self.import_stars)
-        conn = KOR.databases:closeInfoConnections(conn)
+        self.import_annotations, self.import_stars = KOR.databases:closeStmts(self.import_annotations, self.import_stars)
+        conn = KOR.databases:closeConnections(conn)
         DX.s:saveSetting("SeriesManager_all_data_imported", true)
         self:resetData()
         upon_ready_callback()
@@ -678,10 +678,10 @@ function SeriesManager:_cache_resultset(cache_index, resultset)
 end
 
 function SeriesManager:getSeriesName(full_path)
-    local conn = KOR.databases:getDBconnForBookInfo("SeriesManager:getSeriesName")
+    local conn = KOR.databases:getDBconn("SeriesManager:getSeriesName")
     local sql = KOR.databases:injectSafePath("SELECT series, series_index FROM bookinfo WHERE path = 'safe_path' LIMIT 1", full_path)
     local series, series_index = conn:rowexec(sql)
-    conn = KOR.databases:closeInfoConnections(conn)
+    conn = KOR.databases:closeConnections(conn)
 
     return has_text(series), series_index
 end
@@ -710,16 +710,16 @@ function SeriesManager:showSeriesForEbookPath(full_path)
 end
 
 function SeriesManager:setBookFinishedStatus(full_path)
-    local conn = KOR.databases:getDBconnForBookInfo("SeriesManager:setBookFinishedStatus")
+    local conn = KOR.databases:getDBconn("SeriesManager:setBookFinishedStatus")
     local sql = "INSERT OR IGNORE INTO finished_books (path) VALUES ('safe_path');"
     sql = KOR.databases:injectSafePath(sql, full_path)
     conn:exec(sql)
-    conn = KOR.databases:closeInfoConnections(conn)
+    conn = KOR.databases:closeConnections(conn)
     self:resetData()
 end
 
 function SeriesManager:setAnnotationsCount(full_path, acount)
-    local conn = KOR.databases:getDBconnForBookInfo("SeriesManager:setBookmarksCount")
+    local conn = KOR.databases:getDBconn("SeriesManager:setBookmarksCount")
     local sql = "UPDATE bookinfo SET annotations = ? WHERE directory || filename = 'safe_path';"
     sql = KOR.databases:injectSafePath(sql, full_path)
     local stmt = conn:prepare(sql)
@@ -732,7 +732,7 @@ function SeriesManager:setStars(full_path, num)
     if num == 0 then
         num = nil
     end
-    local conn = KOR.databases:getDBconnForBookInfo("SeriesManager:setBookmarksCount")
+    local conn = KOR.databases:getDBconn("SeriesManager:setBookmarksCount")
     local sql = "UPDATE bookinfo SET stars = ? WHERE directory || filename = 'safe_path';"
     sql = KOR.databases:injectSafePath(sql, full_path)
     local stmt = conn:prepare(sql)

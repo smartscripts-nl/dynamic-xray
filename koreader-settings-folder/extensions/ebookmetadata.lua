@@ -27,13 +27,13 @@ function EbookMetadata:getMetadata(full_path, data, conn)
 
     local is_local_conn = not conn
     if is_local_conn then
-        conn = KOR.databases:getDBconnForBookInfo("EbookMetadata#getMetadata")
+        conn = KOR.databases:getDBconn("EbookMetadata#getMetadata")
     end
 
     local sql = KOR.databases:injectSafePath("SELECT authors, title, publication_year, series, series_index, rating_goodreads, pages, description FROM bookinfo WHERE directory || filename = 'safe_path'", full_path)
     local authors, title, publication_year, series, series_index, rating_goodreads, pages, description = conn:rowexec(sql)
     if is_local_conn then
-        conn = KOR.databases:closeInfoConnections(conn)
+        conn = KOR.databases:closeConnections(conn)
     end
 
     if data then
@@ -59,7 +59,7 @@ function EbookMetadata:editEbookMetadata(full_path, data, active_tab)
     if not active_tab then
         active_tab = 1
     end
-    local conn = KOR.databases:getDBconnForBookInfo("Ebooks:updateEbookMetadata")
+    local conn = KOR.databases:getDBconn("Ebooks:updateEbookMetadata")
     local authors, title, publication_year, series, series_index, rating_goodreads, pages, description = self:getMetadata(full_path, data, conn)
     local fields_description = "\n" .. T(_("fields from left %1 right:\n1. year, 2. authors, 3. title, 4. series,\n5. series-index, 6. pages, 7. GoodReads-rating"), KOR.icons.arrow_bare)
     fields_description = fields_description:gsub("(%d%.) ", "%1 ")
@@ -300,13 +300,13 @@ function EbookMetadata:saveMetadata(context, data)
         local sql = KOR.databases:injectSafePath("UPDATE bookinfo SET authors = ?, title = ?, publication_year = ?, series = ?, series_index = ?, rating_goodreads = ?, pages = ?, description = ? WHERE directory || filename = 'safe_path'", full_path)
         local stmt = conn:prepare(sql)
         stmt:reset():bind(authors, title, publication_year, series, series_index, rating_goodreads, pages, description):step()
-        stmt = KOR.databases:closeInfoStmts(stmt)
+        stmt = KOR.databases:closeStmts(stmt)
 
         sql = KOR.databases:injectSafePath("UPDATE bookinfo SET authors = ?, title = ? WHERE directory || filename = 'safe_path'", full_path)
         stmt = conn:prepare(sql)
         stmt:reset():bind(authors, title):step()
-        stmt = KOR.databases:closeInfoStmts(stmt)
-        KOR.databases:closeInfoConnections(conn)
+        stmt = KOR.databases:closeStmts(stmt)
+        KOR.databases:closeConnections(conn)
 
         self:closeDialog()
         --* when called from filemanager:

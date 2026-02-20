@@ -27,21 +27,21 @@ function Databases:setDatabaseFileName(database_filename)
 end
 
 function Databases:closeConnAndStmt(conn, stmt)
-    self:closeInfoStmts(stmt)
-    self:closeInfoConnections(conn)
+    self:closeStmts(stmt)
+    self:closeConnections(conn)
     return nil, nil
 end
 
-function Databases:closeInfoConnections(conn)
+function Databases:closeConnections(conn)
     if conn and not conn._closed then
         conn:close()
         conn = nil
     end
-    KOR.registry:unset("db_conn_info")
+    KOR.registry:unset("db_conn")
     return nil
 end
 
-function Databases:closeInfoStmts(stmt, ...)
+function Databases:closeStmts(stmt, ...)
     if stmt then
         stmt:clearbind():reset():close()
         stmt = nil
@@ -71,14 +71,14 @@ function Databases:detachStatisticsDB(conn)
     conn:exec("DETACH DATABASE statistics;")
 end
 
-function Databases:getDBconnForBookInfo()
-    local keep_open_conn = KOR.registry:get("db_conn_info")
+function Databases:getDBconn()
+    local keep_open_conn = KOR.registry:get("db_conn")
     if keep_open_conn then
         if not keep_open_conn._closed then
             return keep_open_conn, true
         else
             local conn = self:_getConn()
-            KOR.registry:set("db_conn_info", conn)
+            KOR.registry:set("db_conn", conn)
             return conn, true
         end
     end

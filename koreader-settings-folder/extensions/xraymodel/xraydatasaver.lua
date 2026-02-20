@@ -247,9 +247,9 @@ function XrayDataSaver:initDataHandlers(xray_model)
 end
 
 function XrayDataSaver:execExternalQuery(context, query_index)
-    local conn = KOR.databases:getDBconnForBookInfo(context)
+    local conn = KOR.databases:getDBconn(context)
     local result = conn:exec(self.queries_external[query_index])
-    conn = KOR.databases:closeInfoConnections(conn)
+    conn = KOR.databases:closeConnections(conn)
     return result
 end
 
@@ -262,20 +262,20 @@ function XrayDataSaver:runExternalStmt(context, stmt_index, params)
         --* run removals only once:
         local previous_version = DX.s.prune_orphan_translations_version
         if previous_version == DX.t.prune_orphan_translations_version then
-            conn = KOR.databases:closeInfoConnections(conn)
+            conn = KOR.databases:closeConnections(conn)
             return
         end
 
-        conn = KOR.databases:getDBconnForBookInfo(context)
+        conn = KOR.databases:getDBconn(context)
         sql = sql:gsub("WHERE_CONDITIONS", params)
         conn:exec(sql)
-        conn = KOR.databases:closeInfoConnections(conn)
+        conn = KOR.databases:closeConnections(conn)
         --* mark the translations table as pruned:
         DX.s:saveSetting("prune_orphan_translations_version", DX.t.prune_orphan_translations_version)
         return
     end
 
-    conn = KOR.databases:getDBconnForBookInfo(context)
+    conn = KOR.databases:getDBconn(context)
     local stmt = conn:prepare(sql)
     count = #params
     for i = 1, count do
@@ -292,7 +292,7 @@ function XrayDataSaver.storeDeletedItem(current_series, delete_item)
 
     local self = DX.ds
 
-    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver:storeDeletedItem")
+    local conn = KOR.databases:getDBconn("XrayDataSaver:storeDeletedItem")
     local sql, stmt
     local id = delete_item.id
     --! this argument CAN be nil!, so don't use parent.current_series here:
@@ -314,7 +314,7 @@ function XrayDataSaver.storeChapters(chapters)
     local self = DX.ds
 
     chapters = json.encode(chapters)
-    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver.storeChapters")
+    local conn = KOR.databases:getDBconn("XrayDataSaver.storeChapters")
     local stmt = conn:prepare(self.queries.store_book_chapters)
     stmt:reset():bind(parent.current_ebook_basename, chapters):step()
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
@@ -324,7 +324,7 @@ function XrayDataSaver.storeChapterHitsData(item)
     local self = DX.ds
 
     local chapter_hits_data = self:getChapterHitsDataForStorage(item.chapter_hits_data)
-    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver.storeChapterHitsData")
+    local conn = KOR.databases:getDBconn("XrayDataSaver.storeChapterHitsData")
     local stmt = conn:prepare(self.queries.update_chapter_hits_data)
     stmt:reset():bind(chapter_hits_data, item.id):step()
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
@@ -333,7 +333,7 @@ end
 function XrayDataSaver.storeQuote(item, quote, pos0, chapter)
     local self = DX.ds
 
-    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver.storeQuote")
+    local conn = KOR.databases:getDBconn("XrayDataSaver.storeQuote")
     local stmt = conn:prepare(self.queries.add_quote)
     stmt:reset():bind(item.name, parent.current_ebook_basename, parent.current_title, parent.current_series, parent.current_series_index, quote, pos0, chapter):step()
 
@@ -352,11 +352,11 @@ function XrayDataSaver.storeImportedItemsFromOtherSeries(series)
 
     local self = DX.ds
 
-    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver:storeImportedItems", nil, "is_initial_connection")
+    local conn = KOR.databases:getDBconn("XrayDataSaver:storeImportedItems", nil, "is_initial_connection")
     local result = DX.dl:getItemsForImportFromOtherSeries(conn, series)
     count = result and #result["name"] or 0
     if count == 0 then
-        conn = KOR.databases:closeInfoConnections(conn)
+        conn = KOR.databases:closeConnections(conn)
         KOR.messages:notify(T(_("the series %1 was not found..."), series))
         return
     end
@@ -392,7 +392,7 @@ function XrayDataSaver.storeImportedItemsFromOtherSeries(series)
         item.id = id
         table_insert(imported_items, item)
     end
-    stmt = KOR.databases:closeInfoStmts(stmt)
+    stmt = KOR.databases:closeStmts(stmt)
     --* above stmt was only concerned with metadata; actual hits update wil now be done in this method:
     self.setItemHitsForImportedItems(imported_items, conn)
 end
@@ -403,7 +403,7 @@ function XrayDataSaver.storeItemHits(item)
     local self = DX.ds
 
     local id = item.id
-    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver:updateBookHits")
+    local conn = KOR.databases:getDBconn("XrayDataSaver:updateBookHits")
     local chapter_hits_data = self:getChapterHitsDataForStorage(item.chapter_hits_data)
     local stmt = conn:prepare(self.queries.update_hits)
     stmt:reset():bind(item.book_hits, item.chapter_hits, chapter_hits_data, id):step()
@@ -426,7 +426,7 @@ function XrayDataSaver.storeNewItem(new_item)
 
     local self = DX.ds
 
-    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver#storeNewItem")
+    local conn = KOR.databases:getDBconn("XrayDataSaver#storeNewItem")
     local stmt = conn:prepare(self.queries.insert_item)
     local x = new_item
     --* set empty texts to nil; these might have been generated in ((MultiInputDialog#registerFieldValues)), when the user never opened a particular form tab for left the fields empty:
@@ -450,7 +450,7 @@ function XrayDataSaver.storeUpdatedItem(item)
     end
 
     --* in series mode we want to display the total count of all occurences of an item in the entire series:
-    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver#storeUpdatedItem")
+    local conn = KOR.databases:getDBconn("XrayDataSaver#storeUpdatedItem")
     local sql = parent.current_series and self.queries.update_item_for_entire_series or self.queries.update_item
     local stmt = conn:prepare(sql)
     local x = item
@@ -476,7 +476,7 @@ function XrayDataSaver.storeUpdatedItemType(item)
         return
     end
     local id = item.id
-    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver#updateXrayItemType")
+    local conn = KOR.databases:getDBconn("XrayDataSaver#updateXrayItemType")
     local sql = self.queries.update_item_type
     local stmt = conn:prepare(sql)
     stmt:reset():bind(item.xray_type, id):step()
@@ -608,7 +608,7 @@ function XrayDataSaver.createAndModifyTables()
     if overrule_tables_creation then
         tables_were_created = false
     end
-    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver:createAndModifyTables")
+    local conn = KOR.databases:getDBconn("XrayDataSaver:createAndModifyTables")
 
     if not tables_were_created then
         --* make it WAL, if possible
@@ -627,7 +627,7 @@ function XrayDataSaver.createAndModifyTables()
         update_tasks_count == 0
         or version_index >= update_tasks_count
     then
-        conn = KOR.databases:closeInfoConnections(conn)
+        conn = KOR.databases:closeConnections(conn)
         return
     end
 
@@ -635,7 +635,7 @@ function XrayDataSaver.createAndModifyTables()
     --* update database_scheme_version in XraySettings:
     DX.s:saveSetting(self.scheme_version_name, update_tasks_count)
 
-    conn = KOR.databases:closeInfoConnections(conn)
+    conn = KOR.databases:closeConnections(conn)
 end
 
 -- #((XrayDataSaver#deleteItem))

@@ -193,9 +193,9 @@ function XrayDataLoader:initDataHandlers(xray_model)
 end
 
 function XrayDataLoader:execExternalQuery(context, query_index)
-    local conn = KOR.databases:getDBconnForBookInfo(context)
+    local conn = KOR.databases:getDBconn(context)
     local result = conn:exec(self.queries_external[query_index])
-    conn = KOR.databases:closeInfoConnections(conn)
+    conn = KOR.databases:closeConnections(conn)
     return result
 end
 
@@ -244,11 +244,11 @@ end
 
 --- @private
 function XrayDataLoader:_loadAllData(mode)
-    local conn = KOR.databases:getDBconnForBookInfo("XrayDataLoader:_loadAllData")
+    local conn = KOR.databases:getDBconn("XrayDataLoader:_loadAllData")
     local sql = self:_getAllDataSql(mode)
     local result = conn:exec(sql, nil, "XrayDataLoader:_loadAllData")
     if not result then
-        conn = KOR.databases:closeInfoConnections(conn)
+        conn = KOR.databases:closeConnections(conn)
         return
     end
 
@@ -262,7 +262,7 @@ function XrayDataLoader:_loadAllData(mode)
         self:_loadDataForBook(result)
     end
 
-    conn = KOR.databases:closeInfoConnections(conn)
+    conn = KOR.databases:closeConnections(conn)
 
     --* was only needed for transfer in DeveloperTools from LuaSettings file:
     --KOR.registry:set("all_xray_items", p.ebooks)
@@ -379,21 +379,21 @@ end
 
 function XrayDataLoader:getItemsCountForBook(file_basename)
     --* to get the number of xray items only for the this book:
-    local conn = KOR.databases:getDBconnForBookInfo("XrayDataLoader:getItemsCountForBook")
+    local conn = KOR.databases:getDBconn("XrayDataLoader:getItemsCountForBook")
     local sql = KOR.databases:injectSafePath(self.queries.get_book_items_count, file_basename)
     local xray_items_count = conn:rowexec(sql, nil, "XrayDataLoader:getItemsCountForBook")
-    conn = KOR.databases:closeInfoConnections(conn)
+    conn = KOR.databases:closeConnections(conn)
 
     return xray_items_count
 end
 
 --! file_base_name can be an "external" book, when we call this method for creating an ebook abstract:
 function XrayDataLoader:getItemsForEbook(file_basename)
-    local conn = KOR.databases:getDBconnForBookInfo("XrayDataLoader:getItemsForEbook")
+    local conn = KOR.databases:getDBconn("XrayDataLoader:getItemsForEbook")
     file_basename = KOR.databases:escape(file_basename)
     local sql = T(self.queries.get_items_for_ebook_abstract, file_basename)
     local result = conn:exec(sql)
-    conn = KOR.databases:closeInfoConnections(conn)
+    conn = KOR.databases:closeConnections(conn)
     return result
 end
 
