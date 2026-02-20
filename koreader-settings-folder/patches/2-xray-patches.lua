@@ -67,6 +67,7 @@ local UIManager = require("ui/uimanager")
 local _ = require("gettext")
 local lfs = require("libs/libkoreader-lfs")
 local logger = require("logger")
+--! only use tr for DX related modules:
 local tr = KOR:initCustomTranslations()
 local util = require("util")
 local Screen = Device.screen
@@ -436,11 +437,10 @@ ReaderHighlight.init = function(self)
     self:addToHighlightDialog("41_add_xray_quote", function(this)
         return {
             text = tr("+ Xray quote"),
-            enabled = DX.vd:getBaseItemsCount() > 0,
             callback = function()
                 if DX.vd:getBaseItemsCount() == 0 then
                     this:onClose()
-                    KOR.messages:notify("je hebt nog geen Xray items gedefinieerd")
+                    KOR.messages:notify(tr("you haven't added Xray items as yet"))
                     return
                 end
                 local pos0 = self.selected_text.pos0
