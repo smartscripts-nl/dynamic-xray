@@ -142,6 +142,59 @@ function Tables:slice(subject, startpos, icount)
     return sliced
 end
 
+function Tables:sortByPosition(items)
+    table_sort(items, function(item1, item2)
+        local pos1 = item1.pos0 or "0"
+        local pos2 = item2.pos0 or "0"
+        --* ensure both are valid strings:
+        if type(pos1) ~= "string" then
+            return false
+        end
+        if type(pos2) ~= "string" then
+            return true
+        end
+
+        --* each bookmark is a string containing page_nr:pos,selectedText; e.g. 91:/body/DocFragment[37]/body/em/p[7]/text().0,Net een we...
+        --* locate all numbers in the positionmarkers and weigh them (first number is page number, and then follow the regular numbers as part of bookmarks positions):
+        local numbers1 = {}
+        local insertion = 0
+        for num in pos1:gmatch("%d+") do
+            insertion = insertion + 1
+            --* ignore page numbers, because they can be incorrect:
+            if insertion > 1 then
+                if num == "0" then
+                    --* prevent falsy condition for zero values:
+                    num = "-1"
+                end
+                table_insert(numbers1, tonumber(num))
+            end
+        end
+        local numbers2 = {}
+        insertion = 0
+        for num in pos2:gmatch("%d+") do
+            insertion = insertion + 1
+            if insertion > 1 then
+                if num == "0" then
+                    num = "-1"
+                end
+                table_insert(numbers2, tonumber(num))
+            end
+        end
+        count = #numbers1
+        for i = 1, count do
+            if numbers2[i] and numbers1[i] < numbers2[i] then
+                return true
+            elseif numbers2[i] and numbers1[i] > numbers2[i] then
+                return false
+            end
+            if i == count and numbers2[i + 1] then
+                return false
+            end
+        end
+        return true
+    end)
+end
+
 function Tables:sortByPropAscending(subject, prop)
     table_sort(subject, function(v1, v2)
         if v1[prop] == nil and v2[prop] == nil then

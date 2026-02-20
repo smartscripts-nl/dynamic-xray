@@ -545,7 +545,12 @@ end
 --- @private
 function XrayPages:markedItemRegister(item, html, word)
 
-    if self:isPruneSideButton(item) then
+    --* skip_item_registration might be set by ((XrayQuotes#markItemInHtml)), upon generating quotes html for an item:
+    if KOR.registry:get("skip_item_registration") then
+        local needle = DX.vd:getNeedleString(word, "for_substitution")
+        return self:markNeedleInHtml(html, needle)
+
+    elseif self:isPruneSideButton(item) then
         return html
     end
 
@@ -577,19 +582,24 @@ end
 
 --- @private
 function XrayPages:markNeedleInHtml(html, needle, derived_name)
+
+    local mark_with_italics = KOR.registry:get("mark_items_in_italics")
+    local tag = mark_with_italics and "<em>" or "<strong>"
+    local close_tag = mark_with_italics and "</em>" or "</strong>"
+
     if not DX.pn.active_filter_name and not derived_name then
-        return html:gsub(needle, "<strong>%1</strong>")
+        return html:gsub(needle, tag .. "%1" .. close_tag)
     elseif not DX.pn.active_filter_name then
-        return html:gsub(needle, "<strong>" .. derived_name .. "</strong>")
+        return html:gsub(needle, tag .. derived_name .. close_tag)
     end
 
     if derived_name then
         local non_active_layout = T(self.non_active_layout, derived_name)
 
-        return self.is_filter_item and html:gsub(needle, "<strong>" .. derived_name .. "</strong>") or html:gsub(needle, non_active_layout)
+        return self.is_filter_item and html:gsub(needle, tag .. derived_name .. close_tag) or html:gsub(needle, non_active_layout)
     end
 
-    return self.is_filter_item and html:gsub(needle, "<strong>%1</strong>") or html:gsub(needle, self.non_active_layout)
+    return self.is_filter_item and html:gsub(needle, tag .. "%1" .. close_tag) or html:gsub(needle, self.non_active_layout)
 end
 
 --- @private

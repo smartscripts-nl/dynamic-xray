@@ -34,6 +34,7 @@ local SettingsManager = WidgetContainer:new{
     check_modified_props = {
         "after_change_callback",
         "explanation",
+        "locked",
         "type",
         "validator",
     },

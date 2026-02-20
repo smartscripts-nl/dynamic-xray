@@ -43,6 +43,17 @@ local XrayDataLoader = WidgetContainer:new{
     queries = {
         --* querying series information, because this query will be used when DX is set in book display mode, but the individual books data can still contain series information:
         get_all_book_items = [[
+            WITH quotes AS (
+                SELECT
+                    ebook,
+                    series,
+                    series_index,
+                    item_name,
+                    GROUP_CONCAT(ebook || '||' || COALESCE(series_index, '???') || '||' || COALESCE(ebook_title, '???') || '||' || pos0 || '||' || COALESCE(chapter, '???') || '||' || quote, '@@') AS pos_chapter_quotes
+                FROM xray_quotes
+                GROUP BY ebook, item_name
+            )
+
             SELECT
                 x.id,
                 x.name,
@@ -56,23 +67,23 @@ local XrayDataLoader = WidgetContainer:new{
                 x.tags,
                 x.linkwords,
                 x.book_hits,
-                (
-                    SELECT SUM(x2.book_hits)
-                    FROM xray_items x2
-                    JOIN bookinfo b2 ON b2.filename = x2.ebook
-                    WHERE b2.series = b.series
-                      AND x2.name = x.name
-                ) AS series_hits,
+                -- since no series:
+                x.book_hits AS series_hits,
                 x.chapter_hits,
                 x.chapter_hits_data,
                 o.chapters,
-                GROUP_CONCAT(b.series_index || '. ' || b.title, ', ' ORDER BY b.series_index) AS mentioned_in
+                b.title AS mentioned_in,
+
+                q.item_name,
+                q.pos_chapter_quotes,
+                q.series_index
+
             FROM xray_items x
-                JOIN bookinfo b ON x.ebook = b.filename
-                LEFT OUTER JOIN xray_books o ON x.ebook = o.ebook
+            JOIN bookinfo b ON x.ebook = b.filename
+            LEFT OUTER JOIN xray_books o ON x.ebook = o.ebook
+            LEFT JOIN quotes q ON q.ebook = x.ebook AND q.item_name = x.name
             WHERE x.ebook = '%1'
-            GROUP BY %2
-            ORDER BY (x.xray_type = 2 or x.xray_type = 4) DESC, %3;]],
+            ORDER BY %2;]],
 
         --* s.ebook, s.title, s.book_hits and s.chapter_hits will be null when the xray item only is found in one or more OTHER books in the series, but not in the current ebook:
         get_all_series_items = [[
@@ -102,6 +113,7 @@ local XrayDataLoader = WidgetContainer:new{
             series_data AS (
                 SELECT
                 x.name,
+                x.xray_type,
                 b.series,
                 SUM(x.book_hits) AS series_hits,
                 GROUP_CONCAT(
@@ -135,12 +147,25 @@ local XrayDataLoader = WidgetContainer:new{
 
                s.series,
                s.series_hits,
-               s.mentioned_in
+               s.mentioned_in,
 
-            FROM series_data s
-            LEFT JOIN book_xray_data x ON x.name = s.name
+               q.series_index,
+               q.item_name,
+                GROUP_CONCAT(q.ebook || '||' || COALESCE(q.series_index, '???') || '||' || COALESCE(q.ebook_title, '???') || '||' || q.pos0 || '||' || COALESCE(q.chapter, '???') || '||' || q.quote, '@@') AS pos_chapter_quotes
 
-            ORDER BY (x.xray_type = 2 OR x.xray_type = 4) DESC, %2, x.name;]],
+            FROM book_xray_data x
+            LEFT JOIN series_data s
+                   ON s.name = x.name
+                  AND s.xray_type = x.xray_type
+            LEFT JOIN xray_quotes q
+                   ON q.series = s.series AND q.item_name = x.name
+
+            GROUP BY x.id
+
+            ORDER BY
+                (x.xray_type = 2 OR x.xray_type = 4) DESC,
+                %2,
+                x.name;]],
 
         get_series_name =
             "SELECT series FROM bookinfo WHERE directory || filename = 'safe_path' LIMIT 1;",
@@ -209,10 +234,12 @@ function XrayDataLoader:_getAllDataSql(mode)
     --* for book mode:
 
     local current_ebook_basename = KOR.databases:escape(parent.current_ebook_basename)
-    local group_by = parent.sorting_method == "hits" and "x.name, x.xray_type, x.book_hits" or "x.name, x.xray_type"
-    sort = parent.sorting_method == "hits" and "x.book_hits DESC" or "x.name"
+    sort = parent.sorting_method == "hits" and "(x.xray_type = 2 OR x.xray_type = 4) DESC, x.book_hits DESC, x.name" or "(x.xray_type = 2 OR x.xray_type = 4) DESC, x.name"
 
-    return T(self.queries.get_all_book_items, current_ebook_basename, group_by, sort)
+    if parent.current_series then
+        return T(self.queries.get_all_series_items, current_ebook_basename, sort)
+    end
+    return T(self.queries.get_all_book_items, current_ebook_basename, sort)
 end
 
 --- @private
@@ -241,7 +268,7 @@ function XrayDataLoader:_loadAllData(mode)
     --KOR.registry:set("all_xray_items", p.ebooks)
 
     local items = mode == "series" and parent.series[parent.current_series] or parent.ebooks[parent.current_ebook_basename] or {}
-    views_data:setItems(items)
+    views_data:setItems(items, "from_resultset", "XrayDataLoader:_loadAllData")
 end
 
 --- @private
@@ -306,6 +333,7 @@ function XrayDataLoader:_addBookItem(result, i, book_index)
         series_hits = tonumber(result["series_hits"][i]),
         chapter_hits = result["chapter_hits"][i],
         chapter_hits_data = self:convertChapterHitsData(result["chapter_hits_data"][i]),
+        pos_chapter_quotes = result["pos_chapter_quotes"][i],
     }
     table.insert(parent.ebooks[book_index], item)
 
@@ -325,11 +353,12 @@ function XrayDataLoader:_addSeriesItem(result, i, series_index)
         aliases = result["aliases"][i] or "",
         tags = result["tags"][i] or "",
         linkwords = result["linkwords"][i] or "",
+        mentioned_in = result["mentioned_in"][i] or "",
         series_hits = tonumber(result["series_hits"][i]) or 0,
         book_hits = tonumber(result["book_hits"][i]) or 0,
         chapter_hits = result["chapter_hits"][i],
         chapter_hits_data = self:convertChapterHitsData(result["chapter_hits_data"][i]),
-        mentioned_in = result["mentioned_in"][i] or "",
+        pos_chapter_quotes = result["pos_chapter_quotes"][i],
     }
     parent:updateStaticReferenceCollections(id, item)
 
@@ -375,14 +404,6 @@ end
 
 function XrayDataLoader:getSeriesHits(conn, series, name)
     return conn:rowexec(T(self.queries.get_series_hits, name, series)) or 0
-end
-
-function XrayDataLoader:getSeriesName()
-    local conn = KOR.databases:getDBconnForBookInfo("XrayDataLoader:getSeriesName")
-    local sql = KOR.databases:injectSafePath(self.queries.get_series_name, parent.current_ebook_full_path)
-    local series = conn:rowexec(sql)
-    conn = KOR.databases:closeInfoConnections(conn)
-    return series
 end
 
 return XrayDataLoader

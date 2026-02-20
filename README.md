@@ -88,7 +88,7 @@ This will make the code and updates much easier to maintain for me _and_ for clo
 
 ### Item Viewer: quotes tab
 
-Via ReaderHighlight the user will soon be able to select texts as quotes to be displayed in the fourth tab of the Item Viewer. This feature can be used to add a book index, or to read quickly especially moving or important passages, or for storing definitions from the book. I've added a  preview of this feature in the [Images](#images) section (image 05b...).
+Via ReaderHighlight the user can select texts as quotes to be displayed in the fourth tab of the Item Viewer. This feature can be used to add a book index, or to quickly read especially moving or important passages, or for storing definitions from the book. You can see a picture of this feature in the [Images](#images) section (image 05b...).
 
 ### Global hotkeys
 

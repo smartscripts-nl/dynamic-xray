@@ -410,6 +410,10 @@ function Html:getHtmlBoxCss(additional_css)
             text-indent: 1.5em;
         }
 
+        p + p.chaptertitle {
+            text-indent: 0;
+        }
+
         p.whitespace + p {
             text-indent: 0;
         }

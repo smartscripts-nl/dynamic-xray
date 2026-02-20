@@ -154,6 +154,7 @@ function KOR:initDX()
 		i = "extensions/xrayviews/xrayinformation",
 		ip = "extensions/xrayviews/xrayinfopanel",
 		p = "extensions/xrayviews/xraypages",
+		q = "extensions/xrayviews/xrayquotes",
 		sp = "extensions/xrayviews/xraysidepanels",
 		u = "extensions/xrayviews/xrayui",
 	}

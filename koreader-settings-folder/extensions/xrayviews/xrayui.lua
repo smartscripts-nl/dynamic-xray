@@ -305,7 +305,7 @@ function XrayUI:ReaderViewInitParaOrPageData()
     self.skip_xray_items = {}
     self.screen_width = Screen:getWidth()
     local para_count = #self.paragraphs
-    if self.paragraphs and para_count > 0 and #DX.vd.items > 0 then
+    if self.paragraphs and para_count > 0 and DX.vd:getBaseItemsCount() > 0 then
 
         --* when in page mode, this loop will be stopped (see break below) as soon as a line is found that is long enough to be suitable for adding the xray marker; in this we assume that page_text does indeed have the full page text, so no loop through all paragraphs necessary:
         local marker_line_found

@@ -422,7 +422,7 @@ end
 local orig_init = ReaderHighlight.init
 ReaderHighlight.init = function(self)
     orig_init(self)
-    self:addToHighlightDialog("12_add_xray_item", function(this)
+    self:addToHighlightDialog("40_add_xray_item", function(this)
         return {
             text = tr("+ Xray item"),
             callback = function()
@@ -430,6 +430,28 @@ ReaderHighlight.init = function(self)
                 text = KOR.strings:prepareForDisplay(text, "separate_paragraphs")
                 this:onClose(true)
                 DX.fd.saveNewItem(text)
+            end,
+        }
+    end)
+    self:addToHighlightDialog("41_add_xray_quote", function(this)
+        return {
+            text = tr("+ Xray quote"),
+            callback = function()
+                if DX.vd:getBaseItemsCount() == 0 then
+                    this:onClose()
+                    KOR.messages:notify("je hebt nog geen Xray items gedefinieerd")
+                    return
+                end
+                local pos0 = self.selected_text.pos0
+                local quote = util.cleanupSelectedText(this.selected_text.text)
+                this:onClose()
+                -- #((Xray quote from existing bookmark))
+                KOR.registry:set("xray_quote_props", {
+                    pos0 = pos0,
+                    quote = quote,
+                })
+                --* see ((XrayDialogs#_prepareItemsForList)) for the callback to be supplied with the selected item:
+                DX.c:onShowList(nil, false, "save_quote")
             end,
         }
     end)

@@ -58,6 +58,9 @@ series_hits is NOT a db field, it is computed dynamically by queries XrayDataLoa
 --- @class XrayDataSaver
 local XrayDataSaver = WidgetContainer:new{
     queries = {
+        add_quote = [[
+            INSERT INTO xray_quotes (item_name, ebook, ebook_title, series, series_index, quote, pos0, chapter) VALUES(?, ?, ?, ?, ?, ?, ?, ?);]],
+
         create_items_table = [[
             CREATE TABLE IF NOT EXISTS "xray_items" (
                 "id" INTEGER NOT NULL,
@@ -217,6 +220,22 @@ local XrayDataSaver = WidgetContainer:new{
 
         [[
             ALTER TABLE xray_items ADD COLUMN tags;]],
+
+        [[
+            CREATE TABLE xray_quotes
+            (
+                id INTEGER NOT NULL
+                    CONSTRAINT xray_quotes_pk
+                        PRIMARY KEY AUTOINCREMENT,
+                item_name NOT NULL,
+                series,
+                series_index,
+                ebook NOT NULL,
+                ebook_title,
+                chapter,
+                pos0,
+                quote NOT NULL
+            );]],
     },
     scheme_version_name = "database_scheme_version",
 }
@@ -308,6 +327,16 @@ function XrayDataSaver.storeChapterHitsData(item)
     local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver.storeChapterHitsData")
     local stmt = conn:prepare(self.queries.update_chapter_hits_data)
     stmt:reset():bind(chapter_hits_data, item.id):step()
+    conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
+end
+
+function XrayDataSaver.storeQuote(item, quote, pos0, chapter)
+    local self = DX.ds
+
+    local conn = KOR.databases:getDBconnForBookInfo("XrayDataSaver.storeQuote")
+    local stmt = conn:prepare(self.queries.add_quote)
+    stmt:reset():bind(item.name, parent.current_ebook_basename, parent.current_title, parent.current_series, parent.current_series_index, quote, pos0, chapter):step()
+
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 end
 

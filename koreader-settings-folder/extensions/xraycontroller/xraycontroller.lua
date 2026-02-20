@@ -2,7 +2,7 @@
 --[[--
 This is the controller for the Dynamic Xray plugin. It has been structured in kind of a MVC structure:
 M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
-V = ((XrayUI)), ((XrayPageNavigator)) and ((XrayCallbacks)) and ((XrayPages)) and ((XraySidePanels)) and ((XrayInfoPanel)) and ((XrayOccurrencesHistogram)), ((XrayTranslations)) and ((XrayTranslationsManager)), ((XrayDialogs)) and ((XrayButtons)), ((XrayCallbacks)), ((XrayInformation))
+V = ((XrayUI)), ((XrayPageNavigator)) and ((XrayCallbacks)) and ((XrayPages)) and ((XraySidePanels)) and ((XrayInfoPanel)) and ((XrayOccurrencesHistogram)), ((XrayTranslations)) and ((XrayTranslationsManager)), ((XrayDialogs)) and ((XrayButtons)) and ((XrayQuotes)), ((XrayCallbacks)), ((XrayInformation))
 C = ((XrayController))
 
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database. XrayTappedWords handles data requests resulting from users longpressing (partial) names of Xray items in the e-book text.
@@ -17,6 +17,7 @@ The views layer has three main streams:
     d) NavigatorBox: responsible for drawing the Page Navigator and handling user interaction with the Navigator.
 4) Also mentionable is the fact that some DX dialogs have shared hotkeys, in which case the hotkeys of the top most dialog will be used, not that same hotkey for an underlying dialog. See ((XRAY_DIALOGS_SHARED_HOTKEYS)) for an explanation.
 5) DX has a ((SeriesManager)) for listing the books in a series. The items in this Manager have action buttons, for viewing large covers, descriptions, opening the e-book, etc. The user can also edit the metadata of ebooks from the Manager: authors, titles, series name, series index, page count, publication year, book description. The Manager uses ((Dialogs#filesBox)) > ((FilesBox)) to generate its dialog. The user can call it by tapping on the series manager icon in some DX dialogs, or by pressing Shift+M.
+6) Thanks to ((XrayQuotes)) the user can add quotes from the ebook to the Xray item, for display in a tab "Quotes" in the Xray Item Viewer. So the user has important quotes at hand quickly. The quotes can be added to the item (selected from a popup with al list of all items) via the ReaderHighlight popup shown after text selection in the ebook.
 
 
 The user will have the most Kindle-like experience when he/she opens the Page Navigator - see ((XrayController#onShowPageNavigator)). In this navigator all Xray items in a page will be marked bold and they will be mentioned in a side panel. Tapping on items in the side panel will put an explanation of that item in the bottom panel. You can even filter the content of the Navigator for a specific Xray item, so it will only show pages which contain that item.
@@ -129,7 +130,9 @@ KOR:initBaseExtensions()
 --- @field ip XrayInfoPanel
 --- @field m XrayModel
 --- @field oh XrayOccurrencesHistogram
+--- @field p XrayPages
 --- @field pn XrayPageNavigator
+--- @field q XrayQuotes
 --- @field s XraySettings
 --- @field sp XraySidePanels
 --- @field t XrayTranslations
@@ -137,7 +140,6 @@ KOR:initBaseExtensions()
 --- @field tw XrayTappedWords
 --- @field vd XrayViewsData
 --- @field u XrayUI
---- @field p XrayPages
 DX = {
     --* shorthand notation for Buttons:
     b = nil,
@@ -167,6 +169,8 @@ DX = {
     p = nil,
     --* shorthand notation for PageNavigator; this module will be initialized in ((XrayModel#initDataHandlers)):
     pn = nil,
+    --* shorthand notation for Quotes; this module will be initialized in ((KOR#initDX)):
+    q = nil,
     --* shorthand notation for Settings; this module will be initialized in ((KOR#initDX)):
     s = nil,
     --* shorthand notation for SidePanels; this module will be initialized in ((KOR#initDX)):
@@ -177,10 +181,10 @@ DX = {
     tm = nil,
     --* shorthand notation for TappedWords; this module will be initialized in ((XrayModel#initDataHandlers)):
     tw = nil,
-    --* shorthand notation for ViewsData; this module will be initialized in ((XrayModel#initDataHandlers)):
-    vd = nil,
     --* shorthand notation for UI:
     u = nil,
+    --* shorthand notation for ViewsData; this module will be initialized in ((XrayModel#initDataHandlers)):
+    vd = nil,
 }
 function DX.setProp(name, value)
     DX[name] = value

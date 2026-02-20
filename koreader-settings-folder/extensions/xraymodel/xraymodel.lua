@@ -41,6 +41,7 @@ local XrayModel = WidgetContainer:new{
     current_ebook_basename = nil,
     current_ebook_full_path = nil,
     current_series = nil,
+    current_series_index = nil,
     current_title = nil,
     ebooks = {},
     --! these 3 collections are reference collections that never will be fully reset after item updates or additions; e.g. used for Page Navigator side buttons:
@@ -273,7 +274,7 @@ end
 function XrayModel:insertViewerContextButton(row, item, tapped_word)
     local icon = DX.vd:getItemTypeIcon(item)
     local linked_item_hits
-    if DX.m.current_series then
+    if self.current_series then
         linked_item_hits = has_items(item.series_hits) and " (" .. item.series_hits .. ")" or ""
     else
         linked_item_hits = has_items(item.book_hits) and " (" .. item.book_hits .. ")" or ""
@@ -367,8 +368,6 @@ end
 --- @private
 function XrayModel:setTitleAndSeries(full_path)
     local use_doc_props = true
-    local current_series
-    local current_title
 
     --! this reset is crucial to reset the data upon opening another ebook, when the previous ebook was part of a series:
     self.current_series = nil
@@ -378,35 +377,33 @@ function XrayModel:setTitleAndSeries(full_path)
     self.current_ebook_basename = KOR.filedirnames:basename(self.current_ebook_full_path)
 
     if use_doc_props and KOR.ui and KOR.ui.doc_props then
-        current_series = KOR.ui.doc_props.series
-        current_title = KOR.ui.doc_props.title
+        self.current_series = KOR.ui.doc_props.series
+        self.current_series_index = KOR.ui.doc_props.series_index
+        self.current_title = KOR.ui.doc_props.title
     end
 
     local is_non_series_book, series_has_changed
-    if not current_series then
-        current_series = DX.dl:getSeriesName()
+    if not self.current_series then
+        self.current_series, self.current_series_index = KOR.seriesmanager:getSeriesName(self.current_ebook_full_path)
         local doc_props = KOR.ui.doc_settings:readSetting("doc_props")
-        current_title = doc_props.title or "???"
-        if has_text(current_series) then
-            self.current_series = current_series:gsub(" #%d+", "")
-            self.current_title = current_title
+        self.current_title = doc_props.title or "???"
+        if has_text(self.current_series) then
+            self.current_series = self.current_series:gsub(" #%d+", "")
             is_non_series_book = false
             series_has_changed = self.current_series ~= self.previous_series
             self.previous_series = self.current_series
             return series_has_changed, is_non_series_book
         end
     end
-    if has_no_text(current_series) then
+    if has_no_text(self.current_series) then
         series_has_changed = true
         is_non_series_book = true
-        self.current_title = current_title
         self.previous_series = self.current_series
         return series_has_changed, is_non_series_book
     end
 
     is_non_series_book = false
-    self.current_series = current_series:gsub(" #%d+", "")
-    self.current_title = current_title
+    self.current_series = self.current_series:gsub(" #%d+", "")
     series_has_changed = self.current_series ~= self.previous_series
 
     self.previous_series = self.current_series

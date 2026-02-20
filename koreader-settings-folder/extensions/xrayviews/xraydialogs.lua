@@ -59,7 +59,6 @@ local XrayDialogs = WidgetContainer:new{
     item_viewer = nil,
     list_args = nil,
     list_is_opened = false,
-    list_title = nil,
     needle_name_for_list_page = "",
     select_mode = false,
     -- #((Xray-item edit dialog: tab buttons in TitleBar))
@@ -450,16 +449,27 @@ function XrayDialogs:_prepareItemsForList(current_tab_items, items_for_select)
         return
     end
 
+    local select_mode_message
+    if self.select_mode == "next_or_previous_message" then
+        select_mode_message = ("Select an item to search:")
+    elseif self.select_mode == "save_quote" then
+        select_mode_message = ("Select an item to attach the quote to:")
+    end
     count = #current_tab_items
     for i = 1, count do
         local item = current_tab_items[i]
         item.text = DX.vd:generateListItemText(item)
         item.text = KOR.strings:formatListItemNumber(i, item.text)
-        item.callback = self.select_mode and
+        item.callback = (self.select_mode == "next_or_previous_item" and
         function()
             DX.p:toPrevOrNextNavigatorPage(item)
             self.select_mode = false
-        end
+        end)
+        or (self.select_mode == "save_quote" and
+        function()
+            DX.q:saveQuote(item)
+            self.select_mode = false
+        end)
         or
         function()
             UIManager:close(self.xray_items_chooser_dialog)
@@ -474,6 +484,8 @@ function XrayDialogs:_prepareItemsForList(current_tab_items, items_for_select)
     if not self.select_mode then
         DX.vd:setProp("current_tab_items", current_tab_items)
     end
+
+    return select_mode_message
 end
 
 --- @private
@@ -482,8 +494,7 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
     local select_number = focus_item and focus_item.index or 1
 
     --* optionally items are filtered here also:
-    local title = self.select_mode and _("Select an item to search:") or DX.vd:updateItemsTable(select_number)
-    self.list_title = title
+    local title = DX.vd:updateItemsTable(select_number)
     if not title then
         return
     end
@@ -492,7 +503,10 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
     --* this is the case after editing, deleting or adding xray_items:
     --* if the related items popup is active, after tapping on a name in the reader, show that collection of items instead of all items:
     --* here, if necessary, we format the items just like in ((XrayViewsData#filterAndAddItemToItemTables)):
-    self:_prepareItemsForList(current_tab_items, items_for_select)
+    local select_mode_message = self:_prepareItemsForList(current_tab_items, items_for_select)
+    if select_mode_message then
+        title = select_mode_message
+    end
 
     self.xray_items_chooser_dialog = CenterContainer:new{
         dimen = Screen:getSize(),
@@ -775,6 +789,12 @@ function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, 
         linked_items_info = DX.ex:generateXrayItemsOverview(linked_items)
     end
 
+    --? hotfix: for some reason only viewer called from List doesn't have prop pos_chapter_quotes, so here we circumvent that by referencing DX.m.items_by_id, which DOES have the prop:
+    --* also by using this circumvention we ensure dynamic update of the prop after quotes were saved in ((XrayQuotes#saveQuote)) - there DX.m.items_by_id[id].pos_chapter_quotes is being updated dynamically:
+    local id = needle_item.id
+    needle_item.pos_chapter_quotes = DX.m.items_by_id[id].pos_chapter_quotes
+    local quotes_info = DX.q:generateQuotesList(needle_item)
+
     --! we need this when opening an item in the Item Viewer from Page Navigator:
     if not needle_item.index then
         needle_item.index = DX.vd:getItemIndexById(needle_item.id)
@@ -788,7 +808,7 @@ function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, 
     self.needle_name_for_list_page = needle_item.name
 
     local key_events_module = "XrayItemViewer"
-    local tabs = DX.b:getItemViewerTabs(main_info, hits_info, linked_items_info)
+    local tabs = DX.b:getItemViewerTabs(main_info, hits_info, linked_items_info, quotes_info)
 
     self.item_viewer = KOR.dialogs:htmlBoxTabbed(1, {
         title = title,

@@ -255,6 +255,7 @@ function XrayViewsData:addItemToPersonsOrTerms(item)
     end
 end
 
+--* this method is only called after adding or updating items:
 --- @private
 function XrayViewsData:repopulateItemsPersonsTerms(item)
     count = #self.items
@@ -312,15 +313,13 @@ end
 --* compare ((XrayTappedWords#getCurrentListTabItems)):
 function XrayViewsData:getCurrentListTabItems(needle_item)
     --* this will sometimes be the case when we first call up a definition through ReaderHighlight, before calling the Items List:
-    if has_no_items(self.current_tab_items) then
-        if has_items(self.item_table[1]) then
-            self.items = KOR.tables:shallowCopy(self.item_table[1])
-            self.persons = KOR.tables:shallowCopy(self.item_table[2])
-            self.terms = KOR.tables:shallowCopy(self.item_table[3])
-        else
-            self.initData("force_refresh")
-            self.prepareData()
-        end
+    if
+        has_no_items(self.current_tab_items)
+        and
+        has_no_items(self.item_table[1])
+    then
+        self.initData("force_refresh")
+        self.prepareData()
     end
 
     --* this can occur after a filter reset from ((XrayController#resetFilteredItems)):
@@ -555,7 +554,7 @@ function XrayViewsData:_doStrongMatchCheck(needle_item, matcher, args, t, for_re
     local is_exists_check = args.is_exists_check
     local tapped_ok, is_same_item, exists
 
-    local item = self.items[t]
+    local item = self.item_table[1][t]
     local needle_name = needle_item.name
     local haystack_name = item.name
     local uc, is_lower_needle = getNameVariants(haystack_name)
@@ -595,7 +594,7 @@ end
 
 --- @private
 function XrayViewsData:_doWeakMatchCheck(t, needle, partial_matches, for_relations)
-    local item = self.items[t]
+    local item = self.item_table[1][t]
 
     local needles = {
         item.name,
@@ -633,7 +632,7 @@ function XrayViewsData:upgradeNeedleItem(needle_item, args)
     local partial_matches = {}
     local item_was_upgraded = false
     local needle_matches_fullname, upgraded_needle_item
-    count = #self.items
+    count = #self.item_table[1]
 
     for t = 1, count do
         upgraded_needle_item, item_was_upgraded, needle_matches_fullname = self:_doStrongMatchCheck(needle_item, matcher, args, t, for_relations)
@@ -842,6 +841,14 @@ function XrayViewsData:populateItemTableFromLinkWords(linked_item_needles, items
     end
 
     return hits_registry
+end
+
+function XrayViewsData:getItemsCount()
+    return #self.items
+end
+
+function XrayViewsData:getBaseItemsCount()
+    return #self.item_table[1]
 end
 
 --* ((XrayViewsData#upgradeNeedleItem)) has to be called in the caller context, before calling getRelatedItems:
@@ -1562,9 +1569,36 @@ function XrayViewsData:registerUpdatedItem(updated_item)
     self:updateAndSortAllItemTables(updated_item)
 end
 
+--* upon load items are set here as direct copies from database resultsets, from ((XrayDataLoader#loadAllItems)) load from cache or from resulset > ((XrayDataLoader#_loadAllData)):
 --- @private
-function XrayViewsData:setItems(items)
-    self.items = items
+function XrayViewsData:setItems(items, from_result_set)
+    if not from_result_set then
+        self.items = items
+        return
+    end
+
+    self.item_table[1] = items
+    self.item_table[1] = parent:placeImportantItemsAtTop(self.item_table[1], -1)
+    self.items = KOR.tables:shallowCopy(self.item_table[1])
+
+    self.item_table[2] = {}
+    self.item_table[3] = {}
+    local item
+    count = #self.item_table[1]
+    for i = 1, count do
+        item = self.item_table[1][i]
+        if DX.m:isPerson(item) then
+            table_insert(self.item_table[2], item)
+        else
+            table_insert(self.item_table[3], item)
+        end
+    end
+
+    self.item_table[2] = parent:placeImportantItemsAtTop(self.item_table[2], -1)
+    self.item_table[3] = parent:placeImportantItemsAtTop(self.item_table[3], -1)
+
+    self.persons = KOR.tables:shallowCopy(self.item_table[2])
+    self.terms = KOR.tables:shallowCopy(self.item_table[3])
 end
 
 --* compare getting keywords via ((XrayModel#splitByCommaOrSpace)):

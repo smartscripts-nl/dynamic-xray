@@ -87,7 +87,7 @@ function XrayCallbacks:execJumpToPageCallback()
 end
 
 function XrayCallbacks:execPageNavigatorSearchItemCallback()
-    DX.c:onShowList(nil, false, "select_mode")
+    DX.c:onShowList(nil, false, "next_or_previous_item")
     --* after a selection in the list, the item will be searched in ((XrayPages#gotoPageHitForItem)), with option search_also_in_opposite_direction set to true
     return true
 end

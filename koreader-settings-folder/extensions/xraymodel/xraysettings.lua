@@ -251,8 +251,8 @@ local XraySettings = WidgetContainer:new{
         --* this setting controls database scheme modifications via ((XrayDataSaver#createAndModifyTables)) > ((XrayDataSaver#modifyTables)) > XrayDataSaver.scheme_alter_queries:
         database_scheme_version = {
             value = 0,
-            explanation = locked_xray_setting_message,
-            locked = 1,
+            explanation = _("This setting detemines which tasks to update the database scheme should be executed. Most times it is best to leave this value untouched. But suppose for some reason you deleted a table, you can then set this to a lower value, to let XrayDataSaver re-create the table. USE WITH EXTREME CAUTION!"),
+            locked = 0,
         },
         prune_orphan_translations_version = {
             value = 1,
@@ -359,7 +359,9 @@ function XraySettings:toggleSetting(key, alternatives)
 end
 
 function XraySettings:saveSetting(key, value)
-    KOR.dialogs:closeAllOverlays()
+    if KOR.dialogs then
+        KOR.dialogs:closeAllOverlays()
+    end
     local self = DX.s
     self.settings_manager:saveSetting(key, value)
 end

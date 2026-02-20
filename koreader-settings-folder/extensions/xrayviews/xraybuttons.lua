@@ -803,7 +803,7 @@ function XrayButtons:forTranslationViewer(parent, translation)
     }
 end
 
-function XrayButtons:getItemViewerTabs(main_info, hits_info, linked_items_info)
+function XrayButtons:getItemViewerTabs(main_info, hits_info, linked_items_info, quotes_info)
     local has_chapter_info = hits_info ~= ""
     local hits_tab_enabled, hits_tab_color = KOR.buttonprops:getButtonState(has_chapter_info)
     local tabs = {
@@ -825,6 +825,13 @@ function XrayButtons:getItemViewerTabs(main_info, hits_info, linked_items_info)
             tab = _("linked items"),
             html = linked_items_info,
             content_type = "text",
+        })
+    end
+    if has_text(quotes_info) then
+        table_insert(tabs, {
+            tab = _("quotes"),
+            html = quotes_info,
+            content_type = "html",
         })
     end
 
