@@ -678,7 +678,7 @@ function SeriesManager:_cache_resultset(cache_index, resultset)
 end
 
 function SeriesManager:getSeriesName(full_path)
-    local conn = KOR.databases:getDBconnForStatistics("SeriesManager:getSeriesName")
+    local conn = KOR.databases:getDBconnForBookInfo("SeriesManager:getSeriesName")
     local sql = KOR.databases:injectSafePath("SELECT series, series_index FROM bookinfo WHERE path = 'safe_path' LIMIT 1", full_path)
     local series, series_index = conn:rowexec(sql)
     conn = KOR.databases:closeConnections(conn)

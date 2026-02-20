@@ -664,6 +664,7 @@ local Menu = FocusManager:extend{
     top_buttons_left = nil,
     top_buttons_right = nil,
 
+    titlebar_inverted = false,
     title_tab_buttons_left = nil,
     title_tab_buttons_right = nil,
     higher_tab_buttons = false,
@@ -779,6 +780,7 @@ function Menu:init(restore_dialog)
             width = self.dimen.w,
             fullscreen = self.fullscreen,
             align = "center",
+            titlebar_inverted = self.titlebar_inverted,
             for_collection = self.collection,
             with_bottom_line = self.with_bottom_line,
             bottom_line_thickness = self.with_bottom_line and Size.line.thick or Size.line.thin,

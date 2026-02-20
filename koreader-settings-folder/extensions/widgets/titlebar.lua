@@ -14,6 +14,7 @@ local Button = require("extensions/widgets/button")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Device = require("device")
 local Font = require("extensions/modules/font")
+local FrameContainer = require("extensions/widgets/container/framecontainer")
 local Geom = require("ui/geometry")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local HorizontalSpan = require("ui/widget/horizontalspan")
@@ -133,6 +134,8 @@ local TitleBar = OverlapGroup:extend{
 
     tab_buttons_left_top_padding = nil,
 
+    titlebar_inverted = false,
+
     --* dynamically set in ((TitleBar#setWidgetProps)):
     is_landscape_screen = true,
 }
@@ -243,6 +246,14 @@ function TitleBar:wasReInitialized()
 
 --- @private
 function TitleBar:injectMainContainer()
+    if self.titlebar_inverted then
+        self.main_container = FrameContainer:new {
+            bordersize = 0,
+            background = KOR.colors.background_inverted,
+            focus_border_color = KOR.colors.white,
+            self.main_container,
+        }
+    end
     table_insert(self, self.main_container)
 
     if not self.title_bar_height then
@@ -456,6 +467,8 @@ function TitleBar:injectTitleIntoMainContainer()
     if self.title_multilines and self.align ~= "left" then
         self.title_widget = TextBoxWidget:new{
             text = self.title,
+            bgcolor = self.titlebar_inverted and KOR.colors.background_inverted or KOR.colors.white,
+            fgcolor = self.titlebar_inverted and KOR.colors.white or KOR.colors.black,
             alignment = self.align,
             --* for Xray edit dialog we need self.corrected_title_width to get title centered; see ((TitleBar#computeCorrectedTitleWidth)) > ((corrected title width for Xray edit dialog)):
             width = self.corrected_title_width or width,
@@ -468,6 +481,8 @@ function TitleBar:injectTitleIntoMainContainer()
             self.title_widget = TextWidget:new{
                 text = self.title,
                 face = title_face,
+                bgcolor = self.titlebar_inverted and KOR.colors.background_inverted or KOR.colors.white,
+                fgcolor = self.titlebar_inverted and KOR.colors.white or KOR.colors.black,
                 padding = 0,
                 alignment = self.align,
                 lang = self.lang,
@@ -713,6 +728,8 @@ function TitleBar:addCloseButton()
             icon = "close",
             icon_height = icon_height,
             icon_width = icon_height,
+            background = self.titlebar_inverted and KOR.colors.background_inverted or KOR.colors.white,
+            generate_inverted_icon = self.titlebar_inverted,
             --[[text = "x",
             text_font_size = 14,
             text_font_bold = false,]]
@@ -805,9 +822,13 @@ function TitleBar:injectBottomLineAndOrSubmenuButtonTable()
 
         local width = self.is_popout_dialog and self.width - 2 * Size.line.thick or self.width
 
+        local background = self.submenu_buttontable and KOR.colors.title_bar_with_submenu_bottom_line or KOR.colors.title_bar_bottom_line
+        if self.titlebar_inverted then
+            background = KOR.colors.white
+        end
         local line_widget = LineWidget:new{
             dimen = Geom:new{ w = width, h = self.bottom_line_thickness },
-            background = self.submenu_buttontable and KOR.colors.title_bar_with_submenu_bottom_line or KOR.colors.title_bar_bottom_line
+            background = background,
         }
         if self.bottom_line_h_padding then
             line_widget.dimen.w = line_widget.dimen.w - 2 * self.bottom_line_h_padding
