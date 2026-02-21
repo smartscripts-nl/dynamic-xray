@@ -315,7 +315,7 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
         }),
         KOR.buttonchoicepopup:forXrayItemsImport({
             callback = function()
-                DX.d:showRefreshHitsForCurrentEbookConfirmation(dialog_close_callback, upon_ready_callback)
+                DX.d:showImportFromCurrentSeriesConfirmation(dialog_close_callback, upon_ready_callback)
             end,
             hold_callback = function()
                 DX.d:showImportFromOtherSeriesDialog(dialog_close_callback, upon_ready_callback)
@@ -1001,7 +1001,7 @@ function XrayButtons:forListFooterRight(parent)
         }),
         KOR.buttonchoicepopup:forXrayItemsImport({
             callback = function()
-                DX.d:showRefreshHitsForCurrentEbookConfirmation(dialog_close_callback, upon_ready_callback)
+                DX.d:showImportFromCurrentSeriesConfirmation(dialog_close_callback, upon_ready_callback)
             end,
             hold_callback = function()
                 DX.d:showImportFromOtherSeriesDialog(dialog_close_callback, upon_ready_callback)

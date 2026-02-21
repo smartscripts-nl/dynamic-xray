@@ -170,8 +170,57 @@ local XrayDataLoader = WidgetContainer:new{
         get_series_name =
             "SELECT series FROM bookinfo WHERE directory || filename = 'safe_path' LIMIT 1;",
 
-        get_items_for_import_from_other_series =
-            "SELECT DISTINCT(x.name), x.short_names, x.description, x.xray_type, x.aliases, x.tags, x.linkwords FROM xray_items x LEFT OUTER JOIN bookinfo b ON x.ebook = b.filename WHERE b.series = 'safe_path' ORDER BY x.name;",
+        get_items_for_import_from_current_series = [[
+            SELECT DISTINCT
+                x.name,
+                x.short_names,
+                x.description,
+                x.xray_type,
+                x.aliases,
+                x.tags,
+                x.linkwords
+            FROM bookinfo current_book
+            JOIN bookinfo b
+                 ON b.series = current_book.series
+            JOIN xray_items x
+                 ON x.ebook = b.filename
+            WHERE current_book.filename = 'safe_path'
+              AND b.filename != 'safe_path'
+            -- exclude items already present in current ebook
+            AND NOT EXISTS (
+                SELECT 1
+                FROM xray_items x_current
+                WHERE x_current.ebook = current_book.filename
+                  AND x_current.name = x.name
+            )
+            ORDER BY x.name;]],
+
+        get_items_for_import_from_other_series = [[
+            SELECT DISTINCT
+                x.name,
+                x.short_names,
+                x.description,
+                x.xray_type,
+                x.aliases,
+                x.tags,
+                x.linkwords
+            FROM bookinfo current_book
+            JOIN bookinfo b
+                 ON (
+                        (current_book.series IS NOT NULL AND b.series IS NOT NULL AND b.series != current_book.series)
+                     OR (current_book.series IS NULL AND b.series IS NOT NULL)
+                    )
+            JOIN xray_items x
+                 ON x.ebook = b.filename
+            WHERE current_book.filename = 'safe_path'
+            -- exclude items already present in current ebook
+            AND NOT EXISTS (
+                SELECT 1
+                FROM xray_items x_current
+                WHERE x_current.ebook = current_book.filename
+                  AND x_current.name = x.name
+            )
+            ORDER BY x.name;]],
 
         get_series_hits = [[
             SELECT SUM(x.book_hits) AS series_hits
@@ -397,8 +446,11 @@ function XrayDataLoader:getItemsForEbook(file_basename)
     return result
 end
 
-function XrayDataLoader:getItemsForImportFromOtherSeries(conn, series)
-    local sql = KOR.databases:injectSafePath(self.queries.get_items_for_import_from_other_series, series)
+function XrayDataLoader:getItemsForImportFromSeries(conn, series, is_other_series)
+
+    local sql = is_other_series and self.queries.get_items_for_import_from_other_series or self.queries.get_items_for_import_from_current_series
+
+    sql = KOR.databases:injectSafePath(sql, series)
     return conn:exec(sql)
 end
 

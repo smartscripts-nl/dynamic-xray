@@ -126,20 +126,6 @@ function XrayDialogs:closeForm(mode)
     return false
 end
 
-function XrayDialogs:showRefreshHitsForCurrentEbookConfirmation(dialog_close_callback, upon_ready_callback)
-    self.import_items_dialog = KOR.dialogs:confirm(_("Do you want to import Xray items from the other books in the series and compute their occurrence in the current book?\n\nNB: this is a heavy, computation-intensive function; the import therefor will take some time (you will be notified about the progress)..."), function()
-        UIManager:close(self.import_items_dialog)
-        dialog_close_callback()
-        UIManager:close(self.xray_items_chooser_dialog)
-        local import_notification = KOR.messages:notify("import started: 0% imported...")
-        UIManager:forceRePaint()
-        KOR.registry:set("import_notification", import_notification)
-        --* the import will be processed and the user notified about the progress in ((XrayDataSaver#setSeriesHitsForImportedItems)) > ((XrayController#doBatchImport)):
-        DX.ds.storeImportedItemsFromOtherSeries(DX.m.current_series)
-        upon_ready_callback()
-    end)
-end
-
 function XrayDialogs:showEditDescriptionDialog(description_field, callback, cancel_callback)
     self.edit_item_description_dialog = InputDialog:new{
         title = _("Edit description"),
@@ -158,6 +144,19 @@ function XrayDialogs:showEditDescriptionDialog(description_field, callback, canc
     self.edit_item_description_dialog:onShowKeyboard()
 end
 
+function XrayDialogs:showImportFromCurrentSeriesConfirmation(dialog_close_callback, upon_ready_callback)
+    self.import_items_dialog = KOR.dialogs:confirm(_("Do you want to import Xray items from the other books in the current series?\n\nNB: this is a computation-intensive function; the import therefor will take some time (you will be notified about the progress)"), function()
+        UIManager:close(self.import_items_dialog)
+        dialog_close_callback()
+        local import_notification = KOR.messages:notify("import gestart: 0% geïmporteerd…")
+        UIManager:forceRePaint()
+        KOR.registry:set("import_notification", import_notification)
+        --* the import will be processed and the user notified about the progress in ((XrayDataSaver#setSeriesHitsForImportedItems)) > ((XrayController#doBatchImport)):
+        DX.ds.storeImportedItemsFromSeries(DX.m.current_series)
+        upon_ready_callback()
+    end)
+end
+
 function XrayDialogs:showImportFromOtherSeriesDialog(dialog_close_callback, upon_ready_callback)
     local question
     question = KOR.dialogs:prompt({
@@ -166,7 +165,7 @@ function XrayDialogs:showImportFromOtherSeriesDialog(dialog_close_callback, upon
         callback = function(series)
             UIManager:close(question)
             dialog_close_callback()
-            DX.ds.storeImportedItemsFromOtherSeries(series)
+            DX.ds.storeImportedItemsFromSeries(series, "is_other_series")
             upon_ready_callback()
         end
     })

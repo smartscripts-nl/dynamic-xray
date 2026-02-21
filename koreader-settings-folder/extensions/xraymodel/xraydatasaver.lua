@@ -9,6 +9,7 @@ local require = require
 
 local Device = require("device")
 local KOR = require("extensions/kor")
+local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 local json = require("json")
@@ -348,16 +349,19 @@ function XrayDataSaver:getChapterHitsDataForStorage(chapter_hits_data)
     return table_concat(chapter_hits_data, ",")
 end
 
-function XrayDataSaver.storeImportedItemsFromOtherSeries(series)
+function XrayDataSaver.storeImportedItemsFromSeries(series, is_other_series)
 
     local self = DX.ds
 
     local conn = KOR.databases:getDBconn("XrayDataSaver:storeImportedItems", nil, "is_initial_connection")
-    local result = DX.dl:getItemsForImportFromOtherSeries(conn, series)
+    local result = DX.dl:getItemsForImportFromSeries(conn, series, is_other_series)
     count = result and #result["name"] or 0
     if count == 0 then
         conn = KOR.databases:closeConnections(conn)
-        KOR.messages:notify(T(_("the series %1 was not found..."), series))
+        local initial_notification = KOR.registry:getOnce("import_notification")
+        UIManager:close(initial_notification)
+        UIManager:forceRePaint()
+        KOR.messages:notify(_("there were no new items to be imported"))
         return
     end
 
@@ -528,6 +532,7 @@ function XrayDataSaver:processItemsInBatches(conn, stmt, items, batch_count, pro
 
         local loop_end = math_min(start + items_per_batch - 1, icount)
         for i = start, loop_end do
+            --* process_items callback e.g. defined in ((XrayDataSaver#setSeriesHitsForImportedItems)):
             process_item(items[i])
         end
 

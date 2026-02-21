@@ -243,14 +243,14 @@ function XrayController:doBatchImport(conn, stmt, count, callback)
         UIManager:close(notification)
         --* callbacks defined in ((XrayDataSaver#processItemsInBatches)):
         start, loop_end, percentage = callback(start, count)
-        --* this initial notification was set in ((XrayDialogs#showRefreshHitsForCurrentEbookConfirmation)):
+        --* this initial notification was set in ((XrayDataSaver#setSeriesHitsForImportedItems)):
         initial_notification = KOR.registry:getOnce("import_notification")
         if initial_notification then
             UIManager:close(initial_notification)
-            --* needed to ensure positioning at top of screen of next progress messages:
-            UIManager:forceRePaint()
         end
-        notification = KOR.messages:notify(percentage .. " " .. DX.d:getControllerEntryName("imported"), 4)
+        --* needed to ensure positioning at top of screen of next progress messages:
+        UIManager:forceRePaint()
+        notification = KOR.messages:notify(percentage .. " geïmporteerd…", 4)
         UIManager:forceRePaint()
         loops = loops + 1
         if percentage:match("100") or loops > limit then

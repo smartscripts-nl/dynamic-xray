@@ -372,7 +372,7 @@ function KeyEvents:addHotkeysForXrayList(parent, key_events_module)
             label = "import",
             hotkey = { { "Shift", { "I" } } },
             callback = function()
-                parent:showRefreshHitsForCurrentEbookConfirmation()
+                parent:showImportFromCurrentSeriesConfirmation()
                 return true
             end,
         },
