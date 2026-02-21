@@ -185,7 +185,11 @@ function XrayViewsData:updateItemsTable(select_number, reset_item_table_for_filt
         title = source
     end
     if #self.items == 0 then
-        return {}, _("Xray items")
+        if not KOR.registry:get("import_items_notification shown") then
+            KOR.dialogs:niceAlert(_("No items defined"), _("No items were defined as yet.\n\nShould other book from the same (or another) series have items which are relevant for the current ebook, you can import them with the import button in the bottom right part of this dialog."))
+            KOR.registry:set("import_items_notification shown", true)
+        end
+        return _("No items defined"), _("Xray items")
     end
 
     return title

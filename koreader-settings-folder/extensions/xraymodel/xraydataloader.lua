@@ -171,55 +171,42 @@ local XrayDataLoader = WidgetContainer:new{
             "SELECT series FROM bookinfo WHERE directory || filename = 'safe_path' LIMIT 1;",
 
         get_items_for_import_from_current_series = [[
-            SELECT DISTINCT
-                x.name,
+            WITH series_books AS (SELECT filename
+              FROM all_books
+              WHERE series = 'current_series'
+              AND filename != 'safe_path' -- exclude current book
+            )
+            SELECT DISTINCT x.name,
                 x.short_names,
                 x.description,
                 x.xray_type,
                 x.aliases,
                 x.tags,
                 x.linkwords
-            FROM bookinfo current_book
-            JOIN bookinfo b
-                 ON b.series = current_book.series
-            JOIN xray_items x
-                 ON x.ebook = b.filename
-            WHERE current_book.filename = 'safe_path'
-              AND b.filename != 'safe_path'
-            -- exclude items already present in current ebook
-            AND NOT EXISTS (
-                SELECT 1
-                FROM xray_items x_current
-                WHERE x_current.ebook = current_book.filename
-                  AND x_current.name = x.name
-            )
+            FROM xray_items x
+                JOIN series_books s ON x.ebook = s.filename
+            WHERE NOT EXISTS (SELECT 1
+                 FROM xray_items cur
+                 WHERE cur.ebook = 'safe_path' AND cur.name = x.name)
             ORDER BY x.name;]],
 
-        get_items_for_import_from_other_series = [[
-            SELECT DISTINCT
-                x.name,
+        get_items_for_import_from_series = [[
+            WITH series_books AS (
+              SELECT filename
+              FROM bookinfo
+              WHERE series = 'current_series'
+            )
+
+            SELECT DISTINCT x.name,
                 x.short_names,
                 x.description,
                 x.xray_type,
                 x.aliases,
                 x.tags,
                 x.linkwords
-            FROM bookinfo current_book
-            JOIN bookinfo b
-                 ON (
-                        (current_book.series IS NOT NULL AND b.series IS NOT NULL AND b.series != current_book.series)
-                     OR (current_book.series IS NULL AND b.series IS NOT NULL)
-                    )
-            JOIN xray_items x
-                 ON x.ebook = b.filename
-            WHERE current_book.filename = 'safe_path'
-            -- exclude items already present in current ebook
-            AND NOT EXISTS (
-                SELECT 1
-                FROM xray_items x_current
-                WHERE x_current.ebook = current_book.filename
-                  AND x_current.name = x.name
-            )
+            FROM xray_items x
+            JOIN series_books s ON s.filename = x.ebook
+            WHERE x.ebook != 'safe_path'
             ORDER BY x.name;]],
 
         get_series_hits = [[
@@ -446,11 +433,15 @@ function XrayDataLoader:getItemsForEbook(file_basename)
     return result
 end
 
-function XrayDataLoader:getItemsForImportFromSeries(conn, series, is_other_series)
+function XrayDataLoader:getItemsForImportFromSeries(conn, series)
 
-    local sql = is_other_series and self.queries.get_items_for_import_from_other_series or self.queries.get_items_for_import_from_current_series
+    local sql = self.queries.get_items_for_import_from_series
 
-    sql = KOR.databases:injectSafePath(sql, series)
+    series = KOR.databases:escape(series)
+    sql = sql:gsub("current_series", series)
+
+    sql = KOR.databases:injectSafePath(sql, parent.current_ebook_basename)
+
     return conn:exec(sql)
 end
 
