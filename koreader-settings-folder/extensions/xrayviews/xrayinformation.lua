@@ -75,7 +75,7 @@ function XrayInformation:showPageNavigatorHelp(parent, active_tab)
                 html = _([[With the arrows in the right bottom corner you can browse through pages.<br>
     If you longpress the arrow buttons, PN will jump to the previous/next occurrence of the item shown in the bottom information panel.<br>
 <br>
-If you have a (BT) keyboard, you can also browse with Space and Shift+Space. If you reach the end of a page, the viewer will jump to the next page if you press Space. If you reach the top of a page, then Shift+Space will take you to the previous page.<br>
+If you have a physical (BT) keyboard, you can also browse with Space and Shift+Space. If you reach the end of a page, the viewer will jump to the next page if you press Space. If you reach the top of a page, then Shift+Space will take you to the previous page.<br>
 <br>
 With the target icon you can jump back to the page on which you started navigating through the pages.<br>
 <br>
@@ -104,22 +104,25 @@ end
 
 --- @private
 function XrayInformation:getPageNavigatorHotkeysInfo()
-    return self.hotkeys_information or _("For usage with (BT) keyboards:") .. [[<br>
+    return self.hotkeys_information or _("For usage with physical (BT) keyboards:") .. [[<br>
                 <br>
 <strong>]] .. _("Global hotkeys (while reading)") .. [[</strong><br>
 <br>
 <table style='border-collapse: collapse'>
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+G</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+            .. _("show a glossary for the current ebook - or add it by marking its boundaries in the ebook")
+            .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+H</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
-            .. ("show this Help information dialog")
+            .. _("show this Help information dialog")
             .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+L</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
-            .. ("show Xray List")
+            .. _("show Xray List")
             .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+M</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
-            .. ("show current series books or Metadata of a non-series book")
+            .. _("show current series books or Metadata of a non-series book")
             .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+X</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
-            .. ("show Xray Page Navigator")
+            .. _("show Xray Page Navigator")
             .. [[</td></tr>
 </table>
                 <br>
@@ -127,7 +130,7 @@ function XrayInformation:getPageNavigatorHotkeysInfo()
 <br>
 <table style='border-collapse: collapse'>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>U</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
-            .. ("open dialog for jumping to a specific page number")
+            .. _("open dialog for jumping to a specific page number")
             .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>E</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
             .. _("Edit Xray item shown in bottom info panel")

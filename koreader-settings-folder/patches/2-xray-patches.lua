@@ -429,7 +429,7 @@ ReaderHighlight.init = function(self)
             callback = function()
                 local text = util.cleanupSelectedText(this.selected_text.text)
                 text = KOR.strings:prepareForDisplay(text, "separate_paragraphs")
-                this:onClose(true)
+                this:onClose()
                 DX.fd.saveNewItem(text)
             end,
         }
@@ -456,6 +456,24 @@ ReaderHighlight.init = function(self)
             end,
         }
     end)
+end
+
+local orig_onShowHighlightMenu = ReaderHighlight.onShowHighlightMenu
+ReaderHighlight.onShowHighlightMenu = function(self, index)
+    local glossary_boundaries = KOR.registry:get("mark_glossary_boundaries")
+    if glossary_boundaries then
+        if #glossary_boundaries == 0 then
+            table_insert(glossary_boundaries, self.selected_text.pos0)
+            self:onClose()
+            KOR.messages:notify(_("start of glossary has been registered; now mark the end of it"))
+            return
+        end
+        table_insert(glossary_boundaries, self.selected_text.pos1)
+        self:onClose()
+        DX.pn:addGlossary(glossary_boundaries)
+        return
+    end
+    orig_onShowHighlightMenu(self, index)
 end
 
 local orig_onTap = ReaderHighlight.onTap

@@ -115,6 +115,11 @@ function KeyEvents:addHotkeysForReaderUI(parent)
     end
 
     local readerui = KOR.ui
+    readerui.key_events.ShowGlossaryUI = { { "Shift", { "G" } } }
+    readerui.onShowGlossaryUI = function()
+        return DX.pn:showGlossary()
+    end
+
     readerui.key_events.ShowXrayHelpUI = { { "Shift", { "H" } } }
     readerui.onShowXrayHelpUI = function()
         return DX.i:showPageNavigatorHelp(parent, 3)
@@ -145,6 +150,7 @@ function KeyEvents:disableHotkeysForReaderUI()
     end
 
     local readerui = KOR.ui
+    readerui.key_events.ShowGlossaryUI = nil
     readerui.key_events.ShowXrayHelpUI = nil
     readerui.onShowXrayHelpUI = nil
 

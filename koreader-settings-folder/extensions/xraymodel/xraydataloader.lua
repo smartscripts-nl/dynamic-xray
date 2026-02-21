@@ -167,6 +167,9 @@ local XrayDataLoader = WidgetContainer:new{
                 %2,
                 x.name;]],
 
+        get_book_glossary =
+            "SELECT glossary FROM bookinfo WHERE directory || filename = 'safe_path';",
+
         get_series_name =
             "SELECT series FROM bookinfo WHERE directory || filename = 'safe_path' LIMIT 1;",
 
@@ -257,6 +260,14 @@ function XrayDataLoader:loadAllItems(mode, force_refresh)
     self:_loadAllData(mode)
 end
 
+function XrayDataLoader:loadGlossary(path)
+    local sql = KOR.databases:injectSafePath(self.queries.get_book_glossary, path)
+    local conn = KOR.databases:getDBconn("XrayDataLoader:loadGlossary")
+    local glossary = conn:rowexec(sql)
+    conn = KOR.databases:closeConnections(conn)
+    return glossary
+end
+
 --- @private
 function XrayDataLoader:_getAllDataSql(mode)
     local sort
@@ -283,8 +294,8 @@ function XrayDataLoader:_loadAllData(mode)
     local conn = KOR.databases:getDBconn("XrayDataLoader:_loadAllData")
     local sql = self:_getAllDataSql(mode)
     local result = conn:exec(sql, nil, "XrayDataLoader:_loadAllData")
+    conn = KOR.databases:closeConnections(conn)
     if not result then
-        conn = KOR.databases:closeConnections(conn)
         return
     end
 
@@ -297,8 +308,6 @@ function XrayDataLoader:_loadAllData(mode)
     else
         self:_loadDataForBook(result)
     end
-
-    conn = KOR.databases:closeConnections(conn)
 
     --* was only needed for transfer in DeveloperTools from LuaSettings file:
     --KOR.registry:set("all_xray_items", p.ebooks)

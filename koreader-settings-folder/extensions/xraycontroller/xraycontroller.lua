@@ -18,7 +18,7 @@ The views layer has three main streams:
 4) Also mentionable is the fact that some DX dialogs have shared hotkeys, in which case the hotkeys of the top most dialog will be used, not that same hotkey for an underlying dialog. See ((XRAY_DIALOGS_SHARED_HOTKEYS)) for an explanation.
 5) DX has a ((SeriesManager)) for listing the books in a series. The items in this Manager have action buttons, for viewing large covers, descriptions, opening the e-book, etc. The user can also edit the metadata of ebooks from the Manager: authors, titles, series name, series index, page count, publication year, book description. The Manager uses ((Dialogs#filesBox)) > ((FilesBox)) to generate its dialog. The user can call it by tapping on the series manager icon in some DX dialogs, or by pressing Shift+M.
 6) Thanks to ((XrayQuotes)) the user can add quotes from the ebook to the Xray item, for display in a tab "Quotes" in the Xray Item Viewer. So the user has important quotes at hand quickly. The quotes can be added to the item (selected from a popup with al list of all items) via the ReaderHighlight popup shown after text selection in the ebook.
-
+7) Through Page Navigator you can quickly reference a glossary for the current ebook through the hotkey Shift+G (or the gesture "Show/add glossary for current book"). If a glossary hasn't been defined yet, this same hotkey or gesture will lead the user to a dialog from which to start the import of the ebook glossary into Page Navigator by marking its boundaries in the ebook text.
 
 The user will have the most Kindle-like experience when he/she opens the Page Navigator - see ((XrayController#onShowPageNavigator)). In this navigator all Xray items in a page will be marked bold and they will be mentioned in a side panel. Tapping on items in the side panel will put an explanation of that item in the bottom panel. You can even filter the content of the Navigator for a specific Xray item, so it will only show pages which contain that item.
 
@@ -231,6 +231,7 @@ function XrayController:onDispatcherRegisterActions()
     Dispatcher:registerAction("add_xray_item", { category = "none", event = "AddNewXrayItem", title = DX.d:getControllerEntryName("Add an Xray item"), reader = true })
     Dispatcher:registerAction("show_series_manager", { category = "none", event = "ShowSeriesManager", title = _("Show Series Manager"), reader = true })
     Dispatcher:registerAction("show_series_manager_current_ebook", { category = "none", event = "ShowCurrentSeries", title = _("Show series and/or metadata for current e-book"), reader = true })
+    Dispatcher:registerAction("show_book_glossary", { category = "none", event = "ShowCurrentBookGlossary", title = "Show/add glossary for current book", reader = true })
 end
 
 function XrayController:doBatchImport(conn, stmt, count, callback)
@@ -295,6 +296,11 @@ function XrayController:onShowSeriesManager()
     return true
 end
 
+function XrayController:onShowCurrentBookGlossary()
+    DX.pn:showGlossary()
+    return true
+end
+
 function XrayController:onShowCurrentSeries()
     KOR.seriesmanager:showContextDialogForCurrentEbook()
     return true
@@ -308,6 +314,7 @@ function XrayController:onReaderReady()
         KOR.messages:notify("dynamic xray could not be initiated...")
         return
     end
+    DX.m:loadGlossary(self.document.file)
     self:addGlobalHotkeys()
     self:resetDynamicXray(false, "do_full_update")
 end

@@ -204,7 +204,7 @@ function SettingsManager:showSettingsManagerInfo()
     if not self.list_title then
         self.list_title = "Dynamic Xray"
     end
-    KOR.dialogs:niceAlert(_("Settings management"), T(_("Here you can modify settings for %1.\n\nItems with an %2, under the third tab, are computed settings. These you can't modify manually.\n\nIf you longpress a setting, you'll see an explanation of that setting.\n\nWith the hotkeys 1 through 3 on your (BT) keyboard, you can select a tab in the Settings Manager."), self.list_title, KOR.icons.lock_bare))
+    KOR.dialogs:niceAlert(_("Settings management"), T(_("Here you can modify settings for %1.\n\nItems with an %2, under the third tab, are computed settings. These you can't modify manually.\n\nIf you longpress a setting, you'll see an explanation of that setting.\n\nWith the hotkeys 1 through 3 on your physical (BT) keyboard, you can select a tab in the Settings Manager."), self.list_title, KOR.icons.lock_bare))
     return true
 end
 

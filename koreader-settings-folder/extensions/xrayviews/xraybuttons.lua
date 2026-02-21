@@ -334,6 +334,16 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
                 return DX.cb:execShowPageBrowserCallback(parent)
             end,
         }),
+        KOR.buttonchoicepopup:forXrayGlossary({
+            callback = function()
+                parent:closePopupMenu()
+                return DX.cb:execShowGlossaryCallback(parent)
+            end,
+            hold_callback = function()
+                parent:closePopupMenu()
+                return parent:showAddGlossaryNotification()
+            end,
+        }),
         KOR.buttoninfopopup:forSeriesCurrentBook({
             callback = function()
                 parent:closePopupMenu()

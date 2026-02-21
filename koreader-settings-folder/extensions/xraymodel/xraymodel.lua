@@ -40,6 +40,7 @@ local XrayModel = WidgetContainer:new{
     active_list_tab = 1,
     current_ebook_basename = nil,
     current_ebook_full_path = nil,
+    current_ebook_glossary = nil,
     current_series = nil,
     current_series_index = nil,
     current_title = nil,
@@ -537,12 +538,16 @@ function XrayModel:isPerson(item)
     return item.xray_type <= 2
 end
 
-function XrayModel:setProp(prop, value)
-    self[prop] = value
+function XrayModel:loadGlossary(path)
+    self.current_ebook_glossary = data_loader:loadGlossary(path)
 end
 
 function XrayModel:markItemsPreparedForCurrentEbook()
     self.items_prepared_for_basename = self.current_ebook_basename
+end
+
+function XrayModel:setProp(prop, value)
+    self[prop] = value
 end
 
 return XrayModel

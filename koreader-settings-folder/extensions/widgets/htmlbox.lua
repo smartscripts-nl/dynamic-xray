@@ -451,7 +451,7 @@ function HtmlBox:onReadPrevItemWithShiftSpace()
     return self:onReadPrevItem()
 end
 
---! this method and the next one are needed to jump to a next or previous page when pressing Space and Shift+Space on a (BT) keyboard:
+--! this method and the next one are needed to jump to a next or previous page when pressing Space and Shift+Space on a physical (BT) keyboard:
 function HtmlBox:onForceNextItem()
     if not self.next_item_callback then
         return false

@@ -14,6 +14,7 @@ local Size = require("extensions/modules/size")
 local T = require("ffi/util").template
 
 local DX = DX
+local has_no_text = has_no_text
 local table_insert = table.insert
 local unpack = unpack
 
@@ -60,6 +61,42 @@ end
 
 function XrayPageNavigator:restoreNavigator()
     self:showNavigator(self.initial_browsing_page)
+end
+
+function XrayPageNavigator:addGlossary(glossary_boundaries)
+
+    local glossary = KOR.document:getTextFromXPointers(glossary_boundaries[1], glossary_boundaries[2], false)
+    KOR.registry:unset("mark_glossary_boundaries")
+    if has_no_text(glossary) then
+        return
+    end
+    local example = glossary:sub(1, 250) .. KOR.strings.ellipsis
+    KOR.dialogs:confirm(_("Do you want to save this text (only topmost part displayed) as your Page Navigator glossary for this book?") .. "\n\n" .. example, function()
+        DX.ds.storeGlossary(glossary)
+        DX.m:setProp("current_ebook_glossary", glossary)
+        self:showGlossary(glossary)
+    end)
+end
+
+function XrayPageNavigator:showAddGlossaryNotification()
+    KOR.dialogs:confirm(_("Do you indeed want to save a glossary for Page Navigator?"), function()
+        DX.pn:closePageNavigator()
+        KOR.registry:set("mark_glossary_boundaries", {})
+        KOR.dialogs:niceAlert(_("Adding a glossary to Page Navigator"), "Browse now:\n\n1) to the start of the glossary in the ebook and mark the beginning thereof with a text selection;\n2) next repeat this for the end of the glossary.\n\nAfter this is done, the text of the glossary will be saved to the database and shown in a popup.\n\nYou can fron now on view this glossary anytime, when in the current ebook, with Shift+G on your physical (BT) keyboard.")
+    end)
+    return true
+end
+
+function XrayPageNavigator:showGlossary(glossary)
+    if not glossary and not DX.m.current_ebook_glossary then
+        return self:showAddGlossaryNotification()
+    end
+    KOR.dialogs:textBox({
+        title = _("Glossary"),
+        fullscreen = true,
+        info = glossary or DX.m.current_ebook_glossary,
+    })
+    return true
 end
 
 function XrayPageNavigator:showNavigator(initial_browsing_page)

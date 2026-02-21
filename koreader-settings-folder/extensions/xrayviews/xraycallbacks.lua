@@ -99,6 +99,11 @@ function XrayCallbacks:execSettingsCallback(iparent)
     return true
 end
 
+--- @param iparent XrayPageNavigator
+function XrayCallbacks:execShowGlossaryCallback(iparent)
+    return iparent:showGlossary()
+end
+
 function XrayCallbacks:execShowHelpInfoCallback()
     return DX.i:showPageNavigatorHelp()
 end

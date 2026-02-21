@@ -117,6 +117,8 @@ local XrayDataSaver = WidgetContainer:new{
         store_book_chapters =
             "INSERT OR IGNORE INTO xray_books (ebook, chapters) VALUES (?, ?);",
 
+        store_glossary = "UPDATE bookinfo SET glossary = ? WHERE directory || filename = 'safe_path';",
+
         update_chapter_hits_data = [[
             UPDATE xray_items
             SET
@@ -237,6 +239,9 @@ local XrayDataSaver = WidgetContainer:new{
                 pos0,
                 quote NOT NULL
             );]],
+
+        [[
+            ALTER TABLE bookinfo ADD COLUMN glossary;]],
     },
     scheme_version_name = "database_scheme_version",
 }
@@ -347,6 +352,17 @@ function XrayDataSaver:getChapterHitsDataForStorage(chapter_hits_data)
         return nil
     end
     return table_concat(chapter_hits_data, ",")
+end
+
+function XrayDataSaver.storeGlossary(glossary)
+    local self = DX.ds
+
+    local conn = KOR.databases:getDBconn("XrayDataSaver:storeGlossary")
+    local sql = KOR.databases:injectSafePath(self.queries.store_glossary, parent.current_ebook_full_path)
+    local stmt = conn:prepare(sql)
+    stmt:reset():bind(glossary):step()
+    --* for items in books which are part of a series update the prop series_hits:
+    conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 end
 
 function XrayDataSaver.storeImportedItemsFromSeries(series, is_other_series)
