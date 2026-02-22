@@ -1255,6 +1255,8 @@ function XrayButtons:addLinkedItemsAsContextButtonsForViewer(buttons, needle_ite
     end
     local add_more_button = count > context_buttons_max_buttons
 
+    --KOR.debug:infoTable("XrayButtons:addLinkedItemsAsContextButtonsForViewer", "sorted_items", sorted_items)
+
     --* first (top) row: fewer buttons (1–3) or full if divisible:
     local first_row = {}
     for i = 1, remainder do
