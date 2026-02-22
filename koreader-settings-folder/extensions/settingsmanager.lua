@@ -290,7 +290,7 @@ function SettingsManager:chooseSetting(key, current_nr, current_value, options, 
                 self:saveSetting(key, options[current])
                 self:changeMenuSetting(key, options[current], current_nr)
                 KOR.messages:notify(_("setting ") .. key .. _(" modified to ") .. tostring(options[current]), 4)
-                self:handleAfterChangeCallback(key)
+                self:handleAfterChangeCallback(key, options[current])
             end
         })
     end
@@ -339,7 +339,7 @@ function SettingsManager:setNumber(key, current_nr, current_value, validator_pro
             self:saveSetting(key, value)
             self:changeMenuSetting(key, value, current_nr)
             KOR.messages:notify(_("setting ") .. key .. _(" modified to ") .. tostring(value), 4)
-            self:handleAfterChangeCallback(key)
+            self:handleAfterChangeCallback(key, value)
         end,
         close_callback = function()
             self:showParentDialog()
@@ -431,14 +431,14 @@ function SettingsManager:handleNewValue(new_value, key, current_nr, itype)
     self:saveSetting(key, new_value)
     self:changeMenuSetting(key, new_value, current_nr)
     KOR.messages:notify(_("settting ") .. key .. _(" modified to ") .. tostring(new_value), 4)
-    self:handleAfterChangeCallback(key)
+    self:handleAfterChangeCallback(key, new_value)
 end
 
 --- @private
-function SettingsManager:handleAfterChangeCallback(key)
+function SettingsManager:handleAfterChangeCallback(key, value)
     if self.settings[key].after_change_callback then
         local callback_index = self.settings[key].after_change_callback
-        self.parent.after_change_callbacks[callback_index]()
+        self.parent.after_change_callbacks[callback_index](value)
     else
         self:showParentDialog()
     end

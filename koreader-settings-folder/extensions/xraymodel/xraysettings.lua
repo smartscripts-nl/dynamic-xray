@@ -276,8 +276,8 @@ local XraySettings = WidgetContainer:new{
         series_manager_reload = function()
             KOR.seriesmanager:reloadContextDialog()
         end,
-        show_reload_koreader_message = function()
-            KOR.dialogs:niceAlert(_("For your information"), "The new setting will be effective upon KOReader restart.")
+        show_reload_koreader_message = function(new_font_size)
+            DX.b.default_tabs_button_table_props.button_font_size = new_font_size
         end,
     },
     validators = {
