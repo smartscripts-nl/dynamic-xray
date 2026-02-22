@@ -133,25 +133,22 @@ function XrayExporter:initData()
         return false
     end
 
-    self.items, self.iconless_items = self:generateXrayItemsOverview(DX.vd.items)
-    self.persons, self.iconless_persons = self:generateXrayItemsOverview(DX.vd.persons)
-    self.terms, self.iconless_terms = self:generateXrayItemsOverview(DX.vd.terms)
+    self.items, self.iconless_items = self:generateXrayItemsOverview(DX.vd.items, "for_all_items_list")
+    self.persons, self.iconless_persons = self:generateXrayItemsOverview(DX.vd.persons, "for_all_items_list")
+    self.terms, self.iconless_terms = self:generateXrayItemsOverview(DX.vd.terms, "for_all_items_list")
     self.tag_groups, self.iconless_tag_groups = self:generateTagGroupsOverview(DX.vd.items)
 
     return true
 end
 
-function XrayExporter:generateXrayItemsOverview(items)
+--- @param mode string Either "for_all_items_list" or "for_linked_items_tab"
+function XrayExporter:generateXrayItemsOverview(items, mode)
     local paragraphs = {}
     local paragraphs_iconless = {}
     local paragraph, paragraph_iconless
     count = #items
     for i = 1, count do
-        paragraph, paragraph_iconless = DX.vd:generateXrayExportOrLinkedItemItemInfo(items[i], nil, i, "for_all_items_list")
-        if i == 1 then
-            paragraph = paragraph:gsub(DX.ip.info_indent, "", 1)
-            paragraph_iconless = paragraph_iconless:gsub(DX.ip.info_indent, "", 1)
-        end
+        paragraph, paragraph_iconless = DX.vd:generateXrayExportOrLinkedItemItemInfo(items[i], nil, i, mode)
         table_insert(paragraphs, paragraph)
         table_insert(paragraphs_iconless, paragraph_iconless)
     end

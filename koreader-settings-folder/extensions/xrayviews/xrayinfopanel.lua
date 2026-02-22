@@ -157,10 +157,7 @@ end
 --- @private
 function XrayInfoPanel:getConfiguredInfoPanelIndentation()
     local space = " "
-    local description_indent = space:rep(DX.s.PN_infopanel_description_indent)
-    local meta_indent = space:rep(DX.s.PN_infopanel_meta_indent)
-
-    return description_indent, meta_indent
+    return space:rep(DX.s.PN_infopanel_meta_indent)
 end
 
 --- @private
@@ -240,10 +237,9 @@ function XrayInfoPanel:generateItemMetaInfo(item, reliability_indicator)
     --* alias_indent suffixed with 2 spaces, because of icon .. " ":
     local info = icon .. " " .. item.name .. "\n"
 
-    local description_indent, meta_indent = self:getConfiguredInfoPanelIndentation()
+    local meta_indent = self:getConfiguredInfoPanelIndentation()
 
-    local description = item.description
-    description = KOR.strings:splitLinesToMaxLength(description_indent .. description, DX.s.PN_info_panel_max_line_length, meta_indent, nil, "dont_indent_first_line")
+    local description = DX.vd:addDescriptionDisplayIndentation(item.description)
     info = info .. "\n" .. reliability_indicator_placeholder .. description
 
     local info_table = {}

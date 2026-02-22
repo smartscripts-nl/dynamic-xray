@@ -32,7 +32,6 @@ local tapped_words
 --- @class XrayViewsData
 local XrayViewsData = WidgetContainer:new{
     active_list_tab = 1,
-    alias_indent = "  ",
     chapter_page_number_format = "<span style='font-size: 80%; color: #888888;'> [p.%1]</span>",
     chapter_props = {},
     chapters_start_pages_ordered = {},
@@ -1129,7 +1128,7 @@ end
 
 --* only used for linked items and for XrayExporter:
 --* compare for generation of info_text for found-in-page side panel items: ((XrayInfoPanel#getItemInfoText)):
-function XrayViewsData:generateXrayExportOrLinkedItemItemInfo(item, ui_explanation, information_level, for_all_items_list)
+function XrayViewsData:generateXrayExportOrLinkedItemItemInfo(item, ui_explanation, information_level, mode)
 
     local linebreak = information_level == 1 and "" or "\n"
     local first_line = {
@@ -1140,20 +1139,19 @@ function XrayViewsData:generateXrayExportOrLinkedItemItemInfo(item, ui_explanati
         linebreak
     }
     local iindent
-    local description_indent, meta_indent
-    local description = item.description
-    if for_all_items_list then
+    local meta_indent
+    local description = self:addDescriptionDisplayIndentation(item.description)
+    if mode then
         iindent = DX.ip.info_indent
         meta_indent = DX.ip.alias_indent
     else
-        description_indent, meta_indent = DX.ip:getConfiguredInfoPanelIndentation()
+        meta_indent = DX.ip:getConfiguredInfoPanelIndentation()
         iindent = meta_indent
     end
-    description = KOR.strings:splitLinesToMaxLength(description, DX.s.PN_info_panel_max_line_length, description_indent)
-    local aliases, aliases_fc = self:generateAliasesInfo(item, iindent, for_all_items_list)
-    local linkwords, linkwords_fc = self:generateLinkwordsInfo(item, iindent, for_all_items_list)
-    local tags, tags_fc = self:generateTagsInfo(item, iindent, for_all_items_list)
-    local hits, hits_fc = self:generateHitsInfo(item, iindent, for_all_items_list)
+    local aliases, aliases_fc = self:generateAliasesInfo(item, iindent, mode)
+    local linkwords, linkwords_fc = self:generateLinkwordsInfo(item, iindent, mode)
+    local tags, tags_fc = self:generateTagsInfo(item, iindent, mode)
+    local hits, hits_fc = self:generateHitsInfo(item, iindent, mode)
 
     -- #((use xray match reliability indicators))
     local xray_match_reliability_icon = DX.i:getMatchReliabilityIndicator("full_name")
@@ -1163,7 +1161,7 @@ function XrayViewsData:generateXrayExportOrLinkedItemItemInfo(item, ui_explanati
         xray_match_reliability_icon = ui_explanation:match(self.separator .. "([^ ]+)")
 
     --* when we want to populated the linked items side panel:
-    elseif not for_all_items_list then
+    elseif not mode then
         --* this indicator for the parent item in the first side panel tab was set via ((XraySidePanels#activatePageNavigatorPanelTab)) > ((XrayInfoPanel#setParentReliabilityIndicator)):
         local parent_item_indicator = KOR.registry:getOnce("parent_reliability_indicator")
         if parent_item_indicator then
@@ -1173,7 +1171,7 @@ function XrayViewsData:generateXrayExportOrLinkedItemItemInfo(item, ui_explanati
         end
     end
     local xray_type_icon = DX.vd:getItemTypeIcon(item)
-    first_line, first_line_fc = self:generateFirstLines(first_line, first_line_fc, item, xray_type_icon, ui_explanation, meta_indent, for_all_items_list)
+    first_line, first_line_fc = self:generateFirstLines(first_line, first_line_fc, item, xray_type_icon, ui_explanation, meta_indent, mode)
 
     local info = table_concat({
         first_line,
@@ -1186,7 +1184,7 @@ function XrayViewsData:generateXrayExportOrLinkedItemItemInfo(item, ui_explanati
         tags,
     })
     local info_fc
-    if for_all_items_list then
+    if mode then
         info_fc = table_concat({
             first_line_fc,
             description,
@@ -1206,6 +1204,10 @@ function XrayViewsData:generateXrayExportOrLinkedItemItemInfo(item, ui_explanati
 
     --* for Xray Page Information popup:
     return info, xray_type_icon, xray_match_reliability_icon
+end
+
+function XrayViewsData:addDescriptionDisplayIndentation(description)
+    return description:gsub("\n +", "\n" .. KOR.strings.indent)
 end
 
 --- @private
@@ -1280,22 +1282,20 @@ function XrayViewsData:generateLinkwordsInfo(item, iindent, for_all_items_list)
 end
 
 --- @private
-function XrayViewsData:generateFirstLines(first_line, first_line_fc, item, xray_type_icon, ui_explanation, meta_indent, for_all_items_list)
+function XrayViewsData:generateFirstLines(first_line, first_line_fc, item, xray_type_icon, ui_explanation, meta_indent, mode)
     local name = item.name
 
     --* here the info gets combined:
     -- #((xray items dialog add match reliability explanations))
-    if for_all_items_list then
-        table_insert(first_line, meta_indent)
-    end
     table_insert(first_line, xray_type_icon)
     table_insert(first_line, name)
     if ui_explanation then
         table_insert(first_line, ui_explanation)
     end
     first_line = table_concat(first_line)
-    first_line = KOR.strings:splitLinesToMaxLength(first_line, DX.s.PN_info_panel_max_line_length, meta_indent) .. "\n"
-    if for_all_items_list then
+    --! dont_indent_first_line here is crucial, to ensure the first line has no indentation:
+    first_line = KOR.strings:splitLinesToMaxLength(first_line, DX.s.PN_info_panel_max_line_length, meta_indent, nil, "dont_indent_first_line") .. "\n"
+    if mode then
         local important_marker = (item.xray_type == 2 or item.xray_type == 4) and "!" or ""
         table_insert(first_line_fc, important_marker)
         table_insert(first_line_fc, name)

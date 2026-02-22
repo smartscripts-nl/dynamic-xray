@@ -786,7 +786,7 @@ function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, 
     local linked_items_info
     local linked_items = DX.vd:getLinkedItems(needle_item)
     if linked_items then
-        linked_items_info = DX.ex:generateXrayItemsOverview(linked_items)
+        linked_items_info = DX.ex:generateXrayItemsOverview(linked_items, "for_linked_items_tab")
     end
 
     --? hotfix: for some reason only viewer called from List doesn't have prop pos_chapter_quotes, so here we circumvent that by referencing DX.m.items_by_id, which DOES have the prop:
