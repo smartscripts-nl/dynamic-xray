@@ -14,6 +14,7 @@ local Size = require("extensions/modules/size")
 local T = require("ffi/util").template
 
 local DX = DX
+local has_items = has_items
 local has_no_text = has_no_text
 local table_insert = table.insert
 local unpack = unpack
@@ -65,24 +66,55 @@ end
 
 function XrayPageNavigator:addGlossary(glossary_boundaries)
 
-    local glossary = KOR.document:getTextFromXPointers(glossary_boundaries[1], glossary_boundaries[2], false)
+    local glossary, css_files = KOR.document:getHTMLFromXPointers(glossary_boundaries[1], glossary_boundaries[2])
+    local glossary_text = KOR.document:getTextFromXPointers(glossary_boundaries[1], glossary_boundaries[2])
     KOR.registry:unset("mark_glossary_boundaries")
     if has_no_text(glossary) then
         return
     end
-    local example = glossary:sub(1, 250) .. KOR.strings.ellipsis
-    KOR.dialogs:confirm(_("Do you want to save this text (only topmost part displayed) as your Page Navigator glossary for this book?") .. "\n\n" .. example, function()
-        DX.ds.storeGlossary(glossary)
-        DX.m:setProp("current_ebook_glossary", glossary)
-        self:showGlossary(glossary)
-    end)
+    local example = glossary_text:sub(1, 250) .. KOR.strings.ellipsis
+    self.save_glossary_dialog = KOR.dialogs:niceAlert((_"Save glossary"), _("You can save the glossary as HTML, or as text.\n\n* Advantage HTML: better readable.\n* Advantage text: searchable.") .. "\n\n" .. _("GLOSSARY TEXT:") .. "\n" .. example, {
+        buttons = DX.b:forSaveGlossary(self, glossary, glossary_text, css_files)
+    })
+end
+
+function XrayPageNavigator:storeGlossary(glossary, content_type, css_files)
+    UIManager:close(self.save_glossary_dialog)
+    if content_type == "html" then
+        glossary = self:addGlossaryCSS(glossary, css_files)
+    end
+    DX.ds.storeGlossary(glossary)
+    DX.m:setProp("current_ebook_glossary", glossary)
+    self:showGlossary(glossary)
+end
+
+--- @private
+function XrayPageNavigator:addGlossaryCSS(glossary, css_files)
+    local remove = { "DocFragment", "body", "section", "a", "inlineBox", "autoBoxing" }
+    for i = 1, #remove do
+        glossary = glossary
+            :gsub("</" .. remove[i] .. ">", "")
+            :gsub("<" .. remove[i] .. "[^>]*>", "")
+    end
+    --* remove heading classes:
+    glossary = glossary:gsub("<(h%d+)[^>]*>", "<%1>")
+    glossary = "<html><body>" .. glossary .. "</body></html>"
+    if has_items(css_files) then
+        local css = ""
+        for i = 1, #css_files do
+            css = css .. KOR.document:getDocumentFileContent(css_files[i]) .. "\n"
+        end
+        css = css:gsub("page%-break%-before: always[^;]*;", "")
+        glossary = "<style>" .. css .. "</style>\n" .. glossary
+    end
+    return glossary
 end
 
 function XrayPageNavigator:showAddGlossaryNotification()
     KOR.dialogs:confirm(_("Do you indeed want to save a glossary for Page Navigator?"), function()
         DX.pn:closePageNavigator()
         KOR.registry:set("mark_glossary_boundaries", {})
-        KOR.dialogs:niceAlert(_("Adding a glossary to Page Navigator"), "Browse now:\n\n1) to the start of the glossary in the ebook and mark the beginning thereof with a text selection;\n2) next repeat this for the end of the glossary.\n\nAfter this is done, the text of the glossary will be saved to the database and shown in a popup.\n\nYou can fron now on view this glossary anytime, when in the current ebook, with Shift+G on your physical (BT) keyboard.")
+        KOR.dialogs:niceAlert(_("Adding a glossary to Page Navigator"), "Browse now:\n\n1) to the start of the glossary in the ebook and mark the beginning thereof with a text selection;\n2) next repeat this for the end of the glossary.\n\nAfter this is done, the text of the glossary will be saved to the database and shown in a popup.\n\nYou can from now on view this glossary anytime, when in the current ebook, with Shift+G on your physical (BT) keyboard.")
     end)
     return true
 end
@@ -91,10 +123,19 @@ function XrayPageNavigator:showGlossary(glossary)
     if not glossary and not DX.m.current_ebook_glossary then
         return self:showAddGlossaryNotification()
     end
-    KOR.dialogs:textBox({
+    if not glossary then
+        glossary = DX.m.current_ebook_glossary
+    end
+
+    local css = glossary:match("<style>([^>]+)</style>")
+    if css then
+        glossary = glossary:gsub("^.+</style>", "", 1)
+    end
+    KOR.dialogs:textOrHtmlBox({
         title = _("Glossary"),
         fullscreen = true,
-        info = glossary or DX.m.current_ebook_glossary,
+        css = css,
+        content = glossary,
     })
     return true
 end

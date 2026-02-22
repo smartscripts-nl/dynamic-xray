@@ -260,8 +260,8 @@ function XrayDataLoader:loadAllItems(mode, force_refresh)
     self:_loadAllData(mode)
 end
 
-function XrayDataLoader:loadGlossary(path)
-    local sql = KOR.databases:injectSafePath(self.queries.get_book_glossary, path)
+function XrayDataLoader:loadGlossary(full_path)
+    local sql = KOR.databases:injectSafePath(self.queries.get_book_glossary, full_path)
     local conn = KOR.databases:getDBconn("XrayDataLoader:loadGlossary")
     local glossary = conn:rowexec(sql)
     conn = KOR.databases:closeConnections(conn)

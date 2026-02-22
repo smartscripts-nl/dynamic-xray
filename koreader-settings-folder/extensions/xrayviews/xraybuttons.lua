@@ -588,6 +588,30 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
     return buttons
 end
 
+--- @param parent XrayPageNavigator
+function XrayButtons:forSaveGlossary(parent, glossary, glossary_text, css_files)
+    return {{
+         {
+             icon = "back",
+             callback = function()
+                 UIManager:close(parent.save_glossary_dialog)
+             end,
+         },
+         {
+             text = _("HTML"),
+             callback = function()
+                 parent:storeGlossary(glossary, "html", css_files)
+             end,
+         },
+         {
+             text = _("text"),
+             callback = function()
+                 parent:storeGlossary(glossary_text, "text")
+             end,
+         },
+     }}
+end
+
 --* compare ((XrayButtons#forItemViewer)) and buttons for list view ((XrayButtons#forListFooterLeft)), ((XrayButtons#forListFooterRight)), ((XrayButtons#forListContext)):
 function XrayButtons:forTappedWordItemViewer(needle_item, called_from_list, tapped_word, book_hits)
     local buttons = {
