@@ -820,6 +820,7 @@ function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, 
         no_filter_button = true,
         title_shrink_font_to_fit = true,
         modal = false,
+        fullscreen = true,
         key_events_module = key_events_module,
         text_padding_top_bottom = Screen:scaleBySize(25),
         hotkeys_configurator = function()
