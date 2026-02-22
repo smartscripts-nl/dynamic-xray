@@ -33,6 +33,12 @@ local XrayButtons = WidgetContainer:new{
         toggle_main_xray_item = _("Toggle to mark this Xray item as important."),
     },
     context_buttons_max_buttons = 16,
+    --* used for HtmlBox tab buttons in ((ButtonTableFactory#getTabsTable)) and HtmlBox footer buttons in ((HtmlBox#generateButtonTables)):
+    default_tabs_button_table_props = {
+        button_font_face = "cfont",
+        button_font_size = 13,
+        button_font_weight = "normal",
+    },
     hits_buttons_max = 30,
     info_max_total_buttons = 16,
     related_item_icons_font_size = 14,

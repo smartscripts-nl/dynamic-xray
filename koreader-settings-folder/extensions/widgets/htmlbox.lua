@@ -632,15 +632,16 @@ function HtmlBox:generateButtonTables()
     --* reach out from the content to the borders a bit more
     local buttons_padding = Size.padding.default
     local buttons_width = self.inner_width - 2 * buttons_padding
-    self.button_table = ButtonTable:new{
+    local config = {
         width = buttons_width,
-        button_font_face = "cfont",
-        button_font_size = 20,
         buttons = buttons,
         zero_sep = true,
         show_parent = self,
-        button_font_weight = "normal",
     }
+    for key, value in pairs(DX.b.default_tabs_button_table_props) do
+        config[key] = value
+    end
+    self.button_table = ButtonTable:new(config)
 end
 
 --- @private

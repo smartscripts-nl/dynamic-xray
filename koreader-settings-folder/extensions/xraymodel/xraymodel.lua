@@ -283,8 +283,6 @@ function XrayModel:insertViewerContextButton(row, item, tapped_word)
     table_insert(row, {
         text = item.name:lower() .. linked_item_hits .. KOR.icons.xray_link_bare .. icon,
         font_bold = item.is_bold,
-        text_font_face = "x_smallinfofont",
-        font_size = self.related_item_text_font_size,
         callback = function()
             DX.d:viewLinkedItem(item, tapped_word)
         end,

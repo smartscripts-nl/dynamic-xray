@@ -17,7 +17,7 @@ local tostring = tostring
 local type = type
 local unpack = unpack
 
-local count
+local count, count2
 
 --- @class Tables
 local Tables = WidgetContainer:extend{}
@@ -330,38 +330,82 @@ function Tables:tableToMd5(subject)
     return md5(text)
 end
 
-function Tables:tableToText(o, add_line_endings, get_unclipped_table, remove_indices)
-    local ellipsis = "…"
-    local max_string_length = 120
-    if o == nil then
-        o = "nil"
+function Tables:tableToText(o, opts, level, seen)
+    opts = opts or {}
+    local MAX_DEPTH = opts.max_depth or 4
+    local add_line_endings = opts.multiline ~= false
+    local remove_indices = opts.remove_indices
+    local indent_step = opts.indent or "   "
+
+    level = level or 0
+    seen = seen or {}
+
+    if type(o) ~= "table" then
+        local t = type(o)
+        if t == "string" then
+            return '"' .. o .. '"'
+        elseif t == "function" then
+            return "[function]"
+        elseif t == "userdata" then
+            return "[userdata]"
+        elseif t == "thread" then
+            return "[thread]"
+        end
+        return tostring(o)
     end
-    if type(o) == "table" then
-        local spacer = add_line_endings and "\n" or " "
-        local s = "{" .. spacer
-        for k, v in pairs(o) do
-            if type(k) == "function" then
-                k = "function"
-            elseif type(k) ~= "number" then
-                k = "\"" .. k .. "\""
-            end
-            s = s .. "[" .. k .. "] = " .. self:tableToText(v, add_line_endings, get_unclipped_table) .. "," .. spacer
-        end
-        s = s .. "}" .. spacer
-        s = s:gsub(", %}", " }"):gsub(",\n%}", "\n}"):gsub("\n%[", "\n   [")
-        if remove_indices then
-            s = s:gsub("%[%d+%] = ", "")
-        end
-        return s
-    else
-        local value = tostring(o)
-        value = value:gsub("\n", " ")
-        --* second condition: don't clip paths:
-        if not get_unclipped_table and not value:match("[A-Za-z]/[A-Za-z]") and value:len() > max_string_length then
-            value = value:sub(1, max_string_length) .. ellipsis
-        end
-        return value
+
+    --* cycle detection:
+    if seen[o] then
+        return "{<cycle>}"
     end
+    seen[o] = true
+
+    if level >= MAX_DEPTH then
+        return "{...}"
+    end
+
+    local newline = add_line_endings and "\n" or " "
+    local indent = add_line_endings and indent_step:rep(level) or ""
+    local next_indent = add_line_endings and indent_step:rep(level + 1) or ""
+
+    --* collect and sort keys for stable output:
+    local keys = {}
+    for k in pairs(o) do
+        table_insert(keys, k)
+    end
+
+    table_sort(keys, function(a, b)
+        if type(a) == type(b) then
+            return tostring(a) < tostring(b)
+        end
+        return type(a) < type(b)
+    end)
+
+    local s = "{" .. newline
+
+    count2 = #keys
+    for i = 1, count2 do
+        local k = keys[i]
+        local v = o[k]
+
+        local key_repr
+        if type(k) == "number" then
+            key_repr = remove_indices and "" or "[" .. k .. "] = "
+        elseif type(k) == "string" then
+            key_repr = '["' .. k .. '"] = '
+        else
+            key_repr = "[" .. tostring(k) .. "] = "
+        end
+
+        local value_repr = self:tableToText(v, opts, level + 1, seen)
+
+        s = s .. next_indent .. key_repr .. value_repr .. "," .. newline
+    end
+
+    if add_line_endings then
+        return s .. indent .. "}"
+    end
+    return s .. "}"
 end
 
 function Tables:arrangeInVerticalColumns(subject, column_count)
