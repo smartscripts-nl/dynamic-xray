@@ -14,7 +14,7 @@ local Size = require("extensions/modules/size")
 local T = require("ffi/util").template
 
 local DX = DX
-local has_items = has_items
+local has_no_items = has_no_items
 local has_no_text = has_no_text
 local table_insert = table.insert
 local unpack = unpack
@@ -81,7 +81,7 @@ end
 function XrayPageNavigator:storeGlossary(glossary, content_type, css_files)
     UIManager:close(self.save_glossary_dialog)
     if content_type == "html" then
-        glossary = self:addGlossaryCSS(glossary, css_files)
+        glossary = self:prepareHtmlGlossary(glossary, css_files)
     end
     DX.ds.storeGlossary(glossary)
     DX.m:setProp("current_ebook_glossary", glossary)
@@ -89,25 +89,29 @@ function XrayPageNavigator:storeGlossary(glossary, content_type, css_files)
 end
 
 --- @private
-function XrayPageNavigator:addGlossaryCSS(glossary, css_files)
+function XrayPageNavigator:prepareHtmlGlossary(glossary, css_files)
     local remove = { "DocFragment", "body", "section", "a", "inlineBox", "autoBoxing" }
     for i = 1, #remove do
         glossary = glossary
             :gsub("</" .. remove[i] .. ">", "")
             :gsub("<" .. remove[i] .. "[^>]*>", "")
     end
-    --* remove heading classes:
-    glossary = glossary:gsub("<(h%d+)[^>]*>", "<%1>")
     glossary = "<html><body>" .. glossary .. "</body></html>"
-    if has_items(css_files) then
-        local css = ""
-        for i = 1, #css_files do
-            css = css .. KOR.document:getDocumentFileContent(css_files[i]) .. "\n"
-        end
-        css = css:gsub("page%-break%-before: always[^;]*;", "")
-        glossary = "<style>" .. css .. "</style>\n" .. glossary
+    if has_no_items(css_files) then
+        return glossary
     end
-    return glossary
+
+    local css = ""
+    for i = 1, #css_files do
+        css = css .. KOR.document:getDocumentFileContent(css_files[i]) .. "\n"
+    end
+    css = css:gsub("page%-break%-before: always[^;]*;", "")
+    css = css .. [[
+h1, h2, h3, h4, h5, h6 {
+    margin-top: 1.5em !important;
+}
+]]
+    return "<style>" .. css .. "</style>\n" .. glossary
 end
 
 function XrayPageNavigator:showAddGlossaryNotification()
