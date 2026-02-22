@@ -4,11 +4,9 @@
 local require = require
 
 local ButtonTable = require("extensions/widgets/buttontable")
-local Font = require("extensions/modules/font")
 local Geom = require("ui/geometry")
 local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")
-local ScrollTextWidget = require("extensions/widgets/scrolltextwidget")
 local Size = require("extensions/modules/size")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 
@@ -239,16 +237,7 @@ function XraySidePanels:generateSidePanelButtons(side_buttons_width, screen_heig
     }
     local side_buttons_table
     if has_no_items(self.side_buttons) then
-        side_buttons_table = ScrollTextWidget:new{
-            text = " ",
-            face = Font:getFace("x_smallinfofont", DX.s.PN_panels_font_size or 14),
-            line_height = 0.16,
-            alignment = "left",
-            justified = false,
-            dialog = self,
-            width = side_buttons_width,
-            height = math_floor(screen_height * 0.18),
-        }
+        side_buttons_table = DX.pn:getEmptyFillElement(side_buttons_width, math_floor(screen_height * 0.18))
         return side_buttons_table, side_buttons_table_separator
     end
 

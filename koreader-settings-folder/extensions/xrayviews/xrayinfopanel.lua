@@ -23,6 +23,9 @@ local tonumber = tonumber
 local XrayInfoPanel = WidgetContainer:new{
     alias_indent = "   ",
     alias_indent_corrected = nil,
+    cached_info_panel_height = nil,
+    cached_info_panel_separator_height = nil,
+    cached_sheight = nil,
     info_indent = "     ",
     info_panel_text = nil,
     parent = nil,
@@ -32,10 +35,12 @@ local XrayInfoPanel = WidgetContainer:new{
 function XrayInfoPanel:resetProps()
     self.info_panel_text = nil
     self.upon_load_panel_text = nil
+    self.cached_info_panel_height = nil
+    self.cached_info_panel_separator_height = nil
+    self.cached_sheight = nil
 end
 
 function XrayInfoPanel:generateInfoPanel(data)
-
     self.parent = data.parent
     self.info_panel_text = data.info_panel_text
     local screen_height = data.screen_height
@@ -46,23 +51,33 @@ function XrayInfoPanel:generateInfoPanel(data)
     local info_panel_nav_buttons_height = data.info_panel_nav_buttons_height
     local histogram_height = data.histogram_height
     local histogram_bottom_line_height = data.histogram_bottom_line_height
-    local ratio_per_chapter = data.ratio_per_chapter
+
+    self.info_panel_separator = self.info_panel_separator or self:generateInfoPanelSeparator()
+    local info_panel_separator_height = self.cached_info_panel_separator_height or self.info_panel_separator:getSize().h
 
     --* info_text was generated in ((XrayPageNavigator#showNavigator)) > ((XrayPages#markItemsFoundInPageHtml)) > ((XrayPages#markItem)) > ((XrayInfoPanel#getItemInfoText)):
     local info_text = self.info_panel_text or " "
+    local has_panel_content = has_text(info_text)
+    local info_panel
+    --* to get an empty info panel of the same height as info panels with content:
+    if not has_panel_content and self.cached_info_panel_height then
+        --? don't know why in case of empty info panels we need the subtraction:
+        info_panel = DX.pn:getEmptyFillElement(self.info_panel_width, self.cached_info_panel_height - info_panel_separator_height)
 
-    local info_panel = self:generateInfoPanelContent(info_text)
-    local info_panel_separator = self:generateInfoPanelSeparator()
-
-    --self.info_panel_height = self.info_panel:getSize().h
-    local info_panel_separator_height = info_panel_separator:getSize().h
-    content_height = content_height - self.info_panel_height - info_panel_separator_height - info_panel_nav_buttons_height
-    local sheight = content_height
-    if ratio_per_chapter then
-        sheight = sheight - histogram_height - histogram_bottom_line_height
+        return info_panel, self.info_panel_separator, self.cached_info_panel_height, self.cached_info_panel_separator_height, self.cached_sheight
     end
 
-    return info_panel, info_panel_separator, self.info_panel_height, info_panel_separator_height, sheight
+    info_panel = self:generateInfoPanelContent(info_text)
+
+    content_height = content_height - self.info_panel_height - info_panel_separator_height - info_panel_nav_buttons_height
+    local sheight = self.cached_sheight or content_height - histogram_height - histogram_bottom_line_height
+    if has_panel_content and not self.cached_info_panel_height then
+        self.cached_info_panel_height = self.info_panel_height
+        self.cached_info_panel_separator_height = info_panel_separator_height
+        self.cached_sheight = sheight
+    end
+
+    return info_panel, self.info_panel_separator, self.info_panel_height, info_panel_separator_height, sheight
 end
 
 --* this method will be called by ((XraySidePanels#activatePageNavigatorPanelTab)), when the use activated the side panel for linked items there:
@@ -125,7 +140,7 @@ function XrayInfoPanel:generateInfoPanelContent(info_text)
         dialog = self.parent,
         --* info_panel_width was computed in ((NavigatorBox#generateInfoButtons)):
         width = self.info_panel_width,
-        height = self.info_panel_height,
+        height = self.cached_info_panel_height or self.info_panel_height,
     }
 end
 

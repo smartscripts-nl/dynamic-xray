@@ -29,7 +29,8 @@ local XrayOccurrencesHistogram = WidgetContainer:new{
 function XrayOccurrencesHistogram:generateChapterOccurrencesHistogram(data)
 
     if not data.ratio_per_chapter or not DX.s.PN_show_chapter_hits_histogram then
-        return
+        local height = data.histogram_height + data.histogram_bottom_line_height
+        return DX.pn:getEmptyFillElement(data.info_panel_width, height)
     end
 
     self.occurrences_subject = data.occurrences_subject

@@ -542,7 +542,7 @@ function NavigatorBox:registerPopupMenuCoords()
         --* info panel heights were computed in ((XrayInfoPanel#generateInfoPanel)):
         - self.info_panel_height
         + math_floor(self.info_panel_nav_buttons_height / 2)
-        + self.info_panel_separator_height
+        - self.info_panel_separator_height
 
     local x_pos = self.content_padding_h + VerticalScrollBar:getSize().w + Size.line.medium
 

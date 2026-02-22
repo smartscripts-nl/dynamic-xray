@@ -4,8 +4,10 @@
 local require = require
 
 local ButtonDialog = require("extensions/widgets/buttondialog")
+local Font = require("extensions/modules/font")
 local KOR = require("extensions/kor")
 local MovableContainer = require("ui/widget/container/movablecontainer")
+local ScrollTextWidget = require("extensions/widgets/scrolltextwidget")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
@@ -344,6 +346,19 @@ function XrayPageNavigator:scrollToBottom()
             self.page_navigator.html_widget:onScrollDown(i)
         end
     end
+end
+
+function XrayPageNavigator:getEmptyFillElement(width, height)
+    return ScrollTextWidget:new{
+        text = " ",
+        face = Font:getFace("x_smallinfofont", DX.s.PN_panels_font_size or 14),
+        line_height = 0.16,
+        alignment = "left",
+        justified = false,
+        dialog = self,
+        width = width,
+        height = height,
+    }
 end
 
 function XrayPageNavigator:getTaggedItems()
