@@ -11,7 +11,6 @@ local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 
 local DX = DX
-local has_items = has_items
 local has_no_text = has_no_text
 local has_text = has_text
 local pairs = pairs
@@ -205,96 +204,6 @@ function XrayModel:sortAndSetTags()
         table_insert(self.tags, key)
     end
     table_sort(self.tags)
-end
-
-function XrayModel:addLinkedItemsAsContextButtonsForViewer(buttons, needle_item, max_per_row, context_buttons_max_buttons, tapped_word)
-
-    local sorted_items = views_data:getLinkedItems(needle_item)
-    count = #sorted_items
-    --* nothing to do if no linked items were found:
-    if count == 0 then
-        return
-    end
-
-    local remainder = count % max_per_row
-    if remainder == 0 then
-        remainder = max_per_row
-    end
-    local add_more_button = count > context_buttons_max_buttons
-
-    --* first (top) row: fewer buttons (1–3) or full if divisible:
-    local first_row = {}
-    for i = 1, remainder do
-        self:insertViewerContextButton(first_row, sorted_items[i], tapped_word)
-    end
-    local row_count = 1
-
-    --* remaining rows: always max_per_row items:
-    local index = remainder + 1
-    while index <= count and index < context_buttons_max_buttons do
-        local row = {}
-        row_count = row_count + 1
-        for j = 1, max_per_row do
-            if sorted_items[index] then
-                self:insertViewerContextButton(row, sorted_items[index], tapped_word)
-            else
-                self.garbage = j
-            end
-            index = index + 1
-        end
-
-        --* insert each new row at position 1 ABOVE previous rows:
-        table_insert(buttons, 1, row)
-    end
-    table_insert(buttons, 1, first_row)
-    if add_more_button then
-        DX.b:addMoreButton(buttons, nil, {
-            --* popup buttons dialog doesn't have to display any additional info, except the buttons, so may contain more buttons - this prop to be consumed in ((XrayButtons#handleMoreButtonClick)):
-            max_total_buttons_after_first_popup = context_buttons_max_buttons + 16,
-            max_total_buttons = context_buttons_max_buttons,
-            current_row = row_count,
-            popup_buttons_per_row = max_per_row,
-            source_items = sorted_items,
-            title = " extra xray-items:",
-            parent_dialog = KOR.ui,
-            item_callback = function(citem)
-                DX.d:viewLinkedItem(citem, tapped_word)
-            end,
-            item_hold_callback = function(citem, iicon)
-                KOR.dialogs:textBox({
-                    title = iicon .. citem.name,
-                    info = self:getItemInfo(citem),
-                    use_computed_height = true,
-                })
-            end,
-        })
-    end
-end
-
---- @private
-function XrayModel:insertViewerContextButton(row, item, tapped_word)
-    local icon = DX.vd:getItemTypeIcon(item)
-    local linked_item_hits
-    if self.current_series then
-        linked_item_hits = has_items(item.series_hits) and " (" .. item.series_hits .. ")" or ""
-    else
-        linked_item_hits = has_items(item.book_hits) and " (" .. item.book_hits .. ")" or ""
-    end
-    table_insert(row, {
-        text = item.name:lower() .. linked_item_hits .. KOR.icons.xray_link_bare .. icon,
-        font_bold = item.is_bold,
-        callback = function()
-            DX.d:viewLinkedItem(item, tapped_word)
-        end,
-        hold_callback = function()
-            KOR.dialogs:textBox({
-                title = icon .. " " .. item.name,
-                title_shrink_font_to_fit = true,
-                info = self:getItemInfo(item),
-                use_computed_height = true,
-            })
-        end,
-    })
 end
 
 function XrayModel:toggleSortingMode()

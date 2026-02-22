@@ -177,7 +177,6 @@ function SettingsManager:getTabContent(caller_method, active_tab)
         dimen = dimen,
         modal = true,
     }
-    self.width = math_floor(dimen.w * 0.8)
     self.settings_menu = KOR.tabbedlist:create({
         parent = self,
         caller_method = caller_method,
@@ -380,9 +379,11 @@ function SettingsManager:showPromptForNewSettingsValue(key, value, current_nr, i
         description = explanation:gsub("%.$", ":"),
         input = tostring(value),
         callback = function(new_value)
+            KOR.dialogs:closeAllWidgets()
             self:handleNewValue(new_value, key, current_nr, itype)
         end,
         cancel_callback = function()
+            KOR.dialogs:closeAllWidgets()
             self:showParentDialog()
         end,
     })

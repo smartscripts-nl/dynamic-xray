@@ -221,6 +221,13 @@ local XraySettings = WidgetContainer:new{
             type = "number",
             after_change_callback = "series_manager_reload",
         },
+        tab_buttons_font_size = {
+            value = 13,
+            explanation = _("This setting determines the size of tab buttons in dialogs and of Item Viewer context buttons."),
+            type = "number",
+            locked = 0,
+            after_change_callback = "show_reload_koreader_message",
+        },
         UI_mode = {
             value = "page",
             options = { "page", "paragraph" },
@@ -268,6 +275,9 @@ local XraySettings = WidgetContainer:new{
         end,
         series_manager_reload = function()
             KOR.seriesmanager:reloadContextDialog()
+        end,
+        show_reload_koreader_message = function()
+            KOR.dialogs:niceAlert(_("For your information"), "The new setting will be effective upon KOReader restart.")
         end,
     },
     validators = {

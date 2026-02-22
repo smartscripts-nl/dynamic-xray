@@ -35,15 +35,14 @@ local XrayButtons = WidgetContainer:new{
     context_buttons_max_buttons = 16,
     --* used for HtmlBox tab buttons in ((ButtonTableFactory#getTabsTable)) and HtmlBox footer buttons in ((HtmlBox#generateButtonTables)):
     default_tabs_button_table_props = {
-        button_font_face = "cfont",
-        button_font_size = 13,
+        button_font_face = "x_smallinfofont",
+        button_font_size = DX.s.tab_buttons_font_size,
         button_font_weight = "normal",
     },
     hits_buttons_max = 30,
     info_max_total_buttons = 16,
-    related_item_icons_font_size = 14,
-    related_item_text_font_size = 18,
     max_buttons_per_row = 4,
+    tapped_item_text_font_size = 18,
     xray_type_chooser = nil,
 }
 
@@ -108,7 +107,7 @@ function XrayButtons:addTappedWordCollectionButton(button_table, indicator_butto
         --* is_bold prop was set in ((XrayTappedWords#collectionPopulateAndSort)):
         font_bold = item.is_bold,
         text_font_face = "x_smallinfofont",
-        font_size = self.related_item_text_font_size,
+        font_size = self.tapped_item_text_font_size,
         callback = function()
             callback()
         end,
@@ -136,7 +135,7 @@ function XrayButtons:addTappedWordCollectionButton(button_table, indicator_butto
         font_bold = item.is_bold,
         text_font_face = "x_smallinfofont",
         fgcolor = status_indicator_color,
-        font_size = self.related_item_icons_font_size,
+        font_size = self.tapped_item_text_font_size,
         callback = function()
             callback()
         end,
@@ -155,7 +154,7 @@ end
 function XrayButtons:forItemViewerBottomContextButtons(buttons, needle_item, tapped_word)
     DX.tw:rememberTappedWord(tapped_word)
     if has_text(needle_item.name) then
-        DX.m:addLinkedItemsAsContextButtonsForViewer(buttons, needle_item, self.max_buttons_per_row, self.context_buttons_max_buttons, tapped_word)
+        self:addLinkedItemsAsContextButtonsForViewer(buttons, needle_item, self.max_buttons_per_row, self.context_buttons_max_buttons, tapped_word)
     end
 end
 
@@ -180,7 +179,7 @@ function XrayButtons:addMoreButton(buttons, indicator_buttons, props)
         text = "[+" .. extra_buttons_count .. "]",
         font_bold = false,
         text_font_face = "x_smallinfofont",
-        font_size = self.related_item_text_font_size,
+        font_size = self.tapped_item_text_font_size,
         callback = function()
             self:handleMoreButtonClick(props, extra_buttons_count)
         end,
@@ -192,7 +191,7 @@ function XrayButtons:addMoreButton(buttons, indicator_buttons, props)
         text = " ",
         font_bold = false,
         text_font_face = "x_smallinfofont",
-        font_size = self.related_item_text_font_size,
+        font_size = self.tapped_item_text_font_size,
         callback = function()
             self:handleMoreButtonClick(props, extra_buttons_count)
         end,
@@ -210,6 +209,7 @@ function XrayButtons:forPageNavigator(parent)
          },
         KOR.buttoninfopopup:forXrayButtonsPopup({
             callback = function()
+                KOR.system:inhibitInputOnHold()
                 return DX.cb:execShowPopupButtonsCallback(parent)
             end
         }),
@@ -221,11 +221,6 @@ function XrayButtons:forPageNavigator(parent)
                     return
                 end
                 DX.d:showTagSelector("page_navigator")
-            end,
-        }),
-        KOR.buttoninfopopup:forXrayPageNavigatorSearchItem({
-            callback = function()
-                return DX.cb:execPageNavigatorSearchItemCallback()
             end,
         }),
         KOR.buttoninfopopup:forXrayViewer({
@@ -1245,6 +1240,97 @@ function XrayButtons:forFilterDialog()
     }
 end
 
+function XrayButtons:addLinkedItemsAsContextButtonsForViewer(buttons, needle_item, max_per_row, context_buttons_max_buttons, tapped_word)
+
+    local sorted_items = DX.vd:getLinkedItems(needle_item)
+    count = #sorted_items
+    --* nothing to do if no linked items were found:
+    if count == 0 then
+        return
+    end
+
+    local remainder = count % max_per_row
+    if remainder == 0 then
+        remainder = max_per_row
+    end
+    local add_more_button = count > context_buttons_max_buttons
+
+    --* first (top) row: fewer buttons (1–3) or full if divisible:
+    local first_row = {}
+    for i = 1, remainder do
+        self:insertViewerContextButton(first_row, sorted_items[i], tapped_word)
+    end
+    local row_count = 1
+
+    --* remaining rows: always max_per_row items:
+    local index = remainder + 1
+    while index <= count and index < context_buttons_max_buttons do
+        local row = {}
+        row_count = row_count + 1
+        for j = 1, max_per_row do
+            if sorted_items[index] then
+                self:insertViewerContextButton(row, sorted_items[index], tapped_word)
+            else
+                self.garbage = j
+            end
+            index = index + 1
+        end
+
+        --* insert each new row at position 1 ABOVE previous rows:
+        table_insert(buttons, 1, row)
+    end
+    table_insert(buttons, 1, first_row)
+    if add_more_button then
+        self:addMoreButton(buttons, nil, {
+            --* popup buttons dialog doesn't have to display any additional info, except the buttons, so may contain more buttons - this prop to be consumed in ((XrayButtons#handleMoreButtonClick)):
+            max_total_buttons_after_first_popup = context_buttons_max_buttons + 16,
+            max_total_buttons = context_buttons_max_buttons,
+            current_row = row_count,
+            popup_buttons_per_row = max_per_row,
+            source_items = sorted_items,
+            title = " " .. _("additional xray-items:"),
+            parent_dialog = KOR.ui,
+            item_callback = function(citem)
+                DX.d:viewLinkedItem(citem, tapped_word)
+            end,
+            item_hold_callback = function(citem, iicon)
+                KOR.dialogs:textBox({
+                    title = iicon .. citem.name,
+                    info = DX.m:getItemInfo(citem),
+                    use_computed_height = true,
+                })
+            end,
+        })
+    end
+end
+
+--- @private
+function XrayButtons:insertViewerContextButton(row, item, tapped_word)
+    local icon = DX.vd:getItemTypeIcon(item)
+    local linked_item_hits
+    if DX.m.current_series then
+        linked_item_hits = has_items(item.series_hits) and " (" .. item.series_hits .. ")" or ""
+    else
+        linked_item_hits = has_items(item.book_hits) and " (" .. item.book_hits .. ")" or ""
+    end
+    table_insert(row, {
+        text = item.name:lower() .. linked_item_hits .. KOR.icons.xray_link_bare .. icon,
+        font_bold = item.is_bold,
+        text_font_face = "x_smallinfofont",
+        callback = function()
+            DX.d:viewLinkedItem(item, tapped_word)
+        end,
+        hold_callback = function()
+            KOR.dialogs:textBox({
+                title = icon .. " " .. item.name,
+                title_shrink_font_to_fit = true,
+                info = DX.m:getItemInfo(item),
+                use_computed_height = true,
+            })
+        end,
+    })
+end
+
 --- @private
 --- @return boolean true if more_button was added
 function XrayButtons:injectItemsCollectionButton(buttons, indicator_buttons, status_icons, copies, nr, add_more_button)
@@ -1475,10 +1561,10 @@ function XrayButtons:forListSubmenu()
         width = Screen:getWidth(),
         button_font_face = "x_smallinfofont",
         button_font_size = 17,
-        button_font_weight = "normal",
         buttons = buttons,
         zero_sep = true,
         show_parent = DX.c,
+        button_font_weight = "normal",
     }
 end
 

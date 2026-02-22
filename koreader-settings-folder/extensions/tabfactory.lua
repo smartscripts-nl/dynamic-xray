@@ -6,7 +6,8 @@ local KOR = require("extensions/kor")
 local Size = require("extensions/modules/size")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 
-local math = math
+local DX = DX
+local math_floor = math.floor
 local table_insert = table.insert
 local type = type
 
@@ -15,7 +16,6 @@ local type = type
 --- @class TabFactory
 local TabFactory = WidgetContainer:extend{
     tab_buttons_font = "x_smallinfofont",
-    tab_buttons_font_size = 14,
     tabs_as_table = G_reader_settings:readSetting("tabs_as_table"),
 }
 
@@ -32,10 +32,11 @@ function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
     local tab_content --* can be html or plain text
 
     if args.tabs_as_table == nil then
+        local props = DX.b.default_tabs_button_table_props
         args.tabs_as_table = true
-        args.tab_buttons_font = "x_smallinfofont"
-        args.tab_buttons_font_size = 14
-        args.tab_buttons_font_weight = "normal"
+        args.tab_buttons_font = props.button_font_face
+        args.tab_buttons_font_size = props.button_font_size
+        args.tab_buttons_font_weight = props.button_font_weight
     end
 
     local count
@@ -68,7 +69,7 @@ function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
                 is_tab_button = true,
                 is_target_tab = tab.is_target_tab,
                 text_font_face = args.tab_buttons_font,
-                text_font_size = is_current_tab and math.floor(args.tab_buttons_font_size * 1.1) or args.tab_buttons_font_size,
+                text_font_size = is_current_tab and math_floor(args.tab_buttons_font_size * 1.1) or args.tab_buttons_font_size,
                 text_font_weight = is_current_tab and "bold" or "normal",
                 text_font_bold = is_current_tab,
                 font_bold = is_current_tab,
@@ -136,18 +137,16 @@ function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
 end
 
 --* for custom tabs in cases where the normal tabfactory method would not work:
-function TabFactory:generateTabButtons(caller_method, active_tab, tab_labels, width, base_font_size)
+function TabFactory:generateTabButtons(caller_method, active_tab, tab_labels, width)
     local buttons = { {} }
-    base_font_size = base_font_size or self.tab_buttons_font_size
+    local base_font_size = DX.b.default_tabs_button_table_props.button_font_size
     local font_bold, font_size
     for i = 1, #tab_labels do
         font_bold, font_size = self:getActiveTabFontProps(active_tab, i, base_font_size)
         table_insert(buttons[1], {
             text = i == active_tab and KOR.icons.active_tab_bare .. tab_labels[i] or tab_labels[i],
             text_font_size = font_size,
-            font_bold = font_bold,
             text_font_bold = font_bold,
-            font_weight = font_bold and "bold" or "normal",
             callback = function()
                 local current = i
                 --* points e.g. to ((XraySettings#showSettingsManager)):
@@ -158,7 +157,7 @@ function TabFactory:generateTabButtons(caller_method, active_tab, tab_labels, wi
 
     return ButtonTable:new{
         width = width - 2 * Size.margin.default,
-        button_font_face = "x_smallinfofont",
+        button_font_face = DX.b.default_tabs_button_table_props.button_font_face,
         button_font_size = font_size,
         buttons = buttons,
         zero_sep = true,
@@ -168,11 +167,8 @@ function TabFactory:generateTabButtons(caller_method, active_tab, tab_labels, wi
 end
 
 function TabFactory:getActiveTabFontProps(active_tab, i, font_size)
-    if not font_size then
-        font_size = self.tab_buttons_font_size
-    end
     if i == active_tab then
-        return true, math.floor(font_size * 1.15)
+        return true, math_floor(font_size * 1.15)
     end
 
     return false, font_size

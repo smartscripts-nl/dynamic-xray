@@ -15,7 +15,6 @@
 --* ((PATCH READERSEARCH)) some methods completely replaced...
 -- ((PATCH LUASETTINGS))
 -- ((PATCH BOOKSTATUSWIDGET))
--- ((PATCH MOVABLECONTAINER))
 -- ((PATCH PLUGINLOADER))
 
 
@@ -48,8 +47,6 @@ local InputDialog = require("ui/widget/inputdialog")
 local KOR = require("extensions/kor")
 local LuaSettings = require("luasettings")
 local Menu = require("extensions/widgets/menu")
---- @class MovableContainer
-local MovableContainer = require("ui/widget/container/movablecontainer")
 local PluginLoader = require("pluginloader")
 --- @class ReaderDictionary
 local ReaderDictionary = require("apps/reader/modules/readerdictionary")
@@ -83,7 +80,6 @@ local has_no_text = has_no_text
 local has_text = has_text
 local ipairs = ipairs
 local math = math
-local math_floor = math.floor
 local next = next
 local pcall = pcall
 local select = select
@@ -1092,38 +1088,6 @@ local orig_setStar = BookStatusWidget.setStar
 BookStatusWidget.setStar = function(self, num)
     orig_setStar(self, num)
     KOR.seriesmanager:setStars(DX.m.current_ebook_full_path, num)
-end
-
-
---- PATCH MOVABLECONTAINER
--- #((PATCH MOVABLECONTAINER))
-MovableContainer.screen_height = Screen:getHeight()
-MovableContainer.screen_width = Screen:getWidth()
-
-function MovableContainer:moveToYPos(target_y_pos)
-    if not target_y_pos then
-        target_y_pos = 0
-    end
-    self.dimen = self:getSize()
-
-    self._orig_y = math_floor((self.screen_height - self.dimen.h) / 2)
-    self._orig_x = math_floor((self.screen_width - self.dimen.w) / 2)
-
-    local move_by = 0 - self._orig_y + target_y_pos
-    self:_moveBy(0, move_by, "restrict_to_screen")
-end
-
---* param coords was set via ((NavigatorBox#registerPopupMenuCoords)) and ((XrayPageNavigator#showPopupMenu)):
-function MovableContainer:movePopupMenuToAboveParent(coords)
-    self._orig_y = math_floor(self.screen_height / 2)
-    self._orig_x = math_floor(self.screen_width / 2)
-
-    --* this width was set in ((set button_dialog_table_width)):
-    local dialog_width = KOR.registry:get("button_dialog_table_width")
-
-    local move_by_x = coords.x - self._orig_x + math_floor(dialog_width / 2)
-    local move_by_y = coords.y - self._orig_y
-    self:_moveBy(move_by_x, move_by_y)
 end
 
 

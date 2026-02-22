@@ -3,7 +3,7 @@ local require = require
 
 local Button = require("extensions/widgets/button")
 local Device = require("device")
-local FocusManager = require("ui/widget/focusmanager")
+local FocusManager = require("extensions/widgets/focusmanager")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")
@@ -273,8 +273,8 @@ function ButtonTable:generateButton(btn_entry, max_button_height, default_button
     config.padding = Size.padding.buttontable --* a bit taller than standalone buttons, for easier tap
     config.padding_h = btn_entry.align == "left" and Size.padding.large or Size.padding.button
     config.text_font_bold = is_bold
-    config.text_font_face = btn_entry.text_font_face or self.button_font_face
-    config.text_font_size = btn_entry.font_size or self.button_font_size
+    config.text_font_face = self.button_font_face or btn_entry.text_font_face
+    config.text_font_size = btn_entry.text_font_size or btn_entry.button_font_size or btn_entry.font_size or self.button_font_size
     --* if avoid_text_truncation prop is set: allow text to take more of the horizontal space if centered...
     --* show_parent can also be set...
 
