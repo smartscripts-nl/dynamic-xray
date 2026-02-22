@@ -9,12 +9,14 @@ local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")
 local ScrollTextWidget = require("extensions/widgets/scrolltextwidget")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
+local _ = KOR:initCustomTranslations()
 local Size = require("extensions/modules/size")
 
 local DX = DX
 local has_content = has_content
 local has_text = has_text
 local math_floor = math.floor
+local select = select
 local table_concat = table.concat
 local table_insert = table.insert
 local tonumber = tonumber
@@ -252,6 +254,13 @@ function XrayInfoPanel:generateItemMetaInfo(item, reliability_indicator)
     self:itemInfoAddPropInfo(item, "aliases", KOR.icons.xray_alias_bare, info_table, meta_indent)
     self:itemInfoAddPropInfo(item, "linkwords", KOR.icons.xray_link_bare, info_table, meta_indent)
     self:itemInfoAddPropInfo(item, "tags", KOR.icons.tag_open_bare, info_table, meta_indent)
+    if item.pos_chapter_quotes then
+        table_insert(info_table, "\n*** ")
+        table_insert(info_table, _("QUOTES"))
+        table_insert(info_table, " ***\n\n")
+        local quotes_info = select(2, DX.q:generateQuotesList(item))
+        table_insert(info_table, quotes_info)
+    end
     if #info_table > 0 then
         info = info .. " \n" .. table_concat(info_table, "")
     end

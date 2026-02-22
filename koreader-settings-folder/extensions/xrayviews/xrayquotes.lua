@@ -4,6 +4,7 @@ local require = require
 
 local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
+local _ = KOR:initCustomTranslations()
 
 local DX = DX
 local has_text = has_text
@@ -58,7 +59,7 @@ function XrayQuotes:generateQuotesList(item)
         return a.series_index < b.series_index
     end)
 
-    local html = {}
+    local html, text = {}, {}
     local ebook
     count = #ebooks
     for b = 1, count do
@@ -72,6 +73,9 @@ function XrayQuotes:generateQuotesList(item)
                 prefix ..
                 KOR.strings:upper(ebook.title) ..
                 "</strong></p>"
+            )
+            table_insert(text,
+        prefix .. KOR.strings:upper(ebook.title)
             )
         end
 
@@ -90,18 +94,26 @@ function XrayQuotes:generateQuotesList(item)
                 "<br /> </li></ul>" ..
                 "<p>" .. q.quote .. "</p>"
             )
+            table_insert(text,
+                q.chapter .. "\n" ..
+                _("page") .. ": " ..
+                page ..
+                "\n \n" ..
+                q.quote
+            )
         end
     end
 
     html = table_concat(html, "<p> </p>")
+    text = table_concat(text, "\n \n")
     KOR.registry:set("mark_items_in_italics", true)
     html = self:markItemInHtml(html, item)
     KOR.registry:unset("mark_items_in_italics")
-    return html
+    return html, text
 end
 
 function XrayQuotes:saveQuote(item)
-    --* quote_props contains props "quote" and "pos0"; set for existing bookmark in ((Xray quote from selected text)) or ((Xray quote from existing bookmark)):
+    --* quote_props contains props "quote" and "pos0"; set for existing bookmark in ((Xray quote from existing bookmark)):
     local quote_props = KOR.registry:getOnce("xray_quote_props")
     local pos0 = quote_props.pos0
     local chapter
