@@ -973,7 +973,7 @@ function InputDialog:_addScrollButtons(nav_bar)
                                     end,
                                 },
                                 {
-                                    text = KOR.icons.next_bare,
+                                    icon = "next",
                                     is_enter_default = true,
                                     callback = function()
                                         self:findCallback(keyboard_hidden_state, input_dialog)

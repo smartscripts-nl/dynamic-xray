@@ -247,7 +247,7 @@ function XrayButtons:forPageNavigator(parent)
              end,
          }),
          {
-             text = KOR.icons.previous,
+             icon = "previous",
              callback = function()
              return DX.cb:execGotoPrevPageCallback()
              end,
@@ -269,7 +269,7 @@ function XrayButtons:forPageNavigator(parent)
              end,
          }),
         {
-             text = KOR.icons.next,
+             icon = "next",
              callback = function()
              return DX.cb:execGotoNextPageCallback()
              end,
@@ -745,7 +745,7 @@ function XrayButtons:forTranslationsEditor(parent, item)
                 end,
             },
             {
-                text = KOR.icons.previous,
+                icon = "previous",
                 callback = function()
                     UIManager:close(parent.edit_translation_input)
                     parent:closeListDialog()
@@ -753,7 +753,7 @@ function XrayButtons:forTranslationsEditor(parent, item)
                 end,
             },
             {
-                text = KOR.icons.next,
+                icon = "next",
                 callback = function()
                     UIManager:close(parent.edit_translation_input)
                     parent:closeListDialog()
@@ -814,14 +814,14 @@ function XrayButtons:forTranslationViewer(parent, translation)
                 end,
             },
             {
-                text = KOR.icons.previous,
+                icon = "previous",
                 callback = function()
                     UIManager:close(parent.translation_viewer)
                     parent:showPreviousTranslation(translation)
                 end,
             },
             {
-                text = KOR.icons.next,
+                icon = "next",
                 callback = function()
                     UIManager:close(parent.translation_viewer)
                     parent:showNextTranslation(translation)

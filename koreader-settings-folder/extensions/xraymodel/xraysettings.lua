@@ -232,7 +232,7 @@ local XraySettings = WidgetContainer:new{
             explanation = _("This setting determines the size of tab buttons in dialogs and of Item Viewer context buttons."),
             type = "number",
             locked = 0,
-            after_change_callback = "show_reload_koreader_message",
+            after_change_callback = "set_tab_buttons_font_size",
         },
         UI_auto_toc_for_buttons_count = {
             value = 5,
@@ -288,7 +288,7 @@ local XraySettings = WidgetContainer:new{
         series_manager_reload = function()
             KOR.seriesmanager:reloadContextDialog()
         end,
-        show_reload_koreader_message = function(new_font_size)
+        set_tab_buttons_font_size = function(new_font_size)
             DX.b.default_tabs_button_table_props.button_font_size = new_font_size
         end,
     },

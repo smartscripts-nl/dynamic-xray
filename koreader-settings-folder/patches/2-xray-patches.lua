@@ -784,13 +784,13 @@ function ReaderSearch:showHitWithContext(item, not_cached)
                     end,
                 },
                 {
-                    text = KOR.icons.first,
+                    icon = "first",
                     callback = function()
                         self:toFirstHit()
                     end,
                 },
                 {
-                    text = KOR.icons.previous,
+                    icon = "previous",
                     callback = function()
                         self:toPrevHit()
                     end,
@@ -828,13 +828,13 @@ function ReaderSearch:showHitWithContext(item, not_cached)
                     end,
                 }),
                 {
-                    text = KOR.icons.next,
+                    icon = "next",
                     callback = function()
                         self:toNextHit()
                     end,
                 },
                 {
-                    text = KOR.icons.last,
+                    icon = "last",
                     callback = function()
                         self:toLastHit()
                     end,

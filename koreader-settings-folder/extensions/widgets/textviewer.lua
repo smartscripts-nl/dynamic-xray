@@ -345,7 +345,7 @@ function TextViewer:findDialog()
                     end,
                 },
                 {
-                    text = KOR.icons.next_bare,
+                    icon = "next",
                     is_enter_default = true,
                     callback = function()
                         self._find_next = true

@@ -399,7 +399,7 @@ end
 
 function ButtonInfoPopup:forXrayNextItem(props)
 	return KOR.buttonprops:set({
-		text = KOR.icons.next_bare,
+		icon = "next",
 		info = T(_([[arrow icon | Go to next Xray item. You can also use the space bar on your physical (BT) keyboard for this.
 
 Alternate hotkey %1 %2]]), KOR.icons.arrow_bare, DX.s.hk_goto_next_item),
@@ -515,7 +515,7 @@ end
 
 function ButtonInfoPopup:forXrayPreviousItem(props)
 	return KOR.buttonprops:set({
-		text = KOR.icons.previous_bare,
+		icon = "previous",
 		info = T(_([[arrow icon | Go to previous Xray item. You can also use Shift+Space on your physical (BT) keyboard for this.
 
 Alternate hotkey %1 %2]]), KOR.icons.arrow_bare, DX.s.hk_goto_previous_item),
