@@ -30,7 +30,6 @@ local InfoMessage = require("ui/widget/infomessage")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local InputDialog = require("extensions/widgets/inputdialog")
 local KOR = require("extensions/kor")
-local LineWidget = require("ui/widget/linewidget")
 local MovableContainer = require("extensions/widgets/container/movablecontainer")
 local ScrollTextWidget = require("extensions/widgets/scrolltextwidget")
 local Size = require("extensions/modules/size")
@@ -132,7 +131,6 @@ local TextViewer = InputContainer:extend{
     --* to inform the parent about a newly actived tab, via ((TabNavigator#broadcastActivatedTab)):
     parent = nil,
     prev_item_callback = nil,
-    separator = nil,
     --* this table will be populated by ((TabFactory#setTabButtonAndContent)):
     tabs_table_buttons = nil,
     text = nil,
@@ -144,6 +142,7 @@ local TextViewer = InputContainer:extend{
     text_padding_left_right = nil,
     title = nil,
     title_alignment = "left",
+    title_bottom_line_thickness = Size.line.thick,
     title_face = Font:getFace("x_smalltfont"),
     title_multilines = nil, --* see TitleBar for details
     title_padding = Size.padding.default,
@@ -175,7 +174,6 @@ function TextViewer:init()
     KOR.keyevents:addHotkeysForTextViewer(self, self.key_events_module)
     self:initTitleBar()
     self:initScrollCallbacks()
-    self:setSeparator()
     self:initButtons()
     self:setFaceWidthLineHeight()
     self:initSpacers()
@@ -733,8 +731,7 @@ function TextViewer:computeHeights()
     local textw_height
     local button_table_height = self.button_table and self.button_table:getSize().h or 0
     local tabs_table_height = self.tabs_table_buttons and self.tabs_table:getSize().h or 0
-    local separator_height = self.separator:getSize().h
-    local available_height = self.screen_height - button_table_height - separator_height - tabs_table_height
+    local available_height = self.screen_height - button_table_height - tabs_table_height
     local title_height = self.titlebar:getSize().h
     if self.title ~= "dummy" then
         available_height = available_height - title_height
@@ -873,9 +870,9 @@ function TextViewer:computeHeights()
         -- self.height in init() set to this:
         -- self.height = self.height or Screen:getHeight() - Screen:scaleBySize(30)
 
-        textw_height = self.height - separator_height - button_table_height - title_height - tabs_table_height - self.top_spacer_height
+        textw_height = self.height - button_table_height - title_height - tabs_table_height - self.top_spacer_height
     else
-        textw_height = self.height - separator_height - button_table_height - tabs_table_height - self.top_spacer_height
+        textw_height = self.height - button_table_height - tabs_table_height - self.top_spacer_height
     end
 
     self.textw_height = textw_height
@@ -941,7 +938,6 @@ function TextViewer:returnWithTabsTable(text_section, radius, padding)
                     },
                     self.tabs_table,
                 },
-                self.separator,
                 self.top_spacer,
                 text_section,
             CenterContainer:new{
@@ -958,21 +954,20 @@ end
 --- @private
 function TextViewer:returnWithTabsTableWithoutButtons(text_section, radius, padding)
     return {
-        radius = radius,
-        padding = padding,
-        margin = self.add_margin and Size.margin.default or 0,
-        background = Blitbuffer.COLOR_WHITE,
-        VerticalGroup:new {
-            align = "left",
-            self.titlebar,
-        CenterContainer:new{
-            dimen = Geom:new{
-                w = self.frame_width,
-                h = self.tabs_table_height,
+            radius = radius,
+            padding = padding,
+            margin = self.add_margin and Size.margin.default or 0,
+            background = Blitbuffer.COLOR_WHITE,
+            VerticalGroup:new {
+                align = "left",
+                self.titlebar,
+            CenterContainer:new{
+                dimen = Geom:new{
+                    w = self.frame_width,
+                    h = self.tabs_table_height,
+                },
+                self.tabs_table,
             },
-            self.tabs_table,
-        },
-        self.separator,
             self.top_spacer,
             text_section,
         }
@@ -989,7 +984,6 @@ function TextViewer:returnWithButtons(text_section, radius, padding)
         VerticalGroup:new{
             align = "left",
             self.titlebar,
-            self.separator,
             self.top_spacer,
             text_section,
             CenterContainer:new{
@@ -1013,7 +1007,6 @@ function TextViewer:returnWithoutButtons(text_section, radius, padding)
         VerticalGroup:new{
             align = "left",
             self.titlebar,
-            self.separator,
             self.top_spacer,
             text_section,
         }
@@ -1073,7 +1066,6 @@ function TextViewer:setConfigForContainersWithoutTitlebar(radius, padding)
                 },
                 self.tabs_table,
             },
-            self.separator,
             self.top_spacer,
             CenterContainer:new{
                 dimen = Geom:new{
@@ -1343,7 +1335,7 @@ function TextViewer:initWidgetFrame()
     if self.title ~= "dummy" then
         config = self:setConfigForContainersWithTitlebar(radius, padding)
 
-        --* no title, so don't use a separator for title:
+    --* no title, so don't use a separator for title:
     else
         config = self:setConfigForContainersWithoutTitlebar(radius, padding)
     end
@@ -1547,6 +1539,7 @@ function TextViewer:initTitleBar()
         width = self.width,
         align = self.title_alignment,
         with_bottom_line = true,
+        bottom_line_thickness = self.title_bottom_line_thickness,
         title = self.title,
         title_face = self.title_face,
         title_multilines = self.title_multilines,
@@ -1563,7 +1556,7 @@ function TextViewer:initTitleBar()
     }
     if self.tabs_table_buttons and self.fullscreen then
         title_bar_config.bottom_line_color = KOR.colors.title_bar_bottom_line
-        title_bar_config.bottom_line_thickness = Size.line.small
+        title_bar_config.bottom_line_thickness = Size.line.thick
     end
     self.titlebar = TitleBar:new(title_bar_config)
 
@@ -1709,17 +1702,6 @@ function TextViewer:setPadding()
     if self.add_more_padding then
         self.text_padding = Screen:scaleBySize(60)
     end
-end
-
---- @private
-function TextViewer:setSeparator()
-    self.separator = LineWidget:new{
-        background = KOR.colors.line_separator,
-        dimen = Geom:new{
-            w = self.width,
-            h = Size.line.thick,
-        }
-    }
 end
 
 --- @private

@@ -192,9 +192,8 @@ end
 function TitleBar:setWidgetProps()
     self.is_landscape_screen = KOR.screenhelpers:isLandscapeScreen()
 
-    --- we don't want an in-your-face bottom line in case of fullscreen dialogs:
-    if self.fullscreen and self.with_bottom_line then
-        self.bottom_line_thickness = Size.line.thin
+    if self.submenu_buttontable then
+        self.bottom_line_thickness = Size.line.thick
     end
 
     self.has_top_buttons_left = self.top_buttons_left or self.tab_buttons_left

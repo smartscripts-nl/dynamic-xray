@@ -228,6 +228,12 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
             after_change_callback = "show_reload_koreader_message",
         },
+        UI_auto_toc_for_buttons_count = {
+            value = 5,
+            explanation = _("This setting determines whether the XrayUI page info popup should automatically show the index popup. If the count of Xray items in the popup is at least equal to the value of this setting, it will automatically be shown with the dialog. Set this setting to zero, to disable automatic display."),
+            type = "number",
+            locked = 0,
+        },
         UI_mode = {
             value = "page",
             options = { "page", "paragraph" },

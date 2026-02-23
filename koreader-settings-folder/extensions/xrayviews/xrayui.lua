@@ -16,6 +16,7 @@ local Screen = Device.screen
 local T = require("ffi/util").template
 
 local DX = DX
+local has_items = has_items
 local has_no_text = has_no_text
 local has_text = has_text
 local math = math
@@ -623,7 +624,7 @@ end
 function XrayUI:onInfoPopupLoadShowToc(textviewer, headings)
     KOR.registry:unset("toc_info_button_injected")
     --* only show the toc automatically when there are more than 2 xray items:
-    if #headings > 2 then
+    if has_items(DX.s.UI_auto_toc_for_buttons_count) and #headings >= DX.s.UI_auto_toc_for_buttons_count then
         -- #((call TextViewer TOC))
         --* call ((TextViewer#init)) > ((TextViewer execute after load callback)) > current method > ((TextViewer#showToc)) after a short delay:
         textviewer:showToc()
