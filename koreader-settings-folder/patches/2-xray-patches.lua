@@ -461,7 +461,7 @@ ReaderHighlight.onShowHighlightMenu = function(self, index)
         if #glossary_boundaries == 0 then
             table_insert(glossary_boundaries, self.selected_text.pos0)
             self:onClose()
-            KOR.messages:notify(_("start of glossary has been registered; now mark the end of it"))
+            KOR.messages:notify(tr("start of glossary has been registered; now mark the end of it"))
             return
         end
         table_insert(glossary_boundaries, self.selected_text.pos1)
@@ -661,8 +661,8 @@ function ReaderSearch:onShowFindAllResults(not_cached)
 
     local last_search = self.last_search_text
     self.result_menu = Menu:new{
-        title = T(_("Search results (%1)"), #self.findall_results),
-        subtitle = T("zoekopdracht: %1", last_search),
+        title = T(tr("Search results (%1)"), #self.findall_results),
+        subtitle = T(tr("search term: %1"), last_search),
         top_buttons_left = {
             {
                 icon = "plus",
@@ -682,7 +682,7 @@ function ReaderSearch:onShowFindAllResults(not_cached)
         },
         footer_buttons_right = {
             Button:new(KOR.buttoninfopopup:forSaveToXray({
-                info = "gebruiker-lamp-ikoon | Voeg \"" .. last_search .. "\" toe als nieuw Xray-item.",
+                info = T(tr("user lamp icon | Add \"%1\" as new Xray-item."), last_search),
                 callback = function()
                     UIManager:close(self.result_menu)
                     self.last_search_text = ""
@@ -706,7 +706,7 @@ function ReaderSearch:onShowFindAllResults(not_cached)
         end,
         onMenuHold = function(menu_self, item)
             local title
-            local context_info = T(_("Page: %1"), item.mandatory) .. "\n"
+            local context_info = T(tr("Page: %1"), item.mandatory) .. "\n"
             context_info, title = KOR.toc:getTocPathInfoForText(item.start, context_info)
             KOR.dialogs:niceAlert(title, context_info)
             self.garbage = menu_self
@@ -896,7 +896,7 @@ end
 --* called from Labels.context button in ((XrayDialogs#onMenuHold)):
 function ReaderSearch:onShowTextLocationsForNeedle(needle, case_insensitive)
     if has_no_text(needle) then
-        KOR.messages:notify(_("you forgot to supply a search term..."))
+        KOR.messages:notify(tr("you forgot to supply a search term..."))
         return
     end
     self:searchCallback(nil, needle, case_insensitive)
@@ -967,7 +967,7 @@ function ReaderSearch:onShowFulltextSearchInput()
     end
     -- #((initial readersearch dialog))
     self.input_dialog = InputDialog:new{
-        title = _("Enter text to search for"),
+        title = tr("Enter text to search for"),
         width = math.floor(math.min(Screen:getWidth(), Screen:getHeight()) * 0.9),
         input = self.last_search_text or self.ui.doc_settings:readSetting("fulltext_search_last_search_text"),
         buttons = {
