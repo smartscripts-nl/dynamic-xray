@@ -815,6 +815,7 @@ function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, 
         top_buttons_left = DX.b:forItemViewerTopLeft(self, needle_item),
         tabs = tabs,
         window_size = "max",
+        box_font_size = DX.s.IV_font_size,
         button_font_weight = "normal",
         --* htmlBox will always have a close_callback and therefor a close button; so no need to define a close_callback here...
         no_filter_button = true,

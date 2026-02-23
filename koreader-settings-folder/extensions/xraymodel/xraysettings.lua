@@ -133,6 +133,12 @@ local XraySettings = WidgetContainer:new{
             explanation = _("This variables enables a number of default settings for KOReader onder Ubuntu, e.g. that the user can close some dialogs with ESC."),
             locked = 0,
         },
+        IV_font_size = {
+            value = 17,
+            explanation = _("This variable determines the font size of the information in the Item Viewer dialog."),
+            locked = 0,
+            type = "number",
+        },
         PN_infopanel_meta_indent = {
             value = 10,
             explanation = _("This variables enables the numbers of spaces used to indent the item meta information (hits, aliases etc.) in the PN item info panel at the bottom."),

@@ -81,6 +81,7 @@ local HtmlBox = InputContainer:extend{
     additional_key_events = nil,
     after_close_callback = nil,
     align = "center",
+    box_font_size = 18,
     buttons_table = nil,
     content_padding = nil,
     --* this is the default, but some widgets can set the content_type to "text" for a specific tab; e.g. see ((XrayButtons#getItemViewerTabs)):
@@ -798,7 +799,9 @@ function HtmlBox:setModuleProps()
         self.histogram_bottom_line_height = Size.line.thin
     end
 
-    self.box_font_size = DX.s.is_mobile_device and 26 or 18
+    if DX.s.is_mobile_device then
+        self.box_font_size = 26
+    end
     self.content_face = Font:getFace("x_smallinfofont", self.box_font_size)
     --self.content_face = Font:getFace("infofont", self.box_font_size)
     local font_size_alt = self.box_font_size - 4
