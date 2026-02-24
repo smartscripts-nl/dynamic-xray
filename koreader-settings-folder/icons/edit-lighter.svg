@@ -1,7 +1,47 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Svg Vector Icons : http://www.onlinewebfonts.com/icon -->
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 256 256" enable-background="new 0 0 256 256" xml:space="preserve">
-<metadata> Svg Vector Icons : http://www.onlinewebfonts.com/icon </metadata>
-<g><g><g><path fill="#000000" d="M187,144.9h8.4V246H10V26.9h134.9v8.4H18.4v202.3H187V144.9z M246,52.1L102.7,195.4l-59,16.9l16.9-59L203.9,10h8.4L246,43.7V52.1z M207.4,18.4l-24.1,24.1l30.2,30.2l24.1-24.1v-1.4l-28.8-28.8H207.4z M55.9,200.1l42.4-12.2L207.6,78.6l-30.2-30.2L68.1,157.7L55.9,200.1z"/></g></g></g>
+
+<svg
+   version="1.1"
+   x="0px"
+   y="0px"
+   viewBox="0 0 256 256"
+   enable-background="new 0 0 256 256"
+   xml:space="preserve"
+   id="svg2463"
+   sodipodi:docname="edit-lighter.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><defs
+   id="defs2467" /><sodipodi:namedview
+   id="namedview2465"
+   pagecolor="#ffffff"
+   bordercolor="#000000"
+   borderopacity="0.25"
+   inkscape:showpageshadow="2"
+   inkscape:pageopacity="0.0"
+   inkscape:pagecheckerboard="0"
+   inkscape:deskcolor="#d1d1d1"
+   showgrid="false"
+   inkscape:zoom="0.921875"
+   inkscape:cx="-49.898305"
+   inkscape:cy="128"
+   inkscape:window-width="1440"
+   inkscape:window-height="831"
+   inkscape:window-x="0"
+   inkscape:window-y="32"
+   inkscape:window-maximized="1"
+   inkscape:current-layer="svg2463" />
+<metadata
+   id="metadata2453"> Svg Vector Icons : http://www.onlinewebfonts.com/icon </metadata>
+<g
+   id="g2461"
+   transform="matrix(0.91931423,0,0,0.92968315,9.9403985,11.153016)"><g
+     id="g2459"><g
+       id="g2457"><path
+         fill="#000000"
+         d="m 187,144.9 h 8.4 V 246 H 10 V 26.9 h 134.9 v 8.4 H 18.4 V 237.6 H 187 Z m 59,-92.8 -143.3,143.3 -59,16.9 16.9,-59 L 203.9,10 h 8.4 L 246,43.7 Z M 207.4,18.4 183.3,42.5 213.5,72.7 237.6,48.6 V 47.2 L 208.8,18.4 Z M 55.9,200.1 98.3,187.9 207.6,78.6 177.4,48.4 68.1,157.7 Z"
+         id="path2455" /></g></g></g>
 </svg>

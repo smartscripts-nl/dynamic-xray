@@ -1,7 +1,56 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Svg Vector Icons : http://www.onlinewebfonts.com/icon -->
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 256 256" enable-background="new 0 0 256 256" xml:space="preserve">
-<metadata> Svg Vector Icons : http://www.onlinewebfonts.com/icon </metadata>
-<g><g><g><path fill="#000000" d="M24.1,10.2c-5.4,1.1-10.9,5.7-13,10.9L10,23.8V128v104.1l1.1,2.8c1.5,3.8,6.1,8.5,10,10l2.8,1.1l102.5,0.1c68.4,0,103.4,0,105.1-0.4c5.7-1.1,11.3-5.6,13.5-10.9l1.1-2.7V128V23.8l-1.1-2.8c-1.5-3.8-6.1-8.5-10-10l-2.8-1.1l-103,0C71.5,9.9,25.2,10,24.1,10.2z M231.2,17.8c3,0.9,5.1,2.6,6.5,5.4l1.2,2.4v102.1c0,84.1-0.1,102.4-0.6,103.9c-1,2.6-2.8,4.8-5.2,5.9l-2.2,1.1l-101.4,0.1c-73,0.1-102,0-103.8-0.4c-3.3-0.7-5.8-2.6-7.3-5.6l-1.2-2.4V128V25.6l1.2-2.4c1.4-2.8,3.4-4.5,6.3-5.4C27.7,16.8,228,16.8,231.2,17.8z"/><path fill="#000000" d="M54.6,68.4v14.3H128h73.4V68.4V54.1H128H54.6V68.4z M194,68.4v6.9h-66H62v-6.9v-6.9h66h66V68.4z"/><path fill="#000000" d="M54.6,128v14.3H128h73.4V128v-14.3H128H54.6V128z M194,128v6.9h-66H62V128V121h66h66V128z"/><path fill="#000000" d="M54.6,187.5v14.3H128h73.4v-14.3v-14.3H128H54.6V187.5z M194,187.5v6.9h-66H62v-6.9v-6.9h66h66V187.5z"/></g></g></g>
+
+<svg
+   version="1.1"
+   x="0px"
+   y="0px"
+   viewBox="0 0 256 256"
+   enable-background="new 0 0 256 256"
+   xml:space="preserve"
+   id="svg2918"
+   sodipodi:docname="popup-menu.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><defs
+   id="defs2922" /><sodipodi:namedview
+   id="namedview2920"
+   pagecolor="#ffffff"
+   bordercolor="#000000"
+   borderopacity="0.25"
+   inkscape:showpageshadow="2"
+   inkscape:pageopacity="0.0"
+   inkscape:pagecheckerboard="0"
+   inkscape:deskcolor="#d1d1d1"
+   showgrid="false"
+   inkscape:zoom="0.921875"
+   inkscape:cx="-49.898305"
+   inkscape:cy="128"
+   inkscape:window-width="1440"
+   inkscape:window-height="831"
+   inkscape:window-x="0"
+   inkscape:window-y="32"
+   inkscape:window-maximized="1"
+   inkscape:current-layer="svg2918" />
+<metadata
+   id="metadata2902"> Svg Vector Icons : http://www.onlinewebfonts.com/icon </metadata>
+<g
+   id="g2916"
+   transform="matrix(0.93782638,0,0,0.9553184,9.4075214,8.1841712)"><g
+     id="g2914"><g
+       id="g2912"><path
+         fill="#000000"
+         d="m 24.1,10.2 c -5.4,1.1 -10.9,5.7 -13,10.9 L 10,23.8 V 128 232.1 l 1.1,2.8 c 1.5,3.8 6.1,8.5 10,10 l 2.8,1.1 102.5,0.1 c 68.4,0 103.4,0 105.1,-0.4 5.7,-1.1 11.3,-5.6 13.5,-10.9 l 1.1,-2.7 V 128 23.8 L 245,21 c -1.5,-3.8 -6.1,-8.5 -10,-10 l -2.8,-1.1 h -103 C 71.5,9.9 25.2,10 24.1,10.2 Z m 207.1,7.6 c 3,0.9 5.1,2.6 6.5,5.4 l 1.2,2.4 v 102.1 c 0,84.1 -0.1,102.4 -0.6,103.9 -1,2.6 -2.8,4.8 -5.2,5.9 l -2.2,1.1 -101.4,0.1 c -73,0.1 -102,0 -103.8,-0.4 -3.3,-0.7 -5.8,-2.6 -7.3,-5.6 l -1.2,-2.4 V 128 25.6 l 1.2,-2.4 c 1.4,-2.8 3.4,-4.5 6.3,-5.4 3,-1 203.3,-1 206.5,0 z"
+         id="path2904" /><path
+         fill="#000000"
+         d="M 54.6,68.4 V 82.7 H 128 201.4 V 68.4 54.1 H 128 54.6 Z m 139.4,0 v 6.9 H 128 62 v -6.9 -6.9 h 66 66 z"
+         id="path2906" /><path
+         fill="#000000"
+         d="m 54.6,128 v 14.3 H 128 201.4 V 128 113.7 H 128 54.6 Z m 139.4,0 v 6.9 H 128 62 v -6.9 -7 h 66 66 z"
+         id="path2908" /><path
+         fill="#000000"
+         d="m 54.6,187.5 v 14.3 H 128 201.4 V 187.5 173.2 H 128 54.6 Z m 139.4,0 v 6.9 H 128 62 v -6.9 -6.9 h 66 66 z"
+         id="path2910" /></g></g></g>
 </svg>

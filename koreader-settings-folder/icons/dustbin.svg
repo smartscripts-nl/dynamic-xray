@@ -1,14 +1,82 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <!-- Created with Vectornator (http://vectornator.io/) -->
-<svg height="100%" stroke-miterlimit="10" style="fill-rule:nonzero;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;" version="1.1" viewBox="0 0 256 256" width="100%" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-<defs/>
-<g id="Untitled">
-<g opacity="1">
-<path d="M219.1 39.6L163.3 39.6C163.7 37.6 163.9 35.6 163.9 33.4C163.9 15 148.4 0.1 129.3 0.1C110.1 0.1 94.7 15 94.7 33.4C94.7 35.5 95 37.6 95.3 39.6L36.9 39.6C22.1 39.6 10 51.2 10 65.5C10 79.8 22.1 91.4 36.9 91.4L39 91.4L39 237.1C39 247.5 47.7 255.8 58.5 255.8L197.4 255.8C208.2 255.8 216.9 247.4 216.9 237.1L216.9 91.4L219 91.4C233.9 91.4 245.9 79.8 245.9 65.5C246 51.2 234 39.6 219.1 39.6ZM105.8 33.4C105.8 20.9 116.3 10.8 129.3 10.8C142.3 10.8 152.8 20.9 152.8 33.4C152.8 35.5 152.4 37.6 151.8 39.6L106.8 39.6C106.2 37.6 105.8 35.6 105.8 33.4ZM205 234.6C205 239.7 200.7 243.8 195.4 243.8L60.2 243.8C55.2 243.4 51.3 239.6 51 234.8L51 91.4L205 91.4L205 234.6ZM217.4 78.6L217 78.6L39.1 78.6L38.7 78.6C31.2 78.6 25 72.7 25 65.4C25 58.1 31.1 52.3 38.7 52.3L217.5 52.3C225.1 52.3 231.2 58.2 231.2 65.4C231.2 72.6 224.9 78.6 217.4 78.6Z" fill="#000000" fill-rule="nonzero" opacity="1" stroke="none"/>
-<path d="M87.4 210.1C91.4 210.1 94.7 206.9 94.7 203.1L94.7 112.9C94.7 109.1 91.4 105.9 87.4 105.9C83.4 105.9 80.1 109.1 80.1 112.9L80.1 203.1C80.1 206.9 83.4 210.1 87.4 210.1Z" fill="#000000" fill-rule="nonzero" opacity="1" stroke="none"/>
-<path d="M128 210.1C132 210.1 135.3 206.9 135.3 203.1L135.3 112.9C135.3 109.1 132.1 105.9 128 105.9C124 105.9 120.7 109.1 120.7 112.9L120.7 203.1C120.8 206.9 124 210.1 128 210.1Z" fill="#000000" fill-rule="nonzero" opacity="1" stroke="none"/>
-<path d="M168.4 210.1C172.4 210.1 175.7 206.9 175.7 203.1L175.7 112.9C175.7 109.1 172.4 105.9 168.4 105.9C164.4 105.9 161.1 109.1 161.1 112.9L161.1 203.1C161.1 206.9 164.4 210.1 168.4 210.1Z" fill="#000000" fill-rule="nonzero" opacity="1" stroke="none"/>
+
+<svg
+   height="100%"
+   stroke-miterlimit="10"
+   style="fill-rule:nonzero;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;"
+   version="1.1"
+   viewBox="0 0 256 256"
+   width="100%"
+   xml:space="preserve"
+   id="svg15"
+   sodipodi:docname="dustbin.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+   id="namedview17"
+   pagecolor="#ffffff"
+   bordercolor="#000000"
+   borderopacity="0.25"
+   inkscape:showpageshadow="2"
+   inkscape:pageopacity="0.0"
+   inkscape:pagecheckerboard="0"
+   inkscape:deskcolor="#d1d1d1"
+   showgrid="false"
+   inkscape:zoom="0.921875"
+   inkscape:cx="-55.322034"
+   inkscape:cy="116.0678"
+   inkscape:window-width="1440"
+   inkscape:window-height="831"
+   inkscape:window-x="0"
+   inkscape:window-y="32"
+   inkscape:window-maximized="1"
+   inkscape:current-layer="svg15" />
+<defs
+   id="defs2" />
+<g
+   id="Untitled"
+   transform="matrix(0.8702174,0,0,0.84224344,17.930109,20.464497)"
+   style="fill:#444444;fill-opacity:1;stroke-width:0.999719;stroke-dasharray:none">
+<g
+   opacity="1"
+   id="g12"
+   style="fill:#444444;fill-opacity:1;stroke-width:0.999719;stroke-dasharray:none">
+<path
+   d="m 219.1,39.6 h -55.8 c 0.4,-2 0.6,-4 0.6,-6.2 C 163.9,15 148.4,0.1 129.3,0.1 110.1,0.1 94.7,15 94.7,33.4 c 0,2.1 0.3,4.2 0.6,6.2 H 36.9 C 22.1,39.6 10,51.2 10,65.5 10,79.8 22.1,91.4 36.9,91.4 H 39 v 145.7 c 0,10.4 8.7,18.7 19.5,18.7 h 138.9 c 10.8,0 19.5,-8.4 19.5,-18.7 V 91.4 h 2.1 c 14.9,0 26.9,-11.6 26.9,-25.9 C 246,51.2 234,39.6 219.1,39.6 Z M 105.8,33.4 c 0,-12.5 10.5,-22.6 23.5,-22.6 13,0 23.5,10.1 23.5,22.6 0,2.1 -0.4,4.2 -1,6.2 h -45 c -0.6,-2 -1,-4 -1,-6.2 z M 205,234.6 c 0,5.1 -4.3,9.2 -9.6,9.2 H 60.2 c -5,-0.4 -8.9,-4.2 -9.2,-9 V 91.4 h 154 z m 12.4,-156 H 217 39.1 38.7 C 31.2,78.6 25,72.7 25,65.4 25,58.1 31.1,52.3 38.7,52.3 h 178.8 c 7.6,0 13.7,5.9 13.7,13.1 0,7.2 -6.3,13.2 -13.8,13.2 z"
+   fill="#000000"
+   fill-rule="nonzero"
+   opacity="1"
+   stroke="none"
+   id="path4"
+   style="fill:#444444;fill-opacity:1;stroke-width:0.999719;stroke-dasharray:none" />
+<path
+   d="m 87.4,210.1 c 4,0 7.3,-3.2 7.3,-7 v -90.2 c 0,-3.8 -3.3,-7 -7.3,-7 -4,0 -7.3,3.2 -7.3,7 v 90.2 c 0,3.8 3.3,7 7.3,7 z"
+   fill="#000000"
+   fill-rule="nonzero"
+   opacity="1"
+   stroke="none"
+   id="path6"
+   style="fill:#444444;fill-opacity:1;stroke-width:0.999719;stroke-dasharray:none" />
+<path
+   d="m 128,210.1 c 4,0 7.3,-3.2 7.3,-7 v -90.2 c 0,-3.8 -3.2,-7 -7.3,-7 -4,0 -7.3,3.2 -7.3,7 v 90.2 c 0.1,3.8 3.3,7 7.3,7 z"
+   fill="#000000"
+   fill-rule="nonzero"
+   opacity="1"
+   stroke="none"
+   id="path8"
+   style="fill:#444444;fill-opacity:1;stroke-width:0.999719;stroke-dasharray:none" />
+<path
+   d="m 168.4,210.1 c 4,0 7.3,-3.2 7.3,-7 v -90.2 c 0,-3.8 -3.3,-7 -7.3,-7 -4,0 -7.3,3.2 -7.3,7 v 90.2 c 0,3.8 3.3,7 7.3,7 z"
+   fill="#000000"
+   fill-rule="nonzero"
+   opacity="1"
+   stroke="none"
+   id="path10"
+   style="fill:#444444;fill-opacity:1;stroke-width:0.999719;stroke-dasharray:none"
+   inkscape:label="path10" />
 </g>
 </g>
 </svg>
