@@ -16,6 +16,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 * DX has a Series Manager for listing the books in a series. The items in this Manager have action buttons, for viewing large covers, descriptions, reading progress, annotations count, opening the e-book, etc. An example of this manager can be seen in the last image under [Images](#images).
 
 ## Table of contents in this readme
+- [DX under Android](#dx-under-android)
 - [Use cases](#use-cases)
   - [Fiction books](#fiction-books)
   - [Non-fiction books](#non-fiction-books)
@@ -41,6 +42,10 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 - [Icons](#icons)
 - [Tips for navigating through the code](#tips-for-navigating-through-the-code)
 - [License](#license)
+
+### DX under Android
+
+Alas, under Android DX doesn't currently load. I'm trying to solve this.
 
 ## Use cases
 
@@ -237,7 +242,7 @@ PT_bookinfo_cache.sqlite3". In that case:
 3. KOReader will automatically be reloaded and then create the xray_items table in your database.
 
 ## Issues to fix
-* Currently none?
+* Make DX work under Android.
 
 ## Todos
 * Update the demo movies in the GitHub releases section.
