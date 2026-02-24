@@ -43,7 +43,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 - [Tips for navigating through the code](#tips-for-navigating-through-the-code)
 - [License](#license)
 
-### DX under Android
+## DX under Android
 
 Alas, under Android DX doesn't currently load. I'm trying to solve this.
 
