@@ -25,6 +25,7 @@ local pairs = pairs
 --- @field labels Labels
 --- @field list List
 --- @field messages Messages
+--- @field pagetexts PageTexts
 --- @field registry Registry
 --- @field screenhelpers ScreenHelpers
 --- @field seriesmanager SeriesManager
@@ -79,6 +80,7 @@ local KOR = WidgetContainer:new{
 	labels = nil,
 	list = nil,
 	messages = nil,
+	pagetexts = nil,
 	registry = nil,
 	screenhelpers = nil,
 	seriesmanager = nil,
@@ -115,6 +117,7 @@ local KOR = WidgetContainer:new{
 		"labels",
 		"list",
 		"messages",
+		"pagetexts",
 		"screenhelpers",
 		"seriesmanager",
 		"sidecar",

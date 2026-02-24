@@ -86,6 +86,8 @@ local HtmlBox = InputContainer:extend{
     content_padding = nil,
     --* this is the default, but some widgets can set the content_type to "text" for a specific tab; e.g. see ((XrayButtons#getItemViewerTabs)):
     content_type = "html",
+    --* see for HtmlBox CSS ((Html#getHtmlBoxCss)):
+    css = nil,
     frame_content_fullscreen = nil,
     frame_content_windowed = nil,
     fullscreen = false,

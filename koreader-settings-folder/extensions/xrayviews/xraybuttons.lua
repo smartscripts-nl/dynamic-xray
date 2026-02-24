@@ -6,6 +6,7 @@ local require = require
 local Button = require("extensions/widgets/button")
 local ButtonDialogTitle = require("extensions/widgets/buttondialogtitle")
 local ButtonTable = require("extensions/widgets/buttontable")
+local Event = require("ui/event")
 local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
@@ -1080,6 +1081,44 @@ function XrayButtons:getListSubmenuButton(tab_no)
     }
 end
 
+function XrayButtons:forChapterInformationPopup(parent, page)
+    return {{
+     {
+         icon = "back",
+         callback = function()
+             UIManager:close(parent.information_dialog)
+         end
+     },
+     {
+         icon_text = {
+             icon = "goto-location",
+             text = " " .. _("navigator"),
+         },
+         callback = function()
+             if not parent:handleBeforeGotoPageRequest(page) then
+                 return
+             end
+             DX.sp:resetActiveSideButtons("NavigatorBox:showChapterInformation")
+             DX.pn.page_no = page
+             DX.pn:restoreNavigator()
+         end
+     },
+     {
+         icon_text = {
+             icon = "goto-location",
+             text = " " .. KOR.icons.arrow_bare .. " " .. _("book"),
+         },
+         callback = function()
+             if not parent:handleBeforeGotoPageRequest(page) then
+                 return
+             end
+             KOR.ui.link:addCurrentLocationToStack()
+             KOR.ui:handleEvent(Event:new("GotoPage", page))
+         end
+     },
+ }}
+end
+
 function XrayButtons:forEditDescription(callback, cancel_callback)
     return {
         {
@@ -1254,8 +1293,6 @@ function XrayButtons:addLinkedItemsAsContextButtonsForViewer(buttons, needle_ite
         remainder = max_per_row
     end
     local add_more_button = count > context_buttons_max_buttons
-
-    --KOR.debug:infoTable("XrayButtons:addLinkedItemsAsContextButtonsForViewer", "sorted_items", sorted_items)
 
     --* first (top) row: fewer buttons (1–3) or full if divisible:
     local first_row = {}

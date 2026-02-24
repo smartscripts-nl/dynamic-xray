@@ -1666,6 +1666,30 @@ function XrayViewsData:haystackItemPartlyMatches(needle, haystack, uc_haystack, 
     return false
 end
 
+function XrayViewsData:getXrayItemNameVariants(item)
+    local needles = {
+        item.name
+    }
+    local is_person = parent:isPerson(item)
+
+    local sources = { "name", "aliases", "short_names" }
+    local prop, values
+    for s = 1, 3 do
+        prop = sources[s]
+        if has_text(item[prop]) then
+            values = parent:splitByCommaOrSpace(item[prop])
+            count = #values
+            for i = 1, count do
+                --* we are not interested in lower case parts of person names:
+                if not is_person or values[i]:match("[A-Z]") then
+                    table_insert(needles, values[i])
+                end
+            end
+        end
+    end
+    return needles
+end
+
 function XrayViewsData:setFilterTypes(filter_types)
     self.filter_xray_types = filter_types
 end

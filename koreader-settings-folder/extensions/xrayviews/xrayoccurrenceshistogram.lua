@@ -4,7 +4,6 @@
 local require = require
 
 local CenterContainer = require("ui/widget/container/centercontainer")
-local Event = require("ui/event")
 local Geom = require("ui/geometry")
 local HistogramWidget = require("extensions/widgets/histogramwidget")
 local KOR = require("extensions/kor")
@@ -103,42 +102,27 @@ function XrayOccurrencesHistogram:showChapterInformation(n)
         display_page = _(", page") .. " " .. page
     end
 
+    local buttons = DX.b:forChapterInformationPopup(self, page)
+
+    if page then
+        local needles = DX.vd:getXrayItemNameVariants(self.occurrences_subject)
+
+        local chapter_html = KOR.pagetexts:getChapterText("as_html", needles, page)
+        local title = self.occurrences_subject.name
+        if chapter_title ~= "-" then
+            title = title .. ", in: " .. chapter_title
+        end
+        self.information_dialog = KOR.dialogs:htmlBox({
+            title = title,
+            fullscreen = true,
+            html = T("<p><strong>Stats</strong><br />%1</p><ul><li>Chapter %2/%3%4<br/>\n\"%5\"</li>\n<li>Occurrences: %6</li></ul><p>%7<br /><strong>All mentions int the chapter</strong><br />%8</p>\n", " ", n, self.chapters_count, display_page, chapter_title, self.occurrences_per_chapter[n], " ", " ") .. chapter_html,
+            buttons = buttons,
+        })
+        return true
+    end
+
     self.information_dialog = KOR.dialogs:niceAlert(self.occurrences_subject, T(_("Chapter %1/%2%3%4\"%5\"%6Occurrences: %7"), n, self.chapters_count, display_page, "\n", chapter_title, "\n\n", self.occurrences_per_chapter[n]), {
-        buttons = {{
-            {
-                icon = "back",
-                callback = function()
-                    UIManager:close(self.information_dialog)
-                end
-            },
-            {
-                icon_text = {
-                    icon = "goto-location",
-                    text = " " .. _("navigator"),
-                },
-                callback = function()
-                    if not self:handleBeforeGotoPageRequest(page) then
-                        return
-                    end
-                    DX.sp:resetActiveSideButtons("NavigatorBox:showChapterInformation")
-                    DX.pn.page_no = page
-                    DX.pn:restoreNavigator()
-                end
-            },
-            {
-                icon_text = {
-                    icon = "goto-location",
-                    text = " " .. KOR.icons.arrow_bare .. " " .. _("book"),
-                },
-                callback = function()
-                    if not self:handleBeforeGotoPageRequest(page) then
-                        return
-                    end
-                    KOR.ui.link:addCurrentLocationToStack()
-                    KOR.ui:handleEvent(Event:new("GotoPage", page))
-                end
-            },
-        }}
+        buttons = buttons
     })
     return true
 end

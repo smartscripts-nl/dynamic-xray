@@ -151,7 +151,7 @@ function CreDocument:storeCurrentPageParagraphs(page_xp, starting_page)
 
     self.paragraphs = {}
 
-    self.paragraphs = KOR.html:getAllHtmlContainersInPage(page_xp, self.start_page_no)
+    self.paragraphs = KOR.pagetexts:getAllHtmlContainersInPage(page_xp, self.start_page_no)
     self.paragraphs_cached[self.start_page_no] = self.paragraphs
 end
 
@@ -184,7 +184,7 @@ function CreDocument:getPageText(page_no)
         return self:getPageTextFromXPs(xp, next_page_xp)
     end
 
-    local texts = select(2, KOR.html:getAllHtmlContainersInPage(xp, page_no))
+    local texts = select(2, KOR.pagetexts:getAllHtmlContainersInPage(xp, page_no))
     if has_no_items(texts) then
         return ""
     end
@@ -209,7 +209,7 @@ function CreDocument:getPageHtml(page_no, mark_text)
         return html
     end
 
-    local texts = select(2, KOR.html:getAllHtmlContainersInPage(xp, page_no, "include_punctuation"))
+    local texts = select(2, KOR.pagetexts:getAllHtmlContainersInPage(xp, page_no, "include_punctuation"))
     if has_no_items(texts) then
         return ""
     end

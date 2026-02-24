@@ -425,7 +425,7 @@ function XrayUI:getCurrentColumn(x)
     return KOR.ui.document:getVisiblePageCount() > 1 and x > KOR.registry.half_screen_width and 2 or 1
 end
 
---* content of self.paragraphs was generated in ((Html#getAllHtmlContainersInPage)):
+--* content of self.paragraphs was generated in ((PageTexts#getAllHtmlContainersInPage)):
 --- @private
 function XrayUI:getFullPageText()
     if not self.paragraphs then

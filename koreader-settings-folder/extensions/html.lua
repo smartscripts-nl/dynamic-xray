@@ -7,10 +7,8 @@ local util = require("util")
 
 local G_reader_settings = G_reader_settings
 local has_no_text = has_no_text
-local has_text = has_text
 local table = table
 local table_insert = table.insert
-local tonumber = tonumber
 
 local count
 local STATE_NORMAL = 0
@@ -97,186 +95,6 @@ function Html:removeListIndents(text)
         :gsub(self.placeholder_br .. "\n?", "\n   ")
 
     return text:gsub("\n\n +", "\n\n")
-end
-
-function Html:getAllHtmlContainersInPage(page_xp, start_page_no, include_punctuation)
-    local containers = {}
-    local texts = {}
-    local pos = page_xp
-    self.start_page_no = start_page_no
-    self.current_elem_no = self:getHtmlElementIndex(pos)
-    self.start_elem_no = self.current_elem_no
-
-    --* guard clause: no element found:
-    if not self.current_elem_no then
-        return containers
-    end
-
-    local in_current_page
-    while true do
-        self.paragraph_start = pos
-        self.paragraph_end = pos
-
-        --* loop through words until we reach a new element (next paragraph):
-        self:loopThroughContainerWords(include_punctuation)
-        if not self.paragraph_end then
-            break
-        end
-        self:addContainerToContainers(containers, texts)
-
-        --* advance to next paragraph:
-        pos = KOR.document:getNextVisibleWordEnd(self.paragraph_end)
-        if not pos then
-            break
-        end
-
-        self.current_elem_no = self:getHtmlElementIndex(pos)
-        in_current_page = KOR.document:getPageFromXPointer(pos) == start_page_no
-        if not in_current_page then
-            break
-        end
-    end
-
-    --! return paragraphs to CreDocument, where it will be stored in self.paragraphs for the current page!:
-    return containers, texts
-end
-
---* this method should set self.paragraph_end (or not), to be used in ((Html#getAllHtmlContainersInPage)):
---- @private
-function Html:loopThroughContainerWords(include_punctuation)
-    local next_word_end, next_elem_no, in_current_page
-    local add_text_by = "word"
-    while true do
-        if add_text_by == "word" then
-            next_word_end = KOR.document:getNextVisibleWordEnd(self.paragraph_end)
-        else
-            next_word_end = KOR.document:getNextVisibleChar(self.paragraph_end)
-        end
-
-        if not next_word_end and include_punctuation and add_text_by == "word" then
-            add_text_by = "char"
-            next_word_end = KOR.document:getNextVisibleChar(self.paragraph_end)
-        end
-
-        if not next_word_end then
-            self:setParagraphStart()
-            --* we're ready looping through this container, so break out of the loop:
-            return
-        end
-
-        next_elem_no = self:getHtmlElementIndex(next_word_end)
-        in_current_page = KOR.document:getPageFromXPointer(next_word_end) == self.start_page_no
-
-        --* stop at the end of the page, ignore any partial paragraph spilling to next page:
-        if not in_current_page then
-            self:setParagraphStart()
-            --* we're ready looping through this container, so break out of the loop:
-            return
-        end
-
-        --* reached next paragraph:
-        if include_punctuation and add_text_by == "word" and next_elem_no ~= self.current_elem_no then
-            add_text_by = "char"
-
-        elseif next_elem_no ~= self.current_elem_no then
-            self:setParagraphStart()
-            --* we're ready looping through this container, so break out of the loop:
-            return
-
-        else
-            --! this is the value we are interested in:
-            self.paragraph_end = next_word_end
-        end
-    end
-end
-
---- @private
-function Html:addContainerToContainers(paragraphs, texts)
-    --* extract text for the current paragraph
-    local paragraph_text = KOR.document:getTextFromXPointers(self.paragraph_start, self.paragraph_end)
-
-    --* skip empty or image-only paragraphs:
-    if has_text(paragraph_text) then
-        paragraph_text = KOR.strings:cleanupSelectedText(paragraph_text)
-        paragraph_text = KOR.strings:removeNotes(paragraph_text)
-        table_insert(paragraphs, {
-            pos0 = self.paragraph_start,
-            pos1 = self.paragraph_end,
-            text = paragraph_text,
-            element_no = self.current_elem_no,
-        })
-        table_insert(texts, paragraph_text)
-    end
-end
-
---- @private
-function Html:setParagraphStart()
-    if self.current_elem_no ~= self.start_elem_no then
-        self.paragraph_start = self.paragraph_start
-        :gsub("%[%d+%]%.%d+$", "[1].0")
-        :gsub("text%(%)%.%d+$", "text().0")
-    end
-end
-
-function Html:getHtmlElementIndex(position)
-    if not position then
-        return 1
-    end
-
-    --* bookmark / highlight positions have these formats:
-    --[[
-    /body/DocFragment[13]/body/section/section[1]/p[8]/text()[1].93,
-    or
-    /body/DocFragment[12]/body/p[179]/text().157
-    or
-    /body/DocFragment[13]/body/section/section[1]/p[18]/sup[5]/a/text().0
-    or
-    /body/DocFragment[13]/body/div[1]/p[16]/text()[1].0
-    ]]
-
-    position = position
-        :gsub("^/body.+/body/", "", 1)
-        :gsub("su[bp]%[%d+%]/", "", 1)
-        :gsub("/text%(%)%[%d+%]", "", 1)
-        :gsub("/text%(%)", "", 1)
-    --* previous replacements reduce above markers to:
-    --[[
-    section/section[1]/p[8].93,
-    or
-    p[179].157
-    or
-    section/section[1]/p[18]/a/.0
-    or
-    div[1]/p[16].0
-    ]]
-    --* so if there are 3 numerical indices, then we have a container element, so we remove the container index number here:
-    position = position:gsub("%[%d+%](/[a-zA-Z0-9]+%[%d+%])", "%1", 1)
-    --* result:
-    --[[
-    section/section/p[8].93,
-    or
-    p[179].157
-    or
-    section/section/p[18]/a/.0
-    or
-    div/p[16].0
-    ]]
-
-    local element_type, element_number = position:match("([piv])%[(%d+)")
-    if element_type == "p" then
-        element_type = "paragraph"
-    elseif element_type == "i" then --* for "li"
-        element_type = "list"
-    elseif element_type == "v" then
-        element_type = "div"
-    end
-    if not element_number then
-        element_type = "paragraph"
-        element_number = 0
-    end
-
-    --* return main html elem number (is first number match in tail of position):
-    return tonumber(element_number), element_type
 end
 
 function Html:textToHtml(text)
@@ -410,12 +228,8 @@ function Html:getHtmlBoxCss(additional_css)
             text-indent: 1.5em;
         }
 
-        p + p.chaptertitle {
-            text-indent: 0;
-        }
-
-        p.whitespace + p {
-            text-indent: 0;
+        h1 + p, h2 + p, h3 + p, h4 + p, p + p.chaptertitle, p.noindent, p.whitespace + p {
+            text-indent: 0 !important;
         }
 
         div.poezie p {

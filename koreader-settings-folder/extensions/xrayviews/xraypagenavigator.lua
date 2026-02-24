@@ -185,7 +185,7 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
         modal = false,
         no_buttons_row = true,
         occurrences_per_chapter = occurrences_per_chapter,
-        occurrences_subject = item and item.name,
+        occurrences_subject = item,
         page_navigator = self,
         ratio_per_chapter = ratio_per_chapter,
         --* side_buttons were generated via ((XrayPages#markedItemRegister)) > ((XraySidePanels#addSideButton)):
