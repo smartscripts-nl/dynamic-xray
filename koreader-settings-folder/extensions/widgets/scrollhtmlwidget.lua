@@ -236,4 +236,60 @@ function ScrollHtmlWidget:onScrollUpWithShiftSpace()
     return self:onScrollUp()
 end
 
+function ScrollHtmlWidget:scrollToPage(page_num)
+    if page_num > self.htmlbox_widget.page_count then
+        page_num = self.htmlbox_widget.page_count
+    end
+    self.htmlbox_widget:setPageNumber(page_num)
+    self:_updateScrollBar()
+    self.htmlbox_widget:freeBb()
+    self.htmlbox_widget:_render()
+    if self.dialog.movable and self.dialog.movable.alpha then
+        self.dialog.movable.alpha = nil
+        UIManager:setDirty(self.dialog, function()
+            return "partial", self.dialog.movable.dimen
+        end)
+    else
+        UIManager:setDirty(self.dialog, function()
+            return "partial", self.dimen
+        end)
+    end
+end
+
+function ScrollHtmlWidget:scrollToBottom()
+    local page_num = self.htmlbox_widget.page_count
+    self.htmlbox_widget:setPageNumber(page_num)
+    self:_updateScrollBar()
+    self.htmlbox_widget:freeBb()
+    self.htmlbox_widget:_render()
+    if self.dialog.movable and self.dialog.movable.alpha then
+        self.dialog.movable.alpha = nil
+        UIManager:setDirty(self.dialog, function()
+            return "partial", self.dialog.movable.dimen
+        end)
+    else
+        UIManager:setDirty(self.dialog, function()
+            return "partial", self.dimen
+        end)
+    end
+end
+
+function ScrollHtmlWidget:scrollToTop()
+    local page_num = 1
+    self.htmlbox_widget:setPageNumber(page_num)
+    self:_updateScrollBar()
+    self.htmlbox_widget:freeBb()
+    self.htmlbox_widget:_render()
+    if self.dialog.movable and self.dialog.movable.alpha then
+        self.dialog.movable.alpha = nil
+        UIManager:setDirty(self.dialog, function()
+            return "partial", self.dialog.movable.dimen
+        end)
+    else
+        UIManager:setDirty(self.dialog, function()
+            return "partial", self.dimen
+        end)
+    end
+end
+
 return ScrollHtmlWidget
