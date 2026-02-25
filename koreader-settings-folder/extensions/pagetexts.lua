@@ -29,12 +29,8 @@ function PageTexts:countItemOccurrences(text, needles)
 
     local total_count = 0
     local rcount
-    --* only the first needle is the full name of the item:
-    text, rcount = text:gsub(needles[1], "")
-    total_count = total_count + rcount
-
-    for i = 2, #needles do
-        text, rcount = text:gsub(needles[i], "")
+    for i = 1, #needles do
+        text, rcount = text:gsub("%f[%w_]" .. needles[i] .. "%f[^%w_]", "")
         total_count = total_count + rcount
     end
 
@@ -369,8 +365,8 @@ function PageTexts:getChapterText(as_html, needles, current_page)
         local needle
         count = #needles
         for i = 1, count do
-            needle = needles[i]
-            text = text:gsub(needle, "<strong>" .. needle .. "</strong>")
+            needle = "%f[%w_](" .. needles[i] .. ")%f[^%w_]"
+            text = text:gsub(needle, "<strong>%1</strong>")
         end
         text = self:compressTextAroundMarkers(text, 300)
     end

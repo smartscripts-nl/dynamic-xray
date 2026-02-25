@@ -244,6 +244,10 @@ local XrayDataSaver = WidgetContainer:new{
 
         [[
             UPDATE xray_items SET chapter_hits = NULL, chapter_hits_data = NULL WHERE 1;]],
+
+        --* a second reset was needed after some updates to the hits counting system:
+        [[
+            UPDATE xray_items SET chapter_hits = NULL, chapter_hits_data = NULL WHERE 1;]],
     },
     scheme_version_name = "database_scheme_version",
 }
