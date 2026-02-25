@@ -19,7 +19,6 @@ local table = table
 local table_concat = table.concat
 local table_insert = table.insert
 local tonumber = tonumber
-local type = type
 
 local count, count2
 --- @type XrayDataLoader data_loader
@@ -421,126 +420,76 @@ function XrayViewsData:setChapterHits(chapter_stats, chapters_ordered, chapter_t
 end
 
 --! this method will only be called upon creating a new or updating an existing item:
-function XrayViewsData:getAllTextHits(search_text_or_item)
+function XrayViewsData:getAllTextHits(item)
 
-    local aliases = {}
-    local short_names = {}
-    local main_name = search_text_or_item
+    local max_hits, total_count
+    item.chapter_hits_data, max_hits, total_count = self:getChapterHitsData(item)
 
-    if type(search_text_or_item) == "table" then
-        main_name = search_text_or_item.name
-        if has_text(search_text_or_item.aliases) then
-            aliases = parent:splitByCommaOrSpace(search_text_or_item.aliases)
-        end
-        if has_text(search_text_or_item.short_names) then
-            short_names = parent:splitByCommaOrSpace(search_text_or_item.short_names)
-        end
-    end
+    local present_as_table = not DX.s.is_mobile_device
 
-    --* build unified list of search terms:
-    local search_terms = { main_name }
-    count = #aliases
+    -- chapter_items should have a sequential number, a title, the page and the number of hits
+    --[[
+    table_insert(self.chapters_start_pages_ordered, i, chapter_stats[chapter_title].start_page)
+    ]]
+
+    local toc_item
+    local index = 0
+    local chapter_list_items = {}
+    count = #item.chapter_hits_data
     for i = 1, count do
-        table_insert(search_terms, aliases[i])
-    end
-    count = #short_names
-    for i = 1, count do
-        table_insert(search_terms, short_names[i])
-    end
-
-    --* initialize containers
-    local chapter_stats = {}
-    local chapter_titles_ordered = {}
-
-    --* process all search terms (main + aliases):
-    local total_count = 0
-    count = #search_terms
-    for s = 1, count do
-        total_count = self:getChapterHitsPerTerm(search_terms[s], chapter_stats, chapter_titles_ordered, total_count)
-    end
-
-    --* chapter_info used in 4 places, to populate the chapter_hits html prop of items:
-    local chapter_info
-    local chapters_found = #chapter_titles_ordered
-    if chapters_found > 0 then
-        local present_as_table = not DX.s.is_mobile_device
-        local chapter_items = {}
-        local current_chapter_title, current_chapter_stats
-        local max_hits = 0
-        -- #((generate chapter info))
-        for i = 1, chapters_found do
-            current_chapter_title = chapter_titles_ordered[i]
-            current_chapter_stats = chapter_stats[current_chapter_title]
-            max_hits = self:addChapterToChapterStats(current_chapter_title, chapter_items, current_chapter_stats, present_as_table, i, max_hits)
+        if item.chapter_hits_data[i] > 0 then
+            index = index + 1
+            toc_item = KOR.toc:getChapterPropsByIndex(i)
+            self:addChapterToChapterStats(toc_item, item.chapter_hits_data[i], chapter_list_items, present_as_table, index)
         end
-        chapter_info = self:generateChaptersListHtml(chapter_items, present_as_table, max_hits)
     end
 
-    local chapter_hits_data = self:generateChapterHitsData(chapter_titles_ordered, chapter_stats)
+    local chapter_hits_list = self:generateChaptersListHtml(chapter_list_items, present_as_table, max_hits)
 
-    return total_count, chapter_info, chapter_hits_data
+    return total_count, chapter_hits_list, item.chapter_hits_data
 end
 
 --* these data will be used for generating a chapter-occurrences-histogram in the PN info panel; current method called from ((XrayPageNavigator#setCurrentItem)):
 function XrayViewsData:getChapterHitsData(item)
 
-    local aliases = {}
-    local short_names = {}
-    local main_name = item
-
-    if type(item) == "table" then
-        main_name = item.name
-        if has_text(item.aliases) then
-            aliases = parent:splitByCommaOrSpace(item.aliases)
-        end
-        if has_text(item.short_names) then
-            short_names = parent:splitByCommaOrSpace(item.short_names)
-        end
-    end
-
     --* build unified list of search terms:
-    local search_terms = { main_name }
-    count = #aliases
-    for i = 1, count do
-        table_insert(search_terms, aliases[i])
-    end
-    count = #short_names
-    for i = 1, count do
-        table_insert(search_terms, short_names[i])
-    end
+    local needles = self:getXrayItemNameVariants(item)
 
-    --* initialize containers:
-    local chapter_stats = {}
-    local chapter_titles_ordered = {}
-
-    --* process all search terms (main + aliases):
+    local xp, end_xp, start_page, chapter_text, chapter_hits
+    local chapter_positions = KOR.toc:getTocXpointers()
+    local chapter_hits_data = {}
+    local max_hits = 0
     local total_count = 0
-    count = #search_terms
-    for s = 1, count do
-        total_count = self:getChapterHitsPerTerm(search_terms[s], chapter_stats, chapter_titles_ordered, total_count)
+    count = #chapter_positions
+    for i = 1, count - 1 do
+        xp = chapter_positions[i][1]
+        start_page = chapter_positions[i][2]
+        end_xp = chapter_positions[i + 1][1]
+        chapter_hits = KOR.pagetexts:getChapterHits(i, needles, start_page, xp, end_xp)
+        chapter_text = KOR.document:getTextFromXPointers(xp, end_xp)
+        chapter_hits = KOR.pagetexts:countItemOccurrences(chapter_text, needles)
+        total_count = total_count + chapter_hits
+        table_insert(chapter_hits_data, chapter_hits)
+        if chapter_hits > max_hits then
+            max_hits = chapter_hits
+        end
     end
 
-    return self:generateChapterHitsData(chapter_titles_ordered, chapter_stats)
-end
-
---- @private
-function XrayViewsData:generateChapterHitsData(chapter_titles_ordered, chapter_stats)
-    local toc = KOR.toc.toc
-    if has_no_items(toc) then
-        return {}
+    --? is this the correct way to add last chapter?:
+    local last_toc_item = KOR.toc:getChapterPropsByIndex(count)
+    start_page = last_toc_item.page
+    local last_page = KOR.document:getPageCount()
+    chapter_text = ""
+    for page = start_page, last_page do
+        chapter_text = chapter_text .. KOR.document:getPageText(page) .. "\n"
     end
-
-    local chapters_count = #toc
-    local hits_per_chapter = KOR.tables:populateWithPlaceholders(chapters_count, 0)
-
-    count = #chapter_titles_ordered
-    local title
-    for i = 1, count do
-        title = chapter_titles_ordered[i]
-        hits_per_chapter[chapter_stats[title].index] = chapter_stats[title].count
+    chapter_hits = KOR.pagetexts:countItemOccurrences(chapter_text, needles)
+    total_count = total_count + chapter_hits
+    table_insert(chapter_hits_data, chapter_hits)
+    if chapter_hits > max_hits then
+        max_hits = chapter_hits
     end
-
-    return hits_per_chapter
+    return chapter_hits_data, max_hits, total_count
 end
 
 --- @private
@@ -1088,6 +1037,16 @@ function XrayViewsData:addHitsHtml(meta_info, item)
     end
 end
 
+--- @private
+function XrayViewsData:updateChapterHtmlIfMissing(item)
+    if not item.book_hits or item.chapter_hits then
+        return
+    end
+    local book_hits
+    book_hits, item.chapter_hits = self:getAllTextHits(item)
+    DX.ds.storeMissingChapterHitsData(item, book_hits)
+end
+
 function XrayViewsData:getItemInfoHtml(item, ucfirst)
     local separator = "<br>"
     local info = ucfirst and KOR.strings:ucfirst(item.description) .. separator or separator .. item.description .. separator
@@ -1373,24 +1332,21 @@ function XrayViewsData:filterAndPopulateItemTables(data_items)
     end
 end
 
+--* chapter_item was retrieved via ((ReaderToc#getChapterPropsByIndex)):
 --- @private
-function XrayViewsData:addChapterToChapterStats(current_chapter_title, chapter_items, current_chapter_stats, present_as_table, i, max_hits)
+function XrayViewsData:addChapterToChapterStats(chapter_item, ccount, chapter_list_items, present_as_table, i)
     local chapter_start_page
     --* in the viewer this will be a list under an ul; using ul for this sublist yields ugly big open bullets, so here no list tags used:
     --* chapter_stats[chapter].count was set in ((XrayViewsData#setChapterHits)):
     if present_as_table then
-        chapter_start_page = current_chapter_stats.start_page
-                and T(self.chapter_page_number_format, current_chapter_stats.start_page)
-                or ""
-        table_insert(chapter_items, "<tr><td>" ..
-                i .. ". <i>" .. current_chapter_title .. "</i>" .. chapter_start_page .. "</td><td>&nbsp;&nbsp;</td><td>" .. current_chapter_stats.count .. "</td></tr>")
+        chapter_start_page = chapter_item.page
+            and T(self.chapter_page_number_format, chapter_item.page)
+            or ""
+        table_insert(chapter_list_items, "<tr><td>" ..
+            i .. ". <i>" .. chapter_item.title .. "</i>" .. chapter_start_page .. "</td><td>&nbsp;&nbsp;</td><td>" .. ccount .. "</td></tr>")
     else
-        table_insert(chapter_items, current_chapter_title .. " " .. KOR.icons.arrow_bare .. " " .. current_chapter_stats.count .. "<br>")
+        table_insert(chapter_list_items, chapter_item.title .. " " .. KOR.icons.arrow_bare .. " " .. ccount .. "<br>")
     end
-    if current_chapter_stats.count > max_hits then
-        max_hits = current_chapter_stats.count
-    end
-    return max_hits
 end
 
 --- @private
@@ -1401,50 +1357,11 @@ function XrayViewsData:generateChaptersListHtml(chapter_items, present_as_table,
     if present_as_table then
         --* wrap table around the info:
         chapter_info = "<table><tr><td><b>chapter</b></td><td>&nbsp;</td><td><b>hits</b></td></tr>" .. chapter_info .. "</table>"
-        --* mark the highest hits with a bullet:
+        --* mark the highest hits with an arrow:
         return chapter_info:gsub("<td>" .. max_hits .. "</td>", "<td>" .. max_hit_indicator .. "</td>")
     end
 
     return chapter_info:gsub(max_hits .. "<br>", max_hit_indicator .. "<br>")
-end
-
---* the chapter data retrieved here are generated for display in ((XrayViewsData#getAllTextHits)) caller of current method > ((generate chapter info)):
---- @private
-function XrayViewsData:getChapterHitsPerTerm(term, chapter_stats, chapters_ordered, total_count)
-    local results, needle, case_insensitive, last_chapter_title, last_chapter_index
-    --* if applicable, we only search for first names (then probably more accurate hits count):
-    needle = parent:getRealFirstOrSurName(term)
-    --* for lowercase needles (terms instead of persons), we search case insensitive:
-    case_insensitive = not needle:match("[A-Z]")
-
-    --! using document:findAllTextWholeWords instead of document:findAllText here crucial to get exact hits count:
-    results = KOR.document:findAllTextWholeWords(needle, case_insensitive, 0, 3000, false)
-
-    if has_no_items(results) then
-        return total_count
-    end
-
-    local result_count = #results
-    total_count = total_count + result_count
-    for i = 1, result_count do
-        last_chapter_title = KOR.toc:getTocLastChapterInfo(results[i].start)
-
-        --* the cached chapter_props will only be reset in ((XrayController#onReaderReady)) > ((XrayController#resetDynamicXray)), so when opening another ebook:
-        if not self.chapter_props[last_chapter_title] then
-            last_chapter_index = KOR.toc:getAccurateTocIndexByXPointer(results[i].start)
-
-            self.chapter_props[last_chapter_title] = {
-                index = last_chapter_index,
-                start_page = KOR.toc:getChapterStartPage(results[i].start),
-            }
-        end
-
-        if has_text(last_chapter_title) then
-            self:setChapterHits(chapter_stats, chapters_ordered, last_chapter_title)
-        end
-    end
-
-    return total_count
 end
 
 --* called from ((XrayViewsData#prepareData)):
@@ -1671,6 +1588,9 @@ function XrayViewsData:getXrayItemNameVariants(item)
         item.name
     }
     local is_person = parent:isPerson(item)
+    if not is_person and not item.name:match("[A-Z]") then
+        table_insert(needles, KOR.strings:ucfirst(item.name))
+    end
 
     local sources = { "name", "aliases", "short_names" }
     local prop, values

@@ -52,6 +52,7 @@ local XrayPageNavigator = WidgetContainer:new{
     return_to_current_item = nil,
     return_to_item_no = nil,
     return_to_page = nil,
+    save_glossary_dialog = nil,
     screen_width = nil,
     scroll_to_page = nil,
 }
@@ -212,22 +213,25 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
     self:createPopupMenu()
 end
 
---* calls ((XrayViewsData#generateChapterHitsData)) when no chapter_hits_data found for item:
+--* calls ((XrayViewsData#getChapterHitsData)) when no chapter_hits_data found for item:
 --- @private
 function XrayPageNavigator:computeHistogramData(item)
+
+    local overrule = false
 
     local index = KOR.tables:normalizeTableIndex(item.name)
     local data = self.cached_histogram_data[index]
     local chapters_count, ratio_per_chapter, occurrences_per_chapter
-    if data then
+    if not overrule and data then
         chapters_count, ratio_per_chapter, occurrences_per_chapter = unpack(data)
         return chapters_count, ratio_per_chapter, occurrences_per_chapter
     end
+    local max_value
 
     item = item or DX.sp:getCurrentTabItem()
 
     --* for best speed do this only for current / actual item in the info panel, and not for all items in the side panel:
-    if item and not item.chapter_hits_data then
+    if item and (overrule or not item.chapter_hits_data) then
         item.chapter_hits_data = DX.vd:getChapterHitsData(item)
         DX.ds.storeChapterHitsData(item)
     end
@@ -236,9 +240,11 @@ function XrayPageNavigator:computeHistogramData(item)
         return
     end
 
+    if not max_value then
+        max_value = KOR.tables:getMaxValue(item.chapter_hits_data)
+    end
     occurrences_per_chapter = item.chapter_hits_data
     chapters_count = #occurrences_per_chapter
-    local max_value = KOR.tables:getMaxValue(occurrences_per_chapter)
     ratio_per_chapter = {}
     for i = 1, chapters_count do
         table_insert(ratio_per_chapter, occurrences_per_chapter[i] / max_value)

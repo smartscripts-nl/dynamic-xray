@@ -202,7 +202,7 @@ function CreDocument:getPageHtml(page_no, mark_text)
     local next_page_no = page_no + 1
     local next_page_xp = self:getPageXPointer(next_page_no)
     if has_text(next_page_xp) then
-        html = self:getPageTextFromXPs(xp, next_page_xp, "for_html")
+        html = self:getPageTextFromXPs(xp, next_page_xp, "as_html")
         if mark_text then
             return html:gsub(mark_text, "<strong>" .. mark_text .. "</strong>")
         end
@@ -222,11 +222,11 @@ end
 
 --* return page text, format it with indents and add whitespace around separators in the text:
 --- @private
-function CreDocument:getPageTextFromXPs(xp, next_page_xp, for_html)
+function CreDocument:getPageTextFromXPs(xp, next_page_xp, as_html)
     local text = self:getTextFromXPointers(xp, next_page_xp)
     text = text:gsub("\n[ \t]+", "\n")
     local formatted = {}
-    local lb = for_html and "<br/>" or "\n"
+    local lb = as_html and "<br/>" or "\n"
     local parts = KOR.strings:split(text, "\n")
     count = #parts
     local separator_was_inserted = false
@@ -237,7 +237,7 @@ function CreDocument:getPageTextFromXPs(xp, next_page_xp, for_html)
         elseif not parts[i]:match("[A-Za-z0-9]") then
             separator_was_inserted = true
             table.insert(formatted, self.empty_line)
-            if for_html then
+            if as_html then
                 table_insert(formatted, "<p style='text-align: center'>" .. parts[i] .. "</p>")
             else
                 table_insert(formatted, parts[i] .. lb)
@@ -324,6 +324,8 @@ end
 --- PATCH READERTOC
 -- #((PATCH READERTOC))
 
+ReaderToc.cached_positions = {}
+ReaderToc.cached_positions_index = {}
 ReaderToc.cached_titles = {}
 ReaderToc.cached_titles_index = nil
 
@@ -394,8 +396,33 @@ function ReaderToc:getPageFromItemTitle(title)
     end
 end
 
+function ReaderToc:getTocXpointers(file)
+    if not file then
+        file = KOR.registry.current_ebook
+    end
+    local index = KOR.tables:normalizeTableIndex(file)
+    if index and self.cached_positions_index == index then
+        return self.cached_positions[index]
+    end
+    self.cached_positions_index = index
+    self.cached_positions[index] = {}
+    self:fillToc()
+    if not self.toc then
+        return
+    end
+    count = #self.toc
+    for i = 1, count do
+        table_insert(self.cached_positions[index], {
+            self.toc[i].xpointer,
+            self.toc[i].page,
+        })
+    end
+    return self.cached_positions[index]
+end
+
 function ReaderToc:getTocTitles(file)
-    local index = file and KOR.tables:normalizeTableIndex(file)
+    file = file or DX.m.current_ebook_full_path
+    local index = KOR.tables:normalizeTableIndex(file)
     if index and self.cached_titles_index == index then
         return self.cached_titles[index]
     end
@@ -411,6 +438,15 @@ function ReaderToc:getTocTitles(file)
     end
     return self.cached_titles[index]
 end
+
+function ReaderToc:getChapterPropsByIndex(n)
+    self:fillToc()
+    if not self.toc then
+        return
+    end
+    return self.toc[n]
+end
+
 
 
 --- PATCH READERHIGHLIGHT

@@ -774,6 +774,9 @@ function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, 
     local current_items_count = DX.vd.current_tab_items and #DX.vd.current_tab_items or 0
     self:closeListDialog()
 
+    --* this sometimes is needed when we made an update to the hits computation routines:
+    DX.vd:updateChapterHtmlIfMissing(needle_item)
+
     --! if you want to show additional or specific props in the info, those props have to be added in ((XrayDataLoader#_loadAllData)) > ((set xray item props)), AND you have to add them to the menu_item props in ((XrayViewsData#filterAndPopulateItemTables))! Search for "mentioned_in" to see an example of this...
     local main_info, hits_info = DX.vd:getItemInfoHtml(needle_item, "ucfirst")
     if not hits_info then

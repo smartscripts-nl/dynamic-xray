@@ -51,9 +51,8 @@ linkwords,
 book_hits, -- an integer
 chapter_hits, -- a string, containing a html list of all hits in the chapters of an ebook
 chapter_hits_data -- a comma delimited string of number, indicating item hits per chapter
-
-series_hits is NOT a db field, it is computed dynamically by queries XrayDataLoader.queries.get_all_book_items and XrayDataLoader.queries.get_all_series_items
 ]]
+--! series_hits is NOT a db field, it is computed dynamically by queries XrayDataLoader.queries.get_all_book_items and XrayDataLoader.queries.get_all_series_items
 
 --* compare ((XrayDataLoader)) for loading data:
 --- @class XrayDataSaver
@@ -242,6 +241,9 @@ local XrayDataSaver = WidgetContainer:new{
 
         [[
             ALTER TABLE bookinfo ADD COLUMN glossary;]],
+
+        [[
+            UPDATE xray_items SET chapter_hits = NULL, chapter_hits_data = NULL WHERE 1;]],
     },
     scheme_version_name = "database_scheme_version",
 }
@@ -333,6 +335,17 @@ function XrayDataSaver.storeChapterHitsData(item)
     local conn = KOR.databases:getDBconn("XrayDataSaver.storeChapterHitsData")
     local stmt = conn:prepare(self.queries.update_chapter_hits_data)
     stmt:reset():bind(chapter_hits_data, item.id):step()
+    conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
+end
+
+-- #((XrayDataSaver.storeMissingChapterHitsData))
+function XrayDataSaver.storeMissingChapterHitsData(item, book_hits)
+    local self = DX.ds
+
+    local chapter_hits_data = table_concat(item.chapter_hits_data, ",")
+    local conn = KOR.databases:getDBconn("XrayDataSaver.storeChapterHitsList")
+    local stmt = conn:prepare(self.queries.update_hits)
+    stmt:reset():bind(book_hits, item.chapter_hits, chapter_hits_data, item.id):step()
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 end
 
