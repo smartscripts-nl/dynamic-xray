@@ -358,6 +358,11 @@ end
 --- @param parent XrayPageNavigator
 function XrayButtons:forPageNavigatorTopLeft(parent)
     return {
+        KOR.buttoninfopopup:forXrayTips({
+            callback = function()
+                return DX.i:showGeneralDXTips(parent)
+            end,
+        }),
         {
             icon = "info-slender",
             callback = function()
@@ -877,6 +882,11 @@ end
 --- @param parent XrayDialogs
 function XrayButtons:forItemViewerTopLeft(parent)
     return {
+        KOR.buttoninfopopup:forXrayTips({
+            callback = function()
+                return DX.i:showGeneralDXTips(parent)
+            end,
+        }),
         {
             icon = "info-slender",
             callback = function()
@@ -1609,6 +1619,11 @@ end
 
 function XrayButtons:forListTopLeft(parent)
     return {
+        KOR.buttoninfopopup:forXrayTips({
+            callback = function()
+                return DX.i:showGeneralDXTips(parent)
+            end,
+        }),
         {
             icon = "info-slender",
             callback = function()

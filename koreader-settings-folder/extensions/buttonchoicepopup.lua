@@ -60,7 +60,7 @@ function ButtonChoicePopup:forXrayItemsImport(props)
 	return KOR.buttonprops:set({
 		icon = "fill",
 		icon_size_ratio = 0.53,
-		info = T(_("fill icon %1if the current book is part of a series, import Xray items from other books in the series, if they are also mentioned in the current book. Hits/occurrences for all Xray items in the current book will be refreshed.%2import items from another series"), "| :", self.separator),
+		info = T(_("bucket icon %1if the current book is part of a series, import Xray items from other books in the series, if they are also mentioned in the current book. Hits/occurrences for all Xray items in the current book will be refreshed.%2import items from another series"), "| :", self.separator),
 		callback_label = _("import"),
 		--! callback defined by calling module
 		hold_callback_label = _("external"),

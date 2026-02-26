@@ -202,7 +202,7 @@ local XraySettings = WidgetContainer:new{
         },
         SeriesManager_all_data_imported = {
             value = false,
-            explanation = _("Series Manager: this value will be set to true after you imported all ebooks data into the Series Manager (via the import icon in the top left of Series Manager dialogs). You can reset this to false if you wish to re-import the data."),
+            explanation = _("Series Manager: this value will be set to true after you imported all ebooks data into the Series Manager (via the bucket icon in the top left of Series Manager dialogs). You can reset this to false if you wish to re-import the data."),
             locked = 0,
             after_change_callback = "series_manager_reload",
         },

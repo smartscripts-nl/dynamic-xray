@@ -49,6 +49,65 @@ function XrayInformation:getMatchReliabilityIndicator(name)
     return self.match_reliability_indicators[name]
 end
 
+function XrayInformation:showGeneralDXTips(parent, active_tab)
+    local screen_dims = Screen:getSize()
+
+    KOR.dialogs:htmlBoxTabbed(active_tab or 1, {
+        parent = parent or DX.pn,
+        title = _("General DX tips"),
+        modal = true,
+        button_font_weight = "normal",
+        --* htmlBox will always have a close_callback and therefor a close button; so no need to define a close_callback here...
+        no_filter_button = true,
+        title_shrink_font_to_fit = true,
+        text_padding_top_bottom = Screen:scaleBySize(10),
+        window_size = {
+            h = screen_dims.h * 0.8,
+            w = screen_dims.w * 0.7,
+        },
+        after_close_callback = function()
+            KOR.registry:unset("add_parent_hotkeys")
+        end,
+        no_buttons_row = true,
+        tabs = {
+            {
+                tab = _("adding items"),
+                html = _([[<ul>
+<li><strong>should I add or not?</strong><br/>If you add an item from a text selection in the book, you can use the add dialog to determine whether this item is important enough in the book to add: because in the title bar of the dialog you will see how many times this item is mentioned in the book.</li>
+<li><strong>best format for person names:</strong><br />If a person is mainly mentioned by his/her last name in the book, then add the name in this format:<br /> <br /><em>LastName, FirstName</em><br/> <br />Doing so will make DX find more hits. In every other case you can best use this format:<br /> <br /><em>FirstName LastName</em><br /> </li>
+<li><strong>defining tag-groups:</strong><br />If you want to be able to explore items as a related group (e.g. by being associated to the same event or a same ship), then give each of these items the same tag. In Page Navigator or in the Exporter you can now explore these items as a group.
+</ul>]])
+            },
+            {
+                tab = _("navigation tips"),
+                html = _([[<ul>
+<li><strong>the best way to navigate?</strong>
+    <ol>
+    <li>If you want to quickly see which Xray items are mentioned in the current page, then tap on the <em>in-page lightning icon</em>. The overview this provides is the best readable of all DX dialogs.</li>
+    <li>Do you want to see which items are in the current page and you want at the same time to explore, then the Page Navigator is you best option. There you can explore relations via the buttons in the side bar. The Page Navigator can be called by <em>longpressing the in-page lightning icon</em>, or with Shift+X on your physical (BT) keyboard.</li>
+    <li>Do you want to explore all items in the current series or book, then call the Items List. With a gesture defined by you, or with Shift+L on your physical (BT) keyboard. If you tap on a iten in the list, you can then explore relations between item via the context buttons in the footer of the Item Viewer.
+    </ol>
+<ul>]])
+            },
+            {
+                tab = _("importing items"),
+                html = _([[<ul>
+    <li><strong>how?</strong><br />with the bucket icon:
+        <ol>
+            <li>in the footer of the Items List</li>
+            <li>in the popup menu of the Page Navigator</li>
+        </ol>
+    </li>
+    <li><strong>why?</strong><br />By importing items you can see how often those items occur in the current ebook.</li>
+    <li><strong>importing from books in the same series:</strong><br />If you start reading a book in a series from which you alread read other titles, you can import the items defined with a <em>tap on the bucket icon</em>.</li>
+    <li><strong>importing from books in another series:</strong><br />Sometimes your book is part of a follow-up series for a previous series. You can then import the items of that previous series by <em>longpressing the bucket icon</em> and then tap on the button "external".</li>
+</ul>]])
+            },
+        },
+    })
+    return true
+end
+
 function XrayInformation:showPageNavigatorHelp(parent, active_tab)
     local screen_dims = Screen:getSize()
 

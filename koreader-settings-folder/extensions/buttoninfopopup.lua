@@ -527,7 +527,7 @@ end
 function ButtonInfoPopup:forSeriesManagerDataImport(props)
 	return KOR.buttonprops:set({
 		icon = "fill",
-		info = _("fill icon | Import data (finished status, percentage read, stars rating) of all known books into Series Manager data."),
+		info = _("bucket icon | Import data (finished status, percentage read, stars rating) of all known books into Series Manager data."),
 		callback_label = _("import"),
 		--! callback defined by calling module
 	}, props)
@@ -569,6 +569,14 @@ function ButtonInfoPopup:forXrayTogglePageOrParagraphInfo(props)
 		icon_size_ratio = 0.4,
 		info = _("page or paragraph icon | Toggle between display of Xray information per page or paragraph."),
 		callback_label = _("toggle"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forXrayTips(props)
+	return KOR.buttonprops:set({
+		icon = "bulb",
+		info = _("Show general DX usage tips."),
 		--! callback defined by calling module
 	}, props)
 end
