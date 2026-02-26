@@ -62,8 +62,8 @@ function XrayInformation:showGeneralDXTips(parent, active_tab)
         title_shrink_font_to_fit = true,
         text_padding_top_bottom = Screen:scaleBySize(10),
         window_size = {
-            h = screen_dims.h * 0.8,
-            w = screen_dims.w * 0.7,
+            h = screen_dims.h * 0.9,
+            w = screen_dims.w * 0.8,
         },
         after_close_callback = function()
             KOR.registry:unset("add_parent_hotkeys")
@@ -71,11 +71,12 @@ function XrayInformation:showGeneralDXTips(parent, active_tab)
         no_buttons_row = true,
         tabs = {
             {
-                tab = _("adding items"),
+                tab = _("items"),
                 html = _([[<ul>
-<li><strong>should I add or not?</strong><br/>If you add an item from a text selection in the book, you can use the add dialog to determine whether this item is important enough in the book to add: because in the title bar of the dialog you will see how many times this item is mentioned in the book.</li>
+<li><strong>should I add or not?</strong><br/>If you add an item from a text selection in the book, you can <em>use the add dialog to determine whether this item is important enough</em> in the book to add: because in the title bar of the dialog you will see how many times this item is mentioned in the book.<br /> </li>
 <li><strong>best format for person names:</strong><br />If a person is mainly mentioned by his/her last name in the book, then add the name in this format:<br /> <br /><em>LastName, FirstName</em><br/> <br />Doing so will make DX find more hits. In every other case you can best use this format:<br /> <br /><em>FirstName LastName</em><br /> </li>
-<li><strong>defining tag-groups:</strong><br />If you want to be able to explore items as a related group (e.g. by being associated to the same event or a same ship), then give each of these items the same tag. In Page Navigator or in the Exporter you can now explore these items as a group.
+<li><strong>defining tag-groups:</strong><br />If you want to <em>be able to explore items as a related group</em> (e.g. by being associated to the same event or a same ship), then give each of these items the same tag. In Page Navigator or in the Exporter you can now explore these items as a group.<br /> </li>
+<li><strong>adding quotes</strong><br />from a text selection in the book you can - by tapping on the button "+ Xray quote" - <em>add your favorite or important quotes to an item</em>. By doing this you'll have them always quickly at hand in the Page Navigator or in the Item Viewer.</li>
 </ul>]])
             },
             {
@@ -84,9 +85,11 @@ function XrayInformation:showGeneralDXTips(parent, active_tab)
 <li><strong>the best way to navigate?</strong>
     <ol>
     <li>If you want to quickly see which Xray items are mentioned in the current page, then tap on the <em>in-page lightning icon</em>. The overview this provides is the best readable of all DX dialogs.</li>
-    <li>Do you want to see which items are in the current page and you want at the same time to explore, then the Page Navigator is you best option. There you can explore relations via the buttons in the side bar. The Page Navigator can be called by <em>longpressing the in-page lightning icon</em>, or with Shift+X on your physical (BT) keyboard.</li>
-    <li>Do you want to explore all items in the current series or book, then call the Items List. With a gesture defined by you, or with Shift+L on your physical (BT) keyboard. If you tap on a iten in the list, you can then explore relations between item via the context buttons in the footer of the Item Viewer.
+    <li>Do you want to see which items are in the current page and <em>you want at the same time to explore relations</em>, then the Page Navigator is you best option. There you can explore relations via the buttons in the side bar. The Page Navigator can be called by <em>longpressing the in-page lightning icon</em>, or with Shift+X on your physical (BT) keyboard.</li>
+    <li>Do you want to <em>explore all items in the current series or book</em>, then call the Items List. With a gesture defined by you, or with Shift+L on your physical (BT) keyboard. If you tap on a iten in the list, you can then explore relations between item via the context buttons in the footer of the Item Viewer.<br /> </li>
     </ol>
+    </li>
+    <li><strong>using the bars in the Occurrences-per-Chapter-Histogram</strong><br />In this Histogram in the Page Navigator you can <em>quickly inspect the locations in the chapter where the active item in the info panel is being mentioned</em>, by tapping on the bar belonging to that chapter. So you don't have to jump to the chapter in the ebook first, to do this.</li>
 <ul>]])
             },
             {
@@ -95,11 +98,11 @@ function XrayInformation:showGeneralDXTips(parent, active_tab)
     <li><strong>how?</strong><br />with the bucket icon:
         <ol>
             <li>in the footer of the Items List</li>
-            <li>in the popup menu of the Page Navigator</li>
+            <li>in the popup menu of the Page Navigator<br /> </li>
         </ol>
     </li>
-    <li><strong>why?</strong><br />By importing items you can see how often those items occur in the current ebook.</li>
-    <li><strong>importing from books in the same series:</strong><br />If you start reading a book in a series from which you alread read other titles, you can import the items defined with a <em>tap on the bucket icon</em>.</li>
+    <li><strong>why?</strong><br />By importing items you can <em>see how often those items occur in the current ebook</em>.<br /> </li>
+    <li><strong>importing from books in the same series:</strong><br />If you start reading a book in a series from which you alread read other titles, you can import the items defined with a <em>tap on the bucket icon</em>.<br /> </li>
     <li><strong>importing from books in another series:</strong><br />Sometimes your book is part of a follow-up series for a previous series. You can then import the items of that previous series by <em>longpressing the bucket icon</em> and then tap on the button "external".</li>
 </ul>]])
             },
