@@ -105,6 +105,7 @@ local HtmlBox = InputContainer:extend{
     ratio_per_chapter = nil,
     screen_height = nil,
     screen_width = nil,
+    separator = nil,
     --* this table will be populated by ((TabFactory#setTabButtonAndContent)):
     tabs_table_buttons = nil,
     title = nil,
@@ -846,6 +847,7 @@ function HtmlBox:setSeparator()
     }
 end
 
+--* compare ((TitleBar for TextViewer)):
 --- @private
 function HtmlBox:generateTitleBar()
     local config = {

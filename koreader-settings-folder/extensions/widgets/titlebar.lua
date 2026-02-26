@@ -81,7 +81,7 @@ local TitleBar = OverlapGroup:extend{
 
     button_padding = Screen:scaleBySize(11), --* fine to keep exit/cross icon diagonally aligned with screen corners
 
-    with_bottom_line = false,
+    with_bottom_line = true,
     bottom_line_h_padding = nil, --* default to 0: full width
     bottom_line_thickness = Size.line.thin,
 

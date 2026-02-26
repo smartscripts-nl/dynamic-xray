@@ -30,6 +30,7 @@ local InfoMessage = require("ui/widget/infomessage")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local InputDialog = require("extensions/widgets/inputdialog")
 local KOR = require("extensions/kor")
+local LineWidget = require("ui/widget/linewidget")
 local MovableContainer = require("extensions/widgets/container/movablecontainer")
 local ScrollTextWidget = require("extensions/widgets/scrolltextwidget")
 local Size = require("extensions/modules/size")
@@ -131,6 +132,7 @@ local TextViewer = InputContainer:extend{
     --* to inform the parent about a newly actived tab, via ((TabNavigator#broadcastActivatedTab)):
     parent = nil,
     prev_item_callback = nil,
+    separator = nil,
     --* this table will be populated by ((TabFactory#setTabButtonAndContent)):
     tabs_table_buttons = nil,
     text = nil,
@@ -178,6 +180,7 @@ function TextViewer:init()
     self:setFaceWidthLineHeight()
     self:initSpacers()
     self:generateTabsTable()
+    self:setSeparator()
     self:computeHeights()
 
     self:initTextWidget()
@@ -338,7 +341,7 @@ function TextViewer:findDialog()
                     end,
                 },
                 {
-                    text = KOR.icons.first_bare,
+                    icon = "first",
                     callback = function()
                         self._find_next = false
                         self:findCallback(input_dialog)
@@ -732,6 +735,9 @@ function TextViewer:computeHeights()
     local button_table_height = self.button_table and self.button_table:getSize().h or 0
     local tabs_table_height = self.tabs_table_buttons and self.tabs_table:getSize().h or 0
     local available_height = self.screen_height - button_table_height - tabs_table_height
+    if self.tabs then
+        available_height = available_height - self.separator:getSize().h
+    end
     local title_height = self.titlebar:getSize().h
     if self.title ~= "dummy" then
         available_height = available_height - title_height
@@ -953,24 +959,28 @@ end
 
 --- @private
 function TextViewer:returnWithTabsTableWithoutButtons(text_section, radius, padding)
-    return {
-            radius = radius,
-            padding = padding,
-            margin = self.add_margin and Size.margin.default or 0,
-            background = Blitbuffer.COLOR_WHITE,
-            VerticalGroup:new {
-                align = "left",
-                self.titlebar,
-            CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.frame_width,
-                    h = self.tabs_table_height,
-                },
-                self.tabs_table,
+    local main_content = VerticalGroup:new{
+        self.titlebar,
+        CenterContainer:new{
+            dimen = Geom:new{
+                w = self.frame_width,
+                h = self.tabs_table_height,
             },
-            self.top_spacer,
-            text_section,
-        }
+            self.tabs_table,
+        },
+        self.top_spacer,
+        text_section,
+    }
+    if self.tabs then
+        table_insert(main_content, 3, self.separator)
+    end
+    main_content.align = "left"
+    return {
+        radius = radius,
+        padding = padding,
+        margin = self.add_margin and Size.margin.default or 0,
+        background = Blitbuffer.COLOR_WHITE,
+        main_content,
     }
 end
 
@@ -1534,7 +1544,7 @@ function TextViewer:initTitleBar()
     end
 
     -- #((TitleBar for TextViewer))
-    --* compare ((TitleBar for Menu)), e.g. for Collections:
+    --* compare ((TitleBar for Menu)), e.g. for Collections, and ((HtmlBox#generateTitleBar)):
     local title_bar_config = {
         width = self.width,
         align = self.title_alignment,
@@ -1556,6 +1566,8 @@ function TextViewer:initTitleBar()
     }
     if self.tabs_table_buttons and self.fullscreen then
         title_bar_config.bottom_line_color = KOR.colors.title_bar_bottom_line
+    end
+    if self.tabs then
         title_bar_config.bottom_line_thickness = Size.line.thick
     end
     self.titlebar = TitleBar:new(title_bar_config)
@@ -1745,6 +1757,20 @@ function TextViewer:setScrollingMode()
     else
         self.fullscreen = false
     end
+end
+
+--- @private
+function TextViewer:setSeparator()
+    if not self.tabs then
+        return
+    end
+    self.separator = LineWidget:new {
+        background = self.tabs_table and KOR.colors.tabs_table_separators or KOR.colors.line_separator,
+        dimen = Geom:new {
+            w = self.width,
+            h = Size.line.thick,
+        }
+    }
 end
 
 function TextViewer:onActivateTab(tab_no)
