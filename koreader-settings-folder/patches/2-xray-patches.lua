@@ -470,11 +470,6 @@ ReaderHighlight.init = function(self)
         return {
             text = tr("+ Xray quote"),
             callback = function()
-                if DX.vd:getBaseItemsCount() == 0 then
-                    this:onClose()
-                    KOR.messages:notify(tr("you haven't added Xray items as yet"))
-                    return
-                end
                 local pos0 = self.selected_text.pos0
                 local quote = util.cleanupSelectedText(this.selected_text.text)
                 this:onClose()
