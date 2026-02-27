@@ -399,13 +399,13 @@ function XrayController:saveNewItem(return_modus)
     self:showListConditionally(new_item, return_modus)
 end
 
-function XrayController:saveUpdatedItem(item_copy, return_modus, reload_manager)
+function XrayController:saveUpdatedItem(return_modus, reload_manager)
     if return_modus then
         self.return_to_viewer = false
     end
     local field_values = DX.d.edit_item_input:getAllTabsFieldsValues()
     --* here the edited item will also be saved to the db:
-    local updated_item = DX.fd:saveUpdatedItem(item_copy, field_values)
+    local updated_item = DX.fd:saveUpdatedItem(field_values)
     DX.fd:setProp("edit_item_index", nil)
 
     if not updated_item then
@@ -455,6 +455,8 @@ end
 
 --*compare ((XrayController#onShowNewItemForm)):
 function XrayController:onShowEditItemForm(needle_item, reload_manager, active_form_tab)
+
+    KOR.registry:set("edit_item", KOR.tables:shallowCopy(needle_item))
 
     local m_item, item_copy = DX.fd:initEditFormProps(needle_item, reload_manager, active_form_tab)
 

@@ -914,11 +914,7 @@ function XrayButtons:forListContext(manager, item)
                 icon_text = KOR.labels.new_item,
                 callback = function()
                     UIManager:close(manager.item_context_dialog)
-                    local exists_already = DX.c:guardIsExistingItem(item.name)
-                    if exists_already then
-                        return false
-                    end
-                    DX.c:onShowNewItemForm(item.name)
+                    DX.c:onShowNewItemForm()
                 end,
                 hold_callback = function()
                     KOR.dialogs:alertInfo(manager.button_info.add_item)
@@ -928,6 +924,8 @@ function XrayButtons:forListContext(manager, item)
                 icon_text = KOR.labels.edit,
                 callback = function()
                     UIManager:close(manager.item_context_dialog)
+                    --! we need this to ensure updated item id will be remembered and item saved, in ((XrayFormsData#storeItemUpdates)) > ((XrayFormsData#reAttachViewerItemId)):
+                    KOR.registry:set("edit_item_id", item.id)
                     DX.c:onShowEditItemForm(item, "reload_manager")
                 end,
                 hold_callback = function()
@@ -1513,7 +1511,7 @@ Sneltoets %1 H]]), KOR.icons.arrow_bare),
 end
 
 --- @param mode string either "add" or "edit"
-function XrayButtons:forItemEditor(mode, active_form_tab, reload_manager, item_copy)
+function XrayButtons:forItemEditor(mode, active_form_tab, reload_manager)
     local edit_or_type_change_button = active_form_tab == 1 and
         self:forItemEditorEditButton()
         or
@@ -1576,7 +1574,7 @@ Continue?]])
                         DX.c:saveNewItem(return_modus)
                         return
                     end
-                    DX.c:saveUpdatedItem(item_copy, return_modus, reload_manager)
+                    DX.c:saveUpdatedItem(return_modus, reload_manager)
                 end,
             }),
             KOR.buttoninfopopup:forXrayItemSave({
@@ -1587,7 +1585,7 @@ Continue?]])
                         DX.c:saveNewItem(return_to_list)
                         return
                     end
-                    DX.c:saveUpdatedItem(item_copy, return_to_list, reload_manager)
+                    DX.c:saveUpdatedItem(return_to_list, reload_manager)
                 end,
             }),
         }

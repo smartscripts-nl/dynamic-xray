@@ -146,7 +146,6 @@ function XrayFormsData:initEditFormProps(item, reload_manager, active_form_tab)
     self.active_form_mode = "edit"
 
     DX.d:setProp("edit_args", {
-        xray_item = item,
         reload_manager = reload_manager,
     })
 
@@ -156,6 +155,7 @@ function XrayFormsData:initEditFormProps(item, reload_manager, active_form_tab)
             include_name_matches = true,
             is_exists_check = true,
         })
+        DX.d:setProp("edit_item", KOR.tables:shallowCopy(item))
     end
 
     --! because of tabs in edit form, we need to re-attach the "hidden" item id after switching between tabs:
@@ -183,7 +183,7 @@ function XrayFormsData:initEditFormProps(item, reload_manager, active_form_tab)
 end
 
 --* compare ((XrayFormsData#saveNewItem)):
-function XrayFormsData:saveUpdatedItem(item_copy, field_values)
+function XrayFormsData:saveUpdatedItem(field_values)
     if not self.edit_item_index then
         KOR.messages:notify(_("edit_item_index has not been set for this item..."))
         return
@@ -191,6 +191,8 @@ function XrayFormsData:saveUpdatedItem(item_copy, field_values)
     --* current method is called from ((XrayController#saveUpdatedItem)); book_hits count was added to the edited item there:
     local edited_props = self:
     convertFieldValuesToItemProps(field_values)
+
+    --! re-attach the item id!:
     self:reAttachViewerItemId(edited_props)
 
     --! name field MUST be present:
@@ -202,7 +204,7 @@ function XrayFormsData:saveUpdatedItem(item_copy, field_values)
     DX.d:setProp("needle_name_for_list_page", "")
     local edited_item = {
         --! this prop is mandatory for saving updated item:
-        id = item_copy.id,
+        id = edited_props.id,
         name = edited_props.name,
         description = edited_props.description,
         short_names = edited_props.short_names,
@@ -262,10 +264,22 @@ end
 --* this id was "remembered" in ((XrayFormsData#setFormItemId)):
 function XrayFormsData:reAttachViewerItemId(item)
     if self.form_item_id then
-        --! never set this value to nil, because we need it when switching between form tabs in the edit form:
+        --! never let the id of an item get set to nil, because we need it when switching between form tabs in the edit form:
         item.id = self.form_item_id
+        self:resetFormItemId()
+        return
     end
-    self:resetFormItemId()
+
+    --* fallback; this prop was set in ((XrayFormsData#initEditFormProps)):
+    local edit_item = KOR.registry:get("edit_item")
+    if edit_item then
+        item.id = edit_item.id
+
+    --? for some reason we need the second fallback in case of editing items from List context menu, because otherwise id would not be remembered:
+    --* this prop was set in ((XrayButtons#forListContext)):
+    else
+        item.id = KOR.registry:getOnce("edit_item_id")
+    end
 end
 
 --* this id is set upon viewing an item from the list or after tapping an Xray item button in ((XrayDialogs#showItemViewer)), or upon viewing an item found upon tapping a word in the reader in ((XrayDialogs#viewTappedWordItem)):
@@ -474,6 +488,7 @@ function XrayFormsData:storeItemUpdates(mode, item)
     if not item then
         KOR.messages:notify(_("item could not be updated..."))
         return
+
     elseif not item.id then
         return
     end

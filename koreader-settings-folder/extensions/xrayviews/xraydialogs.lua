@@ -215,7 +215,7 @@ function XrayDialogs:showNewItemForm(args)
         is_borderless = true,
         is_popout = false,
         input = "",
-        buttons = DX.b:forItemEditor("add", self.active_form_tab, item_copy),
+        buttons = DX.b:forItemEditor("add", self.active_form_tab),
     }
 
     UIManager:show(self.add_item_input)
@@ -281,7 +281,7 @@ function XrayDialogs:showEditItemForm(args)
         is_borderless = true,
         is_popout = false,
         --* saving edits: ((XrayController#saveUpdatedItem)) > ((XrayFormsData#saveUpdatedItem))
-        buttons = DX.b:forItemEditor("edit", active_form_tab, args.reload_manager, item_copy),
+        buttons = DX.b:forItemEditor("edit", active_form_tab, args.reload_manager),
     }
 
     UIManager:show(self.edit_item_input)
