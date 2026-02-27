@@ -508,45 +508,42 @@ function XrayViewsData:_doStrongMatchCheck(needle_item, matcher, args, t, for_re
     local is_exists_check = args.is_exists_check
     local tapped_ok, is_same_item, exists
 
-    local item = self.item_table[1][t]
-    local haystack_name = item.name
-    --* check for cases when the user tapped on a Xray item name part which was all in uppercase (e.g. in the intro text of a chapter):
-    local haystack_name_ucfirst = KOR.strings:ucfirst(haystack_name)
-    local haystack_name_inverted = haystack_name:match(",") and haystack_name:gsub("^([^,]+), +(.+)$", "%2 %1")
-    local uc, is_lower_needle = getNameVariants(haystack_name)
+    local existing_item = self.item_table[1][t]
+    local existing_name = existing_item.name
+    local existing_name_inverted = existing_name:match(",") and existing_name:gsub("^([^,]+), +(.+)$", "%2 %1")
+    local uc, is_lower_needle = getNameVariants(existing_name)
 
     --* for checks whether an item exists we use very strict matching:
     exists = is_exists_check and
         (
-            haystack_name == needle_item.name
-            or haystack_name:match("^" .. matcher .. "[, ]")
-            or haystack_name:match(" " .. matcher .. "[, ]")
-            or haystack_name:match(" " .. matcher .. "$")
-            or haystack_name == haystack_name_inverted
-            or haystack_name == haystack_name_ucfirst
+            existing_name == needle_item.name
+            or existing_name_inverted == needle_item.name
+            or existing_name:match("^" .. matcher .. "[, ]")
+            or existing_name:match(" " .. matcher .. "[, ]")
+            or existing_name:match(" " .. matcher .. "$")
         )
     if exists then
         --* needle_item, item_was_upgraded, needle_matches_fullname:
-        return item, true, true
+        return existing_item, true, true
     end
 
     tapped_ok = not tapped_word
-        or tapped_word == haystack_name
-        or tapped_word == haystack_name
+        or tapped_word == existing_name
+        or tapped_word == existing_name
         or (is_lower_needle and tapped_word == uc)
 
-    is_same_item = needle_item.index == item.index
-        or needle_item.name == haystack_name
+    is_same_item = needle_item.index == existing_item.index
+        or needle_item.name == existing_name
         --* plural:
-        or haystack_name:match("^" .. matcher .. "s$")
+        or existing_name:match("^" .. matcher .. "s$")
         or (is_lower_needle and uc:match("^" .. matcher .. "s$"))
 
     if tapped_ok and is_same_item then
         if for_relations then
-            item.reliability_indicator = DX.i:getMatchReliabilityIndicator("full_name")
-            return { item }, true, true
+            existing_item.reliability_indicator = DX.i:getMatchReliabilityIndicator("full_name")
+            return { existing_item }, true, true
         end
-        return item, true, true
+        return existing_item, true, true
     end
 end
 
