@@ -234,7 +234,7 @@ function XrayTappedWords:itemExists(needle_name, tapped_word, is_exists_check)
     }
 
     needle_item, item_was_upgraded, needle_matches_fullname = views_data:upgradeNeedleItem(needle_item, {
-        for_relations = not is_exists_check and true,
+        for_relations = not is_exists_check,
         include_name_match = include_name_match,
         is_exists_check = is_exists_check,
         tapped_word = tapped_word,

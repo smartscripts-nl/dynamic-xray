@@ -492,6 +492,8 @@ function XrayViewsData:getChapterHitsData(item)
     return chapter_hits_data, max_hits, total_count
 end
 
+--* compare ((XrayViewsData#getXrayItemNameVariants)):
+-- #((getNameVariants))
 --- @private
 local function getNameVariants(haystack_name)
     local uc = KOR.strings:ucfirst(haystack_name, "force_only_first")
@@ -507,17 +509,18 @@ function XrayViewsData:_doStrongMatchCheck(needle_item, matcher, args, t, for_re
     local tapped_ok, is_same_item, exists
 
     local item = self.item_table[1][t]
-    local needle_name = needle_item.name
     local haystack_name = item.name
+    local haystack_name_inverted = haystack_name:match(",") and haystack_name:gsub("^([^,]+), +(.+)$", "%2 %1")
     local uc, is_lower_needle = getNameVariants(haystack_name)
 
     --* for checks whether an item exists we use very strict matching:
     exists = is_exists_check and
         (
-        haystack_name == needle_name
-        or haystack_name:match("^" .. needle_name .. "[, ]")
-        or haystack_name:match(" " .. needle_name .. "[, ]")
-        or haystack_name:match(" " .. needle_name .. "$")
+            haystack_name == needle_item.name
+            or haystack_name == haystack_name_inverted
+            or haystack_name:match("^" .. matcher .. "[, ]")
+            or haystack_name:match(" " .. matcher .. "[, ]")
+            or haystack_name:match(" " .. matcher .. "$")
         )
     if exists then
         --* needle_item, item_was_upgraded, needle_matches_fullname:
@@ -559,6 +562,8 @@ function XrayViewsData:_doWeakMatchCheck(t, needle, partial_matches, for_relatio
     local haystack, uc_haystack, is_lower_haystack, indicator
     for i = 1, loops_count do
         haystack = needles[i]
+        --! force items in format [LastName, FirstName] to match:
+        haystack = haystack:gsub(",", "")
         uc_haystack, is_lower_haystack = getNameVariants(haystack)
         indicator = self:haystackItemPartlyMatches(needle, haystack, uc_haystack, is_lower_haystack)
         if indicator then
@@ -1583,6 +1588,7 @@ function XrayViewsData:haystackItemPartlyMatches(needle, haystack, uc_haystack, 
     return false
 end
 
+--* compare ((getNameVariants)), used to find hits when tapping on words in the ebook:
 function XrayViewsData:getXrayItemNameVariants(item)
     local needles = {
         item.name
