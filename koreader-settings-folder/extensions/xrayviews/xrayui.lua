@@ -808,7 +808,7 @@ end
 function XrayUI:toggleParagraphOrPageMode(parent, target, new_trigger)
     local question = T(_([[Do you indeed want to toggle the Xray information display mode to %1?]]), target, new_trigger)
     KOR.dialogs:confirm(question, function()
-        DX.s:toggleSetting("ui_mode", { "page", "paragraph" })
+        DX.s:toggleSetting("UI_mode", { "page", "paragraph" })
         if parent then
             UIManager:close(parent.xray_ui_info_dialog)
             parent.xray_ui_info_dialog = nil

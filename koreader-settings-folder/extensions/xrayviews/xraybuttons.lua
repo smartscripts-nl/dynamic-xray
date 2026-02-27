@@ -422,6 +422,11 @@ end
 --- @param parent XrayDialogs
 function XrayButtons:forUiInfoTopLeft(target, new_trigger, parent)
     return {
+        KOR.buttoninfopopup:forXrayTips({
+            callback = function()
+                return DX.i:showGeneralDXTips(parent)
+            end,
+        }),
         KOR.buttoninfopopup:forXrayTogglePageOrParagraphInfo({
             icon = DX.s.UI_mode == "paragraph" and "paragraph" or "pages",
             callback = function()
