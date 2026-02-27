@@ -1391,10 +1391,6 @@ function XrayButtons:injectItemsCollectionButton(buttons, indicator_buttons, sta
     if is_non_bold_alias then
         item_with_alias_found = true
     end
-    --? why return here?:
-    if is_alias or item_with_alias_found then
-        return false
-    end
     more_button_added = self:addTappedWordCollectionButton(buttons, indicator_buttons, status_icons, item, {
         add_more_button = add_more_button,
         max_total_buttons = self.hits_buttons_max,
