@@ -152,10 +152,25 @@ function Strings:lcfirst(str, force_only_first)
     return (force_only_first and Utf8Proc.lowercase(util.fixUtf8(str, "?")) or str:gsub("^%u", string.lower))
 end
 
---* only return ucfirst variant of string if it not contains uppercase characters:
 function Strings:ucfirst(str, force_only_first)
-    --* %l matches lower case characters:
-    return (force_only_first and str:sub(1, 1):upper() .. Utf8Proc.lowercase(util.fixUtf8(str:sub(2), "?")) or str:gsub("^%l", string.upper))
+    if type(str) ~= "string" or str == "" then
+        return str
+    end
+
+    --* always normalize input first:
+    str = util.fixUtf8(str, "?")
+    --* normalize whole string to lowercase first:
+    str = Utf8Proc.lowercase(str)
+
+    if force_only_first then
+        return Utf8Proc.uppercase_dumb(str:sub(1, 1)) .. str:sub(2)
+    end
+
+    --* capitalize start of every word:
+    --* word = sequence separated by whitespace:
+    return (str:gsub("(%S+)", function(word)
+        return Utf8Proc.uppercase_dumb(word:sub(1, 1)) .. word:sub(2)
+    end))
 end
 
 --* return utf8-safe lowercase string:

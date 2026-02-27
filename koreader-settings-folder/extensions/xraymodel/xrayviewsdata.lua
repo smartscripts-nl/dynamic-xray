@@ -510,6 +510,8 @@ function XrayViewsData:_doStrongMatchCheck(needle_item, matcher, args, t, for_re
 
     local item = self.item_table[1][t]
     local haystack_name = item.name
+    --* check for cases when the user tapped on a Xray item name part which was all in uppercase (e.g. in the intro text of a chapter):
+    local haystack_name_ucfirst = KOR.strings:ucfirst(haystack_name)
     local haystack_name_inverted = haystack_name:match(",") and haystack_name:gsub("^([^,]+), +(.+)$", "%2 %1")
     local uc, is_lower_needle = getNameVariants(haystack_name)
 
@@ -517,10 +519,11 @@ function XrayViewsData:_doStrongMatchCheck(needle_item, matcher, args, t, for_re
     exists = is_exists_check and
         (
             haystack_name == needle_item.name
-            or haystack_name == haystack_name_inverted
             or haystack_name:match("^" .. matcher .. "[, ]")
             or haystack_name:match(" " .. matcher .. "[, ]")
             or haystack_name:match(" " .. matcher .. "$")
+            or haystack_name == haystack_name_inverted
+            or haystack_name == haystack_name_ucfirst
         )
     if exists then
         --* needle_item, item_was_upgraded, needle_matches_fullname:
@@ -548,22 +551,43 @@ function XrayViewsData:_doStrongMatchCheck(needle_item, matcher, args, t, for_re
 end
 
 --- @private
-function XrayViewsData:_doWeakMatchCheck(t, needle, partial_matches, for_relations)
+function XrayViewsData:_doWeakMatchCheck(t, needle, args, partial_matches, for_relations)
     local item = self.item_table[1][t]
 
+    --! force items in format [LastName, FirstName] to match:
+    local name = item.name:gsub(",", "")
     local needles = {
-        item.name,
+        name,
     }
-    local loops_count = 1
+    --* check for cases when the user tapped on a Xray item name part which was all in uppercase (e.g. in the intro text of a chapter), so then convert it to ucfirst here:
+    if args.tapped_word and args.tapped_word:match("^[-A-Z]+$") then
+        local matcher = KOR.strings:ucfirst(args.tapped_word):gsub("%-", "%%-")
+        if (
+            has_text(item.aliases) and item.aliases:match(matcher)
+        )
+        or
+        (
+            has_text(item.short_names) and item.short_names:match(matcher)
+        )
+        then
+            if for_relations then
+                item.reliability_indicator = DX.i:getMatchReliabilityIndicator("alias")
+            end
+            table_insert(partial_matches, item)
+            --* item_was_upgraded:
+            return true
+        end
+    end
     if has_text(item.aliases) then
         table_insert(needles, item.aliases)
-        loops_count = 2
+    end
+    if has_text(item.short_names) then
+        table_insert(needles, item.short_names)
     end
     local haystack, uc_haystack, is_lower_haystack, indicator
+    local loops_count = #needles
     for i = 1, loops_count do
         haystack = needles[i]
-        --! force items in format [LastName, FirstName] to match:
-        haystack = haystack:gsub(",", "")
         uc_haystack, is_lower_haystack = getNameVariants(haystack)
         indicator = self:haystackItemPartlyMatches(needle, haystack, uc_haystack, is_lower_haystack)
         if indicator then
@@ -599,7 +623,7 @@ function XrayViewsData:upgradeNeedleItem(needle_item, args)
     end
 
     for t = 1, count do
-        item_was_upgraded = self:_doWeakMatchCheck(t, needle_item.name, partial_matches, for_relations)
+        item_was_upgraded = self:_doWeakMatchCheck(t, needle_item.name, args, partial_matches, for_relations)
         if item_was_upgraded then
             break
         end
@@ -1609,6 +1633,8 @@ function XrayViewsData:getXrayItemNameVariants(item)
                 --* we are not interested in lower case parts of person names:
                 if not is_person or values[i]:match("[A-Z]") then
                     table_insert(needles, values[i])
+                    --* for all uppercase variants, e.g. in intro texts at the start of chapters:
+                    table_insert(needles, KOR.strings:upper(values[i]))
                 end
             end
         end
