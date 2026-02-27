@@ -1073,9 +1073,8 @@ function XrayViewsData:updateChapterHtmlIfMissing(item)
     DX.ds.storeMissingChapterHitsData(item, book_hits)
 end
 
-function XrayViewsData:getItemInfoHtml(item, ucfirst)
-    local separator = "<br>"
-    local info = ucfirst and KOR.strings:ucfirst(item.description) .. separator or separator .. item.description .. separator
+function XrayViewsData:getItemInfoHtml(item)
+    local info = item.description .. "<br>"
 
     local meta_info = { "<table style='margin-top: 2.5em'>" }
     self:addAliasesHtml(meta_info, item)
