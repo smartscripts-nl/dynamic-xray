@@ -1096,6 +1096,8 @@ function XrayButtons:getListSubmenuButton(tab_no)
 end
 
 function XrayButtons:forChapterInformationPopup(parent, page, for_page_navigator, current_chapter, last_chapter)
+    local max_loops = 150
+    local lcount
     local buttons = {{
      {
          icon = "back",
@@ -1106,9 +1108,17 @@ function XrayButtons:forChapterInformationPopup(parent, page, for_page_navigator
      {
          icon = "previous",
          callback = function()
+             lcount = 0
              current_chapter = current_chapter - 1
              if current_chapter < 1 then
                  current_chapter = last_chapter
+             end
+             while not parent:chapterHasOccurrences(current_chapter) and lcount <= max_loops do
+                 lcount = lcount + 1
+                 current_chapter = current_chapter - 1
+                 if current_chapter < 1 then
+                     current_chapter = last_chapter
+                 end
              end
              UIManager:close(parent.information_dialog)
              parent:showChapterInformation(current_chapter)
@@ -1117,9 +1127,17 @@ function XrayButtons:forChapterInformationPopup(parent, page, for_page_navigator
      {
          icon = "next",
          callback = function()
+             lcount = 0
              current_chapter = current_chapter + 1
              if current_chapter > last_chapter then
                  current_chapter = 1
+             end
+             while not parent:chapterHasOccurrences(current_chapter) and lcount <= max_loops do
+                 lcount = lcount + 1
+                 current_chapter = current_chapter + 1
+                 if current_chapter > last_chapter then
+                     current_chapter = 1
+                 end
              end
              UIManager:close(parent.information_dialog)
              parent:showChapterInformation(current_chapter)

@@ -15,6 +15,7 @@ local _ = KOR:initCustomTranslations()
 local T = require("ffi/util").template
 
 local DX = DX
+local has_items = has_items
 local math_floor = math.floor
 
 --- @class XrayOccurrencesHistogram
@@ -92,7 +93,10 @@ function XrayOccurrencesHistogram:chapterHoldCallback(n)
     return self:showChapterInformation(n)
 end
 
---- @private
+function XrayOccurrencesHistogram:chapterHasOccurrences(n)
+    return has_items(self.occurrences_per_chapter[n])
+end
+
 function XrayOccurrencesHistogram:showChapterInformation(n)
     --* DX.vd.book_chapters was populated in ((XrayDataLoader#_populateViewsDataBookChapters)):
     local chapter_title = DX.vd.book_chapters[n] or "-"
