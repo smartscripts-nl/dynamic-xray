@@ -386,6 +386,13 @@ function ReaderToc:getTocPathInfoForText(pos0, context_info, has_own_title)
     return context_info .. indent .. last, title
 end
 
+function ReaderToc:getPageFromItemIndex(index)
+    self:fillToc()
+    if self.toc[index] then
+        return self.toc[index].page
+    end
+end
+
 function ReaderToc:getPageFromItemTitle(title)
     self:fillToc()
     count = #self.toc

@@ -96,12 +96,8 @@ end
 function XrayOccurrencesHistogram:showChapterInformation(n)
     --* DX.vd.book_chapters was populated in ((XrayDataLoader#_populateViewsDataBookChapters)):
     local chapter_title = DX.vd.book_chapters[n] or "-"
-    local page
-    local display_page = ""
-    if chapter_title ~= "-" then
-        page = KOR.toc:getPageFromItemTitle(chapter_title)
-        display_page = _(", page") .. " " .. page
-    end
+    local page = KOR.toc:getPageFromItemIndex(n) or 1
+    local display_page = ", pagina " .. page
 
     local buttons = DX.b:forChapterInformationPopup(self, page, self.for_page_navigator, n, self.chapters_count)
 

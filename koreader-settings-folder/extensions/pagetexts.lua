@@ -356,6 +356,9 @@ function PageTexts:getChapterText(as_html, needles, current_page)
     local chapter_start_page = KOR.toc:getChapterStartPage(xp)
     local start_xp = KOR.document:getPageXPointer(chapter_start_page)
     local next_chapter_start_page = KOR.toc:getNextChapter(current_page)
+    if not next_chapter_start_page then
+        return "", current_toc_title
+    end
     local end_xp = KOR.document:getPageXPointer(next_chapter_start_page)
     local text = KOR.document:getTextFromXPointers(start_xp, end_xp)
 
