@@ -24,6 +24,7 @@ local VerticalGroup = require("ui/widget/verticalgroup")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local Screen = require("device").screen
 local _ = KOR:initCustomTranslations()
+local Size = require("ui/size")
 local T = require("ffi/util").template
 
 local DX = DX
@@ -817,6 +818,7 @@ function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, 
         title = title,
         top_buttons_left = DX.b:forItemViewerTopLeft(self, needle_item),
         tabs = tabs,
+        bottom_widget = DX.s.IV_show_occurrences_histogram and self:generateOccurrencesHistogram(needle_item),
         window_size = "max",
         box_font_size = DX.s.IV_font_size,
         button_font_weight = "normal",
@@ -847,6 +849,21 @@ end
 
 function XrayDialogs:closeItemViewer()
     UIManager:close(self.item_viewer)
+end
+
+function XrayDialogs:generateOccurrencesHistogram(item)
+    local chapters_count, ratio_per_chapter, occurrences_per_chapter = DX.pn:computeHistogramData(item)
+    return DX.oh:generateChapterOccurrencesHistogram({
+        occurrences_subject = item,
+        occurrences_per_chapter = occurrences_per_chapter,
+        ratio_per_chapter = ratio_per_chapter,
+        current_chapter_index = KOR.toc:getTocIndexByPage(DX.u:getCurrentPage()),
+        --* this is the width of a "max" HtmlBox:
+        info_panel_width = Screen:getWidth() - 2 * Size.margin.default - Screen:scaleBySize(20),
+        chapters_count = chapters_count,
+        histogram_height = Screen:scaleBySize(DX.s.IV_occurrences_histogram_height),
+        histogram_bottom_line_height = Size.line.thin,
+    })
 end
 
 function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_word)

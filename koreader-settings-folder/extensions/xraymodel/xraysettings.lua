@@ -139,6 +139,24 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
             type = "number",
         },
+        IV_occurrences_histogram_height = {
+            value = 30,
+            validator = {
+                name = "item_viewer_histogram_height",
+                min_value = 20,
+                max_value = 45,
+                default_value = 30,
+                value_step = 1,
+            },
+            type = "number",
+            explanation = _("This variable determines the height of the chapter-occurrences-histogram in the Item Viewer. Valid values lie between 20 and 45."),
+            locked = 0,
+        },
+        IV_show_occurrences_histogram = {
+            value = true,
+            explanation = _("This variable determines whether a chapter-occurrences-histogram will be shown in the Item Viewer tabs (or not)."),
+            locked = 0,
+        },
         PN_infopanel_meta_indent = {
             value = 10,
             explanation = _("This variables enables the numbers of spaces used to indent the item meta information (hits, aliases etc.) in the PN item info panel at the bottom."),
@@ -294,12 +312,15 @@ local XraySettings = WidgetContainer:new{
     },
     validators = {
         info_panel_height = function(value)
-            return type(value) == "number" and value >= 0.1 and value <= 0.5 or _("a valid value should lie between 0.1 and 0.5...")
+            return type(value) == "number" and value >= 0.1 and value <= 0.5 or _("a valid value should lie between 0.1 and 0.5") .. KOR.strings.ellipsis
+        end,
+        item_viewer_histogram_height = function(value)
+            return type(value) == "number" and value >= 20 and value <= 45 or _("a valid value should lie between 20 and 45") .. KOR.strings.ellipsis
         end,
         item_info_indent = function(value)
             --* so we immediately will see the new indentation:
             DX.pn:resetCache("do_limited_refresh")
-            return type(value) == "number" and value >= 4 and value <= 14 or _("a valid value should lie between 4 and 14...")
+            return type(value) == "number" and value >= 4 and value <= 14 or _("a valid value should lie between 4 and 14") .. KOR.strings.ellipsis
         end,
     },
 }

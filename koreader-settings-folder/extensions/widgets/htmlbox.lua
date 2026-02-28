@@ -81,6 +81,7 @@ local HtmlBox = InputContainer:extend{
     additional_key_events = nil,
     after_close_callback = nil,
     align = "center",
+    bottom_widget = nil,
     box_font_size = 18,
     buttons_table = nil,
     content_padding = nil,
@@ -265,6 +266,13 @@ function HtmlBox:generateScrollWidget()
             width = self.swidth,
             height = self.sheight,
         }
+        if self.bottom_widget then
+            self.html_widget = VerticalGroup:new{
+                align = "left",
+                self.html_widget,
+                self.bottom_widget,
+            }
+        end
         return
     end
 
@@ -276,6 +284,13 @@ function HtmlBox:generateScrollWidget()
         height = self.sheight,
         dialog = self,
     }
+    if self.bottom_widget then
+        self.html_widget = VerticalGroup:new{
+            align = "left",
+            self.html_widget,
+            self.bottom_widget,
+        }
+    end
 end
 
 function HtmlBox:onCloseWidget()
@@ -570,6 +585,11 @@ function HtmlBox:computeHeights()
         local nb_lines = Math.round(self.content_height / self.content_line_height)
         self.content_height = nb_lines * self.content_line_height
         self.height = self.content_height + others_height
+    end
+
+    if self.bottom_widget then
+        local bottom_widget_height = self.bottom_widget:getSize().h
+        self.content_height = self.content_height - bottom_widget_height
     end
 end
 
