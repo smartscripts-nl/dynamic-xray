@@ -26,15 +26,12 @@ local PageTexts = WidgetContainer:extend{
 }
 
 function PageTexts:countItemOccurrences(text, needles)
-
-    local total_count = 0
     local rcount
     for i = 1, #needles do
-        text, rcount = text:gsub("%f[%w_]" .. needles[i] .. "%f[^%w_]", "")
-        total_count = total_count + rcount
+        text, rcount = text:gsub("%f[%w_]" .. needles[i] .. "%f[^%w_]", "<strong>")
     end
-
-    return total_count
+    local parts = KOR.strings:split(text, "<strong>")
+    return #parts - 1
 end
 
 function PageTexts:getAllHtmlContainersInPage(page_xp, start_page_no, include_punctuation, toc_title_condition)
@@ -385,6 +382,19 @@ function PageTexts:getChapterText(as_html, needles, current_page)
     end
 
     return table_concat(lines, "\n"), current_toc_title
+end
+
+function PageTexts:getChapterTextBare(start_page, xp, end_xp)
+    local toc_title = KOR.toc:getTocTitleByPage(start_page)
+    local chapter_text = KOR.document:getTextFromXPointers(xp, end_xp)
+    local non_current_chapter_start_lines = self:getNonCurrentChapterLinesCount(toc_title, start_page, xp)
+
+    local lines = KOR.strings:split(chapter_text, "\n")
+    for r = 1, non_current_chapter_start_lines do
+        table_remove(lines, 1)
+        self.garbage = r
+    end
+    return table_concat(lines, "\n")
 end
 
 return PageTexts

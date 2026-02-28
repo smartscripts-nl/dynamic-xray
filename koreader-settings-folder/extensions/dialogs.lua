@@ -597,6 +597,7 @@ function Dialogs:niceAlert(title, info, options)
     dialog = KOR.nicealert:new{
         info_text = prefix .. info .. "\n",
         mono_face = options.mono_face,
+        top_buttons_left = options.top_buttons_left,
         info_buttons = buttons,
         title = title,
         called_externally = true,

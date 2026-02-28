@@ -1187,6 +1187,17 @@ function XrayButtons:forChapterInformationPopup(parent, page, for_page_navigator
     return buttons
 end
 
+function XrayButtons:forChapterInformationTopLeft()
+    return {
+        {
+            icon = "info-slender",
+            callback = function()
+                KOR.dialogs:niceAlert(_("For your information"), _("The statistics shown below are an ESTIMATE: the beginning and end of the chapter and the exact number of item occurrences cannot always be determined with complete accuracy.\n\nSometimes a small portion of text from the previous or next chapter is displayed at the beginning or end of a chapter, or the text on the last page of the chapter may be missing. Unfortunately, this cannot be avoided.\n\nUse the arrow buttons to navigate from preview to preview. Target icons allow you to jump directly to the chapter itself."))
+            end,
+        },
+    }
+end
+
 function XrayButtons:forEditDescription(callback, cancel_callback)
     return {
         {

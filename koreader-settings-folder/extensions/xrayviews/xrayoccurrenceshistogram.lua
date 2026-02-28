@@ -115,6 +115,7 @@ function XrayOccurrencesHistogram:showChapterInformation(n)
         end
         self.information_dialog = KOR.dialogs:htmlBox({
             title = title,
+            top_buttons_left = DX.b:forChapterInformationTopLeft(),
             fullscreen = true,
             html = T("<p><strong>Stats</strong><br />%1</p><ul><li>Chapter %2/%3%4<br/>\n\"%5\"</li>\n<li>Occurrences: %6</li></ul><p>%7<br /><strong>All mentions int the chapter</strong><br />%8</p>\n", " ", n, self.chapters_count, display_page, chapter_title, self.occurrences_per_chapter[n], " ", " ") .. chapter_html,
             left_side_buttons = buttons,
@@ -123,7 +124,8 @@ function XrayOccurrencesHistogram:showChapterInformation(n)
     end
 
     self.information_dialog = KOR.dialogs:niceAlert(self.occurrences_subject, T(_("Chapter %1/%2%3%4\"%5\"%6Occurrences: %7"), n, self.chapters_count, display_page, "\n", chapter_title, "\n\n", self.occurrences_per_chapter[n]), {
-        buttons = buttons
+        buttons = buttons,
+        top_buttons_left = DX.b:forChapterInformationTopLeft(),
     })
     return true
 end

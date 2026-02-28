@@ -465,9 +465,8 @@ function XrayViewsData:getChapterHitsData(item)
         xp = chapter_positions[i][1]
         start_page = chapter_positions[i][2]
         end_xp = chapter_positions[i + 1][1]
+        chapter_text = KOR.pagetexts:getChapterTextBare(start_page, xp, end_xp)
         chapter_hits = KOR.pagetexts:getChapterHits(i, needles, start_page, xp, end_xp)
-        chapter_text = KOR.document:getTextFromXPointers(xp, end_xp)
-        chapter_hits = KOR.pagetexts:countItemOccurrences(chapter_text, needles)
         total_count = total_count + chapter_hits
         table_insert(chapter_hits_data, chapter_hits)
         if chapter_hits > max_hits then
