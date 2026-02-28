@@ -20,6 +20,7 @@ local math_floor = math.floor
 --- @class XrayOccurrencesHistogram
 local XrayOccurrencesHistogram = WidgetContainer:new{
     chapters_count = nil,
+    for_page_navigator = false,
     information_dialog = nil,
     occurrences_per_chapter = nil,
     occurrences_subject = nil,
@@ -102,7 +103,7 @@ function XrayOccurrencesHistogram:showChapterInformation(n)
         display_page = _(", page") .. " " .. page
     end
 
-    local buttons = DX.b:forChapterInformationPopup(self, page)
+    local buttons = DX.b:forChapterInformationPopup(self, page, self.for_page_navigator, n, self.chapters_count)
 
     if page then
         local needles = DX.vd:getXrayItemNameVariants(self.occurrences_subject)
@@ -116,7 +117,7 @@ function XrayOccurrencesHistogram:showChapterInformation(n)
             title = title,
             fullscreen = true,
             html = T("<p><strong>Stats</strong><br />%1</p><ul><li>Chapter %2/%3%4<br/>\n\"%5\"</li>\n<li>Occurrences: %6</li></ul><p>%7<br /><strong>All mentions int the chapter</strong><br />%8</p>\n", " ", n, self.chapters_count, display_page, chapter_title, self.occurrences_per_chapter[n], " ", " ") .. chapter_html,
-            buttons = buttons,
+            left_side_buttons = buttons,
         })
         return true
     end

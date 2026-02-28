@@ -21,6 +21,7 @@ local has_no_text = has_no_text
 local has_text = has_text
 local table = table
 local table_insert = table.insert
+local table_remove = table.remove
 
 local count
 
@@ -1094,13 +1095,35 @@ function XrayButtons:getListSubmenuButton(tab_no)
     }
 end
 
-function XrayButtons:forChapterInformationPopup(parent, page)
-    return {{
+function XrayButtons:forChapterInformationPopup(parent, page, for_page_navigator, current_chapter, last_chapter)
+    local buttons = {{
      {
          icon = "back",
          callback = function()
              UIManager:close(parent.information_dialog)
          end
+     },
+     {
+         icon = "previous",
+         callback = function()
+             current_chapter = current_chapter - 1
+             if current_chapter < 1 then
+                 current_chapter = last_chapter
+             end
+             UIManager:close(parent.information_dialog)
+             parent:showChapterInformation(current_chapter)
+         end,
+     },
+     {
+         icon = "next",
+         callback = function()
+             current_chapter = current_chapter + 1
+             if current_chapter > last_chapter then
+                 current_chapter = 1
+             end
+             UIManager:close(parent.information_dialog)
+             parent:showChapterInformation(current_chapter)
+         end,
      },
      {
          icon_text = {
@@ -1111,6 +1134,7 @@ function XrayButtons:forChapterInformationPopup(parent, page)
              if not parent:handleBeforeGotoPageRequest(page) then
                  return
              end
+             UIManager:close(parent.information_dialog)
              DX.sp:resetActiveSideButtons("NavigatorBox:showChapterInformation")
              DX.pn.page_no = page
              DX.pn:restoreNavigator()
@@ -1122,14 +1146,27 @@ function XrayButtons:forChapterInformationPopup(parent, page)
              text = " " .. KOR.icons.arrow_bare .. " " .. _("book"),
          },
          callback = function()
-             if not parent:handleBeforeGotoPageRequest(page) then
-                 return
+             if for_page_navigator then
+                     if not parent:handleBeforeGotoPageRequest(page) then
+                     return
+                 end
+                 UIManager:close(parent.information_dialog)
+                 KOR.ui.link:addCurrentLocationToStack()
+                 KOR.ui:handleEvent(Event:new("GotoPage", page))
+                return
              end
+             UIManager:close(parent.information_dialog)
+             DX.d:closeItemViewer()
              KOR.ui.link:addCurrentLocationToStack()
              KOR.ui:handleEvent(Event:new("GotoPage", page))
          end
      },
  }}
+    --* remove jump in Page Navigator button:
+    if not for_page_navigator then
+        table_remove(buttons[1], 4)
+    end
+    return buttons
 end
 
 function XrayButtons:forEditDescription(callback, cancel_callback)
@@ -1593,7 +1630,7 @@ Continue?]])
     }
     --* remove save and return to list button in case of tapped words viewer:
     if DX.m.use_tapped_word_data then
-        table.remove(buttons[1], 5)
+        table_remove(buttons[1], 5)
     end
     return buttons
 end

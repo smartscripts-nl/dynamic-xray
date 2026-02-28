@@ -33,7 +33,10 @@ local math_floor = math.floor
 local pairs = pairs
 local table = table
 local table_insert = table.insert
+local table_remove = table.remove
 local type = type
+
+local count
 
 -- Inject scroll page method for ScrollHtmlWidget
 ScrollHtmlWidget.scrollToPage = function(self, page_num)
@@ -95,6 +98,7 @@ local HtmlBox = InputContainer:extend{
     height = nil,
     html = nil,
     key_events_module = nil,
+    left_side_buttons = nil,
     modal = true,
     next_item_callback = nil,
     no_buttons_row = false,
@@ -305,7 +309,7 @@ function HtmlBox:onCloseWidget()
         local window = HtmlBox.window_list[i]
         --* We should only find a single match, but, better safe than sorry...
         if window == self then
-            table.remove(HtmlBox.window_list, i)
+            table_remove(HtmlBox.window_list, i)
         end
     end
 
@@ -651,6 +655,13 @@ function HtmlBox:generateButtonTables()
     }
     if self.tweak_buttons_func then
         self:tweak_buttons_func(buttons)
+    end
+    if self.left_side_buttons then
+        count = #self.left_side_buttons[1]
+        for i = count, 1, -1 do
+            table_insert(buttons[1], 1, self.left_side_buttons[1][i])
+        end
+        table_remove(buttons[1])
     end
     --* Bottom buttons get a bit less padding so their line separators
     --* reach out from the content to the borders a bit more

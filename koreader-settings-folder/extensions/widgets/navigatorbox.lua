@@ -181,6 +181,7 @@ end
 --- @private
 function NavigatorBox:generateChapterOccurrencesHistogram()
     self.chapter_occurrences_histogram = DX.oh:generateChapterOccurrencesHistogram({
+        for_page_navigator = true,
         occurrences_subject = self.occurrences_subject,
         occurrences_per_chapter = self.occurrences_per_chapter,
         ratio_per_chapter = self.ratio_per_chapter,

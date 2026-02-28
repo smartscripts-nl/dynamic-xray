@@ -854,6 +854,7 @@ end
 function XrayDialogs:generateOccurrencesHistogram(item)
     local chapters_count, ratio_per_chapter, occurrences_per_chapter = DX.pn:computeHistogramData(item)
     return DX.oh:generateChapterOccurrencesHistogram({
+        for_page_navigator = false,
         occurrences_subject = item,
         occurrences_per_chapter = occurrences_per_chapter,
         ratio_per_chapter = ratio_per_chapter,
