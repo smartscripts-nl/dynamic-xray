@@ -1113,15 +1113,17 @@ function XrayButtons:forChapterInformationPopup(parent, page, for_page_navigator
              if current_chapter < 1 then
                  current_chapter = last_chapter
              end
-             while not parent:chapterHasOccurrences(current_chapter) and lcount <= max_loops do
+             local html = parent:getChapterHtml(current_chapter)
+             while (not html:find("<strong>", 1, true) or not parent:chapterHasOccurrences(current_chapter)) and lcount <= max_loops do
                  lcount = lcount + 1
                  current_chapter = current_chapter - 1
                  if current_chapter < 1 then
                      current_chapter = last_chapter
                  end
+                 html = parent:getChapterHtml(current_chapter)
              end
              UIManager:close(parent.information_dialog)
-             parent:showChapterInformation(current_chapter)
+             parent:showChapterInformation(current_chapter, html)
          end,
      },
      {
@@ -1132,15 +1134,17 @@ function XrayButtons:forChapterInformationPopup(parent, page, for_page_navigator
              if current_chapter > last_chapter then
                  current_chapter = 1
              end
-             while not parent:chapterHasOccurrences(current_chapter) and lcount <= max_loops do
+             local html = parent:getChapterHtml(current_chapter)
+             while (not html:find("<strong>", 1, true) or not parent:chapterHasOccurrences(current_chapter)) and lcount <= max_loops do
                  lcount = lcount + 1
                  current_chapter = current_chapter + 1
                  if current_chapter > last_chapter then
                      current_chapter = 1
                  end
+                 html = parent:getChapterHtml(current_chapter)
              end
              UIManager:close(parent.information_dialog)
-             parent:showChapterInformation(current_chapter)
+             parent:showChapterInformation(current_chapter, html)
          end,
      },
      {

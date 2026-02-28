@@ -97,7 +97,14 @@ function XrayOccurrencesHistogram:chapterHasOccurrences(n)
     return has_items(self.occurrences_per_chapter[n])
 end
 
-function XrayOccurrencesHistogram:showChapterInformation(n)
+function XrayOccurrencesHistogram:getChapterHtml(n)
+    local page = KOR.toc:getPageFromItemIndex(n) or 1
+    local needles = DX.vd:getXrayItemNameVariants(self.occurrences_subject)
+
+    return KOR.pagetexts:getChapterText("as_html", needles, page)
+end
+
+function XrayOccurrencesHistogram:showChapterInformation(n, chapter_html)
     --* DX.vd.book_chapters was populated in ((XrayDataLoader#_populateViewsDataBookChapters)):
     local chapter_title = DX.vd.book_chapters[n] or "-"
     local page = KOR.toc:getPageFromItemIndex(n) or 1
@@ -106,9 +113,12 @@ function XrayOccurrencesHistogram:showChapterInformation(n)
     local buttons = DX.b:forChapterInformationPopup(self, page, self.for_page_navigator, n, self.chapters_count)
 
     if page then
-        local needles = DX.vd:getXrayItemNameVariants(self.occurrences_subject)
-
-        local chapter_html = KOR.pagetexts:getChapterText("as_html", needles, page)
+        --* chapter_html might have been prefilled via ((XrayButtons#forChapterInformationPopup)) > arrow button > ((XrayOccurrencesHistogram#getChapterHtml)):
+        chapter_html = chapter_html or self:getChapterHtml(n)
+        --* this can happen when a section which is itself empty, contains one or more chapters which do have occurrences; the section would then list them as belonging to itself; this corrects that situation:
+        if self.occurrences_per_chapter[n] == 0 then
+            chapter_html = " "
+        end
         local title = self.occurrences_subject.name
         if chapter_title ~= "-" then
             title = title .. ", in: " .. chapter_title

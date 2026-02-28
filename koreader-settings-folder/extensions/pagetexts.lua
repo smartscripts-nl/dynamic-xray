@@ -21,17 +21,19 @@ local PageTexts = WidgetContainer:extend{
     current_elem_no = nil,
     paragraph_end = nil,
     paragraph_start = nil,
+    fragments_separator = "\n…\n________\n",
     start_elem_no = nil,
     start_page_no = nil,
 }
 
 function PageTexts:countItemOccurrences(text, needles)
     local rcount
+    local total_count = 0
     for i = 1, #needles do
         text, rcount = text:gsub("%f[%w_]" .. needles[i] .. "%f[^%w_]", "<strong>")
+        total_count = total_count + rcount
     end
-    local parts = KOR.strings:split(text, "<strong>")
-    return #parts - 1
+    return total_count
 end
 
 function PageTexts:getAllHtmlContainersInPage(page_xp, start_page_no, include_punctuation, toc_title_condition)
@@ -326,7 +328,7 @@ function PageTexts:compressTextAroundMarkers(html, context)
         table_insert(result, line)
     end
 
-    return table_concat(result, "\n…\n________\n")
+    return table_concat(result, self.fragments_separator)
 end
 
 function PageTexts:getChapterHits(chapter_index, needles, start_page, xp, end_xp)
