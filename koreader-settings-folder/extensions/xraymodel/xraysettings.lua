@@ -152,6 +152,11 @@ local XraySettings = WidgetContainer:new{
             explanation = _("This variable determines the height of the chapter-occurrences-histogram in the Item Viewer. Valid values lie between 20 and 45."),
             locked = 0,
         },
+        IV_show_linked_items_in_two_columns = {
+            value = true,
+            explanation = _("With this setting you can force the info in the linked items tabs of Item Viewer to be displayed in two columns (if set to true). This two column mode however will only be activated when you are also displaying KOReader in landscape mode."),
+            locked = 0,
+        },
         IV_show_occurrences_histogram = {
             value = true,
             explanation = _("This variable determines whether a chapter-occurrences-histogram will be shown in the Item Viewer tabs (or not)."),

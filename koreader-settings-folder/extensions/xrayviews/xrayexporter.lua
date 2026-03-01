@@ -12,6 +12,7 @@ local T = require("ffi/util").template
 local DX = DX
 local has_no_items = has_no_items
 local has_text = has_text
+local math_ceil = math.ceil
 local os_date = os.date
 local table_concat = table.concat
 local table_insert = table.insert
@@ -142,11 +143,29 @@ function XrayExporter:initData()
 end
 
 --- @param mode string Either "for_all_items_list" or "for_linked_items_tab"
-function XrayExporter:generateXrayItemsOverview(items, mode)
+function XrayExporter:generateXrayItemsOverview(items, mode, use_two_column_display)
     local paragraphs = {}
+    local paragraphs2 = {}
     local paragraphs_iconless = {}
     local paragraph, paragraph_iconless
     count = #items
+
+    if use_two_column_display then
+        local half_way = math_ceil(count / 2)
+        local information_level
+        for i = 1, count do
+            --* at the top of the second column we don't want to start with a line ending, so set information_level to 1 for that case:
+            information_level = i == half_way + 1 and 1 or i
+            paragraph = DX.vd:generateXrayExportOrLinkedItemItemInfo(items[i], nil, information_level, mode)
+            if i <= half_way then
+                table_insert(paragraphs, paragraph)
+            else
+                table_insert(paragraphs2, paragraph)
+            end
+        end
+        return table_concat(paragraphs, ""), table_concat(paragraphs2, "")
+    end
+
     for i = 1, count do
         paragraph, paragraph_iconless = DX.vd:generateXrayExportOrLinkedItemItemInfo(items[i], nil, i, mode)
         table_insert(paragraphs, paragraph)

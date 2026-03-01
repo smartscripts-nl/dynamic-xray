@@ -787,10 +787,16 @@ function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, 
     local name = needle_item.name
     local icon = DX.vd:getItemTypeIcon(needle_item)
 
-    local linked_items_info
+    local linked_items_info, linked_items_info2
     local linked_items = DX.vd:getLinkedItems(needle_item)
     if linked_items then
-        linked_items_info = DX.ex:generateXrayItemsOverview(linked_items, "for_linked_items_tab")
+        --* show linked items in two column display if that setting has been enabled AND the screen width is greater than its height:
+        local use_two_column_display = DX.s.IV_show_linked_items_in_two_columns and Screen:getWidth() > Screen:getHeight()
+        if use_two_column_display then
+            linked_items_info, linked_items_info2 = DX.ex:generateXrayItemsOverview(linked_items, "for_linked_items_tab", "use_two_column_display")
+        else
+            linked_items_info = DX.ex:generateXrayItemsOverview(linked_items, "for_linked_items_tab")
+        end
     end
 
     --? hotfix: for some reason only viewer called from List doesn't have prop pos_chapter_quotes, so here we circumvent that by referencing DX.m.items_by_id, which DOES have the prop:
@@ -812,7 +818,7 @@ function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, 
     self.needle_name_for_list_page = needle_item.name
 
     local key_events_module = "XrayItemViewer"
-    local tabs = DX.b:getItemViewerTabs(main_info, hits_info, linked_items_info, quotes_info)
+    local tabs = DX.b:getItemViewerTabs(main_info, hits_info, linked_items_info, quotes_info, linked_items_info2)
 
     self.item_viewer = KOR.dialogs:htmlBoxTabbed(1, {
         title = title,

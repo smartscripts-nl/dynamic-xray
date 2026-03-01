@@ -9,6 +9,8 @@ local Font = require("extensions/modules/font")
 local FrameContainer = require("extensions/widgets/container/framecontainer")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
+local HorizontalGroup = require("ui/widget/horizontalgroup")
+local HorizontalSpan = require("ui/widget/horizontalspan")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")
@@ -97,6 +99,8 @@ local HtmlBox = InputContainer:extend{
     fullscreen = false,
     height = nil,
     html = nil,
+    --* for two column display of linked item in landscap display:
+    html2 = nil,
     key_events_module = nil,
     left_side_buttons = nil,
     modal = true,
@@ -260,16 +264,82 @@ function HtmlBox:generateScrollWidget()
 
     --* this is the default, but some widgets can set the content_type to "text" for a specific tab; e.g. see ((XrayButtons#getItemViewerTabs)):
     if self.content_type == "text" then
-        self.html_widget = ScrollTextWidget:new{
-            text = self.html,
-            face = self.content_face,
-            line_height = KOR.registry.line_height or 0.95,
-            alignment = "left",
-            justified = false,
-            dialog = self,
-            width = self.swidth,
-            height = self.sheight,
-        }
+        --* two column display:
+        if self.html2 then
+            local horizontal_padding = math_floor(Screen:scaleBySize(50) / 2)
+            local half_width = math_floor(self.swidth / 2) - horizontal_padding
+            self.html_widget =
+            CenterContainer:new{
+                dimen = Geom:new{
+                    w = self.screen_width,
+                    h = self.sheight,
+                },
+                HorizontalGroup:new{
+                    CenterContainer:new{
+                        dimen = Geom:new{
+                            w = half_width + horizontal_padding,
+                            h = self.sheight,
+                        },
+                        HorizontalGroup:new{
+                            HorizontalSpan:new{
+                                w = horizontal_padding,
+                            },
+                            ScrollTextWidget:new{
+                                text = self.html,
+                                face = self.content_face,
+                                line_height = KOR.registry.line_height or 0.95,
+                                alignment = "left",
+                                justified = false,
+                                dialog = self,
+                                width = half_width,
+                                height = self.sheight,
+                            }
+                        }
+                    },
+                    CenterContainer:new{
+                        dimen = Geom:new{
+                            w = half_width + horizontal_padding,
+                            h = self.sheight,
+                        },
+                        HorizontalGroup:new{
+                            HorizontalSpan:new{
+                                w = horizontal_padding,
+                            },
+                            ScrollTextWidget:new{
+                                text = self.html2,
+                                face = self.content_face,
+                                line_height = KOR.registry.line_height or 0.95,
+                                alignment = "left",
+                                justified = false,
+                                dialog = self,
+                                width = half_width,
+                                height = self.sheight,
+                            }
+                        }
+                    },
+                }
+            }
+        --* single column display:
+        else
+            self.html_widget =
+            CenterContainer:new{
+                dimen = Geom:new{
+                    w = self.screen_width,
+                    h = self.sheight,
+                },
+                ScrollTextWidget:new{
+                    text = self.html,
+                    face = self.content_face,
+                    line_height = KOR.registry.line_height or 0.95,
+                    alignment = "left",
+                    justified = false,
+                    dialog = self,
+                    width = self.swidth,
+                    height = self.sheight,
+                }
+            }
+        end
+
         if self.bottom_widget then
             self.html_widget = VerticalGroup:new{
                 align = "left",

@@ -29,7 +29,8 @@ function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
 
     --* for usage with resp. ((Dialogs#htmlBox)), ((Dialogs#textBox)):
     local content_prop = tab_method == "htmlBoxTabbed" and "html" or "info"
-    local tab_content --* can be html or plain text
+    local content_prop2 = tab_method == "htmlBoxTabbed" and "html2" or "info2"
+    local tab_content, tab_content2 --* these can be html or plain text
 
     if args.tabs_as_table == nil then
         local props = DX.b.default_tabs_button_table_props
@@ -55,6 +56,7 @@ function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
                 --* other_factory currently not used anywhere:
                 if not args.other_factory then
                     tab_content = type(tab[content_prop]) == "function" and tab[content_prop]() or tab[content_prop]
+                    tab_content2 = type(tab[content_prop2]) == "function" and tab[content_prop2]() or tab[content_prop2]
                 else
                     tab_content = args.other_factory()
                     args.other_factory = nil
@@ -134,6 +136,7 @@ function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
 
     --* set content of the tab; content_prop can be "html" or "info":
     args[content_prop] = tab_content
+    args[content_prop2] = tab_content2
 end
 
 --* for custom tabs in cases where the normal tabfactory method would not work:
