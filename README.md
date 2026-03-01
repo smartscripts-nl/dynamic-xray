@@ -175,6 +175,9 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 ![05b Xray Item Viewer quotes tab](images/05b-xray-item-viewer-quotes-tab-in-item-viewer.png)
 05b Xray Item Viewer: quotes tab
 
+![05c Xray Item Viewer linked items tab](images/05c-xray-item-viewer-tab-3-linked-items.png)
+05c Xray Item Viewer: linked items tab
+
 ![06 Xray item editor tab 1](images/06-xray-item-editor-tab-1.png)
 06 Xray item editor tab 1
 
