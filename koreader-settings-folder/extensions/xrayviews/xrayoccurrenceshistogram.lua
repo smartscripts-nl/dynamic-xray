@@ -31,7 +31,7 @@ function XrayOccurrencesHistogram:generateChapterOccurrencesHistogram(data)
 
     if not data.ratio_per_chapter or not DX.s.PN_show_chapter_hits_histogram then
         local height = data.histogram_height + data.histogram_bottom_line_height
-        return DX.pn:getEmptyFillElement(data.info_panel_width, height)
+        return DX.pn:getEmptyFillElement(data.histogram_width, height)
     end
 
     self.occurrences_subject = data.occurrences_subject
@@ -39,25 +39,24 @@ function XrayOccurrencesHistogram:generateChapterOccurrencesHistogram(data)
     local ratio_per_chapter = data.ratio_per_chapter
     local current_chapter_index = data.current_chapter_index
     self.chapters_count = data.chapters_count
-    local info_panel_width = data.info_panel_width
+    local histogram_width = data.histogram_width
     local histogram_height = data.histogram_height
     local histogram_bottom_line_height = data.histogram_bottom_line_height
 
     local bottom_line = LineWidget:new{
         background = KOR.colors.histogram_bar_light,
         dimen = Geom:new{
-            w = info_panel_width,
+            w = histogram_width,
             h = histogram_bottom_line_height,
         }
     }
     --* at about 50 items will give a nice distribution of not too wide histogram bars; if there are significantly less chapters, we reduce the width of the histogram, so the bars will not get too wide:
-    local histogram_width = info_panel_width
     if self.chapters_count <= 45 then
         histogram_width = math_floor(self.chapters_count / 50 * histogram_width)
     end
 
     return CenterContainer:new{
-        dimen = Geom:new{ w = info_panel_width, h = histogram_height + histogram_bottom_line_height },
+        dimen = Geom:new{ w = histogram_width, h = histogram_height + histogram_bottom_line_height },
         VerticalGroup:new{
             HistogramWidget:new{
                 current_chapter_index = current_chapter_index,

@@ -186,7 +186,7 @@ function NavigatorBox:generateChapterOccurrencesHistogram()
         occurrences_per_chapter = self.occurrences_per_chapter,
         ratio_per_chapter = self.ratio_per_chapter,
         current_chapter_index = self.current_chapter_index,
-        info_panel_width = self.info_panel_width,
+        histogram_width = self.info_panel_width,
         chapters_count = self.chapters_count,
         histogram_height = self.histogram_height,
         histogram_bottom_line_height = self.histogram_bottom_line_height,

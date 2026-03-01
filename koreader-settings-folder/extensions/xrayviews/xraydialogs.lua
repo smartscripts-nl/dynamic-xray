@@ -860,7 +860,7 @@ function XrayDialogs:generateOccurrencesHistogram(item)
         ratio_per_chapter = ratio_per_chapter,
         current_chapter_index = KOR.toc:getTocIndexByPage(DX.u:getCurrentPage()),
         --* this is the width of a "max" HtmlBox:
-        info_panel_width = Screen:getWidth() - 2 * Size.margin.default - Screen:scaleBySize(20),
+        histogram_width = Screen:getWidth() - 2 * Size.margin.default - Screen:scaleBySize(20),
         chapters_count = chapters_count,
         histogram_height = Screen:scaleBySize(DX.s.IV_occurrences_histogram_height),
         histogram_bottom_line_height = Size.line.thin,
