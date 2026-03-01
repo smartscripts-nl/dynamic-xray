@@ -791,7 +791,7 @@ function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, 
     local linked_items = DX.vd:getLinkedItems(needle_item)
     if linked_items then
         --* show linked items in two column display if that setting has been enabled AND the screen width is greater than its height:
-        local use_two_column_display = DX.s.IV_show_linked_items_in_two_columns and Screen:getWidth() > Screen:getHeight()
+        local use_two_column_display = DX.s.IV_show_linked_items_in_two_columns and #linked_items > 2 and Screen:getWidth() > Screen:getHeight()
         if use_two_column_display then
             linked_items_info, linked_items_info2 = DX.ex:generateXrayItemsOverview(linked_items, "for_linked_items_tab", "use_two_column_display")
         else
