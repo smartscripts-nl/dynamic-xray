@@ -250,19 +250,22 @@ function XrayViewsData:addItemToPersonsOrTerms(item)
         table_insert(self.item_table[2], item_copy)
         item_copy.index = #self.persons + 1
         table_insert(self.persons, item_copy)
-    else
-        table_insert(self.item_table[3], item_copy)
-        item_copy.index = #self.terms + 1
-        table_insert(self.terms, item_copy)
+        return
     end
+
+    table_insert(self.item_table[3], item_copy)
+    item_copy.index = #self.terms + 1
+    table_insert(self.terms, item_copy)
 end
 
 --* this method is only called after adding or updating items:
 --- @private
-function XrayViewsData:repopulateItemsPersonsTerms(item)
+function XrayViewsData:repopulateItemsPersonsTerms(item, skip_item_table)
     count = #self.items
     self.persons = {}
     self.terms = {}
+    self.item_table[2] = {}
+    self.item_table[3] = {}
     --* luckily we don't have to update TextViewer.paragraph_headings etc. (loaded from XrayUI data) here, because those take their info from XrayModel via ((XrayUI#getXrayItemsFoundInText)) > ((get xray_item for XrayUI))...
 
     for i = 1, count do
@@ -279,7 +282,9 @@ function XrayViewsData:repopulateItemsPersonsTerms(item)
                 end
             end
             self.items[i].index = i
-            table_insert(self.item_table[1], self.items[i])
+            if not skip_item_table then
+                table_insert(self.item_table[1], self.items[i])
+            end
             self:addItemToPersonsOrTerms(self.items[i])
         end
     end
@@ -288,37 +293,56 @@ end
 --* only called from ((XrayController#saveUpdatedItem)), but not for newly added items; for those we call ((XrayViewsData#registerNewItem)):
 function XrayViewsData:updateAndSortAllItemTables(item)
 
+    --* this call is also needed to update possibly changed xray type icons (dark/important or light/normal):
+    item.text = self:generateListItemText(item)
+
     local id = item.id
     --* before editing we have reset filters, so usage of self.items here is safe; see ((XrayController#onShowNewItemForm)) and ((XrayController#onShowEditItemForm)) > ((XrayViewsData#resetAllFilters)):
-    count = #self.items
+    count = #self.item_table[1]
     for i = 1, count do
-        if self.items[i].id == id then
-            self.items[i] = item
+        if self.item_table[1][i].id == id then
+            self.item_table[1][i] = KOR.tables:shallowCopy(item)
             break
         end
     end
-    --! prevent duplication after item updates:
-    self.item_table = {
-        {},
-        {},
-        {},
-    }
+    for i = 1, count do
+        if self.items[i].id == id then
+            self.items[i] = KOR.tables:shallowCopy(item)
+            break
+        end
+    end
+
+    parent:updateStaticReferenceCollections(id, KOR.tables:shallowCopy(item))
 
     --* here we also populate self.item_table[1] etc.:
-    self:repopulateItemsPersonsTerms(item)
-    --* this call is also needed to add reliability and xray type icons:
-    self:applyFilters()
+    self:repopulateItemsPersonsTerms(item, "skip_item_table")
 
     --* display the new item in its proper place in the Items List (placeImportantItemsAtTop wil also add corresponding "index" prop to each item):
     self.items = parent:placeImportantItemsAtTop(self.items, -1)
     self.item_table[1] = parent:placeImportantItemsAtTop(self.item_table[1], -1)
-    if DX.m:isPerson(item) then
+    if #self.item_table[2] > 0 then
         self.item_table[2] = parent:placeImportantItemsAtTop(self.item_table[2], -1)
         self.persons = parent:placeImportantItemsAtTop(self.persons, -1)
-        return
     end
-    self.item_table[3] = parent:placeImportantItemsAtTop(self.item_table[3], -1)
-    self.terms = parent:placeImportantItemsAtTop(self.terms, -1)
+    if #self.item_table[3] > 0 then
+        self.item_table[3] = parent:placeImportantItemsAtTop(self.item_table[3], -1)
+        self.terms = parent:placeImportantItemsAtTop(self.terms, -1)
+    end
+
+    --* add correct index for updated_item:
+    self.current_tab_items = self.items
+    if self.active_list_tab == 2 then
+        self.current_tab_items = self.persons
+    elseif self.active_list_tab == 3 then
+        self.current_tab_items = self.terms
+    end
+    count = #self.current_tab_items
+    for i = 1, count do
+        if self.current_tab_items[i].id == id then
+            item.index = self.current_tab_items[i].index
+            break
+        end
+    end
 end
 
 --* compare ((XrayViewsData#registerUpdatedItem)) and ((XrayViewsData#updateAndSortAllItemTables)) for edited items:
@@ -350,7 +374,7 @@ function XrayViewsData:getCurrentListTabItems(needle_item)
         self.persons,
         self.terms,
     }
-    local items = subject_tables[parent.active_list_tab]
+    local items = subject_tables[self.active_list_tab]
 
     --* prop "text" is generated in ((XrayViewsData#generateListItemText)):
     --* make sure items in the list have a sequence number; only done here, after prioritizing and sorting items, and not in ((XrayViewsData#generateListItemText)), because order could be changed by those actions:
@@ -498,7 +522,7 @@ function XrayViewsData:getChapterHitsData(item)
     for page = start_page, last_page do
         chapter_text = chapter_text .. KOR.document:getPageText(page) .. "\n"
     end
-    chapter_hits = KOR.pagetexts:countItemOccurrences(chapter_text, needles)
+    chapter_hits = KOR.pagetexts:countItemOccurrences(chapter_text, needles, #chapter_positions)
     total_count = total_count + chapter_hits
     table_insert(chapter_hits_data, chapter_hits)
     if chapter_hits > max_hits then
@@ -1458,12 +1482,12 @@ end
 --- @private
 function XrayViewsData:applyFilters()
     --* self.items etc. were populated in (())
-    local xray_items, persons, terms = self.items or {}, self.persons or {}, self.terms or {}
+    local items, persons, terms = self.items or {}, self.persons or {}, self.terms or {}
     self.filtered_count = 0
-    if #xray_items > 0 then
+    if #items > 0 then
         --* in these calls self.filtered_count must be updated:
         local subjects = {
-            xray_items,
+            items,
             persons,
             terms,
         }

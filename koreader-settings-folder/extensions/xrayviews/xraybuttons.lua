@@ -552,6 +552,7 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
                 callback = function()
                     DX.d:closeViewer()
                     local toggled_item = DX.fd:toggleIsImportantItem(needle_item)
+                    DX.ds.storeUpdatedItemType(toggled_item)
                     DX.vd:updateAndSortAllItemTables(toggled_item)
                     DX.d:showItemViewer(toggled_item, called_from_list, tapped_word)
                 end,
@@ -561,6 +562,14 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
                 callback = function()
                     DX.d:closeViewer()
                     local toggled_item = DX.fd:toggleIsPersonOrTerm(needle_item)
+                    DX.ds.storeUpdatedItemType(toggled_item)
+                    if DX.vd.active_list_tab > 1 then
+                        if DX.m:isPerson(toggled_item) then
+                            DX.vd:setProp("active_list_tab", 2)
+                        else
+                            DX.vd:setProp("active_list_tab", 3)
+                        end
+                    end
                     DX.vd:updateAndSortAllItemTables(toggled_item)
                     DX.d:showItemViewer(toggled_item, called_from_list, tapped_word)
                 end,
@@ -971,9 +980,9 @@ function XrayButtons:forListContext(manager, item)
                 fgcolor = KOR.colors.lighter_text,
                 callback = function()
                     UIManager:close(manager.item_context_dialog)
-                    local select_number = DX.fd:toggleIsImportantItem(item)
-                    DX.vd:updateItemsTable(select_number)
-                    DX.vd.prepareData()
+                    local toggled_item = DX.fd:toggleIsImportantItem(item)
+                    DX.ds.storeUpdatedItemType(toggled_item)
+                    DX.vd:updateAndSortAllItemTables(toggled_item)
                     DX.d:showList()
                     return false
                 end,

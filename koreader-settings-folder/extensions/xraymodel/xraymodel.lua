@@ -36,7 +36,6 @@ local views_data
 
 --- @class XrayModel
 local XrayModel = WidgetContainer:new{
-    active_list_tab = 1,
     current_ebook_basename = nil,
     current_ebook_full_path = nil,
     current_ebook_glossary = nil,
@@ -320,7 +319,7 @@ function XrayModel:setTitleAndSeries(full_path)
 end
 
 function XrayModel:getActiveListTab()
-    return self.use_tapped_word_data and tapped_words.active_tapped_word_tab or self.active_list_tab
+    return self.use_tapped_word_data and tapped_words.active_tapped_word_tab or views_data.active_list_tab
 end
 
 --! this method can also be called via ((XrayButtons#getListSubmenuButton)) > ((XrayDialogs#selectListTab))
@@ -329,7 +328,7 @@ function XrayModel:setActiveListTab(tab_no)
         tapped_words:setProp("active_tapped_word_tab", tab_no)
         return
     end
-    self.active_list_tab = tab_no
+    views_data.active_list_tab = tab_no
 end
 
 --* these counts will be used in ((XrayButtons#forListSubmenu)) > ((XrayButtons#getListSubmenuButton)):
@@ -409,7 +408,7 @@ end
 
 function XrayModel:resetData(force_refresh, full_path)
     --! this one is crucial for when we view tab 2 or 3 in the list in one book and then change to another book; without this, the data for tab 1 of that new book would be set to the data of tab 2 or 3 in the previous book!:
-    self.active_list_tab = 1
+    views_data.active_list_tab = 1
 
     self.items_prepared_for_basename = nil
     tapped_words:resetData(force_refresh)
