@@ -43,6 +43,7 @@ function XrayOccurrencesHistogram:generateChapterOccurrencesHistogram(data)
     local histogram_width = data.histogram_width
     local histogram_height = data.histogram_height
     local histogram_bottom_line_height = data.histogram_bottom_line_height
+    self.for_page_navigator = data.for_page_navigator
 
     local bottom_line = LineWidget:new{
         background = KOR.colors.histogram_bar_light,
@@ -56,8 +57,9 @@ function XrayOccurrencesHistogram:generateChapterOccurrencesHistogram(data)
         histogram_width = math_floor(self.chapters_count / 50 * histogram_width)
     end
 
+    local width = data.for_page_navigator and histogram_width or Screen:getWidth()
     return CenterContainer:new{
-        dimen = Geom:new{ w = Screen:getWidth(), h = histogram_height + histogram_bottom_line_height },
+        dimen = Geom:new{ w = width, h = histogram_height + histogram_bottom_line_height },
         VerticalGroup:new{
             HistogramWidget:new{
                 current_chapter_index = current_chapter_index,
@@ -70,7 +72,7 @@ function XrayOccurrencesHistogram:generateChapterOccurrencesHistogram(data)
                 width = histogram_width,
             },
             bottom_line,
-        }
+        },
     }
 end
 
