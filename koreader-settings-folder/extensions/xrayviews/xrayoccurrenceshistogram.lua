@@ -12,6 +12,7 @@ local UIManager = require("ui/uimanager")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
+local Screen = require("device").screen
 local T = require("ffi/util").template
 
 local DX = DX
@@ -56,7 +57,7 @@ function XrayOccurrencesHistogram:generateChapterOccurrencesHistogram(data)
     end
 
     return CenterContainer:new{
-        dimen = Geom:new{ w = histogram_width, h = histogram_height + histogram_bottom_line_height },
+        dimen = Geom:new{ w = Screen:getWidth(), h = histogram_height + histogram_bottom_line_height },
         VerticalGroup:new{
             HistogramWidget:new{
                 current_chapter_index = current_chapter_index,
