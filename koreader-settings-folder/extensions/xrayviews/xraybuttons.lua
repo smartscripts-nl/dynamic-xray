@@ -869,18 +869,16 @@ function XrayButtons:getItemViewerTabs(main_info, hits_info, linked_items_info, 
     }
     if has_text(linked_items_info2) and has_text(linked_items_info) then
         table_insert(tabs, {
-            tab = "gelinkte items",
+            tab = _("linked items"),
             html = linked_items_info,
             html2 = linked_items_info2,
             content_type = "text",
-            two_column_display = true,
         })
     elseif has_text(linked_items_info) then
         table_insert(tabs, {
-            tab = "gelinkte items",
+            tab = _("linked items"),
             html = linked_items_info,
             content_type = "text",
-            two_column_display = false,
         })
     end
     if has_text(quotes_info) then

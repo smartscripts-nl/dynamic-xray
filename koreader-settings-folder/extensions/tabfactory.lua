@@ -29,6 +29,7 @@ function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
 
     --* for usage with resp. ((Dialogs#htmlBox)), ((Dialogs#textBox)):
     local content_prop = tab_method == "htmlBoxTabbed" and "html" or "info"
+    --* this prop can be set for two column display of linked items, in ((XrayButtons#getItemViewerTabs)):
     local content_prop2 = tab_method == "htmlBoxTabbed" and "html2" or "info2"
     local tab_content, tab_content2 --* these can be html or plain text
 
