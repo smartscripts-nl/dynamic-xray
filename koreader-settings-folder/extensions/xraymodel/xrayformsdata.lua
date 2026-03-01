@@ -421,7 +421,6 @@ end
 --- @private
 function XrayFormsData:toggleIsImportantItem(toggle_item)
     local xray_items = {}
-    local position = 1
     local item
     count = #views_data.items
     for nr = 1, count do
@@ -433,19 +432,17 @@ function XrayFormsData:toggleIsImportantItem(toggle_item)
                 item.xray_type = item.xray_type + 1
             end
             toggle_item.xray_type = item.xray_type
-            position = nr
         end
         table_insert(xray_items, item)
     end
     self:storeItemUpdates("toggle_type", toggle_item)
 
-    return position, toggle_item
+    return toggle_item
 end
 
 --- @private
 function XrayFormsData:toggleIsPersonOrTerm(toggle_item)
     local xray_items = {}
-    local position = 1
     local item
     count = #views_data.items
     for nr = 1, count do
@@ -457,13 +454,12 @@ function XrayFormsData:toggleIsPersonOrTerm(toggle_item)
                 item.xray_type = item.xray_type - 2
             end
             toggle_item.xray_type = item.xray_type
-            position = nr
         end
         table_insert(xray_items, item)
     end
     self:storeItemUpdates("toggle_type", toggle_item)
 
-    return position, toggle_item
+    return toggle_item
 end
 
 --- @private

@@ -551,8 +551,8 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
                 text = DX.vd.xray_type_icons_importance_toggle[needle_item.xray_type],
                 callback = function()
                     DX.d:closeViewer()
-                    local select_number, toggled_item = DX.fd:toggleIsImportantItem(needle_item)
-                    DX.vd:updateItemsTable(select_number)
+                    local toggled_item = DX.fd:toggleIsImportantItem(needle_item)
+                    DX.vd:updateAndSortAllItemTables(toggled_item)
                     DX.d:showItemViewer(toggled_item, called_from_list, tapped_word)
                 end,
             }),
@@ -560,8 +560,8 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
                 text = DX.vd.xray_type_icons_person_or_term_toggle[needle_item.xray_type],
                 callback = function()
                     DX.d:closeViewer()
-                    local select_number, toggled_item = DX.fd:toggleIsPersonOrTerm(needle_item)
-                    DX.vd:updateItemsTable(select_number)
+                    local toggled_item = DX.fd:toggleIsPersonOrTerm(needle_item)
+                    DX.vd:updateAndSortAllItemTables(toggled_item)
                     DX.d:showItemViewer(toggled_item, called_from_list, tapped_word)
                 end,
             }),

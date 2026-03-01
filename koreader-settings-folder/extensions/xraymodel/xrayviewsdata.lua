@@ -288,6 +288,22 @@ end
 --* only called from ((XrayController#saveUpdatedItem)), but not for newly added items; for those we call ((XrayViewsData#registerNewItem)):
 function XrayViewsData:updateAndSortAllItemTables(item)
 
+    local id = item.id
+    --* before editing we have reset filters, so usage of self.items here is safe; see ((XrayController#onShowNewItemForm)) and ((XrayController#onShowEditItemForm)) > ((XrayViewsData#resetAllFilters)):
+    count = #self.items
+    for i = 1, count do
+        if self.items[i].id == id then
+            self.items[i] = item
+            break
+        end
+    end
+    --! prevent duplication after item updates:
+    self.item_table = {
+        {},
+        {},
+        {},
+    }
+
     --* here we also populate self.item_table[1] etc.:
     self:repopulateItemsPersonsTerms(item)
     --* this call is also needed to add reliability and xray type icons:
