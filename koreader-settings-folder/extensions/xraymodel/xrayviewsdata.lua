@@ -293,7 +293,7 @@ end
 --* only called from ((XrayController#saveUpdatedItem)), but not for newly added items; for those we call ((XrayViewsData#registerNewItem)):
 function XrayViewsData:updateAndSortAllItemTables(item)
 
-    --* this call is also needed to update possibly changed xray type icons (dark/important or light/normal):
+    --* this call is needed to update possibly changed xray type icons (dark/important or light/normal):
     item.text = self:generateListItemText(item)
 
     local id = item.id
@@ -495,7 +495,7 @@ function XrayViewsData:getChapterHitsData(item)
     --* build unified list of search terms:
     local needles = self:getXrayItemNameVariants(item)
 
-    local xp, end_xp, start_page, chapter_text, chapter_hits
+    local xp, end_xp, start_page, chapter_hits
     local chapter_positions = KOR.toc:getTocXpointers()
     local chapter_hits_data = {}
     local max_hits = 0
@@ -505,7 +505,6 @@ function XrayViewsData:getChapterHitsData(item)
         xp = chapter_positions[i][1]
         start_page = chapter_positions[i][2]
         end_xp = chapter_positions[i + 1][1]
-        chapter_text = KOR.pagetexts:getChapterTextBare(start_page, xp, end_xp)
         chapter_hits = KOR.pagetexts:getChapterHits(i, needles, start_page, xp, end_xp)
         total_count = total_count + chapter_hits
         table_insert(chapter_hits_data, chapter_hits)
@@ -518,7 +517,7 @@ function XrayViewsData:getChapterHitsData(item)
     local last_toc_item = KOR.toc:getChapterPropsByIndex(count)
     start_page = last_toc_item.page
     local last_page = KOR.document:getPageCount()
-    chapter_text = ""
+    local chapter_text = ""
     for page = start_page, last_page do
         chapter_text = chapter_text .. KOR.document:getPageText(page) .. "\n"
     end
@@ -1238,8 +1237,9 @@ function XrayViewsData:generateAliasesInfo(item, iindent, for_all_items_list)
     if not has_text(item.aliases) then
         return "", ""
     end
-    local aliases, aliases_fc = "", ""
 
+    local aliases
+    local aliases_fc = ""
     local icon = KOR.icons.xray_alias_bare .. " "
     aliases = KOR.strings:splitLinesToMaxLength(item.aliases, DX.s.PN_info_panel_max_line_length, iindent, icon) .. "\n"
     if for_all_items_list then
@@ -1276,7 +1276,8 @@ function XrayViewsData:generateTagsInfo(item, iindent, for_all_items_list)
     if not has_text(item.tags) then
         return "", ""
     end
-    local tags, tags_fc = "", ""
+    local tags
+    local tags_fc = ""
 
     local icon = KOR.icons.tag_open_bare .. " "
     tags = KOR.strings:splitLinesToMaxLength(item.tags, DX.s.PN_info_panel_max_line_length, iindent, icon) .. "\n"
@@ -1293,7 +1294,8 @@ function XrayViewsData:generateLinkwordsInfo(item, iindent, for_all_items_list)
     if not has_text(item.linkwords) then
         return "", ""
     end
-    local linkwords, linkwords_fc = "", ""
+    local linkwords
+    local linkwords_fc = ""
     local icon = KOR.icons.xray_link_bare .. " "
     linkwords = KOR.strings:splitLinesToMaxLength(item.linkwords, DX.s.PN_info_panel_max_line_length, iindent, icon) .. "\n"
     if for_all_items_list then
@@ -1378,7 +1380,7 @@ function XrayViewsData:filterAndPopulateItemTables(data_items)
 
     --* loop for items which had full or partial matching AND had linkwords; now we search for those linkwords, to get all items linked to these main items:
     if not self.search_simple and not self.filter_tag then
-        hits_registry = self:populateItemTableFromLinkWords(linked_item_needles, items, hits_registry)
+        hits_registry = self:populateItemTableFromLinkWords(linked_item_needles, items, hits_registry) -- luacheck: ignore
     end
 
     DX.d:notifyFilterResult(filter_active, self.filtered_count)
