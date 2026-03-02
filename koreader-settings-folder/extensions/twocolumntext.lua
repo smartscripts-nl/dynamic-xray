@@ -93,10 +93,10 @@ function TwoColumnText:resetCache()
 end
 
 function TwoColumnText:useTwoColumnDisplay(items_count)
-	if not items_count then
+	if not items_count or DX.s.is_mobile_device then
 		return false
 	end
-	if not self.is_landscape_screen then
+	if self.is_landscape_screen == nil then
 		self.is_landscape_screen = Screen:getWidth() > Screen:getHeight()
 	end
 	return

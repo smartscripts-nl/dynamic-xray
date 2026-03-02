@@ -206,6 +206,9 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
     local item, for_second_column
     count = #items
     local use_second_info_column = KOR.twocolumntext:useTwoColumnDisplay(count)
+    if use_second_info_column then
+        KOR.registry:set("split_to_half_max_length", true)
+    end
     local half_point = math_ceil(count / 2)
     for i = 1, count do
         for_second_column = use_second_info_column and i > half_point
@@ -232,6 +235,8 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
     paragraph_matches_count = injected_nr
     --* correction for indentation of first line in dialog; this should not be necessary:
     paragraph_hits_info = paragraph_hits_info:gsub("^ +", "")
+
+    KOR.registry:unset("split_to_half_max_length")
 
     -- #((xray paragraph info callback))
     --* callback defined in ((set xray info for paragraphs)) > ((XrayUI#ReaderViewPopulateInfoRects)) and calls ((XrayDialogs#showUiPageInfo)):
