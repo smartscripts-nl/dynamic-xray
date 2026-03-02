@@ -152,11 +152,6 @@ local XraySettings = WidgetContainer:new{
             explanation = _("This variable determines the height of the chapter-occurrences-histogram in the Item Viewer. Valid values lie between 20 and 45."),
             locked = 0,
         },
-        IV_show_linked_items_in_two_columns = {
-            value = true,
-            explanation = _("With this setting you can force the info in the linked items tabs of Item Viewer to be displayed in two columns (if set to true). This two column mode however will only be activated when you are also displaying KOReader in landscape mode."),
-            locked = 0,
-        },
         IV_show_occurrences_histogram = {
             value = true,
             explanation = _("This variable determines whether a chapter-occurrences-histogram will be shown in the Item Viewer tabs (or not)."),
@@ -194,7 +189,7 @@ local XraySettings = WidgetContainer:new{
         },
         PN_info_panel_max_line_length = {
             value = 70,
-            explanation = "Page Navigator: this setting determines the max line length for information in the bottom info panel. You can use this to prevent ugly soft line wraps.",
+            explanation = "Page Navigator: this setting determines the max line length for information in the bottom info panel. You can use this to prevent ugly soft line wraps. If a text is displayed in two columns, this value will automatically be halved for this particular text.",
             locked = 0,
             type = "number",
             after_change_callback = "reset_page_navigator_cache",
@@ -249,6 +244,11 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
             type = "number",
             after_change_callback = "series_manager_reload",
+        },
+        show_items_in_two_columns = {
+            value = true,
+            explanation = _("With this setting you can force the info in the linked items tabs of Item Viewer, or in the XrayUI page information popup, or in the Xray Items Exporter to be displayed in two columns (if set to true). This two column mode however will only be activated when you are also displaying KOReader in landscape mode."),
+            locked = 0,
         },
         tab_buttons_font_size = {
             value = 13,

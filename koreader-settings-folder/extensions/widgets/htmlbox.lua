@@ -9,8 +9,6 @@ local Font = require("extensions/modules/font")
 local FrameContainer = require("extensions/widgets/container/framecontainer")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
-local HorizontalGroup = require("ui/widget/horizontalgroup")
-local HorizontalSpan = require("ui/widget/horizontalspan")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")
@@ -266,59 +264,16 @@ function HtmlBox:generateScrollWidget()
     if self.content_type == "text" then
         --* two column display:
         if self.html2 then
-            local horizontal_padding = math_floor(Screen:scaleBySize(50) / 2)
-            local half_width = math_floor(self.swidth / 2) - horizontal_padding
-            self.html_widget =
-            CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.screen_width,
-                    h = self.sheight,
-                },
-                HorizontalGroup:new{
-                    CenterContainer:new{
-                        dimen = Geom:new{
-                            w = half_width + horizontal_padding,
-                            h = self.sheight,
-                        },
-                        HorizontalGroup:new{
-                            HorizontalSpan:new{
-                                w = horizontal_padding,
-                            },
-                            ScrollTextWidget:new{
-                                text = self.html,
-                                face = self.content_face,
-                                line_height = KOR.registry.line_height or 0.95,
-                                alignment = "left",
-                                justified = false,
-                                dialog = self,
-                                width = half_width,
-                                height = self.sheight,
-                            }
-                        }
-                    },
-                    CenterContainer:new{
-                        dimen = Geom:new{
-                            w = half_width + horizontal_padding,
-                            h = self.sheight,
-                        },
-                        HorizontalGroup:new{
-                            HorizontalSpan:new{
-                                w = horizontal_padding,
-                            },
-                            ScrollTextWidget:new{
-                                text = self.html2,
-                                face = self.content_face,
-                                line_height = KOR.registry.line_height or 0.95,
-                                alignment = "left",
-                                justified = false,
-                                dialog = self,
-                                width = half_width,
-                                height = self.sheight,
-                            }
-                        }
-                    },
-                }
-            }
+            self.html_widget = KOR.twocolumntext:getWidget({
+                parent = self,
+                column1_text = self.html,
+                column2_text = self.html2,
+                face = self.content_face,
+                width = self.swidth,
+                container_width = self.screen_width,
+                height = self.sheight,
+            })
+
         --* single column display:
         else
             self.html_widget =

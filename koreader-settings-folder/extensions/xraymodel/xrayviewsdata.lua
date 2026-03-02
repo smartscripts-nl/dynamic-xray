@@ -6,6 +6,7 @@ local require = require
 local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
+local Screen = require("device").screen
 local T = require("ffi/util").template
 local _ = KOR:initCustomTranslations()
 
@@ -1170,10 +1171,18 @@ function XrayViewsData:generateXrayExportOrLinkedItemItemInfo(item, ui_explanati
         meta_indent = DX.ip:getConfiguredInfoPanelIndentation()
         iindent = meta_indent
     end
+
+    if DX.s.show_items_in_two_columns and Screen:getWidth() > Screen:getHeight() then
+        KOR.registry:set("split_to_half_max_length", true)
+    end
+    KOR.registry:set("add_icon_indent", true)
+
     local aliases, aliases_fc = self:generateAliasesInfo(item, iindent, mode)
     local linkwords, linkwords_fc = self:generateLinkwordsInfo(item, iindent, mode)
     local tags, tags_fc = self:generateTagsInfo(item, iindent, mode)
     local hits, hits_fc = self:generateHitsInfo(item, iindent, mode)
+
+    KOR.registry:unset("split_to_half_max_length", "add_icon_indent")
 
     -- #((use xray match reliability indicators))
     local xray_match_reliability_icon = DX.i:getMatchReliabilityIndicator("full_name")

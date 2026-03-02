@@ -388,7 +388,7 @@ function XrayButtons:forPageNavigatorTopLeft(parent)
 end
 
 --* additional buttons can be inserted via ((TextViewer#initButtons)), when it is configurated with optional props extra_button, extra_button2 and extra_button3:
--- these additional buttons for the current dialog are defined in ((inject xray list buttons)):
+--* these additional buttons for the current dialog are defined in ((inject xray list buttons)):
 function XrayButtons:forUiInfo(parent, buttons)
     -- #((TextViewer toc button))
     --* the items for this and the next two buttons were generated in ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)):

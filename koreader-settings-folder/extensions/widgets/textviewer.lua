@@ -135,6 +135,8 @@ local TextViewer = InputContainer:extend{
     --* this table will be populated by ((TabFactory#setTabButtonAndContent)):
     tabs_table_buttons = nil,
     text = nil,
+    --* for two column display:
+    text2 = nil,
     --* for generating an icon-less copy of TextViewer.text:
     text_for_copy = nil,
     text_margin = Size.margin.small,
@@ -579,23 +581,41 @@ function TextViewer:initTextWidget()
     end
     local padding_right = self.fullscreen and 40 or 0
     if (self.block_height_adaptation or self.use_low_height) and self.use_scrolling_dialog ~= SCROLLING_FIXED_HEIGHT_WITHOUT_SCROLLBAR then
-        self.scroll_text_w = ScrollTextWidget:new{
-            text = self.text,
-            face = self.face,
-            line_height = self.line_height,
-            width = self.computed_width,
-            height = height,
-            dialog = self,
-            alignment = self.alignment,
-            justified = self.justified,
-            lang = self.lang,
-            para_direction_rtl = self.para_direction_rtl,
-            auto_para_direction = self.auto_para_direction,
-            alignment_strict = self.alignment_strict,
-            padding_right = padding_right,
-            --* to make the scrollbar lighter for fullscreen ScrollTextWidgets:
-            fullscreen = self.fullscreen,
-        }
+
+        --* two column display:
+        if self.text2 then
+            if not self.screen_width then
+                self.screen_width = Screen:getWidth()
+            end
+            self.scroll_text_w = KOR.twocolumntext:getWidget({
+                parent = self,
+                column1_text = self.text,
+                column2_text = self.text2,
+                face = self.face,
+                width = self.screen_width,
+                container_width = self.screen_width,
+                height = height,
+            })
+        --* single column display:
+        else
+            self.scroll_text_w = ScrollTextWidget:new{
+                text = self.text,
+                face = self.face,
+                line_height = self.line_height,
+                width = self.computed_width,
+                height = height,
+                dialog = self,
+                alignment = self.alignment,
+                justified = self.justified,
+                lang = self.lang,
+                para_direction_rtl = self.para_direction_rtl,
+                auto_para_direction = self.auto_para_direction,
+                alignment_strict = self.alignment_strict,
+                padding_right = padding_right,
+                --* to make the scrollbar lighter for fullscreen ScrollTextWidgets:
+                fullscreen = self.fullscreen,
+            }
+        end
 
     --* show non scrollable text:
     else
