@@ -233,7 +233,7 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
         count = #paragraph_hits_info
         local half_point = math_ceil(count / 2)
         for i = count, half_point + 1, -1 do
-            table_insert(paragraph_hits_info2, paragraph_hits_info[i])
+            table_insert(paragraph_hits_info2, 1, paragraph_hits_info[i])
             paragraph_hits_info[i] = nil
         end
         paragraph_hits_info = table_concat(paragraph_hits_info, "")
