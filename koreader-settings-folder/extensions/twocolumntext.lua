@@ -10,10 +10,13 @@ local ScrollTextWidget = require("extensions/widgets/scrolltextwidget")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local Screen = require("device").screen
 
+local DX = DX
 local math_floor = math.floor
 
 --- @class TwoColumnText
-local TwoColumnText = WidgetContainer:extend {}
+local TwoColumnText = WidgetContainer:extend{
+	is_landscape_screen = nil,
+}
 
 function TwoColumnText:getWidget(args)
 
@@ -83,6 +86,23 @@ function TwoColumnText:getWidget(args)
 			},
 		}
 	}
+end
+
+function TwoColumnText:resetCache()
+	self.is_landscape_screen = Screen:getWidth() > Screen:getHeight()
+end
+
+function TwoColumnText:useTwoColumnDisplay(items_count)
+	if not items_count then
+		return false
+	end
+	if not self.is_landscape_screen then
+		self.is_landscape_screen = Screen:getWidth() > Screen:getHeight()
+	end
+	return
+		DX.s.show_items_in_two_columns
+		and items_count > 2
+		and self.is_landscape_screen
 end
 
 return TwoColumnText

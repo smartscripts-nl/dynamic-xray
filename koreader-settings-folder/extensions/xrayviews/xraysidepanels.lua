@@ -172,7 +172,7 @@ function XraySidePanels:populateLinkedItemsPanel()
     local lcount = #self.linked_items
     local info_panel_text
     for i = 1, lcount do
-        info_panel_text = DX.vd:generateXrayExportOrLinkedItemItemInfo(self.linked_items[i], nil, 2)
+        info_panel_text = DX.vd:generateXrayExportOrLinkedItemInfo(lcount, self.linked_items[i], nil, 2)
         if i == 1 then
             DX.ip:setProp("upon_load_panel_text", info_panel_text)
         end
@@ -256,7 +256,7 @@ end
 function XraySidePanels:activatePageNavigatorPanelTab(tab_no)
     self.active_side_tab = tab_no
     local pn = DX.pn
-    --* for consumption in ((XrayViewsData#generateXrayExportOrLinkedItemItemInfo)):
+    --* for consumption in ((XrayViewsData#generateXrayExportOrLinkedItemInfo)):
     DX.ip:setParentReliabilityIndicator()
     pn:setActiveScrollPage()
     pn:reloadPageNavigator()

@@ -327,7 +327,7 @@ function Strings:splitLinesToMaxLength(text, max_length, indent, first_word, don
     if has_no_content(text) then
         return ""
     end
-    --* this might e.g. be set in ((XrayViewsData#generateXrayExportOrLinkedItemItemInfo)):
+    --* this might e.g. be set in ((XrayViewsData#generateXrayExportOrLinkedItemInfo)):
     if KOR.registry:get("split_to_half_max_length") then
         max_length = math_floor(max_length / 2)
     end
@@ -373,13 +373,18 @@ function Strings:splitLinesToMaxLength(text, max_length, indent, first_word, don
         end
     end
 
-    --* e.g. set in ((XrayViewsData#generateXrayExportOrLinkedItemItemInfo)):
+    local additional_indent = indent
+    --* e.g. set in ((XrayViewsData#generateXrayExportOrLinkedItemInfo)):
     local add_icon_indent = KOR.registry:get("add_icon_indent")
+    if add_icon_indent then
+        local space = " "
+        additional_indent = indent .. space:rep(5)
+    end
     count = #lined_text
     for i = 1, count do
         if indent and (not dont_indent_first_line or i > 1) then
             if add_icon_indent and i > 1 then
-                indent = indent .. "   "
+                indent = additional_indent
             end
             lined_text[i] = indent .. lined_text[i]
         end

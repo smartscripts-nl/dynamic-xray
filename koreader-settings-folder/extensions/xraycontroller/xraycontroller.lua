@@ -621,6 +621,7 @@ function XrayController:resetDynamicXray(is_prepared, do_full_update)
     DX.sp:resetSideButtons()
     DX.pn:resetCache()
     DX.pn:setCurrentItem(nil)
+    KOR.twocolumntext:resetCache()
     --? I don't know why we need this:
     if not DX.ex then
         DX.ex = require("extensions/xrayviews/xrayexporter")

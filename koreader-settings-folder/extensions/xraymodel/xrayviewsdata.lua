@@ -6,7 +6,6 @@ local require = require
 local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
-local Screen = require("device").screen
 local T = require("ffi/util").template
 local _ = KOR:initCustomTranslations()
 
@@ -1151,7 +1150,7 @@ end
 
 --* only used for linked items and for XrayExporter:
 --* compare for generation of info_text for found-in-page side panel items: ((XrayInfoPanel#getItemInfoText)):
-function XrayViewsData:generateXrayExportOrLinkedItemItemInfo(item, ui_explanation, information_level, mode)
+function XrayViewsData:generateXrayExportOrLinkedItemInfo(items_count, item, ui_explanation, information_level, mode)
 
     local linebreak = information_level == 1 and "" or "\n"
     local first_line = {
@@ -1172,7 +1171,7 @@ function XrayViewsData:generateXrayExportOrLinkedItemItemInfo(item, ui_explanati
         iindent = meta_indent
     end
 
-    if DX.s.show_items_in_two_columns and Screen:getWidth() > Screen:getHeight() then
+    if KOR.twocolumntext:useTwoColumnDisplay(items_count) then
         KOR.registry:set("split_to_half_max_length", true)
     end
     KOR.registry:set("add_icon_indent", true)

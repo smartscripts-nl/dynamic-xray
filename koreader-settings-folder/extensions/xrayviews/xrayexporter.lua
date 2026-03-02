@@ -7,7 +7,6 @@ local DataStorage = require("datastorage")
 local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
-local Screen = require("device").screen
 local T = require("ffi/util").template
 
 local DX = DX
@@ -160,14 +159,13 @@ function XrayExporter:initData()
         return false
     end
 
-    local is_landscape = Screen:getWidth() > Screen:getHeight()
-    local use_two_column_display = DX.s.show_items_in_two_columns and #DX.vd.items > 2 and is_landscape
+    local use_two_column_display = KOR.twocolumntext:useTwoColumnDisplay(#DX.vd.items)
     self.items, self.items2, self.iconless_items = self:generateXrayItemsOverview(DX.vd.items, "for_all_items_list", use_two_column_display)
 
-    use_two_column_display = DX.s.show_items_in_two_columns and #DX.vd.persons > 2 and is_landscape
+    use_two_column_display = KOR.twocolumntext:useTwoColumnDisplay(#DX.vd.persons)
     self.persons, self.persons2, self.iconless_persons = self:generateXrayItemsOverview(DX.vd.persons, "for_all_items_list", use_two_column_display)
 
-    use_two_column_display = DX.s.show_items_in_two_columns and #DX.vd.terms > 2 and is_landscape
+    KOR.twocolumntext:useTwoColumnDisplay(#DX.vd.terms)
     self.terms, self.terms2, self.iconless_terms = self:generateXrayItemsOverview(DX.vd.terms, "for_all_items_list", use_two_column_display)
 
     self.tag_groups, self.tag_groups2, self.iconless_tag_groups = self:generateTagGroupsOverview(DX.vd.items)
@@ -189,7 +187,7 @@ function XrayExporter:generateXrayItemsOverview(items, mode, use_two_column_disp
         for i = 1, count do
             --* at the top of the second column we don't want to start with a line ending, so set information_level to 1 for that case:
             information_level = i == half_way + 1 and 1 or i
-            paragraph = DX.vd:generateXrayExportOrLinkedItemItemInfo(items[i], nil, information_level, mode)
+            paragraph = DX.vd:generateXrayExportOrLinkedItemInfo(count, items[i], nil, information_level, mode)
             if i <= half_way then
                 table_insert(paragraphs, paragraph)
             else
@@ -205,7 +203,7 @@ function XrayExporter:generateXrayItemsOverview(items, mode, use_two_column_disp
 
     paragraphs = {}
     for i = 1, count do
-        paragraph, paragraph_iconless = DX.vd:generateXrayExportOrLinkedItemItemInfo(items[i], nil, i, mode)
+        paragraph, paragraph_iconless = DX.vd:generateXrayExportOrLinkedItemInfo(count, items[i], nil, i, mode)
         table_insert(paragraphs, paragraph)
         table_insert(paragraphs_iconless, paragraph_iconless)
     end
@@ -243,8 +241,7 @@ function XrayExporter:generateTagGroupsOverview(items)
         return "you haven't defined any tag-groups as yet" .. "...\n\n" .. _("You can create tag-groups by adding tags to Xray items.")
     end
 
-    local is_landscape = Screen:getWidth() > Screen:getHeight()
-    local use_two_column_display = DX.s.show_items_in_two_columns and count > 2 and is_landscape
+    local use_two_column_display = KOR.twocolumntext:useTwoColumnDisplay(count)
     local column1, column2 = {}, {}
     if use_two_column_display then
         local half_way = math_ceil(count / 2)
@@ -292,7 +289,7 @@ function XrayExporter:populateTagGroups(tag_groups, item)
                 },
             }
         end
-        local paragraph, paragraph_iconless = DX.vd:generateXrayExportOrLinkedItemItemInfo(item, nil, i, "for_all_items_list")
+        local paragraph, paragraph_iconless = DX.vd:generateXrayExportOrLinkedItemInfo(count, item, nil, i, "for_all_items_list")
         if add_spacer then
             table_insert(tag_groups[tag].paras, "\n")
             table_insert(tag_groups[tag].paras_iconless, "\n")

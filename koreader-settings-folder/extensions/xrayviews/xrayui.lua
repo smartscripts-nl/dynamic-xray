@@ -205,7 +205,7 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
     local more_button_added
     local item, for_second_column
     count = #items
-    local use_second_info_column = DX.s.show_items_in_two_columns and count > 2 and Screen:getWidth() > Screen:getHeight()
+    local use_second_info_column = KOR.twocolumntext:useTwoColumnDisplay(count)
     local half_point = math_ceil(count / 2)
     for i = 1, count do
         for_second_column = use_second_info_column and i > half_point
@@ -252,7 +252,7 @@ function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanation
     if self.info_use_upper_case_names then
         name = KOR.strings:upper(name)
     end
-    local match_block, xray_type_icon, xray_match_reliability_icon = DX.vd:generateXrayExportOrLinkedItemItemInfo(items[i], xray_explanations[i], injected_nr)
+    local match_block, xray_type_icon, xray_match_reliability_icon = DX.vd:generateXrayExportOrLinkedItemInfo(nil, items[i], xray_explanations[i], injected_nr)
     if not for_second_column then
         paragraph_hits_info = paragraph_hits_info .. match_block
     else
