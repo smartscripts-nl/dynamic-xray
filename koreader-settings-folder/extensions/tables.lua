@@ -96,6 +96,16 @@ function Tables:populateWithPlaceholders(items_count, default_value)
     return temp
 end
 
+function Tables:relationalTableLength(itable)
+    local iteration = 0
+    local garbage
+    for _, v in pairs(itable) do
+        iteration = iteration + 1
+        garbage = v
+    end
+    return iteration
+end
+
 function Tables:concatField(itable, prop, separator)
     local texts = {}
     count = #itable

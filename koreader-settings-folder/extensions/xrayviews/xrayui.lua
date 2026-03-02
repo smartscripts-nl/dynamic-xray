@@ -24,6 +24,7 @@ local math_ceil = math.ceil
 local math_floor = math.floor
 local pairs = pairs
 local table = table
+local table_concat = table.concat
 local table_insert = table.insert
 
 local count
@@ -188,8 +189,8 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
     end
 
     local paragraph_text = self.paragraph_texts[nr]
-    local paragraph_hits_info = ""
-    local paragraph_hits_info2 = ""
+    local paragraph_hits_info = {}
+    local paragraph_hits_info2 = {}
     local paragraph_headings = {}
     --* these items were generated via ((init xray sideline markers)) > ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#ReaderViewInitParaOrPageData)) > ((XrayUI#ReaderViewLoopThroughParagraphOrPage)) ((XrayUI#getXrayItemsFoundInText)):
     local items = xray_rects.hits[nr]
@@ -203,34 +204,40 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
     local injected_names = {}
     local injected_nr = 0
     local more_button_added
-    local item, for_second_column
+    local item
     count = #items
     local use_second_info_column = KOR.twocolumntext:useTwoColumnDisplay(count)
     if use_second_info_column then
         KOR.registry:set("split_to_half_max_length", true)
     end
-    local half_point = math_ceil(count / 2)
     for i = 1, count do
-        for_second_column = use_second_info_column and i > half_point
         item = items[i]
-        injected_nr, paragraph_hits_info, paragraph_hits_info2, more_button_added = self:addParagraphInfoItems(
-            items,
-            i,
-            injected_names,
-            xray_explanations,
-            skip_xray_items,
-            paragraph_headings,
-            injected_nr,
-            paragraph_hits_info,
-            paragraph_hits_info2,
-            for_second_column
+        injected_nr, more_button_added = self:addParagraphInfoItems(
+                items,
+                i,
+                injected_names,
+                xray_explanations,
+                skip_xray_items,
+                paragraph_headings,
+                injected_nr,
+                paragraph_hits_info
         )
         if more_button_added then
             break
         end
     end
-    if not use_second_info_column or has_no_text(paragraph_hits_info2) then
+    if not use_second_info_column then
         paragraph_hits_info2 = nil
+        paragraph_hits_info = table_concat(paragraph_hits_info, "")
+    else
+        count = #paragraph_hits_info
+        local half_point = math_ceil(count / 2)
+        for i = count, half_point + 1, -1 do
+            table_insert(paragraph_hits_info2, paragraph_hits_info[i])
+            paragraph_hits_info[i] = nil
+        end
+        paragraph_hits_info = table_concat(paragraph_hits_info, "")
+        paragraph_hits_info2 = table_concat(paragraph_hits_info2, "")
     end
     paragraph_matches_count = injected_nr
     --* correction for indentation of first line in dialog; this should not be necessary:
@@ -243,12 +250,12 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
     xray_rects.callback(paragraph_hits_info, paragraph_hits_info2, paragraph_headings, paragraph_matches_count, self.info_extra_button_rows, paragraph_text)
 end
 
-function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanations, skip_xray_items, paragraph_headings, injected_nr, paragraph_hits_info, paragraph_hits_info2, for_second_column)
+function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanations, skip_xray_items, paragraph_headings, injected_nr, paragraph_hits_info)
     local more_button_added
 
     local name = items[i].name
     if injected_names[name] or (skip_xray_items and skip_xray_items[name]) then
-        return injected_nr, paragraph_hits_info, paragraph_hits_info2
+        return injected_nr
     end
 
     injected_names[name] = name
@@ -258,11 +265,7 @@ function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanation
         name = KOR.strings:upper(name)
     end
     local match_block, xray_type_icon, xray_match_reliability_icon = DX.vd:generateXrayExportOrLinkedItemInfo(nil, items[i], xray_explanations[i], injected_nr)
-    if not for_second_column then
-        paragraph_hits_info = paragraph_hits_info .. match_block
-    else
-        paragraph_hits_info2 = paragraph_hits_info2 .. match_block
-    end
+    table_insert(paragraph_hits_info, match_block)
 
     -- #((headings for use in TextViewer))
     --* needles will be used in ((TextViewer#blockDown)) and  ((TextViewer#blockUp)):
@@ -289,7 +292,7 @@ function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanation
         end,
     })
 
-    return injected_nr, paragraph_hits_info, paragraph_hits_info2, more_button_added
+    return injected_nr, more_button_added
 end
 
 --* called from ReaderView:

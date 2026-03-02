@@ -10,6 +10,7 @@
 -- ((PATCH UIMANAGER))
 -- ((PATCH READERDICTIONARY))
 --! I didn't patch DictQuickLookup, to add a add Xray item button to the dictionary dialog; dialog code for me too complicated to patch...
+-- ((PATCH READERFOOTER))
 -- ((PATCH READERTOC))
 -- ((PATCH READERHIGHLIGHT))
 --* ((PATCH READERSEARCH)) some methods completely replaced...
@@ -50,6 +51,7 @@ local Menu = require("extensions/widgets/menu")
 local PluginLoader = require("pluginloader")
 --- @class ReaderDictionary
 local ReaderDictionary = require("apps/reader/modules/readerdictionary")
+local ReaderFooter = require("apps/reader/modules/readerfooter")
 --- @class ReaderHighlight
 local ReaderHighlight = require("apps/reader/modules/readerhighlight")
 --- @class ReaderSearch
@@ -318,6 +320,16 @@ ReaderDictionary.onLookupWord = function(self, word, is_sane, boxes, highlight, 
     end
 
     return orig_onLookupWord(self, word, is_sane, boxes, highlight, link, dict_close_callback)
+end
+
+
+--- PATCH READERFOOTER
+-- #((PATCH READERFOOTER))
+
+local orig_ReaderFooter_init = ReaderFooter.init
+ReaderFooter.init = function(self)
+    orig_ReaderFooter_init(self)
+    KOR:registerModule("footer", self)
 end
 
 
