@@ -21,6 +21,7 @@ local has_no_text = has_no_text
 local has_text = has_text
 local table = table
 local table_insert = table.insert
+local table_remove = table.remove
 
 local count
 
@@ -387,7 +388,7 @@ function XrayButtons:forPageNavigatorTopLeft(parent)
 end
 
 --* additional buttons can be inserted via ((TextViewer#initButtons)), when it is configurated with optional props extra_button, extra_button2 and extra_button3:
--- these additional buttons for the current dialog are defined in ((inject xray list buttons)):
+--* these additional buttons for the current dialog are defined in ((inject xray list buttons)):
 function XrayButtons:forUiInfo(parent, buttons)
     -- #((TextViewer toc button))
     --* the items for this and the next two buttons were generated in ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)):
@@ -550,8 +551,9 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
                 text = DX.vd.xray_type_icons_importance_toggle[needle_item.xray_type],
                 callback = function()
                     DX.d:closeViewer()
-                    local select_number, toggled_item = DX.fd:toggleIsImportantItem(needle_item)
-                    DX.vd:updateItemsTable(select_number)
+                    local toggled_item = DX.fd:toggleIsImportantItem(needle_item)
+                    DX.ds.storeUpdatedItemType(toggled_item)
+                    DX.vd:updateAndSortAllItemTables(toggled_item)
                     DX.d:showItemViewer(toggled_item, called_from_list, tapped_word)
                 end,
             }),
@@ -559,8 +561,16 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
                 text = DX.vd.xray_type_icons_person_or_term_toggle[needle_item.xray_type],
                 callback = function()
                     DX.d:closeViewer()
-                    local select_number, toggled_item = DX.fd:toggleIsPersonOrTerm(needle_item)
-                    DX.vd:updateItemsTable(select_number)
+                    local toggled_item = DX.fd:toggleIsPersonOrTerm(needle_item)
+                    DX.ds.storeUpdatedItemType(toggled_item)
+                    if DX.vd.active_list_tab > 1 then
+                        if DX.m:isPerson(toggled_item) then
+                            DX.vd:setProp("active_list_tab", 2)
+                        else
+                            DX.vd:setProp("active_list_tab", 3)
+                        end
+                    end
+                    DX.vd:updateAndSortAllItemTables(toggled_item)
                     DX.d:showItemViewer(toggled_item, called_from_list, tapped_word)
                 end,
             }),
@@ -849,7 +859,7 @@ function XrayButtons:forTranslationViewer(parent, translation)
     }
 end
 
-function XrayButtons:getItemViewerTabs(main_info, hits_info, linked_items_info, quotes_info)
+function XrayButtons:getItemViewerTabs(main_info, hits_info, linked_items_info, quotes_info, linked_items_info2)
     local has_chapter_info = hits_info ~= ""
     local hits_tab_enabled, hits_tab_color = KOR.buttonprops:getButtonState(has_chapter_info)
     local tabs = {
@@ -866,7 +876,14 @@ function XrayButtons:getItemViewerTabs(main_info, hits_info, linked_items_info, 
             html = "<div style='margin: 1em 2em' class='redhat'>" .. hits_info .. "</div>",
         },
     }
-    if has_text(linked_items_info) then
+    if has_text(linked_items_info2) and has_text(linked_items_info) then
+        table_insert(tabs, {
+            tab = _("linked items"),
+            html = linked_items_info,
+            html2 = linked_items_info2,
+            content_type = "text",
+        })
+    elseif has_text(linked_items_info) then
         table_insert(tabs, {
             tab = _("linked items"),
             html = linked_items_info,
@@ -963,9 +980,9 @@ function XrayButtons:forListContext(manager, item)
                 fgcolor = KOR.colors.lighter_text,
                 callback = function()
                     UIManager:close(manager.item_context_dialog)
-                    local select_number = DX.fd:toggleIsImportantItem(item)
-                    DX.vd:updateItemsTable(select_number)
-                    DX.vd.prepareData()
+                    local toggled_item = DX.fd:toggleIsImportantItem(item)
+                    DX.ds.storeUpdatedItemType(toggled_item)
+                    DX.vd:updateAndSortAllItemTables(toggled_item)
                     DX.d:showList()
                     return false
                 end,
@@ -1094,13 +1111,57 @@ function XrayButtons:getListSubmenuButton(tab_no)
     }
 end
 
-function XrayButtons:forChapterInformationPopup(parent, page)
-    return {{
+function XrayButtons:forChapterInformationPopup(parent, page, for_page_navigator, current_chapter, last_chapter)
+    local max_loops = 150
+    local lcount
+    local buttons = {{
      {
          icon = "back",
          callback = function()
              UIManager:close(parent.information_dialog)
          end
+     },
+     {
+         icon = "previous",
+         callback = function()
+             lcount = 0
+             current_chapter = current_chapter - 1
+             if current_chapter < 1 then
+                 current_chapter = last_chapter
+             end
+             local html = parent:getChapterHtml(current_chapter)
+             while (not html:find("<strong>", 1, true) or not parent:chapterHasOccurrences(current_chapter)) and lcount <= max_loops do
+                 lcount = lcount + 1
+                 current_chapter = current_chapter - 1
+                 if current_chapter < 1 then
+                     current_chapter = last_chapter
+                 end
+                 html = parent:getChapterHtml(current_chapter)
+             end
+             UIManager:close(parent.information_dialog)
+             parent:showChapterInformation(current_chapter, html)
+         end,
+     },
+     {
+         icon = "next",
+         callback = function()
+             lcount = 0
+             current_chapter = current_chapter + 1
+             if current_chapter > last_chapter then
+                 current_chapter = 1
+             end
+             local html = parent:getChapterHtml(current_chapter)
+             while (not html:find("<strong>", 1, true) or not parent:chapterHasOccurrences(current_chapter)) and lcount <= max_loops do
+                 lcount = lcount + 1
+                 current_chapter = current_chapter + 1
+                 if current_chapter > last_chapter then
+                     current_chapter = 1
+                 end
+                 html = parent:getChapterHtml(current_chapter)
+             end
+             UIManager:close(parent.information_dialog)
+             parent:showChapterInformation(current_chapter, html)
+         end,
      },
      {
          icon_text = {
@@ -1111,6 +1172,7 @@ function XrayButtons:forChapterInformationPopup(parent, page)
              if not parent:handleBeforeGotoPageRequest(page) then
                  return
              end
+             UIManager:close(parent.information_dialog)
              DX.sp:resetActiveSideButtons("NavigatorBox:showChapterInformation")
              DX.pn.page_no = page
              DX.pn:restoreNavigator()
@@ -1122,14 +1184,38 @@ function XrayButtons:forChapterInformationPopup(parent, page)
              text = " " .. KOR.icons.arrow_bare .. " " .. _("book"),
          },
          callback = function()
-             if not parent:handleBeforeGotoPageRequest(page) then
-                 return
+             if for_page_navigator then
+                     if not parent:handleBeforeGotoPageRequest(page) then
+                     return
+                 end
+                 UIManager:close(parent.information_dialog)
+                 KOR.ui.link:addCurrentLocationToStack()
+                 KOR.ui:handleEvent(Event:new("GotoPage", page))
+                return
              end
+             UIManager:close(parent.information_dialog)
+             DX.d:closeItemViewer()
              KOR.ui.link:addCurrentLocationToStack()
              KOR.ui:handleEvent(Event:new("GotoPage", page))
          end
      },
  }}
+    --* remove jump in Page Navigator button:
+    if not for_page_navigator then
+        table_remove(buttons[1], 4)
+    end
+    return buttons
+end
+
+function XrayButtons:forChapterInformationTopLeft()
+    return {
+        {
+            icon = "info-slender",
+            callback = function()
+                KOR.dialogs:niceAlert(_("For your information"), _("The statistics shown below are an ESTIMATE: the beginning and end of the chapter and the exact number of item occurrences cannot always be determined with complete accuracy.\n\nSometimes a small portion of text from the previous or next chapter is displayed at the beginning or end of a chapter, or the text on the last page of the chapter may be missing. Unfortunately, this cannot be avoided.\n\nUse the arrow buttons to navigate from preview to preview. Target icons allow you to jump directly to the chapter itself."))
+            end,
+        },
+    }
 end
 
 function XrayButtons:forEditDescription(callback, cancel_callback)
@@ -1593,7 +1679,7 @@ Continue?]])
     }
     --* remove save and return to list button in case of tapped words viewer:
     if DX.m.use_tapped_word_data then
-        table.remove(buttons[1], 5)
+        table_remove(buttons[1], 5)
     end
     return buttons
 end

@@ -38,6 +38,7 @@ local pairs = pairs
 --- @field tabfactory TabFactory
 --- @field tabnavigator TabNavigator
 --- @field tables Tables
+--- @field twocolumntext TwoColumnText
 local KOR = WidgetContainer:new{
 
 	--- NATIVE KOREADER UI MODULES
@@ -93,6 +94,7 @@ local KOR = WidgetContainer:new{
 	tabfactory = nil,
 	tabnavigator = nil,
 	tables = nil,
+	twocolumntext = nil,
 
 	--- PLUGINS
 
@@ -126,6 +128,7 @@ local KOR = WidgetContainer:new{
 		"system",
 		"tabfactory",
 		"tabnavigator",
+		"twocolumntext",
 	},
 
 	translations_source = nil,

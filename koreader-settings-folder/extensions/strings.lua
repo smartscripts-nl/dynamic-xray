@@ -10,12 +10,15 @@ local DX = DX
 local has_content = has_content
 local has_no_content = has_no_content
 local has_no_text = has_no_text
+local math_floor = math.floor
 local select = select
 local string = string
 local table = table
 local table_concat = table.concat
 local table_insert = table.insert
 local type = type
+
+local count
 
 --- accented characters:
 --- ÄËÏÖÜ äëïöü ÁÉÍÓÚ áéíóú ÀÈÌÒÙ àèìòù Çç ß
@@ -73,7 +76,7 @@ function Strings:getKeywordsForMatchingFrom(subject, no_lower_case, add_singular
     local keywords = self:split(subject, splitter, false)
     local singulars = {}
     local keyword, singular
-    local count = #keywords
+    count = #keywords
     for nr = 1, count do
         keyword = keywords[nr]
         keyword = keyword:gsub("%-", "%%-"):gsub("%.", "%%.")
@@ -121,8 +124,8 @@ function Strings:limitLength(text, max_length)
 end
 
 --* count is meant for loops: only on first loop convert strings to singular:
-function Strings:singular(text, count)
-    if count == 1 then
+function Strings:singular(text, icount)
+    if icount == 1 then
         --* third substitution: personen -> persoon, fourth: boeken -> boek:
         return text:gsub("’s$", ""):gsub("s$", ""):gsub("onen$", "oon"):gsub("ken$", "k")
     end
@@ -324,6 +327,10 @@ function Strings:splitLinesToMaxLength(text, max_length, indent, first_word, don
     if has_no_content(text) then
         return ""
     end
+    --* this might e.g. be set in ((XrayViewsData#generateXrayExportOrLinkedItemInfo)):
+    if KOR.registry:get("split_to_half_max_length") then
+        max_length = math_floor(max_length / 2)
+    end
     if has_content(first_word) then
         text = first_word .. text
     end
@@ -338,7 +345,7 @@ function Strings:splitLinesToMaxLength(text, max_length, indent, first_word, don
     local lined_text = { "" }
     local index = 1
     local word, for_next_line, for_previous_line, parts, insert
-    local count = #words
+    count = #words
     for i = 1, count do
         word = words[i]
         if word:match("\n") then
@@ -366,9 +373,19 @@ function Strings:splitLinesToMaxLength(text, max_length, indent, first_word, don
         end
     end
 
+    local additional_indent = indent
+    --* e.g. set in ((XrayViewsData#generateXrayExportOrLinkedItemInfo)):
+    local add_icon_indent = KOR.registry:get("add_icon_indent")
+    if add_icon_indent then
+        local space = " "
+        additional_indent = indent .. space:rep(5)
+    end
     count = #lined_text
     for i = 1, count do
         if indent and (not dont_indent_first_line or i > 1) then
+            if add_icon_indent and i > 1 then
+                indent = additional_indent
+            end
             lined_text[i] = indent .. lined_text[i]
         end
         if after_first_line_indent and i > 1 then

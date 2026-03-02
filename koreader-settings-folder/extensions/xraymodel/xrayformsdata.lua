@@ -68,7 +68,7 @@ function XrayFormsData:initNewItemFormProps(name_from_selected_text, active_form
     end
     local xray_type_stored = false
     --* this concerns the active tab of the Xray items list:
-    if parent.active_list_tab == 3 or tapped_words.active_tapped_word_tab == 3 then
+    if views_data.active_list_tab == 3 or tapped_words.active_tapped_word_tab == 3 then
         xray_type = 3
         if item then
             item.xray_type = 3
@@ -420,8 +420,6 @@ end
 
 --- @private
 function XrayFormsData:toggleIsImportantItem(toggle_item)
-    local xray_items = {}
-    local position = 1
     local item
     count = #views_data.items
     for nr = 1, count do
@@ -433,19 +431,15 @@ function XrayFormsData:toggleIsImportantItem(toggle_item)
                 item.xray_type = item.xray_type + 1
             end
             toggle_item.xray_type = item.xray_type
-            position = nr
+            return toggle_item
         end
-        table_insert(xray_items, item)
     end
-    self:storeItemUpdates("toggle_type", toggle_item)
 
-    return position, toggle_item
+    return toggle_item
 end
 
 --- @private
 function XrayFormsData:toggleIsPersonOrTerm(toggle_item)
-    local xray_items = {}
-    local position = 1
     local item
     count = #views_data.items
     for nr = 1, count do
@@ -457,13 +451,11 @@ function XrayFormsData:toggleIsPersonOrTerm(toggle_item)
                 item.xray_type = item.xray_type - 2
             end
             toggle_item.xray_type = item.xray_type
-            position = nr
+            return toggle_item
         end
-        table_insert(xray_items, item)
     end
-    self:storeItemUpdates("toggle_type", toggle_item)
 
-    return position, toggle_item
+    return toggle_item
 end
 
 --- @private

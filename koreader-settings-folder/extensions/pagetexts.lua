@@ -21,19 +21,18 @@ local PageTexts = WidgetContainer:extend{
     current_elem_no = nil,
     paragraph_end = nil,
     paragraph_start = nil,
+    fragments_separator = "\n…\n________\n",
     start_elem_no = nil,
     start_page_no = nil,
 }
 
 function PageTexts:countItemOccurrences(text, needles)
-
-    local total_count = 0
     local rcount
+    local total_count = 0
     for i = 1, #needles do
-        text, rcount = text:gsub("%f[%w_]" .. needles[i] .. "%f[^%w_]", "")
+        text, rcount = text:gsub("%f[%w_]" .. needles[i] .. "%f[^%w_]", "<strong>")
         total_count = total_count + rcount
     end
-
     return total_count
 end
 
@@ -329,7 +328,7 @@ function PageTexts:compressTextAroundMarkers(html, context)
         table_insert(result, line)
     end
 
-    return table_concat(result, "\n…\n________\n")
+    return table_concat(result, self.fragments_separator)
 end
 
 function PageTexts:getChapterHits(chapter_index, needles, start_page, xp, end_xp)
@@ -356,6 +355,9 @@ function PageTexts:getChapterText(as_html, needles, current_page)
     local chapter_start_page = KOR.toc:getChapterStartPage(xp)
     local start_xp = KOR.document:getPageXPointer(chapter_start_page)
     local next_chapter_start_page = KOR.toc:getNextChapter(current_page)
+    if not next_chapter_start_page then
+        return "", current_toc_title
+    end
     local end_xp = KOR.document:getPageXPointer(next_chapter_start_page)
     local text = KOR.document:getTextFromXPointers(start_xp, end_xp)
 
@@ -382,6 +384,19 @@ function PageTexts:getChapterText(as_html, needles, current_page)
     end
 
     return table_concat(lines, "\n"), current_toc_title
+end
+
+function PageTexts:getChapterTextBare(start_page, xp, end_xp)
+    local toc_title = KOR.toc:getTocTitleByPage(start_page)
+    local chapter_text = KOR.document:getTextFromXPointers(xp, end_xp)
+    local non_current_chapter_start_lines = self:getNonCurrentChapterLinesCount(toc_title, start_page, xp)
+
+    local lines = KOR.strings:split(chapter_text, "\n")
+    for r = 1, non_current_chapter_start_lines do
+        table_remove(lines, 1)
+        self.garbage = r
+    end
+    return table_concat(lines, "\n")
 end
 
 return PageTexts

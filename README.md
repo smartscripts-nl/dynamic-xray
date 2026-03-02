@@ -175,6 +175,9 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 ![05b Xray Item Viewer quotes tab](images/05b-xray-item-viewer-quotes-tab-in-item-viewer.png)
 05b Xray Item Viewer: quotes tab
 
+![05c Xray Item Viewer linked items tab](images/05c-xray-item-viewer-tab-3-linked-items.png)
+05c Xray Item Viewer: linked items tab
+
 ![06 Xray item editor tab 1](images/06-xray-item-editor-tab-1.png)
 06 Xray item editor tab 1
 
@@ -247,6 +250,17 @@ PT_bookinfo_cache.sqlite3". In that case:
 ## Todos
 * Update the demo movies in the GitHub releases section.
 * Base custom translations on indices instead of the texts they translate → continued usability of translations by the user much better protected, even when the actual text to be translated changes.
+* It is possible to add an item to the KOReader footer to show the total count of Xray items for the current ebook. But alas, ReaderFooter as it is now is much too convoluted and heavily relies on local vars, which to my best knowledge makes patching impossible. You could of course directly modify ReaderFooter yourself, but you'd then have to re-do this upon every update. You'd have to edit this module in several places, the most important modification being to add this function to the functions already present in footerTextGeneratorMap:
+```
+xray_items = function()
+  local items_count = #DX.vd.item_table[1]
+  if items_count == 0 then
+      return ""
+  end
+  local KOR = require("extensions/kor")
+  return KOR.icons.lightning_bare .. items_count
+end
+```
 
 ## About the code
 

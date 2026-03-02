@@ -250,19 +250,22 @@ function XrayViewsData:addItemToPersonsOrTerms(item)
         table_insert(self.item_table[2], item_copy)
         item_copy.index = #self.persons + 1
         table_insert(self.persons, item_copy)
-    else
-        table_insert(self.item_table[3], item_copy)
-        item_copy.index = #self.terms + 1
-        table_insert(self.terms, item_copy)
+        return
     end
+
+    table_insert(self.item_table[3], item_copy)
+    item_copy.index = #self.terms + 1
+    table_insert(self.terms, item_copy)
 end
 
 --* this method is only called after adding or updating items:
 --- @private
-function XrayViewsData:repopulateItemsPersonsTerms(item)
+function XrayViewsData:repopulateItemsPersonsTerms(item, skip_item_table)
     count = #self.items
     self.persons = {}
     self.terms = {}
+    self.item_table[2] = {}
+    self.item_table[3] = {}
     --* luckily we don't have to update TextViewer.paragraph_headings etc. (loaded from XrayUI data) here, because those take their info from XrayModel via ((XrayUI#getXrayItemsFoundInText)) > ((get xray_item for XrayUI))...
 
     for i = 1, count do
@@ -279,7 +282,9 @@ function XrayViewsData:repopulateItemsPersonsTerms(item)
                 end
             end
             self.items[i].index = i
-            table_insert(self.item_table[1], self.items[i])
+            if not skip_item_table then
+                table_insert(self.item_table[1], self.items[i])
+            end
             self:addItemToPersonsOrTerms(self.items[i])
         end
     end
@@ -288,21 +293,56 @@ end
 --* only called from ((XrayController#saveUpdatedItem)), but not for newly added items; for those we call ((XrayViewsData#registerNewItem)):
 function XrayViewsData:updateAndSortAllItemTables(item)
 
+    --* this call is needed to update possibly changed xray type icons (dark/important or light/normal):
+    item.text = self:generateListItemText(item)
+
+    local id = item.id
+    --* before editing we have reset filters, so usage of self.items here is safe; see ((XrayController#onShowNewItemForm)) and ((XrayController#onShowEditItemForm)) > ((XrayViewsData#resetAllFilters)):
+    count = #self.item_table[1]
+    for i = 1, count do
+        if self.item_table[1][i].id == id then
+            self.item_table[1][i] = KOR.tables:shallowCopy(item)
+            break
+        end
+    end
+    for i = 1, count do
+        if self.items[i].id == id then
+            self.items[i] = KOR.tables:shallowCopy(item)
+            break
+        end
+    end
+
+    parent:updateStaticReferenceCollections(id, KOR.tables:shallowCopy(item))
+
     --* here we also populate self.item_table[1] etc.:
-    self:repopulateItemsPersonsTerms(item)
-    --* this call is also needed to add reliability and xray type icons:
-    self:applyFilters()
+    self:repopulateItemsPersonsTerms(item, "skip_item_table")
 
     --* display the new item in its proper place in the Items List (placeImportantItemsAtTop wil also add corresponding "index" prop to each item):
     self.items = parent:placeImportantItemsAtTop(self.items, -1)
     self.item_table[1] = parent:placeImportantItemsAtTop(self.item_table[1], -1)
-    if DX.m:isPerson(item) then
+    if #self.item_table[2] > 0 then
         self.item_table[2] = parent:placeImportantItemsAtTop(self.item_table[2], -1)
         self.persons = parent:placeImportantItemsAtTop(self.persons, -1)
-        return
     end
-    self.item_table[3] = parent:placeImportantItemsAtTop(self.item_table[3], -1)
-    self.terms = parent:placeImportantItemsAtTop(self.terms, -1)
+    if #self.item_table[3] > 0 then
+        self.item_table[3] = parent:placeImportantItemsAtTop(self.item_table[3], -1)
+        self.terms = parent:placeImportantItemsAtTop(self.terms, -1)
+    end
+
+    --* add correct index for updated_item:
+    self.current_tab_items = self.items
+    if self.active_list_tab == 2 then
+        self.current_tab_items = self.persons
+    elseif self.active_list_tab == 3 then
+        self.current_tab_items = self.terms
+    end
+    count = #self.current_tab_items
+    for i = 1, count do
+        if self.current_tab_items[i].id == id then
+            item.index = self.current_tab_items[i].index
+            break
+        end
+    end
 end
 
 --* compare ((XrayViewsData#registerUpdatedItem)) and ((XrayViewsData#updateAndSortAllItemTables)) for edited items:
@@ -334,7 +374,7 @@ function XrayViewsData:getCurrentListTabItems(needle_item)
         self.persons,
         self.terms,
     }
-    local items = subject_tables[parent.active_list_tab]
+    local items = subject_tables[self.active_list_tab]
 
     --* prop "text" is generated in ((XrayViewsData#generateListItemText)):
     --* make sure items in the list have a sequence number; only done here, after prioritizing and sorting items, and not in ((XrayViewsData#generateListItemText)), because order could be changed by those actions:
@@ -455,7 +495,7 @@ function XrayViewsData:getChapterHitsData(item)
     --* build unified list of search terms:
     local needles = self:getXrayItemNameVariants(item)
 
-    local xp, end_xp, start_page, chapter_text, chapter_hits
+    local xp, end_xp, start_page, chapter_hits
     local chapter_positions = KOR.toc:getTocXpointers()
     local chapter_hits_data = {}
     local max_hits = 0
@@ -466,8 +506,6 @@ function XrayViewsData:getChapterHitsData(item)
         start_page = chapter_positions[i][2]
         end_xp = chapter_positions[i + 1][1]
         chapter_hits = KOR.pagetexts:getChapterHits(i, needles, start_page, xp, end_xp)
-        chapter_text = KOR.document:getTextFromXPointers(xp, end_xp)
-        chapter_hits = KOR.pagetexts:countItemOccurrences(chapter_text, needles)
         total_count = total_count + chapter_hits
         table_insert(chapter_hits_data, chapter_hits)
         if chapter_hits > max_hits then
@@ -479,11 +517,11 @@ function XrayViewsData:getChapterHitsData(item)
     local last_toc_item = KOR.toc:getChapterPropsByIndex(count)
     start_page = last_toc_item.page
     local last_page = KOR.document:getPageCount()
-    chapter_text = ""
+    local chapter_text = ""
     for page = start_page, last_page do
         chapter_text = chapter_text .. KOR.document:getPageText(page) .. "\n"
     end
-    chapter_hits = KOR.pagetexts:countItemOccurrences(chapter_text, needles)
+    chapter_hits = KOR.pagetexts:countItemOccurrences(chapter_text, needles, #chapter_positions)
     total_count = total_count + chapter_hits
     table_insert(chapter_hits_data, chapter_hits)
     if chapter_hits > max_hits then
@@ -1112,7 +1150,7 @@ end
 
 --* only used for linked items and for XrayExporter:
 --* compare for generation of info_text for found-in-page side panel items: ((XrayInfoPanel#getItemInfoText)):
-function XrayViewsData:generateXrayExportOrLinkedItemItemInfo(item, ui_explanation, information_level, mode)
+function XrayViewsData:generateXrayExportOrLinkedItemInfo(items_count, item, ui_explanation, information_level, mode)
 
     local linebreak = information_level == 1 and "" or "\n"
     local first_line = {
@@ -1132,10 +1170,18 @@ function XrayViewsData:generateXrayExportOrLinkedItemItemInfo(item, ui_explanati
         meta_indent = DX.ip:getConfiguredInfoPanelIndentation()
         iindent = meta_indent
     end
+
+    if KOR.twocolumntext:useTwoColumnDisplay(items_count) then
+        KOR.registry:set("split_to_half_max_length", true)
+    end
+    KOR.registry:set("add_icon_indent", true)
+
     local aliases, aliases_fc = self:generateAliasesInfo(item, iindent, mode)
     local linkwords, linkwords_fc = self:generateLinkwordsInfo(item, iindent, mode)
     local tags, tags_fc = self:generateTagsInfo(item, iindent, mode)
     local hits, hits_fc = self:generateHitsInfo(item, iindent, mode)
+
+    KOR.registry:unset("split_to_half_max_length", "add_icon_indent")
 
     -- #((use xray match reliability indicators))
     local xray_match_reliability_icon = DX.i:getMatchReliabilityIndicator("full_name")
@@ -1199,8 +1245,9 @@ function XrayViewsData:generateAliasesInfo(item, iindent, for_all_items_list)
     if not has_text(item.aliases) then
         return "", ""
     end
-    local aliases, aliases_fc = "", ""
 
+    local aliases
+    local aliases_fc = ""
     local icon = KOR.icons.xray_alias_bare .. " "
     aliases = KOR.strings:splitLinesToMaxLength(item.aliases, DX.s.PN_info_panel_max_line_length, iindent, icon) .. "\n"
     if for_all_items_list then
@@ -1237,7 +1284,8 @@ function XrayViewsData:generateTagsInfo(item, iindent, for_all_items_list)
     if not has_text(item.tags) then
         return "", ""
     end
-    local tags, tags_fc = "", ""
+    local tags
+    local tags_fc = ""
 
     local icon = KOR.icons.tag_open_bare .. " "
     tags = KOR.strings:splitLinesToMaxLength(item.tags, DX.s.PN_info_panel_max_line_length, iindent, icon) .. "\n"
@@ -1254,7 +1302,8 @@ function XrayViewsData:generateLinkwordsInfo(item, iindent, for_all_items_list)
     if not has_text(item.linkwords) then
         return "", ""
     end
-    local linkwords, linkwords_fc = "", ""
+    local linkwords
+    local linkwords_fc = ""
     local icon = KOR.icons.xray_link_bare .. " "
     linkwords = KOR.strings:splitLinesToMaxLength(item.linkwords, DX.s.PN_info_panel_max_line_length, iindent, icon) .. "\n"
     if for_all_items_list then
@@ -1339,7 +1388,7 @@ function XrayViewsData:filterAndPopulateItemTables(data_items)
 
     --* loop for items which had full or partial matching AND had linkwords; now we search for those linkwords, to get all items linked to these main items:
     if not self.search_simple and not self.filter_tag then
-        hits_registry = self:populateItemTableFromLinkWords(linked_item_needles, items, hits_registry)
+        hits_registry = self:populateItemTableFromLinkWords(linked_item_needles, items, hits_registry) -- luacheck: ignore
     end
 
     DX.d:notifyFilterResult(filter_active, self.filtered_count)
@@ -1443,12 +1492,12 @@ end
 --- @private
 function XrayViewsData:applyFilters()
     --* self.items etc. were populated in (())
-    local xray_items, persons, terms = self.items or {}, self.persons or {}, self.terms or {}
+    local items, persons, terms = self.items or {}, self.persons or {}, self.terms or {}
     self.filtered_count = 0
-    if #xray_items > 0 then
+    if #items > 0 then
         --* in these calls self.filtered_count must be updated:
         local subjects = {
-            xray_items,
+            items,
             persons,
             terms,
         }

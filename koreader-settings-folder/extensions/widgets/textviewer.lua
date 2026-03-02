@@ -13,7 +13,6 @@
 local require = require
 
 local BD = require("ui/bidi")
-local Blitbuffer = require("ffi/blitbuffer")
 local Button = require("extensions/widgets/button")
 local ButtonTable = require("extensions/widgets/buttontable")
 local CenterContainer = require("ui/widget/container/centercontainer")
@@ -105,7 +104,7 @@ local TextViewer = InputContainer:extend{
     extra_button2_position = nil,
     extra_button3 = nil,
     extra_button3_position = nil,
-    fgcolor = Blitbuffer.COLOR_BLACK,
+    fgcolor = KOR.colors.black,
     find_centered_lines_count = 5, --* line with find results to be not far from the center
     fixed_face = nil,
     fullscreen = false,
@@ -136,6 +135,8 @@ local TextViewer = InputContainer:extend{
     --* this table will be populated by ((TabFactory#setTabButtonAndContent)):
     tabs_table_buttons = nil,
     text = nil,
+    --* for two column display:
+    text2 = nil,
     --* for generating an icon-less copy of TextViewer.text:
     text_for_copy = nil,
     text_margin = Size.margin.small,
@@ -580,23 +581,41 @@ function TextViewer:initTextWidget()
     end
     local padding_right = self.fullscreen and 40 or 0
     if (self.block_height_adaptation or self.use_low_height) and self.use_scrolling_dialog ~= SCROLLING_FIXED_HEIGHT_WITHOUT_SCROLLBAR then
-        self.scroll_text_w = ScrollTextWidget:new{
-            text = self.text,
-            face = self.face,
-            line_height = self.line_height,
-            width = self.computed_width,
-            height = height,
-            dialog = self,
-            alignment = self.alignment,
-            justified = self.justified,
-            lang = self.lang,
-            para_direction_rtl = self.para_direction_rtl,
-            auto_para_direction = self.auto_para_direction,
-            alignment_strict = self.alignment_strict,
-            padding_right = padding_right,
-            --* to make the scrollbar lighter for fullscreen ScrollTextWidgets:
-            fullscreen = self.fullscreen,
-        }
+
+        --* two column display:
+        if self.text2 then
+            if not self.screen_width then
+                self.screen_width = Screen:getWidth()
+            end
+            self.scroll_text_w = KOR.twocolumntext:getWidget({
+                parent = self,
+                column1_text = self.text,
+                column2_text = self.text2,
+                face = self.face,
+                width = self.screen_width,
+                container_width = self.screen_width,
+                height = height,
+            })
+        --* single column display:
+        else
+            self.scroll_text_w = ScrollTextWidget:new{
+                text = self.text,
+                face = self.face,
+                line_height = self.line_height,
+                width = self.computed_width,
+                height = height,
+                dialog = self,
+                alignment = self.alignment,
+                justified = self.justified,
+                lang = self.lang,
+                para_direction_rtl = self.para_direction_rtl,
+                auto_para_direction = self.auto_para_direction,
+                alignment_strict = self.alignment_strict,
+                padding_right = padding_right,
+                --* to make the scrollbar lighter for fullscreen ScrollTextWidgets:
+                fullscreen = self.fullscreen,
+            }
+        end
 
     --* show non scrollable text:
     else
@@ -617,14 +636,14 @@ function TextViewer:initTextWidget()
     end
     if not self.add_padding and not self.add_more_padding then
         self.textw = not self.text_padding_top_bottom and
-        FrameContainer:new {
+        FrameContainer:new{
             padding = 0,
             margin = 0,
             bordersize = 0,
             self.scroll_text_w
         }
         or
-        FrameContainer:new {
+        FrameContainer:new{
             padding_left = 0,
             padding_right = 0,
             padding_top = self.text_padding_top_bottom,
@@ -635,14 +654,14 @@ function TextViewer:initTextWidget()
         }
     else
         self.textw = not self.text_padding_top_bottom and
-        FrameContainer:new {
+        FrameContainer:new{
             padding = self.text_padding,
             margin = self.text_margin,
             bordersize = 0,
             self.scroll_text_w
         }
         or
-        FrameContainer:new {
+        FrameContainer:new{
             padding_left = self.text_padding,
             padding_right = self.text_padding,
             padding_top = self.text_padding_top_bottom,
@@ -929,31 +948,35 @@ end
 
 --- @private
 function TextViewer:returnWithTabsTable(text_section, radius, padding)
-    return {
-            radius = radius,
-            padding = padding,
-            margin = self.add_margin and Size.margin.default or 0,
-            background = Blitbuffer.COLOR_WHITE,
-            VerticalGroup:new {
-                align = "left",
-                self.titlebar,
-                CenterContainer:new {
-                    dimen = Geom:new {
-                        w = self.frame_width,
-                        h = self.tabs_table_height,
-                    },
-                    self.tabs_table,
-                },
-                self.top_spacer,
-                text_section,
-            CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.frame_width,
-                    h = self.button_table_height,
-                },
-                self.button_table,
-            }
+    local main_content = VerticalGroup:new{
+        align = "left",
+        self.titlebar,
+        CenterContainer:new{
+            dimen = Geom:new{
+                w = self.frame_width,
+                h = self.tabs_table_height,
+            },
+            self.tabs_table,
+        },
+        self.top_spacer,
+        text_section,
+        CenterContainer:new{
+            dimen = Geom:new{
+                w = self.frame_width,
+                h = self.button_table_height,
+            },
+            self.button_table,
         }
+    }
+    if self.tabs then
+        table_insert(main_content, 3, self.separator)
+    end
+    return {
+        radius = radius,
+        padding = padding,
+        margin = self.add_margin and Size.margin.default or 0,
+        background = KOR.colors.background,
+        main_content,
     }
 end
 
@@ -979,7 +1002,7 @@ function TextViewer:returnWithTabsTableWithoutButtons(text_section, radius, padd
         radius = radius,
         padding = padding,
         margin = self.add_margin and Size.margin.default or 0,
-        background = Blitbuffer.COLOR_WHITE,
+        background = KOR.colors.background,
         main_content,
     }
 end
@@ -990,7 +1013,7 @@ function TextViewer:returnWithButtons(text_section, radius, padding)
         radius = radius,
         padding = padding,
         margin = self.add_margin and Size.margin.default or 0,
-        background = Blitbuffer.COLOR_WHITE,
+        background = KOR.colors.background,
         VerticalGroup:new{
             align = "left",
             self.titlebar,
@@ -1013,7 +1036,7 @@ function TextViewer:returnWithoutButtons(text_section, radius, padding)
         radius = radius,
         padding = padding,
         margin = self.add_margin and Size.margin.default or 0,
-        background = Blitbuffer.COLOR_WHITE,
+        background = KOR.colors.background,
         VerticalGroup:new{
             align = "left",
             self.titlebar,
@@ -1066,7 +1089,7 @@ function TextViewer:setConfigForContainersWithoutTitlebar(radius, padding)
         radius = radius,
         padding = padding,
         margin = self.add_margin and Size.margin.default or 0,
-        background = Blitbuffer.COLOR_WHITE,
+        background = KOR.colors.background,
         VerticalGroup:new{
             align = "left",
             CenterContainer:new{
@@ -1098,7 +1121,7 @@ function TextViewer:setConfigForContainersWithoutTitlebar(radius, padding)
         radius = radius,
         padding = padding,
         margin = self.add_margin and Size.margin.default or 0,
-        background = Blitbuffer.COLOR_WHITE,
+        background = KOR.colors.background,
         VerticalGroup:new{
             align = "left",
             self.top_spacer,
@@ -1764,9 +1787,9 @@ function TextViewer:setSeparator()
     if not self.tabs then
         return
     end
-    self.separator = LineWidget:new {
+    self.separator = LineWidget:new{
         background = self.tabs_table and KOR.colors.tabs_table_separators or KOR.colors.line_separator,
-        dimen = Geom:new {
+        dimen = Geom:new{
             w = self.width,
             h = Size.line.thick,
         }

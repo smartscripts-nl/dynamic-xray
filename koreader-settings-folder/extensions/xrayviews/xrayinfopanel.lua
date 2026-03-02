@@ -85,7 +85,7 @@ end
 --* this method will be called by ((XraySidePanels#activatePageNavigatorPanelTab)), when the use activated the side panel for linked items there:
 function XrayInfoPanel:setParentReliabilityIndicator()
     local reliability_indicator = self.info_panel_text:match("^\n([^ ]+) ")
-    --* for consumption in ((XrayViewsData#generateXrayExportOrLinkedItemItemInfo)):
+    --* for consumption in ((XrayViewsData#generateXrayExportOrLinkedItemInfo)):
     KOR.registry:set("parent_reliability_indicator", reliability_indicator)
 end
 
@@ -164,7 +164,7 @@ end
 
 --- @private
 function XrayInfoPanel:itemInfoAddHits(item, indent)
-    --* when called from ((XrayViewsData#generateXrayExportOrLinkedItemItemInfo)) - so when generating an overview of all Xray items -, add no additional indentation:
+    --* when called from ((XrayViewsData#generateXrayExportOrLinkedItemInfo)) - so when generating an overview of all Xray items -, add no additional indentation:
     if not indent then
         indent = ""
     end
@@ -205,7 +205,7 @@ function XrayInfoPanel:splitLinesToMaxLength(prop, text)
 end
 
 --* this info will be consumed for the info panel in ((NavigatorBox#generateScrollWidget)):
---* compare for generation of info_text for linked items: ((XrayViewsData#generateXrayExportOrLinkedItemItemInfo)):
+--* compare for generation of info_text for linked items: ((XrayViewsData#generateXrayExportOrLinkedItemInfo)):
 function XrayInfoPanel:getItemInfoText(item, for_info_panel)
     --* the reliability_indicators were added and cached via ((XrayUI#getXrayItemsFoundInText)) > ((XrayUI#matchNameInPageOrParagraph)) and ((XrayUI#matchAliasesToParagraph)) > ((XrayPageNavigator#cacheReliabilityIndicators)), or via this statement:
     DX.pn:cacheReliabilityIndicator(item, DX.pn.page_no)

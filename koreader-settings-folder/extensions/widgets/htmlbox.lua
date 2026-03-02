@@ -33,7 +33,10 @@ local math_floor = math.floor
 local pairs = pairs
 local table = table
 local table_insert = table.insert
+local table_remove = table.remove
 local type = type
+
+local count
 
 -- Inject scroll page method for ScrollHtmlWidget
 ScrollHtmlWidget.scrollToPage = function(self, page_num)
@@ -81,6 +84,7 @@ local HtmlBox = InputContainer:extend{
     additional_key_events = nil,
     after_close_callback = nil,
     align = "center",
+    bottom_widget = nil,
     box_font_size = 18,
     buttons_table = nil,
     content_padding = nil,
@@ -93,7 +97,10 @@ local HtmlBox = InputContainer:extend{
     fullscreen = false,
     height = nil,
     html = nil,
+    --* for two column display of linked item in landscap display:
+    html2 = nil,
     key_events_module = nil,
+    left_side_buttons = nil,
     modal = true,
     next_item_callback = nil,
     no_buttons_row = false,
@@ -255,16 +262,46 @@ function HtmlBox:generateScrollWidget()
 
     --* this is the default, but some widgets can set the content_type to "text" for a specific tab; e.g. see ((XrayButtons#getItemViewerTabs)):
     if self.content_type == "text" then
-        self.html_widget = ScrollTextWidget:new{
-            text = self.html,
-            face = self.content_face,
-            line_height = KOR.registry.line_height or 0.95,
-            alignment = "left",
-            justified = false,
-            dialog = self,
-            width = self.swidth,
-            height = self.sheight,
-        }
+        --* two column display:
+        if self.html2 then
+            self.html_widget = KOR.twocolumntext:getWidget({
+                parent = self,
+                column1_text = self.html,
+                column2_text = self.html2,
+                face = self.content_face,
+                width = self.swidth,
+                container_width = self.screen_width,
+                height = self.sheight,
+            })
+
+        --* single column display:
+        else
+            self.html_widget =
+            CenterContainer:new{
+                dimen = Geom:new{
+                    w = self.screen_width,
+                    h = self.sheight,
+                },
+                ScrollTextWidget:new{
+                    text = self.html,
+                    face = self.content_face,
+                    line_height = KOR.registry.line_height or 0.95,
+                    alignment = "left",
+                    justified = false,
+                    dialog = self,
+                    width = self.swidth,
+                    height = self.sheight,
+                }
+            }
+        end
+
+        if self.bottom_widget then
+            self.html_widget = VerticalGroup:new{
+                align = "left",
+                self.html_widget,
+                self.bottom_widget,
+            }
+        end
         return
     end
 
@@ -276,6 +313,13 @@ function HtmlBox:generateScrollWidget()
         height = self.sheight,
         dialog = self,
     }
+    if self.bottom_widget then
+        self.html_widget = VerticalGroup:new{
+            align = "left",
+            self.html_widget,
+            self.bottom_widget,
+        }
+    end
 end
 
 function HtmlBox:onCloseWidget()
@@ -290,7 +334,7 @@ function HtmlBox:onCloseWidget()
         local window = HtmlBox.window_list[i]
         --* We should only find a single match, but, better safe than sorry...
         if window == self then
-            table.remove(HtmlBox.window_list, i)
+            table_remove(HtmlBox.window_list, i)
         end
     end
 
@@ -571,6 +615,11 @@ function HtmlBox:computeHeights()
         self.content_height = nb_lines * self.content_line_height
         self.height = self.content_height + others_height
     end
+
+    if self.bottom_widget then
+        local bottom_widget_height = self.bottom_widget:getSize().h
+        self.content_height = self.content_height - bottom_widget_height
+    end
 end
 
 --- @private
@@ -631,6 +680,13 @@ function HtmlBox:generateButtonTables()
     }
     if self.tweak_buttons_func then
         self:tweak_buttons_func(buttons)
+    end
+    if self.left_side_buttons then
+        count = #self.left_side_buttons[1]
+        for i = count, 1, -1 do
+            table_insert(buttons[1], 1, self.left_side_buttons[1][i])
+        end
+        table_remove(buttons[1])
     end
     --* Bottom buttons get a bit less padding so their line separators
     --* reach out from the content to the borders a bit more

@@ -429,10 +429,22 @@ function Dialogs:textBox(args)
     info = info:gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
     args.text = info
 
+    --* for text in two columns:
+    local info2 = args.info2 or nil
+    if info2 then
+        info2 = KOR.html:htmlToPlainTextIfHtml(info2)
+        info2 = info2:gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
+    end
+    args.text2 = info2
+
     --* for a non-icon variant of a text with icons:
     if args.info_icon_less then
         --* hotfix for initials in names:
         args.text_for_copy = args.info_icon_less:gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
+    elseif info and info2 then
+        args.text_for_copy = info .. "\n\n" .. info2
+    else
+        args.text_for_copy = info
     end
 
     args.width_factor = args.width_factor or 1
@@ -597,6 +609,7 @@ function Dialogs:niceAlert(title, info, options)
     dialog = KOR.nicealert:new{
         info_text = prefix .. info .. "\n",
         mono_face = options.mono_face,
+        top_buttons_left = options.top_buttons_left,
         info_buttons = buttons,
         title = title,
         called_externally = true,

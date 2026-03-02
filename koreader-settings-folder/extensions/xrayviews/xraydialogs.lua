@@ -24,6 +24,7 @@ local VerticalGroup = require("ui/widget/verticalgroup")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local Screen = require("device").screen
 local _ = KOR:initCustomTranslations()
+local Size = require("ui/size")
 local T = require("ffi/util").template
 
 local DX = DX
@@ -359,7 +360,7 @@ end
 --* information for this dialog was generated in ((ReaderView#paintTo)) > ((XrayUI#ReaderViewGenerateXrayInformation))
 --* extra buttons (from xray items) were populated in ((XrayUI#ReaderHighlightGenerateXrayInformation))
 --* current method called from callback in ((xray paragraph info callback)):
-function XrayDialogs:showUiPageInfo(hits_info, headings, matches_count, extra_button_rows, haystack_text)
+function XrayDialogs:showUiPageInfo(hits_info, hits_info2, headings, matches_count, extra_button_rows, haystack_text)
     local debug = false
     local info = hits_info
     if not self.xray_ui_info_dialog and has_text(info) then
@@ -376,6 +377,7 @@ function XrayDialogs:showUiPageInfo(hits_info, headings, matches_count, extra_bu
         self.xray_ui_info_dialog = KOR.dialogs:textBox({
             title = matches_count_info .. subject,
             info = info,
+            info2 = hits_info2,
             fullscreen = true,
             covers_fullscreen = true,
             modal = false,
@@ -786,10 +788,15 @@ function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, 
     local name = needle_item.name
     local icon = DX.vd:getItemTypeIcon(needle_item)
 
-    local linked_items_info
+    local linked_items_info, linked_items_info2
     local linked_items = DX.vd:getLinkedItems(needle_item)
     if linked_items then
-        linked_items_info = DX.ex:generateXrayItemsOverview(linked_items, "for_linked_items_tab")
+        --* show linked items in two column display if that setting has been enabled AND the screen width is greater than its height:
+        if KOR.twocolumntext:useTwoColumnDisplay(#linked_items) then
+            linked_items_info, linked_items_info2 = DX.ex:generateXrayItemsOverview(linked_items, "for_linked_items_tab", "use_two_column_display")
+        else
+            linked_items_info = DX.ex:generateXrayItemsOverview(linked_items, "for_linked_items_tab")
+        end
     end
 
     --? hotfix: for some reason only viewer called from List doesn't have prop pos_chapter_quotes, so here we circumvent that by referencing DX.m.items_by_id, which DOES have the prop:
@@ -811,12 +818,13 @@ function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, 
     self.needle_name_for_list_page = needle_item.name
 
     local key_events_module = "XrayItemViewer"
-    local tabs = DX.b:getItemViewerTabs(main_info, hits_info, linked_items_info, quotes_info)
+    local tabs = DX.b:getItemViewerTabs(main_info, hits_info, linked_items_info, quotes_info, linked_items_info2)
 
     self.item_viewer = KOR.dialogs:htmlBoxTabbed(1, {
         title = title,
         top_buttons_left = DX.b:forItemViewerTopLeft(self, needle_item),
         tabs = tabs,
+        bottom_widget = DX.s.IV_show_occurrences_histogram and self:generateOccurrencesHistogram(needle_item),
         window_size = "max",
         box_font_size = DX.s.IV_font_size,
         button_font_weight = "normal",
@@ -847,6 +855,22 @@ end
 
 function XrayDialogs:closeItemViewer()
     UIManager:close(self.item_viewer)
+end
+
+function XrayDialogs:generateOccurrencesHistogram(item)
+    local chapters_count, ratio_per_chapter, occurrences_per_chapter = DX.pn:computeHistogramData(item)
+    return DX.oh:generateChapterOccurrencesHistogram({
+        for_page_navigator = false,
+        occurrences_subject = item,
+        occurrences_per_chapter = occurrences_per_chapter,
+        ratio_per_chapter = ratio_per_chapter,
+        current_chapter_index = KOR.toc:getTocIndexByPage(DX.u:getCurrentPage()),
+        --* this is the width of a "max" HtmlBox:
+        histogram_width = Screen:getWidth() - 2 * Size.margin.default - Screen:scaleBySize(20),
+        chapters_count = chapters_count,
+        histogram_height = Screen:scaleBySize(DX.s.IV_occurrences_histogram_height),
+        histogram_bottom_line_height = Size.line.thin,
+    })
 end
 
 function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_word)

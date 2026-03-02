@@ -517,8 +517,6 @@ function XrayDataSaver.storeUpdatedItemType(item)
     local stmt = conn:prepare(sql)
     stmt:reset():bind(item.xray_type, id):step()
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
-
-    parent:updateStaticReferenceCollections(id, item)
 end
 
 function XrayDataSaver:itemPropWasMissing(updated_item, check_props)

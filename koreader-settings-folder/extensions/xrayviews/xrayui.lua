@@ -20,6 +20,8 @@ local has_items = has_items
 local has_no_text = has_no_text
 local has_text = has_text
 local math = math
+local math_ceil = math.ceil
+local math_floor = math.floor
 local pairs = pairs
 local table = table
 local table_insert = table.insert
@@ -187,6 +189,7 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
 
     local paragraph_text = self.paragraph_texts[nr]
     local paragraph_hits_info = ""
+    local paragraph_hits_info2 = ""
     local paragraph_headings = {}
     --* these items were generated via ((init xray sideline markers)) > ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#ReaderViewInitParaOrPageData)) > ((XrayUI#ReaderViewLoopThroughParagraphOrPage)) ((XrayUI#getXrayItemsFoundInText)):
     local items = xray_rects.hits[nr]
@@ -200,11 +203,14 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
     local injected_names = {}
     local injected_nr = 0
     local more_button_added
-    local item
+    local item, for_second_column
     count = #items
+    local use_second_info_column = KOR.twocolumntext:useTwoColumnDisplay(count)
+    local half_point = math_ceil(count / 2)
     for i = 1, count do
+        for_second_column = use_second_info_column and i > half_point
         item = items[i]
-        injected_nr, paragraph_hits_info, more_button_added = self:addParagraphInfoItems(
+        injected_nr, paragraph_hits_info, paragraph_hits_info2, more_button_added = self:addParagraphInfoItems(
             items,
             i,
             injected_names,
@@ -212,27 +218,32 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
             skip_xray_items,
             paragraph_headings,
             injected_nr,
-            paragraph_hits_info
+            paragraph_hits_info,
+            paragraph_hits_info2,
+            for_second_column
         )
         if more_button_added then
             break
         end
+    end
+    if not use_second_info_column or has_no_text(paragraph_hits_info2) then
+        paragraph_hits_info2 = nil
     end
     paragraph_matches_count = injected_nr
     --* correction for indentation of first line in dialog; this should not be necessary:
     paragraph_hits_info = paragraph_hits_info:gsub("^ +", "")
 
     -- #((xray paragraph info callback))
-    --* callback defined in ((set xray info for paragraphs)) and calls ((XrayDialogs#showUiPageInfo)):
-    xray_rects.callback(paragraph_hits_info, paragraph_headings, paragraph_matches_count, self.info_extra_button_rows, paragraph_text)
+    --* callback defined in ((set xray info for paragraphs)) > ((XrayUI#ReaderViewPopulateInfoRects)) and calls ((XrayDialogs#showUiPageInfo)):
+    xray_rects.callback(paragraph_hits_info, paragraph_hits_info2, paragraph_headings, paragraph_matches_count, self.info_extra_button_rows, paragraph_text)
 end
 
-function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanations, skip_xray_items, paragraph_headings, injected_nr, paragraph_hits_info)
+function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanations, skip_xray_items, paragraph_headings, injected_nr, paragraph_hits_info, paragraph_hits_info2, for_second_column)
     local more_button_added
 
     local name = items[i].name
     if injected_names[name] or (skip_xray_items and skip_xray_items[name]) then
-        return injected_nr, paragraph_hits_info
+        return injected_nr, paragraph_hits_info, paragraph_hits_info2
     end
 
     injected_names[name] = name
@@ -241,8 +252,12 @@ function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanation
     if self.info_use_upper_case_names then
         name = KOR.strings:upper(name)
     end
-    local match_block, xray_type_icon, xray_match_reliability_icon = DX.vd:generateXrayExportOrLinkedItemItemInfo(items[i], xray_explanations[i], injected_nr)
-    paragraph_hits_info = paragraph_hits_info .. match_block
+    local match_block, xray_type_icon, xray_match_reliability_icon = DX.vd:generateXrayExportOrLinkedItemInfo(nil, items[i], xray_explanations[i], injected_nr)
+    if not for_second_column then
+        paragraph_hits_info = paragraph_hits_info .. match_block
+    else
+        paragraph_hits_info2 = paragraph_hits_info2 .. match_block
+    end
 
     -- #((headings for use in TextViewer))
     --* needles will be used in ((TextViewer#blockDown)) and  ((TextViewer#blockUp)):
@@ -269,7 +284,7 @@ function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanation
         end,
     })
 
-    return injected_nr, paragraph_hits_info, more_button_added
+    return injected_nr, paragraph_hits_info, paragraph_hits_info2, more_button_added
 end
 
 --* called from ReaderView:
@@ -367,7 +382,7 @@ function XrayUI:ReaderViewLoopThroughParagraphOrPage(p)
             -- #((set half screen width))
             if not KOR.registry.half_screen_width then
                 self.screen_width = Screen:getWidth()
-                KOR.registry.half_screen_width = math.floor(self.screen_width / 2)
+                KOR.registry.half_screen_width = math_floor(self.screen_width / 2)
             end
 
             local rect, current_column, fallback_line
@@ -413,9 +428,10 @@ function XrayUI:ReaderViewPopulateInfoRects()
         explanations = self.paragraph_explanations,
         rects = self.rects_with_matches,
         --* the buttons in extra_button_rows were generated in ((TextViewer#getDefaultButtons)) > ((XrayButtons#forUiInfo)):
-        callback = function(paragraph_hits_info, extra_button_rows, paragraph_text)
+        --* paragraph_hits_info was generated in ((XrayUI#addParagraphInfoItems)):
+        callback = function(paragraph_hits_info, paragraph_hits_info2, extra_button_rows, paragraph_text)
             --* paragraph_text only needed for debugging purposes, to ascertain we are looking at the correct paragraph:
-            DX.d:showUiPageInfo(paragraph_hits_info, extra_button_rows, paragraph_text)
+            DX.d:showUiPageInfo(paragraph_hits_info, paragraph_hits_info2, extra_button_rows, paragraph_text)
         end
     }
 end

@@ -441,6 +441,9 @@ end
 --* compare form for editing Xray items: ((XrayController#onShowEditItemForm)):
 --* see also method ((XrayController#guardIsExistingItem)), through which current method is called and which ensures no duplicated items are created:
 function XrayController:onShowNewItemForm(name_from_selected_text, active_form_tab, item)
+
+    DX.vd:resetAllFilters()
+
     local title, item_copy, prefilled_field = DX.fd:initNewItemFormProps(name_from_selected_text, active_form_tab, item)
     DX.d:showNewItemForm({
         title = title,
@@ -455,6 +458,8 @@ end
 
 --*compare ((XrayController#onShowNewItemForm)):
 function XrayController:onShowEditItemForm(needle_item, reload_manager, active_form_tab)
+
+    DX.vd:resetAllFilters()
 
     KOR.registry:set("edit_item", KOR.tables:shallowCopy(needle_item))
 
@@ -616,6 +621,7 @@ function XrayController:resetDynamicXray(is_prepared, do_full_update)
     DX.sp:resetSideButtons()
     DX.pn:resetCache()
     DX.pn:setCurrentItem(nil)
+    KOR.twocolumntext:resetCache()
     --? I don't know why we need this:
     if not DX.ex then
         DX.ex = require("extensions/xrayviews/xrayexporter")
