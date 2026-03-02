@@ -333,11 +333,21 @@ function XrayUI:ReaderViewInitParaOrPageData()
         for p = 1, para_count do
             marker_line_found = self:ReaderViewLoopThroughParagraphOrPage(p)
             if DX.s.UI_mode == "page" and marker_line_found then
+                self:updateStatusInFooter()
                 return self.xray_info_found
             end
         end
     end
+    self:updateStatusInFooter()
     return self.xray_info_found
+end
+
+--- @private
+function XrayUI:updateStatusInFooter()
+    --* for consumption in footer:
+    KOR.registry:set("xray_items_on_page_count", KOR.tables:relationalTableLength(self.hits))
+    --* force update of footer, to show correct number of current Xray items on page:
+    KOR.footer:onUpdateFooter()
 end
 
 --- @private

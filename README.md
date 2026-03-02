@@ -151,6 +151,9 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 ![01 Xray marker in page](images/01-xray-marker-in-page.png)
 01 Xray marker in page
 
+![01b Xray items counts in footer](images/01b-xray-items_count-in-footer.png)
+01b Xray items counts in footer (see lightning icon). You'll have to manually modify ReaderFooter for this.
+
 ![02 Xray info dialog after click on marker](images/02-xray-info-dialog-after-click-on-marker.png)
 02 Xray info dialog after click on marker
 
