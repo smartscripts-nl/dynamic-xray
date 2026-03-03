@@ -12,7 +12,6 @@ local UIManager = require("ui/uimanager")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
-local Screen = require("device").screen
 local Size = require("ui/size")
 local T = require("ffi/util").template
 
@@ -41,7 +40,6 @@ function XrayOccurrencesHistogram:generateChapterOccurrencesHistogram(data)
     local ratio_per_chapter = data.ratio_per_chapter
     local current_chapter_index = data.current_chapter_index
     self.chapters_count = data.chapters_count
-    local histogram_width = data.histogram_width
     local histogram_height = data.histogram_height
     local histogram_bottom_line_height = data.histogram_bottom_line_height
     self.for_page_navigator = data.for_page_navigator
@@ -49,18 +47,20 @@ function XrayOccurrencesHistogram:generateChapterOccurrencesHistogram(data)
     local bottom_line = LineWidget:new{
         background = KOR.colors.histogram_bar_light,
         dimen = Geom:new{
-            w = histogram_width,
+            w = data.container_width,
             h = histogram_bottom_line_height,
         }
     }
+
+    local histogram_width = data.for_page_navigator and data.container_width or data.container_width - 4 * Size.padding.large
+
     --* at about 50 items will give a nice distribution of not too wide histogram bars; if there are significantly less chapters, we reduce the width of the histogram, so the bars will not get too wide:
     if self.chapters_count <= 45 then
         histogram_width = math_floor(self.chapters_count / 50 * histogram_width)
     end
 
-    local width = data.for_page_navigator and histogram_width or Screen:getWidth() - 4 * Size.padding.large
     return CenterContainer:new{
-        dimen = Geom:new{ w = width, h = histogram_height + histogram_bottom_line_height },
+        dimen = Geom:new{ w = data.container_width, h = histogram_height + histogram_bottom_line_height },
         VerticalGroup:new{
             HistogramWidget:new{
                 current_chapter_index = current_chapter_index,

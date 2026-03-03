@@ -255,6 +255,8 @@ end
 
 --* Used in init & update to instantiate the Scroll*Widget that self.html_widget points to
 --- @private
+--* Used in init & update to instantiate the Scroll*Widget that self.html_widget points to
+--- @private
 function HtmlBox:generateScrollWidget()
 
     self.swidth = self.content_width
@@ -262,49 +264,15 @@ function HtmlBox:generateScrollWidget()
 
     --* this is the default, but some widgets can set the content_type to "text" for a specific tab; e.g. see ((XrayButtons#getItemViewerTabs)):
     if self.content_type == "text" then
-        --* two column display:
-        if self.html2 then
-            self.html_widget = KOR.twocolumntext:getWidget({
-                parent = self,
-                column1_text = self.html,
-                column2_text = self.html2,
-                face = self.content_face,
-                width = self.swidth,
-                container_width = self.screen_width,
-                height = self.sheight,
-            })
-
-        --* single column display:
-        else
-            self.html_widget =
-            CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.screen_width,
-                    h = self.sheight,
-                },
-                ScrollTextWidget:new{
-                    text = self.html,
-                    face = self.content_face,
-                    line_height = KOR.registry.line_height or 0.95,
-                    alignment = "left",
-                    justified = false,
-                    dialog = self,
-                    width = self.swidth,
-                    height = self.sheight,
-                }
-            }
-        end
-
-        if self.bottom_widget then
-            self.html_widget = VerticalGroup:new{
-                align = "left",
-                self.html_widget,
-                self.bottom_widget,
-            }
-        end
+        self:generateTextScrollWidget()
         return
     end
 
+    self:generateHtmlScrollWidget()
+end
+
+--- @private
+function HtmlBox:generateHtmlScrollWidget()
     self.html_widget = ScrollHtmlWidget:new{
         html_body = self.html,
         css = KOR.html:getHtmlBoxCss(self.css),
@@ -313,13 +281,66 @@ function HtmlBox:generateScrollWidget()
         height = self.sheight,
         dialog = self,
     }
-    if self.bottom_widget then
-        self.html_widget = VerticalGroup:new{
-            align = "left",
-            self.html_widget,
-            self.bottom_widget,
+    if not self.bottom_widget then
+        return
+    end
+
+    self.html_widget = VerticalGroup:new{
+        align = "left",
+        self.html_widget,
+        self.bottom_widget,
+    }
+end
+
+--- @private
+function HtmlBox:generateTextScrollWidget()
+    --* two column display:
+    if self.html2 then
+        self.html_widget = KOR.twocolumntext:getWidget({
+            parent = self,
+            column1_text = self.html,
+            column2_text = self.html2,
+            face = self.content_face,
+            width = self.swidth,
+            container_width = self.screen_width,
+            height = self.sheight,
+        })
+
+        --* single column display:
+    else
+        self.html_widget = CenterContainer:new{
+            dimen = Geom:new{
+                w = self.screen_width,
+                h = self.sheight,
+            },
+            ScrollTextWidget:new{
+                text = self.html,
+                face = self.content_face,
+                line_height = KOR.registry.line_height or 0.95,
+                alignment = "left",
+                justified = false,
+                dialog = self,
+                width = self.swidth,
+                height = self.sheight,
+            }
         }
     end
+    if not self.bottom_widget then
+        return
+    end
+
+    self.html_widget = VerticalGroup:new{
+        align = "left",
+        self.html_widget,
+        --* to display the occurrences histogram centered under a box with content_type "text":
+        CenterContainer:new{
+            dimen = Geom:new{
+                w = self.screen_width,
+                h = self.bottom_widget:getSize().h,
+            },
+            self.bottom_widget,
+        }
+    }
 end
 
 function HtmlBox:onCloseWidget()
