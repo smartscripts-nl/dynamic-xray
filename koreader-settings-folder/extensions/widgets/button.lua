@@ -472,6 +472,7 @@ end
 --- @private
 function Button:getIcon(icon)
     self:ensureIconSize()
+    --* this prop is set for an entire ButtonTable:
     if self.generate_active_icon then
         return IconWidgetActive:new{
             icon = icon,
@@ -481,6 +482,7 @@ function Button:getIcon(icon)
             height = self.icon_height,
         }
     end
+    --* this prop is set for individual buttons:
     if self.generate_inverted_icon then
         return IconWidgetInverted:new{
             icon = icon,

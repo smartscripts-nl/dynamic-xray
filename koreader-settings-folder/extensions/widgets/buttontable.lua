@@ -267,7 +267,8 @@ function ButtonTable:generateButton(btn_entry, max_button_height, default_button
     config.bordersize = 0
     config.button_lines = self.button_lines
     config.decrease_top_padding = self.decrease_top_padding
-    config.generate_active_icon = btn_entry.generate_active_icon
+    --! watch out: generate_active_icon is set on the ButtonTable self, to color all its buttons, not on individual buttons:
+    config.generate_active_icon = self.generate_active_icon
     config.increase_top_padding = self.increase_top_padding
     config.margin = 0
     config.padding = Size.padding.buttontable --* a bit taller than standalone buttons, for easier tap

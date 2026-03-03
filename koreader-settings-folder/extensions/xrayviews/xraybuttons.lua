@@ -1083,7 +1083,7 @@ function XrayButtons:forListFooterRight(parent)
     if DX.m.current_series then
         table_insert(buttons, 1, Button:new(KOR.buttoninfopopup:forSeriesCurrentBook({
             callback = function()
-                KOR.descriptiondialog:showSeriesForEbookPath()
+                KOR.seriesmanager:showSeriesForEbookPath()
             end
         })))
     end
