@@ -724,7 +724,7 @@ function TitleBar:addCloseButton()
 
     self.top_buttons_right = {
         Button:new({
-            icon = "close",
+            icon = self.titlebar_inverted and "close-inverted" or "close",
             icon_height = icon_height,
             icon_width = icon_height,
             background = self.titlebar_inverted and KOR.colors.background_inverted or KOR.colors.white,
