@@ -1,3 +1,11 @@
+
+--! this file is an example how to manually edit ReaderFooter to display Xray items counts in the footer
+--* because ReaderFooter is not really patchable, this manual edit is needed and has to be repeated after every KOReader update
+--! this is only an example; exact locations to edit can vary depending on current KOReader version
+--* you can find the locations to be modified by searching for "xray_items"
+--! don't forget that the patches file patches ReaderFooter, so as to make the display of Xray items possible; see ((PATCH READERFOOTER)) in that file
+--* for an example of Xray items counts displayed in the footer see image 01b... in the README
+
 local BD = require("ui/bidi")
 local Blitbuffer = require("ffi/blitbuffer")
 local BottomContainer = require("ui/widget/container/bottomcontainer")
@@ -9,6 +17,10 @@ local FrameContainer = require("ui/widget/container/framecontainer")
 local Geom = require("ui/geometry")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local HorizontalSpan = require("ui/widget/horizontalspan")
+
+--! this is needed to display xray_items in the footer:
+local KOR = require("extensions/kor")
+
 local LeftContainer = require("ui/widget/container/leftcontainer")
 local LineWidget = require("ui/widget/linewidget")
 local MultiInputDialog = require("ui/widget/multiinputdialog")
@@ -29,6 +41,10 @@ local T = require("ffi/util").template
 local _ = require("gettext")
 local C_ = _.pgettext
 local Screen = Device.screen
+
+--* needed for xray_items display:
+local DX = DX
+local has_no_items = has_no_items
 
 local MODE = {
     off = 0,
@@ -52,6 +68,7 @@ local MODE = {
     book_author = 18,
     page_turning_inverted = 19, -- includes both page-turn-button and swipe-and-tap inversion
     dynamic_filler = 20,
+    xray_items = 21,
 }
 
 local symbol_prefix = {
@@ -79,6 +96,7 @@ local symbol_prefix = {
         wifi_status = C_("FooterLetterPrefix", "W:"),
         -- @translators This is the footer letter prefix for page turning status.
         page_turning_inverted = C_("FooterLetterPrefix", "Pg:"),
+        xray_items = C_("FooterLetterPrefix", "XI:"),
     },
     icons = {
         time = "⌚",
@@ -96,6 +114,7 @@ local symbol_prefix = {
         wifi_status_off = "",
         page_turning_inverted = "⇄",
         page_turning_regular = "⇉",
+        xray_items = KOR.icons.lightning_bare,
     },
     compact_items = {
         time = nil,
@@ -453,6 +472,14 @@ footerTextGeneratorMap = {
             return filler_space:rep(filler_nb), true
         end
     end,
+    xray_items = function()
+        if has_no_items(DX.vd.item_table[1]) then
+            return ""
+        end
+        --* this in page items count was set via ((XrayUI#ReaderViewInitParaOrPageData)) > ((XrayUI#updateStatusInFooter)):
+        local current_page_count = KOR.registry:get("xray_items_on_page_count") or 0
+        return KOR.icons.lightning_bare .. current_page_count .. "/" .. #DX.vd.item_table[1]
+    end,
 }
 
 local ReaderFooter = WidgetContainer:extend{
@@ -523,6 +550,7 @@ ReaderFooter.default_settings = {
     pages_left_includes_current_page = false,
     initial_marker = false,
     invert_progress_direction = false,
+    xray_items = false,
 }
 
 function ReaderFooter:init()
@@ -1033,6 +1061,7 @@ function ReaderFooter:textOptionTitles(option)
             self.custom_text_repetitions > 1 and
             string.format(" × %d", self.custom_text_repetitions) or ""),
         dynamic_filler = _("Dynamic filler"),
+        xray_items = T(_("Xray items (%1)"), KOR.icons.lightning_bare),
     }
     return option_titles[option]
 end
@@ -1428,6 +1457,7 @@ function ReaderFooter:addToMainMenu(menu_items)
     table.insert(footer_items, getMinibarOption("book_chapter"))
     table.insert(footer_items, getMinibarOption("custom_text"))
     table.insert(footer_items, getMinibarOption("dynamic_filler"))
+    table.insert(sub_items, getMinibarOption("xray_items"))
 
     -- configure footer_items
     table.insert(sub_items, {
