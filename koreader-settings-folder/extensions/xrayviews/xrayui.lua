@@ -655,10 +655,15 @@ end
 
 --- @private
 --- @param textviewer TextViewer
-function XrayUI:onInfoPopupLoadShowToc(textviewer, headings)
+function XrayUI:onInfoPopupLoadShowToc(textviewer, headings, second_column_text)
+    local min_buttons_for_auto_toc = DX.s.UI_auto_toc_for_buttons_count
+    --* in case of items distributed over two columns, make the buttons count needed for auto toc twice as high:
+    if second_column_text and has_items(min_buttons_for_auto_toc) then
+        min_buttons_for_auto_toc = min_buttons_for_auto_toc * 2
+    end
     KOR.registry:unset("toc_info_button_injected")
     --* only show the toc automatically when there are more than 2 xray items:
-    if has_items(DX.s.UI_auto_toc_for_buttons_count) and #headings >= DX.s.UI_auto_toc_for_buttons_count then
+    if has_items(min_buttons_for_auto_toc) and #headings >= min_buttons_for_auto_toc then
         -- #((call TextViewer TOC))
         --* call ((TextViewer#init)) > ((TextViewer execute after load callback)) > current method > ((TextViewer#showToc)) after a short delay:
         textviewer:showToc()
