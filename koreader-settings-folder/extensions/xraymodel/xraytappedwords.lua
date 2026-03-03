@@ -480,7 +480,11 @@ function XrayTappedWords:getTypeAndReliabilityIcons(item)
     --* to prevent that partial or whole matches are attributed to items which only have been added to the collection because they are a linked item:
     --* self.tapped_word was set in ((XrayTappedWords#itemExists)), the method which is also used to determine which items have to be added to the tapped word collection:
     local matches_with_tapped_word = self.tapped_word and item.name:find(self.tapped_word, 1, true)
-    local alias_matches_with_tapped_word = self.tapped_word and (item.aliases:find(self.tapped_word, 1, true) or item.short_names:find(self.tapped_word, 1, true))
+    local alias_matches_with_tapped_word = self.tapped_word and (
+        (item.aliases and item.aliases:find(self.tapped_word, 1, true))
+        or
+        (item.short_names and item.short_names:find(self.tapped_word, 1, true))
+    )
 
     local text = KOR.strings:lower(item.name)
     local ri = DX.i.match_reliability_indicators
