@@ -20,11 +20,9 @@ local has_items = has_items
 local has_no_text = has_no_text
 local has_text = has_text
 local math = math
-local math_ceil = math.ceil
 local math_floor = math.floor
 local pairs = pairs
 local table = table
-local table_concat = table.concat
 local table_insert = table.insert
 
 local count
@@ -206,8 +204,8 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
     local more_button_added
     local item
     count = #items
-    local use_second_info_column = KOR.twocolumntext:useTwoColumnDisplay(count)
-    if use_second_info_column then
+    local use_second_text_column = KOR.twocolumntext:useTwoColumnDisplay(count)
+    if use_second_text_column then
         KOR.registry:set("split_to_half_max_length", true)
     end
     for i = 1, count do
@@ -226,19 +224,7 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
             break
         end
     end
-    if not use_second_info_column then
-        paragraph_hits_info2 = nil
-        paragraph_hits_info = table_concat(paragraph_hits_info, "")
-    else
-        count = #paragraph_hits_info
-        local half_point = math_ceil(count / 2)
-        for i = count, half_point + 1, -1 do
-            table_insert(paragraph_hits_info2, 1, paragraph_hits_info[i])
-            paragraph_hits_info[i] = nil
-        end
-        paragraph_hits_info = table_concat(paragraph_hits_info, "")
-        paragraph_hits_info2 = table_concat(paragraph_hits_info2, "")
-    end
+    paragraph_hits_info, paragraph_hits_info2 = KOR.twocolumntext:getColumnTexts(paragraph_hits_info, paragraph_hits_info2, use_second_text_column, nil, "\n\n")
     paragraph_matches_count = injected_nr
     --* correction for indentation of first line in dialog; this should not be necessary:
     paragraph_hits_info = paragraph_hits_info:gsub("^ +", "")

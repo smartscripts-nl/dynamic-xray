@@ -1173,6 +1173,7 @@ function TextViewer:getDefaultButtons()
                 elseif self.text_for_copy then
                     copy_text = self.text_for_copy
                 end
+                copy_text = copy_text:gsub("\n\n\n+", "\n\n")
                 Device.input.setClipboardText(copy_text)
                 KOR.messages:notify(tr("text copied to clipboard..."))
             end,

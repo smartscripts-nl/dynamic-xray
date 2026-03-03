@@ -144,6 +144,7 @@ function XrayExporter:exportInfoToFile()
         self:getInfoText(self.active_tab, "iconless")
 
     self:addTagsOverview(info, self.active_tab)
+    info = info:gsub("\n\n\n+", "\n\n")
 
     KOR.files:filePutcontents(DataStorage:getDataDir() .. "/xray-items.txt", info)
 
@@ -175,46 +176,23 @@ end
 
 --- @param mode string Either "for_all_items_list" or "for_linked_items_tab"
 function XrayExporter:generateXrayItemsOverview(items, mode, use_two_column_display)
-    local paragraphs = {}
-    local paragraphs2 = {}
     local paragraphs_iconless = {}
-    local paragraph, paragraph_iconless, column1, column2
+    local paragraph, paragraph_iconless
+    local column1, column2 = {}, {}
     count = #items
 
-    if use_two_column_display then
-        local half_way = math_ceil(count / 2)
-        local information_level
-        for i = 1, count do
-            --* at the top of the second column we don't want to start with a line ending, so set information_level to 1 for that case:
-            information_level = i == half_way + 1 and 1 or i
-            paragraph = DX.vd:generateXrayExportOrLinkedItemInfo(count, items[i], nil, information_level, mode)
-            if i <= half_way then
-                table_insert(paragraphs, paragraph)
-            else
-                table_insert(paragraphs2, paragraph)
-            end
-        end
-        column1 = table_concat(paragraphs, "")
-        column2 = table_concat(paragraphs2, "")
-        if mode == "for_linked_items_tab" then
-            return column1, column2
-        end
-    end
-
-    paragraphs = {}
+    local half_way = math_ceil(count / 2)
+    local is_top_column_item
     for i = 1, count do
-        paragraph, paragraph_iconless = DX.vd:generateXrayExportOrLinkedItemInfo(count, items[i], nil, i, mode)
-        table_insert(paragraphs, paragraph)
+        --* at the top of the second column we don't want to start with a line ending, so set is_top_column_item to true for that case:
+        is_top_column_item = use_two_column_display and i == half_way + 1
+        paragraph, paragraph_iconless = DX.vd:generateXrayExportOrLinkedItemInfo(count, items[i], nil, is_top_column_item, mode)
+        table_insert(column1, paragraph)
         table_insert(paragraphs_iconless, paragraph_iconless)
     end
-    local info = table_concat(paragraphs, "")
-    local info_iconless = table_concat(paragraphs_iconless, "")
 
-    if use_two_column_display then
-        return column1, column2, info_iconless
-    end
-
-    return info, nil, info_iconless
+    --* returned here: column1, column2, info_iconless; column2 will be set to nil when usage of text columns wasn't active:
+    return KOR.twocolumntext:getColumnTexts(column1, column2, use_two_column_display, paragraphs_iconless)
 end
 
 --- @private
@@ -228,7 +206,7 @@ function XrayExporter:generateTagGroupsOverview(items)
             self:populateTagGroups(tag_groups, items[i])
         end
     end
-    local data, info
+    local data
     local otable = KOR.tables:getSortedRelationalTable(tag_groups)
     count = #otable
     for i = 1, count do
@@ -242,31 +220,10 @@ function XrayExporter:generateTagGroupsOverview(items)
     end
 
     local use_two_column_display = KOR.twocolumntext:useTwoColumnDisplay(count)
-    local column1, column2 = {}, {}
-    if use_two_column_display then
-        local half_way = math_ceil(count / 2)
-        local information_level
-        for i = 1, count do
-            --* at the top of the second column we don't want to start with a line ending, so set information_level to 1 for that case:
-            information_level = i == half_way + 1 and 1 or i
-            if i <= half_way then
-                table_insert(column1, paragraphs[i])
-            else
-                table_insert(column2, paragraphs[i])
-            end
-        end
-        column1 = table_concat(column1, "")
-        column2 = table_concat(column2, "")
-    else
-        info = table_concat(paragraphs, "")
-    end
 
-    local info_iconless = table_concat(paragraphs_iconless, "")
-    if use_two_column_display then
-        return column1, column2, info_iconless
-    end
-
-    return info, nil, info_iconless
+    --* column2 here will be set to nil if use_two_column_display is false:
+    --* return as text: column1, column2, paragraphs_iconless:
+    return KOR.twocolumntext:getColumnTexts(paragraphs, nil, use_two_column_display, paragraphs_iconless)
 end
 
 --- @private

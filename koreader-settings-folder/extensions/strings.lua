@@ -323,12 +323,13 @@ function Strings:removeNotes(text)
     return text:gsub(" ?%*", ""):gsub(" ?%†", ""):gsub(" ?%‡", "")
 end
 
-function Strings:splitLinesToMaxLength(text, max_length, indent, first_word, dont_indent_first_line, after_first_line_indent)
+function Strings:splitLinesToMaxLength(text, indent, first_word, dont_indent_first_line, after_first_line_indent, is_iconless)
     if has_no_content(text) then
         return ""
     end
+    local max_length = DX.s.PN_info_panel_max_line_length
     --* this might e.g. be set in ((XrayViewsData#generateXrayExportOrLinkedItemInfo)):
-    if KOR.registry:get("split_to_half_max_length") then
+    if not is_iconless and KOR.registry:get("split_to_half_max_length") then
         max_length = math_floor(max_length / 2)
     end
     if has_content(first_word) then
@@ -394,6 +395,13 @@ function Strings:splitLinesToMaxLength(text, max_length, indent, first_word, don
         lined_text[i] = lined_text[i]:gsub(" $", "")
     end
     return table_concat(lined_text, "\n")
+end
+
+function Strings:splitLinesToMaxLengthIconLess(text, indent, first_word, dont_indent_first_line, after_first_line_indent)
+    if has_no_content(text) then
+        return ""
+    end
+    return self:splitLinesToMaxLength(text, indent, first_word, dont_indent_first_line, after_first_line_indent, "is_iconless")
 end
 
 --* remove trailing and leading whitespace from string.

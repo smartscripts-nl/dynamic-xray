@@ -201,7 +201,7 @@ function XrayInfoPanel:splitLinesToMaxLength(prop, text)
     if not has_text(prop) then
         return ""
     end
-    return KOR.strings:splitLinesToMaxLength(text, DX.s.PN_info_panel_max_line_length - DX.s.PN_infopanel_meta_indent, self.alias_indent_corrected, nil, "dont_indent_first_line")
+    return KOR.strings:splitLinesToMaxLength(text, self.alias_indent_corrected, nil, "dont_indent_first_line")
 end
 
 --* this info will be consumed for the info panel in ((NavigatorBox#generateScrollWidget)):
