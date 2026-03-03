@@ -511,12 +511,12 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
                 icon = "back",
                 icon_size_ratio = 0.55,
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:closeItemViewer()
                 end,
             },
             KOR.buttoninfopopup:forXrayList({
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:closeItemViewer()
                     DX.d:showList(needle_item)
                 end,
             }),
@@ -533,7 +533,7 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
             }),
             KOR.buttoninfopopup:forXrayItemAdd({
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:closeItemViewer()
                     -- #((enable return to viewer))
                     DX.c:setProp("return_to_viewer", true)
                     DX.c:resetFilteredItems()
@@ -542,7 +542,7 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
             }),
             KOR.buttoninfopopup:forXrayItemEdit({
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:closeItemViewer()
                     DX.c:setProp("return_to_viewer", true)
                     DX.c:onShowEditItemForm(needle_item, false, 1)
                 end,
@@ -550,7 +550,7 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
             KOR.buttoninfopopup:forXrayToggleImportantItem({
                 text = DX.vd.xray_type_icons_importance_toggle[needle_item.xray_type],
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:closeItemViewer()
                     local toggled_item = DX.fd:toggleIsImportantItem(needle_item)
                     DX.ds.storeUpdatedItemType(toggled_item)
                     DX.vd:updateAndSortAllItemTables(toggled_item)
@@ -560,7 +560,7 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
             KOR.buttoninfopopup:forXrayTogglePersonOrTerm({
                 text = DX.vd.xray_type_icons_person_or_term_toggle[needle_item.xray_type],
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:closeItemViewer()
                     local toggled_item = DX.fd:toggleIsPersonOrTerm(needle_item)
                     DX.ds.storeUpdatedItemType(toggled_item)
                     if DX.vd.active_list_tab > 1 then
@@ -640,7 +640,7 @@ function XrayButtons:forTappedWordItemViewer(needle_item, called_from_list, tapp
         {
             KOR.buttoninfopopup:forXrayList({
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:closeItemViewer()
                     DX.d:showList(needle_item)
                 end,
             }),
@@ -667,21 +667,21 @@ function XrayButtons:forTappedWordItemViewer(needle_item, called_from_list, tapp
             }),
             KOR.buttoninfopopup:forXrayItemAdd({
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:closeItemViewer()
                     DX.c:resetFilteredItems()
                     DX.c:onShowNewItemForm()
                 end,
             }),
             KOR.buttoninfopopup:forXrayItemEdit({
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:closeItemViewer()
                     DX.c:onShowEditItemForm(needle_item, false, 1)
                 end,
             }),
             KOR.buttoninfopopup:forXrayToggleImportantItem({
                 text = DX.vd.xray_type_icons_importance_toggle[needle_item.xray_type],
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:closeItemViewer()
                     local select_number, toggled_item = DX.fd:toggleIsImportantItem(needle_item)
                     DX.vd:updateItemsTable(select_number)
                     DX.d:showItemViewer(toggled_item, called_from_list, tapped_word)
@@ -690,7 +690,7 @@ function XrayButtons:forTappedWordItemViewer(needle_item, called_from_list, tapp
             KOR.buttoninfopopup:forXrayTogglePersonOrTerm({
                 text = DX.vd.xray_type_icons_person_or_term_toggle[needle_item.xray_type],
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:closeItemViewer()
                     local select_number, toggled_item = DX.fd:toggleIsPersonOrTerm(needle_item)
                     DX.vd:updateItemsTable(select_number)
                     DX.d:showItemViewer(toggled_item, called_from_list, tapped_word)
@@ -717,7 +717,7 @@ function XrayButtons:forTappedWordItemViewer(needle_item, called_from_list, tapp
                 icon = "back",
                 icon_size_ratio = 0.55,
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:closeItemViewer()
                 end,
             },
         }

@@ -242,7 +242,7 @@ function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
     local parent = DX.d
     self:registerSharedHotkeys(key_events_module, {
         [DX.s.hk_edit_item] = function()
-            parent:closeViewer()
+            parent:closeItemViewer()
             DX.c:onShowEditItemForm(DX.vd.current_item, false, 1)
             return true
         end,
@@ -256,7 +256,7 @@ function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
             return true
         end,
         [DX.s.hk_show_list] = function()
-            parent:closeViewer()
+            parent:closeItemViewer()
             parent:showList(DX.vd.current_item)
             return true
         end,
@@ -275,7 +275,7 @@ function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
             label = "add",
             hotkey = { { DX.s.hk_add_item } },
             callback = function()
-                parent:closeViewer()
+                parent:closeItemViewer()
                 DX.c:resetFilteredItems()
                 parent:showNewItemForm()
                 return true

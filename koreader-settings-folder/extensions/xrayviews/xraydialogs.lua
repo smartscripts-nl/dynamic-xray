@@ -603,7 +603,7 @@ function XrayDialogs:showJumpToChapterDialog()
                 return
             end
 
-            self:closeViewer()
+            self:closeItemViewer()
             DX.pn:closePageNavigator()
             KOR.ui.link:addCurrentLocationToStack()
             KOR.ui:handleEvent(Event:new("GotoPage", page))
@@ -715,10 +715,6 @@ function XrayDialogs:closeListDialog()
         UIManager:close(self.xray_items_chooser_dialog)
         self.xray_items_chooser_dialog = nil
     end
-end
-
-function XrayDialogs:closeViewer()
-    UIManager:close(self.item_viewer)
 end
 
 --- @private
@@ -854,7 +850,8 @@ function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, 
 end
 
 function XrayDialogs:closeItemViewer()
-    UIManager:close(self.item_viewer)
+    --? don't know why we need this to enforce closure, after browsing through Item Viewer tabs; UIManager:close(self.item_viewer) should work in that case, but doesn't:
+    KOR.dialogs:closeTopWidget()
 end
 
 function XrayDialogs:generateOccurrencesHistogram(item)
@@ -939,28 +936,28 @@ function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_wo
 end
 
 function XrayDialogs:viewLinkedItem(item, tapped_word)
-    self:closeViewer()
+    self:closeItemViewer()
     self:showItemViewer(item, "called_from_list", tapped_word)
 end
 
 function XrayDialogs:viewNextItem(item)
-    self:closeViewer()
+    self:closeItemViewer()
     local next_item = DX.vd:getNextItem(item)
     self:showItemViewer(next_item, nil, nil, "skip_item_search")
 end
 
 function XrayDialogs:viewPreviousItem(item)
-    self:closeViewer()
+    self:closeItemViewer()
     self:showItemViewer(DX.vd:getPreviousItem(item), nil, nil, "skip_item_search")
 end
 
 function XrayDialogs:viewNextTappedWordItem()
-    self:closeViewer()
+    self:closeItemViewer()
     self:viewTappedWordItem(DX.tw:getNextItem())
 end
 
 function XrayDialogs:viewPreviousTappedWordItem()
-    self:closeViewer()
+    self:closeItemViewer()
     self:viewTappedWordItem(DX.tw:getPreviousItem())
 end
 

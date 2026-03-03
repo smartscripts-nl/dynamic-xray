@@ -49,6 +49,13 @@ function Dialogs:closeAllWidgets()
     self.widgets = {}
 end
 
+function Dialogs:closeTopWidget()
+    local widget = self.widgets[#self.widgets]
+    UIManager:close(widget)
+    self.widgets[#self.widgets] = nil
+    KOR.screenhelpers:refreshDialog()
+end
+
 function Dialogs:computePagePosition(dialogOrPage)
     if not dialogOrPage then
         return 1

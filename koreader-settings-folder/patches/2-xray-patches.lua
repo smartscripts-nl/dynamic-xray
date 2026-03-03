@@ -907,7 +907,7 @@ function ReaderSearch:closeHitviewer(close_item_viewer)
         self.hit_viewer = nil
     end
     if close_item_viewer then
-        DX.d:closeViewer()
+        DX.d:closeItemViewer()
     end
 end
 
