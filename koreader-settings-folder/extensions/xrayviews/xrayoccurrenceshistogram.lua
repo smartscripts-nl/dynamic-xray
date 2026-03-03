@@ -13,6 +13,7 @@ local VerticalGroup = require("ui/widget/verticalgroup")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 local Screen = require("device").screen
+local Size = require("ui/size")
 local T = require("ffi/util").template
 
 local DX = DX
@@ -57,7 +58,7 @@ function XrayOccurrencesHistogram:generateChapterOccurrencesHistogram(data)
         histogram_width = math_floor(self.chapters_count / 50 * histogram_width)
     end
 
-    local width = data.for_page_navigator and histogram_width or Screen:getWidth()
+    local width = data.for_page_navigator and histogram_width or Screen:getWidth() - 4 * Size.padding.large
     return CenterContainer:new{
         dimen = Geom:new{ w = width, h = histogram_height + histogram_bottom_line_height },
         VerticalGroup:new{

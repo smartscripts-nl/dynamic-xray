@@ -185,7 +185,10 @@ function XrayExporter:generateXrayItemsOverview(items, mode, use_two_column_disp
     local is_top_column_item
     for i = 1, count do
         --* at the top of the second column we don't want to start with a line ending, so set is_top_column_item to true for that case:
-        is_top_column_item = use_two_column_display and i == half_way + 1
+        is_top_column_item =
+            (not use_two_column_display and i == 1)
+            or
+            (use_two_column_display and (i == 1 or i == half_way + 1))
         paragraph, paragraph_iconless = DX.vd:generateXrayExportOrLinkedItemInfo(count, items[i], nil, is_top_column_item, mode)
         table_insert(column1, paragraph)
         table_insert(paragraphs_iconless, paragraph_iconless)
