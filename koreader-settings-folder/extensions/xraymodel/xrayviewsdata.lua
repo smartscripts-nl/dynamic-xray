@@ -297,6 +297,10 @@ function XrayViewsData:updateAndSortAllItemTables(item)
     item.text = self:generateListItemText(item)
 
     local id = item.id
+    if not id then
+        KOR.messages:notify(_("id of item could not be determined..."))
+        return
+    end
     --* before editing we have reset filters, so usage of self.items here is safe; see ((XrayController#onShowNewItemForm)) and ((XrayController#onShowEditItemForm)) > ((XrayViewsData#resetAllFilters)):
     count = #self.item_table[1]
     for i = 1, count do

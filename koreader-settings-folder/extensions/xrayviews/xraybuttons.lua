@@ -946,8 +946,6 @@ function XrayButtons:forListContext(manager, item)
                 icon_text = KOR.labels.edit,
                 callback = function()
                     UIManager:close(manager.item_context_dialog)
-                    --! we need this to ensure updated item id will be remembered and item saved, in ((XrayFormsData#storeItemUpdates)) > ((XrayFormsData#reAttachViewerItemId)):
-                    KOR.registry:set("edit_item_id", item.id)
                     DX.c:onShowEditItemForm(item, "reload_manager")
                 end,
                 hold_callback = function()

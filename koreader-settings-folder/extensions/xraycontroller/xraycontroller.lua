@@ -462,6 +462,8 @@ function XrayController:onShowEditItemForm(needle_item, reload_manager, active_f
     DX.vd:resetAllFilters()
 
     KOR.registry:set("edit_item", KOR.tables:shallowCopy(needle_item))
+    --! we need this to ensure updated item id will be remembered and item saved, in ((XrayFormsData#storeItemUpdates)) > ((XrayFormsData#reAttachViewerItemId)):
+    KOR.registry:set("edit_item_id", needle_item.id)
 
     local m_item, item_copy = DX.fd:initEditFormProps(needle_item, reload_manager, active_form_tab)
 

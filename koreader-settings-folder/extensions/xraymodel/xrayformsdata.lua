@@ -275,8 +275,8 @@ function XrayFormsData:reAttachViewerItemId(item)
     if edit_item then
         item.id = edit_item.id
 
-    --? for some reason we need the second fallback in case of editing items from List context menu, because otherwise id would not be remembered:
-    --* this prop was set in ((XrayButtons#forListContext)):
+    --? for some reason we need this second fallback in case of editing items from List context menu, because otherwise id would not be remembered:
+    --* this prop was set in ((XrayController#onShowEditItemForm)):
     else
         item.id = KOR.registry:get("edit_item_id")
     end
