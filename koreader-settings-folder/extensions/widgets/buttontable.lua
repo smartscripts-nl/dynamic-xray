@@ -263,6 +263,7 @@ function ButtonTable:generateButton(btn_entry, max_button_height, default_button
         config.width = default_button_width
     end
     config.align = btn_entry.align or "center"
+    config.avoid_text_truncation = btn_entry.avoid_text_truncation
     config.background = self.background or KOR.colors.background
     config.bordersize = 0
     config.button_lines = self.button_lines

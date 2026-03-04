@@ -966,23 +966,28 @@ function Button:generateTextLabel(label)
     if self.button_lines > 2 then
         self.reference_height = self.reference_height * (self.button_lines + 1) / 2
     end
-    self:doTruncationTweaks(label_widget, label, label_color, is_bold)
+    label_widget = self:doTruncationTweaks(label_widget, label, label_color, is_bold)
 
     return label_widget, _min_needed_width
 end
 
 --- @private
 function Button:doTruncationTweaks(label_widget, label, label_color, is_bold)
+    if not self.avoid_text_truncation then
+        self.did_truncation_tweaks = true
+        return label_widget
+    end
     self.did_truncation_tweaks = false
-    if self.avoid_text_truncation and label_widget.face.orig_size and label_widget:isTruncated() then
+    if label_widget.face.orig_size and label_widget:isTruncated() then
         self.did_truncation_tweaks = true
         local font_size_2_lines = TextBoxWidget:getFontSizeToFitHeight(self.reference_height, self.button_lines, 0)
+        local new_size
         while label_widget:isTruncated() do
-            local new_size = label_widget.face.orig_size - 1
+            new_size = label_widget.face.orig_size - 1
             if new_size <= font_size_2_lines then
                 --* Switch to a 2-lines TextBoxWidget
                 label_widget:free(true)
-                label_widget = TextBoxWidget:new {
+                label_widget = TextBoxWidget:new{
                     text = label.text,
                     lang = self.lang,
                     line_height = 0,
@@ -1007,7 +1012,8 @@ function Button:doTruncationTweaks(label_widget, label, label_color, is_bold)
                 break
             end
             label_widget:free(true)
-            label_widget = TextWidget:new {
+            --! this MUST be a TextWidget, not a TextBoxWidget, because we need ((TextWidget#isTruncated)):
+            label_widget = TextWidget:new{
                 text = label.text,
                 lang = self.lang,
                 padding = 0,
@@ -1018,6 +1024,7 @@ function Button:doTruncationTweaks(label_widget, label, label_color, is_bold)
             }
         end
     end
+    return label_widget
 end
 
 function Button:setIconSizeRatioIfNeeded()
