@@ -58,7 +58,7 @@ local XrayModel = WidgetContainer:new{
     switch_first_and_sur_name = false,
     tab_display_counts = { 0, 0, 0 },
     tags = {},
-    tags_relational = {},
+    tags_associative = {},
     use_tapped_word_data = false,
 }
 
@@ -153,7 +153,7 @@ function XrayModel:placeImportantItemsAtTop(items, sorting_direction)
 end
 
 function XrayModel:addTags(tags, id)
-    return self:addRelationalTags(tags, id)
+    return self:addAssociativeTags(tags, id)
 end
 
 --! this method must be called AFTER a parent has initiated storage of the data into the database and in XrayViewsData:
@@ -163,18 +163,19 @@ function XrayModel:updateTags(item, mode)
     end
 
     --* if an edited item has no tags, then still we must loop through all items, because a tag might have been removed from the updated item:
-    self.tags_relational = {}
+    self.tags_associative = {}
     --* take UNFILTERED items as subject:
     local items = DX.vd.item_table[1]
     count = #items
     for i = 1, count do
+        --* update the associative table with tags:
         self:addTags(items[i].tags, items[i].id)
     end
     self:sortAndSetTags()
 end
 
 --- @private
-function XrayModel:addRelationalTags(tags, id)
+function XrayModel:addAssociativeTags(tags, id)
     if not has_text(tags) then
         return false
     end
@@ -184,13 +185,13 @@ function XrayModel:addRelationalTags(tags, id)
     for i = 1, #tag_items do
         tag = tag_items[i]
         --* this collection will e.g. be used for filtering the Items List:
-        if not self.tags_relational[tag] then
-            self.tags_relational[tag] = {
+        if not self.tags_associative[tag] then
+            self.tags_associative[tag] = {
                 id,
             }
             a_tag_was_added = true
         else
-            table_insert(self.tags_relational[tag], id)
+            table_insert(self.tags_associative[tag], id)
         end
     end
     return a_tag_was_added
@@ -199,10 +200,14 @@ end
 --- @private
 function XrayModel:sortAndSetTags()
     self.tags = {}
-    for key in pairs(self.tags_relational) do
+    for key in pairs(self.tags_associative) do
         table_insert(self.tags, key)
     end
     table_sort(self.tags)
+end
+
+function XrayModel:getAllAssignedTagsString()
+    return table_concat(self.tags, ", ")
 end
 
 function XrayModel:toggleSortingMode()

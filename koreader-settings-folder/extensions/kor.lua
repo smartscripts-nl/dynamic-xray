@@ -156,6 +156,8 @@ function KOR:initDX()
 		oh = "extensions/xrayviews/xrayoccurrenceshistogram",
 		b = "extensions/xrayviews/xraybuttons",
 		cb = "extensions/xrayviews/xraycallbacks",
+		--* this one must be loaded before XrayDialogs:
+		ta = "extensions/xrayviews/xraytags",
 		d = "extensions/xrayviews/xraydialogs",
 		i = "extensions/xrayviews/xrayinformation",
 		ip = "extensions/xrayviews/xrayinfopanel",

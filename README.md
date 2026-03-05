@@ -168,25 +168,31 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 02d Tappable popup with linked items after longpressing a name in the ebook
 
 ![03 List of Xray items](images/03-list-of-xray-items.png)
-03 List of Xray items
+03 Items List
+
+![03b Items List: enter tag for assignment to items](images/03b-items-list-enter-tag-for-assignment-to-items.png)
+03b Items List: enter tag for assignment to items
+
+![03c Items List: select items for tag assignment](images/03c-items-list-select-items-for-tag-assignment.png)
+03b Items List: select items for tag assignment
 
 ![04 Xray Item Viewer tab 1](images/04-xray-item-viewer-tab-1.png)
-04 Xray Item Viewer tab 1
+04 Item Viewer tab 1
 
 ![05 Xray Item Viewer tab 2](images/05-xray-item-viewer-tab-2.png)
-05 Xray Item Viewer tab 2
+05 Item Viewer tab 2
 
 ![05b Xray Item Viewer quotes tab](images/05b-xray-item-viewer-quotes-tab-in-item-viewer.png)
-05b Xray Item Viewer: quotes tab
+05b Item Viewer: quotes tab
 
 ![05c Xray Item Viewer linked items tab](images/05c-xray-item-viewer-tab-3-linked-items.png)
-05c Xray Item Viewer: linked items tab
+05c Item Viewer: linked items tab
 
 ![06 Xray item editor tab 1](images/06-xray-item-editor-tab-1.png)
-06 Xray item editor tab 1
+06 Item Editor tab 1
 
 ![07 Xray item editor tab 2](images/07-xray-item-editor-tab-2.png)
-07 Xray item editor tab 2
+07 Item Editor tab 2
 
 ![07b Larger field editor](images/07b-larger-field-editor.png)
 07b Larger field editor, called with edit button next to field. Handy for fields with longer content.

@@ -222,7 +222,7 @@ function XrayButtons:forPageNavigator(parent)
                     DX.pn:betweenTagsNavigationDisable()
                     return
                 end
-                DX.d:showTagSelector("page_navigator")
+                DX.ta:showTagSelector("page_navigator")
             end,
         }),
         KOR.buttoninfopopup:forXrayViewer({
@@ -1023,7 +1023,17 @@ Current sorting mode: %1.]]), current_sorting_mode:upper()),
                 DX.c:toggleSortingMode()
             end,
             show_parent = DX.c,
-        }))
+        })),
+        Button:new(KOR.buttoninfopopup:forXrayPageNavigatorShowTagsDialogForList({
+            generate_active_icon = DX.ta.select_for_tags,
+            callback = function()
+                if DX.ta.select_for_tags then
+                    DX.ta:addTagsToItems()
+                    return
+                end
+                DX.ta:showTagSelector("list")
+            end,
+        })),
     }
     if DX.m.current_series then
         table_insert(buttons, 2, Button:new(KOR.buttoninfopopup:forXrayToggleBookOrSeriesMode({
@@ -1036,11 +1046,6 @@ Current sorting mode: %1.]]), current_sorting_mode:upper()),
             show_parent = KOR.ui,
         })))
     end
-    table_insert(buttons, Button:new(KOR.buttoninfopopup:forXrayPageNavigatorShowTagsDialogForList({
-        callback = function()
-            DX.d:showTagSelector("list")
-        end,
-    })))
     return buttons
 end
 
@@ -1700,6 +1705,7 @@ function XrayButtons:forListSubmenu()
     }
 end
 
+--- @param parent XrayDialogs
 function XrayButtons:forListTopLeft(parent)
     return {
         KOR.buttoninfopopup:forXrayTips({
@@ -1714,6 +1720,11 @@ function XrayButtons:forListTopLeft(parent)
             end
         },
         KOR.buttoninfopopup:forXrayTranslations(),
+        KOR.buttoninfopopup:forXrayItemsSelectForTagGroup({
+            callback = function()
+                DX.ta:toggleItemsForTagsSelection()
+            end,
+        }),
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
                 UIManager:close(parent.xray_items_chooser_dialog)

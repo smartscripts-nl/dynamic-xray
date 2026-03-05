@@ -384,6 +384,17 @@ function ButtonInfoPopup:forXrayItemsIndex(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forXrayItemsSelectForTagGroup(props)
+	return KOR.buttonprops:set({
+		text = KOR.icons.checkboxes,
+		font_bold = false,
+		fgcolor = KOR.colors.button_label,
+		info = _("checkbox icon | Enable or disable item select mode for items to which you want to assign a tag. If enabled, you will be asked for the tag you want to assign, before you can select items. Selected items will be colored light gray and get a checkbox. If you tap once again on them, this selection will be undone. With the tags button in the left lower corner (marked gray in in selection mode) you can save the assigned tags when you are done selecting items."),
+		callback_label = DX.ta.select_for_tags and _("enable") or _("disable"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forXrayList(props)
 	return KOR.buttonprops:set({
 		icon = "list",

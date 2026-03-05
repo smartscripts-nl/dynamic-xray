@@ -202,6 +202,15 @@ function Strings:formatListItemNumber(nr, title, use_spacer)
     return nr .. ". " .. spacer .. self:removeListItemNumber(title)
 end
 
+function Strings:prepareNeedleForMatching(needle, with_word_boundaries)
+    needle = needle:gsub("%-", "%%-")
+    if not with_word_boundaries then
+        return needle
+    end
+
+    return "%f[%w_]" .. needle .. "%f[^%w_]"
+end
+
 --- @class DescriptionDialogTextFormat
 function Strings:prepareForDisplay(text, separate_paragraphs)
 

@@ -2,7 +2,7 @@
 --[[--
 This is the controller for the Dynamic Xray plugin. It has been structured in kind of a MVC structure:
 M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
-V = ((XrayUI)), ((XrayPageNavigator)) and ((XrayCallbacks)) and ((XrayPages)) and ((XraySidePanels)) and ((XrayInfoPanel)) and ((XrayOccurrencesHistogram)), ((XrayTranslations)) and ((XrayTranslationsManager)), ((XrayDialogs)) and ((XrayButtons)) and ((XrayQuotes)), ((XrayCallbacks)), ((XrayInformation))
+V = ((XrayUI)), ((XrayPageNavigator)) and ((XrayCallbacks)) and ((XrayPages)) and ((XraySidePanels)) and ((XrayInfoPanel)) and ((XrayOccurrencesHistogram)), ((XrayTranslations)) and ((XrayTranslationsManager)), ((XrayDialogs)) and ((XrayButtons)) and ((XrayQuotes)) and ((XrayTags)), ((XrayCallbacks)), ((XrayInformation))
 C = ((XrayController))
 
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database. XrayTappedWords handles data requests resulting from users longpressing (partial) names of Xray items in the e-book text.
@@ -19,6 +19,8 @@ The views layer has three main streams:
 5) DX has a ((SeriesManager)) for listing the books in a series. The items in this Manager have action buttons, for viewing large covers, descriptions, opening the e-book, etc. The user can also edit the metadata of ebooks from the Manager: authors, titles, series name, series index, page count, publication year, book description. The Manager uses ((Dialogs#filesBox)) > ((FilesBox)) to generate its dialog. The user can call it by tapping on the series manager icon in some DX dialogs, or by pressing Shift+M.
 6) Thanks to ((XrayQuotes)) the user can add quotes from the ebook to the Xray item, for display in a tab "Quotes" in the Xray Item Viewer. So the user has important quotes at hand quickly. The quotes can be added to the item (selected from a popup with al list of all items) via the ReaderHighlight popup shown after text selection in the ebook.
 7) Through Page Navigator you can quickly reference a glossary for the current ebook through the hotkey Shift+G (or the gesture "Show/add glossary for current book"). If a glossary hasn't been defined yet, this same hotkey or gesture will lead the user to a dialog from which to start the import of the ebook glossary into Page Navigator by marking its boundaries in the ebook text.
+8) The Items List has a button in the top left corner to select multiple items and to assign a tag to all those items in one fell swoop (or remove that tag for items which already had it). See ((XrayTags#toggleItemsForTagsSelection)) > ((XrayTags#initiateItemTagsSelection)) > ((XrayTags#addTagsToItems)) > ((XrayDataSaver#storeItemsTags))
+
 
 The user will have the most Kindle-like experience when he/she opens the Page Navigator - see ((XrayController#onShowPageNavigator)). In this navigator all Xray items in a page will be marked bold and they will be mentioned in a side panel. Tapping on items in the side panel will put an explanation of that item in the bottom panel. You can even filter the content of the Navigator for a specific Xray item, so it will only show pages which contain that item.
 
@@ -136,6 +138,7 @@ KOR:initBaseExtensions()
 --- @field s XraySettings
 --- @field sp XraySidePanels
 --- @field t XrayTranslations
+--- @field ta XrayTags
 --- @field tm XrayTranslationsManager
 --- @field tw XrayTappedWords
 --- @field vd XrayViewsData
@@ -177,6 +180,8 @@ DX = {
     sp = nil,
     --* shorthand notation for Translations; this module will be initialized in ((XrayModel#initDataHandlers)):
     t = nil,
+    --* shorthand notation for Tags; this module will be initialized in ((KOR#initDX)):
+    ta = nil,
     --* shorthand notation for TranslationsManager; this module will be initialized in ((KOR#initDX)):
     tm = nil,
     --* shorthand notation for TappedWords; this module will be initialized in ((XrayModel#initDataHandlers)):
@@ -629,6 +634,7 @@ function XrayController:resetDynamicXray(is_prepared, do_full_update)
         DX.ex = require("extensions/xrayviews/xrayexporter")
     end
     DX.ex:resetCache()
+    DX.ta:resetTagGroups()
     DX.vd:resetAllFilters()
     --* e.g. when current method called after saving an item from a form:
     if is_prepared or not do_full_update then

@@ -961,6 +961,16 @@ function XrayViewsData:addItemsWhichPointToParent(needle_item, haystack_item, li
     end
 end
 
+function XrayViewsData:getItemById(id)
+    local items = self:getCurrentListTabItems()
+    count = #items
+    for i = 1, count do
+        if items[i].id == id then
+            return items[i]
+        end
+    end
+end
+
 --- @private
 function XrayViewsData:getItemIndexById(id)
     local items = self:getCurrentListTabItems()

@@ -163,6 +163,9 @@ local XrayDataSaver = WidgetContainer:new{
         update_item_hits =
             "UPDATE xray_items SET book_hits = ?, chapter_hits = ?, chapter_hits_data = ? WHERE id = ?;",
 
+        update_items_tags =
+            "UPDATE xray_items SET tags = ? WHERE id = ?;",
+
         update_item_type =
             "UPDATE xray_items SET xray_type = ? WHERE id = ?;",
     },
@@ -456,6 +459,29 @@ function XrayDataSaver.storeItemHits(item)
     end
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 end
+
+-- #((XrayDataSaver#storeItemsTags))
+--* item_ids_and_tags is a associative table, with item ids as indices for the updated tags:
+function XrayDataSaver.storeItemsTags(item_ids_and_tags)
+    local self = DX.ds
+    local conn = KOR.databases:getDBconn("XrayDataSaver:storeItemsTags")
+    local stmt = conn:prepare(self.queries.update_items_tags)
+    local item
+    for id, tags in pairs(item_ids_and_tags) do
+        --* this might be set in ((XrayTags#prepareUpdatedItemTags)), when after deletion of a tag there were no remaining tags:
+        if tags == "nil" then
+            tags = nil
+        end
+        stmt:reset():bind(tags, id):step()
+        item = views_data:getItemById(id)
+        item.tags = tags
+        parent:updateTags(item, "update")
+        parent:updateStaticReferenceCollections(id, item)
+        views_data:registerUpdatedItem(item)
+    end
+    conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
+end
+
 
 --* compare for edited items: ((XrayFormsData#storeItemUpdates)) > ((XrayDataSaver#storeUpdatedItem))
 -- #((XrayDataSaver#storeNewItem))

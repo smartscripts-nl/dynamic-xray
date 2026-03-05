@@ -53,6 +53,8 @@ return {
     bookmark_add_bare = "\u{E7C3}",
     bookmark_outline = "\u{E7C2}" .. spacer, -- bookmark open
     bookmark_outline_bare = "\u{E7C2}",
+    checkboxes = "\u{E838}" .. spacer,
+    checkboxes_bare = "\u{E838}",
     checkmark = "\u{F00C}" .. spacer, -- ✓
     checkmark_bare = "\u{F00C}",
     clipboard = "\u{E84C}" .. spacer,

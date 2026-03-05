@@ -11,10 +11,8 @@ local T = require("ffi/util").template
 
 local DX = DX
 local has_no_items = has_no_items
-local has_text = has_text
 local math_ceil = math.ceil
 local os_date = os.date
-local table_concat = table.concat
 local table_insert = table.insert
 
 local count
@@ -31,13 +29,6 @@ local XrayExporter = WidgetContainer:new{
     iconless_items = nil,
     iconless_persons = nil,
     iconless_terms = nil,
-
-    tag_groups = nil,
-    tag_groups2 = nil,
-    iconless_tag_groups = nil,
-
-    tags = nil,
-    tags_concatenated = nil,
 
     export_nouns = {
         _("items"),
@@ -57,12 +48,6 @@ function XrayExporter:resetCache()
     self.iconless_items = nil
     self.iconless_persons = nil
     self.iconless_terms = nil
-
-    self.tag_groups = nil
-    self.tag_groups2 = nil
-    self.iconless_tag_groups = nil
-
-    self.tags_concatenated = nil
 end
 
 --- @private
@@ -94,7 +79,7 @@ function XrayExporter:getInfoText(active_tab, iconless, column_2)
             self.items2,
             self.persons2,
             self.terms2,
-            self.tag_groups2,
+            DX.ta.tag_groups2,
         }
         --* choose one of the above items:
         return info_texts[active_tab]
@@ -106,14 +91,14 @@ function XrayExporter:getInfoText(active_tab, iconless, column_2)
             self.iconless_items,
             self.iconless_persons,
             self.iconless_terms,
-            self.iconless_tag_groups,
+            DX.ta.iconless_tag_groups,
         }
     or
         {
             self.items,
             self.persons,
             self.terms,
-            self.tag_groups,
+            DX.ta.tag_groups,
     }
 
     --* choose one of the above items:
@@ -125,14 +110,7 @@ function XrayExporter:addTagsOverview(info, active_tab)
     if active_tab < 4 or has_no_items(DX.m.tags) then
         return info
     end
-
-    local tags = self.tags_concatenated or table_concat(DX.m.tags, " - ")
-    self.tags_concatenated = tags
-
-    info = KOR.strings:split(info, "\n", "capture_empty_entity")
-    table_insert(info, 2, _("Tags in this overview") .. ": " .. self.tags_concatenated)
-
-    return table_concat(info, "\n")
+    return DX.ta:getTagsForExporterOverview(info)
 end
 
 --- @private
@@ -169,7 +147,7 @@ function XrayExporter:initData()
     KOR.twocolumntext:useTwoColumnDisplay(#DX.vd.terms)
     self.terms, self.terms2, self.iconless_terms = self:generateXrayItemsOverview(DX.vd.terms, "for_all_items_list", use_two_column_display)
 
-    self.tag_groups, self.tag_groups2, self.iconless_tag_groups = self:generateTagGroupsOverview(DX.vd.items)
+    DX.ta:generateTagGroupsOverview()
 
     return true
 end
@@ -196,67 +174,6 @@ function XrayExporter:generateXrayItemsOverview(items, mode, use_two_column_disp
 
     --* returned here: column1, column2, info_iconless; column2 will be set to nil when usage of text columns wasn't active:
     return KOR.twocolumntext:getColumnTexts(column1, column2, use_two_column_display, paragraphs_iconless)
-end
-
---- @private
-function XrayExporter:generateTagGroupsOverview(items)
-    local paragraphs = {}
-    local paragraphs_iconless = {}
-    local tag_groups = {}
-    count = #items
-    for i = 1, count do
-        if has_text(items[i].tags) then
-            self:populateTagGroups(tag_groups, items[i])
-        end
-    end
-    local data
-    local otable = KOR.tables:getSortedRelationalTable(tag_groups)
-    count = #otable
-    for i = 1, count do
-        data = otable[i][2]
-        KOR.tables:merge(paragraphs, data.paras)
-        KOR.tables:merge(paragraphs_iconless, data.paras_iconless)
-    end
-    count = #paragraphs
-    if count == 0 then
-        return "you haven't defined any tag-groups as yet" .. "...\n\n" .. _("You can create tag-groups by adding tags to Xray items.")
-    end
-
-    local use_two_column_display = KOR.twocolumntext:useTwoColumnDisplay(count)
-
-    --* column2 here will be set to nil if use_two_column_display is false:
-    --* return as text: column1, column2, paragraphs_iconless:
-    return KOR.twocolumntext:getColumnTexts(paragraphs, nil, use_two_column_display, paragraphs_iconless)
-end
-
---- @private
-function XrayExporter:populateTagGroups(tag_groups, item)
-    local tags = DX.m:splitByCommaOrSpace(item.tags)
-    local tag, heading_tag
-    local add_spacer = true
-    count = #tags
-    for i = 1, count do
-        tag = tags[i]
-        heading_tag = tag:upper()
-        if not tag_groups[tag] then
-            add_spacer = false
-            tag_groups[tag] = {
-                paras = {
-                    "\n" .. KOR.icons.tag_open_bare .. " " .. heading_tag .. "\n\n",
-                },
-                paras_iconless = {
-                    "\n" .. heading_tag .. "\n\n",
-                },
-            }
-        end
-        local paragraph, paragraph_iconless = DX.vd:generateXrayExportOrLinkedItemInfo(count, item, nil, i, "for_all_items_list")
-        if add_spacer then
-            table_insert(tag_groups[tag].paras, "\n")
-            table_insert(tag_groups[tag].paras_iconless, "\n")
-        end
-        table_insert(tag_groups[tag].paras, paragraph)
-        table_insert(tag_groups[tag].paras_iconless, paragraph_iconless)
-    end
 end
 
 function XrayExporter:showExportXrayItemsDialog()

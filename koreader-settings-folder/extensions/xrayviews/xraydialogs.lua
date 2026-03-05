@@ -494,6 +494,11 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
 
     local select_number = focus_item and focus_item.index or 1
 
+    --? don't know why we need this:
+    if not DX.ta then
+        DX.ta = require("extensions/xrayviews/xraytags")
+    end
+
     --* optionally items are filtered here also:
     local title = DX.vd:updateItemsTable(select_number)
     if not title then
@@ -507,6 +512,8 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
     local select_mode_message = self:_prepareItemsForList(current_tab_items, items_for_select)
     if select_mode_message then
         title = select_mode_message
+    elseif DX.ta.select_for_tags_tag then
+        title = title .. " " .. _("+tag:") .. " " .. DX.ta.select_for_tags_tag
     end
 
     self.xray_items_chooser_dialog = CenterContainer:new{
@@ -549,6 +556,7 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
         _manager = self,
     }
     self.xray_items_inner_menu = Menu:new(config)
+    DX.ta:initiateItemTagsSelection()
 
     table_insert(self.xray_items_chooser_dialog, self.xray_items_inner_menu)
     self.xray_items_inner_menu.close_callback = function()

@@ -66,7 +66,6 @@ local XrayUI = WidgetContainer:new{
 }
 
 --- @private
---- @private
 function XrayUI:drawMarker(c, rect)
     --* c was populated in ((XrayUI#ReaderViewSetXrayContextProps)):
     local bb = c.bb
@@ -334,7 +333,7 @@ end
 --- @private
 function XrayUI:updateStatusInFooter()
     --* for consumption in footer:
-    KOR.registry:set("xray_items_on_page_count", KOR.tables:relationalTableLength(self.hits))
+    KOR.registry:set("xray_items_on_page_count", KOR.tables:associativeTableLength(self.hits))
     --* force update of footer, to show correct number of current Xray items on page:
     KOR.footer:onUpdateFooter()
 end

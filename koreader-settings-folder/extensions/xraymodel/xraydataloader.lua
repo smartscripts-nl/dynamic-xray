@@ -301,7 +301,7 @@ function XrayDataLoader:_loadAllData(mode)
 
     self:_populateViewsDataBookChapters(result)
 
-    parent.tags_relational = {}
+    parent.tags_associative = {}
     --* loop over 1 or multiple books (in series mode):
     if mode == "series" then
         self:_loadDataForSeries(result)
