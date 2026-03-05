@@ -51,6 +51,7 @@ local math = math
 local math_floor = math.floor
 local select = select
 local table_insert = table.insert
+local table_remove = table.remove
 local type = type
 
 local count
@@ -104,11 +105,14 @@ local TextViewer = InputContainer:extend{
     extra_button2_position = nil,
     extra_button3 = nil,
     extra_button3_position = nil,
+    extra_button4 = nil,
+    extra_button4_position = nil,
     fgcolor = KOR.colors.black,
     find_centered_lines_count = 5, --* line with find results to be not far from the center
     fixed_face = nil,
     fullscreen = false,
     height = nil,
+    is_duo_scroll_widget = false,
     is_standard_tabbed_dialog = false,
     is_standard_tabbed_dialog_lower = false,
     justified = false,
@@ -131,6 +135,9 @@ local TextViewer = InputContainer:extend{
     --* to inform the parent about a newly actived tab, via ((TabNavigator#broadcastActivatedTab)):
     parent = nil,
     prev_item_callback = nil,
+    scroll_text_w = nil,
+    scroll_text_w1 = nil,
+    scroll_text_w2 = nil,
     separator = nil,
     --* this table will be populated by ((TabFactory#setTabButtonAndContent)):
     tabs_table_buttons = nil,
@@ -588,7 +595,8 @@ function TextViewer:initTextWidget()
             if not self.screen_width then
                 self.screen_width = Screen:getWidth()
             end
-            self.scroll_text_w = KOR.twocolumntext:getWidget({
+            self.is_duo_scroll_widget = true
+            self.scroll_text_w, self.scroll_text_w1, self.scroll_text_w2 = KOR.twocolumntext:getWidget({
                 parent = self,
                 column1_text = self.text,
                 column2_text = self.text2,
@@ -1184,6 +1192,11 @@ function TextViewer:getDefaultButtons()
                 if self.paragraph_headings then
                     self.active_paragraph = nil
                 end
+                if self.is_duo_scroll_widget then
+                    self.scroll_text_w1:scrollToTop()
+                    self.scroll_text_w2:scrollToTop()
+                    return
+                end
                 self.scroll_text_w:scrollToTop()
             end,
             hold_callback = self.default_hold_callback,
@@ -1193,11 +1206,19 @@ function TextViewer:getDefaultButtons()
                 if self.paragraph_headings then
                     self.active_paragraph = #self.paragraph_headings
                 end
+                if self.is_duo_scroll_widget then
+                    self.scroll_text_w1:scrollToBottom()
+                    self.scroll_text_w2:scrollToBottom()
+                    return
+                end
                 self.scroll_text_w:scrollToBottom()
             end,
             hold_callback = self.default_hold_callback,
         }),
     }
+    if self.is_duo_scroll_widget then
+        table_remove(default_buttons, 1)
+    end
     if self.paragraph_headings then
         --* additional buttons can be inserted via ((TextViewer#initButtons)), when it is configurated with optional props extra_button, extra_button2 and extra_button3:
         DX.b:forUiInfo(self, default_buttons)
@@ -1273,6 +1294,10 @@ function TextViewer:initButtons()
     if self.extra_button3 then
         local position = self.extra_button3_position or #buttons[1]
         table_insert(buttons[1], position, self.extra_button3)
+    end
+    if self.extra_button4 then
+        local position = self.extra_button4_position or #buttons[1]
+        table_insert(buttons[1], position, self.extra_button4)
     end
     if not self.buttons_table then
         table_insert(buttons[1], 1, {

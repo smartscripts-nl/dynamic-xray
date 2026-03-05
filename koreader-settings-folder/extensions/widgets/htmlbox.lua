@@ -97,8 +97,12 @@ local HtmlBox = InputContainer:extend{
     fullscreen = false,
     height = nil,
     html = nil,
-    --* for two column display of linked item in landscap display:
+    --* for two column display of linked item in landscape display:
     html2 = nil,
+    html_widget = nil,
+    html_widget1 = nil,
+    html_widget2 = nil,
+    is_duo_scroll_widget = false,
     key_events_module = nil,
     left_side_buttons = nil,
     modal = true,
@@ -255,8 +259,6 @@ end
 
 --* Used in init & update to instantiate the Scroll*Widget that self.html_widget points to
 --- @private
---* Used in init & update to instantiate the Scroll*Widget that self.html_widget points to
---- @private
 function HtmlBox:generateScrollWidget()
 
     self.swidth = self.content_width
@@ -296,7 +298,8 @@ end
 function HtmlBox:generateTextScrollWidget()
     --* two column display:
     if self.html2 then
-        self.html_widget = KOR.twocolumntext:getWidget({
+        self.is_duo_scroll_widget = true
+        self.html_widget, self.html_widget1, self.html_widget2 = KOR.twocolumntext:getWidget({
             parent = self,
             column1_text = self.html,
             column2_text = self.html2,
@@ -675,6 +678,11 @@ function HtmlBox:generateButtonTables()
                 id = "top",
                 vsync = true,
                 callback = function()
+                    if self.is_duo_scroll_widget then
+                        self.html_widget1:scrollToTop()
+                        self.html_widget2:scrollToTop()
+                        return
+                    end
                     self.html_widget:scrollToTop()
                 end,
             },
@@ -683,6 +691,11 @@ function HtmlBox:generateButtonTables()
                 id = "bottom",
                 vsync = true,
                 callback = function()
+                    if self.is_duo_scroll_widget then
+                        self.html_widget1:scrollToBottom()
+                        self.html_widget2:scrollToBottom()
+                        return
+                    end
                     self.html_widget:scrollToBottom()
                 end,
             },
@@ -905,6 +918,10 @@ function HtmlBox:setPaddingAndSpacing()
     self.content_padding_h = self.content_padding or (self.window_size == "fullscreen" or self.window_size == "max" or type(self.window_size) == "table") and Size.padding.closebuttonpopupdialog or Size.padding.large
     local content_padding_v = Size.padding.fullscreen --* added via VerticalSpan
     self.content_width = self.inner_width - 2 * self.content_padding_h
+    --* in two column display of linked items, make more room available:
+    if self.html2 then
+        self.content_width = self.inner_width
+    end
 
     self.content_padding_v =  content_padding_v
 
