@@ -135,6 +135,12 @@ function KeyEvents:addHotkeysForReaderUI(parent)
         DX.c:onShowCurrentSeries()
     end
 
+    readerui.key_events.ShowTagGroupSelectorUI = { { "Shift", { "T" } } }
+    readerui.onShowTagGroupSelectorUI = function()
+        DX.ta:showTagGroupSelector()
+        return true
+    end
+
     readerui.key_events.ShowPageNavigatorUI = { { "Shift", { "X" } } }
     readerui.onShowPageNavigatorUI = function()
         DX.c:onShowPageNavigator()

@@ -237,7 +237,8 @@ function XrayController:onDispatcherRegisterActions()
     Dispatcher:registerAction("add_xray_item", { category = "none", event = "AddNewXrayItem", title = DX.d:getControllerEntryName("Add an Xray item"), reader = true })
     Dispatcher:registerAction("show_series_manager", { category = "none", event = "ShowSeriesManager", title = _("Show Series Manager"), reader = true })
     Dispatcher:registerAction("show_series_manager_current_ebook", { category = "none", event = "ShowCurrentSeries", title = _("Show series and/or metadata for current e-book"), reader = true })
-    Dispatcher:registerAction("show_book_glossary", { category = "none", event = "ShowCurrentBookGlossary", title = "Show/add glossary for current book", reader = true })
+    Dispatcher:registerAction("show_book_glossary", { category = "none", event = "ShowCurrentBookGlossary", title = _("Show/add glossary for current book"), reader = true })
+    Dispatcher:registerAction("show_tag_group_selector", { category = "none", event = "ShowTagGroupSelector", title = _("Show the Xray tag-group selector"), reader = true })
 end
 
 function XrayController:doBatchImport(conn, stmt, count, callback)
@@ -309,6 +310,11 @@ end
 
 function XrayController:onShowCurrentSeries()
     KOR.seriesmanager:showContextDialogForCurrentEbook()
+    return true
+end
+
+function XrayController:onShowTagGroupSelector()
+    DX.ta:showTagGroupSelector()
     return true
 end
 
