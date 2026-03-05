@@ -115,6 +115,13 @@ You can show this navigator by:
 * tapping in KOReader's main menu: most left icon > Dynamic Xray > Show Page Navigator
 * assigning a gesture for "Show Xray Page Navigator" (in the Gestures menu under "Reflowable documents...") and then use this gesture.
 
+### Use tag-groups to group items together
+
+* Tag-groups are items which share a tag with each other.
+* You can view them grouped together in the 4th tab of the Xray Exporter.
+* Tag-groups can be very handy to e.g. see all persons/terms belonging to one party in a conflict together, or to group logically linked items together.
+* The Items List has a checkbox-button in the top left to quickly assign a tag to multiple items. See images 3b... and 3c... in this README.
+
 #### Generate a copyable list of all Xray items from Page Navigator
 
 With the export button in Page Navigator you open a popup with a list of all Xray items. Including stats and additional info per item. This list you can copy to the clipboard and then print, if you like, for usage next to your e-reader.
