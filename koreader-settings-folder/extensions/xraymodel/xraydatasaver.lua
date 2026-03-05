@@ -475,10 +475,12 @@ function XrayDataSaver.storeItemsTags(item_ids_and_tags)
         stmt:reset():bind(tags, id):step()
         item = views_data:getItemById(id)
         item.tags = tags
-        parent:updateTags(item, "update")
         parent:updateStaticReferenceCollections(id, item)
         views_data:registerUpdatedItem(item)
     end
+    --* do this to make sure we remove possibly now empty tag-groups after tag deletions:
+    parent:updateAllTags()
+
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 end
 

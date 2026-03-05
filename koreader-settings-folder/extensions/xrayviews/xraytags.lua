@@ -46,8 +46,7 @@ local XrayTags = WidgetContainer:new{
 
 function XrayTags:showTagSelector(mode)
     local tags = DX.m.tags
-    if has_no_items(tags) then
-        KOR.messages:notify(_("you haven't assigned any tags to items yet"))
+    if self:showNoTagsNotification() then
         return
     end
     local buttons_per_row = 4
@@ -319,8 +318,8 @@ function XrayTags:generateTagGroupsOverview()
         KOR.tables:merge(paragraphs_iconless, data.paras_iconless)
     end
     count = #paragraphs
-    if count == 0 then
-        return _("you haven't defined any tag-groups as yet") .. "...\n\n" .. _("You can create tag-groups by adding tags to Xray items.")
+    if self:showNoTagsNotification(count, "with_explanation") then
+        return
     end
 
     local use_two_column_display = KOR.twocolumntext:useTwoColumnDisplay(count)
@@ -375,8 +374,7 @@ end
 
 function XrayTags:showTagGroupSelector()
     local tags = DX.m.tags
-    if #tags == 0 then
-        KOR.messages:notify(_("you haven't assigned any tags yet"))
+    if self:showNoTagsNotification(tags) then
         return
     end
     self.tag_group_selector = ButtonDialogTitle:new{
@@ -402,6 +400,18 @@ function XrayTags:showTagGroup(tag)
         info2 = self.tag_group2,
         text_for_copy = self.iconless_tag_group,
     })
+end
+
+function XrayTags:showNoTagsNotification(tags, with_explanation)
+    if has_no_items(tags) then
+        local message = _("you haven't assigned any tags to items yet")
+        if with_explanation then
+            message = message .. "\n\n" .. _("You can create tag-groups by adding tags to Xray items.")
+        end
+        KOR.messages:notify(message)
+        return true
+    end
+    return false
 end
 
 return XrayTags

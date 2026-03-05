@@ -156,6 +156,22 @@ function XrayModel:addTags(tags, id)
     return self:addAssociativeTags(tags, id)
 end
 
+function XrayModel:updateAllTags()
+
+    --* if an edited item has no tags, then still we must loop through all items, because a tag might have been removed from the updated item:
+    self.tags_associative = {}
+    --* take UNFILTERED items as subject:
+    local items = DX.vd.item_table[1]
+    count = #items
+    for i = 1, count do
+        --* update the associative table with tags:
+        self:addTags(items[i].tags, items[i].id)
+    end
+    self:sortAndSetTags()
+    --! prevent a crash in the tag-group-selector because of stale data:
+    DX.ta:resetTagGroups()
+end
+
 --! this method must be called AFTER a parent has initiated storage of the data into the database and in XrayViewsData:
 function XrayModel:updateTags(item, mode)
     if (mode == "is_new_item" or mode == "is_deleted_item") and has_no_text(item.tags) then
