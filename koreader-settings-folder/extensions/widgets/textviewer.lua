@@ -1187,6 +1187,28 @@ function TextViewer:getDefaultButtons()
                 KOR.messages:notify(tr("text copied to clipboard..."))
             end,
         }),
+        KOR.buttoninfopopup:forTextViewerOneScreenUp({
+            callback = function()
+                if self.is_duo_scroll_widget then
+                    self.scroll_text_w1:onScrollUp(1)
+                    self.scroll_text_w2:onScrollUp(1)
+                    return
+                end
+                self.scroll_text_w:onScrollUp(1)
+            end,
+            hold_callback = self.default_hold_callback,
+        }),
+        KOR.buttoninfopopup:forTextViewerOneScreenDown({
+            callback = function()
+                if self.is_duo_scroll_widget then
+                    self.scroll_text_w1:onScrollDown(1)
+                    self.scroll_text_w2:onScrollDown(1)
+                    return
+                end
+                self.scroll_text_w:onScrollDown(1)
+            end,
+            hold_callback = self.default_hold_callback,
+        }),
         KOR.buttoninfopopup:forTextViewerToTop({
             callback = function()
                 if self.paragraph_headings then

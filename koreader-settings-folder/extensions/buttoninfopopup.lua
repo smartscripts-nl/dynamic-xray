@@ -233,11 +233,29 @@ function ButtonInfoPopup:forTextViewerCopy(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forTextViewerOneScreenDown(props)
+	return KOR.buttonprops:set({
+		icon = "down",
+		info = _("arrow-down icon | Go one screen down. In case of a two column text this move will be applied to both columns."),
+		callback_label = _("1 down"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forTextViewerOneScreenUp(props)
+	return KOR.buttonprops:set({
+		icon = "up",
+		info = _("arrow-up icon | Go one screen up. In case of a two column text this move will be applied to both columns."),
+		callback_label = _("1 up"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forTextViewerToBottom(props)
 	return KOR.buttonprops:set({
 		text = "⇲",
 		id = "bottom",
-		info = _("arrow icon | Jump to end of text."),
+		info = _("arrow icon | Jump to end of text. In case of a two column text this move will be applied to both columns."),
 		callback_label = _("to end"),
 		--! callback defined by calling module
 	}, props)
@@ -247,7 +265,7 @@ function ButtonInfoPopup:forTextViewerToTop(props)
 	return KOR.buttonprops:set({
 		text = "⇱",
 		id = "top",
-		info = _("arrow icon | Jump to start of text."),
+		info = _("arrow icon | Jump to start of text. In case of a two column text this move will be applied to both columns."),
 		callback_label = _("to start"),
 		--! callback defined by calling module
 	}, props)
