@@ -416,7 +416,13 @@ function XrayDialogs:showUiPageInfo(hits_info, hits_info2, headings, matches_cou
                 icon_size_ratio = 0.58,
             }),
             extra_button3_position = 3,
-            extra_button3 = KOR.buttoninfopopup:forXrayExport({
+            extra_button3 = KOR.buttoninfopopup:forXrayTagGroupSelector({
+                callback = function()
+                    DX.ta:showTagGroupSelector()
+                end
+            }),
+            extra_button4_position = 4,
+            extra_button4 = KOR.buttoninfopopup:forXrayExport({
                 callback = function()
                     UIManager:close(self.xray_ui_info_dialog)
                     return DX.cb:execExportXrayItemsCallback()

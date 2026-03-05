@@ -215,7 +215,7 @@ function XrayButtons:forPageNavigator(parent)
                 return DX.cb:execShowPopupButtonsCallback(parent)
             end
         }),
-        KOR.buttoninfopopup:forXrayPageNavigatorShowTagsDialogForPN({
+        KOR.buttonchoicepopup:forXrayPageNavigatorShowTagsDialogForPN({
             generate_active_icon = DX.pn.navigation_tag,
             callback = function()
                 if DX.pn.navigation_tag then
@@ -223,6 +223,9 @@ function XrayButtons:forPageNavigator(parent)
                     return
                 end
                 DX.ta:showTagSelector("page_navigator")
+            end,
+            hold_callback = function()
+                DX.ta:showTagGroupSelector()
             end,
         }),
         KOR.buttoninfopopup:forXrayViewer({
@@ -634,6 +637,27 @@ function XrayButtons:forSaveGlossary(parent, glossary, glossary_text, css_files)
      }}
 end
 
+--- @param parent XrayTags
+function XrayButtons:forTagGroupsSelector(parent, tags)
+    local buttons_per_row = 5
+    local current_row
+    count = #tags
+    local buttons = {}
+    for b = 1, count do
+        if b == 1 or b % buttons_per_row == 1 then
+            table_insert(buttons, {})
+            current_row = #buttons
+        end
+        table_insert(buttons[current_row], {
+            text = tags[b],
+            callback = function()
+                parent:showTagGroup(tags[b])
+            end
+        })
+    end
+    return buttons
+end
+
 --* compare ((XrayButtons#forItemViewer)) and buttons for list view ((XrayButtons#forListFooterLeft)), ((XrayButtons#forListFooterRight)), ((XrayButtons#forListContext)):
 function XrayButtons:forTappedWordItemViewer(needle_item, called_from_list, tapped_word, book_hits)
     local buttons = {
@@ -1024,7 +1048,7 @@ Current sorting mode: %1.]]), current_sorting_mode:upper()),
             end,
             show_parent = DX.c,
         })),
-        Button:new(KOR.buttoninfopopup:forXrayPageNavigatorShowTagsDialogForList({
+        Button:new(KOR.buttonchoicepopup:forXrayPageNavigatorShowTagsDialogForList({
             generate_active_icon = DX.ta.select_for_tags,
             callback = function()
                 if DX.ta.select_for_tags then
@@ -1032,6 +1056,9 @@ Current sorting mode: %1.]]), current_sorting_mode:upper()),
                     return
                 end
                 DX.ta:showTagSelector("list")
+            end,
+            hold_callback = function()
+                DX.ta:showTagGroupSelector()
             end,
         })),
     }

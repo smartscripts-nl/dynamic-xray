@@ -33,6 +33,10 @@ local XrayTags = WidgetContainer:new{
     select_for_tag_items = {},
     select_for_tags_tag = nil,
 
+    tag_group = nil,
+    tag_group2 = nil,
+    iconless_tag_group = nil,
+
     tag_groups = nil,
     tag_groups2 = nil,
     iconless_tag_groups = nil,
@@ -113,6 +117,10 @@ function XrayTags:resetModule()
 end
 
 function XrayTags:resetTagGroups()
+    self.tag_group = nil
+    self.tag_group2 = nil
+    self.iconless_tag_group = nil
+
     self.tag_groups = nil
     self.tag_groups2 = nil
     self.iconless_tag_groups = nil
@@ -265,6 +273,32 @@ function XrayTags:toggleItemsForTagsSelection()
     DX.d:showListWithRestoredArguments()
 end
 
+--- @private
+function XrayTags:generateTagGroup(tag)
+    local items = DX.vd.items
+    local tag_group = {}
+    local needle = KOR.strings:prepareNeedleForMatching(tag, "with_word_boundaries")
+    local is_first_para = true
+    local tagged_items = {}
+    count = #items
+    for i = 1, count do
+        if has_text(items[i].tags) and items[i].tags:match(needle) then
+            table_insert(tagged_items, items[i])
+        end
+    end
+    count = #tagged_items
+    for i = 1, count do
+        self:populateTagGroup(tag_group, tag, tagged_items[i], count, is_first_para)
+        is_first_para = false
+    end
+    count = #tag_group.paras
+    local use_two_column_display = KOR.twocolumntext:useTwoColumnDisplay(count)
+
+    --* column2 here will be set to nil if use_two_column_display is false:
+    --* return as text: column1, column2, paragraphs_iconless:
+    self.tag_group, self.tag_group2, self.iconless_tag_group = KOR.twocolumntext:getColumnTexts(tag_group.paras, nil, use_two_column_display, tag_group.paras_iconless)
+end
+
 function XrayTags:generateTagGroupsOverview()
     local items = DX.vd.items
     local paragraphs = {}
@@ -297,6 +331,19 @@ function XrayTags:generateTagGroupsOverview()
 end
 
 --- @private
+function XrayTags:populateTagGroup(tag_group, tag, item, tagged_count, is_first_para)
+    if is_first_para then
+        tag_group.paras = {}
+        tag_group.paras_iconless = {
+            tag:upper() .. "\n\n"
+        }
+    end
+    local paragraph, paragraph_iconless = DX.vd:generateXrayExportOrLinkedItemInfo(tagged_count, item, nil, is_first_para, "for_all_items_list")
+    table_insert(tag_group.paras, paragraph .. "\n")
+    table_insert(tag_group.paras_iconless, paragraph_iconless .. "\n")
+end
+
+--- @private
 function XrayTags:populateTagGroups(tag_groups, item)
     local tags = DX.m:splitByCommaOrSpace(item.tags)
     local tag, heading_tag
@@ -324,6 +371,37 @@ function XrayTags:populateTagGroups(tag_groups, item)
         table_insert(tag_groups[tag].paras, paragraph .. "\n")
         table_insert(tag_groups[tag].paras_iconless, paragraph_iconless .. "\n")
     end
+end
+
+function XrayTags:showTagGroupSelector()
+    local tags = DX.m.tags
+    if #tags == 0 then
+        KOR.messages:notify(_("you haven't assigned any tags yet"))
+        return
+    end
+    self.tag_group_selector = ButtonDialogTitle:new{
+        title = _("Choose a tag-group"),
+        use_low_title = true,
+        title_align = "center",
+        width_factor = 0.95,
+        button_width = 0.33,
+        buttons = DX.b:forTagGroupsSelector(self, tags),
+        --[[after_close_callback = function()
+            KOR.dialogs:closeAllOverlays()
+        end]]
+    }
+    UIManager:show(self.tag_group_selector)
+end
+
+function XrayTags:showTagGroup(tag)
+    self:generateTagGroup(tag)
+    KOR.dialogs:textBox({
+        title = _("Tag-group") .. ": " .. tag,
+        fullscreen = true,
+        info = self.tag_group,
+        info2 = self.tag_group2,
+        text_for_copy = self.iconless_tag_group,
+    })
 end
 
 return XrayTags

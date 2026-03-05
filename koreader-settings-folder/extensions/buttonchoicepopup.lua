@@ -8,6 +8,8 @@ local _ = KOR:initCustomTranslations()
 local ffiUtil = require("ffi/util")
 local T = ffiUtil.template
 
+local DX = DX
+
 --* compare ((ButtonInfoPopup)) and ((ButtonProps))
 --* see also ((BUTTONCHOICEPROPS_MORE_THAN_2))
 --- @class ButtonChoicePopup
@@ -76,6 +78,34 @@ function ButtonChoicePopup:forXrayItemDelete(props)
 		callback_label = _("delete"),
 		--! callback defined by calling module
 		hold_callback_label = _("delete all"),
+		--! hold_callback defined by calling module
+	}, props)
+end
+
+function ButtonChoicePopup:forXrayPageNavigatorShowTagsDialogForList(props)
+	return KOR.buttonprops:set({
+		icon = "tags",
+		info = T(_("tags icon | show popup for tag filters") .. self.separator .. _("show the tag-group-selector, to choose a specific tag-group to display"), KOR.icons.arrow_bare),
+		callback_label = _("show"),
+		--! callback defined by calling module
+		hold_callback_label = _("tag-groups"),
+		--! hold_callback defined by calling module
+	}, props)
+end
+
+function ButtonChoicePopup:forXrayPageNavigatorShowTagsDialogForPN(props)
+	--* the minus sign is a n_dash:
+	local state_marker = DX.pn.navigation_tag and "–" or "+"
+	return KOR.buttonprops:set({
+		icon_text = {
+			icon = "tags",
+			text = " " .. state_marker,
+		},
+		icon = "tags",
+		info = T(_("tags icon | Activate (+) or disabled (-) browsing between members of a tag group") .. self.separator .. _("show the tag-group-selector, to choose a specific tag-group to display"), KOR.icons.arrow_bare),
+		callback_label = _("browse") .. " " .. state_marker,
+		--! callback defined by calling module
+		hold_callback_label = _("tag-groups"),
 		--! hold_callback defined by calling module
 	}, props)
 end
