@@ -139,7 +139,6 @@ function Strings:sortKeywords(text)
     local splitter = uses_commas and ", *" or " +"
     local joiner = uses_commas and ", " or " "
     local parts = self:split(text, splitter)
-    KOR.debug:hoera("sdgsdgsdg", #parts)
     table.sort(parts)
     text = table_concat(parts, joiner)
     --* re-attach comma for a single entry comma delimited string; for example maintain alias "Sun Eater," don't let it get mangled to "Eater Sun" bij de sorting and re-joining process:

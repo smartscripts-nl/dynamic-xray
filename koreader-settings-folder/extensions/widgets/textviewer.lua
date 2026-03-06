@@ -174,7 +174,7 @@ local TextViewer = InputContainer:extend{
 
 --- @class TextViewerInit
 function TextViewer:init()
-
+    self:configureForTwoColumnTexts()
     self:initRelatedSettings()
     self:initTabbedDialog()
     self:setScrollingMode()
@@ -1845,17 +1845,25 @@ function TextViewer:setSeparator()
     }
 end
 
-function TextViewer:onActivateTab(tab_no)
-    return KOR.tabnavigator:onActivateTab(tab_no)
+--- @private
+function TextViewer:configureForTwoColumnTexts()
+    if not self.text2 then
+        return
+    end
+
+    self.add_margin = false
+    self.add_padding = false
+    self.add_more_padding = false
+    self.text_padding_top_bottom = nil
+    self.text_margin = 0
+    self.text_padding = 0
+    self.use_computed_height = false
+
+    self.fullscreen_padding = DX.s.is_mobile_device and Screen:scaleBySize(10) or Screen:scaleBySize(15)
 end
 
 --- @private
 function TextViewer:initRelatedSettings()
-    if self.text2 then
-        self.add_padding = false
-        self.add_more_padding = false
-        self.text_padding_top_bottom = nil
-    end
     if not self.add_more_padding and not self.add_padding then
         self.text_margin = 0
         self.text_padding = 0
