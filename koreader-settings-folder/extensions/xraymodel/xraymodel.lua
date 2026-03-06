@@ -381,7 +381,7 @@ function XrayModel:removeMatchReliabilityIndicators(subject)
 end
 
 --* compare usage of ((Strings#sortKeywords)) in ((XrayFormsData#convertFieldValuesToItemProps)):
-function XrayModel:splitByCommaOrSpace(subject, add_singulars)
+function XrayModel:splitByCommaOrSpace(subject, add_singulars, skip_lowercase)
     if not subject then
         return
     end
@@ -390,8 +390,18 @@ function XrayModel:splitByCommaOrSpace(subject, add_singulars)
     local plural_keywords = {}
     --* in case of comma separated linkwords we want exact, non partly hits of these linkwords:
     keywords = separated_by_commas and KOR.strings:split(subject, ", *") or KOR.strings:split(subject, " +")
-    local keyword
     count = #keywords
+    if skip_lowercase then
+        local pruned = {}
+        for i = 1, count do
+            if keywords[i]:match("[A-Z]") then
+                table_insert(pruned, keywords[i])
+            end
+        end
+        keywords = pruned
+        count = #keywords
+    end
+    local keyword
     for nr = 1, count do
         keyword = keywords[nr]
         keywords[nr] = keyword:gsub("%-", "%%-")

@@ -36,6 +36,8 @@ local Strings = WidgetContainer:extend{
     m_dash = "—",
     n_dash = "–",
     poem_max_line_length = 50,
+    whole_word_end = "%f[^%w_]",
+    whole_word_start = "%f[%w_]",
 }
 
 function Strings:cleanupSelectedText(text)
@@ -208,7 +210,7 @@ function Strings:prepareNeedleForMatching(needle, with_word_boundaries)
         return needle
     end
 
-    return "%f[%w_]" .. needle .. "%f[^%w_]"
+    return self.whole_word_start .. needle .. self.whole_word_end
 end
 
 --- @class DescriptionDialogTextFormat
@@ -427,24 +429,24 @@ function Strings:hasWholeWordMatch(haystack, haystack_lower, needle)
 
     --* case sensitive search, mostly for Xray persons:
     if needle:match("[A-Z]") then
-        --* %A = non alpha characters:
-        if haystack:match("%A" .. needle .. "%A") or haystack:match("^" .. needle .. "%A") or haystack:match("%A" .. needle .. "$") then
+        if haystack:match(self.whole_word_start .. needle .. self.whole_word_end) then
             return true
         end
 
         --* search for uppercase names at start of chapters:
         needle = needle:upper()
-        return haystack:match("%A" .. needle .. "%A") or haystack:match("^" .. needle .. "%A") or haystack:match("%A" .. needle .. "$")
+        return haystack:match(self.whole_word_start .. needle .. self.whole_word_end)
     end
 
     --* case insensitive, mostly for Xray terms (non persons):
-    if haystack_lower:match("%A" .. needle .. "%A") or haystack_lower:match("^" .. needle .. "%A") or haystack_lower:match("%A" .. needle .. "$")
-        then return true
+    if haystack_lower:match(self.whole_word_start .. needle .. self.whole_word_end)
+    then
+        return true
     end
 
-    --* search for uppercase things/entities at start of chapters:
+    --* search for uppercase terms/entities at start of chapters:
     needle = needle:upper()
-    return haystack:match("%A" .. needle .. "%A") or haystack:match("^" .. needle .. "%A") or haystack:match("%A" .. needle .. "$")
+    return haystack:match(self.whole_word_start .. needle .. self.whole_word_end)
 end
 
 function Strings:getNameSwapped(name)

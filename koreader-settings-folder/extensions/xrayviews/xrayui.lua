@@ -235,6 +235,14 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
     xray_rects.callback(paragraph_hits_info, paragraph_hits_info2, paragraph_headings, paragraph_matches_count, self.info_extra_button_rows, paragraph_text)
 end
 
+function XrayUI:addFirstAndLastNames(names, xray_name)
+    local parts = DX.m:splitByCommaOrSpace(xray_name, false, "skip_lowercase")
+    local pcount = #parts
+    for i = 1, pcount do
+        table_insert(names, parts[i])
+    end
+end
+
 function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanations, skip_xray_items, paragraph_headings, injected_nr, paragraph_hits_info)
     local more_button_added
 
@@ -472,6 +480,9 @@ function XrayUI:getXrayItemsFoundInText(page_or_paragraph_text, tagged_items)
         short_names = has_text(xray_item.short_names)
         xray_name = xray_item.name
         names = { xray_name }
+        if xray_name:match(" ") and DX.m:isPerson(xray_item) then
+            self:addFirstAndLastNames(names, xray_name)
+        end
         if short_names then
             parts = KOR.strings:split(short_names, ", +")
             KOR.tables:merge(names, parts)
