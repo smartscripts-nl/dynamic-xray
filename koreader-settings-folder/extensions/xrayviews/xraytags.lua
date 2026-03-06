@@ -422,9 +422,6 @@ function XrayTags:showTagGroupSelector()
         width_factor = 0.95,
         button_width = 0.33,
         buttons = DX.b:forTagGroupsSelector(self, tags),
-        --[[after_close_callback = function()
-            KOR.dialogs:closeAllOverlays()
-        end]]
     }
     UIManager:show(self.tag_group_selector)
 end
