@@ -135,11 +135,18 @@ function Strings:singular(text, icount)
 end
 
 function Strings:sortKeywords(text)
-    local splitter = text:match(",") and ", *" or " +"
-    local joiner = splitter == ", *" and ", " or " "
+    local uses_commas = text:match(",")
+    local splitter = uses_commas and ", *" or " +"
+    local joiner = uses_commas and ", " or " "
     local parts = self:split(text, splitter)
+    KOR.debug:hoera("sdgsdgsdg", #parts)
     table.sort(parts)
-    return table_concat(parts, joiner)
+    text = table_concat(parts, joiner)
+    --* re-attach comma for a single entry comma delimited string; for example maintain alias "Sun Eater," don't let it get mangled to "Eater Sun" bij de sorting and re-joining process:
+    if uses_commas and not text:match(",") then
+        text = text .. ","
+    end
+    return text
 end
 
 function Strings:split(str, pat, capture_empty_entity)

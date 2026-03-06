@@ -258,6 +258,10 @@ function XrayDialogs:showEditItemForm(args)
     local item = args.item
     local item_copy = args.item_copy
 
+    --* by closing this widgets we prevent their hotkeys from interfering with entering content in the form:
+    self:closeItemViewer()
+    DX.pn:closePageNavigator()
+
     --! making sure we don't retain field values from previous form sessions: crucial call to ((MultiInputDialog#resetRegistryValues)) on every init and tab-change of MultiInputDialog:
     self.edit_item_input = MultiInputDialog:new{
         title = KOR.icons.edit_bare .. " " .. item.name:gsub(" %(.+", ""):gsub(" %-.+", ""),

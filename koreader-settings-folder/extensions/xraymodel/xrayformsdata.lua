@@ -520,7 +520,9 @@ function XrayFormsData:getFormFields(item_copy, prefilled_field, name_from_selec
 
 Through aliases:
 1) main names will be found in the Xray overview of items in paragraphs on the current page;
-2) the main item will be shown if the user longpresses an alias in the ebook text.]]),
+2) the main item will be shown if the user longpresses an alias in the ebook text.
+
+If it is you intention that aliases shouldn't be separated by spaces, then use comma's, even it concerns only one name. So e.g. use \"Sun Eater,\" instead of \"Sun Eater\", because the latter would be seen as two aliases and would be converted and sorted to \"Eater Sun\".]]),
         tab = 2,
         cursor_at_end = true,
         input_face = self.other_fields_face,
