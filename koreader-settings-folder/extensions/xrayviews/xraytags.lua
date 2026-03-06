@@ -372,6 +372,44 @@ function XrayTags:populateTagGroups(tag_groups, item)
     end
 end
 
+function XrayTags:getNextTagGroup(tag)
+    local tags = DX.m.tags
+    local next_tag_index
+    count = #tags
+    for i = 1, count do
+        if tags[i] == tag then
+            next_tag_index = i + 1
+            if next_tag_index > count then
+                next_tag_index = 1
+            end
+            return tags[next_tag_index]
+        end
+    end
+end
+
+function XrayTags:getPreviousTagGroup(tag)
+    local tags = DX.m.tags
+    local previous_tag_index
+    count = #tags
+    for i = 1, count do
+        if tags[i] == tag then
+            previous_tag_index = i - 1
+            if previous_tag_index < 1 then
+                previous_tag_index = count
+            end
+            return tags[previous_tag_index]
+        end
+    end
+end
+
+function XrayTags:isSameTagGroup(tag, other_tag)
+    if other_tag == tag then
+        KOR.messages:notify(_("only one tag-group has been defined"))
+        return true
+    end
+    return false
+end
+
 function XrayTags:showTagGroupSelector()
     local tags = DX.m.tags
     if self:showNoTagsNotification(tags) then
@@ -393,11 +431,33 @@ end
 
 function XrayTags:showTagGroup(tag)
     self:generateTagGroup(tag)
-    KOR.dialogs:textBox({
+    self.tag_group_viewer = KOR.dialogs:textBox({
         title = _("Tag-group") .. ": " .. tag,
         fullscreen = true,
         info = self.tag_group,
         info2 = self.tag_group2,
+        extra_button = KOR.buttoninfopopup:forXrayTagGroupNext({
+            callback = function()
+                local next_tag = DX.ta:getNextTagGroup(tag)
+                if DX.ta:isSameTagGroup(tag, next_tag) or not next_tag then
+                    return
+                end
+                UIManager:close(self.tag_group_viewer)
+                DX.ta:showTagGroup(next_tag)
+            end,
+        }),
+        extra_button_position = 2,
+        extra_button2 = KOR.buttoninfopopup:forXrayTagGroupPrevious({
+            callback = function()
+                local previous_tag = DX.ta:getPreviousTagGroup(tag)
+                if DX.ta:isSameTagGroup(tag, previous_tag) or not previous_tag then
+                    return
+                end
+                UIManager:close(self.tag_group_viewer)
+                DX.ta:showTagGroup(previous_tag)
+            end,
+        }),
+        extra_button2_position = 2,
         text_for_copy = self.iconless_tag_group,
     })
 end

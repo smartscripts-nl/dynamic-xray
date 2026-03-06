@@ -559,6 +559,22 @@ function ButtonInfoPopup:forXrayShowMatchReliabilityExplanation(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forXrayTagGroupNext(props)
+	return KOR.buttonprops:set({
+		icon = "next",
+		info = _("arrow-right icon | Jump to next tag-group."),
+		callback_label = _("next"),
+	}, props)
+end
+
+function ButtonInfoPopup:forXrayTagGroupPrevious(props)
+	return KOR.buttonprops:set({
+		icon = "previous",
+		info = _("arrow-left icon. Jump to previous tag-group."),
+		callback_label = _("previous"),
+	}, props)
+end
+
 function ButtonInfoPopup:forXrayTagGroupSelector(props)
 	return KOR.buttonprops:set({
 		icon = "tags",

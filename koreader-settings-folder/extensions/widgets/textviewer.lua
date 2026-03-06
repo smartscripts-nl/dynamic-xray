@@ -1851,6 +1851,11 @@ end
 
 --- @private
 function TextViewer:initRelatedSettings()
+    if self.text2 then
+        self.add_padding = false
+        self.add_more_padding = false
+        self.text_padding_top_bottom = nil
+    end
     if not self.add_more_padding and not self.add_padding then
         self.text_margin = 0
         self.text_padding = 0
