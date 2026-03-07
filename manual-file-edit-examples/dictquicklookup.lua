@@ -558,27 +558,25 @@ function DictQuickLookup:init()
             {
                 KOR.buttoninfopopup:forSaveToXray({
                     id = "xray",
-                    vsync = true,
                     fgcolor = KOR.colors.button_label,
-                    info = tr("user-lamp icon | Save this lemma as a Xray item."),
+                    info = tr("user-lamp icon | Save the looked-up word as a Xray item."),
                     callback = function()
-                        self:onClose()
-                        if self.highlight.selected_text then
-                            --* add selected text to the data:
-                            self.highlight.selected_text.text = KOR.strings:cleanupSelectedText(self.ui.document:getTextFromXPointers(self.highlight.selected_text.pos0, self.highlight.selected_text.pos1))
-
-                            local hname = self.highlight.selected_text.text
-                            if DX.c:guardIsExistingItem(hname) then
-                                return
-                            end
-                            --* nextTick needed to prevent the icon of the button shining through the keyboard (ghosting):
-                            UIManager:nextTick(function()
-                                DX.c:onShowNewItemForm(hname)
-                            end)
-
-                        else
+                        local selected_text = self.highlight.selected_text
+                        if not selected_text then
                             KOR.messages:notify(tr("no name was selected"), 3)
+                            self:onClose()
+                            return
                         end
+
+                        local pos0 = self.highlight.selected_text.pos0
+                        local pos1 = self.highlight.selected_text.pos1
+                        self:onClose()
+                        local hname = KOR.strings:cleanupSelectedText(self.ui.document:getTextFromXPointers(pos0, pos1))
+
+                        if DX.c:guardIsExistingItem(hname) then
+                            return
+                        end
+                        DX.c:onShowNewItemForm(hname)
                     end
                 }),
             },
