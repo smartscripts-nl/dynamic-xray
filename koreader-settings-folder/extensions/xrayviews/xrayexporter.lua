@@ -107,7 +107,7 @@ end
 
 --- @private
 function XrayExporter:addTagsOverview(info, active_tab)
-    if active_tab < 4 or has_no_items(DX.m.tags) then
+    if active_tab < 4 or has_no_items(DX.m.taggroups) then
         return info
     end
     return DX.ta:getTagsForExporterOverview(info)

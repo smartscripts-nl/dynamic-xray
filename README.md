@@ -181,7 +181,13 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 03b Items List: enter tag for assignment to items
 
 ![03c Items List: select items for tag assignment](images/03c-items-list-select-items-for-tag-assignment.png)
-03b Items List: select items for tag assignment
+03c Items List: select items for tag assignment
+
+![03d Tag-group-selector](images/03d-tag-group-selector.png)
+03d Tag-group selector, callable with gesture or hotkey
+
+![03e Tag-group-viewer](images/03e-tag-group-viewer.png)
+03e Tag-group viewer
 
 ![04 Xray Item Viewer tab 1](images/04-xray-item-viewer-tab-1.png)
 04 Item Viewer tab 1

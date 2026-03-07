@@ -632,8 +632,9 @@ function XrayButtons:forTagGroupsSelector(parent, tags)
         table_insert(buttons[current_row], {
             text = tags[b],
             callback = function()
+                local taggroup = tags[b]:gsub(" %(.+$", "")
                 UIManager:close(parent.tag_group_selector)
-                parent:showTagGroup(tags[b])
+                parent:showTagGroup(taggroup)
             end
         })
     end

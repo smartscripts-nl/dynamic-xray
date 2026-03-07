@@ -57,7 +57,7 @@ local XrayModel = WidgetContainer:new{
     sorting_method = "hits",
     switch_first_and_sur_name = false,
     tab_display_counts = { 0, 0, 0 },
-    tags = {},
+    taggroups = {},
     tags_associative = {},
     use_tapped_word_data = false,
 }
@@ -139,6 +139,16 @@ function XrayModel:getSortingProp()
     return "name"
 end
 
+function XrayModel:getTagGroupsWithCountsWithTotals()
+    local taggroups = KOR.tables:shallowCopy(self.taggroups)
+    local taggroups_with_totals = {}
+    count = #taggroups
+    for i = 1, count do
+        table_insert(taggroups_with_totals, taggroups[i] .. " (" .. #self.tags_associative[taggroups[i]] .. ")")
+    end
+    return taggroups_with_totals
+end
+
 function XrayModel:placeImportantItemsAtTop(items, sorting_direction)
 
     local sorting_prop = self:getSortingProp()
@@ -215,15 +225,15 @@ end
 
 --- @private
 function XrayModel:sortAndSetTags()
-    self.tags = {}
+    self.taggroups = {}
     for key in pairs(self.tags_associative) do
-        table_insert(self.tags, key)
+        table_insert(self.taggroups, key)
     end
-    table_sort(self.tags)
+    table_sort(self.taggroups)
 end
 
 function XrayModel:getAllAssignedTagsString()
-    return table_concat(self.tags, ", ")
+    return table_concat(self.taggroups, ", ")
 end
 
 function XrayModel:toggleSortingMode()

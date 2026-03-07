@@ -45,7 +45,7 @@ local XrayTags = WidgetContainer:new{
 }
 
 function XrayTags:showTagSelector(mode)
-    local tags = DX.m.tags
+    local taggroups = DX.m.taggroups
     if self:showNoTagsNotification() then
         return
     end
@@ -54,20 +54,20 @@ function XrayTags:showTagSelector(mode)
     local row = 1
     local tags_dialog
     local button_width = math_floor(Screen:getWidth() / 6)
-    count = #tags
+    count = #taggroups
     local dialog_width = count < buttons_per_row and count * button_width or buttons_per_row * button_width
     for i = 1, count do
         table_insert(buttons[row], {
-            text = tags[i],
+            text = taggroups[i],
             font_bold = false,
             width = button_width,
             callback = function()
                 UIManager:close(tags_dialog)
                 if mode == "list" then
-                    DX.c:filterItemsByTag(tags[i])
+                    DX.c:filterItemsByTag(taggroups[i])
 
                 else
-                    DX.pn:betweenTagsNavigationActivate(tags[i])
+                    DX.pn:betweenTagsNavigationActivate(taggroups[i])
                     if DX.s.PN_show_tagged_items_navigation_alert then
                         KOR.dialogs:niceAlert(_("Tag group navigation"), T(_("You can now browse:\n\n* with the arrow buttons\n* or with N and P on your keyboard\n\nfrom page with tagged items to next/previous page with tagged items%1\n\nDisable this popup by setting PN_show_tagged_items_navigation_alert to false%2"), KOR.strings.ellipsis, KOR.strings.ellipsis), {
                             delay = 7,
@@ -127,8 +127,8 @@ function XrayTags:resetTagGroups()
 end
 
 function XrayTags:getTagsForExporterOverview(info)
-    local tags = self.tags_concatenated or table_concat(DX.m.tags, " - ")
-    self.tags_concatenated = tags
+    local taggroups = self.tags_concatenated or table_concat(DX.m.taggroups, " - ")
+    self.tags_concatenated = taggroups
 
     info = KOR.strings:split(info, "\n", "capture_empty_entity")
     table_insert(info, 2, _("Tags in this overview") .. ": " .. self.tags_concatenated)
@@ -285,9 +285,9 @@ function XrayTags:generateTagGroup(tag)
             table_insert(tagged_items, items[i])
         end
     end
-    count = #tagged_items
-    for i = 1, count do
-        self:populateTagGroup(tag_group, tag, tagged_items[i], count, is_first_para)
+    local taggroup_count = #tagged_items
+    for i = 1, taggroup_count do
+        self:populateTagGroup(tag_group, tag, tagged_items[i], taggroup_count, is_first_para)
         is_first_para = false
     end
     count = #tag_group.paras
@@ -296,6 +296,8 @@ function XrayTags:generateTagGroup(tag)
     --* column2 here will be set to nil if use_two_column_display is false:
     --* return as text: column1, column2, paragraphs_iconless:
     self.tag_group, self.tag_group2, self.iconless_tag_group = KOR.twocolumntext:getColumnTexts(tag_group.paras, nil, use_two_column_display, tag_group.paras_iconless)
+
+    return taggroup_count
 end
 
 function XrayTags:generateTagGroupsOverview()
@@ -373,31 +375,31 @@ function XrayTags:populateTagGroups(tag_groups, item)
 end
 
 function XrayTags:getNextTagGroup(tag)
-    local tags = DX.m.tags
+    local taggroups = DX.m.taggroups
     local next_tag_index
-    count = #tags
+    count = #taggroups
     for i = 1, count do
-        if tags[i] == tag then
+        if taggroups[i] == tag then
             next_tag_index = i + 1
             if next_tag_index > count then
                 next_tag_index = 1
             end
-            return tags[next_tag_index]
+            return taggroups[next_tag_index]
         end
     end
 end
 
 function XrayTags:getPreviousTagGroup(tag)
-    local tags = DX.m.tags
+    local taggroups = DX.m.taggroups
     local previous_tag_index
-    count = #tags
+    count = #taggroups
     for i = 1, count do
-        if tags[i] == tag then
+        if taggroups[i] == tag then
             previous_tag_index = i - 1
             if previous_tag_index < 1 then
                 previous_tag_index = count
             end
-            return tags[previous_tag_index]
+            return taggroups[previous_tag_index]
         end
     end
 end
@@ -411,25 +413,26 @@ function XrayTags:isSameTagGroup(tag, other_tag)
 end
 
 function XrayTags:showTagGroupSelector()
-    local tags = DX.m.tags
-    if self:showNoTagsNotification(tags) then
+    local taggroups_with_totals = DX.m:getTagGroupsWithCountsWithTotals()
+    if self:showNoTagsNotification(taggroups_with_totals) then
         return
     end
     self.tag_group_selector = ButtonDialogTitle:new{
         title = _("Choose a tag-group"),
         use_low_title = true,
         title_align = "center",
+        font_weight = "normal",
         width_factor = 0.95,
         button_width = 0.33,
-        buttons = DX.b:forTagGroupsSelector(self, tags),
+        buttons = DX.b:forTagGroupsSelector(self, taggroups_with_totals),
     }
     UIManager:show(self.tag_group_selector)
 end
 
 function XrayTags:showTagGroup(tag)
-    self:generateTagGroup(tag)
+    local taggroup_count = self:generateTagGroup(tag)
     self.tag_group_viewer = KOR.dialogs:textBox({
-        title = _("Tag-group") .. ": " .. tag,
+        title = _("Tag-group") .. ": " .. tag .. " (" .. taggroup_count .. ")",
         fullscreen = true,
         info = self.tag_group,
         info2 = self.tag_group2,
