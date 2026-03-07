@@ -364,24 +364,28 @@ end
 --* information for this dialog was generated in ((ReaderView#paintTo)) > ((XrayUI#ReaderViewGenerateXrayInformation))
 --* extra buttons (from xray items) were populated in ((XrayUI#ReaderHighlightGenerateXrayInformation))
 --* current method called from callback in ((xray paragraph info callback)):
-function XrayDialogs:showUiPageInfo(hits_info, hits_info2, headings, matches_count, extra_button_rows, haystack_text)
-    local debug = false
-    local info = hits_info
-    if not self.xray_ui_info_dialog and has_text(info) then
-        --* paragraph_text only needed for debugging purposes, to ascertain we are looking at the correct paragraph:
-        if debug and haystack_text then
-            info = haystack_text .. "\n\n" .. info
-        end
+function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_info, hits_info2, headings, matches_count, extra_button_rows)
+    if not self.xray_ui_info_dialog and has_text(hits_info) then
         local matches_count_info = matches_count == 1 and _("1 Xray item") or matches_count .. " " .. _("Xray items")
         local subject = DX.s.UI_mode == "paragraph" and _(" in this paragraph") or _(" on this page")
         local target = DX.s.UI_mode == "paragraph" and _("the ENTIRE PAGE") or _("PARAGRAPHS")
         local new_trigger = DX.s.UI_mode == "paragraph" and _("the first line marked with a lightning icon") or _("a paragraph marked with a star")
         --* the data below was populated in ((XrayUI#ReaderViewGenerateXrayInformation)):
         local key_events_module = "XrayUIpageInfoViewer"
-        self.xray_ui_info_dialog = KOR.dialogs:textBox({
+        self.xray_ui_info_dialog = KOR.dialogs:textBoxTabbed(1, {
             title = matches_count_info .. subject,
-            info = info,
-            info2 = hits_info2,
+            tabs = {
+                {
+                    tab = _("occurrences"),
+                    info = hits_names,
+                    info2 = hits_names2,
+                },
+                {
+                    tab = _("information"),
+                    info = hits_info,
+                    info2 = hits_info2,
+                },
+            },
             fullscreen = true,
             covers_fullscreen = true,
             modal = false,
