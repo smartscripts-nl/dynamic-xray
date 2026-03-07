@@ -1,3 +1,8 @@
+--! this file is an example how to manually edit DictQuickLookup to add a button to the word lookup results dialog
+--* because DictQuickLookup is not really patchable - because of one ENORMOUSLY BIG method init(), with lots of stuff going on -, this manual edit is needed and has to be repeated after every KOReader update
+--! this is only an example; exact locations to edit can vary depending on current KOReader version
+--* you can find the locations to be modified by searching for "xray_items"
+
 local BD = require("ui/bidi")
 local Blitbuffer = require("ffi/blitbuffer")
 local ButtonDialog = require("ui/widget/buttondialog")
@@ -446,6 +451,12 @@ function DictQuickLookup:init()
             },
         }
     else
+
+        --* these three statements are needed for the button to add a looked up word to the xray_items:
+        local DX = DX
+        local KOR = require("extensions/kor")
+        local tr = KOR:initCustomTranslations()
+
         local prev_dict_text = "◁◁"
         local next_dict_text = "▷▷"
         if BD.mirroredUILayout() then
@@ -542,6 +553,34 @@ function DictQuickLookup:init()
                         self:onHoldClose()
                     end,
                 },
+            },
+            --* add a row with a button to added the looked-up word to the xray_items:
+            {
+                KOR.buttoninfopopup:forSaveToXray({
+                    id = "xray",
+                    vsync = true,
+                    fgcolor = KOR.colors.button_label,
+                    info = tr("user-lamp icon | Save this lemma as a Xray item."),
+                    callback = function()
+                        self:onClose()
+                        if self.highlight.selected_text then
+                            --* add selected text to the data:
+                            self.highlight.selected_text.text = KOR.strings:cleanupSelectedText(self.ui.document:getTextFromXPointers(self.highlight.selected_text.pos0, self.highlight.selected_text.pos1))
+
+                            local hname = self.highlight.selected_text.text
+                            if DX.c:guardIsExistingItem(hname) then
+                                return
+                            end
+                            --* nextTick needed to prevent the icon of the button shining through the keyboard (ghosting):
+                            UIManager:nextTick(function()
+                                DX.c:onShowNewItemForm(hname)
+                            end)
+
+                        else
+                            KOR.messages:notify(tr("no name was selected"), 3)
+                        end
+                    end
+                }),
             },
         }
         if self.allow_key_text_selection and Device:hasFewKeys() then
