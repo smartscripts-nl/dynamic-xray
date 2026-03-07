@@ -1,7 +1,6 @@
 
 local require = require
 
-local ButtonDialogTitle = require("extensions/widgets/buttondialogtitle")
 local ConfirmBox = require("extensions/widgets/confirmbox")
 local DocumentRegistry = require("document/documentregistry")
 local FilesBox = require("extensions/widgets/filesbox")
@@ -589,32 +588,6 @@ function Dialogs:showBookCover(full_path)
         end
         DocumentRegistry:closeDocument(full_path)
     end
-end
-
-function Dialogs:showButtonDialog(title, button_table)
-    local dialog
-    dialog = ButtonDialogTitle:new{
-        title = title,
-        no_overlay = true,
-        modal = true,
-        move_to_top = true,
-        use_low_title = true,
-        button_font_face = "x_smallinfofont",
-        button_font_size = 14,
-        button_font_bold = false,
-        button_font_weight = "normal",
-        title_align = "center",
-        width_factor = 0.95,
-        button_width = 0.33,
-        show_parent = KOR.ui,
-        buttons = button_table,
-        after_close_callback = function()
-            KOR.registry:unset("xray_toc_dialog_shown")
-        end
-    }
-    UIManager:show(dialog)
-    --KOR.registryset("TextViewer_index", dialog)
-    return dialog
 end
 
 --* see ((DIALOGS))

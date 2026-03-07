@@ -121,18 +121,4 @@ function ButtonChoicePopup:forXrayPageNavigatorToCurrentPage(props)
 	}, props)
 end
 
---* see also ((Button#init)) > ((hotfix for bold "edit" and "jump" buttons for xray items in page info TOC popup)):
-function ButtonChoicePopup:forXrayTocItemEdit(props)
-	local args = {
-		info = T(_("xray item %1go to this item in the list%2edit this item"), "| :", self.separator),
-		is_xray_toc_item = true,
-		callback_label = _("jump"),
-		--! callback defined by calling module
-		hold_callback_label = _("edit"),
-		--! hold_callback defined by calling module
-		--* extra_callbacks prop, with for each item a callback_label and a callback prop, can be dynamically inserted
-	}
-	return KOR.buttonprops:set(args, props)
-end
-
 return ButtonChoicePopup

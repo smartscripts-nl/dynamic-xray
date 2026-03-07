@@ -36,7 +36,6 @@ local TextBoxWidget = require("extensions/widgets/textboxwidget")
 local TextWidget = require("extensions/widgets/textwidget")
 local UIManager = require("ui/uimanager")
 local _ = require("gettext")
-local tr = KOR:initCustomTranslations()
 local Screen = Device.screen
 local logger = require("logger")
 
@@ -217,14 +216,6 @@ function Button:setBasicButtonProps()
     --* to prevent errors in the match in the next code block when self.text is delivered as a number:
     if self.text then
         self.text = tostring(self.text)
-    end
-    -- #((hotfix for bold "edit" and "jump" buttons for xray items in page info TOC popup))
-    --! hotfix for the Xray "jump" and "edit" buttons which are shown when the user longpresses a xray item in the Page/Paragraph Info TOC popup:
-    if self.text and (self.text:match(tr("edit") .. "$") or self.text:match(tr("jump") .. "$")) then
-        self.text_font_bold = true
-        self.font_bold = true
-        --* for consumption in ((Button#generateTextLabel)): edit and jump buttons will have bigger font size than the regular xray item buttons in the xray TOC longpress dialog:
-        self.is_bigger_xray_item = true
     end
 
     if self.readonly and self.readonly_inverted then
@@ -924,11 +915,6 @@ function Button:generateTextLabel(label)
     local label_color = not label.is_icon_text and label.label_color or KOR.colors.button_label
     local is_bold = not label.is_icon_text and self.text_font_bold or false
     local font_size = (self.text_font_size or not label.is_icon_text) and self.text_font_size or self.text_font_size * 1.15
-
-    --* first var might be set in ((hotfix for bold "edit" and "jump" buttons for xray items in page info TOC popup)):
-    if not self.is_bigger_xray_item and KOR.registry:get("xray_toc_dialog_shown") then
-        font_size = 17
-    end
 
     -- #((mark active tab bold))
     --* ((TabFactory#setTabButtonAndContent)) can set this prop:

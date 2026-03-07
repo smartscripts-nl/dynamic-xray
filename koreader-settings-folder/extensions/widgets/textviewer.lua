@@ -64,7 +64,6 @@ local SCROLLING_FIXED_HEIGHT_WITHOUT_SCROLLBAR = 3
 local TextViewer = InputContainer:extend{
     activate_letter_hotkeys = false,
     activate_shifted_numerical_hotkeys = false,
-    active_paragraph = nil,
     active_tab = nil,
     --* Bottom row with Close, Find buttons. Also added when no caller's buttons defined.
     add_default_buttons = nil,
@@ -381,8 +380,7 @@ function TextViewer:findDialog()
 end
 
 --* when argument external_search_string not nil: called via ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((XrayUI#showParagraphInformation)) >
---* click on line with xray marker > ((XrayDialogs#showUiPageInfo)) - here reliability icons and xray type icons injected for buttons > ((Dialogs#textBox)) > ((send external searchstring for xray info)) > ((TextViewer#showToc)) > ((TextViewer#getTocIndexButton)) >
---* click on button > ((TextViewer#blockUp)) or ((TextViewer#blockDown)):
+--* click on line with xray marker > ((XrayDialogs#showUiPageInfo)) - here reliability icons and xray type icons injected for buttons > ((Dialogs#textBox)) > ((send external searchstring for xray info))
 --- @private
 function TextViewer:findCallback(input_dialog, external_search_string, overrule_pos)
     if input_dialog then
@@ -703,61 +701,6 @@ function TextViewer:alertDebug(message, timeout, dismiss_callback)
 end
 
 --- @private
-function TextViewer:blockDown()
-    if not self.active_paragraph then
-        self.active_paragraph = 1
-    else
-        self.active_paragraph = self.active_paragraph + 1
-        if self.active_paragraph > #self.paragraph_headings then
-            self.active_paragraph = 1
-        end
-    end
-
-    --* to make the entire last paragraph visbile:
-    if self.active_paragraph == #self.paragraph_headings then
-        self.scroll_text_w:scrollToTop()
-        self:blockUp("force_active_paragraph")
-        return
-    end
-
-    --* the paragraph headings were generated in ((XrayUI#ReaderHighlightGenerateXrayInformation)) >  > ((headings for use in TextViewer)):
-    local start_pos = 1
-    if self.active_paragraph > 1 then
-        for i = 1, self.active_paragraph - 1 do
-            start_pos = start_pos + self.paragraph_headings[i].length - 20
-        end
-    end
-    --* these needles were defined in ((headings for use in TextViewer)):
-    local needle = self.paragraph_headings[self.active_paragraph].needle
-    self:findCallback(nil, needle, start_pos)
-end
-
---- @private
-function TextViewer:blockUp(force_active_paragraph)
-    if not force_active_paragraph then
-        if not self.active_paragraph then
-            self.active_paragraph = 1
-        else
-            self.active_paragraph = self.active_paragraph - 1
-            if self.active_paragraph < 1 then
-                self.active_paragraph = #self.paragraph_headings
-            end
-        end
-    end
-
-    --* the paragraph headings were generated in ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)):
-    local start_pos = 1
-    if self.active_paragraph > 1 then
-        for i = 1, self.active_paragraph - 1 do
-            start_pos = start_pos + self.paragraph_headings[i].length - 20
-        end
-    end
-    -- #((Xray page hits TOC search routine))
-    local needle = self.paragraph_headings[self.active_paragraph].label
-    self:findCallback(nil, needle, start_pos)
-end
-
---- @private
 function TextViewer:computeHeights()
     local textw_height
     local button_table_height = self.button_table and self.button_table:getSize().h or 0
@@ -922,37 +865,6 @@ function TextViewer:generateTabsTable()
     end
     self.tabs_table = KOR.buttontablefactory:getTabsTable(self)
     KOR.tabnavigator:broadcastActivatedTab()
-end
-
---* called automatically with an after_load_callback from ((XrayDialogs#showUiPageInfo)) - see ((call TextViewer TOC))
---* or from a button: ((TextViewer#getDefaultButtons)) > ((TextViewer toc button)) > ((ButtonInfoPopup#forXrayItemsIndex))
---- @private
-function TextViewer:showToc()
-
-    local button_table, buttons_count = KOR.buttontablefactory:getVerticallyArrangedButtonTable(
-    --* self.paragraph_headings was generated in ((XrayUI#ReaderHighlightGenerateXrayInformation)):
-        self.paragraph_headings,
-        function(i)
-            return self:getTocIndexButton(i)
-        end,
-        --* info button:
-        KOR.buttoninfopopup:forXrayShowMatchReliabilityExplanation(),
-        --* back button:
-    {
-            icon = "back",
-            icon_size_ratio = 0.5,
-            callback = function()
-                UIManager:close(self.toc_dialog)
-                UIManager:close(self)
-            end
-        }
-    )
-
-    local xray_ui_mode = DX.s.UI_mode
-    local title = xray_ui_mode == "paragraph" and "Xray items in deze alinea" or "Xray items op deze pagina"
-    self.toc_dialog = KOR.dialogs:showButtonDialog(buttons_count .. " " .. title, button_table)
-
-    KOR.registry:set("xray_toc_dialog_shown", true)
 end
 
 --- @private
@@ -1211,9 +1123,6 @@ function TextViewer:getDefaultButtons()
         }),
         KOR.buttoninfopopup:forTextViewerToTop({
             callback = function()
-                if self.paragraph_headings then
-                    self.active_paragraph = nil
-                end
                 if self.is_duo_scroll_widget then
                     self.scroll_text_w1:scrollToTop()
                     self.scroll_text_w2:scrollToTop()
@@ -1225,9 +1134,6 @@ function TextViewer:getDefaultButtons()
         }),
         KOR.buttoninfopopup:forTextViewerToBottom({
             callback = function()
-                if self.paragraph_headings then
-                    self.active_paragraph = #self.paragraph_headings
-                end
                 if self.is_duo_scroll_widget then
                     self.scroll_text_w1:scrollToBottom()
                     self.scroll_text_w2:scrollToBottom()
@@ -1243,7 +1149,7 @@ function TextViewer:getDefaultButtons()
     end
     if self.paragraph_headings then
         --* additional buttons can be inserted via ((TextViewer#initButtons)), when it is configurated with optional props extra_button, extra_button2 and extra_button3:
-        DX.b:forUiInfo(self, default_buttons)
+        DX.b:forUiInfo(default_buttons)
     end
 
     return default_buttons
@@ -1280,7 +1186,6 @@ function TextViewer:finalizeWidget()
         return "partial", self.frame.dimen
     end)
 
-    --* e.g. defined in ((xray paragraph info: after load callback)):
     -- #((TextViewer execute after load callback))
     if self.after_load_callback then
         UIManager:nextTick(function()
@@ -1427,45 +1332,6 @@ function TextViewer:initWidgetFrame()
         config.covers_fullscreen = self.covers_fullscreen
     end
     self.frame = FrameContainer:new(config)
-end
-
---* see also ((Button#init)) > ((hotfix for bold "edit" and "jump" buttons for xray items in page info TOC popup)):
---- @private
-function TextViewer:getTocIndexButton(i)
-    --* self.paragraph_headings was generated in ((XrayUI#ReaderHighlightGenerateXrayInformation)):
-    local needle_item = self.paragraph_headings[i].xray_item
-    --* calls ((ButtonChoicePopup#forXrayTocItemEdit)):
-    local args = {
-        --* self.paragraph_headings were generated in ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((XrayUI#showParagraphInformation)):
-        text = i .. ". " .. self.paragraph_headings[i].label,
-        font_bold = false,
-        text_font_face = "x_smallinfofont",
-        font_size = 14,
-        --* we don't want to see the xray item names in the popup button:
-        overrule_callback_label = "spring",
-        callback = function()
-            --* if you want this to be closable, store the dialog in ((Dialogs#showButtonDialog)) in Registry and close it here...
-            self.active_paragraph = i
-            self.scroll_text_w:scrollToBottom()
-            self:blockUp("force_active_paragraph")
-        end,
-        overrule_hold_callback_label = "bewerk",
-        hold_callback = function()
-            UIManager:close(self.toc_dialog)
-            UIManager:close(self)
-            --* source: see ((headings for use in TextViewer)):
-            --* paragraph headings were defined in((XrayUI#ReaderHighlightGenerateXrayInformation)):
-            -- #((edit xray item from toc popup))
-            DX.c:onShowEditItemForm(needle_item)
-        end,
-        extra_callbacks = self:addLinkedItemsToTocButton(needle_item),
-    }
-    -- #((set extra wide popup for xray items with linked items))
-    --* to make room for optional linked items below the main actions row:
-    if args.extra_callbacks and #args.extra_callbacks > 0 then
-        args.extra_wide_dialog = true
-    end
-    return KOR.buttonchoicepopup:forXrayTocItemEdit(args)
 end
 
 --- @private
@@ -1786,36 +1652,6 @@ function TextViewer:setPadding()
     if self.add_more_padding then
         self.text_padding = Screen:scaleBySize(60)
     end
-end
-
---- @private
-function TextViewer:addLinkedItemsToTocButton(needle_item)
-    local linked_items = DX.vd:getLinkedItems(needle_item)
-    if not linked_items then
-        return
-    end
-
-    local extra_callbacks = {}
-    count = #linked_items
-    for l = 1, count do
-        local item = linked_items[l]
-        local icon = DX.vd:getItemTypeIcon(item)
-        local linked_item_matches = item.matches and item.matches > 0 and " (" .. item.matches .. ")" or ""
-        table_insert(extra_callbacks, {
-            overrule_callback_label = KOR.icons.xray_link_bare .. icon .. " " .. item.name:lower() .. linked_item_matches,
-            for_separate_rows = true,
-            callback = function()
-                KOR.dialogs:textBox({
-                    title = icon .. " " .. item.name,
-                    title_shrink_font_to_fit = true,
-                    info = DX.vd:getItemInfo(item),
-                    use_computed_height = true,
-                    modal = true,
-                })
-            end,
-        })
-    end
-    return extra_callbacks
 end
 
 --- @private

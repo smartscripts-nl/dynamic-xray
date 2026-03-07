@@ -268,10 +268,6 @@ function ButtonProps:popupChoice(choice_props)
 	local parts = KOR.strings:split(info, " ?| ?")
 	if #parts > 1 then
 		title = parts[1]
-		--* this prop is set in ((ButtonChoicePopup#forXrayTocItemEdit)):
-		if choice_props.is_xray_toc_item then
-			title = choice_props.text:gsub("^%d+%. ", "")
-		end
 		info = self:addDisabledButtonMessage(choice_props, parts[2])
 	end
 	-- #((setting overruling_button_label for choice popup))

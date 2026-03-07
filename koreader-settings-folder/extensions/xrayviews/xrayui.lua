@@ -16,7 +16,6 @@ local Screen = Device.screen
 local T = require("ffi/util").template
 
 local DX = DX
-local has_items = has_items
 local has_no_text = has_no_text
 local has_text = has_text
 local math = math
@@ -261,11 +260,9 @@ function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanation
     table_insert(paragraph_hits_info, match_block)
 
     -- #((headings for use in TextViewer))
-    --* needles will be used in ((TextViewer#blockDown)) and  ((TextViewer#blockUp)):
     table_insert(paragraph_headings, {
         name = name,
         --* in paragraph/page info popup first show icon for type of item and importance thereof, and only after that the match reliability indicator icon:
-        needle = xray_type_icon .. xray_match_reliability_icon .. " " .. name,
         --* this label will be the button text; by using name:sub we ensure that the text will not be too long:
         label = xray_type_icon .. xray_match_reliability_icon .. " " .. name:sub(1, 14),
         length = match_block:len(),
@@ -647,23 +644,6 @@ function XrayUI:matchNameInPageOrParagraph(text, lower_text, needle, hits, parti
         item.reliability_indicator = match_reliability_indicator
     end
     return match_found, multiple_parts_count
-end
-
---- @private
---- @param textviewer TextViewer
-function XrayUI:onInfoPopupLoadShowToc(textviewer, headings, second_column_text)
-    local min_buttons_for_auto_toc = DX.s.UI_auto_toc_for_buttons_count
-    --* in case of items distributed over two columns, make the buttons count needed for auto toc twice as high:
-    if second_column_text and has_items(min_buttons_for_auto_toc) then
-        min_buttons_for_auto_toc = min_buttons_for_auto_toc * 2
-    end
-    KOR.registry:unset("toc_info_button_injected")
-    --* only show the toc automatically when there are more than 2 xray items:
-    if has_items(min_buttons_for_auto_toc) and #headings >= min_buttons_for_auto_toc then
-        -- #((call TextViewer TOC))
-        --* call ((TextViewer#init)) > ((TextViewer execute after load callback)) > current method > ((TextViewer#showToc)) after a short delay:
-        textviewer:showToc()
-    end
 end
 
 function XrayUI:ReaderHighlightGenerateXrayInformation(pos, mode)

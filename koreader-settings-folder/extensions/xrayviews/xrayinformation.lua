@@ -26,7 +26,7 @@ local XrayInformation = WidgetContainer:extend {
     },
 }
 
---* called from ((TextViewer#showToc)) or ((XrayTappedWords#getXrayItemAsDictionaryEntry)), for info icon:
+--* called from ((XrayTappedWords#getXrayItemAsDictionaryEntry)), for info icon:
 function XrayInformation:getMatchReliabilityExplanation()
     if self.match_reliability_explanations then
         return self.match_reliability_explanations

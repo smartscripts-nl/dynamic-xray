@@ -392,11 +392,6 @@ function XrayDialogs:showUiPageInfo(hits_info, hits_info2, headings, matches_cou
                 self.xray_ui_info_dialog = nil
                 KOR.dialogs:closeOverlay()
             end,
-            -- #((xray paragraph info: after load callback))
-            --- @param textviewer TextViewer
-            after_load_callback = function(textviewer)
-                DX.u:onInfoPopupLoadShowToc(textviewer, headings, hits_info2)
-            end,
             hotkeys_configurator = function()
                 KOR.keyevents.addHotkeysForXrayUIpageInfoViewer(self, key_events_module)
             end,

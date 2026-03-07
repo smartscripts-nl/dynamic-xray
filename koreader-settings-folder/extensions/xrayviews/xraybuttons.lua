@@ -392,30 +392,11 @@ end
 
 --* additional buttons can be inserted via ((TextViewer#initButtons)), when it is configurated with optional props extra_button, extra_button2 and extra_button3:
 --* these additional buttons for the current dialog are defined in ((inject xray list buttons)):
-function XrayButtons:forUiInfo(parent, buttons)
+function XrayButtons:forUiInfo(buttons)
     -- #((TextViewer toc button))
     --* the items for this and the next two buttons were generated in ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)):
     --* compare the buttons for Xray items list as injected in ((inject xray list buttons)):
 
-    --! upon a tap on a button these routines are executed: ((Xray page hits TOC search routine)) > ((TextViewer#findCallback)) > ((XrayModel#removeMatchReliabilityIndicators))
-
-    table_insert(buttons, 1, KOR.buttoninfopopup:forXrayItemsIndex({
-        callback = function()
-            parent:showToc()
-        end,
-    }))
-    table_insert(buttons, 2, KOR.buttoninfopopup:forXrayPreviousItem({
-        id = "previ",
-        callback = function()
-            parent:blockUp()
-        end,
-    }))
-    table_insert(buttons, 3, KOR.buttoninfopopup:forXrayNextItem({
-        id = "nexti",
-        callback = function()
-            parent:blockDown()
-        end,
-    }))
     table_insert(buttons, 2, KOR.buttoninfopopup:forXrayPageNavigator({
         callback = function()
             DX.pn:showNavigator()
