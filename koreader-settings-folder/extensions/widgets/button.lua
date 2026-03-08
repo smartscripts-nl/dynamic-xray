@@ -42,7 +42,7 @@ local logger = require("logger")
 local DX = DX
 local G_defaults = G_defaults
 local G_reader_settings = G_reader_settings
-local math = math
+local math_floor = math.floor
 local table = table
 local table_insert = table.insert
 local tostring = tostring
@@ -176,9 +176,13 @@ end
 
 --- @private
 function Button:computeFixedIconDims()
+    if DX.s.icons_dont_force_ratio then
+        return
+    end
+
     --* don't use forced icon dimensions on Bigme, because otherwise some icons then blackened:
     if self.icon_size_ratio_forced and not DX.s.is_mobile_device then
-        local fixed_icon_height = math.floor(DGENERIC_ICON_SIZE * self.icon_size_ratio_forced)
+        local fixed_icon_height = math_floor(DGENERIC_ICON_SIZE * self.icon_size_ratio_forced)
         self.icon_height = fixed_icon_height
         self.icon_width = fixed_icon_height
 

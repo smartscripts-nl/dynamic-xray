@@ -113,6 +113,11 @@ local XraySettings = WidgetContainer:new{
             explanation = _("To view the details of the current item in the Items List or in the Page Navigator.") .. hotkeys_warning,
             locked = 0,
         },
+        icons_dont_force_ratio = {
+            value = false,
+            explanation = _("Set this to true if your e-reader has problems displaying the DX icons. Hopefully this fixes that problem."),
+            locked = 0,
+        },
         is_android = {
             value = false,
             explanation = _("This variabele triggers a number of default settings for Android devices."),
