@@ -1283,7 +1283,7 @@ function XrayViewsData:generateHitsInfo(item, iindent, for_all_items_list)
         value = tonumber(item.book_hits)
         local separator = series_hits_added and ", " or KOR.icons.graph_bare .. " "
         local separator_iconless = series_hits_added and ", " or ""
-        hits = iindent .. hits .. separator .. _("book") .. tonumber(item.book_hits)
+        hits = iindent .. hits .. separator .. _("book") .. " " .. tonumber(item.book_hits)
         hits_iconless = hits_iconless .. separator_iconless .. _("book") .. " " .. value
     end
 
