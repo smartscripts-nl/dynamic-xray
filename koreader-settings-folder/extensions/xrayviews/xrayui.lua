@@ -260,8 +260,12 @@ function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanation
     if self.info_use_upper_case_names then
         name = KOR.strings:upper(name)
     end
-    local match_block, xray_type_icon, xray_match_reliability_icon = DX.vd:generateXrayExportOrLinkedItemInfo(nil, items[i], xray_explanations[i], injected_nr)
-    table_insert(paragraph_hits_names, xray_type_icon .. xray_match_reliability_icon .. " " .. name)
+    local match_block, type_icon, match_reliability_icon = DX.vd:generateXrayExportOrLinkedItemInfo(nil, items[i], xray_explanations[i], injected_nr)
+    local match_explanation = ""
+    if match_reliability_icon == KOR.icons.xray_alias_bare then
+        match_explanation = " (" .. xray_explanations[i]:match(KOR.icons.xray_alias_bare .. " (.+)$") .. ")"
+    end
+    table_insert(paragraph_hits_names, type_icon .. match_reliability_icon .. " " .. name .. match_explanation)
     table_insert(paragraph_hits_info, match_block)
 
     -- #((headings for use in TextViewer))
@@ -269,7 +273,7 @@ function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanation
         name = name,
         --* in paragraph/page info popup first show icon for type of item and importance thereof, and only after that the match reliability indicator icon:
         --* this label will be the button text; by using name:sub we ensure that the text will not be too long:
-        label = xray_type_icon .. xray_match_reliability_icon .. " " .. name:sub(1, 14),
+        label = type_icon .. match_reliability_icon .. " " .. name:sub(1, 14),
         length = match_block:len(),
         xray_item = items[i],
     })
