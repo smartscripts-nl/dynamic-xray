@@ -227,7 +227,7 @@ local XrayDataSaver = WidgetContainer:new{
             ALTER TABLE xray_items ADD COLUMN tags;]],
 
         [[
-            CREATE TABLE xray_quotes
+            CREATE TABLE IF NOT EXISTS xray_quotes
             (
                 id INTEGER NOT NULL
                     CONSTRAINT xray_quotes_pk
@@ -251,6 +251,29 @@ local XrayDataSaver = WidgetContainer:new{
         --* a second reset was needed after some updates to the hits counting system:
         [[
             UPDATE xray_items SET chapter_hits = NULL, chapter_hits_data = NULL WHERE 1;]],
+    },
+    scheme_verification_queries = {
+        "PRAGMA table_info('finished_books');",
+
+        "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'rating_goodreads';",
+
+        "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'publication_year';",
+
+        "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'bookmarks';",
+
+        "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'annotations';",
+
+        "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'stars';",
+
+        "SELECT 1 FROM pragma_table_info('xray_items') WHERE name = 'chapter_hits_data';",
+
+        "PRAGMA table_info('xray_books');",
+
+        "SELECT 1 FROM pragma_table_info('xray_items') WHERE name = 'tags';",
+
+        "PRAGMA table_info('xray_quotes');",
+
+        "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'glossary';",
     },
     scheme_version_name = "database_scheme_version",
 }
@@ -687,6 +710,8 @@ function XrayDataSaver.createAndModifyTables()
 
     local update_tasks_count = #self.scheme_alter_queries
     local version_index = DX.s[self.scheme_version_name] or 0
+    version_index = self.updateVersionIndex(conn, version_index)
+
     if
         update_tasks_count == 0
         or version_index >= update_tasks_count
@@ -737,9 +762,45 @@ function XrayDataSaver.modifyTables(conn, update_tasks_count, version_index)
     local self = DX.ds
     local sql
     for i = version_index + 1, update_tasks_count do
-        sql = self.scheme_alter_queries[i]
-        conn:exec(sql)
+        if self.scheme_alter_queries[i] then
+            sql = self.scheme_alter_queries[i]
+            conn:exec(sql)
+        end
     end
+end
+
+--* check whether previous DX installations already created some tables or fields and update version_index accordingly:
+function XrayDataSaver.updateVersionIndex(conn, version_index)
+
+    --* problems for previous installation which already installed some tables or fields only occur in this case (because then DX tries to install already existing tables/fields):
+    if version_index > 0 then
+        return version_index
+    end
+
+    local self = DX.ds
+
+    local result
+    count = #self.scheme_verification_queries
+    for i = 1, count do
+        result = conn:exec(self.scheme_verification_queries[i])
+        if result then
+            version_index = i
+        --* account for rename of bookinfo.bookmarks to bookinfo.annotations:
+        elseif i == 3 and conn:exec(self.scheme_verification_queries[4]) then
+            version_index = 4
+        --* table or field not present in db:
+        else
+            --* update database_scheme_version in XraySettings:
+            DX.s:saveSetting(self.scheme_version_name, version_index)
+            return version_index
+        end
+    end
+
+    --* correction for queries which only did reset *data* in xray_items table:
+    version_index = version_index + 2
+    --* update database_scheme_version in XraySettings:
+    DX.s:saveSetting(self.scheme_version_name, version_index)
+    return version_index
 end
 
 function XrayDataSaver:setEmptyPropsToNil(values)
