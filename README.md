@@ -45,7 +45,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 
 ## DX under Android
 
-Alas, under Android DX doesn't currently load. I'm trying to solve this.
+DX should now be also loadable under Android. If you tried to install it previously and sometime later updated to the latest version, it might be that KOReader crashes the first time. But after that crash it should from then on load, with DX enabled.
 
 ## Use cases
 
@@ -270,7 +270,7 @@ PT_bookinfo_cache.sqlite3". In that case:
 3. KOReader will automatically be reloaded and then create the xray_items table in your database.
 
 ## Issues to fix
-* Make DX work under Android.
+* Currently none?
 
 ## Todos
 * Update the demo movies in the GitHub releases section.

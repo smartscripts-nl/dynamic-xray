@@ -29,7 +29,7 @@ local DataStorage = require("datastorage")
 local package = package
 
 -- #((patch: add Dynamic Xray to KOReader))
-package.path = DataStorage:getDataDir() .. "/extensions/?.lua;" .. package.path
+package.path = DataStorage:getDataDir() .. "/?.lua;" .. package.path
 require("extensions/xraycontroller/xraycontroller")
 
 --* =====================================================
