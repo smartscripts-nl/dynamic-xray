@@ -65,7 +65,7 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
      * copy _the contents of_ koreader-settings-folder/icons to .adds/koreader/resources/icons
      * copy the _folder_ koreader-settings-folder/extensions to .adds/koreader
      * copy the _folder_ koreader-settings-folder/plugins/xraycontroller.koplugin to .adds/koreader/plugins
-3. It is **⚠️highly recommended to let KOReader display its keyboard in compact mode**, so you have enough space available for the multiple-field DX forms. You can enable this compact display mode from the main KOReader menu: Cog icon > Device > Keyboard > Keyboard appearance settings > enable checkbox "compact"
+3. It is **⚠️highly recommended to let KOReader display its keyboard in compact mode**, so you have enough space available for the multiple-field DX forms. You can enable this compact display mode from the main KOReader menu: Cog icon > Device > Keyboard > Keyboard appearance settings > enable checkbox "compact".
 4. **⚠️ It's especially important that you copy koreader-settings-folder/patches/2-xray-patches.lua**:
    * **For Android**: to a subfolder "patches" in your KOReader settings folder!** Without this, DX won't be available in your installation.
    * **For Kobo/Kindle** (if a .adds folder is present): to a subfolder (create if not exists) "patches" of .adds/koreader
@@ -76,6 +76,8 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
 8. If you want to let KOReader's footer display Xray items counts (see image 1b... under [Images](#images)), you'll have to manually edit readerfooter.lua (because it's not patchable). An example of this is provided in manual-file-edit-examples/readerfooter.lua. See the comments at the start of that file.
 9. It is possible to add a button to the dictionary lookup results dialog, with which to add the looked-up word to the Xray items. This cannot be done via a patch, but requires a manual edit of dictquicklookup.lua. See
    manual-file-edit-examples/dictquicklookup.lua for an example.
+
+NB: sometimes, if a previous DX installation failed, and you try to install it a second time, KOReader crashes. This can be caused by a DX routine which tries to install all missing DX database tables and fields. But if you then restart KOReader, all should be fine.
 
 ### Updating to new versions
 
