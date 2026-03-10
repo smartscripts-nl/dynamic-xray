@@ -65,7 +65,8 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
      * copy _the contents of_ koreader-settings-folder/icons to .adds/koreader/resources/icons
      * copy the _folder_ koreader-settings-folder/extensions to .adds/koreader
      * copy the _folder_ koreader-settings-folder/plugins/xraycontroller.koplugin to .adds/koreader/plugins
-3. **⚠️ It's especially important that you copy koreader-settings-folder/patches/2-xray-patches.lua**:
+3. It is **highly recommended to let KOReader display its keyboard in compact mode**, so you have enough space available for the multiple-field DX forms. You can enable this compact display mode from the main KOReader menu: Cog icon > Device > Keyboard > Keyboard appearance settings > enable checkbox "compact"
+4. **⚠️ It's especially important that you copy koreader-settings-folder/patches/2-xray-patches.lua**:
    * **For Android**: to a subfolder "patches" in your KOReader settings folder!** Without this, DX won't be available in your installation.
    * **For Kobo/Kindle** (if a .adds folder is present): to a subfolder (create if not exists) "patches" of .adds/koreader
 4. The "koreader-settings-and-patches" folder in this repository represents the settings folder of your koreader installation. In most cases, this target folder will be named "koreader". In its root you should find settings.reader.lua.
