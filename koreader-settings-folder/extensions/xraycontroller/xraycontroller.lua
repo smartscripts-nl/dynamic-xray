@@ -479,10 +479,6 @@ function XrayController:onShowEditItemForm(needle_item, reload_manager, active_f
 
     local m_item, item_copy = DX.fd:initEditFormProps(needle_item, reload_manager, active_form_tab)
 
-    --! hotfix to prevent crash when an edit item request was done (after holding an xray item and choosing "edit") from the page/paragraph toc index popup; see ((TextViewer#getTocIndexButton)) > ((edit xray item from toc popup)):
-    if not needle_item.idx then
-        needle_item.idx = needle_item.index
-    end
     DX.d:showEditItemForm({
         active_form_tab = active_form_tab,
         item = m_item,
@@ -643,6 +639,8 @@ function XrayController:resetDynamicXray(is_prepared, do_full_update)
     DX.ex:resetCache()
     DX.ta:resetTagGroups()
     DX.vd:resetAllFilters()
+    --* to reset Xray marker x-position upon screen rotation:
+    DX.u:setMarkerXPosition()
     --* e.g. when current method called after saving an item from a form:
     if is_prepared or not do_full_update then
         return

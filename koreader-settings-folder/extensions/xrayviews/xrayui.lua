@@ -364,6 +364,11 @@ function XrayUI:ReaderViewSetXrayContextProps(marker, marker_width, marker_heigh
     }
 end
 
+function XrayUI:setMarkerXPosition()
+    self.screen_width = Screen:getWidth()
+    KOR.registry.half_screen_width = math_floor(self.screen_width / 2)
+end
+
 --* see ((XRAY_ITEMS)) for more info:
 --- @private
 function XrayUI:ReaderViewLoopThroughParagraphOrPage(p)
@@ -379,57 +384,8 @@ function XrayUI:ReaderViewLoopThroughParagraphOrPage(p)
         table_insert(self.paragraph_hits, hits)
         table_insert(self.paragraph_explanations, explanations)
         table_insert(self.skip_xray_items, skip_items)
-        local name
-        count = #hits
-        for xi = 1, count do
-            name = hits[xi].name
-            if not self.hits[name] then
-                self.hits[name] = 1
-                self.xray_info_found = true
-            end
-        end
-        --* this context table with props was set in ((set xray info for paragraphs)):
-        local c = self.xray_context_props
-        if c.bb then
-            local lines = KOR.document:getScreenBoxesFromPositions(self.paragraphs[p].pos0, self.paragraphs[p].pos1, true)
-            local lines_count = #lines
-            -- #((xray page marker set target line for icon))
-            local start = 1
-
-            -- #((set half screen width))
-            if not KOR.registry.half_screen_width then
-                self.screen_width = Screen:getWidth()
-                KOR.registry.half_screen_width = math_floor(self.screen_width / 2)
-            end
-
-            local rect, current_column, fallback_line
-            local icon_is_drawn = false
-            for l = start, lines_count do
-                current_column = self:getCurrentColumn(lines[l]["x"])
-                --* use this line if bookmark sideline icons have taken all available y positions (lines) => icons will overlap, but better that than not showing the icon at all:
-                fallback_line = not fallback_line and lines[l]
-
-                --* because xray marker lines are drawn later then bookmark highlights, tapping on them still works, even when they have an underlying bookmark highlight...
-
-                if not KOR.view.icon_y_positions[current_column][lines[l].y] then
-                    --* lines only have position and dimensions data, no text: x, y, w, h:
-                    rect = lines[l]
-                    icon_is_drawn = true
-                    break
-                end
-            end
-            if not icon_is_drawn and fallback_line then
-                rect = fallback_line
-            end
-
-            if rect then
-                local marker_rect = self:drawMarker(c, rect)
-                if marker_rect then
-                    table_insert(self.rects_with_matches, marker_rect)
-                end
-                return true
-            end
-        end
+        self:registerHits(hits)
+        return self:registerAndMarkRects(p)
     end
     return false
 end
@@ -451,6 +407,77 @@ function XrayUI:ReaderViewPopulateInfoRects()
             DX.d:showUiPageInfo(paragraph_names, paragraph_names2, paragraph_hits_info, paragraph_hits_info2, extra_button_rows, paragraph_text)
         end
     }
+end
+
+--- @private
+function XrayUI:registerHits(hits)
+    local name
+    count = #hits
+    for xi = 1, count do
+        name = hits[xi].name
+        if not self.hits[name] then
+            self.hits[name] = 1
+            self.xray_info_found = true
+        end
+    end
+end
+
+--- @private
+function XrayUI:registerAndMarkRects(p)
+    --* this context table with props was set in ((set xray info for paragraphs)):
+    local c = self.xray_context_props
+    if not c.bb then
+        return false
+    end
+
+    -- #((set half screen width))
+    if not KOR.registry.half_screen_width then
+        self:setMarkerXPosition()
+    end
+    local rect, icon_is_drawn, fallback_line = self:getMarkerYPosition(p)
+    if not icon_is_drawn and fallback_line then
+        rect = fallback_line
+    end
+    return self:drawMarkerIfDetermined(c, rect)
+end
+
+--- @private
+function XrayUI:drawMarkerIfDetermined(c, rect)
+    if not rect then
+        return false
+    end
+
+    --* hotfix: on Boox Page rect and xray marker were sometimes incorrectly drawn on the right half of the screen:
+    local marker_rect = self:drawMarker(c, rect)
+    if marker_rect then
+        table_insert(self.rects_with_matches, marker_rect)
+    end
+    return true
+end
+
+--- @private
+function XrayUI:getMarkerYPosition(p)
+    local lines = KOR.document:getScreenBoxesFromPositions(self.paragraphs[p].pos0, self.paragraphs[p].pos1, true)
+    local lines_count = #lines
+    -- #((xray page marker set target line for icon))
+    local start = 1
+
+    local current_column, fallback_line, rect
+    local icon_is_drawn = false
+    for l = start, lines_count do
+        current_column = self:getCurrentColumn(lines[l]["x"])
+        --* use this line if bookmark sideline icons have taken all available y positions (lines) => icons will overlap, but better that than not showing the icon at all:
+        fallback_line = not fallback_line and lines[l]
+
+        --* because xray marker lines are drawn later then bookmark highlights, tapping on them still works, even when they have an underlying bookmark highlight...
+
+        if not KOR.view.icon_y_positions[current_column][lines[l].y] then
+            --* lines only have position and dimensions data, no text: x, y, w, h:
+            rect = lines[l]
+            icon_is_drawn = true
+            return rect, icon_is_drawn, fallback_line
+        end
+    end
 end
 
 --- @private
