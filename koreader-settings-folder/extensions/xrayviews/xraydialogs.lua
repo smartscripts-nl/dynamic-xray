@@ -258,7 +258,7 @@ function XrayDialogs:showEditItemForm(args)
     local item = args.item
     local item_copy = args.item_copy
 
-    --* by closing this widgets we prevent their hotkeys from interfering with entering content in the form:
+    --* by closing these widgets we prevent their hotkeys from interfering with entering content in the form:
     self:closeItemViewer()
     DX.pn:closePageNavigator()
 
