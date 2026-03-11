@@ -105,6 +105,7 @@ function XrayUI:drawMarker(c, rect)
     return marker_rect
 end
 
+--- @private
 function XrayUI:getMarkerIconXpos(c, rect)
     local marker_width = c.marker_width
     local is_xray_page_mode = DX.s.UI_mode == "page"
@@ -202,14 +203,12 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
     local injected_names = {}
     local injected_nr = 0
     local more_button_added
-    local item
     count = #items
     local use_second_text_column = KOR.twocolumntext:useTwoColumnDisplay(count)
     if use_second_text_column then
         KOR.registry:set("split_to_half_max_length", true)
     end
     for i = 1, count do
-        item = items[i]
         injected_nr, more_button_added = self:addParagraphInfoItems(
                 items,
                 i,
@@ -238,6 +237,7 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
     xray_rects.callback(paragraph_hits_names, paragraph_hits_names2, paragraph_hits_info, paragraph_hits_info2, paragraph_headings, paragraph_matches_count, self.info_extra_button_rows, paragraph_text)
 end
 
+--- @private
 function XrayUI:addFirstAndLastNames(names, xray_name)
     local parts = DX.m:splitByCommaOrSpace(xray_name, false, "skip_lowercase")
     local pcount = #parts
@@ -246,6 +246,7 @@ function XrayUI:addFirstAndLastNames(names, xray_name)
     end
 end
 
+--- @private
 function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanations, skip_xray_items, paragraph_headings, injected_nr, paragraph_hits_names, paragraph_hits_info)
     local more_button_added
 
