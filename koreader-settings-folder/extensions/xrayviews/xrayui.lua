@@ -585,12 +585,15 @@ end
 function XrayUI:matchNameInPageOrParagraph(text, lower_text, needle, hits, partial_hits, explanations, item)
     local xray_name = item.name
     local has_family_name = needle:match(" ")
+    local has_family_name_first = needle:match(",")
     local is_single_word = not has_family_name
     local is_lower_case = not xray_name:match("[A-Z]")
     local name_parts = KOR.strings:split(needle, " ")
     local family_name
     local multiple_parts_count = 0
-    if has_family_name and not is_lower_case then
+    if has_family_name_first and not is_lower_case then
+        family_name = needle:gsub(",.+", "")
+    elseif has_family_name and not is_lower_case then
         family_name = name_parts[#name_parts]
     end
 
@@ -637,6 +640,8 @@ function XrayUI:matchNameInPageOrParagraph(text, lower_text, needle, hits, parti
     if subject:match("[A-Z]") then
         subject = subject:gsub(" [a-z]+ ", " ")
     end
+    --* first remove comma for Xray items which have their family name first, separated from first name with a comma:
+    subject = subject:gsub(",", "")
     local mparts = matcher and KOR.strings:split(subject, " ")
     local match_found, left_side_match_found, right_side_match_found = false, false, false
     local matching_parts = ""
