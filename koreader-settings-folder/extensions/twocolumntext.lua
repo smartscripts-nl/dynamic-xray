@@ -70,7 +70,28 @@ function TwoColumnText:getWidget(args)
 	local horizontal_padding = math_floor(Screen:scaleBySize(50) / 2)
 	local half_width = math_floor(width / 2) - horizontal_padding
 
-	return CenterContainer:new{
+	local widget1 = ScrollTextWidget:new{
+		text = column1_text,
+		face = face,
+		line_height = KOR.registry.line_height or 0.95,
+		alignment = "left",
+		justified = false,
+		dialog = parent,
+		width = half_width,
+		height = height,
+	}
+	local widget2 = ScrollTextWidget:new{
+		text = column2_text,
+		face = face,
+		line_height = KOR.registry.line_height or 0.95,
+		alignment = "left",
+		justified = false,
+		dialog = parent,
+		width = half_width,
+		height = height,
+	}
+
+	local widget = CenterContainer:new{
 		dimen = Geom:new{
 			w = container_width,
 			h = height,
@@ -85,16 +106,7 @@ function TwoColumnText:getWidget(args)
 					HorizontalSpan:new{
 						w = horizontal_padding,
 					},
-					ScrollTextWidget:new{
-						text = column1_text,
-						face = face,
-						line_height = KOR.registry.line_height or 0.95,
-						alignment = "left",
-						justified = false,
-						dialog = parent,
-						width = half_width,
-						height = height,
-					}
+					widget1,
 				}
 			},
 			CenterContainer:new{
@@ -106,20 +118,13 @@ function TwoColumnText:getWidget(args)
 					HorizontalSpan:new{
 						w = horizontal_padding,
 					},
-					ScrollTextWidget:new{
-						text = column2_text,
-						face = face,
-						line_height = KOR.registry.line_height or 0.95,
-						alignment = "left",
-						justified = false,
-						dialog = parent,
-						width = half_width,
-						height = height,
-					}
+					widget2,
 				}
 			},
 		}
 	}
+
+	return widget, widget1, widget2
 end
 
 function TwoColumnText:resetCache()
