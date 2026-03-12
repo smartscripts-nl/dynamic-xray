@@ -556,7 +556,7 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
                     local toggled_item = DX.fd:toggleIsImportantItem(needle_item)
                     DX.ds.storeUpdatedItemType(toggled_item)
                     DX.vd:updateAndSortAllItemTables(toggled_item)
-                    DX.d:showItemViewer(toggled_item, called_from_list, tapped_word)
+                    DX.d:viewItem(toggled_item, called_from_list, tapped_word)
                 end,
             }),
             KOR.buttoninfopopup:forXrayTogglePersonOrTerm({
@@ -573,7 +573,7 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
                         end
                     end
                     DX.vd:updateAndSortAllItemTables(toggled_item)
-                    DX.d:showItemViewer(toggled_item, called_from_list, tapped_word)
+                    DX.d:viewItem(toggled_item, called_from_list, tapped_word)
                 end,
             }),
 
@@ -709,7 +709,7 @@ function XrayButtons:forTappedWordItemViewer(needle_item, called_from_list, tapp
                     DX.d:closeItemViewer()
                     local select_number, toggled_item = DX.fd:toggleIsImportantItem(needle_item)
                     DX.vd:updateItemsTable(select_number)
-                    DX.d:showItemViewer(toggled_item, called_from_list, tapped_word)
+                    DX.d:viewItem(toggled_item, called_from_list, tapped_word)
                 end,
             }),
             KOR.buttoninfopopup:forXrayTogglePersonOrTerm({
@@ -718,7 +718,7 @@ function XrayButtons:forTappedWordItemViewer(needle_item, called_from_list, tapp
                     DX.d:closeItemViewer()
                     local select_number, toggled_item = DX.fd:toggleIsPersonOrTerm(needle_item)
                     DX.vd:updateItemsTable(select_number)
-                    DX.d:showItemViewer(toggled_item, called_from_list, tapped_word)
+                    DX.d:viewItem(toggled_item, called_from_list, tapped_word)
                 end,
             }),
 

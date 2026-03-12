@@ -94,8 +94,6 @@ This will make the code and updates much easier to maintain for me _and_ for clo
 * top left corner of the Xray Item Viewer dialog
 * the most left main menu item → Dynamic Xray → Translate interface
 
-**⚠️ The folder frontend/extensions/translations with in it a .po-file has therefore now been removed.**
-
 ## Usage tips
 
 ### Item Viewer: quotes tab

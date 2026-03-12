@@ -92,7 +92,7 @@ viewer: ((XrayButtons#forItemViewer))
 
 --* NAVIGATING THROUGH RELATED ITEMS SHOWN IN A POPUP BUTTONDIALOG UPON LONGPRESSING ON A WORD IN THE READER
 
-((XrayButtons#forItemsCollectionPopup)) > ((XrayTappedWords#itemsRegister)) > click on a button in the popup > triggers ((related item button callback)) > ((XrayDialogs#viewTappedWordItem)) (like Item Viewer ((XrayDialogs#showItemViewer)) for normal items, but now specifically and only for related items).
+((XrayButtons#forItemsCollectionPopup)) > ((XrayTappedWords#itemsRegister)) > click on a button in the popup > triggers ((related item button callback)) > ((XrayDialogs#viewTappedWordItem)) (like Item Viewer ((XrayDialogs#viewItem)) for normal items, but now specifically and only for related items).
 
 When navigating through the items ((XrayDialogs#viewNextTappedWordItem)) or ((XrayDialogs#viewPreviousTappedWordItem)) are called, either triggered with a button or by a key event.
 
@@ -283,7 +283,7 @@ function XrayController:listHasReloadOrDontShowRequest(focus_item, dont_show)
         return true
     end
 
-    --* dont_show can be set to true via ((XrayDialogs#showItemViewer)), when looking up an XrayItem from ReaderHighlight, when XrayController list had not been shown yet:
+    --* dont_show can be set to true via ((XrayDialogs#viewItem)), when looking up an XrayItem from ReaderHighlight, when XrayController list had not been shown yet:
     return dont_show
 end
 
@@ -491,7 +491,7 @@ function XrayController:showListConditionally(focus_item, show_list)
 
     --* this prop can be set in ((XrayButtons#forItemViewer)) > ((enable return to viewer)), when the user opens an add or edit form:
     if self.return_to_viewer then
-        DX.d:showItemViewer(focus_item)
+        DX.d:viewItem(focus_item)
         return
     end
 
@@ -537,7 +537,7 @@ function XrayController:guardIsExistingItem(needle_name)
     local already_existing_item = DX.tw:itemExists(needle_name, nil, "is_exists_check")
     if already_existing_item then
         DX.d:setActionResultMessage(DX.d:getControllerEntryName("an xray item with this name already exists..."))
-        DX.d:showItemViewer(already_existing_item)
+        DX.d:viewItem(already_existing_item)
         return true
     end
 end

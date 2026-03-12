@@ -103,7 +103,7 @@ function XrayDialogs:closeForm(mode)
             --* reset values and go to Item Viewer:
             self.form_was_cancelled = false
             DX.vd:setProp("new_item_hits", nil)
-            self:showItemViewer(DX.vd.current_item, self.called_from_list, nil, "skip_item_search")
+            self:viewItem(DX.vd.current_item, self.called_from_list, nil, "skip_item_search")
             --* signal that we were redirected to the Item Viewer:
             return true
         end
@@ -120,7 +120,7 @@ function XrayDialogs:closeForm(mode)
 
     --* this prop can be set in ((XrayButtons#forItemViewer)) > ((enable return to viewer)), when the user opens an edit form:
     if DX.c.return_to_viewer and DX.vd.current_item then
-        self:showItemViewer(DX.vd.current_item, self.called_from_list, nil, "skip_item_search")
+        self:viewItem(DX.vd.current_item, self.called_from_list, nil, "skip_item_search")
         return true
     end
     return false
@@ -247,7 +247,7 @@ function XrayDialogs:showDeleteItemConfirmation(delete_item, dialog, remove_all_
             self:showListWithRestoredArguments()
             return
         end
-        self:showItemViewer(DX.vd.current_item)
+        self:viewItem(DX.vd.current_item)
     end)
 end
 
@@ -456,7 +456,7 @@ function XrayDialogs:_prepareItemsForList(current_tab_items, items_for_select)
         function()
             UIManager:close(self.xray_items_chooser_dialog)
             self.needle_name_for_list_page = item.name
-            self:showItemViewer(item, "called_from_list")
+            self:viewItem(item, "called_from_list")
         end
         if self.select_mode and item.text:match("%(%d") then
             table_insert(items_for_select, item)
@@ -738,7 +738,8 @@ function XrayDialogs:_prepareViewerData(needle_item)
     DX.vd:getCurrentListTabItems(needle_item)
 end
 
-function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, skip_item_search)
+--* compare this method with the viewer for tapped words in ((XrayDialogs#viewTappedWordItem)):
+function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_item_search)
 
     if tapped_word then
         called_from_list = false
@@ -761,34 +762,12 @@ function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, 
     local current_items_count = DX.vd.current_tab_items and #DX.vd.current_tab_items or 0
     self:closeListDialog()
 
+    --! if you want to show additional or specific props in the info, those props have to be added in ((XrayDataLoader#_loadAllData)) > ((set xray item props)), AND you have to add them to the menu_item props in ((XrayViewsData#filterAndPopulateItemTables))! Search for "mentioned_in" to see an example of this...
+
     --* this sometimes is needed when we made an update to the hits computation routines:
     DX.vd:updateChapterHtmlIfMissing(needle_item)
 
-    --! if you want to show additional or specific props in the info, those props have to be added in ((XrayDataLoader#_loadAllData)) > ((set xray item props)), AND you have to add them to the menu_item props in ((XrayViewsData#filterAndPopulateItemTables))! Search for "mentioned_in" to see an example of this...
-    local main_info, hits_info = DX.vd:getItemInfoHtml(needle_item)
-    if not hits_info then
-        hits_info = ""
-    end
-
-    local name = needle_item.name
-    local icon = DX.vd:getItemTypeIcon(needle_item)
-
-    local linked_items_info, linked_items_info2
-    local linked_items = DX.vd:getLinkedItems(needle_item)
-    if linked_items then
-        --* show linked items in two column display if that setting has been enabled AND the screen width is greater than its height:
-        if KOR.twocolumntext:useTwoColumnDisplay(#linked_items) then
-            linked_items_info, linked_items_info2 = DX.ex:generateXrayItemsOverview(linked_items, "for_linked_items_tab", "use_two_column_display")
-        else
-            linked_items_info = DX.ex:generateXrayItemsOverview(linked_items, "for_linked_items_tab")
-        end
-    end
-
-    --? hotfix: for some reason only viewer called from List doesn't have prop pos_chapter_quotes, so here we circumvent that by referencing DX.m.items_by_id, which DOES have the prop:
-    --* also by using this circumvention we ensure dynamic update of the prop after quotes were saved in ((XrayQuotes#saveQuote)) - there DX.m.items_by_id[id].pos_chapter_quotes is being updated dynamically:
-    local id = needle_item.id
-    needle_item.pos_chapter_quotes = DX.m.items_by_id[id].pos_chapter_quotes
-    local quotes_info = DX.q:generateQuotesList(needle_item)
+    local name, icon, main_info, hits_info, linked_items_info, linked_items_info2, quotes_info = self:getItemProps(needle_item)
 
     --! we need this when opening an item in the Item Viewer from Page Navigator:
     if not needle_item.index then
@@ -798,12 +777,39 @@ function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, 
     if needle_item.index > current_items_count then
         needle_item.index = current_items_count
     end
-    local title = icon .. name .. " (" .. needle_item.index .. "/" .. current_items_count .. ")"
+    self:showItemViewer(needle_item, {
+        icon = icon,
+        name = name,
+        index = needle_item.index,
+        current_items_count = current_items_count,
+        key_events_module = "XrayItemViewer",
+        main_info = main_info,
+        hits_info = hits_info,
+        linked_items_info = linked_items_info,
+        linked_items_info2 = linked_items_info2,
+        quotes_info = quotes_info,
+        main_info = main_info,
+        tapped_word = nil,
+        book_hits = book_hits,
+        next_item_callback = function()
+            self:viewNextItem(DX.vd.current_item)
+        end,
+        prev_item_callback = function()
+            self:viewPreviousItem(DX.vd.current_item)
+        end,
+        button_table = DX.b:forItemViewer(needle_item, called_from_list, tapped_word, book_hits),
+    })
+    self:showActionResultMessage()
+end
+
+--- @private
+function XrayDialogs:showItemViewer(needle_item, props)
+    local title = props.icon .. props.name .. " (" .. props.index .. "/" .. props.current_items_count .. ")"
 
     self.needle_name_for_list_page = needle_item.name
+    local key_events_module = props.key_events_module
 
-    local key_events_module = "XrayItemViewer"
-    local tabs = DX.b:getItemViewerTabs(main_info, hits_info, linked_items_info, quotes_info, linked_items_info2)
+    local tabs = DX.b:getItemViewerTabs(props.main_info, props.hits_info, props.linked_items_info, props.quotes_info, props.linked_items_info2)
 
     self.item_viewer = KOR.dialogs:htmlBoxTabbed(1, {
         title = title,
@@ -827,15 +833,37 @@ function XrayDialogs:showItemViewer(needle_item, called_from_list, tapped_word, 
             KOR.registry:unset("add_parent_hotkeys")
             KOR.keyevents:unregisterSharedHotkeys(key_events_module)
         end,
-        next_item_callback = function()
-            self:viewNextItem(DX.vd.current_item)
-        end,
-        prev_item_callback = function()
-            self:viewPreviousItem(DX.vd.current_item)
-        end,
-        buttons_table = DX.b:forItemViewer(needle_item, called_from_list, tapped_word, book_hits),
+        next_item_callback = props.next_item_callback,
+        prev_item_callback = props.prev_item_callback,
+        buttons_table = props.button_table,
     })
-    self:showActionResultMessage()
+end
+
+function XrayDialogs:getItemProps(needle_item)
+    local main_info, hits_info = DX.vd:getItemInfoHtml(needle_item)
+    if not hits_info then
+        hits_info = ""
+    end
+
+    local name = needle_item.name
+    local icon = DX.vd:getItemTypeIcon(needle_item)
+
+    local linked_items_info, linked_items_info2
+    local linked_items = DX.vd:getLinkedItems(needle_item)
+    if linked_items then
+        --* show linked items in two column display if that setting has been enabled AND the screen width is greater than its height:
+        local use_two_column_display = KOR.twocolumntext:useTwoColumnDisplay(#linked_items)
+        --* linked_items_info2 will be nil when use_two_column_display was false:
+        linked_items_info, linked_items_info2 = DX.ex:generateXrayItemsOverview(linked_items, "for_linked_items_tab", use_two_column_display)
+    end
+
+    --? hotfix: for some reason only viewer called from List doesn't have prop pos_chapter_quotes, so here we circumvent that by referencing DX.m.items_by_id, which DOES have the prop:
+    --* also by using this circumvention we ensure dynamic update of the prop after quotes were saved in ((XrayQuotes#saveQuote)) - there DX.m.items_by_id[id].pos_chapter_quotes is being updated dynamically:
+    local id = needle_item.id
+    needle_item.pos_chapter_quotes = DX.m.items_by_id[id].pos_chapter_quotes
+    local quotes_info = DX.q:generateQuotesList(needle_item)
+
+    return name, icon, main_info, hits_info, linked_items_info, linked_items_info2, quotes_info
 end
 
 function XrayDialogs:closeItemViewer()
@@ -859,6 +887,7 @@ function XrayDialogs:generateOccurrencesHistogram(item)
     })
 end
 
+--* compare this viewer for tapped words for the regular Item Viewer in ((XrayDialogs#viewItem)):
 function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_word)
 
     self.called_from_list = called_from_list
@@ -878,66 +907,52 @@ function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_wo
     local book_hits = needle_item.book_hits
     DX.fd:setFormItemId(needle_item.id)
 
+    local name, icon, main_info, hits_info, linked_items_info, linked_items_info2, quotes_info = self:getItemProps(needle_item)
+
     --! if you want to show additional or specific props in the info, those props have to be added in ((XrayDataLoader#_loadAllData)) > ((set xray item props)), AND you have to add them to the menu_item props in ((XrayViewsData#filterAndPopulateItemTables))! Search for "mentioned_in" to see an example of this...
-    local main_info, hits_info = DX.vd:getItemInfoHtml(needle_item)
     if not hits_info then
         hits_info = ""
     end
 
-    local name = needle_item.name
-    local icon = DX.vd:getItemTypeIcon(needle_item)
-
-    local title = icon .. name .. " (" .. needle_item.tapped_index .. "/" .. current_items_count .. ")"
-
-    self.needle_name_for_list_page = needle_item.name
-
-    local key_events_module = "TappedWordViewer"
-    local tabs = DX.b:getItemViewerTabs(main_info, hits_info)
-    self.item_viewer = KOR.dialogs:htmlBoxTabbed(1, {
-        title = title,
-        top_buttons_left = DX.b:forItemViewerTopLeft(self, needle_item),
-        tabs = tabs,
-        window_size = "max",
-        button_font_weight = "normal",
-        --* htmlBox will always have a close_callback and therefor a close button; so no need to define a close_callback here...
-        no_filter_button = true,
-        title_shrink_font_to_fit = true,
-        text_padding_top_bottom = Screen:scaleBySize(25),
-        hotkeys_configurator = function()
-            KOR.keyevents.addHotkeysForXrayItemViewer(key_events_module)
-        end,
-        after_close_callback = function()
-            KOR.registry:unset("add_parent_hotkeys")
-            KOR.keyevents:unregisterSharedHotkeys(key_events_module)
-        end,
+    self:showItemViewer(needle_item, {
+        icon = icon,
+        name = name,
+        index = needle_item.tapped_index,
+        current_items_count = current_items_count,
+        key_events_module = "TappedWordViewer",
+        main_info = main_info,
+        hits_info = hits_info,
+        linked_items_info = linked_items_info,
+        linked_items_info2 = linked_items_info2,
+        quotes_info = quotes_info,
+        main_info = main_info,
+        tapped_word = nil,
+        book_hits = book_hits,
         next_item_callback = function()
             self:viewNextTappedWordItem()
         end,
         prev_item_callback = function()
             self:viewPreviousTappedWordItem()
         end,
-        after_close_callback = function()
-            KOR.registry:unset("add_parent_hotkeys")
-        end,
-        buttons_table = DX.b:forTappedWordItemViewer(needle_item, false, tapped_word, book_hits),
+        button_table = DX.b:forTappedWordItemViewer(needle_item, false, tapped_word, book_hits),
     })
     self:showActionResultMessage()
 end
 
 function XrayDialogs:viewLinkedItem(item, tapped_word)
     self:closeItemViewer()
-    self:showItemViewer(item, "called_from_list", tapped_word)
+    self:viewItem(item, "called_from_list", tapped_word)
 end
 
 function XrayDialogs:viewNextItem(item)
     self:closeItemViewer()
     local next_item = DX.vd:getNextItem(item)
-    self:showItemViewer(next_item, nil, nil, "skip_item_search")
+    self:viewItem(next_item, nil, nil, "skip_item_search")
 end
 
 function XrayDialogs:viewPreviousItem(item)
     self:closeItemViewer()
-    self:showItemViewer(DX.vd:getPreviousItem(item), nil, nil, "skip_item_search")
+    self:viewItem(DX.vd:getPreviousItem(item), nil, nil, "skip_item_search")
 end
 
 function XrayDialogs:viewNextTappedWordItem()

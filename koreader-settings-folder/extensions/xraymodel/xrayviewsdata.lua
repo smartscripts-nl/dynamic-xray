@@ -278,7 +278,7 @@ function XrayViewsData:repopulateItemsPersonsTerms(item, skip_item_table)
                 self.items[i].callback = function()
                     UIManager:close(DX.d.xray_items_chooser_dialog)
                     DX.d:setProp("needle_name_for_list_page", item.name)
-                    DX.d:showItemViewer(item, "called_from_list")
+                    DX.d:viewItem(item, "called_from_list")
                 end
             end
             self.items[i].index = i
@@ -827,7 +827,7 @@ function XrayViewsData:filterAndAddItemToItemTables(items, n, search_needles, li
             callback = function()
                 UIManager:close(DX.d.xray_items_chooser_dialog)
                 DX.d:setProp("needle_name_for_list_page", item.name)
-                DX.d:showItemViewer(item, "called_from_list")
+                DX.d:viewItem(item, "called_from_list")
             end
         }
 
@@ -1477,7 +1477,7 @@ function XrayViewsData:indexItems(new_item)
         end
         --! this statement is crucial to ensure items have a callback always:
         self.items[current].callback = function()
-            DX.d:showItemViewer(self.items[current])
+            DX.d:viewItem(self.items[current])
         end
     end
 
