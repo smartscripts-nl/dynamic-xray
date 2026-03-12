@@ -149,7 +149,6 @@ function XrayFormsData:initEditFormProps(item, reload_manager, active_form_tab)
         reload_manager = reload_manager,
     })
 
-    --* this can be the case on longpressing an toc-item in TextViewer; see ((TextViewer toc button)):
     if not item.index or (not item.xray_type and not item.aliases and not item.tags) then
         item = views_data:upgradeNeedleItem(item, {
             include_name_matches = true,

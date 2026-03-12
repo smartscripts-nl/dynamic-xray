@@ -229,12 +229,14 @@ function XrayExporter:showExportXrayItemsDialog()
         text_for_copy = function()
             return self:getInfoText(self.active_tab, "iconless")
         end,
-        extra_button = KOR.buttoninfopopup:forXrayItemsExportToFile({
-            callback = function()
-                self:exportInfoToFile()
-            end,
-        }),
-        extra_button_position = 3,
+        extra_buttons_startpos = 3,
+        extra_buttons = {
+            KOR.buttoninfopopup:forXrayItemsExportToFile({
+                callback = function()
+                    self:exportInfoToFile()
+                end,
+            })
+        },
         top_buttons_left = top_buttons_left,
     })
     KOR.screenhelpers:refreshScreen()

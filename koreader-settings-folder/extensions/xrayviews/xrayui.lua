@@ -1,8 +1,6 @@
 
 --* see ((Dynamic Xray: module info)) for more info
 
---! info about TextViewer TOC functionality for Xray items: see ((TextViewer toc button))
-
 local require = require
 
 local Device = require("device")
@@ -190,7 +188,6 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
     local paragraph_hits_names2 = {}
     local paragraph_hits_info = {}
     local paragraph_hits_info2 = {}
-    local paragraph_headings = {}
     --* these items were generated via ((init xray sideline markers)) > ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#ReaderViewInitParaOrPageData)) > ((XrayUI#ReaderViewLoopThroughParagraphOrPage)) ((XrayUI#getXrayItemsFoundInText)):
     local items = xray_rects.hits[nr]
     local paragraph_matches_count
@@ -215,7 +212,6 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
                 injected_names,
                 xray_explanations,
                 skip_xray_items,
-                paragraph_headings,
                 injected_nr,
                 paragraph_hits_names,
                 paragraph_hits_info
@@ -234,7 +230,7 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
 
     -- #((xray paragraph info callback))
     --* callback defined in ((set xray info for paragraphs)) > ((XrayUI#ReaderViewPopulateInfoRects)) and calls ((XrayDialogs#showUiPageInfo)):
-    xray_rects.callback(paragraph_hits_names, paragraph_hits_names2, paragraph_hits_info, paragraph_hits_info2, paragraph_headings, paragraph_matches_count, self.info_extra_button_rows, paragraph_text)
+    xray_rects.callback(paragraph_hits_names, paragraph_hits_names2, paragraph_hits_info, paragraph_hits_info2, paragraph_matches_count, self.info_extra_button_rows, paragraph_text)
 end
 
 --- @private
@@ -247,7 +243,7 @@ function XrayUI:addFirstAndLastNames(names, xray_name)
 end
 
 --- @private
-function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanations, skip_xray_items, paragraph_headings, injected_nr, paragraph_hits_names, paragraph_hits_info)
+function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanations, skip_xray_items, injected_nr, paragraph_hits_names, paragraph_hits_info)
     local more_button_added
 
     local name = items[i].name
@@ -268,16 +264,6 @@ function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanation
     end
     table_insert(paragraph_hits_names, type_icon .. match_reliability_icon .. " " .. name .. match_explanation)
     table_insert(paragraph_hits_info, match_block)
-
-    -- #((headings for use in TextViewer))
-    table_insert(paragraph_headings, {
-        name = name,
-        --* in paragraph/page info popup first show icon for type of item and importance thereof, and only after that the match reliability indicator icon:
-        --* this label will be the button text; by using name:sub we ensure that the text will not be too long:
-        label = type_icon .. match_reliability_icon .. " " .. name:sub(1, 14),
-        length = match_block:len(),
-        xray_item = items[i],
-    })
 
     more_button_added = DX.b:addTappedWordCollectionButton(self.info_extra_button_rows, nil, nil, items[i], {
         nr = injected_nr,
@@ -401,11 +387,10 @@ function XrayUI:ReaderViewPopulateInfoRects()
         skip_xray_items = self.skip_xray_items,
         explanations = self.paragraph_explanations,
         rects = self.rects_with_matches,
-        --* the buttons in extra_button_rows were generated in ((TextViewer#getDefaultButtons)) > ((XrayButtons#forUiInfo)):
         --* paragraph_hits_info was generated in ((XrayUI#addParagraphInfoItems)):
-        callback = function(paragraph_names, paragraph_names2, paragraph_hits_info, paragraph_hits_info2, extra_button_rows, paragraph_text)
+        callback = function(paragraph_names, paragraph_names2, paragraph_hits_info, paragraph_hits_info2, paragraph_text)
             --* paragraph_text only needed for debugging purposes, to ascertain we are looking at the correct paragraph:
-            DX.d:showUiPageInfo(paragraph_names, paragraph_names2, paragraph_hits_info, paragraph_hits_info2, extra_button_rows, paragraph_text)
+            DX.d:showUiPageInfo(paragraph_names, paragraph_names2, paragraph_hits_info, paragraph_hits_info2, paragraph_text)
         end
     }
 end

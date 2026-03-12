@@ -1,8 +1,6 @@
 
 --* see ((Dynamic Xray: module info)) for more info
 
---! info about TextViewer TOC functionality for Xray items: see ((TextViewer toc button))
-
 local require = require
 
 local ButtonDialogTitle = require("extensions/widgets/buttondialogtitle")
@@ -436,28 +434,29 @@ function XrayTags:showTagGroup(tag)
         fullscreen = true,
         info = self.tag_group,
         info2 = self.tag_group2,
-        extra_button = KOR.buttoninfopopup:forXrayTagGroupNext({
-            callback = function()
-                local next_tag = DX.ta:getNextTagGroup(tag)
-                if DX.ta:isSameTagGroup(tag, next_tag) or not next_tag then
-                    return
-                end
-                UIManager:close(self.tag_group_viewer)
-                DX.ta:showTagGroup(next_tag)
-            end,
-        }),
-        extra_button_position = 2,
-        extra_button2 = KOR.buttoninfopopup:forXrayTagGroupPrevious({
-            callback = function()
-                local previous_tag = DX.ta:getPreviousTagGroup(tag)
-                if DX.ta:isSameTagGroup(tag, previous_tag) or not previous_tag then
-                    return
-                end
-                UIManager:close(self.tag_group_viewer)
-                DX.ta:showTagGroup(previous_tag)
-            end,
-        }),
-        extra_button2_position = 2,
+        extra_buttons_start_pos = 2,
+        extra_buttons = {
+            KOR.buttoninfopopup:forXrayTagGroupPrevious({
+                callback = function()
+                    local previous_tag = DX.ta:getPreviousTagGroup(tag)
+                    if DX.ta:isSameTagGroup(tag, previous_tag) or not previous_tag then
+                        return
+                    end
+                    UIManager:close(self.tag_group_viewer)
+                    DX.ta:showTagGroup(previous_tag)
+                end,
+            }),
+            KOR.buttoninfopopup:forXrayTagGroupNext({
+                callback = function()
+                    local next_tag = DX.ta:getNextTagGroup(tag)
+                    if DX.ta:isSameTagGroup(tag, next_tag) or not next_tag then
+                        return
+                    end
+                    UIManager:close(self.tag_group_viewer)
+                    DX.ta:showTagGroup(next_tag)
+                end,
+            }),
+        },
         text_for_copy = self.iconless_tag_group,
     })
 end

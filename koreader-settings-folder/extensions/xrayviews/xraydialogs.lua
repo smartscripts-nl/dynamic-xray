@@ -6,7 +6,6 @@
 
 local require = require
 
-local Blitbuffer = require("ffi/blitbuffer")
 local Button = require("extensions/widgets/button")
 local ButtonDialogTitle = require("extensions/widgets/buttondialogtitle")
 local CenterContainer = require("ui/widget/container/centercontainer")
@@ -364,7 +363,7 @@ end
 --* information for this dialog was generated in ((ReaderView#paintTo)) > ((XrayUI#ReaderViewGenerateXrayInformation))
 --* extra buttons (from xray items) were populated in ((XrayUI#ReaderHighlightGenerateXrayInformation))
 --* current method called from callback in ((xray paragraph info callback)):
-function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_info, hits_info2, headings, matches_count, extra_button_rows)
+function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_info, hits_info2, matches_count)
     if not self.xray_ui_info_dialog and has_text(hits_info) then
         local matches_count_info = matches_count == 1 and _("1 Xray item") or matches_count .. " " .. _("Xray items")
         local subject = DX.s.UI_mode == "paragraph" and _(" in this paragraph") or _(" on this page")
@@ -372,16 +371,16 @@ function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_info, hits_inf
         local new_trigger = DX.s.UI_mode == "paragraph" and _("the first line marked with a lightning icon") or _("a paragraph marked with a star")
         --* the data below was populated in ((XrayUI#ReaderViewGenerateXrayInformation)):
         local key_events_module = "XrayUIpageInfoViewer"
-        self.xray_ui_info_dialog = KOR.dialogs:textBoxTabbed(1, {
+        local config = {
             title = matches_count_info .. subject,
             tabs = {
                 {
-                    tab = _("occurrences"),
+                    tab = "vermeldingen",
                     info = hits_names,
                     info2 = hits_names2,
                 },
                 {
-                    tab = _("information"),
+                    tab = "informatie",
                     info = hits_info,
                     info2 = hits_info2,
                 },
@@ -390,7 +389,6 @@ function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_info, hits_inf
             covers_fullscreen = true,
             modal = false,
             top_buttons_left = DX.b:forUiInfoTopLeft(target, new_trigger, self),
-            paragraph_headings = headings,
             fixed_face = Font:getFace("x_smallinfofont", 19),
             close_callback = function()
                 self.xray_ui_info_dialog = nil
@@ -403,36 +401,10 @@ function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_info, hits_inf
                 KOR.registry:unset("add_parent_hotkeys")
                 KOR.keyevents:unregisterSharedHotkeys(key_events_module)
             end,
-            -- #((inject xray list buttons))
-            --* for special buttons like index and navigation arrows see ((TextViewer toc button)):
-            extra_button_position = 2,
-            extra_button = KOR.buttoninfopopup:forXrayList({
-                fgcolor = Blitbuffer.COLOR_GRAY_3,
-                callback = function()
-                    UIManager:close(self.xray_ui_info_dialog)
-                    self.xray_ui_info_dialog = nil
-                    self:showList()
-                end
-            }),
-            extra_button2_position = 1,
-            extra_button2 = KOR.buttoninfopopup:forXrayShowMatchReliabilityExplanation({
-                icon_size_ratio = 0.58,
-            }),
-            extra_button3_position = 3,
-            extra_button3 = KOR.buttoninfopopup:forXrayTagGroupSelector({
-                callback = function()
-                    DX.ta:showTagGroupSelector()
-                end
-            }),
-            extra_button4_position = 4,
-            extra_button4 = KOR.buttoninfopopup:forXrayExport({
-                callback = function()
-                    UIManager:close(self.xray_ui_info_dialog)
-                    return DX.cb:execExportXrayItemsCallback()
-                end
-            }),
-            extra_button_rows = extra_button_rows,
-        })
+        }
+        -- #((inject xray list buttons))
+        DX.b:forUiInfoAdditionalButtons(config, self)
+        self.xray_ui_info_dialog = KOR.dialogs:textBoxTabbed(1, config, self)
     end
 end
 

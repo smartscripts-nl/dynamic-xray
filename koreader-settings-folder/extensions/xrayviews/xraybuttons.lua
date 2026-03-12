@@ -390,18 +390,36 @@ function XrayButtons:forPageNavigatorTopLeft(parent)
     }
 end
 
---* additional buttons can be inserted via ((TextViewer#initButtons)), when it is configurated with optional props extra_button, extra_button2 and extra_button3:
---* these additional buttons for the current dialog are defined in ((inject xray list buttons)):
-function XrayButtons:forUiInfo(buttons)
-    -- #((TextViewer toc button))
-    --* the items for this and the next two buttons were generated in ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)):
-    --* compare the buttons for Xray items list as injected in ((inject xray list buttons)):
-
-    table_insert(buttons, 2, KOR.buttoninfopopup:forXrayPageNavigator({
-        callback = function()
-            DX.pn:showNavigator()
-        end,
-    }))
+function XrayButtons:forUiInfoAdditionalButtons(config, parent)
+    config.extra_buttons = {
+        KOR.buttoninfopopup:forXrayShowMatchReliabilityExplanation({
+            icon_size_ratio = 0.58,
+        }),
+        KOR.buttoninfopopup:forXrayList({
+            fgcolor = KOR.colors.button_label,
+            callback = function()
+                UIManager:close(parent.xray_ui_info_dialog)
+                parent.xray_ui_info_dialog = nil
+                parent:showList()
+            end
+        }),
+        KOR.buttoninfopopup:forXrayPageNavigator({
+            callback = function()
+                DX.pn:showNavigator()
+            end,
+        }),
+        KOR.buttoninfopopup:forXrayTagGroupSelector({
+            callback = function()
+                DX.ta:showTagGroupSelector()
+            end
+        }),
+        KOR.buttoninfopopup:forXrayExport({
+            callback = function()
+                UIManager:close(parent.xray_ui_info_dialog)
+                return DX.cb:execExportXrayItemsCallback()
+            end
+        }),
+    }
 end
 
 --- @param parent XrayDialogs

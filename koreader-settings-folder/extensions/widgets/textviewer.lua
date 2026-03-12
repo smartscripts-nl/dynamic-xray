@@ -96,16 +96,11 @@ local TextViewer = InputContainer:extend{
     convert_big_dialogs_to_fullscreen = true,
     covers_fullscreen = false,
     default_hold_callback = nil, --* on each default button
+    dont_add_back_button = false,
     event_after_close = nil,
     key_events_module = nil,
-    extra_button = nil,
-    extra_button_position = nil,
-    extra_button2 = nil,
-    extra_button2_position = nil,
-    extra_button3 = nil,
-    extra_button3_position = nil,
-    extra_button4 = nil,
-    extra_button4_position = nil,
+    extra_buttons = nil,
+    extra_buttons_startpos = nil,
     fgcolor = KOR.colors.black,
     find_centered_lines_count = 5, --* line with find results to be not far from the center
     fixed_face = nil,
@@ -130,7 +125,6 @@ local TextViewer = InputContainer:extend{
     --* only upon tap-close will TextViewer close the overlay:
     overlay_managed_by_parent = false,
     para_direction_rtl = nil,
-    paragraph_headings = nil,
     --* to inform the parent about a newly actived tab, via ((TabNavigator#broadcastActivatedTab)):
     parent = nil,
     prev_item_callback = nil,
@@ -1147,10 +1141,6 @@ function TextViewer:getDefaultButtons()
     if self.is_duo_scroll_widget then
         table_remove(default_buttons, 1)
     end
-    if self.paragraph_headings then
-        --* additional buttons can be inserted via ((TextViewer#initButtons)), when it is configurated with optional props extra_button, extra_button2 and extra_button3:
-        DX.b:forUiInfo(default_buttons)
-    end
 
     return default_buttons
 end
@@ -1200,48 +1190,66 @@ function TextViewer:initButtons()
         return
     end
 
-    local default_buttons = self:getDefaultButtons()
+    local buttons = self:addDefaultButtons()
+    self:insertExtraButtons(buttons)
+    self:generateButtons(buttons)
+end
 
-    local buttons = self.buttons_table or {}
-    if self.add_default_buttons or not self.buttons_table then
-        --* hotfix to prevent double addition of default buttons row:
-        local last_row = self.buttons_table and self.buttons_table[#self.buttons_table] or nil
-        if not last_row or not last_row[1] or (last_row[1].icon ~= "appbar.search" and last_row[1].text ~= _("Find")) then
-            table_insert(buttons, default_buttons)
-        end
-    end
-    if self.extra_button then
-        local position = self.extra_button_position or #buttons[1]
-        table_insert(buttons[1], position, self.extra_button)
-    end
-    if self.extra_button2 then
-        local position = self.extra_button2_position or #buttons[1]
-        table_insert(buttons[1], position, self.extra_button2)
-    end
-    if self.extra_button3 then
-        local position = self.extra_button3_position or #buttons[1]
-        table_insert(buttons[1], position, self.extra_button3)
-    end
-    if self.extra_button4 then
-        local position = self.extra_button4_position or #buttons[1]
-        table_insert(buttons[1], position, self.extra_button4)
-    end
+--- @private
+function TextViewer:addDefaultButtons()
+    local buttons = self.buttons_table or {{}}
     if not self.buttons_table then
-        table_insert(buttons[1], 1, {
-            icon = "back",
-            icon_size_ratio = 0.8,
-            callback = function()
-                self:onClose()
-            end,
-            hold_callback = self.default_hold_callback,
-        })
+        self.add_default_buttons = true
     end
-    if self.extra_button_rows then
-        count = #self.extra_button_rows
+    if not self.add_default_buttons then
+        return buttons
+    end
+
+    if not self.buttons_table then
+        self.add_default_buttons = true
+        return { self:getDefaultButtons() }
+    elseif self.add_default_buttons then
+        local dbuttons = self:getDefaultButtons()
+        count = #dbuttons
         for i = 1, count do
-            table_insert(buttons, self.extra_button_rows[i])
+            table_insert(buttons[1], dbuttons[i])
         end
     end
+
+    return buttons
+end
+
+--- @private
+function TextViewer:insertBackButton(buttons)
+    if self.dont_add_back_button then
+        return
+    end
+    table_insert(buttons[1], 1, {
+        icon = "back",
+        icon_size_ratio = 0.8,
+        callback = function()
+            self:onClose()
+        end,
+        hold_callback = self.default_hold_callback,
+    })
+end
+
+--- @private
+function TextViewer:insertExtraButtons(buttons)
+    if not self.extra_buttons then
+        self:insertBackButton(buttons)
+        return
+    end
+
+    local start_pos = self.extra_buttons_startpos or 1
+    for i = start_pos, #self.extra_buttons do
+        table_insert(buttons[1], i, self.extra_buttons[i])
+    end
+    self:insertBackButton(buttons)
+end
+
+--- @private
+function TextViewer:generateButtons(buttons)
     self.button_table = ButtonTable:new{
         width = self.frame_width - 2 * self.button_padding,
         button_font_face = self.button_font_face,
