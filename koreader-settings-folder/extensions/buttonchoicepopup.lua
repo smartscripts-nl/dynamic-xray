@@ -82,10 +82,10 @@ function ButtonChoicePopup:forXrayItemDelete(props)
 	}, props)
 end
 
-function ButtonChoicePopup:forXrayPageNavigatorShowTagsDialogForList(props)
+function ButtonChoicePopup:forXrayShowTagsDialogForList(props)
 	return KOR.buttonprops:set({
 		icon = "tags",
-		info = T(_("tags icon | show popup for tag filters") .. self.separator .. _("show the tag-group-selector, to choose a specific tag-group to display"), KOR.icons.arrow_bare),
+		info = T(_("tags icon | :show popup for tag filters") .. self.separator .. _("show the tag-group-selector, to choose a specific tag-group to display"), KOR.icons.arrow_bare),
 		callback_label = _("show"),
 		--! callback defined by calling module
 		hold_callback_label = _("tag-groups"),
@@ -93,7 +93,7 @@ function ButtonChoicePopup:forXrayPageNavigatorShowTagsDialogForList(props)
 	}, props)
 end
 
-function ButtonChoicePopup:forXrayPageNavigatorShowTagsDialogForPN(props)
+function ButtonChoicePopup:forXrayPageNavigatorShowTagsDialog(props)
 	--* the minus sign is a n_dash:
 	local state_marker = DX.pn.navigation_tag and "–" or "+"
 	return KOR.buttonprops:set({

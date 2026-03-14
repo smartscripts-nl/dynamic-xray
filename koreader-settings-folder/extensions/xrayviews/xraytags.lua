@@ -93,7 +93,8 @@ function XrayTags:showTagFilterSelector(mode)
     UIManager:show(self.choose_tag_filter_dialog)
 end
 
-function XrayTags:addTagGroup()
+function XrayTags:addTagGroup(called_from_list)
+    KOR.screenhelpers:refreshScreen()
     KOR.dialogs:prompt({
         no_overlay = true,
         title = _("Tag to be assigned"),
@@ -101,6 +102,9 @@ function XrayTags:addTagGroup()
             if not has_text(tag) then
                 KOR.messages:notify(_("you haven't entered a tag"))
                 self.select_for_tags = false
+                if called_from_list then
+                    DX.d:showListWithRestoredArguments()
+                end
                 return
             end
             --* selection of items happens in ((XrayTags#initiateItemTagsSelection)):
@@ -111,6 +115,9 @@ function XrayTags:addTagGroup()
         end,
         cancel_callback = function()
             self.select_for_tags = false
+            if called_from_list then
+                DX.d:showListWithRestoredArguments()
+            end
         end,
     })
 end
@@ -269,7 +276,7 @@ end
 function XrayTags:toggleItemsForTagsSelection()
     self.select_for_tags = not self.select_for_tags
     if self.select_for_tags then
-        self:addTagGroup()
+        self:addTagGroup("called_from_list")
     else
         self:resetAllSelectionsForTag()
         self:resetModule()

@@ -404,11 +404,9 @@ end
 
 function ButtonInfoPopup:forXrayItemsSelectForTagGroup(props)
 	return KOR.buttonprops:set({
-		text = KOR.icons.checkboxes,
-		font_bold = false,
-		fgcolor = KOR.colors.button_label,
-		info = _("checkbox icon | Enable or disable item select mode for items to which you want to assign a tag. If enabled, you will be asked for the tag you want to assign, before you can select items. Selected items will be colored light gray and get a checkbox. If you tap once again on them, this selection will be undone. With the tags button in the left lower corner (marked gray in in selection mode) you can save the assigned tags when you are done selecting items."),
-		callback_label = DX.ta.select_for_tags and _("enable") or _("disable"),
+		--! icon, active or not, defined by calling module
+		info = _("back icon | Disable selection of items for a tag.\n\nSELECTING ITEMS AND SAVING THEM\n\nItems will color light gray if you tap them; tapping them once again removes them from the selected items. With the disk button in the footer you can save the items selected for the tag."),
+		callback_label = _("disable"),
 		--! callback defined by calling module
 	}, props)
 end
@@ -534,6 +532,15 @@ function ButtonInfoPopup:forSeriesManagerDataImport(props)
 		icon = "fill",
 		info = _("bucket icon | Import data (finished status, percentage read, stars rating) of all known books into Series Manager data."),
 		callback_label = _("import"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forXraySaveTaggedItems(props)
+	return KOR.buttonprops:set({
+		icon = "save",
+		info = "floppy disk icon | Save selected items for the tag.",
+		callback_label = _("save"),
 		--! callback defined by calling module
 	}, props)
 end

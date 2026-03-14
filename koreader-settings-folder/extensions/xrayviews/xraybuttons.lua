@@ -237,7 +237,7 @@ function XrayButtons:forPageNavigator(parent)
                 return DX.cb:execShowPopupButtonsCallback(parent)
             end
         }),
-        KOR.buttonchoicepopup:forXrayPageNavigatorShowTagsDialogForPN({
+        KOR.buttonchoicepopup:forXrayPageNavigatorShowTagsDialog({
             generate_active_icon = DX.pn.navigation_tag,
             callback = function()
                 if DX.pn.navigation_tag then
@@ -1058,6 +1058,19 @@ end
 --* compare buttons for Item Viewer ((XrayButtons#forItemViewer)):
 --* compare ((XrayButtons#forListFooterRight)):
 function XrayButtons:forListFooterLeft(focus_item, dont_show, base_icon_size)
+
+    if DX.ta.select_for_tags then
+        return {
+            Button:new(KOR.buttoninfopopup:forXraySaveTaggedItems({
+                generate_active_icon = true,
+                icon = "save",
+                callback = function()
+                    DX.ta:addTagsToItems()
+                end,
+            })),
+        }
+    end
+
     local notify_list_display_mode = DX.vd.list_display_mode == "series" and _("series") or _("book")
     local notify_list_display_icon = DX.vd.list_display_mode == "series" and KOR.icons.xray_series_mode_bare or KOR.icons.xray_book_mode_bare
     local current_sorting_mode = DX.m.sorting_method == "name" and _("name") or _("occurrences count")
@@ -1073,13 +1086,8 @@ Current sorting mode: %1.]]), current_sorting_mode:upper()),
             end,
             show_parent = DX.c,
         })),
-        Button:new(KOR.buttonchoicepopup:forXrayPageNavigatorShowTagsDialogForList({
-            generate_active_icon = DX.ta.select_for_tags,
+        Button:new(KOR.buttonchoicepopup:forXrayShowTagsDialogForList({
             callback = function()
-                if DX.ta.select_for_tags then
-                    DX.ta:addTagsToItems()
-                    return
-                end
                 DX.ta:showTagFilterSelector("list")
             end,
             hold_callback = function()
@@ -1105,6 +1113,12 @@ end
 --* compare ((XrayButtons#forListFooterLeft)):
 --- @param parent XrayDialogs
 function XrayButtons:forListFooterRight(parent)
+
+    --* when in selection mode for items to be added to a tag, don't show the buttons below:
+    if DX.ta.select_for_tags then
+        return
+    end
+
     local dialog_close_callback = function()
         UIManager:close(parent.xray_items_chooser_dialog)
     end
@@ -1143,6 +1157,69 @@ function XrayButtons:forListFooterRight(parent)
         })))
     end
     return buttons
+end
+
+function XrayButtons:forListSubmenu()
+
+    --* insert buttons for Alles, Personen, Begrippen:
+    local buttons = { {} }
+    for i = 1, 3 do
+        table_insert(buttons[1], self:getListSubmenuButton(i))
+    end
+    return ButtonTable:new{
+        width = Screen:getWidth(),
+        button_font_face = "x_smallinfofont",
+        button_font_size = 17,
+        buttons = buttons,
+        zero_sep = true,
+        show_parent = DX.c,
+        button_font_weight = "normal",
+    }
+end
+
+--- @param parent XrayDialogs
+function XrayButtons:forListTopLeft(parent)
+
+    --* when in selection mode for items to be added to a tag, only show the toggle button for this select mode:
+    if DX.ta.select_for_tags then
+        return {
+            KOR.buttoninfopopup:forXrayItemsSelectForTagGroup({
+                icon = "back-active",
+                generate_active_icon = true,
+                callback = function()
+                    DX.ta:toggleItemsForTagsSelection()
+                end,
+            }),
+        }
+    end
+
+    return {
+        KOR.buttoninfopopup:forXrayTips({
+            callback = function()
+                return DX.i:showGeneralDXTips(parent)
+            end,
+        }),
+        {
+            icon = "info-slender",
+            callback = function()
+                return DX.i:showListAndViewerHelp(1)
+            end
+        },
+        KOR.buttoninfopopup:forXrayItemsSelectForTagGroup({
+            icon = "checkbox",
+            callback = function()
+                DX.ta:toggleItemsForTagsSelection()
+            end,
+        }),
+        KOR.buttoninfopopup:forXrayTranslations(),
+        KOR.buttoninfopopup:forXraySettings({
+            callback = function()
+                UIManager:close(parent.xray_items_chooser_dialog)
+                parent.xray_items_chooser_dialog = nil
+                DX.s.showSettingsManager()
+            end
+        }),
+    }
 end
 
 --- @private
@@ -1737,54 +1814,6 @@ Continue?]])
         table_remove(buttons[1], 5)
     end
     return buttons
-end
-
-function XrayButtons:forListSubmenu()
-
-    --* insert buttons for Alles, Personen, Begrippen:
-    local buttons = { {} }
-    for i = 1, 3 do
-        table_insert(buttons[1], self:getListSubmenuButton(i))
-    end
-    return ButtonTable:new{
-        width = Screen:getWidth(),
-        button_font_face = "x_smallinfofont",
-        button_font_size = 17,
-        buttons = buttons,
-        zero_sep = true,
-        show_parent = DX.c,
-        button_font_weight = "normal",
-    }
-end
-
---- @param parent XrayDialogs
-function XrayButtons:forListTopLeft(parent)
-    return {
-        KOR.buttoninfopopup:forXrayTips({
-            callback = function()
-                return DX.i:showGeneralDXTips(parent)
-            end,
-        }),
-        {
-            icon = "info-slender",
-            callback = function()
-                return DX.i:showListAndViewerHelp(1)
-            end
-        },
-        KOR.buttoninfopopup:forXrayTranslations(),
-        KOR.buttoninfopopup:forXrayItemsSelectForTagGroup({
-            callback = function()
-                DX.ta:toggleItemsForTagsSelection()
-            end,
-        }),
-        KOR.buttoninfopopup:forXraySettings({
-            callback = function()
-                UIManager:close(parent.xray_items_chooser_dialog)
-                parent.xray_items_chooser_dialog = nil
-                DX.s.showSettingsManager()
-            end
-        }),
-    }
 end
 
 function XrayButtons:showImportReadyNotification()
