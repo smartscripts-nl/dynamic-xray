@@ -222,7 +222,7 @@ function XrayButtons:forPageNavigator(parent)
                     DX.pn:betweenTagsNavigationDisable()
                     return
                 end
-                DX.ta:showTagSelector("page_navigator")
+                DX.ta:showTagFilterSelector("page_navigator")
             end,
             hold_callback = function()
                 DX.ta:showTagGroupSelector()
@@ -1056,7 +1056,7 @@ Current sorting mode: %1.]]), current_sorting_mode:upper()),
                     DX.ta:addTagsToItems()
                     return
                 end
-                DX.ta:showTagSelector("list")
+                DX.ta:showTagFilterSelector("list")
             end,
             hold_callback = function()
                 DX.ta:showTagGroupSelector()

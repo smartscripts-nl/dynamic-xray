@@ -42,9 +42,10 @@ local XrayTags = WidgetContainer:new{
     tags_concatenated = nil,
 }
 
-function XrayTags:showTagSelector(mode)
+--* e.g. used to select a tag for Page Navigator tagged items navigation:
+function XrayTags:showTagFilterSelector(mode)
     local taggroups = DX.m.taggroups
-    if self:showNoTagsNotification() then
+    if self:showNoTagsNotification(taggroups, "with_explanation") then
         return
     end
     local buttons_per_row = 4

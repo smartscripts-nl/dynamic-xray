@@ -96,7 +96,6 @@ local TextViewer = InputContainer:extend{
     convert_big_dialogs_to_fullscreen = true,
     covers_fullscreen = false,
     default_hold_callback = nil, --* on each default button
-    dont_add_back_button = false,
     event_after_close = nil,
     key_events_module = nil,
     extra_buttons = nil,
@@ -117,6 +116,7 @@ local TextViewer = InputContainer:extend{
     --* make sure a textviewer window is displayed above all other widgets, even with visible keyboard in other, underlying dialogs:
     modal = true,
     next_item_callback = nil,
+    no_back_button = false,
     no_buttons_row = false,
     no_fullscreen = false,
     no_overlay = false,
@@ -1221,7 +1221,7 @@ end
 
 --- @private
 function TextViewer:insertBackButton(buttons)
-    if self.dont_add_back_button then
+    if self.no_back_button then
         return
     end
     table_insert(buttons[1], 1, {
