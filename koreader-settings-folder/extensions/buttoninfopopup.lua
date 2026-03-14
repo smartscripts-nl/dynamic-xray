@@ -559,11 +559,21 @@ function ButtonInfoPopup:forXrayShowMatchReliabilityExplanation(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forXrayTagGroupAdd(props)
+	return KOR.buttonprops:set({
+		icon = "add",
+		info = _("plus icon | Add a new tag-group."),
+		callback_label = _("add"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forXrayTagGroupNext(props)
 	return KOR.buttonprops:set({
 		icon = "next",
 		info = _("arrow-right icon | Jump to next tag-group."),
 		callback_label = _("next"),
+		--! callback defined by calling module
 	}, props)
 end
 
@@ -580,6 +590,7 @@ function ButtonInfoPopup:forXrayTagGroupSelector(props)
 		icon = "tags",
 		info = _("tags icon | Show the tag-group-selector, to choose a specific tag-group to display"),
 		callback_label = _("show selector"),
+		--! callback defined by calling module
 	}, props)
 end
 

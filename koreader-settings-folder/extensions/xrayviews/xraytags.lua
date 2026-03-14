@@ -27,6 +27,7 @@ local count
 
 --- @class XrayTags
 local XrayTags = WidgetContainer:new{
+    choose_tag_filter_dialog = nil,
     select_for_tags = false,
     select_for_tag_items = {},
     select_for_tags_tag = nil,
@@ -43,6 +44,7 @@ local XrayTags = WidgetContainer:new{
 }
 
 --* e.g. used to select a tag for Page Navigator tagged items navigation:
+--* compare for selecting a tag-group to explore: ((XrayTags#showTagGroupSelector))
 function XrayTags:showTagFilterSelector(mode)
     local taggroups = DX.m.taggroups
     if self:showNoTagsNotification(taggroups, "with_explanation") then
@@ -51,7 +53,6 @@ function XrayTags:showTagFilterSelector(mode)
     local buttons_per_row = 4
     local buttons = { {} }
     local row = 1
-    local tags_dialog
     local button_width = math_floor(Screen:getWidth() / 6)
     count = #taggroups
     local dialog_width = count < buttons_per_row and count * button_width or buttons_per_row * button_width
@@ -61,7 +62,7 @@ function XrayTags:showTagFilterSelector(mode)
             font_bold = false,
             width = button_width,
             callback = function()
-                UIManager:close(tags_dialog)
+                UIManager:close(self.choose_tag_filter_dialog)
                 if mode == "list" then
                     DX.c:filterItemsByTag(taggroups[i])
 
@@ -80,14 +81,38 @@ function XrayTags:showTagFilterSelector(mode)
             row = row + 1
         end
     end
+    DX.b:addXrayTagGroupAddButton(buttons, buttons_per_row, self, "choose_tag_filter_dialog")
+
     local subtitle = mode == "page_navigator" and _("browse between occurrences of tag group members") or _("filter the List by a tag")
-    tags_dialog = ButtonDialogTitle:new{
+    self.choose_tag_filter_dialog = ButtonDialogTitle:new{
         title = _("tag groups"),
         subtitle = subtitle .. KOR.strings.ellipsis,
         width = dialog_width,
         buttons = buttons,
     }
-    UIManager:show(tags_dialog)
+    UIManager:show(self.choose_tag_filter_dialog)
+end
+
+function XrayTags:addTagGroup()
+    KOR.dialogs:prompt({
+        no_overlay = true,
+        title = _("Tag to be assigned"),
+        callback = function(tag)
+            if not has_text(tag) then
+                KOR.messages:notify(_("you haven't entered a tag"))
+                self.select_for_tags = false
+                return
+            end
+            --* selection of items happens in ((XrayTags#initiateItemTagsSelection)):
+            self.select_for_tags_tag = tag
+            --* to show the tag to be added in the title of the Items List dialog:
+            DX.d:showListWithRestoredArguments()
+            KOR.messages:notify(_("now select items"), 4)
+        end,
+        cancel_callback = function()
+            self.select_for_tags = false
+        end,
+    })
 end
 
 function XrayTags:addTagsToItems()
@@ -244,25 +269,7 @@ end
 function XrayTags:toggleItemsForTagsSelection()
     self.select_for_tags = not self.select_for_tags
     if self.select_for_tags then
-        KOR.dialogs:prompt({
-            no_overlay = true,
-            title = _("Tag to be assigned"),
-            callback = function(tags)
-                if not has_text(tags) then
-                    KOR.messages:notify(_("you haven't entered a tag"))
-                    self.select_for_tags = false
-                    return
-                end
-                --* selection of items happens in ((XrayTags#initiateItemTagsSelection)):
-                self.select_for_tags_tag = tags
-                --* to show the tag to be added in the title of the Items List dialog:
-                DX.d:showListWithRestoredArguments()
-                KOR.messages:notify(_("now select items"), 4)
-            end,
-            cancel_callback = function()
-                self.select_for_tags = false
-            end,
-        })
+        self:addTagGroup()
     else
         self:resetAllSelectionsForTag()
         self:resetModule()
@@ -411,6 +418,8 @@ function XrayTags:isSameTagGroup(tag, other_tag)
     return false
 end
 
+--* to select a tag-group to explore:
+--* compare for filtered-by-tag navigation in Page Navigator ((XrayTags#showTagFilterSelector)):
 function XrayTags:showTagGroupSelector()
     local taggroups_with_totals = DX.m:getTagGroupsWithCountsWithTotals()
     if self:showNoTagsNotification(taggroups_with_totals) then
@@ -423,7 +432,7 @@ function XrayTags:showTagGroupSelector()
         font_weight = "normal",
         width_factor = 0.95,
         button_width = 0.33,
-        buttons = DX.b:forTagGroupsSelector(self, taggroups_with_totals),
+        buttons = DX.b:forTagGroupsSelector(self, "tag_group_selector", taggroups_with_totals),
     }
     UIManager:show(self.tag_group_selector)
 end

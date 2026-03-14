@@ -48,6 +48,28 @@ local XrayButtons = WidgetContainer:new{
     xray_type_chooser = nil,
 }
 
+--* this button is added to the general tag-group selector, for exploring the items of a tag-group, in ((XrayButtons#forTagGroupsSelector)), and to the select-tag-filter popup of Xray Page Navigator, in ((XrayTags#showTagFilterSelector)):
+--- @param parent XrayTags
+function XrayButtons:addXrayTagGroupAddButton(buttons, buttons_per_row, parent, dialog_index)
+    local add_button = KOR.buttoninfopopup:forXrayTagGroupAdd({
+        callback = function()
+            UIManager:close(parent[dialog_index])
+            --* to disable hotkeys which are active with loaded PageNavigator:
+            DX.pn:closePageNavigator()
+            UIManager:forceRePaint()
+            parent.select_for_tags = true
+            DX.ta:addTagGroup()
+        end,
+    })
+    local last_row = #buttons
+    if last_row < buttons_per_row then
+        table_insert(buttons[last_row], add_button)
+    else
+        --* insert into new row:
+        table_insert(buttons, { add_button })
+    end
+end
+
 --[[
 Props needed when you want to add a more button:
 
@@ -637,7 +659,7 @@ function XrayButtons:forSaveGlossary(parent, glossary, glossary_text, css_files)
 end
 
 --- @param parent XrayTags
-function XrayButtons:forTagGroupsSelector(parent, tags)
+function XrayButtons:forTagGroupsSelector(parent, dialog_index, tags)
     local buttons_per_row = 5
     local current_row
     count = #tags
@@ -656,6 +678,8 @@ function XrayButtons:forTagGroupsSelector(parent, tags)
             end
         })
     end
+    self:addXrayTagGroupAddButton(buttons, buttons_per_row, parent, dialog_index)
+
     return buttons
 end
 

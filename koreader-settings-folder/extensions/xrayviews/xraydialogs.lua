@@ -432,7 +432,8 @@ function XrayDialogs:_prepareItemsForList(current_tab_items, items_for_select)
     end
 
     local select_mode_message
-    if self.select_mode == "next_or_previous_message" then
+    --* the select_modes referenced here must also be used below to define the callbacks:
+    if self.select_mode == "next_or_previous_item" then
         select_mode_message = ("Select an item to search:")
     elseif self.select_mode == "save_quote" then
         select_mode_message = ("Select an item to attach the quote to:")
@@ -558,6 +559,12 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
 end
 
 function XrayDialogs:showListWithRestoredArguments()
+    --* if Items List hasn't been called yet:
+    if not self.list_args then
+        self:showList()
+        return
+    end
+
     self:showList(self.list_args.focus_item, self.list_args.dont_show)
 end
 
