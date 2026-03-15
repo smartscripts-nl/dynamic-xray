@@ -41,7 +41,55 @@ series_hits is NOT a db field, it is computed dynamically by queries XrayDataLoa
 --- @class XrayDataLoader
 local XrayDataLoader = WidgetContainer:new{
     queries = {
-        --* querying series information, because this query will be used when DX is set in book display mode, but the individual books data can still contain series information:
+        --* querying series information (b.series and b.series_index), because this query will be used when DX is set in book display mode, but the individual books data can still contain series information:
+        get_all_book_items = [[
+           SELECT x.id,
+           x.name,
+           b.series,
+           b.series_index,
+           x.ebook,
+           b.title,
+           x.short_names,
+           x.description,
+           x.xray_type,
+           x.aliases,
+           x.tags,
+           x.linkwords,
+           x.book_hits,
+
+           -- since no series
+           x.book_hits AS series_hits,
+
+           x.chapter_hits,
+           x.chapter_hits_data,
+           o.chapters,
+
+           b.title AS mentioned_in,
+
+           x.name AS item_name,
+
+           GROUP_CONCAT(
+                   q.ebook || '||' ||
+                   COALESCE(q.series_index, '???') || '||' ||
+                   COALESCE(q.ebook_title, '???') || '||' ||
+                   q.pos0 || '||' ||
+                   COALESCE(q.chapter, '???') || '||' ||
+                   q.quote,
+                   '@@'
+           ) AS pos_chapter_quotes
+
+            FROM bookinfo b
+            JOIN xray_items x
+                  ON x.ebook = b.filename
+            LEFT JOIN xray_quotes q
+                  ON q.ebook = x.ebook
+                     AND q.item_name = x.name
+            JOIN xray_books o ON o.ebook = b.ebook
+
+            WHERE b.filename = '%1'
+            GROUP BY x.id
+            ORDER BY %2;]],
+
         get_all_book_items = [[
             WITH quotes AS (
                 SELECT
@@ -283,9 +331,6 @@ function XrayDataLoader:_getAllDataSql(mode)
     local current_ebook_basename = KOR.databases:escape(parent.current_ebook_basename)
     sort = parent.sorting_method == "hits" and "(x.xray_type = 2 OR x.xray_type = 4) DESC, x.book_hits DESC, x.name" or "(x.xray_type = 2 OR x.xray_type = 4) DESC, x.name"
 
-    if parent.current_series then
-        return T(self.queries.get_all_series_items, current_ebook_basename, sort)
-    end
     return T(self.queries.get_all_book_items, current_ebook_basename, sort)
 end
 
