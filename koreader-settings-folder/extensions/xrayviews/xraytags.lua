@@ -277,11 +277,13 @@ function XrayTags:toggleItemsForTagsSelection()
     self.select_for_tags = not self.select_for_tags
     if self.select_for_tags then
         self:addTagGroup("called_from_list")
-    else
-        self:resetAllSelectionsForTag()
-        self:resetModule()
-        KOR.messages:notify(_("items selection for tag-assigment disabled"))
+        DX.d:showListWithRestoredArguments()
+        return
     end
+
+    self:resetAllSelectionsForTag()
+    self:resetModule()
+    KOR.messages:notify(_("items selection for tag-assigment disabled"))
     DX.d:showListWithRestoredArguments()
 end
 

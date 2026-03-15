@@ -825,9 +825,6 @@ function TitleBar:injectFillerAndBottomLine()
         local width = self.is_popout_dialog and self.width - 2 * Size.line.thick or self.width
 
         local background = self.submenu_buttontable and KOR.colors.title_bar_with_submenu_bottom_line or KOR.colors.title_bar_bottom_line
-        if self.titlebar_inverted then
-            background = KOR.colors.white
-        end
         local line_widget = LineWidget:new{
             dimen = Geom:new{ w = width, h = self.bottom_line_thickness },
             background = background,
