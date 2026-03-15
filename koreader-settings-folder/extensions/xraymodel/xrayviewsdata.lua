@@ -145,7 +145,8 @@ function XrayViewsData:updateItemsTable(select_number, reset_item_table_for_filt
         --icon = KOR.icons.xray_link_bare
         icon = KOR.icons.xray_tapped_collection_bare
     end
-    local source = self.list_display_mode == "series" and icon .. " " .. parent.current_series or icon .. " " .. parent.current_title
+    icon = DX.ta.select_for_tags and "" or " - " .. icon
+    local source = self.list_display_mode == "series" and parent.current_series .. icon or parent.current_title .. icon
 
     --! don't reapply filters after item_table_for_filters has been populated; otherwise count for self.item would be reduced if we select tab no 2 (persons) or 3 (terms):
     if not parent.use_tapped_word_data and has_no_items(self.item_table_for_filter[1]) then

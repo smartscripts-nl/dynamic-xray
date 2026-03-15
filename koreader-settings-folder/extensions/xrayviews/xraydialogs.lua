@@ -525,6 +525,7 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
             KOR.keyevents:unregisterSharedHotkeys(key_events_module)
         end,
         is_borderless = true,
+        title_icon = DX.ta.select_for_tags and "lightning-small-inverted" or "lightning-small",
         top_buttons_left = not self.select_mode and DX.b:forListTopLeft(self),
         -- #((filter table example))
         filter = self:getListFilter(),

@@ -120,7 +120,10 @@ return {
     xray_partial_bare = "\u{F140}",
     xray_person_bare = "\u{F2C0}",
     xray_person_important_bare = "\u{F007}",
-    xray_series_mode_bare = "\u{F2C0}",
+    --* was a user icon:
+    --xray_series_mode_bare = "\u{F2C0}",
+    --* book+:
+    xray_series_mode_bare = "\u{E28B}+",
     xray_settings_bare = "\u{F013}", -- cog
     xray_tapped_collection = "\u{E70D}" .. spacer,
     xray_tapped_collection_bare = "\u{E70D}",

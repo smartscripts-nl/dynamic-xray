@@ -18,6 +18,8 @@ local FrameContainer = require("extensions/widgets/container/framecontainer")
 local Geom = require("ui/geometry")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local HorizontalSpan = require("ui/widget/horizontalspan")
+local IconWidget = require("ui/widget/iconwidget")
+local IconWidgetInverted = require("extensions/widgets/iconwidgetinverted")
 local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")
 local OverlapGroup = require("ui/widget/overlapgroup")
@@ -39,6 +41,8 @@ local math_min = math.min
 local pairs = pairs
 local table_insert = table.insert
 local type = type
+
+local DGENERIC_ICON_SIZE = math_floor(G_defaults:readSetting("DGENERIC_ICON_SIZE") * 0.6)
 
 --- @class TitleBar
 local TitleBar = OverlapGroup:extend{
@@ -103,6 +107,9 @@ local TitleBar = OverlapGroup:extend{
 
     has_only_close_button = false,
     for_collection = false,
+
+    title_icon = nil,
+    title_icon_widget = nil,
 
     --- for FileChooser, a subclass of Menu, its no_title prop will be set to true, because FileManager already provided a TitleBar:
     for_filemanager = false,
@@ -466,6 +473,24 @@ function TitleBar:injectTitleIntoMainContainer()
     end
     --* for align == "left" we need width correction, to make sure the titlebar doesnot overlap the right title bar border:
     local adapted_width = width
+    local title_icon_width = 0
+    if self.title_icon then
+        self.title_icon_widget = DX.ta.select_for_tags and
+        IconWidgetInverted:new{
+            icon = self.title_icon,
+            icon_rotation_angle = 0,
+            icon_height = DGENERIC_ICON_SIZE,
+            icon_width = DGENERIC_ICON_SIZE,
+        }
+        or
+        IconWidget:new{
+            icon = self.title_icon,
+            icon_rotation_angle = 0,
+            icon_height = DGENERIC_ICON_SIZE,
+            icon_width = DGENERIC_ICON_SIZE,
+        }
+        title_icon_width = DGENERIC_ICON_SIZE
+    end
     if self.title_multilines and self.align ~= "left" then
         self.title_widget = TextBoxWidget:new{
             text = self.title,
@@ -473,7 +498,7 @@ function TitleBar:injectTitleIntoMainContainer()
             fgcolor = self.titlebar_inverted and KOR.colors.white or KOR.colors.black,
             alignment = self.align,
             --* for Xray edit dialog we need self.corrected_title_width to get title centered; see ((TitleBar#computeCorrectedTitleWidth)) > ((corrected title width for Xray edit dialog)):
-            width = self.corrected_title_width or width,
+            width = self.corrected_title_width - title_icon_width or width - title_icon_width,
             face = title_face,
             lang = self.lang,
             bordersize = 0,
@@ -489,13 +514,13 @@ function TitleBar:injectTitleIntoMainContainer()
                 alignment = self.align,
                 lang = self.lang,
                 --* truncate if not self.title_shrink_font_to_fit:
-                max_width = not self.title_shrink_font_to_fit and title_max_width,
+                max_width = not self.title_shrink_font_to_fit and title_max_width - title_icon_width,
             }
             adapted_width = self.title_widget:getWidth()
             if not self.title_shrink_font_to_fit then
                 break --* truncation allowed, no loop needed
             end
-            if adapted_width < title_max_width then
+            if adapted_width - title_icon_width < title_max_width then
                 break --* text with normal font fits, no loop needed
             end
             --* Text doesn't fit
@@ -525,6 +550,13 @@ function TitleBar:injectTitleIntoMainContainer()
             self.title_widget:free(true)
             title_face = Font:getFace(title_face.orig_font, title_face.orig_size - 1)
         end --* end of loop
+    end
+
+    if self.title_icon_widget then
+        self.title_widget = HorizontalGroup:new {
+            self.title_icon_widget,
+            self.title_widget,
+        }
     end
 
     self.subtitle_widget = nil
