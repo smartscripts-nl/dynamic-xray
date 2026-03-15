@@ -138,6 +138,11 @@ local XraySettings = WidgetContainer:new{
             explanation = _("This variables enables a number of default settings for KOReader onder Ubuntu, e.g. that the user can close some dialogs with ESC."),
             locked = 0,
         },
+        IL_show_xray_icon_in_title = {
+            value = true,
+            explanation = _("When you set this to false, the Xray icon in the title of the Items List will be hidden."),
+            locked = 0,
+        },
         IV_font_size = {
             value = 17,
             explanation = _("This variable determines the font size of the information in the Item Viewer dialog."),
