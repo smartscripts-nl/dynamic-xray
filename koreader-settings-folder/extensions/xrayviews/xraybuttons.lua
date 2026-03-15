@@ -1184,6 +1184,8 @@ function XrayButtons:forListTopLeft(parent)
         return {
             KOR.buttoninfopopup:forXrayItemsSelectForTagGroup({
                 icon = "back-inverted",
+                info = _("back icon | Disable selection of items for a tag.\n\nSELECTING ITEMS AND SAVING THEM\n\nItems will color light gray if you tap them; tapping them once again removes them from the selected items. With the disk button in the footer you can save the items selected for the tag."),
+                callback_label = _("disable"),
                 callback = function()
                     DX.ta:toggleItemsForTagsSelection()
                 end,
@@ -1205,6 +1207,8 @@ function XrayButtons:forListTopLeft(parent)
         },
         KOR.buttoninfopopup:forXrayItemsSelectForTagGroup({
             icon = "checkbox",
+            info = _("checkbox icon | Select items to which you want assign a tag; they will then become members of a tag-group."),
+            callback_label = _("select"),
             callback = function()
                 DX.ta:toggleItemsForTagsSelection()
             end,

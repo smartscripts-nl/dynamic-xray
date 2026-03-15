@@ -405,8 +405,7 @@ end
 function ButtonInfoPopup:forXrayItemsSelectForTagGroup(props)
 	return KOR.buttonprops:set({
 		--! icon, active or not, defined by calling module
-		info = _("back icon | Disable selection of items for a tag.\n\nSELECTING ITEMS AND SAVING THEM\n\nItems will color light gray if you tap them; tapping them once again removes them from the selected items. With the disk button in the footer you can save the items selected for the tag."),
-		callback_label = _("disable"),
+		--! info and callback label defined by calling module
 		--! callback defined by calling module
 	}, props)
 end
