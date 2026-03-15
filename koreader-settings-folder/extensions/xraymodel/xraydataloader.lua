@@ -90,49 +90,6 @@ local XrayDataLoader = WidgetContainer:new{
             GROUP BY x.id
             ORDER BY %2;]],
 
-        get_all_book_items = [[
-            WITH quotes AS (
-                SELECT
-                    ebook,
-                    series,
-                    series_index,
-                    item_name,
-                    GROUP_CONCAT(ebook || '||' || COALESCE(series_index, '???') || '||' || COALESCE(ebook_title, '???') || '||' || pos0 || '||' || COALESCE(chapter, '???') || '||' || quote, '@@') AS pos_chapter_quotes
-                FROM xray_quotes
-                GROUP BY ebook, item_name
-            )
-
-            SELECT
-                x.id,
-                x.name,
-                b.series,
-                x.ebook,
-                b.title,
-                x.short_names,
-                x.description,
-                x.xray_type,
-                x.aliases,
-                x.tags,
-                x.linkwords,
-                x.book_hits,
-                -- since no series:
-                x.book_hits AS series_hits,
-                x.chapter_hits,
-                x.chapter_hits_data,
-                o.chapters,
-                b.title AS mentioned_in,
-
-                q.item_name,
-                q.pos_chapter_quotes,
-                q.series_index
-
-            FROM xray_items x
-            JOIN bookinfo b ON x.ebook = b.filename
-            LEFT OUTER JOIN xray_books o ON x.ebook = o.ebook
-            LEFT JOIN quotes q ON q.ebook = x.ebook AND q.item_name = x.name
-            WHERE x.ebook = '%1'
-            ORDER BY %2;]],
-
         --* s.ebook, s.title, s.book_hits and s.chapter_hits will be null when the xray item only is found in one or more OTHER books in the series, but not in the current ebook:
         get_all_series_items = [[
            WITH
