@@ -915,6 +915,9 @@ end
 function Button:generateTextLabel(label)
     --* when is_icon_text prop == true: for texticon_text labels the first text is an icon and must have a fixed, lighter color and not be bold:
     local label_color = not label.is_icon_text and label.label_color or KOR.colors.button_label
+    if self.generate_inverted_icon then
+        label_color = KOR.colors.white
+    end
     local is_bold = not label.is_icon_text and self.text_font_bold or false
     local font_size = (self.text_font_size or not label.is_icon_text) and self.text_font_size or self.text_font_size * 1.15
 

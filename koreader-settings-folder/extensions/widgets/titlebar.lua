@@ -135,6 +135,7 @@ local TitleBar = OverlapGroup:extend{
     tab_buttons_left_top_padding = nil,
 
     titlebar_inverted = false,
+    inverted_background_color = KOR.colors.background_inverted,
 
     --* dynamically set in ((TitleBar#setWidgetProps)):
     is_landscape_screen = true,
@@ -170,7 +171,7 @@ function TitleBar:init()
     end
 
     self:injectMainContainer()
-    self:injectBottomLineAndOrSubmenuButtonTable()
+    self:injectFillerAndBottomLine()
     --* ((InputDialog)): description line above a field :
     self:injectSubTitle()
     self:setDims()
@@ -248,7 +249,7 @@ function TitleBar:injectMainContainer()
     if self.titlebar_inverted then
         self.main_container = FrameContainer:new {
             bordersize = 0,
-            background = KOR.colors.background_inverted,
+            background = self.inverted_background_color,
             focus_border_color = KOR.colors.white,
             self.main_container,
         }
@@ -364,6 +365,7 @@ function TitleBar:getAdaptedTopButton(button)
             callback = button.callback,
             hold_callback = button.hold_callback,
             info_callback = button.info_callback,
+            generate_inverted_icon = self.titlebar_inverted,
             allow_flash = G_reader_settings:isNilOrFalse("night_mode"),
             show_parent = self.show_parent,
             for_titlebar = true,
@@ -378,6 +380,7 @@ function TitleBar:getAdaptedTopButton(button)
             callback = button.callback,
             hold_callback = button.hold_callback,
             info_callback = button.info_callback,
+            generate_inverted_icon = self.titlebar_inverted,
             allow_flash = not G_reader_settings:isTrue("night_mode"),
             show_parent = self.show_parent,
             for_titlebar = true,
@@ -466,7 +469,7 @@ function TitleBar:injectTitleIntoMainContainer()
     if self.title_multilines and self.align ~= "left" then
         self.title_widget = TextBoxWidget:new{
             text = self.title,
-            bgcolor = self.titlebar_inverted and KOR.colors.background_inverted or KOR.colors.white,
+            bgcolor = self.titlebar_inverted and self.inverted_background_color or KOR.colors.white,
             fgcolor = self.titlebar_inverted and KOR.colors.white or KOR.colors.black,
             alignment = self.align,
             --* for Xray edit dialog we need self.corrected_title_width to get title centered; see ((TitleBar#computeCorrectedTitleWidth)) > ((corrected title width for Xray edit dialog)):
@@ -480,7 +483,7 @@ function TitleBar:injectTitleIntoMainContainer()
             self.title_widget = TextWidget:new{
                 text = self.title,
                 face = title_face,
-                bgcolor = self.titlebar_inverted and KOR.colors.background_inverted or KOR.colors.white,
+                bgcolor = self.titlebar_inverted and self.inverted_background_color or KOR.colors.white,
                 fgcolor = self.titlebar_inverted and KOR.colors.white or KOR.colors.black,
                 padding = 0,
                 alignment = self.align,
@@ -727,7 +730,7 @@ function TitleBar:addCloseButton()
             icon = self.titlebar_inverted and "close-inverted" or "close",
             icon_height = icon_height,
             icon_width = icon_height,
-            background = self.titlebar_inverted and KOR.colors.background_inverted or KOR.colors.white,
+            background = self.titlebar_inverted and self.inverted_background_color or KOR.colors.white,
             generate_inverted_icon = self.titlebar_inverted,
             --[[text = "x",
             text_font_size = 14,
@@ -816,8 +819,8 @@ function TitleBar:addCloseButtonRightSpacer()
 end
 
 --- @private
-function TitleBar:injectBottomLineAndOrSubmenuButtonTable()
-    if self.with_bottom_line or self.submenu_buttontable then
+function TitleBar:injectFillerAndBottomLine()
+    if self.with_bottom_line or self.submenu_buttontable or self.tabs_table_buttons then
 
         local width = self.is_popout_dialog and self.width - 2 * Size.line.thick or self.width
 
@@ -1005,7 +1008,8 @@ function TitleBar:addVerticalSpacers()
 
     self.computed_titlebar_height = self.tab_buttons_left and max_height + Screen:scaleBySize(4) or max_height + Screen:scaleBySize(7)
 
-    local difference = self.computed_titlebar_height - title_height
+    --? for some reason the spacing is ugly when an inverted title bar is used (e.g. to indicate that items are to be selected), so for that case set to zero:
+    local difference = self.titlebar_inverted and 0 or self.computed_titlebar_height - title_height
     local spacer_height = math_floor(difference / 2)
     local config
     if highest_elem == "title" then

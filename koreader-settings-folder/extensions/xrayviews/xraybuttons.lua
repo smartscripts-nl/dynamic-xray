@@ -1062,7 +1062,6 @@ function XrayButtons:forListFooterLeft(focus_item, dont_show, base_icon_size)
     if DX.ta.select_for_tags then
         return {
             Button:new(KOR.buttoninfopopup:forXraySaveTaggedItems({
-                generate_active_icon = true,
                 icon = "save",
                 callback = function()
                     DX.ta:addTagsToItems()
@@ -1184,8 +1183,7 @@ function XrayButtons:forListTopLeft(parent)
     if DX.ta.select_for_tags then
         return {
             KOR.buttoninfopopup:forXrayItemsSelectForTagGroup({
-                icon = "back-active",
-                generate_active_icon = true,
+                icon = "back-inverted",
                 callback = function()
                     DX.ta:toggleItemsForTagsSelection()
                 end,
