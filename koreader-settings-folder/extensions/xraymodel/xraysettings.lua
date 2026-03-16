@@ -114,7 +114,7 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
         },
         icons_dont_force_ratio = {
-            value = false,
+            value = true,
             explanation = _("Set this to true if your e-reader has problems displaying the DX icons. Hopefully this fixes that problem."),
             locked = 0,
         },
