@@ -16,7 +16,6 @@
 --* ((PATCH READERSEARCH)) some methods completely replaced...
 -- ((PATCH LUASETTINGS))
 -- ((PATCH BOOKSTATUSWIDGET))
--- ((PATCH PLUGINLOADER))
 
 
 local require = require
@@ -48,7 +47,6 @@ local InputDialog = require("ui/widget/inputdialog")
 local KOR = require("extensions/kor")
 local LuaSettings = require("luasettings")
 local Menu = require("extensions/widgets/menu")
-local PluginLoader = require("pluginloader")
 --- @class ReaderDictionary
 local ReaderDictionary = require("apps/reader/modules/readerdictionary")
 local ReaderFooter = require("apps/reader/modules/readerfooter")
@@ -64,7 +62,6 @@ local TextBoxWidget = require("ui/widget/textboxwidget")
 local Trapper = require("ui/trapper")
 local UIManager = require("ui/uimanager")
 local _ = require("gettext")
-local lfs = require("libs/libkoreader-lfs")
 local logger = require("logger")
 --! only use tr for DX related modules:
 local tr = KOR:initCustomTranslations()
@@ -80,7 +77,6 @@ local G_reader_settings = G_reader_settings
 local has_no_items = has_no_items
 local has_no_text = has_no_text
 local has_text = has_text
-local ipairs = ipairs
 local math = math
 local next = next
 local pcall = pcall
@@ -90,7 +86,6 @@ local table_concat = table.concat
 local table_insert = table.insert
 local tonumber = tonumber
 local tostring = tostring
-local type = type
 
 local count
 
@@ -1138,90 +1133,4 @@ local orig_setStar = BookStatusWidget.setStar
 BookStatusWidget.setStar = function(self, num)
     orig_setStar(self, num)
     KOR.seriesmanager:setStars(DX.m.current_ebook_full_path, num)
-end
-
-
---- PATCH PLUGINLOADER
--- #((PATCH PLUGINLOADER))
-
-local DEFAULT_PLUGIN_PATH = "plugins"
-function PluginLoader:_addXrayPluginFolder(data_dir, extra_paths, lookup_path_list)
-    local extra_path = data_dir .. "/plugins"
-    local extra_path_mode = lfs.attributes(extra_path, "mode")
-    if extra_path_mode ~= "directory" or extra_path == DEFAULT_PLUGIN_PATH then
-        return
-    end
-
-    extra_paths = extra_paths or {}
-    if KOR.tables:tableHasNot(extra_paths, extra_path) then
-        table_insert(lookup_path_list, extra_path)
-        table_insert(extra_paths, extra_path)
-        G_reader_settings:saveSetting("extra_plugin_paths", extra_paths)
-    end
-end
-
---! here we overwrite the original 2025.10 loader:
-function PluginLoader:_discover()
-    local plugins_disabled = G_reader_settings:readSetting("plugins_disabled")
-    if type(plugins_disabled) ~= "table" then
-        plugins_disabled = {}
-    end
-
-    local discovered = {}
-    local lookup_path_list = { DEFAULT_PLUGIN_PATH }
-    local extra_paths = G_reader_settings:readSetting("extra_plugin_paths")
-    local data_dir = DataStorage:getDataDir()
-    if extra_paths then
-        if type(extra_paths) == "string" then
-            extra_paths = { extra_paths }
-        end
-        if type(extra_paths) == "table" then
-            for _, extra_path in ipairs(extra_paths) do
-                local extra_path_mode = lfs.attributes(extra_path, "mode")
-                if extra_path_mode == "directory" and extra_path ~= DEFAULT_PLUGIN_PATH then
-                    table_insert(lookup_path_list, extra_path)
-                end
-            end
-        else
-            logger.err("extra_plugin_paths config only accepts string or table value")
-        end
-    else
-        if data_dir ~= "." then
-            local extra_path = data_dir .. "/plugins"
-            extra_paths = { extra_path }
-            G_reader_settings:saveSetting("extra_plugin_paths", extra_paths)
-            table_insert(lookup_path_list, extra_path)
-        end
-    end
-
-    --! addition for Dynamic Xray:
-    self:_addXrayPluginFolder(data_dir, extra_paths, lookup_path_list)
-
-    for _, lookup_path in ipairs(lookup_path_list) do
-        logger.info("Looking for plugins in directory:", lookup_path)
-        for entry in lfs.dir(lookup_path) do
-            local plugin_root = lookup_path .. "/" .. entry
-            local mode = lfs.attributes(plugin_root, "mode")
-            -- A valid KOReader plugin directory ends with .koplugin
-            if mode == "directory" and entry:sub(-9) == ".koplugin" then
-                local mainfile = plugin_root .. "/main.lua"
-                local metafile = plugin_root .. "/_meta.lua"
-                local disabled = false
-                if plugins_disabled and plugins_disabled[entry:sub(1, -10)] then
-                    mainfile = metafile
-                    disabled = true
-                end
-                local name = select(2, util.splitFilePathName(plugin_root))
-
-                table_insert(discovered, {
-                    ["main"] = mainfile,
-                    ["meta"] = metafile,
-                    ["path"] = plugin_root,
-                    ["disabled"] = disabled,
-                    ["name"] = name,
-                })
-            end
-        end
-    end
-    return discovered
 end
