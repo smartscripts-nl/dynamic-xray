@@ -134,6 +134,47 @@ function XrayQuotes:saveQuote(item)
     KOR.messages:notify("citaat opgeslagen...")
 end
 
+function XrayQuotes:quoteDelete(quote_no, quote_id, xray_item)
+    DX.ds.quoteDelete(quote_id)
+    local quotes = self:getQuotesFromItemProp(xray_item)
+    count = #quotes
+    if count == 1 then
+        --* DX.m.items_by_id is used as single source of truth for quotes assigned to items:
+        xray_item.pos_chapter_quotes = nil
+        return
+    end
+    local quotes_pruned = {}
+    for i = 1, count do
+        if i ~= quote_no then
+            table_insert(quotes_pruned, quotes[i])
+        end
+    end
+    quotes_pruned = table_concat(quotes_pruned, "@@")
+    xray_item.pos_chapter_quotes = quotes_pruned
+
+    --* DX.m.items_by_id is used as single source of truth for quotes assigned to items:
+    DX.m.items_by_id[xray_item.id].pos_chapter_quotes = quotes_pruned
+end
+
+function XrayQuotes:quoteUpdate(quote_no, quote_id, value, xray_item)
+    DX.ds.quoteUpdate(quote_id, value)
+    local quotes = self:getQuotesFromItemProp(xray_item)
+
+    local quote = quotes[quote_no]
+    --* quote has these parts: ebook_basename||series_index||ebook_title||pos0||chapter||quote, so quote is last part:
+    quotes[quote_no] = quote:gsub("||[^|]+$", "||" .. value)
+    quotes = table_concat(quotes, "@@")
+    xray_item.pos_chapter_quotes = quotes
+
+    --* DX.m.items_by_id is used as single source of truth for quotes assigned to items:
+    DX.m.items_by_id[xray_item.id].pos_chapter_quotes = quotes
+end
+
+--- @private
+function XrayQuotes:getQuotesFromItemProp(xray_item)
+    return KOR.strings:split(xray_item.pos_chapter_quotes, "@@")
+end
+
 --- @private
 function XrayQuotes:markItemInHtml(html, item)
 

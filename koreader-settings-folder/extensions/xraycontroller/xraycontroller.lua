@@ -511,6 +511,38 @@ function XrayController:showPageNavigator()
     DX.pn:showNavigator(current_epage)
 end
 
+function XrayController:showQuotesManager()
+    DX.d:closeItemViewer()
+    local name = DX.d.current_viewer_item.name
+    local quotes = DX.dl.getQuotesForItemByName(name)
+    KOR.itemsmanager:showList({
+        list_title = _("Manage quotes"),
+        edit_title = _("Edit quote"),
+        view_title = _("Quote"),
+        list_footer_buttons_left = {
+            KOR.buttoninfopopup:forXrayItemViewer({
+                info = _("eye icon | Return to Xray item to which these quotes belong."),
+                callback_label = _("show"),
+                callback = function()
+                    KOR.itemsmanager:closeDialogs()
+                    --* for consumption in ((XrayDialogs#showItemViewer)):
+                    KOR.registry:set("active_tab", 4)
+                    DX.d:viewItem(DX.d.current_viewer_item)
+                end,
+            }),
+        },
+        items = quotes,
+        delete_callback = function(item_no, id)
+            DX.q:quoteDelete(item_no, id, DX.d.current_viewer_item)
+            KOR.messages:notify(_("quote deleted"))
+        end,
+        save_callback = function(item_no, id, value)
+            DX.q:quoteUpdate(item_no, id, value, DX.d.current_viewer_item)
+            KOR.messages:notify(_("quote updated"))
+        end,
+    })
+end
+
 --- @param mode string "series" or "book"
 function XrayController:toggleBookOrSeriesMode(mode, focus_item, dont_show)
     DX.vd.initData("force_refresh", mode)

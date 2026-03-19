@@ -21,6 +21,7 @@ local pairs = pairs
 --- @field files Files
 --- @field html Html
 --- @field icons Icons
+--- @field itemsmanager ItemsManager
 --- @field keyevents KeyEvents
 --- @field labels Labels
 --- @field list List
@@ -77,6 +78,7 @@ local KOR = WidgetContainer:new{
 	files = nil,
 	html = nil,
 	icons = nil,
+	itemsmanager = nil,
 	keyevents = nil,
 	labels = nil,
 	list = nil,
@@ -116,6 +118,7 @@ local KOR = WidgetContainer:new{
 		"ebookmetadata",
 		"filedirnames",
 		"html",
+		"itemsmanager",
 		"labels",
 		"list",
 		"messages",

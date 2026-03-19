@@ -46,6 +46,7 @@ local XrayDialogs = WidgetContainer:new{
     called_from_list = false,
     change_xray_type = nil,
     current_tab_items = nil,
+    current_viewer_item = nil,
     description_field_height = DX.s.is_ubuntu and 180 or 420,
     edit_item_description_dialog = nil,
     edit_item_input = nil,
@@ -730,13 +731,13 @@ function XrayDialogs:showToggleBookOrSeriesModeDialog()
     T(_([[
 Switch from series mode %1
 
-TO BOOK MODE %2?
+TO BOOK MODE %2 ?
 ]]), KOR.icons.xray_series_mode_bare, KOR.icons.xray_book_mode_bare)
     or
     T(_([[
 Switch from book mode %1
 
-TO SERIES MODE %2?
+TO SERIES MODE %2 ?
 ]]), KOR.icons.xray_book_mode_bare, KOR.icons.xray_series_mode_bare)
 
     KOR.dialogs:confirm(question, function(focus_item, dont_show)
@@ -822,9 +823,12 @@ function XrayDialogs:showItemViewer(needle_item, props)
     self.needle_name_for_list_page = needle_item.name
     local key_events_module = props.key_events_module
 
+    self.current_viewer_item = needle_item
+
     local tabs = DX.b:getItemViewerTabs(props.main_info, props.hits_info, props.linked_items_info, props.quotes_info, props.linked_items_info2)
 
-    self.item_viewer = KOR.dialogs:htmlBoxTabbed(1, {
+    local active_tab = KOR.registry:getOnce("active_tab") or 1
+    self.item_viewer = KOR.dialogs:htmlBoxTabbed(active_tab, {
         title = title,
         top_buttons_left = DX.b:forItemViewerTopLeft(self, needle_item),
         tabs = tabs,

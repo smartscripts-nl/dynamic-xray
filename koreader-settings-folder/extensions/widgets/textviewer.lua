@@ -85,6 +85,7 @@ local TextViewer = InputContainer:extend{
     alignment = "left",
     alignment_strict = false,
     auto_para_direction = true,
+    back_button_inserted = false,
     block_height_adaptation = false,
     button_font_face = "cfont",
     button_font_size = 20,
@@ -1221,7 +1222,7 @@ end
 
 --- @private
 function TextViewer:insertBackButton(buttons)
-    if self.no_back_button then
+    if self.no_back_button or self.back_button_inserted then
         return
     end
     table_insert(buttons[1], 1, {
@@ -1232,6 +1233,7 @@ function TextViewer:insertBackButton(buttons)
         end,
         hold_callback = self.default_hold_callback,
     })
+    self.back_button_inserted = true
 end
 
 --- @private

@@ -944,6 +944,7 @@ function XrayButtons:getItemViewerTabs(main_info, hits_info, linked_items_info, 
             tab = _("quotes"),
             html = quotes_info,
             content_type = "html",
+            has_items_editor = true,
         })
     end
 

@@ -2,6 +2,7 @@
 local require = require
 
 local BD = require("ui/bidi")
+local Button = require("extensions/widgets/button")
 local ButtonTable = require("extensions/widgets/buttontable")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Device = require("device")
@@ -14,6 +15,8 @@ local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")
 local Math = require("optmath")
 local MovableContainer = require("extensions/widgets/container/movablecontainer")
+local OverlapGroup = require("ui/widget/overlapgroup")
+local RightContainer = require("ui/widget/container/rightcontainer")
 local ScrollHtmlWidget = require("extensions/widgets/scrollhtmlwidget")
 local ScrollTextWidget = require("extensions/widgets/scrolltextwidget")
 local Size = require("extensions/modules/size")
@@ -95,6 +98,7 @@ local HtmlBox = InputContainer:extend{
     frame_content_fullscreen = nil,
     frame_content_windowed = nil,
     fullscreen = false,
+    has_items_editor = false,
     height = nil,
     html = nil,
     --* for two column display of linked item in landscape display:
@@ -275,6 +279,24 @@ end
 
 --- @private
 function HtmlBox:generateHtmlScrollWidget()
+
+    local edit_button
+    if self.has_items_editor then
+        edit_button = Button:new(KOR.buttoninfopopup:forXrayQuotesManager({
+            callback = function()
+                DX.c:showQuotesManager()
+            end,
+        }))
+        local dims = edit_button:getSize()
+        edit_button = RightContainer:new{
+            dimen = Geom:new{
+                w = self.swidth + dims.w,
+                h = dims.h,
+            },
+            edit_button,
+        }
+    end
+
     self.html_widget = ScrollHtmlWidget:new{
         html_body = self.html,
         css = KOR.html:getHtmlBoxCss(self.css),
@@ -283,7 +305,17 @@ function HtmlBox:generateHtmlScrollWidget()
         height = self.sheight,
         dialog = self,
     }
-    if not self.bottom_widget then
+    if not self.bottom_widget and self.has_items_editor then
+        self.html_widget = OverlapGroup:new{
+            dimen = Geom:new{
+                w =  self.swidth,
+                h = self.sheight,
+            },
+            edit_button,
+            self.html_widget,
+        }
+        return
+    elseif not self.bottom_widget then
         return
     end
 
@@ -291,6 +323,19 @@ function HtmlBox:generateHtmlScrollWidget()
         align = "left",
         self.html_widget,
         self.bottom_widget,
+    }
+    if not self.has_items_editor then
+        return
+    end
+
+    local height = self.sheight + self.bottom_widget:getSize().h
+    self.html_widget = OverlapGroup:new{
+        dimen = Geom:new{
+            w = self.swidth,
+            h = height,
+        },
+        edit_button,
+        self.html_widget,
     }
 end
 

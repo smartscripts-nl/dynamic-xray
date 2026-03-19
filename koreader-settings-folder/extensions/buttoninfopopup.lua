@@ -410,6 +410,13 @@ function ButtonInfoPopup:forXrayItemsSelectForTagGroup(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forXrayItemViewer(props)
+	return KOR.buttonprops:set({
+		icon = "view",
+		--! almost all props defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forXrayList(props)
 	return KOR.buttonprops:set({
 		icon = "list",
@@ -531,6 +538,15 @@ function ButtonInfoPopup:forSeriesManagerDataImport(props)
 		icon = "fill",
 		info = _("bucket icon | Import data (finished status, percentage read, stars rating) of all known books into Series Manager data."),
 		callback_label = _("import"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forXrayQuotesManager(props)
+	return KOR.buttonprops:set({
+		icon = "quote",
+		info = _("bubble icon | Manage quotes for this Xray item."),
+		callback_label = _("show manager"),
 		--! callback defined by calling module
 	}, props)
 end

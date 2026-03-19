@@ -115,6 +115,12 @@ local XrayDataSaver = WidgetContainer:new{
         insert_item =
             "INSERT INTO xray_items (ebook, name, short_names, description, xray_type, aliases, tags, linkwords) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
 
+        quote_delete =
+            "DELETE FROM xray_quotes WHERE id = ?;",
+
+        quote_update =
+            "UPDATE xray_quotes SET quote = ? WHERE id = ?;",
+
         store_book_chapters =
             "INSERT OR IGNORE INTO xray_books (ebook, chapters) VALUES (?, ?);",
 
@@ -779,6 +785,22 @@ function XrayDataSaver.modifyTables(conn, update_tasks_count, version_index)
             conn:exec(sql)
         end
     end
+end
+
+function XrayDataSaver.quoteDelete(id)
+    local self = DX.ds
+    local conn = KOR.databases:getDBconn("XrayDataSaver.quoteDelete")
+    local stmt = conn:prepare(self.queries.quote_delete)
+    stmt:reset():bind(id):step()
+    conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
+end
+
+function XrayDataSaver.quoteUpdate(id, value)
+    local self = DX.ds
+    local conn = KOR.databases:getDBconn("XrayDataSaver.quoteUpdate")
+    local stmt = conn:prepare(self.queries.quote_update)
+    stmt:reset():bind(value, id):step()
+    conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 end
 
 --* check whether previous DX installations already created some tables or fields and update version_index accordingly:

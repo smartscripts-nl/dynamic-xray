@@ -10,7 +10,7 @@ local T = require("ffi/util").template
 
 local DX = DX
 local has_text = has_text
-local table = table
+local table_insert = table.insert
 local tonumber = tonumber
 
 local count
@@ -76,6 +76,7 @@ local XrayDataLoader = WidgetContainer:new{
                    COALESCE(q.chapter, '???') || '||' ||
                    q.quote,
                    '@@'
+                   ORDER BY q.id
            ) AS pos_chapter_quotes
 
             FROM bookinfo b
@@ -91,6 +92,7 @@ local XrayDataLoader = WidgetContainer:new{
             ORDER BY %2;]],
 
         --* s.ebook, s.title, s.book_hits and s.chapter_hits will be null when the xray item only is found in one or more OTHER books in the series, but not in the current ebook:
+        --* for prop pos_chapter_quotes compare ((XrayQuotes#generateQuotesList)):
         get_all_series_items = [[
            WITH
 
@@ -156,7 +158,11 @@ local XrayDataLoader = WidgetContainer:new{
 
                q.series_index,
                q.item_name,
-                GROUP_CONCAT(q.ebook || '||' || COALESCE(q.series_index, '???') || '||' || COALESCE(q.ebook_title, '???') || '||' || q.pos0 || '||' || COALESCE(q.chapter, '???') || '||' || q.quote, '@@') AS pos_chapter_quotes
+                GROUP_CONCAT(
+                    q.ebook || '||' || COALESCE(q.series_index, '???') || '||' || COALESCE(q.ebook_title, '???') || '||' || q.pos0 || '||' || COALESCE(q.chapter, '???') || '||' || q.quote,
+                    '@@'
+                    ORDER BY q.id
+                ) AS pos_chapter_quotes
 
             FROM book_xray_data x
             LEFT JOIN series_data s
@@ -216,6 +222,16 @@ local XrayDataLoader = WidgetContainer:new{
             JOIN series_books s ON s.filename = x.ebook
             WHERE x.ebook != 'safe_path'
             ORDER BY x.name;]],
+
+        qet_quotes_for_item_book = [[
+            SELECT id, quote FROM xray_quotes
+            WHERE item_name = '%1' AND ebook = '%2' ORDER BY id;]],
+
+        --* compare ((XrayQuotes#generateQuotesList))
+        qet_quotes_for_item_series = [[
+            SELECT x.id, x.quote FROM xray_quotes x
+            LEFT OUTER JOIN all_books a ON a.filename = x.ebook
+            WHERE x.item_name = '%1' AND a.series = '%2' ORDER BY x.id;]],
 
         get_series_hits = [[
             SELECT SUM(x.book_hits) AS series_hits
@@ -382,7 +398,7 @@ function XrayDataLoader:_addBookItem(result, i, book_index)
         chapter_hits_data = self:convertChapterHitsData(result["chapter_hits_data"][i]),
         pos_chapter_quotes = result["pos_chapter_quotes"][i],
     }
-    table.insert(parent.ebooks[book_index], item)
+    table_insert(parent.ebooks[book_index], item)
 
     parent:updateStaticReferenceCollections(id, item)
 end
@@ -410,7 +426,7 @@ function XrayDataLoader:_addSeriesItem(result, i, series_index)
     parent:updateStaticReferenceCollections(id, item)
 
     -- #((set xray item props))
-    table.insert(parent.series[series_index], item)
+    table_insert(parent.series[series_index], item)
 end
 
 --* compare ((XrayDataSaver#getChapterHitsDataForStorage)), where these data are prepared for storage:
@@ -454,6 +470,31 @@ function XrayDataLoader:getItemsForImportFromSeries(conn, series)
     sql = KOR.databases:injectSafePath(sql, parent.current_ebook_basename)
 
     return conn:exec(sql)
+end
+
+function XrayDataLoader.getQuotesForItemByName(name)
+    local self = DX.dl
+    local conn = KOR.databases:getDBconn("XrayDataLoader:getQuotesForItemById")
+    local sql = parent.list_display_mode == "series" and self.queries.qet_quotes_for_item_series or self.queries.qet_quotes_for_item_book
+    name = KOR.databases:escape(name)
+    local second_arg = parent.list_display_mode == "series" and parent.current_series or parent.current_ebook_basename
+    second_arg = KOR.databases:escape(second_arg)
+    sql = T(sql, name, second_arg)
+    local result = conn:exec(sql)
+    conn = KOR.databases:closeConnections(conn)
+    if not result then
+        return
+    end
+    count = #result["quote"]
+    local quotes = {}
+    for i = 1, count do
+        table_insert(quotes, {
+            item_no = i,
+            id = result["id"][i],
+            value = result["quote"][i],
+        })
+    end
+    return quotes
 end
 
 function XrayDataLoader:getSeriesHits(conn, series, name)

@@ -134,6 +134,7 @@ function Dialogs:htmlBox(args)
             if config.tabs[i].is_active_tab then
                 --* content_type can be set to "text" for the linked items info in ((XrayButtons#getItemViewerTabs)); this content_type prop will be used in
                 config.content_type = config.tabs[i].content_type
+                config.has_items_editor = config.tabs[i].has_items_editor
                 break
             end
         end
