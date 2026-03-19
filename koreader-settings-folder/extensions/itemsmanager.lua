@@ -18,9 +18,13 @@ local count
 
 --- @class ItemsManager
 local ItemsManager = WidgetContainer:new{
+    add_callback = nil,
+    add_item_dialog = nil,
+    add_title = nil,
     delete_callback = nil,
     edit_item_dialog = nil,
     edit_title = nil,
+    --* each item should have this props: id (in the database), item_no (sequential), value:
     items = nil,
     list_footer_buttons_left = nil,
     list_title = nil,
@@ -34,9 +38,11 @@ local ItemsManager = WidgetContainer:new{
 function ItemsManager:showList(args)
     if args then
         self.items = args.items
-        self.list_title = args.list_title
+        self.add_title = args.add_title
         self.edit_title = args.edit_title
+        self.list_title = args.list_title
         self.view_title = args.view_title
+        self.add_callback = args.add_callback
         self.delete_callback = args.delete_callback
         self.save_callback = args.save_callback
         self.list_footer_buttons_left = args.list_footer_buttons_left
@@ -136,6 +142,14 @@ function ItemsManager:buttonsForViewer(item)
              end
          },
      }}
+    if self.add_callback then
+        table_insert(buttons[1], 3, {
+            icon = "add",
+            callback = function()
+                self:addItem(item)
+            end,
+        })
+    end
     if self.list_footer_buttons_left then
         table_insert(buttons[1], 2, self.list_footer_buttons_left[1])
     end
@@ -160,6 +174,53 @@ function ItemsManager:showPrevItem(item)
     self:viewItem(self.items[item_no])
 end
 
+--- @private
+--- @param item table This is not the new item, but only the currently viewed item to return to upon cancelation of the add-item dialog
+function ItemsManager:addItem(item)
+    local buttons = {
+        {
+            icon = "back",
+            callback = function()
+                UIManager:close(self.add_item_dialog)
+                self:viewItem(item)
+            end,
+        },
+        {
+            icon = "save",
+            is_enter_default = false,
+            callback = function()
+                local new_text = self.add_item_dialog:getInputText()
+                UIManager:close(self.add_item_dialog)
+                --! the add_callback defined by the caller should return the id in the database of the new item:
+                local id = self.add_callback(new_text)
+                table_insert(self.items, {
+                    item_no = #self.items + 1,
+                    id = id,
+                    value = new_text
+                })
+                self:showList()
+            end,
+        },
+    }
+    self.add_item_dialog = InputDialog:new{
+        title = self.add_title,
+        input = "",
+        input_type = "text",
+        fullscreen = true,
+        condensed = true,
+        allow_newline = true,
+        cursor_at_end = true,
+        add_nav_bar = true,
+        scroll_by_pan = true,
+        buttons = {
+            buttons
+        },
+    }
+    UIManager:show(self.add_item_dialog)
+    self.add_item_dialog:onShowKeyboard()
+end
+
+--- @private
 --- @private
 function ItemsManager:editItem(item)
     local buttons = {
