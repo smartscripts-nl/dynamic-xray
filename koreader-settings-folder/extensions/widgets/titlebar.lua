@@ -32,7 +32,6 @@ local VerticalGroup = require("ui/widget/verticalgroup")
 local VerticalSpan = require("ui/widget/verticalspan")
 local Screen = Device.screen
 
-local DX = DX
 local G_reader_settings = G_reader_settings
 local math = math
 local math_floor = math.floor
@@ -475,7 +474,7 @@ function TitleBar:injectTitleIntoMainContainer()
     local adapted_width = width
     local title_icon_width = 0
     if self.title_icon then
-        self.title_icon_widget = DX.ta.select_for_tags and
+        self.title_icon_widget = self.title_icon:match("inverted") and
         IconWidgetInverted:new{
             icon = self.title_icon,
             icon_rotation_angle = 0,

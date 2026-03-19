@@ -505,7 +505,7 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
 
     local title_icon
     if DX.s.IL_show_xray_icon_in_title then
-        title_icon = DX.ta.select_for_tags and "lightning-small-inverted" or "lightning-small"
+        title_icon = (self.select_mode or DX.ta.select_for_tags) and "lightning-small-inverted" or "lightning-small"
     end
 
     --* icon size for filter button set in ((Menu#getFilterButton)):
