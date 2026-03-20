@@ -98,7 +98,9 @@ This will make the code and updates much easier to maintain for me _and_ for clo
 
 ### Item Viewer: quotes tab
 
-Via ReaderHighlight the user can select texts as quotes to be displayed in the fourth tab of the Item Viewer. This feature can be used to add a book index, or to quickly read especially moving or important passages, or for storing definitions from the book. You can see a picture of this feature in the [Images](#images) section (image 05b...).
+Via ReaderHighlight the user can select texts as quotes to be displayed in the quotes tab of the Item Viewer. This feature can be used to add a book index, or to quickly read especially moving or important passages, or for storing definitions from the book. You can see a picture of this feature in the [Images](#images) section (image 05b...).
+
+This tab also has a Quotes Manager, to be called with the floating speech bubble button. In this Manager you can view, edit or remove quotes. You could e.g. use this feature to add you own notes to individual quotes.
 
 ### Global hotkeys
 

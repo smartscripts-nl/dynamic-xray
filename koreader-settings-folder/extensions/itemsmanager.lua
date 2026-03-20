@@ -1,6 +1,5 @@
 
---* this is a generic items manager; callers have to provide save and delete callbacks
---* see ((Dynamic Xray: module info)) for more info
+--* this is a generic items manager; callers have to provide save, delete and (optional) add callbacks
 
 local require = require
 
@@ -24,7 +23,7 @@ local ItemsManager = WidgetContainer:new{
     delete_callback = nil,
     edit_item_dialog = nil,
     edit_title = nil,
-    --* each item should have this props: id (in the database), item_no (sequential), value:
+    --* each item should have this props: id (in the database), item_no (sequential), value (a string):
     items = nil,
     list_footer_buttons_left = nil,
     list_title = nil,
@@ -46,7 +45,6 @@ function ItemsManager:showList(args)
         self.delete_callback = args.delete_callback
         self.save_callback = args.save_callback
         self.list_footer_buttons_left = args.list_footer_buttons_left
-        self.items = args.items
     end
     local item_table = self:generateItemTable(self.items)
 
@@ -220,7 +218,6 @@ function ItemsManager:addItem(item)
     self.add_item_dialog:onShowKeyboard()
 end
 
---- @private
 --- @private
 function ItemsManager:editItem(item)
     local buttons = {
