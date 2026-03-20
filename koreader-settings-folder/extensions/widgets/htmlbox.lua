@@ -84,6 +84,7 @@ end
 
 --- @class HtmlBox
 local HtmlBox = InputContainer:extend{
+    active_tab = nil,
     additional_key_events = nil,
     after_close_callback = nil,
     align = "center",
@@ -474,8 +475,21 @@ end
 
 function HtmlBox:onSwipe(arg, ges)
     if not self.movable then
+        local is_navigation_swipe = self.next_item_callback and self.prev_item_callback
+        if not is_navigation_swipe then
+            return false
+        end
+        local direction = BD.flipDirectionIfMirroredUILayout(ges.direction)
+        if direction == "west" then
+            self:next_item_callback()
+            return true
+        elseif direction == "east" then
+            self:prev_item_callback()
+            return true
+        end
         return false
     end
+
     --* Let our MovableContainer handle swipe outside of definition
     return self.movable:onMovableSwipe(arg, ges)
 end
