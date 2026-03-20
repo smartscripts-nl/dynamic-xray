@@ -88,6 +88,14 @@ function ItemsManager:viewItem(item)
         info = item.value,
         fullscreen = true,
         no_back_button = true,
+        next_item_callback = function()
+            self:showNextItem(item)
+            return true
+        end,
+        prev_item_callback = function()
+            self:showPrevItem(item)
+            return true
+        end,
         buttons_table = self:buttonsForViewer(item)
     })
 end
