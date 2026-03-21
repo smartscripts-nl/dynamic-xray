@@ -33,6 +33,11 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
             type = "number",
         },
+        enable_global_DX_tips = {
+            value = true,
+            explanation = _("If true, in the top left of several DX dialogs a lightbulb icon will be shown, with which the user can call general usage tips for DX."),
+            locked = 0,
+        },
         hk_add_item = {
             value = "A",
             explanation = _("To add a new Xray item, in the Item Viewer, the Items List or the Page Navigator.") .. hotkeys_warning,

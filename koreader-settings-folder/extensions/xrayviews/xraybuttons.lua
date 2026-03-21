@@ -383,12 +383,7 @@ end
 
 --- @param parent XrayPageNavigator
 function XrayButtons:forPageNavigatorTopLeft(parent)
-    return {
-        KOR.buttoninfopopup:forXrayTips({
-            callback = function()
-                return DX.i:showGeneralDXTips(parent)
-            end,
-        }),
+    local buttons = {
         {
             icon = "info-slender",
             callback = function()
@@ -410,6 +405,9 @@ function XrayButtons:forPageNavigatorTopLeft(parent)
             end
         }),
     }
+    self:insertGlobalDXTips(buttons, parent)
+
+    return buttons
 end
 
 function XrayButtons:forUiInfoAdditionalButtons(config, parent)
@@ -446,12 +444,7 @@ end
 
 --- @param parent XrayDialogs
 function XrayButtons:forUiInfoTopLeft(target, new_trigger, parent)
-    return {
-        KOR.buttoninfopopup:forXrayTips({
-            callback = function()
-                return DX.i:showGeneralDXTips(parent)
-            end,
-        }),
+    local buttons = {
         KOR.buttoninfopopup:forXrayTogglePageOrParagraphInfo({
             icon = DX.s.UI_mode == "paragraph" and "paragraph" or "pages",
             callback = function()
@@ -467,6 +460,9 @@ function XrayButtons:forUiInfoTopLeft(target, new_trigger, parent)
             end
         }),
     }
+    self:insertGlobalDXTips(buttons, parent)
+
+    return buttons
 end
 
 --- @private
@@ -953,12 +949,7 @@ end
 
 --- @param parent XrayDialogs
 function XrayButtons:forItemViewerTopLeft(parent)
-    return {
-        KOR.buttoninfopopup:forXrayTips({
-            callback = function()
-                return DX.i:showGeneralDXTips(parent)
-            end,
-        }),
+    local buttons = {
         {
             icon = "info-slender",
             callback = function()
@@ -974,6 +965,9 @@ function XrayButtons:forItemViewerTopLeft(parent)
             end
         }),
     }
+    self:insertGlobalDXTips(buttons, parent)
+
+    return buttons
 end
 
 --* compare buttons for Item Viewer ((XrayButtons#forItemViewer)):
@@ -1194,12 +1188,7 @@ function XrayButtons:forListTopLeft(parent)
         }
     end
 
-    return {
-        KOR.buttoninfopopup:forXrayTips({
-            callback = function()
-                return DX.i:showGeneralDXTips(parent)
-            end,
-        }),
+    local buttons = {
         {
             icon = "info-slender",
             callback = function()
@@ -1223,6 +1212,19 @@ function XrayButtons:forListTopLeft(parent)
             end
         }),
     }
+    self:insertGlobalDXTips(buttons, parent)
+
+    return buttons
+end
+
+function XrayButtons:insertGlobalDXTips(buttons, parent)
+    if DX.s.enable_global_DX_tips then
+        table_insert(buttons, 1, KOR.buttoninfopopup:forXrayTips({
+            callback = function()
+                return DX.i:showGeneralDXTips(parent)
+            end,
+        }))
+    end
 end
 
 --- @private

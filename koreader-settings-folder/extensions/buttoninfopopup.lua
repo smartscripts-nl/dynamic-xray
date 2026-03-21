@@ -639,6 +639,7 @@ function ButtonInfoPopup:forXrayTips(props)
 	return KOR.buttonprops:set({
 		icon = "bulb",
 		info = _("Show general DX usage tips."),
+		callback_label = _("show")
 		--! callback defined by calling module
 	}, props)
 end
