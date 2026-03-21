@@ -405,7 +405,7 @@ function XrayButtons:forPageNavigatorTopLeft(parent)
             end
         }),
     }
-    self:insertGlobalDXTips(buttons, parent)
+    self:insertGeneralDXTipsButton(buttons, parent)
 
     return buttons
 end
@@ -460,7 +460,7 @@ function XrayButtons:forUiInfoTopLeft(target, new_trigger, parent)
             end
         }),
     }
-    self:insertGlobalDXTips(buttons, parent)
+    self:insertGeneralDXTipsButton(buttons, parent)
 
     return buttons
 end
@@ -965,7 +965,7 @@ function XrayButtons:forItemViewerTopLeft(parent)
             end
         }),
     }
-    self:insertGlobalDXTips(buttons, parent)
+    self:insertGeneralDXTipsButton(buttons, parent)
 
     return buttons
 end
@@ -1212,12 +1212,12 @@ function XrayButtons:forListTopLeft(parent)
             end
         }),
     }
-    self:insertGlobalDXTips(buttons, parent)
+    self:insertGeneralDXTipsButton(buttons, parent)
 
     return buttons
 end
 
-function XrayButtons:insertGlobalDXTips(buttons, parent)
+function XrayButtons:insertGeneralDXTipsButton(buttons, parent)
     if DX.s.enable_global_DX_tips then
         table_insert(buttons, 1, KOR.buttoninfopopup:forXrayTips({
             callback = function()
