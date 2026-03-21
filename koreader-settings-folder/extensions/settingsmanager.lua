@@ -21,6 +21,7 @@ local math_floor = math.floor
 local pairs = pairs
 local table = table
 local table_insert = table.insert
+local table_sort = table.sort
 local tonumber = tonumber
 local tostring = tostring
 local type = type
@@ -209,15 +210,15 @@ end
 
 --- @private
 function SettingsManager:sortMenuItems()
-    table.sort(self.settings_for_menu, function(v1, v2)
+    table_sort(self.settings_for_menu, function(v1, v2)
         local locked1 = v1.locked or 0
         local locked2 = v2.locked or 0
         if locked1 ~= locked2 then
             return locked1 < locked2
         end
 
-        local key1 = v1.key or ""
-        local key2 = v2.key or ""
+        local key1 = v1.key and v1.key:lower() or ""
+        local key2 = v2.key and v2.key:lower() or ""
         return key1 < key2
     end)
 end
