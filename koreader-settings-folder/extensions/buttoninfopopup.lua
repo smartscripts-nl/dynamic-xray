@@ -233,11 +233,29 @@ function ButtonInfoPopup:forTextViewerCopy(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forTextViewerOneScreenDown(props)
+	return KOR.buttonprops:set({
+		icon = "down",
+		info = _("arrow-down icon | Go one screen down. In case of a two column text this move will be applied to both columns."),
+		callback_label = _("1 down"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forTextViewerOneScreenUp(props)
+	return KOR.buttonprops:set({
+		icon = "up",
+		info = _("arrow-up icon | Go one screen up. In case of a two column text this move will be applied to both columns."),
+		callback_label = _("1 up"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forTextViewerToBottom(props)
 	return KOR.buttonprops:set({
 		text = "⇲",
 		id = "bottom",
-		info = _("arrow icon | Jump to end of text."),
+		info = _("arrow icon | Jump to end of text. In case of a two column text this move will be applied to both columns."),
 		callback_label = _("to end"),
 		--! callback defined by calling module
 	}, props)
@@ -247,7 +265,7 @@ function ButtonInfoPopup:forTextViewerToTop(props)
 	return KOR.buttonprops:set({
 		text = "⇱",
 		id = "top",
-		info = _("arrow icon | Jump to start of text."),
+		info = _("arrow icon | Jump to start of text. In case of a two column text this move will be applied to both columns."),
 		callback_label = _("to start"),
 		--! callback defined by calling module
 	}, props)
@@ -384,6 +402,21 @@ function ButtonInfoPopup:forXrayItemsIndex(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forXrayItemsSelectForTagGroup(props)
+	return KOR.buttonprops:set({
+		--! icon, active or not, defined by calling module
+		--! info and callback label defined by calling module
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forXrayItemViewer(props)
+	return KOR.buttonprops:set({
+		icon = "view",
+		--! almost all props defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forXrayList(props)
 	return KOR.buttonprops:set({
 		icon = "list",
@@ -489,30 +522,6 @@ function ButtonInfoPopup:forXrayPageNavigatorShowPageBrowser(props)
 	}, props)
 end
 
-function ButtonInfoPopup:forXrayPageNavigatorShowTagsDialogForList(props)
-	return KOR.buttonprops:set({
-		icon = "tags",
-		info = _("tags icon | Show popup for tag filters."),
-		callback_label = _("show"),
-		--! callback defined by calling module
-	}, props)
-end
-
-function ButtonInfoPopup:forXrayPageNavigatorShowTagsDialogForPN(props)
-	--* the minus sign is a n_dash:
-	local state_marker = DX.pn.navigation_tag and "–" or "+"
-	return KOR.buttonprops:set({
-		icon_text = {
-			icon = "tags",
-			text = " " .. state_marker,
-		},
-		icon = "tags",
-		info = _("tags icon | Activate (+) or disabled (-) browsing between members of a tag group"),
-		callback_label = _("browse") .. " " .. state_marker,
-		--! callback defined by calling module
-	}, props)
-end
-
 function ButtonInfoPopup:forXrayPreviousItem(props)
 	return KOR.buttonprops:set({
 		icon = "previous",
@@ -529,6 +538,24 @@ function ButtonInfoPopup:forSeriesManagerDataImport(props)
 		icon = "fill",
 		info = _("bucket icon | Import data (finished status, percentage read, stars rating) of all known books into Series Manager data."),
 		callback_label = _("import"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forXrayQuotesManager(props)
+	return KOR.buttonprops:set({
+		icon = "quote",
+		info = _("bubble icon | Manage quotes for this Xray item."),
+		callback_label = _("show manager"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forXraySaveTaggedItems(props)
+	return KOR.buttonprops:set({
+		icon = "save",
+		info = "floppy disk icon | Save selected items for the tag.",
+		callback_label = _("save"),
 		--! callback defined by calling module
 	}, props)
 end
@@ -551,6 +578,41 @@ function ButtonInfoPopup:forXrayShowMatchReliabilityExplanation(props)
 		callback = function()
 			return DX.i:showReliabilityIndicatorsExplanation()
 		end,
+	}, props)
+end
+
+function ButtonInfoPopup:forXrayTagGroupAdd(props)
+	return KOR.buttonprops:set({
+		icon = "add",
+		info = _("plus icon | Add a new tag-group."),
+		callback_label = _("add"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forXrayTagGroupNext(props)
+	return KOR.buttonprops:set({
+		icon = "next",
+		info = _("arrow-right icon | Jump to next tag-group."),
+		callback_label = _("next"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forXrayTagGroupPrevious(props)
+	return KOR.buttonprops:set({
+		icon = "previous",
+		info = _("arrow-left icon. Jump to previous tag-group."),
+		callback_label = _("previous"),
+	}, props)
+end
+
+function ButtonInfoPopup:forXrayTagGroupSelector(props)
+	return KOR.buttonprops:set({
+		icon = "tags",
+		info = _("tags icon | Show the tag-group-selector, to choose a specific tag-group to display"),
+		callback_label = _("show selector"),
+		--! callback defined by calling module
 	}, props)
 end
 
@@ -577,6 +639,7 @@ function ButtonInfoPopup:forXrayTips(props)
 	return KOR.buttonprops:set({
 		icon = "bulb",
 		info = _("Show general DX usage tips."),
+		callback_label = _("show")
 		--! callback defined by calling module
 	}, props)
 end

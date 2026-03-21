@@ -1,8 +1,6 @@
 
 --* see ((Dynamic Xray: module info)) for more info
 
---! info about TextViewer TOC functionality for Xray items: see ((TextViewer toc button))
-
 local require = require
 
 local Device = require("device")
@@ -16,11 +14,9 @@ local Screen = Device.screen
 local T = require("ffi/util").template
 
 local DX = DX
-local has_items = has_items
 local has_no_text = has_no_text
 local has_text = has_text
 local math = math
-local math_ceil = math.ceil
 local math_floor = math.floor
 local pairs = pairs
 local table = table
@@ -67,7 +63,6 @@ local XrayUI = WidgetContainer:new{
 }
 
 --- @private
---- @private
 function XrayUI:drawMarker(c, rect)
     --* c was populated in ((XrayUI#ReaderViewSetXrayContextProps)):
     local bb = c.bb
@@ -108,6 +103,7 @@ function XrayUI:drawMarker(c, rect)
     return marker_rect
 end
 
+--- @private
 function XrayUI:getMarkerIconXpos(c, rect)
     local marker_width = c.marker_width
     local is_xray_page_mode = DX.s.UI_mode == "page"
@@ -188,9 +184,10 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
     end
 
     local paragraph_text = self.paragraph_texts[nr]
-    local paragraph_hits_info = ""
-    local paragraph_hits_info2 = ""
-    local paragraph_headings = {}
+    local paragraph_hits_names = {}
+    local paragraph_hits_names2 = {}
+    local paragraph_hits_info = {}
+    local paragraph_hits_info2 = {}
     --* these items were generated via ((init xray sideline markers)) > ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#ReaderViewInitParaOrPageData)) > ((XrayUI#ReaderViewLoopThroughParagraphOrPage)) ((XrayUI#getXrayItemsFoundInText)):
     local items = xray_rects.hits[nr]
     local paragraph_matches_count
@@ -203,47 +200,55 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
     local injected_names = {}
     local injected_nr = 0
     local more_button_added
-    local item, for_second_column
     count = #items
-    local use_second_info_column = KOR.twocolumntext:useTwoColumnDisplay(count)
-    local half_point = math_ceil(count / 2)
+    local use_second_text_column = KOR.twocolumntext:useTwoColumnDisplay(count)
+    if use_second_text_column then
+        KOR.registry:set("split_to_half_max_length", true)
+    end
     for i = 1, count do
-        for_second_column = use_second_info_column and i > half_point
-        item = items[i]
-        injected_nr, paragraph_hits_info, paragraph_hits_info2, more_button_added = self:addParagraphInfoItems(
-            items,
-            i,
-            injected_names,
-            xray_explanations,
-            skip_xray_items,
-            paragraph_headings,
-            injected_nr,
-            paragraph_hits_info,
-            paragraph_hits_info2,
-            for_second_column
+        injected_nr, more_button_added = self:addParagraphInfoItems(
+                items,
+                i,
+                injected_names,
+                xray_explanations,
+                skip_xray_items,
+                injected_nr,
+                paragraph_hits_names,
+                paragraph_hits_info
         )
         if more_button_added then
             break
         end
     end
-    if not use_second_info_column or has_no_text(paragraph_hits_info2) then
-        paragraph_hits_info2 = nil
-    end
+    paragraph_hits_names, paragraph_hits_names2 = KOR.twocolumntext:getColumnTexts(paragraph_hits_names, paragraph_hits_names2, use_second_text_column, nil, "\n")
+    paragraph_hits_info, paragraph_hits_info2 = KOR.twocolumntext:getColumnTexts(paragraph_hits_info, paragraph_hits_info2, use_second_text_column, nil, "\n\n")
     paragraph_matches_count = injected_nr
     --* correction for indentation of first line in dialog; this should not be necessary:
     paragraph_hits_info = paragraph_hits_info:gsub("^ +", "")
 
+    KOR.registry:unset("split_to_half_max_length")
+
     -- #((xray paragraph info callback))
     --* callback defined in ((set xray info for paragraphs)) > ((XrayUI#ReaderViewPopulateInfoRects)) and calls ((XrayDialogs#showUiPageInfo)):
-    xray_rects.callback(paragraph_hits_info, paragraph_hits_info2, paragraph_headings, paragraph_matches_count, self.info_extra_button_rows, paragraph_text)
+    xray_rects.callback(paragraph_hits_names, paragraph_hits_names2, paragraph_hits_info, paragraph_hits_info2, paragraph_matches_count, self.info_extra_button_rows, paragraph_text)
 end
 
-function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanations, skip_xray_items, paragraph_headings, injected_nr, paragraph_hits_info, paragraph_hits_info2, for_second_column)
+--- @private
+function XrayUI:addFirstAndLastNames(names, xray_name)
+    local parts = DX.m:splitByCommaOrSpace(xray_name, false, "skip_lowercase")
+    local pcount = #parts
+    for i = 1, pcount do
+        table_insert(names, parts[i])
+    end
+end
+
+--- @private
+function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanations, skip_xray_items, injected_nr, paragraph_hits_names, paragraph_hits_info)
     local more_button_added
 
     local name = items[i].name
     if injected_names[name] or (skip_xray_items and skip_xray_items[name]) then
-        return injected_nr, paragraph_hits_info, paragraph_hits_info2
+        return injected_nr
     end
 
     injected_names[name] = name
@@ -252,24 +257,13 @@ function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanation
     if self.info_use_upper_case_names then
         name = KOR.strings:upper(name)
     end
-    local match_block, xray_type_icon, xray_match_reliability_icon = DX.vd:generateXrayExportOrLinkedItemInfo(nil, items[i], xray_explanations[i], injected_nr)
-    if not for_second_column then
-        paragraph_hits_info = paragraph_hits_info .. match_block
-    else
-        paragraph_hits_info2 = paragraph_hits_info2 .. match_block
+    local match_block, type_icon, match_reliability_icon = DX.vd:generateXrayExportOrLinkedItemInfo(nil, items[i], xray_explanations[i], injected_nr)
+    local match_explanation = ""
+    if match_reliability_icon == KOR.icons.xray_alias_bare then
+        match_explanation = " (" .. xray_explanations[i]:match(KOR.icons.xray_alias_bare .. " (.+)$") .. ")"
     end
-
-    -- #((headings for use in TextViewer))
-    --* needles will be used in ((TextViewer#blockDown)) and  ((TextViewer#blockUp)):
-    table_insert(paragraph_headings, {
-        name = name,
-        --* in paragraph/page info popup first show icon for type of item and importance thereof, and only after that the match reliability indicator icon:
-        needle = xray_type_icon .. xray_match_reliability_icon .. " " .. name,
-        --* this label will be the button text; by using name:sub we ensure that the text will not be too long:
-        label = xray_type_icon .. xray_match_reliability_icon .. " " .. name:sub(1, 14),
-        length = match_block:len(),
-        xray_item = items[i],
-    })
+    table_insert(paragraph_hits_names, type_icon .. match_reliability_icon .. " " .. name .. match_explanation)
+    table_insert(paragraph_hits_info, match_block)
 
     more_button_added = DX.b:addTappedWordCollectionButton(self.info_extra_button_rows, nil, nil, items[i], {
         nr = injected_nr,
@@ -284,7 +278,7 @@ function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanation
         end,
     })
 
-    return injected_nr, paragraph_hits_info, paragraph_hits_info2, more_button_added
+    return injected_nr, more_button_added
 end
 
 --* called from ReaderView:
@@ -328,11 +322,21 @@ function XrayUI:ReaderViewInitParaOrPageData()
         for p = 1, para_count do
             marker_line_found = self:ReaderViewLoopThroughParagraphOrPage(p)
             if DX.s.UI_mode == "page" and marker_line_found then
+                self:updateStatusInFooter()
                 return self.xray_info_found
             end
         end
     end
+    self:updateStatusInFooter()
     return self.xray_info_found
+end
+
+--- @private
+function XrayUI:updateStatusInFooter()
+    --* for consumption in footer:
+    KOR.registry:set("xray_items_on_page_count", KOR.tables:associativeTableLength(self.hits))
+    --* force update of footer, to show correct number of current Xray items on page:
+    KOR.footer:onUpdateFooter()
 end
 
 --- @private
@@ -345,6 +349,11 @@ function XrayUI:ReaderViewSetXrayContextProps(marker, marker_width, marker_heigh
         x = x,
         y = y,
     }
+end
+
+function XrayUI:setMarkerXPosition()
+    self.screen_width = Screen:getWidth()
+    KOR.registry.half_screen_width = math_floor(self.screen_width / 2)
 end
 
 --* see ((XRAY_ITEMS)) for more info:
@@ -362,57 +371,8 @@ function XrayUI:ReaderViewLoopThroughParagraphOrPage(p)
         table_insert(self.paragraph_hits, hits)
         table_insert(self.paragraph_explanations, explanations)
         table_insert(self.skip_xray_items, skip_items)
-        local name
-        count = #hits
-        for xi = 1, count do
-            name = hits[xi].name
-            if not self.hits[name] then
-                self.hits[name] = 1
-                self.xray_info_found = true
-            end
-        end
-        --* this context table with props was set in ((set xray info for paragraphs)):
-        local c = self.xray_context_props
-        if c.bb then
-            local lines = KOR.document:getScreenBoxesFromPositions(self.paragraphs[p].pos0, self.paragraphs[p].pos1, true)
-            local lines_count = #lines
-            -- #((xray page marker set target line for icon))
-            local start = 1
-
-            -- #((set half screen width))
-            if not KOR.registry.half_screen_width then
-                self.screen_width = Screen:getWidth()
-                KOR.registry.half_screen_width = math_floor(self.screen_width / 2)
-            end
-
-            local rect, current_column, fallback_line
-            local icon_is_drawn = false
-            for l = start, lines_count do
-                current_column = self:getCurrentColumn(lines[l]["x"])
-                --* use this line if bookmark sideline icons have taken all available y positions (lines) => icons will overlap, but better that than not showing the icon at all:
-                fallback_line = not fallback_line and lines[l]
-
-                --* because xray marker lines are drawn later then bookmark highlights, tapping on them still works, even when they have an underlying bookmark highlight...
-
-                if not KOR.view.icon_y_positions[current_column][lines[l].y] then
-                    --* lines only have position and dimensions data, no text: x, y, w, h:
-                    rect = lines[l]
-                    icon_is_drawn = true
-                    break
-                end
-            end
-            if not icon_is_drawn and fallback_line then
-                rect = fallback_line
-            end
-
-            if rect then
-                local marker_rect = self:drawMarker(c, rect)
-                if marker_rect then
-                    table_insert(self.rects_with_matches, marker_rect)
-                end
-                return true
-            end
-        end
+        self:registerHits(hits)
+        return self:registerAndMarkRects(p)
     end
     return false
 end
@@ -427,13 +387,83 @@ function XrayUI:ReaderViewPopulateInfoRects()
         skip_xray_items = self.skip_xray_items,
         explanations = self.paragraph_explanations,
         rects = self.rects_with_matches,
-        --* the buttons in extra_button_rows were generated in ((TextViewer#getDefaultButtons)) > ((XrayButtons#forUiInfo)):
         --* paragraph_hits_info was generated in ((XrayUI#addParagraphInfoItems)):
-        callback = function(paragraph_hits_info, paragraph_hits_info2, extra_button_rows, paragraph_text)
+        callback = function(paragraph_names, paragraph_names2, paragraph_hits_info, paragraph_hits_info2, paragraph_text)
             --* paragraph_text only needed for debugging purposes, to ascertain we are looking at the correct paragraph:
-            DX.d:showUiPageInfo(paragraph_hits_info, paragraph_hits_info2, extra_button_rows, paragraph_text)
+            DX.d:showUiPageInfo(paragraph_names, paragraph_names2, paragraph_hits_info, paragraph_hits_info2, paragraph_text)
         end
     }
+end
+
+--- @private
+function XrayUI:registerHits(hits)
+    local name
+    count = #hits
+    for xi = 1, count do
+        name = hits[xi].name
+        if not self.hits[name] then
+            self.hits[name] = 1
+            self.xray_info_found = true
+        end
+    end
+end
+
+--- @private
+function XrayUI:registerAndMarkRects(p)
+    --* this context table with props was set in ((set xray info for paragraphs)):
+    local c = self.xray_context_props
+    if not c.bb then
+        return false
+    end
+
+    -- #((set half screen width))
+    if not KOR.registry.half_screen_width then
+        self:setMarkerXPosition()
+    end
+    local rect, icon_is_drawn, fallback_line = self:getMarkerYPosition(p)
+    if not icon_is_drawn and fallback_line then
+        rect = fallback_line
+    end
+    return self:drawMarkerIfDetermined(c, rect)
+end
+
+--- @private
+function XrayUI:drawMarkerIfDetermined(c, rect)
+    if not rect then
+        return false
+    end
+
+    --* hotfix: on Boox Page rect and xray marker were sometimes incorrectly drawn on the right half of the screen:
+    local marker_rect = self:drawMarker(c, rect)
+    if marker_rect then
+        table_insert(self.rects_with_matches, marker_rect)
+    end
+    return true
+end
+
+--- @private
+function XrayUI:getMarkerYPosition(p)
+    local lines = KOR.document:getScreenBoxesFromPositions(self.paragraphs[p].pos0, self.paragraphs[p].pos1, true)
+    local lines_count = #lines
+    -- #((xray page marker set target line for icon))
+    local start = 1
+
+    local current_column, fallback_line, rect
+    local icon_is_drawn = false
+    for l = start, lines_count do
+        current_column = self:getCurrentColumn(lines[l]["x"])
+        --* use this line if bookmark sideline icons have taken all available y positions (lines) => icons will overlap, but better that than not showing the icon at all:
+        fallback_line = not fallback_line and lines[l]
+
+        --* because xray marker lines are drawn later then bookmark highlights, tapping on them still works, even when they have an underlying bookmark highlight...
+
+        if not KOR.view.icon_y_positions[current_column][lines[l].y] then
+            --* lines only have position and dimensions data, no text: x, y, w, h:
+            rect = lines[l]
+            icon_is_drawn = true
+            return rect, icon_is_drawn, fallback_line
+        end
+    end
 end
 
 --- @private
@@ -469,6 +499,9 @@ function XrayUI:getXrayItemsFoundInText(page_or_paragraph_text, tagged_items)
         short_names = has_text(xray_item.short_names)
         xray_name = xray_item.name
         names = { xray_name }
+        if xray_name:match(" ") and DX.m:isPerson(xray_item) then
+            self:addFirstAndLastNames(names, xray_name)
+        end
         if short_names then
             parts = KOR.strings:split(short_names, ", +")
             KOR.tables:merge(names, parts)
@@ -537,12 +570,15 @@ end
 function XrayUI:matchNameInPageOrParagraph(text, lower_text, needle, hits, partial_hits, explanations, item)
     local xray_name = item.name
     local has_family_name = needle:match(" ")
+    local has_family_name_first = needle:match(",")
     local is_single_word = not has_family_name
     local is_lower_case = not xray_name:match("[A-Z]")
     local name_parts = KOR.strings:split(needle, " ")
     local family_name
     local multiple_parts_count = 0
-    if has_family_name and not is_lower_case then
+    if has_family_name_first and not is_lower_case then
+        family_name = needle:gsub(",.+", "")
+    elseif has_family_name and not is_lower_case then
         family_name = name_parts[#name_parts]
     end
 
@@ -589,6 +625,8 @@ function XrayUI:matchNameInPageOrParagraph(text, lower_text, needle, hits, parti
     if subject:match("[A-Z]") then
         subject = subject:gsub(" [a-z]+ ", " ")
     end
+    --* first remove comma for Xray items which have their family name first, separated from first name with a comma:
+    subject = subject:gsub(",", "")
     local mparts = matcher and KOR.strings:split(subject, " ")
     local match_found, left_side_match_found, right_side_match_found = false, false, false
     local matching_parts = ""
@@ -633,18 +671,6 @@ function XrayUI:matchNameInPageOrParagraph(text, lower_text, needle, hits, parti
         item.reliability_indicator = match_reliability_indicator
     end
     return match_found, multiple_parts_count
-end
-
---- @private
---- @param textviewer TextViewer
-function XrayUI:onInfoPopupLoadShowToc(textviewer, headings)
-    KOR.registry:unset("toc_info_button_injected")
-    --* only show the toc automatically when there are more than 2 xray items:
-    if has_items(DX.s.UI_auto_toc_for_buttons_count) and #headings >= DX.s.UI_auto_toc_for_buttons_count then
-        -- #((call TextViewer TOC))
-        --* call ((TextViewer#init)) > ((TextViewer execute after load callback)) > current method > ((TextViewer#showToc)) after a short delay:
-        textviewer:showToc()
-    end
 end
 
 function XrayUI:ReaderHighlightGenerateXrayInformation(pos, mode)

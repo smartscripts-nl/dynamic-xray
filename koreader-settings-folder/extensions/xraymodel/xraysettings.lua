@@ -33,6 +33,11 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
             type = "number",
         },
+        enable_global_DX_tips = {
+            value = true,
+            explanation = _("If true, in the top left of several DX dialogs a lightbulb icon will be shown, with which the user can call general usage tips for DX."),
+            locked = 0,
+        },
         hk_add_item = {
             value = "A",
             explanation = _("To add a new Xray item, in the Item Viewer, the Items List or the Page Navigator.") .. hotkeys_warning,
@@ -113,6 +118,11 @@ local XraySettings = WidgetContainer:new{
             explanation = _("To view the details of the current item in the Items List or in the Page Navigator.") .. hotkeys_warning,
             locked = 0,
         },
+        icons_dont_force_ratio = {
+            value = true,
+            explanation = _("Set this to true if your e-reader has problems displaying the DX icons. Hopefully this fixes that problem."),
+            locked = 0,
+        },
         is_android = {
             value = false,
             explanation = _("This variabele triggers a number of default settings for Android devices."),
@@ -131,6 +141,11 @@ local XraySettings = WidgetContainer:new{
         is_ubuntu = {
             value = false,
             explanation = _("This variables enables a number of default settings for KOReader onder Ubuntu, e.g. that the user can close some dialogs with ESC."),
+            locked = 0,
+        },
+        IL_show_xray_icon_in_title = {
+            value = true,
+            explanation = _("When you set this to false, the Xray icon in the title of the Items List will be hidden."),
             locked = 0,
         },
         IV_font_size = {
@@ -156,6 +171,18 @@ local XraySettings = WidgetContainer:new{
             value = true,
             explanation = _("This variable determines whether a chapter-occurrences-histogram will be shown in the Item Viewer tabs (or not)."),
             locked = 0,
+        },
+        night_mode_color = {
+            value = 0,
+            explanation = _("This settings determines which color will be used for displaying several UI elements IN NIGHT MODE. Valid values: 0 - 5. 0 = white, 5 = a lighter grade of white."),
+            locked = 0,
+            validator = {
+                name = "night_mode_color",
+                min_value = 0,
+                max_value = 5,
+                default_value = 0,
+                value_step = 1,
+            },
         },
         PN_infopanel_meta_indent = {
             value = 10,
@@ -257,12 +284,6 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
             after_change_callback = "set_tab_buttons_font_size",
         },
-        UI_auto_toc_for_buttons_count = {
-            value = 5,
-            explanation = _("This setting determines whether the XrayUI page info popup should automatically show the index popup. If the count of Xray items in the popup is at least equal to the value of this setting, it will automatically be shown with the dialog. Set this setting to zero, to disable automatic display."),
-            type = "number",
-            locked = 0,
-        },
         UI_mode = {
             value = "page",
             options = { "page", "paragraph" },
@@ -326,6 +347,9 @@ local XraySettings = WidgetContainer:new{
             --* so we immediately will see the new indentation:
             DX.pn:resetCache("do_limited_refresh")
             return type(value) == "number" and value >= 4 and value <= 14 or _("a valid value should lie between 4 and 14") .. KOR.strings.ellipsis
+        end,
+        night_mode_color = function(value)
+            return type(value) == "number" and value >= 0 and value <= 5 or _("a valid value should lie between 0 and 5") .. KOR.strings.ellipsis
         end,
     },
 }

@@ -18,6 +18,8 @@ local FrameContainer = require("extensions/widgets/container/framecontainer")
 local Geom = require("ui/geometry")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local HorizontalSpan = require("ui/widget/horizontalspan")
+local IconWidget = require("ui/widget/iconwidget")
+local IconWidgetInverted = require("extensions/widgets/iconwidgetinverted")
 local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")
 local OverlapGroup = require("ui/widget/overlapgroup")
@@ -30,7 +32,6 @@ local VerticalGroup = require("ui/widget/verticalgroup")
 local VerticalSpan = require("ui/widget/verticalspan")
 local Screen = Device.screen
 
-local DX = DX
 local G_reader_settings = G_reader_settings
 local math = math
 local math_floor = math.floor
@@ -39,6 +40,8 @@ local math_min = math.min
 local pairs = pairs
 local table_insert = table.insert
 local type = type
+
+local DGENERIC_ICON_SIZE = math_floor(G_defaults:readSetting("DGENERIC_ICON_SIZE") * 0.6)
 
 --- @class TitleBar
 local TitleBar = OverlapGroup:extend{
@@ -104,6 +107,9 @@ local TitleBar = OverlapGroup:extend{
     has_only_close_button = false,
     for_collection = false,
 
+    title_icon = nil,
+    title_icon_widget = nil,
+
     --- for FileChooser, a subclass of Menu, its no_title prop will be set to true, because FileManager already provided a TitleBar:
     for_filemanager = false,
 
@@ -135,6 +141,7 @@ local TitleBar = OverlapGroup:extend{
     tab_buttons_left_top_padding = nil,
 
     titlebar_inverted = false,
+    inverted_background_color = KOR.colors.background_inverted,
 
     --* dynamically set in ((TitleBar#setWidgetProps)):
     is_landscape_screen = true,
@@ -170,7 +177,7 @@ function TitleBar:init()
     end
 
     self:injectMainContainer()
-    self:injectBottomLineAndOrSubmenuButtonTable()
+    self:injectFillerAndBottomLine()
     --* ((InputDialog)): description line above a field :
     self:injectSubTitle()
     self:setDims()
@@ -248,7 +255,7 @@ function TitleBar:injectMainContainer()
     if self.titlebar_inverted then
         self.main_container = FrameContainer:new {
             bordersize = 0,
-            background = KOR.colors.background_inverted,
+            background = self.inverted_background_color,
             focus_border_color = KOR.colors.white,
             self.main_container,
         }
@@ -364,6 +371,7 @@ function TitleBar:getAdaptedTopButton(button)
             callback = button.callback,
             hold_callback = button.hold_callback,
             info_callback = button.info_callback,
+            generate_inverted_icon = self.titlebar_inverted,
             allow_flash = G_reader_settings:isNilOrFalse("night_mode"),
             show_parent = self.show_parent,
             for_titlebar = true,
@@ -378,6 +386,7 @@ function TitleBar:getAdaptedTopButton(button)
             callback = button.callback,
             hold_callback = button.hold_callback,
             info_callback = button.info_callback,
+            generate_inverted_icon = self.titlebar_inverted,
             allow_flash = not G_reader_settings:isTrue("night_mode"),
             show_parent = self.show_parent,
             for_titlebar = true,
@@ -463,14 +472,32 @@ function TitleBar:injectTitleIntoMainContainer()
     end
     --* for align == "left" we need width correction, to make sure the titlebar doesnot overlap the right title bar border:
     local adapted_width = width
+    local title_icon_width = 0
+    if self.title_icon then
+        self.title_icon_widget = self.title_icon:match("inverted") and
+        IconWidgetInverted:new{
+            icon = self.title_icon,
+            icon_rotation_angle = 0,
+            icon_height = DGENERIC_ICON_SIZE,
+            icon_width = DGENERIC_ICON_SIZE,
+        }
+        or
+        IconWidget:new{
+            icon = self.title_icon,
+            icon_rotation_angle = 0,
+            icon_height = DGENERIC_ICON_SIZE,
+            icon_width = DGENERIC_ICON_SIZE,
+        }
+        title_icon_width = DGENERIC_ICON_SIZE
+    end
     if self.title_multilines and self.align ~= "left" then
         self.title_widget = TextBoxWidget:new{
             text = self.title,
-            bgcolor = self.titlebar_inverted and KOR.colors.background_inverted or KOR.colors.white,
+            bgcolor = self.titlebar_inverted and self.inverted_background_color or KOR.colors.white,
             fgcolor = self.titlebar_inverted and KOR.colors.white or KOR.colors.black,
             alignment = self.align,
             --* for Xray edit dialog we need self.corrected_title_width to get title centered; see ((TitleBar#computeCorrectedTitleWidth)) > ((corrected title width for Xray edit dialog)):
-            width = self.corrected_title_width or width,
+            width = self.corrected_title_width - title_icon_width or width - title_icon_width,
             face = title_face,
             lang = self.lang,
             bordersize = 0,
@@ -480,19 +507,19 @@ function TitleBar:injectTitleIntoMainContainer()
             self.title_widget = TextWidget:new{
                 text = self.title,
                 face = title_face,
-                bgcolor = self.titlebar_inverted and KOR.colors.background_inverted or KOR.colors.white,
+                bgcolor = self.titlebar_inverted and self.inverted_background_color or KOR.colors.white,
                 fgcolor = self.titlebar_inverted and KOR.colors.white or KOR.colors.black,
                 padding = 0,
                 alignment = self.align,
                 lang = self.lang,
                 --* truncate if not self.title_shrink_font_to_fit:
-                max_width = not self.title_shrink_font_to_fit and title_max_width,
+                max_width = not self.title_shrink_font_to_fit and title_max_width - title_icon_width,
             }
             adapted_width = self.title_widget:getWidth()
             if not self.title_shrink_font_to_fit then
                 break --* truncation allowed, no loop needed
             end
-            if adapted_width < title_max_width then
+            if adapted_width - title_icon_width < title_max_width then
                 break --* text with normal font fits, no loop needed
             end
             --* Text doesn't fit
@@ -522,6 +549,13 @@ function TitleBar:injectTitleIntoMainContainer()
             self.title_widget:free(true)
             title_face = Font:getFace(title_face.orig_font, title_face.orig_size - 1)
         end --* end of loop
+    end
+
+    if self.title_icon_widget then
+        self.title_widget = HorizontalGroup:new {
+            self.title_icon_widget,
+            self.title_widget,
+        }
     end
 
     self.subtitle_widget = nil
@@ -724,10 +758,10 @@ function TitleBar:addCloseButton()
 
     self.top_buttons_right = {
         Button:new({
-            icon = "close",
+            icon = self.titlebar_inverted and "close-inverted" or "close",
             icon_height = icon_height,
             icon_width = icon_height,
-            background = self.titlebar_inverted and KOR.colors.background_inverted or KOR.colors.white,
+            background = self.titlebar_inverted and self.inverted_background_color or KOR.colors.white,
             generate_inverted_icon = self.titlebar_inverted,
             --[[text = "x",
             text_font_size = 14,
@@ -816,15 +850,12 @@ function TitleBar:addCloseButtonRightSpacer()
 end
 
 --- @private
-function TitleBar:injectBottomLineAndOrSubmenuButtonTable()
-    if self.with_bottom_line or self.submenu_buttontable then
+function TitleBar:injectFillerAndBottomLine()
+    if self.with_bottom_line or self.submenu_buttontable or self.tabs_table_buttons then
 
         local width = self.is_popout_dialog and self.width - 2 * Size.line.thick or self.width
 
         local background = self.submenu_buttontable and KOR.colors.title_bar_with_submenu_bottom_line or KOR.colors.title_bar_bottom_line
-        if self.titlebar_inverted then
-            background = KOR.colors.white
-        end
         local line_widget = LineWidget:new{
             dimen = Geom:new{ w = width, h = self.bottom_line_thickness },
             background = background,
@@ -1005,7 +1036,8 @@ function TitleBar:addVerticalSpacers()
 
     self.computed_titlebar_height = self.tab_buttons_left and max_height + Screen:scaleBySize(4) or max_height + Screen:scaleBySize(7)
 
-    local difference = self.computed_titlebar_height - title_height
+    --? for some reason the spacing is ugly when an inverted title bar is used (e.g. to indicate that items are to be selected), so for that case set to zero:
+    local difference = self.titlebar_inverted and 0 or self.computed_titlebar_height - title_height
     local spacer_height = math_floor(difference / 2)
     local config
     if highest_elem == "title" then

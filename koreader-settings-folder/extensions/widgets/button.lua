@@ -36,14 +36,13 @@ local TextBoxWidget = require("extensions/widgets/textboxwidget")
 local TextWidget = require("extensions/widgets/textwidget")
 local UIManager = require("ui/uimanager")
 local _ = require("gettext")
-local tr = KOR:initCustomTranslations()
 local Screen = Device.screen
 local logger = require("logger")
 
 local DX = DX
 local G_defaults = G_defaults
 local G_reader_settings = G_reader_settings
-local math = math
+local math_floor = math.floor
 local table = table
 local table_insert = table.insert
 local tostring = tostring
@@ -177,9 +176,13 @@ end
 
 --- @private
 function Button:computeFixedIconDims()
+    if DX.s.icons_dont_force_ratio then
+        return
+    end
+
     --* don't use forced icon dimensions on Bigme, because otherwise some icons then blackened:
     if self.icon_size_ratio_forced and not DX.s.is_mobile_device then
-        local fixed_icon_height = math.floor(DGENERIC_ICON_SIZE * self.icon_size_ratio_forced)
+        local fixed_icon_height = math_floor(DGENERIC_ICON_SIZE * self.icon_size_ratio_forced)
         self.icon_height = fixed_icon_height
         self.icon_width = fixed_icon_height
 
@@ -217,14 +220,6 @@ function Button:setBasicButtonProps()
     --* to prevent errors in the match in the next code block when self.text is delivered as a number:
     if self.text then
         self.text = tostring(self.text)
-    end
-    -- #((hotfix for bold "edit" and "jump" buttons for xray items in page info TOC popup))
-    --! hotfix for the Xray "jump" and "edit" buttons which are shown when the user longpresses a xray item in the Page/Paragraph Info TOC popup:
-    if self.text and (self.text:match(tr("edit") .. "$") or self.text:match(tr("jump") .. "$")) then
-        self.text_font_bold = true
-        self.font_bold = true
-        --* for consumption in ((Button#generateTextLabel)): edit and jump buttons will have bigger font size than the regular xray item buttons in the xray TOC longpress dialog:
-        self.is_bigger_xray_item = true
     end
 
     if self.readonly and self.readonly_inverted then
@@ -920,13 +915,11 @@ end
 function Button:generateTextLabel(label)
     --* when is_icon_text prop == true: for texticon_text labels the first text is an icon and must have a fixed, lighter color and not be bold:
     local label_color = not label.is_icon_text and label.label_color or KOR.colors.button_label
+    if self.generate_inverted_icon then
+        label_color = KOR.colors.white
+    end
     local is_bold = not label.is_icon_text and self.text_font_bold or false
     local font_size = (self.text_font_size or not label.is_icon_text) and self.text_font_size or self.text_font_size * 1.15
-
-    --* first var might be set in ((hotfix for bold "edit" and "jump" buttons for xray items in page info TOC popup)):
-    if not self.is_bigger_xray_item and KOR.registry:get("xray_toc_dialog_shown") then
-        font_size = 17
-    end
 
     -- #((mark active tab bold))
     --* ((TabFactory#setTabButtonAndContent)) can set this prop:
@@ -964,23 +957,28 @@ function Button:generateTextLabel(label)
     if self.button_lines > 2 then
         self.reference_height = self.reference_height * (self.button_lines + 1) / 2
     end
-    self:doTruncationTweaks(label_widget, label, label_color, is_bold)
+    label_widget = self:doTruncationTweaks(label_widget, label, label_color, is_bold)
 
     return label_widget, _min_needed_width
 end
 
 --- @private
 function Button:doTruncationTweaks(label_widget, label, label_color, is_bold)
+    if not self.avoid_text_truncation then
+        self.did_truncation_tweaks = true
+        return label_widget
+    end
     self.did_truncation_tweaks = false
-    if self.avoid_text_truncation and label_widget.face.orig_size and label_widget:isTruncated() then
+    if label_widget.face.orig_size and label_widget:isTruncated() then
         self.did_truncation_tweaks = true
         local font_size_2_lines = TextBoxWidget:getFontSizeToFitHeight(self.reference_height, self.button_lines, 0)
+        local new_size
         while label_widget:isTruncated() do
-            local new_size = label_widget.face.orig_size - 1
+            new_size = label_widget.face.orig_size - 1
             if new_size <= font_size_2_lines then
                 --* Switch to a 2-lines TextBoxWidget
                 label_widget:free(true)
-                label_widget = TextBoxWidget:new {
+                label_widget = TextBoxWidget:new{
                     text = label.text,
                     lang = self.lang,
                     line_height = 0,
@@ -1005,7 +1003,8 @@ function Button:doTruncationTweaks(label_widget, label, label_color, is_bold)
                 break
             end
             label_widget:free(true)
-            label_widget = TextWidget:new {
+            --! this MUST be a TextWidget, not a TextBoxWidget, because we need ((TextWidget#isTruncated)):
+            label_widget = TextWidget:new{
                 text = label.text,
                 lang = self.lang,
                 padding = 0,
@@ -1016,6 +1015,7 @@ function Button:doTruncationTweaks(label_widget, label, label_color, is_bold)
             }
         end
     end
+    return label_widget
 end
 
 function Button:setIconSizeRatioIfNeeded()

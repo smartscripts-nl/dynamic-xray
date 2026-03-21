@@ -514,7 +514,9 @@ function MultiInputDialog:getDescription(field, field_config, width)
             -- #((focus field upon click on info label))
             self:onSwitchFocus(field)
                 --* info_popup_title and info_popup_text e.g. defined in ((XrayFormsData#getFormFields)):
-            KOR.dialogs:niceAlert(field_config.info_popup_title, field_config.info_popup_text)
+            KOR.dialogs:niceAlert(field_config.info_popup_title, field_config.info_popup_text, {
+                width = width,
+            })
         end,
     }
     or

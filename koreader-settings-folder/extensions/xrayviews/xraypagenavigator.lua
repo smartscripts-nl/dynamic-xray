@@ -371,7 +371,7 @@ function XrayPageNavigator:getTaggedItems()
     if not self.navigation_tag then
         return nil
     end
-    local ids = DX.m.tags_relational[self.navigation_tag]
+    local ids = DX.m.tags_associative[self.navigation_tag]
     local tagged_items = {}
     count = #ids
     for i = 1, count do

@@ -52,6 +52,9 @@ function has_no_text(var)
 end
 
 function has_items(table_or_count)
+    if table_or_count == nil then
+        return false
+    end
     if type(table_or_count) == "number" and table_or_count > 0 then
         return true
     end

@@ -2,7 +2,7 @@
 --[[--
 This is the controller for the Dynamic Xray plugin. It has been structured in kind of a MVC structure:
 M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((XrayFormsData)), ((XraySettings)), ((XrayTappedWords)) and ((XrayViewsData))
-V = ((XrayUI)), ((XrayPageNavigator)) and ((XrayCallbacks)) and ((XrayPages)) and ((XraySidePanels)) and ((XrayInfoPanel)) and ((XrayOccurrencesHistogram)), ((XrayTranslations)) and ((XrayTranslationsManager)), ((XrayDialogs)) and ((XrayButtons)) and ((XrayQuotes)), ((XrayCallbacks)), ((XrayInformation))
+V = ((XrayUI)), ((XrayPageNavigator)) and ((XrayCallbacks)) and ((XrayPages)) and ((XraySidePanels)) and ((XrayInfoPanel)) and ((XrayOccurrencesHistogram)), ((XrayTranslations)) and ((XrayTranslationsManager)), ((XrayDialogs)) and ((XrayButtons)) and ((XrayQuotes)) and ((XrayTags)), ((XrayCallbacks)), ((XrayInformation))
 C = ((XrayController))
 
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database. XrayTappedWords handles data requests resulting from users longpressing (partial) names of Xray items in the e-book text.
@@ -19,6 +19,9 @@ The views layer has three main streams:
 5) DX has a ((SeriesManager)) for listing the books in a series. The items in this Manager have action buttons, for viewing large covers, descriptions, opening the e-book, etc. The user can also edit the metadata of ebooks from the Manager: authors, titles, series name, series index, page count, publication year, book description. The Manager uses ((Dialogs#filesBox)) > ((FilesBox)) to generate its dialog. The user can call it by tapping on the series manager icon in some DX dialogs, or by pressing Shift+M.
 6) Thanks to ((XrayQuotes)) the user can add quotes from the ebook to the Xray item, for display in a tab "Quotes" in the Xray Item Viewer. So the user has important quotes at hand quickly. The quotes can be added to the item (selected from a popup with al list of all items) via the ReaderHighlight popup shown after text selection in the ebook.
 7) Through Page Navigator you can quickly reference a glossary for the current ebook through the hotkey Shift+G (or the gesture "Show/add glossary for current book"). If a glossary hasn't been defined yet, this same hotkey or gesture will lead the user to a dialog from which to start the import of the ebook glossary into Page Navigator by marking its boundaries in the ebook text.
+8) The Items List has a checkbox-button in the top left corner to select multiple items and to assign a tag to all those items in one fell swoop (or remove that tag for items which already had it). See ((XrayTags#toggleItemsForTagsSelection)) > ((XrayTags#initiateItemTagsSelection)) > ((XrayTags#addTagsToItems)) > ((XrayDataSaver#storeItemsTags)), and images 3b... and 3c... in the README. The tag-groups created in this way can be viewed in the 4th tab of the Xray Exporter.
+    Tag-groups can be very handy to e.g. see all persons/terms belonging to one party in a conflict together, or to group logically linked concepts together.
+
 
 The user will have the most Kindle-like experience when he/she opens the Page Navigator - see ((XrayController#onShowPageNavigator)). In this navigator all Xray items in a page will be marked bold and they will be mentioned in a side panel. Tapping on items in the side panel will put an explanation of that item in the bottom panel. You can even filter the content of the Navigator for a specific Xray item, so it will only show pages which contain that item.
 
@@ -89,7 +92,7 @@ viewer: ((XrayButtons#forItemViewer))
 
 --* NAVIGATING THROUGH RELATED ITEMS SHOWN IN A POPUP BUTTONDIALOG UPON LONGPRESSING ON A WORD IN THE READER
 
-((XrayButtons#forItemsCollectionPopup)) > ((XrayTappedWords#itemsRegister)) > click on a button in the popup > triggers ((related item button callback)) > ((XrayDialogs#viewTappedWordItem)) (like Item Viewer ((XrayDialogs#showItemViewer)) for normal items, but now specifically and only for related items).
+((XrayButtons#forItemsCollectionPopup)) > ((XrayTappedWords#itemsRegister)) > click on a button in the popup > triggers ((related item button callback)) > ((XrayDialogs#viewTappedWordItem)) (like Item Viewer ((XrayDialogs#viewItem)) for normal items, but now specifically and only for related items).
 
 When navigating through the items ((XrayDialogs#viewNextTappedWordItem)) or ((XrayDialogs#viewPreviousTappedWordItem)) are called, either triggered with a button or by a key event.
 
@@ -103,6 +106,7 @@ For a key event e.g.: ((next related item via hotkey))
 
 local require = require
 
+local Blitbuffer = require("ffi/blitbuffer")
 local Dispatcher = require("dispatcher")
 local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
@@ -110,6 +114,7 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 require("extensions/helperfunctions")
 local _ = KOR:initCustomTranslations()
 
+local G_reader_settings = G_reader_settings
 local has_no_text = has_no_text
 local pairs = pairs
 
@@ -136,6 +141,7 @@ KOR:initBaseExtensions()
 --- @field s XraySettings
 --- @field sp XraySidePanels
 --- @field t XrayTranslations
+--- @field ta XrayTags
 --- @field tm XrayTranslationsManager
 --- @field tw XrayTappedWords
 --- @field vd XrayViewsData
@@ -177,6 +183,8 @@ DX = {
     sp = nil,
     --* shorthand notation for Translations; this module will be initialized in ((XrayModel#initDataHandlers)):
     t = nil,
+    --* shorthand notation for Tags; this module will be initialized in ((KOR#initDX)):
+    ta = nil,
     --* shorthand notation for TranslationsManager; this module will be initialized in ((KOR#initDX)):
     tm = nil,
     --* shorthand notation for TappedWords; this module will be initialized in ((XrayModel#initDataHandlers)):
@@ -231,7 +239,8 @@ function XrayController:onDispatcherRegisterActions()
     Dispatcher:registerAction("add_xray_item", { category = "none", event = "AddNewXrayItem", title = DX.d:getControllerEntryName("Add an Xray item"), reader = true })
     Dispatcher:registerAction("show_series_manager", { category = "none", event = "ShowSeriesManager", title = _("Show Series Manager"), reader = true })
     Dispatcher:registerAction("show_series_manager_current_ebook", { category = "none", event = "ShowCurrentSeries", title = _("Show series and/or metadata for current e-book"), reader = true })
-    Dispatcher:registerAction("show_book_glossary", { category = "none", event = "ShowCurrentBookGlossary", title = "Show/add glossary for current book", reader = true })
+    Dispatcher:registerAction("show_book_glossary", { category = "none", event = "ShowCurrentBookGlossary", title = _("Show/add glossary for current book"), reader = true })
+    Dispatcher:registerAction("show_tag_group_selector", { category = "none", event = "ShowTagGroupSelector", title = _("Show the Xray tag-group selector"), reader = true })
 end
 
 function XrayController:doBatchImport(conn, stmt, count, callback)
@@ -276,7 +285,7 @@ function XrayController:listHasReloadOrDontShowRequest(focus_item, dont_show)
         return true
     end
 
-    --* dont_show can be set to true via ((XrayDialogs#showItemViewer)), when looking up an XrayItem from ReaderHighlight, when XrayController list had not been shown yet:
+    --* dont_show can be set to true via ((XrayDialogs#viewItem)), when looking up an XrayItem from ReaderHighlight, when XrayController list had not been shown yet:
     return dont_show
 end
 
@@ -303,6 +312,11 @@ end
 
 function XrayController:onShowCurrentSeries()
     KOR.seriesmanager:showContextDialogForCurrentEbook()
+    return true
+end
+
+function XrayController:onShowTagGroupSelector()
+    DX.ta:showTagGroupSelector()
     return true
 end
 
@@ -462,13 +476,11 @@ function XrayController:onShowEditItemForm(needle_item, reload_manager, active_f
     DX.vd:resetAllFilters()
 
     KOR.registry:set("edit_item", KOR.tables:shallowCopy(needle_item))
+    --! we need this to ensure updated item id will be remembered and item saved, in ((XrayFormsData#storeItemUpdates)) > ((XrayFormsData#reAttachViewerItemId)):
+    KOR.registry:set("edit_item_id", needle_item.id)
 
     local m_item, item_copy = DX.fd:initEditFormProps(needle_item, reload_manager, active_form_tab)
 
-    --! hotfix to prevent crash when an edit item request was done (after holding an xray item and choosing "edit") from the page/paragraph toc index popup; see ((TextViewer#getTocIndexButton)) > ((edit xray item from toc popup)):
-    if not needle_item.idx then
-        needle_item.idx = needle_item.index
-    end
     DX.d:showEditItemForm({
         active_form_tab = active_form_tab,
         item = m_item,
@@ -481,7 +493,7 @@ function XrayController:showListConditionally(focus_item, show_list)
 
     --* this prop can be set in ((XrayButtons#forItemViewer)) > ((enable return to viewer)), when the user opens an add or edit form:
     if self.return_to_viewer then
-        DX.d:showItemViewer(focus_item)
+        DX.d:viewItem(focus_item)
         return
     end
 
@@ -499,6 +511,38 @@ end
 function XrayController:showPageNavigator()
     local current_epage = DX.u:getCurrentPage()
     DX.pn:showNavigator(current_epage)
+end
+
+function XrayController:showQuotesManager()
+    DX.d:closeItemViewer()
+    local name = DX.d.current_viewer_item.name
+    local quotes = DX.dl.getQuotesForItemByName(name)
+    KOR.itemsmanager:showList({
+        list_title = _("Manage quotes"),
+        edit_title = _("Edit quote"),
+        view_title = _("Quote"),
+        list_footer_buttons_left = {
+            KOR.buttoninfopopup:forXrayItemViewer({
+                info = _("eye icon | Return to Xray item to which these quotes belong."),
+                callback_label = _("show"),
+                callback = function()
+                    KOR.itemsmanager:closeDialogs()
+                    --* for consumption in ((XrayDialogs#showItemViewer)):
+                    KOR.registry:set("active_tab", 4)
+                    DX.d:viewItem(DX.d.current_viewer_item)
+                end,
+            }),
+        },
+        items = quotes,
+        delete_callback = function(item_no, id)
+            DX.q:quoteDelete(item_no, id, DX.d.current_viewer_item)
+            KOR.messages:notify(_("quote deleted"))
+        end,
+        save_callback = function(item_no, id, value)
+            DX.q:quoteUpdate(item_no, id, value, DX.d.current_viewer_item)
+            KOR.messages:notify(_("quote updated"))
+        end,
+    })
 end
 
 --- @param mode string "series" or "book"
@@ -527,7 +571,7 @@ function XrayController:guardIsExistingItem(needle_name)
     local already_existing_item = DX.tw:itemExists(needle_name, nil, "is_exists_check")
     if already_existing_item then
         DX.d:setActionResultMessage(DX.d:getControllerEntryName("an xray item with this name already exists..."))
-        DX.d:showItemViewer(already_existing_item)
+        DX.d:viewItem(already_existing_item)
         return true
     end
 end
@@ -614,6 +658,7 @@ function XrayController:resetDynamicXray(is_prepared, do_full_update)
         KOR.document:resetParagraphsCache()
         DX.p:resetCache()
     end
+    self:setNightModeColors()
     --* to force a refresh of the texts in the bottom info panel:
     DX.sp:resetInfoTexts()
     DX.ip:resetProps()
@@ -627,7 +672,10 @@ function XrayController:resetDynamicXray(is_prepared, do_full_update)
         DX.ex = require("extensions/xrayviews/xrayexporter")
     end
     DX.ex:resetCache()
+    DX.ta:resetTagGroups()
     DX.vd:resetAllFilters()
+    --* to reset Xray marker x-position upon screen rotation:
+    DX.u:setMarkerXPosition()
     --* e.g. when current method called after saving an item from a form:
     if is_prepared or not do_full_update then
         return
@@ -637,6 +685,45 @@ function XrayController:resetDynamicXray(is_prepared, do_full_update)
     --* make data available for display of xray items on page or in paragraphs:
     DX.vd.initData(true, false, full_path)
     DX.vd.prepareData()
+end
+
+function XrayController:setNightModeColors()
+
+    local day_colors = {
+        button_label = Blitbuffer.COLOR_GRAY_3,
+
+        darker_indicator_color = Blitbuffer.COLOR_GRAY_7,
+        lighter_indicator_color = Blitbuffer.COLOR_GRAY_7,
+        lighter_indicator_hold_color = Blitbuffer.COLOR_GRAY_7,
+
+        lighter_text = Blitbuffer.COLOR_GRAY_3,
+
+        line_separator = Blitbuffer.COLOR_GRAY_9,
+        menu_line = Blitbuffer.COLOR_DARK_GRAY,
+        separator_vertical_color = Blitbuffer.COLOR_GRAY,
+        tabs_table_separators = Blitbuffer.COLOR_GRAY,
+
+        title_bar_bottom_line = Blitbuffer.COLOR_GRAY,
+        title_bar_with_submenu_bottom_line = Blitbuffer.COLOR_GRAY_9,
+        title_bar_bottom_line_light = Blitbuffer.COLOR_LIGHT_GRAY,
+
+        xray_item_status_indicators_color = Blitbuffer.COLOR_GRAY_5,
+        xray_page_or_paragraph_match_marker = Blitbuffer.COLOR_GRAY_9,
+    }
+    if G_reader_settings:isFalse("night_mode") then
+        for entry, color in pairs(day_colors) do
+            KOR.colors[entry] = color
+        end
+        return
+    end
+
+    local inverted = Blitbuffer.COLOR_BLACK
+    if DX.s.night_mode_color > 0 and DX.s.night_mode_color <= 5 then
+        inverted = Blitbuffer["COLOR_GRAY_" .. DX.s.night_mode_color]
+    end
+    for entry in pairs(day_colors) do
+        KOR.colors[entry] = inverted
+    end
 end
 
 function XrayController:setProp(prop, value)

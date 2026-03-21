@@ -48,6 +48,28 @@ local XrayButtons = WidgetContainer:new{
     xray_type_chooser = nil,
 }
 
+--* this button is added to the general tag-group selector, for exploring the items of a tag-group, in ((XrayButtons#forTagGroupsSelector)), and to the select-tag-filter popup of Xray Page Navigator, in ((XrayTags#showTagFilterSelector)):
+--- @param parent XrayTags
+function XrayButtons:addXrayTagGroupAddButton(buttons, buttons_per_row, parent, dialog_index)
+    local add_button = KOR.buttoninfopopup:forXrayTagGroupAdd({
+        callback = function()
+            UIManager:close(parent[dialog_index])
+            --* to disable hotkeys which are active with loaded PageNavigator:
+            DX.pn:closePageNavigator()
+            UIManager:forceRePaint()
+            parent.select_for_tags = true
+            DX.ta:addTagGroup()
+        end,
+    })
+    local last_row = #buttons
+    if last_row < buttons_per_row then
+        table_insert(buttons[last_row], add_button)
+    else
+        --* insert into new row:
+        table_insert(buttons, { add_button })
+    end
+end
+
 --[[
 Props needed when you want to add a more button:
 
@@ -215,14 +237,17 @@ function XrayButtons:forPageNavigator(parent)
                 return DX.cb:execShowPopupButtonsCallback(parent)
             end
         }),
-        KOR.buttoninfopopup:forXrayPageNavigatorShowTagsDialogForPN({
+        KOR.buttonchoicepopup:forXrayPageNavigatorShowTagsDialog({
             generate_active_icon = DX.pn.navigation_tag,
             callback = function()
                 if DX.pn.navigation_tag then
                     DX.pn:betweenTagsNavigationDisable()
                     return
                 end
-                DX.d:showTagSelector("page_navigator")
+                DX.ta:showTagFilterSelector("page_navigator")
+            end,
+            hold_callback = function()
+                DX.ta:showTagGroupSelector()
             end,
         }),
         KOR.buttoninfopopup:forXrayViewer({
@@ -358,12 +383,7 @@ end
 
 --- @param parent XrayPageNavigator
 function XrayButtons:forPageNavigatorTopLeft(parent)
-    return {
-        KOR.buttoninfopopup:forXrayTips({
-            callback = function()
-                return DX.i:showGeneralDXTips(parent)
-            end,
-        }),
+    local buttons = {
         {
             icon = "info-slender",
             callback = function()
@@ -385,49 +405,46 @@ function XrayButtons:forPageNavigatorTopLeft(parent)
             end
         }),
     }
+    self:insertGeneralDXTipsButton(buttons, parent)
+
+    return buttons
 end
 
---* additional buttons can be inserted via ((TextViewer#initButtons)), when it is configurated with optional props extra_button, extra_button2 and extra_button3:
---* these additional buttons for the current dialog are defined in ((inject xray list buttons)):
-function XrayButtons:forUiInfo(parent, buttons)
-    -- #((TextViewer toc button))
-    --* the items for this and the next two buttons were generated in ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((headings for use in TextViewer)):
-    --* compare the buttons for Xray items list as injected in ((inject xray list buttons)):
-
-    --! upon a tap on a button these routines are executed: ((Xray page hits TOC search routine)) > ((TextViewer#findCallback)) > ((XrayModel#removeMatchReliabilityIndicators))
-
-    table_insert(buttons, 1, KOR.buttoninfopopup:forXrayItemsIndex({
-        callback = function()
-            parent:showToc()
-        end,
-    }))
-    table_insert(buttons, 2, KOR.buttoninfopopup:forXrayPreviousItem({
-        id = "previ",
-        callback = function()
-            parent:blockUp()
-        end,
-    }))
-    table_insert(buttons, 3, KOR.buttoninfopopup:forXrayNextItem({
-        id = "nexti",
-        callback = function()
-            parent:blockDown()
-        end,
-    }))
-    table_insert(buttons, 2, KOR.buttoninfopopup:forXrayPageNavigator({
-        callback = function()
-            DX.pn:showNavigator()
-        end,
-    }))
+function XrayButtons:forUiInfoAdditionalButtons(config, parent)
+    config.extra_buttons = {
+        KOR.buttoninfopopup:forXrayShowMatchReliabilityExplanation({
+            icon_size_ratio = 0.58,
+        }),
+        KOR.buttoninfopopup:forXrayList({
+            fgcolor = KOR.colors.button_label,
+            callback = function()
+                UIManager:close(parent.xray_ui_info_dialog)
+                parent.xray_ui_info_dialog = nil
+                parent:showList()
+            end
+        }),
+        KOR.buttoninfopopup:forXrayPageNavigator({
+            callback = function()
+                DX.pn:showNavigator()
+            end,
+        }),
+        KOR.buttoninfopopup:forXrayTagGroupSelector({
+            callback = function()
+                DX.ta:showTagGroupSelector()
+            end
+        }),
+        KOR.buttoninfopopup:forXrayExport({
+            callback = function()
+                UIManager:close(parent.xray_ui_info_dialog)
+                return DX.cb:execExportXrayItemsCallback()
+            end
+        }),
+    }
 end
 
 --- @param parent XrayDialogs
 function XrayButtons:forUiInfoTopLeft(target, new_trigger, parent)
-    return {
-        KOR.buttoninfopopup:forXrayTips({
-            callback = function()
-                return DX.i:showGeneralDXTips(parent)
-            end,
-        }),
+    local buttons = {
         KOR.buttoninfopopup:forXrayTogglePageOrParagraphInfo({
             icon = DX.s.UI_mode == "paragraph" and "paragraph" or "pages",
             callback = function()
@@ -443,6 +460,9 @@ function XrayButtons:forUiInfoTopLeft(target, new_trigger, parent)
             end
         }),
     }
+    self:insertGeneralDXTipsButton(buttons, parent)
+
+    return buttons
 end
 
 --- @private
@@ -511,12 +531,12 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
                 icon = "back",
                 icon_size_ratio = 0.55,
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:closeItemViewer()
                 end,
             },
             KOR.buttoninfopopup:forXrayList({
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:closeItemViewer()
                     DX.d:showList(needle_item)
                 end,
             }),
@@ -533,7 +553,7 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
             }),
             KOR.buttoninfopopup:forXrayItemAdd({
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:closeItemViewer()
                     -- #((enable return to viewer))
                     DX.c:setProp("return_to_viewer", true)
                     DX.c:resetFilteredItems()
@@ -542,7 +562,7 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
             }),
             KOR.buttoninfopopup:forXrayItemEdit({
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:closeItemViewer()
                     DX.c:setProp("return_to_viewer", true)
                     DX.c:onShowEditItemForm(needle_item, false, 1)
                 end,
@@ -550,17 +570,17 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
             KOR.buttoninfopopup:forXrayToggleImportantItem({
                 text = DX.vd.xray_type_icons_importance_toggle[needle_item.xray_type],
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:closeItemViewer()
                     local toggled_item = DX.fd:toggleIsImportantItem(needle_item)
                     DX.ds.storeUpdatedItemType(toggled_item)
                     DX.vd:updateAndSortAllItemTables(toggled_item)
-                    DX.d:showItemViewer(toggled_item, called_from_list, tapped_word)
+                    DX.d:viewItem(toggled_item, called_from_list, tapped_word)
                 end,
             }),
             KOR.buttoninfopopup:forXrayTogglePersonOrTerm({
                 text = DX.vd.xray_type_icons_person_or_term_toggle[needle_item.xray_type],
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:closeItemViewer()
                     local toggled_item = DX.fd:toggleIsPersonOrTerm(needle_item)
                     DX.ds.storeUpdatedItemType(toggled_item)
                     if DX.vd.active_list_tab > 1 then
@@ -571,7 +591,7 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
                         end
                     end
                     DX.vd:updateAndSortAllItemTables(toggled_item)
-                    DX.d:showItemViewer(toggled_item, called_from_list, tapped_word)
+                    DX.d:viewItem(toggled_item, called_from_list, tapped_word)
                 end,
             }),
 
@@ -634,13 +654,38 @@ function XrayButtons:forSaveGlossary(parent, glossary, glossary_text, css_files)
      }}
 end
 
+--- @param parent XrayTags
+function XrayButtons:forTagGroupsSelector(parent, dialog_index, tags)
+    local buttons_per_row = 5
+    local current_row
+    count = #tags
+    local buttons = {}
+    for b = 1, count do
+        if b == 1 or b % buttons_per_row == 1 then
+            table_insert(buttons, {})
+            current_row = #buttons
+        end
+        table_insert(buttons[current_row], {
+            text = tags[b],
+            callback = function()
+                local taggroup = tags[b]:gsub(" %(.+$", "")
+                UIManager:close(parent.tag_group_selector)
+                parent:showTagGroup(taggroup)
+            end
+        })
+    end
+    self:addXrayTagGroupAddButton(buttons, buttons_per_row, parent, dialog_index)
+
+    return buttons
+end
+
 --* compare ((XrayButtons#forItemViewer)) and buttons for list view ((XrayButtons#forListFooterLeft)), ((XrayButtons#forListFooterRight)), ((XrayButtons#forListContext)):
 function XrayButtons:forTappedWordItemViewer(needle_item, called_from_list, tapped_word, book_hits)
     local buttons = {
         {
             KOR.buttoninfopopup:forXrayList({
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:closeItemViewer()
                     DX.d:showList(needle_item)
                 end,
             }),
@@ -667,33 +712,33 @@ function XrayButtons:forTappedWordItemViewer(needle_item, called_from_list, tapp
             }),
             KOR.buttoninfopopup:forXrayItemAdd({
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:closeItemViewer()
                     DX.c:resetFilteredItems()
                     DX.c:onShowNewItemForm()
                 end,
             }),
             KOR.buttoninfopopup:forXrayItemEdit({
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:closeItemViewer()
                     DX.c:onShowEditItemForm(needle_item, false, 1)
                 end,
             }),
             KOR.buttoninfopopup:forXrayToggleImportantItem({
                 text = DX.vd.xray_type_icons_importance_toggle[needle_item.xray_type],
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:closeItemViewer()
                     local select_number, toggled_item = DX.fd:toggleIsImportantItem(needle_item)
                     DX.vd:updateItemsTable(select_number)
-                    DX.d:showItemViewer(toggled_item, called_from_list, tapped_word)
+                    DX.d:viewItem(toggled_item, called_from_list, tapped_word)
                 end,
             }),
             KOR.buttoninfopopup:forXrayTogglePersonOrTerm({
                 text = DX.vd.xray_type_icons_person_or_term_toggle[needle_item.xray_type],
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:closeItemViewer()
                     local select_number, toggled_item = DX.fd:toggleIsPersonOrTerm(needle_item)
                     DX.vd:updateItemsTable(select_number)
-                    DX.d:showItemViewer(toggled_item, called_from_list, tapped_word)
+                    DX.d:viewItem(toggled_item, called_from_list, tapped_word)
                 end,
             }),
 
@@ -717,7 +762,7 @@ function XrayButtons:forTappedWordItemViewer(needle_item, called_from_list, tapp
                 icon = "back",
                 icon_size_ratio = 0.55,
                 callback = function()
-                    DX.d:closeViewer()
+                    DX.d:closeItemViewer()
                 end,
             },
         }
@@ -895,6 +940,7 @@ function XrayButtons:getItemViewerTabs(main_info, hits_info, linked_items_info, 
             tab = _("quotes"),
             html = quotes_info,
             content_type = "html",
+            has_items_editor = true,
         })
     end
 
@@ -903,12 +949,7 @@ end
 
 --- @param parent XrayDialogs
 function XrayButtons:forItemViewerTopLeft(parent)
-    return {
-        KOR.buttoninfopopup:forXrayTips({
-            callback = function()
-                return DX.i:showGeneralDXTips(parent)
-            end,
-        }),
+    local buttons = {
         {
             icon = "info-slender",
             callback = function()
@@ -924,6 +965,9 @@ function XrayButtons:forItemViewerTopLeft(parent)
             end
         }),
     }
+    self:insertGeneralDXTipsButton(buttons, parent)
+
+    return buttons
 end
 
 --* compare buttons for Item Viewer ((XrayButtons#forItemViewer)):
@@ -946,8 +990,6 @@ function XrayButtons:forListContext(manager, item)
                 icon_text = KOR.labels.edit,
                 callback = function()
                     UIManager:close(manager.item_context_dialog)
-                    --! we need this to ensure updated item id will be remembered and item saved, in ((XrayFormsData#storeItemUpdates)) > ((XrayFormsData#reAttachViewerItemId)):
-                    KOR.registry:set("edit_item_id", item.id)
                     DX.c:onShowEditItemForm(item, "reload_manager")
                 end,
                 hold_callback = function()
@@ -1011,6 +1053,18 @@ end
 --* compare buttons for Item Viewer ((XrayButtons#forItemViewer)):
 --* compare ((XrayButtons#forListFooterRight)):
 function XrayButtons:forListFooterLeft(focus_item, dont_show, base_icon_size)
+
+    if DX.ta.select_for_tags then
+        return {
+            Button:new(KOR.buttoninfopopup:forXraySaveTaggedItems({
+                icon = "save",
+                callback = function()
+                    DX.ta:addTagsToItems()
+                end,
+            })),
+        }
+    end
+
     local notify_list_display_mode = DX.vd.list_display_mode == "series" and _("series") or _("book")
     local notify_list_display_icon = DX.vd.list_display_mode == "series" and KOR.icons.xray_series_mode_bare or KOR.icons.xray_book_mode_bare
     local current_sorting_mode = DX.m.sorting_method == "name" and _("name") or _("occurrences count")
@@ -1025,7 +1079,15 @@ Current sorting mode: %1.]]), current_sorting_mode:upper()),
                 DX.c:toggleSortingMode()
             end,
             show_parent = DX.c,
-        }))
+        })),
+        Button:new(KOR.buttonchoicepopup:forXrayShowTagsDialogForList({
+            callback = function()
+                DX.ta:showTagFilterSelector("list")
+            end,
+            hold_callback = function()
+                DX.ta:showTagGroupSelector()
+            end,
+        })),
     }
     if DX.m.current_series then
         table_insert(buttons, 2, Button:new(KOR.buttoninfopopup:forXrayToggleBookOrSeriesMode({
@@ -1038,11 +1100,6 @@ Current sorting mode: %1.]]), current_sorting_mode:upper()),
             show_parent = KOR.ui,
         })))
     end
-    table_insert(buttons, Button:new(KOR.buttoninfopopup:forXrayPageNavigatorShowTagsDialogForList({
-        callback = function()
-            DX.d:showTagSelector("list")
-        end,
-    })))
     return buttons
 end
 
@@ -1050,6 +1107,12 @@ end
 --* compare ((XrayButtons#forListFooterLeft)):
 --- @param parent XrayDialogs
 function XrayButtons:forListFooterRight(parent)
+
+    --* when in selection mode for items to be added to a tag, don't show the buttons below:
+    if DX.ta.select_for_tags then
+        return
+    end
+
     local dialog_close_callback = function()
         UIManager:close(parent.xray_items_chooser_dialog)
     end
@@ -1083,11 +1146,85 @@ function XrayButtons:forListFooterRight(parent)
     if DX.m.current_series then
         table_insert(buttons, 1, Button:new(KOR.buttoninfopopup:forSeriesCurrentBook({
             callback = function()
-                KOR.descriptiondialog:showSeriesForEbookPath()
+                KOR.seriesmanager:showSeriesForEbookPath()
             end
         })))
     end
     return buttons
+end
+
+function XrayButtons:forListSubmenu()
+
+    --* insert buttons for Alles, Personen, Begrippen:
+    local buttons = { {} }
+    for i = 1, 3 do
+        table_insert(buttons[1], self:getListSubmenuButton(i))
+    end
+    return ButtonTable:new{
+        width = Screen:getWidth(),
+        button_font_face = "x_smallinfofont",
+        button_font_size = 17,
+        buttons = buttons,
+        zero_sep = true,
+        show_parent = DX.c,
+        button_font_weight = "normal",
+    }
+end
+
+--- @param parent XrayDialogs
+function XrayButtons:forListTopLeft(parent)
+
+    --* when in selection mode for items to be added to a tag, only show the toggle button for this select mode:
+    if DX.ta.select_for_tags then
+        return {
+            KOR.buttoninfopopup:forXrayItemsSelectForTagGroup({
+                icon = "back-inverted",
+                info = _("back icon | Disable selection of items for a tag.\n\nSELECTING ITEMS AND SAVING THEM\n\nItems will color light gray if you tap them; tapping them once again removes them from the selected items. With the disk button in the footer you can save the items selected for the tag."),
+                callback_label = _("disable"),
+                callback = function()
+                    DX.ta:toggleItemsForTagsSelection()
+                end,
+            }),
+        }
+    end
+
+    local buttons = {
+        {
+            icon = "info-slender",
+            callback = function()
+                return DX.i:showListAndViewerHelp(1)
+            end
+        },
+        KOR.buttoninfopopup:forXrayItemsSelectForTagGroup({
+            icon = "checkbox",
+            info = _("checkbox icon | Select items to which you want assign a tag; they will then become members of a tag-group."),
+            callback_label = _("select"),
+            callback = function()
+                DX.ta:toggleItemsForTagsSelection()
+            end,
+        }),
+        KOR.buttoninfopopup:forXrayTranslations(),
+        KOR.buttoninfopopup:forXraySettings({
+            callback = function()
+                UIManager:close(parent.xray_items_chooser_dialog)
+                parent.xray_items_chooser_dialog = nil
+                DX.s.showSettingsManager()
+            end
+        }),
+    }
+    self:insertGeneralDXTipsButton(buttons, parent)
+
+    return buttons
+end
+
+function XrayButtons:insertGeneralDXTipsButton(buttons, parent)
+    if DX.s.enable_global_DX_tips then
+        table_insert(buttons, 1, KOR.buttoninfopopup:forXrayTips({
+            callback = function()
+                return DX.i:showGeneralDXTips(parent)
+            end,
+        }))
+    end
 end
 
 --- @private
@@ -1682,48 +1819,6 @@ Continue?]])
         table_remove(buttons[1], 5)
     end
     return buttons
-end
-
-function XrayButtons:forListSubmenu()
-
-    --* insert buttons for Alles, Personen, Begrippen:
-    local buttons = { {} }
-    for i = 1, 3 do
-        table_insert(buttons[1], self:getListSubmenuButton(i))
-    end
-    return ButtonTable:new{
-        width = Screen:getWidth(),
-        button_font_face = "x_smallinfofont",
-        button_font_size = 17,
-        buttons = buttons,
-        zero_sep = true,
-        show_parent = DX.c,
-        button_font_weight = "normal",
-    }
-end
-
-function XrayButtons:forListTopLeft(parent)
-    return {
-        KOR.buttoninfopopup:forXrayTips({
-            callback = function()
-                return DX.i:showGeneralDXTips(parent)
-            end,
-        }),
-        {
-            icon = "info-slender",
-            callback = function()
-                return DX.i:showListAndViewerHelp(1)
-            end
-        },
-        KOR.buttoninfopopup:forXrayTranslations(),
-        KOR.buttoninfopopup:forXraySettings({
-            callback = function()
-                UIManager:close(parent.xray_items_chooser_dialog)
-                parent.xray_items_chooser_dialog = nil
-                DX.s.showSettingsManager()
-            end
-        }),
-    }
 end
 
 function XrayButtons:showImportReadyNotification()

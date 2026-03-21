@@ -26,7 +26,7 @@ local XrayInformation = WidgetContainer:extend {
     },
 }
 
---* called from ((TextViewer#showToc)) or ((XrayTappedWords#getXrayItemAsDictionaryEntry)), for info icon:
+--* called from ((XrayTappedWords#getXrayItemAsDictionaryEntry)), for info icon:
 function XrayInformation:getMatchReliabilityExplanation()
     if self.match_reliability_explanations then
         return self.match_reliability_explanations
@@ -77,7 +77,7 @@ function XrayInformation:showGeneralDXTips(parent, active_tab)
 <li><strong>best format for person names:</strong><br />If a person is mainly mentioned by his/her last name in the book, then add the name in this format:<br /> <br /><em>LastName, FirstName</em><br/> <br />Doing so will make DX find more hits. In every other case you can best use this format:<br /> <br /><em>FirstName LastName</em><br /> </li>
 <li><strong>quickly edit several items:</strong><br />By <em>longpressing an item in the Items List</em> you'll activate a popup context menu, from which you can edit the item. This is a quick way to edit several items quickly after each other from the Items List.<br /> </li>
 <li><strong>defining tag-groups:</strong><br />If you want to <em>be able to explore items as a related group</em> (e.g. by being associated to the same event or a same ship), then give each of these items the same tag. In Page Navigator or in the Exporter you can now explore these items as a group.<br /> </li>
-<li><strong>adding quotes</strong><br />from a text selection in the book you can - by tapping on the button "+ Xray quote" - <em>add your favorite or important quotes to an item</em>. By doing this you'll have them always quickly at hand in the Page Navigator or in the Item Viewer.</li>
+<li><strong>adding quotes</strong><br />from a text selection in the book you can - by tapping on the button "+ Xray quote" - <em>add your favorite or important quotes to an item</em>. By doing this you'll have them always quickly at hand in the Page Navigator or in the Item Viewer.<br />    After you added quotes to a Xray item, they will be listed in the quotes tab of the Item Viewer. There you'll see a floating speech bubble button, to activate the Quotes Manager. In this Manager you can view quotes, edit them or remove them. Tip: you can use this Manager to add your own notes to individual quotes.</li>
 </ul>]])
             },
             {
@@ -183,6 +183,9 @@ function XrayInformation:getPageNavigatorHotkeysInfo()
             .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+M</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
             .. _("show current series books or Metadata of a non-series book")
+            .. [[</td></tr>
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+T</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+            .. _("show the tag-group-selector")
             .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+X</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
             .. _("show Xray Page Navigator")

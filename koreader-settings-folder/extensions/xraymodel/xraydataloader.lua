@@ -10,7 +10,7 @@ local T = require("ffi/util").template
 
 local DX = DX
 local has_text = has_text
-local table = table
+local table_insert = table.insert
 local tonumber = tonumber
 
 local count
@@ -41,51 +41,58 @@ series_hits is NOT a db field, it is computed dynamically by queries XrayDataLoa
 --- @class XrayDataLoader
 local XrayDataLoader = WidgetContainer:new{
     queries = {
-        --* querying series information, because this query will be used when DX is set in book display mode, but the individual books data can still contain series information:
+        --* querying series information (b.series and b.series_index), because this query will be used when DX is set in book display mode, but the individual books data can still contain series information:
         get_all_book_items = [[
-            WITH quotes AS (
-                SELECT
-                    ebook,
-                    series,
-                    series_index,
-                    item_name,
-                    GROUP_CONCAT(ebook || '||' || COALESCE(series_index, '???') || '||' || COALESCE(ebook_title, '???') || '||' || pos0 || '||' || COALESCE(chapter, '???') || '||' || quote, '@@') AS pos_chapter_quotes
-                FROM xray_quotes
-                GROUP BY ebook, item_name
-            )
+           SELECT x.id,
+           x.name,
+           b.series,
+           b.series_index,
+           x.ebook,
+           b.title,
+           x.short_names,
+           x.description,
+           x.xray_type,
+           x.aliases,
+           x.tags,
+           x.linkwords,
+           x.book_hits,
 
-            SELECT
-                x.id,
-                x.name,
-                b.series,
-                x.ebook,
-                b.title,
-                x.short_names,
-                x.description,
-                x.xray_type,
-                x.aliases,
-                x.tags,
-                x.linkwords,
-                x.book_hits,
-                -- since no series:
-                x.book_hits AS series_hits,
-                x.chapter_hits,
-                x.chapter_hits_data,
-                o.chapters,
-                b.title AS mentioned_in,
+           -- since no series
+           x.book_hits AS series_hits,
 
-                q.item_name,
-                q.pos_chapter_quotes,
-                q.series_index
+           x.chapter_hits,
+           x.chapter_hits_data,
+           o.chapters,
 
-            FROM xray_items x
-            JOIN bookinfo b ON x.ebook = b.filename
-            LEFT OUTER JOIN xray_books o ON x.ebook = o.ebook
-            LEFT JOIN quotes q ON q.ebook = x.ebook AND q.item_name = x.name
-            WHERE x.ebook = '%1'
+           b.title AS mentioned_in,
+
+           x.name AS item_name,
+
+           GROUP_CONCAT(
+                   q.ebook || '||' ||
+                   COALESCE(q.series_index, '???') || '||' ||
+                   COALESCE(q.ebook_title, '???') || '||' ||
+                   q.pos0 || '||' ||
+                   COALESCE(q.chapter, '???') || '||' ||
+                   q.quote,
+                   '@@'
+                   ORDER BY q.id
+           ) AS pos_chapter_quotes
+
+            FROM bookinfo b
+            JOIN xray_items x
+                  ON x.ebook = b.filename
+            LEFT JOIN xray_quotes q
+                  ON q.ebook = x.ebook
+                     AND q.item_name = x.name
+            JOIN xray_books o ON o.ebook = b.ebook
+
+            WHERE b.filename = '%1'
+            GROUP BY x.id
             ORDER BY %2;]],
 
         --* s.ebook, s.title, s.book_hits and s.chapter_hits will be null when the xray item only is found in one or more OTHER books in the series, but not in the current ebook:
+        --* for prop pos_chapter_quotes compare ((XrayQuotes#generateQuotesList)):
         get_all_series_items = [[
            WITH
 
@@ -151,7 +158,11 @@ local XrayDataLoader = WidgetContainer:new{
 
                q.series_index,
                q.item_name,
-                GROUP_CONCAT(q.ebook || '||' || COALESCE(q.series_index, '???') || '||' || COALESCE(q.ebook_title, '???') || '||' || q.pos0 || '||' || COALESCE(q.chapter, '???') || '||' || q.quote, '@@') AS pos_chapter_quotes
+                GROUP_CONCAT(
+                    q.ebook || '||' || COALESCE(q.series_index, '???') || '||' || COALESCE(q.ebook_title, '???') || '||' || q.pos0 || '||' || COALESCE(q.chapter, '???') || '||' || q.quote,
+                    '@@'
+                    ORDER BY q.id
+                ) AS pos_chapter_quotes
 
             FROM book_xray_data x
             LEFT JOIN series_data s
@@ -211,6 +222,16 @@ local XrayDataLoader = WidgetContainer:new{
             JOIN series_books s ON s.filename = x.ebook
             WHERE x.ebook != 'safe_path'
             ORDER BY x.name;]],
+
+        qet_quotes_for_item_book = [[
+            SELECT id, quote FROM xray_quotes
+            WHERE item_name = '%1' AND ebook = '%2' ORDER BY id;]],
+
+        --* compare ((XrayQuotes#generateQuotesList))
+        qet_quotes_for_item_series = [[
+            SELECT x.id, x.quote FROM xray_quotes x
+            LEFT OUTER JOIN all_books a ON a.filename = x.ebook
+            WHERE x.item_name = '%1' AND a.series = '%2' ORDER BY x.id;]],
 
         get_series_hits = [[
             SELECT SUM(x.book_hits) AS series_hits
@@ -283,9 +304,6 @@ function XrayDataLoader:_getAllDataSql(mode)
     local current_ebook_basename = KOR.databases:escape(parent.current_ebook_basename)
     sort = parent.sorting_method == "hits" and "(x.xray_type = 2 OR x.xray_type = 4) DESC, x.book_hits DESC, x.name" or "(x.xray_type = 2 OR x.xray_type = 4) DESC, x.name"
 
-    if parent.current_series then
-        return T(self.queries.get_all_series_items, current_ebook_basename, sort)
-    end
     return T(self.queries.get_all_book_items, current_ebook_basename, sort)
 end
 
@@ -301,7 +319,7 @@ function XrayDataLoader:_loadAllData(mode)
 
     self:_populateViewsDataBookChapters(result)
 
-    parent.tags_relational = {}
+    parent.tags_associative = {}
     --* loop over 1 or multiple books (in series mode):
     if mode == "series" then
         self:_loadDataForSeries(result)
@@ -380,7 +398,7 @@ function XrayDataLoader:_addBookItem(result, i, book_index)
         chapter_hits_data = self:convertChapterHitsData(result["chapter_hits_data"][i]),
         pos_chapter_quotes = result["pos_chapter_quotes"][i],
     }
-    table.insert(parent.ebooks[book_index], item)
+    table_insert(parent.ebooks[book_index], item)
 
     parent:updateStaticReferenceCollections(id, item)
 end
@@ -408,7 +426,7 @@ function XrayDataLoader:_addSeriesItem(result, i, series_index)
     parent:updateStaticReferenceCollections(id, item)
 
     -- #((set xray item props))
-    table.insert(parent.series[series_index], item)
+    table_insert(parent.series[series_index], item)
 end
 
 --* compare ((XrayDataSaver#getChapterHitsDataForStorage)), where these data are prepared for storage:
@@ -452,6 +470,31 @@ function XrayDataLoader:getItemsForImportFromSeries(conn, series)
     sql = KOR.databases:injectSafePath(sql, parent.current_ebook_basename)
 
     return conn:exec(sql)
+end
+
+function XrayDataLoader.getQuotesForItemByName(name)
+    local self = DX.dl
+    local conn = KOR.databases:getDBconn("XrayDataLoader:getQuotesForItemById")
+    local sql = parent.list_display_mode == "series" and self.queries.qet_quotes_for_item_series or self.queries.qet_quotes_for_item_book
+    name = KOR.databases:escape(name)
+    local second_arg = parent.list_display_mode == "series" and parent.current_series or parent.current_ebook_basename
+    second_arg = KOR.databases:escape(second_arg)
+    sql = T(sql, name, second_arg)
+    local result = conn:exec(sql)
+    conn = KOR.databases:closeConnections(conn)
+    if not result then
+        return
+    end
+    count = #result["quote"]
+    local quotes = {}
+    for i = 1, count do
+        table_insert(quotes, {
+            item_no = i,
+            id = result["id"][i],
+            value = result["quote"][i],
+        })
+    end
+    return quotes
 end
 
 function XrayDataLoader:getSeriesHits(conn, series, name)

@@ -169,7 +169,7 @@ function XrayCallbacks:execViewItemCallback()
     if not current_tab_item then
         return true
     end
-    DX.d:showItemViewer(current_tab_item)
+    DX.d:viewItem(current_tab_item)
     return true
 end
 

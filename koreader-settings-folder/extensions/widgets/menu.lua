@@ -781,6 +781,7 @@ function Menu:init(restore_dialog)
             fullscreen = self.fullscreen,
             align = "center",
             titlebar_inverted = self.titlebar_inverted,
+            title_icon = self.title_icon,
             for_collection = self.collection,
             with_bottom_line = self.with_bottom_line,
             bottom_line_thickness = self.with_bottom_line and Size.line.thick or Size.line.thin,

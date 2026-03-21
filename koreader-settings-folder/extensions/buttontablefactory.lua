@@ -35,16 +35,9 @@ function ButtonTableFactory:getHorizontallyArrangedButtonTable(subject, items_pe
 	return buttons
 end
 
---* see ((TextViewer#showToc)) for an example how to use this:
-function ButtonTableFactory:getVerticallyArrangedButtonTable(source_items, button_factory, info_button, close_button)
+function ButtonTableFactory:getVerticallyArrangedButtonTable(source_items, button_factory, close_button)
 	local button_table = {}
 
-	--* prevent repeated injections of info button into the ButtonTable:
-    --* this Registry var will be unset each time the Xray info popup is loaded, via ((xray paragraph info: after load callback)) > ((XrayUI#onInfoPopupLoadShowToc)):
-	if info_button and not KOR.registry:get("toc_info_button_injected") then
-		table_insert(source_items, info_button)
-		KOR.registry:set("toc_info_button_injected", true)
-	end
 	local buttons_count = #source_items
 	local display_buttons_count = source_items[buttons_count].icon and buttons_count - 1 or buttons_count
 	local max_buttons_per_row = buttons_count < 10 and 3 or 4

@@ -7,7 +7,7 @@
    enable-background="new 0 0 24.00 24.00"
    xml:space="preserve"
    id="svg4"
-   sodipodi:docname="close.svg"
+   sodipodi:docname="close-inverted.svg"
    inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -18,7 +18,7 @@
    xmlns:dc="http://purl.org/dc/elements/1.1/"><metadata
    id="metadata10"><rdf:RDF><cc:Work
        rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
-         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title /></cc:Work></rdf:RDF></metadata><defs
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /></cc:Work></rdf:RDF></metadata><defs
    id="defs8" /><sodipodi:namedview
    bordercolor="#666666"
    borderopacity="1"
@@ -47,10 +47,10 @@
      id="grid855" /></sodipodi:namedview>
 	
 <path
-   style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.15592;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+   style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:2.0725;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
    d="M 17.015299,6.9973421 6.9847015,17.002658"
    id="path834" /><path
-   style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.15592;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+   style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:2.0725;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
    d="M 6.5086809,7.2983893 16.539278,17.303705"
    id="path836"
    sodipodi:nodetypes="cc" /></svg>

@@ -135,6 +135,12 @@ function KeyEvents:addHotkeysForReaderUI(parent)
         DX.c:onShowCurrentSeries()
     end
 
+    readerui.key_events.ShowTagGroupSelectorUI = { { "Shift", { "T" } } }
+    readerui.onShowTagGroupSelectorUI = function()
+        DX.ta:showTagGroupSelector()
+        return true
+    end
+
     readerui.key_events.ShowPageNavigatorUI = { { "Shift", { "X" } } }
     readerui.onShowPageNavigatorUI = function()
         DX.c:onShowPageNavigator()
@@ -202,7 +208,6 @@ function KeyEvents:addHotkeysForTextViewer(parent, key_events_module)
             ForceNextTab = { { Input.group.TabNext }, doc = "forceer volgende tab" },
             ForcePreviousTab = { { Input.group.TabPrevious }, doc = "forceer vorige tab" },
         }
-        --self:setKeyEventsForTabs(parent, 8)
         --* see ((TABS)) for more info:
         --* initialize TabNavigator and callbacks:
         KOR.tabnavigator:init(parent.tabs_table_buttons, parent.active_tab, parent.parent)
@@ -234,7 +239,7 @@ function KeyEvents:addHotkeysForTextViewer(parent, key_events_module)
     end
 end
 
---* information about available hotkeys in list shown in ((XrayDialogs#showItemViewer)) > ((XrayInformation#showListAndViewerHelp)):
+--* information about available hotkeys in list shown in ((XrayDialogs#viewItem)) > ((XrayInformation#showListAndViewerHelp)):
 -- #((KeyEvents#addHotkeysForXrayItemViewer))
 --* compare ((KeyEvents#addHotkeysForXrayPageNavigator)):
 function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
@@ -242,7 +247,7 @@ function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
     local parent = DX.d
     self:registerSharedHotkeys(key_events_module, {
         [DX.s.hk_edit_item] = function()
-            parent:closeViewer()
+            parent:closeItemViewer()
             DX.c:onShowEditItemForm(DX.vd.current_item, false, 1)
             return true
         end,
@@ -256,7 +261,7 @@ function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
             return true
         end,
         [DX.s.hk_show_list] = function()
-            parent:closeViewer()
+            parent:closeItemViewer()
             parent:showList(DX.vd.current_item)
             return true
         end,
@@ -275,7 +280,7 @@ function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
             label = "add",
             hotkey = { { DX.s.hk_add_item } },
             callback = function()
-                parent:closeViewer()
+                parent:closeItemViewer()
                 DX.c:resetFilteredItems()
                 parent:showNewItemForm()
                 return true
@@ -450,7 +455,7 @@ function KeyEvents:addHotkeysForXrayList(parent, key_events_module)
                 parent.select_mode = false
                 DX.p:toPrevOrNextNavigatorPage(item)
             else
-                parent:showItemViewer(item)
+                parent:viewItem(item)
             end
             return true
         end)
@@ -745,16 +750,6 @@ function KeyEvents:addHotkeyForFilterButton(parent, filter_active, callback, res
         end
         return true
     end)
-end
-
---! this method assumes event handler onActivateTab exists in caller:
---- @param parent TextViewer
-function KeyEvents:setKeyEventsForTabs(parent, tab_count)
-    --* alternate way of handling tab activations; advantage maybe that we only have one, fixed, event handler - ((TextViewer#onActivateTab)):
-    for i = 1, tab_count do
-        --* format for sending args to event handler: self.key_events.YKey = { { "Y" }, event = "FirstRowKeyPress", args = 0.55 }
-        parent.key_events["HandleTabActivation" .. i] = { { tostring(i) }, event = "ActivateTab", args = i }
-    end
 end
 
 function KeyEvents:registerHotkeysInputDialog(parent)

@@ -23,7 +23,7 @@ local count, count2
 --- @class Tables
 local Tables = WidgetContainer:extend{}
 
-function Tables:getSortedRelationalTable(subject)
+function Tables:getSortedAssociativeTable(subject)
     --* change a relational table into a numerical one, with each new item having a table { key, value }:
     local keys = {}
     for key in pairs(subject) do
@@ -94,6 +94,16 @@ function Tables:populateWithPlaceholders(items_count, default_value)
         table_insert(temp, value)
     end
     return temp
+end
+
+function Tables:associativeTableLength(itable)
+    local iteration = 0
+    local garbage
+    for _, v in pairs(itable) do
+        iteration = iteration + 1
+        garbage = v
+    end
+    return iteration
 end
 
 function Tables:concatField(itable, prop, separator)

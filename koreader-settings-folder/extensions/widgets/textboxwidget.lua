@@ -107,7 +107,7 @@ local TextBoxWidget = InputContainer:extend{
     --                  when bb or hi_bb is nil: its job is to load/build bb or hi_bb.
     --                  The page will refresh itself when load_bb_func returns.
     images = nil, -- list of such images
-    line_num_to_image = nil, -- will be filled by ((TextBoxWidget#_splitToLines))
+    line_num_to_image = nil, --* will be filled by ((TextBoxWidget#_splitToLines))
     image_padding_left = Screen:scaleBySize(10),
     image_padding_bottom = Screen:scaleBySize(3),
     image_alt_face = Font:getFace("xx_smallinfofont"),
@@ -460,13 +460,9 @@ function TextBoxWidget:_splitToLines()
             end
             ln = ln + 1
             idx = line.next_start_offset -- nil when end of text reached
-            -- Skip the whole following non-use_xtext code, to continue
-            -- this 'while' loop (to avoid indentation diff on the
-            -- following code if we were using a 'else'...)
-            goto idx_continue
-        end
 
-            -- Only when not self.use_xtext:
+        --* in case of not self.use_xtext:
+        else
 
             -- We append chars until the accumulated width exceeds `targeted_width`,
             -- or a newline occurs, or no more chars to consume.
@@ -501,7 +497,7 @@ function TextBoxWidget:_splitToLines()
                     -- either a very long english word occupying more than one line,
                     -- or the excessive char is itself splittable:
                     -- we let that excessive char for next line
-                if adjusted_idx == offset then -- let the fact a long word was split be known
+                    if adjusted_idx == offset then -- let the fact a long word was split be known
                         self.has_split_inside_word = true
                     end
                     end_offset = idx - 1
@@ -520,7 +516,7 @@ function TextBoxWidget:_splitToLines()
                     idx = adjusted_idx + 1
                 end
                 if self.justified then
-                -- this line was split and can be justified
+                    -- this line was split and can be justified
                     -- we record in idx_pad the nb of pixels to add to each char
                     -- to make the whole line justified. This also helps hold
                     -- position accuracy.
@@ -582,8 +578,7 @@ function TextBoxWidget:_splitToLines()
             end
             ln = ln + 1
             -- Make sure `idx` point to the next char to be processed in the next loop.
-
-        ::idx_continue:: -- (Label for goto when use_xtext=true)
+        end
     end
 end
 

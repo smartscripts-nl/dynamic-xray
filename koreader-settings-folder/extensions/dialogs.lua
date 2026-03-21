@@ -1,7 +1,6 @@
 
 local require = require
 
-local ButtonDialogTitle = require("extensions/widgets/buttondialogtitle")
 local ConfirmBox = require("extensions/widgets/confirmbox")
 local DocumentRegistry = require("document/documentregistry")
 local FilesBox = require("extensions/widgets/filesbox")
@@ -47,6 +46,13 @@ function Dialogs:closeAllWidgets()
     end
     KOR.screenhelpers:refreshDialog()
     self.widgets = {}
+end
+
+function Dialogs:closeTopWidget()
+    local widget = self.widgets[#self.widgets]
+    UIManager:close(widget)
+    self.widgets[#self.widgets] = nil
+    KOR.screenhelpers:refreshDialog()
 end
 
 function Dialogs:computePagePosition(dialogOrPage)
@@ -128,6 +134,7 @@ function Dialogs:htmlBox(args)
             if config.tabs[i].is_active_tab then
                 --* content_type can be set to "text" for the linked items info in ((XrayButtons#getItemViewerTabs)); this content_type prop will be used in
                 config.content_type = config.tabs[i].content_type
+                config.has_items_editor = config.tabs[i].has_items_editor
                 break
             end
         end
@@ -421,72 +428,9 @@ viewer = KOR.dialogs:textBox({ title = "Circa " .. count .. " ebooks toegevoegd"
 --* see ((DIALOGS))
 function Dialogs:textBox(args)
 
-    --* here only props which are needed for computations:
-    local org_height = args.height or Screen:getHeight() - 80
-    local info = args.info or ""
-    info = KOR.html:htmlToPlainTextIfHtml(info)
-    --* hotfix for initials in names:
-    info = info:gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
-    args.text = info
-
-    --* for text in two columns:
-    local info2 = args.info2 or nil
-    if info2 then
-        info2 = KOR.html:htmlToPlainTextIfHtml(info2)
-        info2 = info2:gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
-    end
-    args.text2 = info2
-
-    --* for a non-icon variant of a text with icons:
-    if args.info_icon_less then
-        --* hotfix for initials in names:
-        args.text_for_copy = args.info_icon_less:gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
-    elseif info and info2 then
-        args.text_for_copy = info .. "\n\n" .. info2
-    else
-        args.text_for_copy = info
-    end
-
-    args.width_factor = args.width_factor or 1
-    if args.fixed_face and type(args.fixed_face) == "string" then
-        args.fixed_face = Font:getFace(args.fixed_face)
-    end
-
-    if not args.low_height then
-        local text_padding_left_right = args.text_padding_left_right
-        local use_wide_description_dialog = false
-        if use_wide_description_dialog and args.for_description_dialog then
-            args.width_factor = args.for_description_dialog and 0.99 or 0.98
-            text_padding_left_right = KOR.screenhelpers:isLandscapeScreen() and Screen:scaleBySize(105) or Screen:scaleBySize(35)
-        elseif args.narrow_text_window or args.for_description_dialog then
-            args.width_factor = KOR.screenhelpers:isLandscapeScreen() and 0.87 or 0.95
-            text_padding_left_right = Screen:scaleBySize(35)
-        elseif args.fullscreen then
-            --* to hide the borders:
-            local overflow = 10
-            args.height = Screen:getHeight() + overflow
-            args.width = Screen:getWidth() + overflow
-            text_padding_left_right = Screen:scaleBySize(35)
-            args.border = 0
-            args.width_factor = 1
-            args.use_computed_height = false
-        else
-            args.height = org_height or math.floor(Screen:getHeight() * 0.8)
-            args.use_computed_height = args.use_computed_height or false
-            args.text_padding_left_right = text_padding_left_right
-        end
-    end
-
-    --* optionally search for a externally transmitted search string:
-    local external_search_string = KOR.registry:getOnce("textviewer_needle")
-    if external_search_string then
-        args.title = args.title .. " - zoek: " .. external_search_string
-    end
-
-    local config = args
-    if args.no_fullscreen then
-        config.fullscreen = false
-    end
+    self:setTextBoxTexts(args)
+    self:setTextBoxHeight(args)
+    local config, external_search_string = self:getTextBoxConfig(args)
     --* you can optionally add a buttons_table setting:
     local textviewer
     textviewer = TextViewer:new(config)
@@ -523,6 +467,98 @@ function Dialogs:textBoxTabbed(active_tab, args)
     return self.tabbed_textbox
 end
 
+--- @private
+function Dialogs:getTextBoxConfig(args)
+    args.width_factor = args.width_factor or 1
+    --local use_scrolling_dialog = args.use_scrolling_dialog or 1
+    if args.fixed_face and type(args.fixed_face) == "string" then
+        args.fixed_face = Font:getFace(args.fixed_face)
+    end
+    --* optionally search for a externally transmitted search string:
+    local external_search_string = KOR.registry:getOnce("textviewer_needle")
+    if external_search_string then
+        args.title = args.title .. " - zoek: " .. external_search_string
+    end
+
+    local config = args
+    if args.no_fullscreen then
+        config.fullscreen = false
+    end
+    return config, external_search_string
+end
+
+--- @private
+function Dialogs:setTextBoxTexts(args)
+    local info = args.info or ""
+    info = KOR.html:htmlToPlainTextIfHtml(info)
+    --* hotfix for initials in names:
+    info = info:gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
+    args.text = info
+
+    --* for text in two columns:
+    local info2 = args.info2 or nil
+    if info2 then
+        info2 = KOR.html:htmlToPlainTextIfHtml(info2)
+        info2 = info2:gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
+    end
+    args.text2 = info2
+
+    --* for a non-icon variant of a text with icons, e.g. as generated in ((XrayCallbacks#execExportXrayItemsCallback)):
+    self:setCopyForTextBox(args, info, info2)
+end
+
+--- @private
+function Dialogs:setCopyForTextBox(args, info, info2)
+    if args.text_for_copy then
+        return
+    end
+
+    if args.info_icon_less then
+        --* hotfix for initials in names:
+        args.text_for_copy = args.info_icon_less:gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
+    elseif info and info2 then
+        args.text_for_copy = info .. "\n\n" .. info2
+    else
+        args.text_for_copy = info
+    end
+end
+
+--- @private
+function Dialogs:setTextBoxHeight(args)
+    if args.low_height then
+        return
+    end
+
+    local text_padding_left_right = args.text_padding_left_right
+    local use_wide_description_dialog = false
+    if use_wide_description_dialog and args.for_description_dialog then
+        args.width_factor = args.for_description_dialog and 0.99 or 0.98
+        text_padding_left_right = KOR.screenhelpers:isLandscapeScreen() and Screen:scaleBySize(105) or Screen:scaleBySize(35)
+        return
+    elseif args.narrow_text_window or args.for_description_dialog then
+        args.width_factor = KOR.screenhelpers:isLandscapeScreen() and 0.87 or 0.95
+        text_padding_left_right = Screen:scaleBySize(35)
+        return
+    elseif args.fullscreen then
+        --* to hide the borders:
+        local overflow = 10
+        args.height = Screen:getHeight() + overflow
+        args.width = Screen:getWidth() + overflow
+        text_padding_left_right = Screen:scaleBySize(35)
+        args.border = 0
+        args.width_factor = 1
+        args.use_computed_height = false
+        return
+    end
+
+    --* here only props which are needed for computations:
+    local org_height = args.height or Screen:getHeight() - 80
+
+    args.height = org_height or math.floor(Screen:getHeight() * 0.8)
+    args.use_computed_height = args.use_computed_height or false
+    args.text_padding_left_right = text_padding_left_right
+end
+
 function Dialogs:showBookCover(full_path)
 
     if not full_path then
@@ -553,32 +589,6 @@ function Dialogs:showBookCover(full_path)
         end
         DocumentRegistry:closeDocument(full_path)
     end
-end
-
-function Dialogs:showButtonDialog(title, button_table)
-    local dialog
-    dialog = ButtonDialogTitle:new{
-        title = title,
-        no_overlay = true,
-        modal = true,
-        move_to_top = true,
-        use_low_title = true,
-        button_font_face = "x_smallinfofont",
-        button_font_size = 14,
-        button_font_bold = false,
-        button_font_weight = "normal",
-        title_align = "center",
-        width_factor = 0.95,
-        button_width = 0.33,
-        show_parent = KOR.ui,
-        buttons = button_table,
-        after_close_callback = function()
-            KOR.registry:unset("xray_toc_dialog_shown")
-        end
-    }
-    UIManager:show(dialog)
-    --KOR.registryset("TextViewer_index", dialog)
-    return dialog
 end
 
 --* see ((DIALOGS))

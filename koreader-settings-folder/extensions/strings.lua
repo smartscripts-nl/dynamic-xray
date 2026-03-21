@@ -36,6 +36,8 @@ local Strings = WidgetContainer:extend{
     m_dash = "—",
     n_dash = "–",
     poem_max_line_length = 50,
+    whole_word_end = "%f[^%w_]",
+    whole_word_start = "%f[%w_]",
 }
 
 function Strings:cleanupSelectedText(text)
@@ -133,11 +135,17 @@ function Strings:singular(text, icount)
 end
 
 function Strings:sortKeywords(text)
-    local splitter = text:match(",") and ", *" or " +"
-    local joiner = splitter == ", *" and ", " or " "
+    local uses_commas = text:match(",")
+    local splitter = uses_commas and ", *" or " +"
+    local joiner = uses_commas and ", " or " "
     local parts = self:split(text, splitter)
     table.sort(parts)
-    return table_concat(parts, joiner)
+    text = table_concat(parts, joiner)
+    --* re-attach comma for a single entry comma delimited string; for example maintain alias "Sun Eater," don't let it get mangled to "Eater Sun" bij de sorting and re-joining process:
+    if uses_commas and not text:match(",") then
+        text = text .. ","
+    end
+    return text
 end
 
 function Strings:split(str, pat, capture_empty_entity)
@@ -200,6 +208,15 @@ function Strings:formatListItemNumber(nr, title, use_spacer)
         end
     end
     return nr .. ". " .. spacer .. self:removeListItemNumber(title)
+end
+
+function Strings:prepareNeedleForMatching(needle, with_word_boundaries)
+    needle = needle:gsub("%-", "%%-")
+    if not with_word_boundaries then
+        return needle
+    end
+
+    return self.whole_word_start .. needle .. self.whole_word_end
 end
 
 --- @class DescriptionDialogTextFormat
@@ -323,12 +340,13 @@ function Strings:removeNotes(text)
     return text:gsub(" ?%*", ""):gsub(" ?%†", ""):gsub(" ?%‡", "")
 end
 
-function Strings:splitLinesToMaxLength(text, max_length, indent, first_word, dont_indent_first_line, after_first_line_indent)
+function Strings:splitLinesToMaxLength(text, indent, first_word, dont_indent_first_line, after_first_line_indent, is_iconless)
     if has_no_content(text) then
         return ""
     end
+    local max_length = DX.s.PN_info_panel_max_line_length
     --* this might e.g. be set in ((XrayViewsData#generateXrayExportOrLinkedItemInfo)):
-    if KOR.registry:get("split_to_half_max_length") then
+    if not is_iconless and KOR.registry:get("split_to_half_max_length") then
         max_length = math_floor(max_length / 2)
     end
     if has_content(first_word) then
@@ -396,6 +414,13 @@ function Strings:splitLinesToMaxLength(text, max_length, indent, first_word, don
     return table_concat(lined_text, "\n")
 end
 
+function Strings:splitLinesToMaxLengthIconLess(text, indent, first_word, dont_indent_first_line, after_first_line_indent)
+    if has_no_content(text) then
+        return ""
+    end
+    return self:splitLinesToMaxLength(text, indent, first_word, dont_indent_first_line, after_first_line_indent, "is_iconless")
+end
+
 --* remove trailing and leading whitespace from string.
 --* @param s String
 function Strings:trim(s)
@@ -410,24 +435,24 @@ function Strings:hasWholeWordMatch(haystack, haystack_lower, needle)
 
     --* case sensitive search, mostly for Xray persons:
     if needle:match("[A-Z]") then
-        --* %A = non alpha characters:
-        if haystack:match("%A" .. needle .. "%A") or haystack:match("^" .. needle .. "%A") or haystack:match("%A" .. needle .. "$") then
+        if haystack:match(self.whole_word_start .. needle .. self.whole_word_end) then
             return true
         end
 
         --* search for uppercase names at start of chapters:
         needle = needle:upper()
-        return haystack:match("%A" .. needle .. "%A") or haystack:match("^" .. needle .. "%A") or haystack:match("%A" .. needle .. "$")
+        return haystack:match(self.whole_word_start .. needle .. self.whole_word_end)
     end
 
     --* case insensitive, mostly for Xray terms (non persons):
-    if haystack_lower:match("%A" .. needle .. "%A") or haystack_lower:match("^" .. needle .. "%A") or haystack_lower:match("%A" .. needle .. "$")
-        then return true
+    if haystack_lower:match(self.whole_word_start .. needle .. self.whole_word_end)
+    then
+        return true
     end
 
-    --* search for uppercase things/entities at start of chapters:
+    --* search for uppercase terms/entities at start of chapters:
     needle = needle:upper()
-    return haystack:match("%A" .. needle .. "%A") or haystack:match("^" .. needle .. "%A") or haystack:match("%A" .. needle .. "$")
+    return haystack:match(self.whole_word_start .. needle .. self.whole_word_end)
 end
 
 function Strings:getNameSwapped(name)

@@ -57,8 +57,8 @@ local XrayModel = WidgetContainer:new{
     sorting_method = "hits",
     switch_first_and_sur_name = false,
     tab_display_counts = { 0, 0, 0 },
-    tags = {},
-    tags_relational = {},
+    taggroups = {},
+    tags_associative = {},
     use_tapped_word_data = false,
 }
 
@@ -139,6 +139,16 @@ function XrayModel:getSortingProp()
     return "name"
 end
 
+function XrayModel:getTagGroupsWithCountsWithTotals()
+    local taggroups = KOR.tables:shallowCopy(self.taggroups)
+    local taggroups_with_totals = {}
+    count = #taggroups
+    for i = 1, count do
+        table_insert(taggroups_with_totals, taggroups[i] .. " (" .. #self.tags_associative[taggroups[i]] .. ")")
+    end
+    return taggroups_with_totals
+end
+
 function XrayModel:placeImportantItemsAtTop(items, sorting_direction)
 
     local sorting_prop = self:getSortingProp()
@@ -153,7 +163,23 @@ function XrayModel:placeImportantItemsAtTop(items, sorting_direction)
 end
 
 function XrayModel:addTags(tags, id)
-    return self:addRelationalTags(tags, id)
+    return self:addAssociativeTags(tags, id)
+end
+
+function XrayModel:updateAllTags()
+
+    --* if an edited item has no tags, then still we must loop through all items, because a tag might have been removed from the updated item:
+    self.tags_associative = {}
+    --* take UNFILTERED items as subject:
+    local items = DX.vd.item_table[1]
+    count = #items
+    for i = 1, count do
+        --* update the associative table with tags:
+        self:addTags(items[i].tags, items[i].id)
+    end
+    self:sortAndSetTags()
+    --! prevent a crash in the tag-group-selector because of stale data:
+    DX.ta:resetTagGroups()
 end
 
 --! this method must be called AFTER a parent has initiated storage of the data into the database and in XrayViewsData:
@@ -163,18 +189,19 @@ function XrayModel:updateTags(item, mode)
     end
 
     --* if an edited item has no tags, then still we must loop through all items, because a tag might have been removed from the updated item:
-    self.tags_relational = {}
+    self.tags_associative = {}
     --* take UNFILTERED items as subject:
     local items = DX.vd.item_table[1]
     count = #items
     for i = 1, count do
+        --* update the associative table with tags:
         self:addTags(items[i].tags, items[i].id)
     end
     self:sortAndSetTags()
 end
 
 --- @private
-function XrayModel:addRelationalTags(tags, id)
+function XrayModel:addAssociativeTags(tags, id)
     if not has_text(tags) then
         return false
     end
@@ -184,13 +211,13 @@ function XrayModel:addRelationalTags(tags, id)
     for i = 1, #tag_items do
         tag = tag_items[i]
         --* this collection will e.g. be used for filtering the Items List:
-        if not self.tags_relational[tag] then
-            self.tags_relational[tag] = {
+        if not self.tags_associative[tag] then
+            self.tags_associative[tag] = {
                 id,
             }
             a_tag_was_added = true
         else
-            table_insert(self.tags_relational[tag], id)
+            table_insert(self.tags_associative[tag], id)
         end
     end
     return a_tag_was_added
@@ -198,11 +225,15 @@ end
 
 --- @private
 function XrayModel:sortAndSetTags()
-    self.tags = {}
-    for key in pairs(self.tags_relational) do
-        table_insert(self.tags, key)
+    self.taggroups = {}
+    for key in pairs(self.tags_associative) do
+        table_insert(self.taggroups, key)
     end
-    table_sort(self.tags)
+    table_sort(self.taggroups)
+end
+
+function XrayModel:getAllAssignedTagsString()
+    return table_concat(self.taggroups, ", ")
 end
 
 function XrayModel:toggleSortingMode()
@@ -360,7 +391,7 @@ function XrayModel:removeMatchReliabilityIndicators(subject)
 end
 
 --* compare usage of ((Strings#sortKeywords)) in ((XrayFormsData#convertFieldValuesToItemProps)):
-function XrayModel:splitByCommaOrSpace(subject, add_singulars)
+function XrayModel:splitByCommaOrSpace(subject, add_singulars, skip_lowercase)
     if not subject then
         return
     end
@@ -369,8 +400,18 @@ function XrayModel:splitByCommaOrSpace(subject, add_singulars)
     local plural_keywords = {}
     --* in case of comma separated linkwords we want exact, non partly hits of these linkwords:
     keywords = separated_by_commas and KOR.strings:split(subject, ", *") or KOR.strings:split(subject, " +")
-    local keyword
     count = #keywords
+    if skip_lowercase then
+        local pruned = {}
+        for i = 1, count do
+            if keywords[i]:match("[A-Z]") then
+                table_insert(pruned, keywords[i])
+            end
+        end
+        keywords = pruned
+        count = #keywords
+    end
+    local keyword
     for nr = 1, count do
         keyword = keywords[nr]
         keywords[nr] = keyword:gsub("%-", "%%-")

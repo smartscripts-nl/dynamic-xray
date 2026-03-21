@@ -8,6 +8,8 @@ local _ = KOR:initCustomTranslations()
 local ffiUtil = require("ffi/util")
 local T = ffiUtil.template
 
+local DX = DX
+
 --* compare ((ButtonInfoPopup)) and ((ButtonProps))
 --* see also ((BUTTONCHOICEPROPS_MORE_THAN_2))
 --- @class ButtonChoicePopup
@@ -80,6 +82,34 @@ function ButtonChoicePopup:forXrayItemDelete(props)
 	}, props)
 end
 
+function ButtonChoicePopup:forXrayShowTagsDialogForList(props)
+	return KOR.buttonprops:set({
+		icon = "tags",
+		info = T(_("tags icon | :show popup for tag filters") .. self.separator .. _("show the tag-group-selector, to choose a specific tag-group to display"), KOR.icons.arrow_bare),
+		callback_label = _("show"),
+		--! callback defined by calling module
+		hold_callback_label = _("tag-groups"),
+		--! hold_callback defined by calling module
+	}, props)
+end
+
+function ButtonChoicePopup:forXrayPageNavigatorShowTagsDialog(props)
+	--* the minus sign is a n_dash:
+	local state_marker = DX.pn.navigation_tag and "–" or "+"
+	return KOR.buttonprops:set({
+		icon_text = {
+			icon = "tags",
+			text = " " .. state_marker,
+		},
+		icon = "tags",
+		info = T(_("tags icon | Activate (+) or disabled (-) browsing between members of a tag group") .. self.separator .. _("show the tag-group-selector, to choose a specific tag-group to display"), KOR.icons.arrow_bare),
+		callback_label = _("browse") .. " " .. state_marker,
+		--! callback defined by calling module
+		hold_callback_label = _("tag-groups"),
+		--! hold_callback defined by calling module
+	}, props)
+end
+
 function ButtonChoicePopup:forXrayPageNavigatorToCurrentPage(props)
 	return KOR.buttonprops:set({
 		icon = "goto-location",
@@ -89,20 +119,6 @@ function ButtonChoicePopup:forXrayPageNavigatorToCurrentPage(props)
 		hold_callback_label = _("ebook"),
 		--! hold_callback defined by calling module
 	}, props)
-end
-
---* see also ((Button#init)) > ((hotfix for bold "edit" and "jump" buttons for xray items in page info TOC popup)):
-function ButtonChoicePopup:forXrayTocItemEdit(props)
-	local args = {
-		info = T(_("xray item %1go to this item in the list%2edit this item"), "| :", self.separator),
-		is_xray_toc_item = true,
-		callback_label = _("jump"),
-		--! callback defined by calling module
-		hold_callback_label = _("edit"),
-		--! hold_callback defined by calling module
-		--* extra_callbacks prop, with for each item a callback_label and a callback prop, can be dynamically inserted
-	}
-	return KOR.buttonprops:set(args, props)
 end
 
 return ButtonChoicePopup

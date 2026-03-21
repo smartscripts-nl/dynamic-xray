@@ -149,7 +149,6 @@ function XrayFormsData:initEditFormProps(item, reload_manager, active_form_tab)
         reload_manager = reload_manager,
     })
 
-    --* this can be the case on longpressing an toc-item in TextViewer; see ((TextViewer toc button)):
     if not item.index or (not item.xray_type and not item.aliases and not item.tags) then
         item = views_data:upgradeNeedleItem(item, {
             include_name_matches = true,
@@ -275,15 +274,15 @@ function XrayFormsData:reAttachViewerItemId(item)
     if edit_item then
         item.id = edit_item.id
 
-    --? for some reason we need the second fallback in case of editing items from List context menu, because otherwise id would not be remembered:
-    --* this prop was set in ((XrayButtons#forListContext)):
+    --? for some reason we need this second fallback in case of editing items from List context menu, because otherwise id would not be remembered:
+    --* this prop was set in ((XrayController#onShowEditItemForm)):
     else
         item.id = KOR.registry:get("edit_item_id")
     end
     KOR.registry:unset("edit_item", "edit_item_id")
 end
 
---* this id is set upon viewing an item from the list or after tapping an Xray item button in ((XrayDialogs#showItemViewer)), or upon viewing an item found upon tapping a word in the reader in ((XrayDialogs#viewTappedWordItem)):
+--* this id is set upon viewing an item from the list or after tapping an Xray item button in ((XrayDialogs#viewItem)), or upon viewing an item found upon tapping a word in the reader in ((XrayDialogs#viewTappedWordItem)):
 function XrayFormsData:setFormItemId(item_id)
     --* "hidden" id, to be re-attached to the updated item in ((XrayFormsData#reAttachViewerItemId)):
     self.form_item_id = item_id
@@ -520,7 +519,9 @@ function XrayFormsData:getFormFields(item_copy, prefilled_field, name_from_selec
 
 Through aliases:
 1) main names will be found in the Xray overview of items in paragraphs on the current page;
-2) the main item will be shown if the user longpresses an alias in the ebook text.]]),
+2) the main item will be shown if the user longpresses an alias in the ebook text.
+
+If it is you intention that aliases shouldn't be separated by spaces, then use comma's, even it concerns only one name. So e.g. use \"Sun Eater,\" instead of \"Sun Eater\", because the latter would be seen as two aliases and would be converted and sorted to \"Eater Sun\".]]),
         tab = 2,
         cursor_at_end = true,
         input_face = self.other_fields_face,

@@ -45,7 +45,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 
 ## DX under Android
 
-Alas, under Android DX doesn't currently load. I'm trying to solve this.
+DX should now be also loadable under Android. If you tried to install it previously and sometime later updated to the latest version, it might be that KOReader crashes the first time. But after that crash it should from then on load, with DX enabled.
 
 ## Use cases
 
@@ -65,13 +65,20 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
      * copy _the contents of_ koreader-settings-folder/icons to .adds/koreader/resources/icons
      * copy the _folder_ koreader-settings-folder/extensions to .adds/koreader
      * copy the _folder_ koreader-settings-folder/plugins/xraycontroller.koplugin to .adds/koreader/plugins
-3. **⚠️ It's especially important that you copy koreader-settings-folder/patches/2-xray-patches.lua**:
+4. **⚠️ It's especially important that you copy koreader-settings-folder/patches/2-xray-patches.lua**:
    * **For Android**: to a subfolder "patches" in your KOReader settings folder!** Without this, DX won't be available in your installation.
    * **For Kobo/Kindle** (if a .adds folder is present): to a subfolder (create if not exists) "patches" of .adds/koreader
 4. The "koreader-settings-and-patches" folder in this repository represents the settings folder of your koreader installation. In most cases, this target folder will be named "koreader". In its root you should find settings.reader.lua.
 5. In that target folder, create a folder patches if it doesn't exist yet and copy koreader-settings-and-patches/patches/2-xray-patches.lua to that target patches folder.
 6. Copy koreader-settings-and-patches/settings/settings_manager.lua to the settings subfolder of the koreader settings folder of your current installation (this folder should already be present and should contain many files, e.g. sqlite3-files for KOReader's databases).
 7. **⚠️ Check whether the database filename in your KOReader settings folder is "bookinfo_cache.sqlite3".** If not, go through the additional steps listed in [User has a database filename other than "bookinfo_cache.sqlite3"](#user-uses-a-database-file-other-than-bookinfo_cachesqlite3)
+8. If you want to let KOReader's footer display Xray items counts (see image 1b... under [Images](#images)), you'll have to manually edit readerfooter.lua (because it's not patchable). An example of this is provided in manual-file-edit-examples/readerfooter.lua. See the comments at the start of that file.
+9. It is possible to add a button to the dictionary lookup results dialog, with which to add the looked-up word to the Xray items. This cannot be done via a patch, but requires a manual edit of dictquicklookup.lua. See
+   manual-file-edit-examples/dictquicklookup.lua for an example.
+10. It is **⚠️highly recommended to let KOReader display its keyboard in compact mode**, so you have enough space
+   available for the multiple-field DX forms. You can enable this compact display mode from the main KOReader menu: Cog icon > Device > Keyboard > Keyboard appearance settings > enable checkbox "compact".
+
+NB: sometimes, if a previous DX installation failed, and you try to install it a second time, KOReader crashes. This can be caused by a DX routine which tries to install all missing DX database tables and fields. But if you then restart KOReader, all should be fine.
 
 ### Updating to new versions
 
@@ -87,13 +94,13 @@ This will make the code and updates much easier to maintain for me _and_ for clo
 * top left corner of the Xray Item Viewer dialog
 * the most left main menu item → Dynamic Xray → Translate interface
 
-**⚠️ The folder frontend/extensions/translations with in it a .po-file has therefore now been removed.**
-
 ## Usage tips
 
 ### Item Viewer: quotes tab
 
-Via ReaderHighlight the user can select texts as quotes to be displayed in the fourth tab of the Item Viewer. This feature can be used to add a book index, or to quickly read especially moving or important passages, or for storing definitions from the book. You can see a picture of this feature in the [Images](#images) section (image 05b...).
+Via ReaderHighlight the user can select texts as quotes to be displayed in the quotes tab of the Item Viewer. This feature can be used to add a book index, or to quickly read especially moving or important passages, or for storing definitions from the book. You can see a picture of this feature in the [Images](#images) section (image 05b...).
+
+This tab also has a Quotes Manager, to be called with the floating speech bubble button. In this Manager you can view, edit or remove quotes. You could e.g. use this feature to add you own notes to individual quotes.
 
 ### Global hotkeys
 
@@ -113,6 +120,13 @@ You can show this navigator by:
 * longpressing the lightning or star Xray markers in pages
 * tapping in KOReader's main menu: most left icon > Dynamic Xray > Show Page Navigator
 * assigning a gesture for "Show Xray Page Navigator" (in the Gestures menu under "Reflowable documents...") and then use this gesture.
+
+### Use tag-groups to group items together
+
+* Tag-groups are items which share a tag with each other.
+* You can view them grouped together in the 4th tab of the Xray Exporter.
+* Tag-groups can be very handy to e.g. see all persons/terms belonging to one party in a conflict together, or to group logically linked items together.
+* The Items List has a checkbox-button in the top left to quickly assign a tag to multiple items. See images 3b... and 3c... in this README.
 
 #### Generate a copyable list of all Xray items from Page Navigator
 
@@ -151,6 +165,9 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 ![01 Xray marker in page](images/01-xray-marker-in-page.png)
 01 Xray marker in page
 
+![01b Xray items counts in footer](images/01b-xray-items_count-in-footer.png)
+01b Xray items counts in footer (see lightning icon). You'll have to manually modify ReaderFooter for this.
+
 ![02 Xray info dialog after click on marker](images/02-xray-info-dialog-after-click-on-marker.png)
 02 Xray info dialog after click on marker
 
@@ -164,25 +181,37 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 02d Tappable popup with linked items after longpressing a name in the ebook
 
 ![03 List of Xray items](images/03-list-of-xray-items.png)
-03 List of Xray items
+03 Items List
+
+![03b Items List: enter tag for assignment to items](images/03b-items-list-enter-tag-for-assignment-to-items.png)
+03b Items List: enter tag for assignment to items
+
+![03c Items List: select items for tag assignment](images/03c-items-list-select-items-for-tag-assignment.png)
+03c Items List: select items for tag assignment
+
+![03d Tag-group-selector](images/03d-tag-group-selector.png)
+03d Tag-group selector, callable with gesture or hotkey
+
+![03e Tag-group-viewer](images/03e-tag-group-viewer.png)
+03e Tag-group viewer
 
 ![04 Xray Item Viewer tab 1](images/04-xray-item-viewer-tab-1.png)
-04 Xray Item Viewer tab 1
+04 Item Viewer tab 1
 
 ![05 Xray Item Viewer tab 2](images/05-xray-item-viewer-tab-2.png)
-05 Xray Item Viewer tab 2
+05 Item Viewer tab 2
 
 ![05b Xray Item Viewer quotes tab](images/05b-xray-item-viewer-quotes-tab-in-item-viewer.png)
-05b Xray Item Viewer: quotes tab
+05b Item Viewer: quotes tab
 
 ![05c Xray Item Viewer linked items tab](images/05c-xray-item-viewer-tab-3-linked-items.png)
-05c Xray Item Viewer: linked items tab
+05c Item Viewer: linked items tab
 
 ![06 Xray item editor tab 1](images/06-xray-item-editor-tab-1.png)
-06 Xray item editor tab 1
+06 Item Editor tab 1
 
 ![07 Xray item editor tab 2](images/07-xray-item-editor-tab-2.png)
-07 Xray item editor tab 2
+07 Item Editor tab 2
 
 ![07b Larger field editor](images/07b-larger-field-editor.png)
 07b Larger field editor, called with edit button next to field. Handy for fields with longer content.
@@ -245,7 +274,7 @@ PT_bookinfo_cache.sqlite3". In that case:
 3. KOReader will automatically be reloaded and then create the xray_items table in your database.
 
 ## Issues to fix
-* Make DX work under Android.
+* Currently none?
 
 ## Todos
 * Update the demo movies in the GitHub releases section.

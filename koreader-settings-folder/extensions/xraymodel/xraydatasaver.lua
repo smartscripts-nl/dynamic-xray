@@ -16,6 +16,7 @@ local json = require("json")
 local T = require("ffi/util").template
 
 local DX = DX
+local G_reader_settings = G_reader_settings
 local has_no_items = has_no_items
 local has_text = has_text
 local math = math
@@ -61,6 +62,7 @@ local XrayDataSaver = WidgetContainer:new{
         add_quote = [[
             INSERT INTO xray_quotes (item_name, ebook, ebook_title, series, series_index, quote, pos0, chapter) VALUES(?, ?, ?, ?, ?, ?, ?, ?);]],
 
+        -- #((create main DX table))
         create_items_table = [[
             CREATE TABLE IF NOT EXISTS "xray_items" (
                 "id" INTEGER NOT NULL,
@@ -112,6 +114,12 @@ local XrayDataSaver = WidgetContainer:new{
         insert_item =
             "INSERT INTO xray_items (ebook, name, short_names, description, xray_type, aliases, tags, linkwords) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
 
+        quote_delete =
+            "DELETE FROM xray_quotes WHERE id = ?;",
+
+        quote_update =
+            "UPDATE xray_quotes SET quote = ? WHERE id = ?;",
+
         store_book_chapters =
             "INSERT OR IGNORE INTO xray_books (ebook, chapters) VALUES (?, ?);",
 
@@ -162,6 +170,9 @@ local XrayDataSaver = WidgetContainer:new{
         update_item_hits =
             "UPDATE xray_items SET book_hits = ?, chapter_hits = ?, chapter_hits_data = ? WHERE id = ?;",
 
+        update_items_tags =
+            "UPDATE xray_items SET tags = ? WHERE id = ?;",
+
         update_item_type =
             "UPDATE xray_items SET xray_type = ? WHERE id = ?;",
     },
@@ -182,7 +193,8 @@ local XrayDataSaver = WidgetContainer:new{
         update_translation =
             "UPDATE xray_translations SET msgstr = ? WHERE md5 = ?;",
     },
-    --* these table modifications for table bookinfo are run and depending on the setting "database_scheme_version" in ((XraySettings)), for the public version of DX:
+    --* these table modifications for table bookinfo are run and depending on the setting "database_scheme_version" in G_reader_settings or ((XraySettings)), for the public version of DX:
+    --* for creation of main DX table, see ((XrayDataSaver#createAndModifyTables)) > ((create main DX table)):
     scheme_alter_queries = {
         [[
             CREATE TABLE IF NOT EXISTS finished_books
@@ -223,7 +235,7 @@ local XrayDataSaver = WidgetContainer:new{
             ALTER TABLE xray_items ADD COLUMN tags;]],
 
         [[
-            CREATE TABLE xray_quotes
+            CREATE TABLE IF NOT EXISTS xray_quotes
             (
                 id INTEGER NOT NULL
                     CONSTRAINT xray_quotes_pk
@@ -247,6 +259,29 @@ local XrayDataSaver = WidgetContainer:new{
         --* a second reset was needed after some updates to the hits counting system:
         [[
             UPDATE xray_items SET chapter_hits = NULL, chapter_hits_data = NULL WHERE 1;]],
+    },
+    scheme_verification_queries = {
+        "PRAGMA table_info('finished_books');",
+
+        "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'rating_goodreads';",
+
+        "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'publication_year';",
+
+        "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'bookmarks';",
+
+        "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'annotations';",
+
+        "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'stars';",
+
+        "SELECT 1 FROM pragma_table_info('xray_items') WHERE name = 'chapter_hits_data';",
+
+        "PRAGMA table_info('xray_books');",
+
+        "SELECT 1 FROM pragma_table_info('xray_items') WHERE name = 'tags';",
+
+        "PRAGMA table_info('xray_quotes');",
+
+        "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'glossary';",
     },
     scheme_version_name = "database_scheme_version",
 }
@@ -456,6 +491,31 @@ function XrayDataSaver.storeItemHits(item)
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 end
 
+-- #((XrayDataSaver#storeItemsTags))
+--* item_ids_and_tags is a associative table, with item ids as indices for the updated tags:
+function XrayDataSaver.storeItemsTags(item_ids_and_tags)
+    local self = DX.ds
+    local conn = KOR.databases:getDBconn("XrayDataSaver:storeItemsTags")
+    local stmt = conn:prepare(self.queries.update_items_tags)
+    local item
+    for id, tags in pairs(item_ids_and_tags) do
+        --* this might be set in ((XrayTags#prepareUpdatedItemTags)), when after deletion of a tag there were no remaining tags:
+        if tags == "nil" then
+            tags = nil
+        end
+        stmt:reset():bind(tags, id):step()
+        item = views_data:getItemById(id)
+        item.tags = tags
+        parent:updateStaticReferenceCollections(id, item)
+        views_data:registerUpdatedItem(item)
+    end
+    --* do this to make sure we remove possibly now empty tag-groups after tag deletions:
+    parent:updateAllTags()
+
+    conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
+end
+
+
 --* compare for edited items: ((XrayFormsData#storeItemUpdates)) > ((XrayDataSaver#storeUpdatedItem))
 -- #((XrayDataSaver#storeNewItem))
 function XrayDataSaver.storeNewItem(new_item)
@@ -657,11 +717,21 @@ function XrayDataSaver.createAndModifyTables()
     end
 
     local update_tasks_count = #self.scheme_alter_queries
-    local version_index = DX.s[self.scheme_version_name] or 0
+    local version_index = G_reader_settings:readSetting("DX_" .. self.scheme_version_name)
+    local version_index_was_saved = true
+    if not version_index then
+        version_index_was_saved = false
+        version_index = DX.s[self.scheme_version_name] or 0
+    end
+    version_index = self.updateVersionIndex(conn, version_index)
+
     if
         update_tasks_count == 0
         or version_index >= update_tasks_count
     then
+        if not version_index_was_saved then
+            G_reader_settings:saveSetting("DX_" .. self.scheme_version_name, update_tasks_count)
+        end
         conn = KOR.databases:closeConnections(conn)
         return
     end
@@ -669,6 +739,7 @@ function XrayDataSaver.createAndModifyTables()
     self.modifyTables(conn, update_tasks_count, version_index)
     --* update database_scheme_version in XraySettings:
     DX.s:saveSetting(self.scheme_version_name, update_tasks_count)
+    G_reader_settings:saveSetting("DX_" .. self.scheme_version_name, update_tasks_count)
 
     conn = KOR.databases:closeConnections(conn)
 end
@@ -708,9 +779,61 @@ function XrayDataSaver.modifyTables(conn, update_tasks_count, version_index)
     local self = DX.ds
     local sql
     for i = version_index + 1, update_tasks_count do
-        sql = self.scheme_alter_queries[i]
-        conn:exec(sql)
+        if self.scheme_alter_queries[i] then
+            sql = self.scheme_alter_queries[i]
+            conn:exec(sql)
+        end
     end
+end
+
+function XrayDataSaver.quoteDelete(id)
+    local self = DX.ds
+    local conn = KOR.databases:getDBconn("XrayDataSaver.quoteDelete")
+    local stmt = conn:prepare(self.queries.quote_delete)
+    stmt:reset():bind(id):step()
+    conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
+end
+
+function XrayDataSaver.quoteUpdate(id, value)
+    local self = DX.ds
+    local conn = KOR.databases:getDBconn("XrayDataSaver.quoteUpdate")
+    local stmt = conn:prepare(self.queries.quote_update)
+    stmt:reset():bind(value, id):step()
+    conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
+end
+
+--* check whether previous DX installations already created some tables or fields and update version_index accordingly:
+function XrayDataSaver.updateVersionIndex(conn, version_index)
+
+    --* problems for previous installation which already installed some tables or fields only occur in this case (because then DX tries to install already existing tables/fields):
+    if version_index > 0 then
+        return version_index
+    end
+
+    local self = DX.ds
+
+    local result
+    count = #self.scheme_verification_queries
+    for i = 1, count do
+        result = conn:exec(self.scheme_verification_queries[i])
+        if result then
+            version_index = i
+        --* account for rename of bookinfo.bookmarks to bookinfo.annotations:
+        elseif i == 3 and conn:exec(self.scheme_verification_queries[4]) then
+            version_index = 4
+        --* table or field not present in db:
+        else
+            --* update database_scheme_version in XraySettings:
+            DX.s:saveSetting(self.scheme_version_name, version_index)
+            return version_index
+        end
+    end
+
+    --* correction for queries which only did reset *data* in xray_items table:
+    version_index = version_index + 2
+    --* update database_scheme_version in XraySettings:
+    DX.s:saveSetting(self.scheme_version_name, version_index)
+    return version_index
 end
 
 function XrayDataSaver:setEmptyPropsToNil(values)

@@ -2,6 +2,7 @@
 local require = require
 
 local BD = require("ui/bidi")
+local Button = require("extensions/widgets/button")
 local ButtonTable = require("extensions/widgets/buttontable")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Device = require("device")
@@ -14,6 +15,8 @@ local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")
 local Math = require("optmath")
 local MovableContainer = require("extensions/widgets/container/movablecontainer")
+local OverlapGroup = require("ui/widget/overlapgroup")
+local RightContainer = require("ui/widget/container/rightcontainer")
 local ScrollHtmlWidget = require("extensions/widgets/scrollhtmlwidget")
 local ScrollTextWidget = require("extensions/widgets/scrolltextwidget")
 local Size = require("extensions/modules/size")
@@ -81,6 +84,7 @@ end
 
 --- @class HtmlBox
 local HtmlBox = InputContainer:extend{
+    active_tab = nil,
     additional_key_events = nil,
     after_close_callback = nil,
     align = "center",
@@ -95,10 +99,15 @@ local HtmlBox = InputContainer:extend{
     frame_content_fullscreen = nil,
     frame_content_windowed = nil,
     fullscreen = false,
+    has_items_editor = false,
     height = nil,
     html = nil,
-    --* for two column display of linked item in landscap display:
+    --* for two column display of linked item in landscape display:
     html2 = nil,
+    html_widget = nil,
+    html_widget1 = nil,
+    html_widget2 = nil,
+    is_duo_scroll_widget = false,
     key_events_module = nil,
     left_side_buttons = nil,
     modal = true,
@@ -262,47 +271,31 @@ function HtmlBox:generateScrollWidget()
 
     --* this is the default, but some widgets can set the content_type to "text" for a specific tab; e.g. see ((XrayButtons#getItemViewerTabs)):
     if self.content_type == "text" then
-        --* two column display:
-        if self.html2 then
-            self.html_widget = KOR.twocolumntext:getWidget({
-                parent = self,
-                column1_text = self.html,
-                column2_text = self.html2,
-                face = self.content_face,
-                width = self.swidth,
-                container_width = self.screen_width,
-                height = self.sheight,
-            })
-
-        --* single column display:
-        else
-            self.html_widget =
-            CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.screen_width,
-                    h = self.sheight,
-                },
-                ScrollTextWidget:new{
-                    text = self.html,
-                    face = self.content_face,
-                    line_height = KOR.registry.line_height or 0.95,
-                    alignment = "left",
-                    justified = false,
-                    dialog = self,
-                    width = self.swidth,
-                    height = self.sheight,
-                }
-            }
-        end
-
-        if self.bottom_widget then
-            self.html_widget = VerticalGroup:new{
-                align = "left",
-                self.html_widget,
-                self.bottom_widget,
-            }
-        end
+        self:generateTextScrollWidget()
         return
+    end
+
+    self:generateHtmlScrollWidget()
+end
+
+--- @private
+function HtmlBox:generateHtmlScrollWidget()
+
+    local edit_button
+    if self.has_items_editor then
+        edit_button = Button:new(KOR.buttoninfopopup:forXrayQuotesManager({
+            callback = function()
+                DX.c:showQuotesManager()
+            end,
+        }))
+        local dims = edit_button:getSize()
+        edit_button = RightContainer:new{
+            dimen = Geom:new{
+                w = self.swidth + dims.w,
+                h = dims.h,
+            },
+            edit_button,
+        }
     end
 
     self.html_widget = ScrollHtmlWidget:new{
@@ -313,13 +306,90 @@ function HtmlBox:generateScrollWidget()
         height = self.sheight,
         dialog = self,
     }
-    if self.bottom_widget then
-        self.html_widget = VerticalGroup:new{
-            align = "left",
+    if not self.bottom_widget and self.has_items_editor then
+        self.html_widget = OverlapGroup:new{
+            dimen = Geom:new{
+                w =  self.swidth,
+                h = self.sheight,
+            },
+            edit_button,
             self.html_widget,
-            self.bottom_widget,
+        }
+        return
+    elseif not self.bottom_widget then
+        return
+    end
+
+    self.html_widget = VerticalGroup:new{
+        align = "left",
+        self.html_widget,
+        self.bottom_widget,
+    }
+    if not self.has_items_editor then
+        return
+    end
+
+    local height = self.sheight + self.bottom_widget:getSize().h
+    self.html_widget = OverlapGroup:new{
+        dimen = Geom:new{
+            w = self.swidth,
+            h = height,
+        },
+        edit_button,
+        self.html_widget,
+    }
+end
+
+--- @private
+function HtmlBox:generateTextScrollWidget()
+    --* two column display:
+    if self.html2 then
+        self.is_duo_scroll_widget = true
+        self.html_widget, self.html_widget1, self.html_widget2 = KOR.twocolumntext:getWidget({
+            parent = self,
+            column1_text = self.html,
+            column2_text = self.html2,
+            face = self.content_face,
+            width = self.swidth,
+            container_width = self.screen_width,
+            height = self.sheight,
+        })
+
+        --* single column display:
+    else
+        self.html_widget = CenterContainer:new{
+            dimen = Geom:new{
+                w = self.screen_width,
+                h = self.sheight,
+            },
+            ScrollTextWidget:new{
+                text = self.html,
+                face = self.content_face,
+                line_height = KOR.registry.line_height or 0.95,
+                alignment = "left",
+                justified = false,
+                dialog = self,
+                width = self.swidth,
+                height = self.sheight,
+            }
         }
     end
+    if not self.bottom_widget then
+        return
+    end
+
+    self.html_widget = VerticalGroup:new{
+        align = "left",
+        self.html_widget,
+        --* to display the occurrences histogram centered under a box with content_type "text":
+        CenterContainer:new{
+            dimen = Geom:new{
+                w = self.screen_width,
+                h = self.bottom_widget:getSize().h,
+            },
+            self.bottom_widget,
+        }
+    }
 end
 
 function HtmlBox:onCloseWidget()
@@ -405,8 +475,21 @@ end
 
 function HtmlBox:onSwipe(arg, ges)
     if not self.movable then
+        local is_navigation_swipe = self.next_item_callback and self.prev_item_callback
+        if not is_navigation_swipe then
+            return false
+        end
+        local direction = BD.flipDirectionIfMirroredUILayout(ges.direction)
+        if direction == "west" then
+            self:next_item_callback()
+            return true
+        elseif direction == "east" then
+            self:prev_item_callback()
+            return true
+        end
         return false
     end
+
     --* Let our MovableContainer handle swipe outside of definition
     return self.movable:onMovableSwipe(arg, ges)
 end
@@ -654,6 +737,11 @@ function HtmlBox:generateButtonTables()
                 id = "top",
                 vsync = true,
                 callback = function()
+                    if self.is_duo_scroll_widget then
+                        self.html_widget1:scrollToTop()
+                        self.html_widget2:scrollToTop()
+                        return
+                    end
                     self.html_widget:scrollToTop()
                 end,
             },
@@ -662,6 +750,11 @@ function HtmlBox:generateButtonTables()
                 id = "bottom",
                 vsync = true,
                 callback = function()
+                    if self.is_duo_scroll_widget then
+                        self.html_widget1:scrollToBottom()
+                        self.html_widget2:scrollToBottom()
+                        return
+                    end
                     self.html_widget:scrollToBottom()
                 end,
             },
@@ -884,6 +977,10 @@ function HtmlBox:setPaddingAndSpacing()
     self.content_padding_h = self.content_padding or (self.window_size == "fullscreen" or self.window_size == "max" or type(self.window_size) == "table") and Size.padding.closebuttonpopupdialog or Size.padding.large
     local content_padding_v = Size.padding.fullscreen --* added via VerticalSpan
     self.content_width = self.inner_width - 2 * self.content_padding_h
+    --* in two column display of linked items, make more room available:
+    if self.html2 then
+        self.content_width = self.inner_width
+    end
 
     self.content_padding_v =  content_padding_v
 
