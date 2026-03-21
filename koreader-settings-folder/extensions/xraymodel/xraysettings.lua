@@ -172,6 +172,18 @@ local XraySettings = WidgetContainer:new{
             explanation = _("This variable determines whether a chapter-occurrences-histogram will be shown in the Item Viewer tabs (or not)."),
             locked = 0,
         },
+        night_mode_color = {
+            value = 0,
+            explanation = _("This settings determines which color will be used for displaying several UI elements IN NIGHT MODE. Valid values: 0 - 5. 0 = white, 5 = a lighter grade of white."),
+            locked = 0,
+            validator = {
+                name = "night_mode_color",
+                min_value = 0,
+                max_value = 5,
+                default_value = 0,
+                value_step = 1,
+            },
+        },
         PN_infopanel_meta_indent = {
             value = 10,
             explanation = _("This variables enables the numbers of spaces used to indent the item meta information (hits, aliases etc.) in the PN item info panel at the bottom."),
@@ -335,6 +347,9 @@ local XraySettings = WidgetContainer:new{
             --* so we immediately will see the new indentation:
             DX.pn:resetCache("do_limited_refresh")
             return type(value) == "number" and value >= 4 and value <= 14 or _("a valid value should lie between 4 and 14") .. KOR.strings.ellipsis
+        end,
+        night_mode_color = function(value)
+            return type(value) == "number" and value >= 0 and value <= 5 or _("a valid value should lie between 0 and 5") .. KOR.strings.ellipsis
         end,
     },
 }

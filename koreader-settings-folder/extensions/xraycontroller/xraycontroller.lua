@@ -717,7 +717,10 @@ function XrayController:setNightModeColors()
         return
     end
 
-    local inverted = Blitbuffer.COLOR_GRAY_5
+    local inverted = Blitbuffer.COLOR_BLACK
+    if DX.s.night_mode_color > 0 and DX.s.night_mode_color <= 5 then
+        inverted = Blitbuffer["COLOR_GRAY_" .. DX.s.night_mode_color]
+    end
     for entry in pairs(day_colors) do
         KOR.colors[entry] = inverted
     end
