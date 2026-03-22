@@ -260,18 +260,18 @@ end
 function Button:setLeftOrRightIndicator()
     --* this was set in ((Button#setHoldCallback)):
     if self.info_callbacks_show_indicators then
-        self.right_indicator = self:generateTextLabel{
+        self.right_indicator = self:generateTextLabel {
             text = ".",
             max_width = self.indicator_max_width,
-            label_color = self.indicator_color,
+            label_color = self.enabled and self.indicator_color or KOR.colors.button_disabled,
             outer_pad_width = 0,
         }
 
     elseif self.show_hold_callback_indicator then
-        self.left_indicator = self:generateTextLabel{
+        self.left_indicator = self:generateTextLabel {
             text = KOR.icons.hold_callback_indicator_bare,
             max_width = self.indicator_max_width,
-            label_color = self.indicator_color_darker,
+            label_color = self.enabled and self.indicator_color_darker or KOR.colors.button_disabled,
             outer_pad_width = 0,
         }
     end
