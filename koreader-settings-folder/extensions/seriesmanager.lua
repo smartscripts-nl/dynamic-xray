@@ -679,7 +679,7 @@ end
 
 function SeriesManager:getSeriesName(full_path)
     local conn = KOR.databases:getDBconn("SeriesManager:getSeriesName")
-    local sql = KOR.databases:injectSafePath("SELECT series, series_index FROM bookinfo WHERE path = 'safe_path' LIMIT 1", full_path)
+    local sql = KOR.databases:injectSafePath("SELECT series, series_index FROM bookinfo WHERE directory || filename = 'safe_path' LIMIT 1", full_path)
     local series, series_index = conn:rowexec(sql)
     conn = KOR.databases:closeConnections(conn)
 

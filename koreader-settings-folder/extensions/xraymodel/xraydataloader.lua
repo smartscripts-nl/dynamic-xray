@@ -85,7 +85,7 @@ local XrayDataLoader = WidgetContainer:new{
             LEFT JOIN xray_quotes q
                   ON q.ebook = x.ebook
                      AND q.item_name = x.name
-            JOIN xray_books o ON o.ebook = b.ebook
+            JOIN xray_books o ON o.ebook = b.filename
 
             WHERE b.filename = '%1'
             GROUP BY x.id
