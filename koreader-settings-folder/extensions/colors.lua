@@ -54,8 +54,8 @@ return {
     readonly_inverted = Blitbuffer.COLOR_WHITE,
     scrollbar_color = Blitbuffer.COLOR_LIGHT_GRAY,
 
-    --separator_vertical_color = Blitbuffer.COLOR_GRAY,
-    --tabs_table_separators = Blitbuffer.COLOR_GRAY,
+    --separator_vertical_color = Blitbuffer.COLOR_GRAY_9,
+    --tabs_table_separators = Blitbuffer.COLOR_GRAY_9,
 
     --title_bar_bottom_line = Blitbuffer.COLOR_GRAY,
     --title_bar_with_submenu_bottom_line = Blitbuffer.COLOR_GRAY_9,

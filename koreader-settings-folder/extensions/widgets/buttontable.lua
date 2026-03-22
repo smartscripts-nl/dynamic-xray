@@ -55,6 +55,9 @@ local ButtonTable = FocusManager:extend{
 }
 
 function ButtonTable:init()
+
+    self.sep_color = KOR.colors.tabs_table_separators
+
     self.width = self.width or math.floor(math.min(Screen:getWidth(), Screen:getHeight()) * 0.9)
     self.buttons_layout = {}
     self.button_by_id = {}
@@ -244,7 +247,7 @@ end
 --* ==================== SMARTSCRIPTS =====================
 
 function ButtonTable:generateButton(btn_entry, max_button_height, default_button_width, min_needed_button_width)
-    local DEFAULT_COLOR = not self.readonly and KOR.colors.black or KOR.colors.white
+    local DEFAULT_COLOR = not self.readonly and KOR.colors.button_label or KOR.colors.white
     local min_width, button_dim, config
 
     local is_bold = self.button_font_weight == "bold"
