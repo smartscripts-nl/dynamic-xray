@@ -160,6 +160,7 @@ local Button = InputContainer:extend{
 }
 
 function Button:init()
+    self:setColors()
     self:computeFixedIconDims()
     self:setBasicButtonProps()
     self:setIconSizeRatioIfNeeded()
@@ -172,6 +173,13 @@ function Button:init()
     self:setWidgetContent()
     self:adaptPaddings()
     self:finalizeWidget()
+end
+
+--- @private
+function Button:setColors()
+    --* we needs these updates because colors might have been changed by ((XrayController#toggleNightModeColors)):
+    self.indicator_color = KOR.colors.lighter_indicator_color
+    self.indicator_color_darker = KOR.colors.darker_indicator_color
 end
 
 --- @private

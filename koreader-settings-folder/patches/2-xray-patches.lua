@@ -6,6 +6,7 @@
 
 --! patches in this file:
 -- ((PATCH CREDOCUMENT))
+-- ((PATCH DEVICELISTENER))
 -- ((PATCH READERVIEW))
 -- ((PATCH UIMANAGER))
 -- ((PATCH READERDICTIONARY))
@@ -41,6 +42,7 @@ local CheckButton = require("ui/widget/checkbutton")
 --- @class CreDocument
 local CreDocument = require("document/credocument")
 local Device = require("device")
+local DeviceListener = require("device/devicelistener")
 local Event = require("ui/event")
 local InfoMessage = require("ui/widget/infomessage")
 local InputDialog = require("ui/widget/inputdialog")
@@ -247,6 +249,16 @@ function CreDocument:getPageTextFromXPs(xp, next_page_xp, as_html)
         end
     end
     return table_concat(formatted, "")
+end
+
+
+--- PATCH DEVICELISTENER
+-- #((PATCH DEVICELISTENER))
+
+local orig_onToggleNightMode = DeviceListener.onToggleNightMode
+DeviceListener.onToggleNightMode = function(self)
+    orig_onToggleNightMode(self)
+    DX.c:toggleNightModeColors()
 end
 
 

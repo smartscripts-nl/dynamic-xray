@@ -743,6 +743,8 @@ function Menu:init(restore_dialog)
         self.dimen.h = self.screen_h
     end
 
+    self.line_color = KOR.colors.menu_line
+
     self.border_size = self.is_borderless and 0 or Size.border.window
     self.inner_dimen = Geom:new{
         w = self.dimen.w - 2 * self.border_size,

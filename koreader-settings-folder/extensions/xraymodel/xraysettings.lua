@@ -183,6 +183,7 @@ local XraySettings = WidgetContainer:new{
                 default_value = 0,
                 value_step = 1,
             },
+            after_change_callback = "toggle_nightmode_colors",
         },
         PN_infopanel_meta_indent = {
             value = 10,
@@ -334,6 +335,9 @@ local XraySettings = WidgetContainer:new{
         end,
         set_tab_buttons_font_size = function(new_font_size)
             DX.b.default_tabs_button_table_props.button_font_size = new_font_size
+        end,
+        toggle_nightmode_colors = function()
+            DX.c:toggleNightModeColors()
         end,
     },
     validators = {

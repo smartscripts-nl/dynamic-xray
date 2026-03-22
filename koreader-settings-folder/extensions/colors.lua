@@ -2,7 +2,7 @@
 local Blitbuffer = require("ffi/blitbuffer")
 
 --- @class Colors This is kind of a stylesheet for Blitbuffer colors used in the KOReader scripts
---! some of these color (commented out) will be dynamically set depending on night mode display, via ((XrayController#resetDynamicXray)) > ((XrayController#setNightModeColors)):
+--! some of these color (commented out) will be dynamically set depending on night mode display, via ((XrayController#resetDynamicXray)) > ((XrayController#toggleNightModeColors)):
 return {
 
     --* see ((BLITBUFFER_COLORS)) for color definitions

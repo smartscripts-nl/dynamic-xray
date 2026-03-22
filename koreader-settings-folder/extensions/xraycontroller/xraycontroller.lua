@@ -658,7 +658,7 @@ function XrayController:resetDynamicXray(is_prepared, do_full_update)
         KOR.document:resetParagraphsCache()
         DX.p:resetCache()
     end
-    self:setNightModeColors()
+    self:toggleNightModeColors()
     --* to force a refresh of the texts in the bottom info panel:
     DX.sp:resetInfoTexts()
     DX.ip:resetProps()
@@ -687,7 +687,7 @@ function XrayController:resetDynamicXray(is_prepared, do_full_update)
     DX.vd.prepareData()
 end
 
-function XrayController:setNightModeColors()
+function XrayController:toggleNightModeColors()
 
     local day_colors = {
         button_label = Blitbuffer.COLOR_GRAY_3,
