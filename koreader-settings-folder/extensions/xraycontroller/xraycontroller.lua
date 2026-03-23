@@ -689,29 +689,8 @@ end
 
 function XrayController:toggleNightModeColors()
 
-    local day_colors = {
-        button_label = Blitbuffer.COLOR_GRAY_3,
-
-        darker_indicator_color = Blitbuffer.COLOR_GRAY_7,
-        lighter_indicator_color = Blitbuffer.COLOR_GRAY_7,
-        lighter_indicator_hold_color = Blitbuffer.COLOR_GRAY_7,
-
-        lighter_text = Blitbuffer.COLOR_GRAY_3,
-
-        line_separator = Blitbuffer.COLOR_GRAY_9,
-        menu_line = Blitbuffer.COLOR_DARK_GRAY,
-        separator_vertical_color = Blitbuffer.COLOR_GRAY_9,
-        tabs_table_separators = Blitbuffer.COLOR_GRAY_9,
-
-        title_bar_bottom_line = Blitbuffer.COLOR_GRAY_9,
-        title_bar_with_submenu_bottom_line = Blitbuffer.COLOR_GRAY_9,
-        title_bar_bottom_line_light = Blitbuffer.COLOR_LIGHT_GRAY,
-
-        xray_item_status_indicators_color = Blitbuffer.COLOR_GRAY_5,
-        xray_page_or_paragraph_match_marker = Blitbuffer.COLOR_GRAY_9,
-    }
     if G_reader_settings:isFalse("night_mode") then
-        for entry, color in pairs(day_colors) do
+        for entry, color in pairs(KOR.colors.day_colors) do
             KOR.colors[entry] = color
         end
         return
@@ -721,7 +700,7 @@ function XrayController:toggleNightModeColors()
     if DX.s.night_mode_color > 0 and DX.s.night_mode_color <= 5 then
         inverted = Blitbuffer["COLOR_GRAY_" .. DX.s.night_mode_color]
     end
-    for entry in pairs(day_colors) do
+    for entry in pairs(KOR.colors.day_colors) do
         KOR.colors[entry] = inverted
     end
 end
