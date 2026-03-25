@@ -31,7 +31,8 @@ function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
     local content_prop = tab_method == "htmlBoxTabbed" and "html" or "info"
     --* this prop can be set for two column display of linked items, in ((XrayButtons#getItemViewerTabs)):
     local content_prop2 = tab_method == "htmlBoxTabbed" and "html2" or "info2"
-    local tab_content, tab_content2 --* these can be html or plain text
+    local content_prop3 = tab_method == "htmlBoxTabbed" and "html3" or "info3"
+    local tab_content, tab_content2, tab_content3 --* these can be html or plain text
 
     if args.tabs_as_table == nil then
         local props = DX.b.default_tabs_button_table_props
@@ -58,6 +59,7 @@ function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
                 if not args.other_factory then
                     tab_content = type(tab[content_prop]) == "function" and tab[content_prop]() or tab[content_prop]
                     tab_content2 = type(tab[content_prop2]) == "function" and tab[content_prop2]() or tab[content_prop2]
+                    tab_content3 = type(tab[content_prop3]) == "function" and tab[content_prop3]() or tab[content_prop3]
                 else
                     tab_content = args.other_factory()
                     args.other_factory = nil
@@ -135,9 +137,10 @@ function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
         args.title_tab_callbacks = title_tab_callbacks
     end
 
-    --* set content of the tab; content_prop can be "html" or "info":
+    --* set content of the tab; content_prop can be "html" or "info", "html2" or "info2", etc.:
     args[content_prop] = tab_content
     args[content_prop2] = tab_content2
+    args[content_prop3] = tab_content3
 end
 
 --* for custom tabs in cases where the normal tabfactory method would not work:

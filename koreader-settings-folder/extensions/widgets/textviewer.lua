@@ -109,6 +109,7 @@ local TextViewer = InputContainer:extend{
     is_duo_scroll_widget = false,
     is_standard_tabbed_dialog = false,
     is_standard_tabbed_dialog_lower = false,
+    is_three_scroll_widget = false,
     justified = false,
     full_height = false,
     fullscreen_padding = Screen:scaleBySize(30),
@@ -132,12 +133,15 @@ local TextViewer = InputContainer:extend{
     scroll_text_w = nil,
     scroll_text_w1 = nil,
     scroll_text_w2 = nil,
+    scroll_text_w3 = nil,
     separator = nil,
     --* this table will be populated by ((TabFactory#setTabButtonAndContent)):
     tabs_table_buttons = nil,
     text = nil,
     --* for two column display:
     text2 = nil,
+    --* for three column display:
+    text3 = nil,
     --* for generating an icon-less copy of TextViewer.text:
     text_for_copy = nil,
     text_margin = Size.margin.small,
@@ -583,13 +587,26 @@ function TextViewer:initTextWidget()
     local padding_right = self.fullscreen and 40 or 0
     if (self.block_height_adaptation or self.use_low_height) and self.use_scrolling_dialog ~= SCROLLING_FIXED_HEIGHT_WITHOUT_SCROLLBAR then
 
+        if not self.screen_width then
+            self.screen_width = Screen:getWidth()
+        end
+        --* three column display:
+        if self.text3 then
+            self.is_three_scroll_widget = true
+            self.scroll_text_w, self.scroll_text_w1, self.scroll_text_w2, self.scroll_text_w3 = KOR.columntexts:getThreeWidget({
+                parent = self,
+                column1_text = self.text,
+                column2_text = self.text2,
+                column3_text = self.text3,
+                face = self.face,
+                width = self.screen_width,
+                container_width = self.screen_width,
+                height = height,
+            })
         --* two column display:
-        if self.text2 then
-            if not self.screen_width then
-                self.screen_width = Screen:getWidth()
-            end
+        elseif self.text2 then
             self.is_duo_scroll_widget = true
-            self.scroll_text_w, self.scroll_text_w1, self.scroll_text_w2 = KOR.twocolumntext:getWidget({
+            self.scroll_text_w, self.scroll_text_w1, self.scroll_text_w2 = KOR.columntexts:getDuoWidget({
                 parent = self,
                 column1_text = self.text,
                 column2_text = self.text2,
@@ -1096,7 +1113,12 @@ function TextViewer:getDefaultButtons()
         }),
         KOR.buttoninfopopup:forTextViewerOneScreenUp({
             callback = function()
-                if self.is_duo_scroll_widget then
+                if self.is_three_scroll_widget then
+                    self.scroll_text_w1:onScrollUp(1)
+                    self.scroll_text_w2:onScrollUp(1)
+                    self.scroll_text_w3:onScrollUp(1)
+                    return
+                elseif self.is_duo_scroll_widget then
                     self.scroll_text_w1:onScrollUp(1)
                     self.scroll_text_w2:onScrollUp(1)
                     return
@@ -1107,7 +1129,12 @@ function TextViewer:getDefaultButtons()
         }),
         KOR.buttoninfopopup:forTextViewerOneScreenDown({
             callback = function()
-                if self.is_duo_scroll_widget then
+                if self.is_three_scroll_widget then
+                    self.scroll_text_w1:onScrollDown(1)
+                    self.scroll_text_w2:onScrollDown(1)
+                    self.scroll_text_w3:onScrollDown(1)
+                    return
+                elseif self.is_duo_scroll_widget then
                     self.scroll_text_w1:onScrollDown(1)
                     self.scroll_text_w2:onScrollDown(1)
                     return
@@ -1118,7 +1145,12 @@ function TextViewer:getDefaultButtons()
         }),
         KOR.buttoninfopopup:forTextViewerToTop({
             callback = function()
-                if self.is_duo_scroll_widget then
+                if self.is_three_scroll_widget then
+                    self.scroll_text_w1:scrollToTop()
+                    self.scroll_text_w2:scrollToTop()
+                    self.scroll_text_w3:scrollToTop()
+                    return
+                elseif self.is_duo_scroll_widget then
                     self.scroll_text_w1:scrollToTop()
                     self.scroll_text_w2:scrollToTop()
                     return
@@ -1129,7 +1161,11 @@ function TextViewer:getDefaultButtons()
         }),
         KOR.buttoninfopopup:forTextViewerToBottom({
             callback = function()
-                if self.is_duo_scroll_widget then
+                if self.is_three_scroll_widget then
+                    self.scroll_text_w1:scrollToBottom()
+                    self.scroll_text_w2:scrollToBottom()
+                    return
+                elseif self.is_duo_scroll_widget then
                     self.scroll_text_w1:scrollToBottom()
                     self.scroll_text_w2:scrollToBottom()
                     return
@@ -1139,7 +1175,7 @@ function TextViewer:getDefaultButtons()
             hold_callback = self.default_hold_callback,
         }),
     }
-    if self.is_duo_scroll_widget then
+    if self.is_three_scroll_widget or self.is_duo_scroll_widget then
         table_remove(default_buttons, 1)
     end
 

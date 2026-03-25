@@ -364,7 +364,7 @@ end
 --* information for this dialog was generated in ((ReaderView#paintTo)) > ((XrayUI#ReaderViewGenerateXrayInformation))
 --* extra buttons (from xray items) were populated in ((XrayUI#ReaderHighlightGenerateXrayInformation))
 --* current method called from callback in ((xray paragraph info callback)):
-function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_info, hits_info2, matches_count)
+function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_names3, hits_info, hits_info2, matches_count)
     if not self.xray_ui_info_dialog and has_text(hits_info) then
         local matches_count_info = matches_count == 1 and _("1 Xray item") or matches_count .. " " .. _("Xray items")
         local subject = DX.s.UI_mode == "paragraph" and _(" in this paragraph") or _(" on this page")
@@ -379,6 +379,7 @@ function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_info, hits_inf
                     tab = "vermeldingen",
                     info = hits_names,
                     info2 = hits_names2,
+                    info3 = hits_names3,
                 },
                 {
                     tab = "informatie",
@@ -869,7 +870,7 @@ function XrayDialogs:getItemProps(needle_item)
     local linked_items = DX.vd:getLinkedItems(needle_item)
     if linked_items then
         --* show linked items in two column display if that setting has been enabled AND the screen width is greater than its height:
-        local use_two_column_display = KOR.twocolumntext:useTwoColumnDisplay(#linked_items)
+        local use_two_column_display = KOR.columntexts:useTwoColumnDisplay(#linked_items)
         --* linked_items_info2 will be nil when use_two_column_display was false:
         linked_items_info, linked_items_info2 = DX.ex:generateXrayItemsOverview(linked_items, "for_linked_items_tab", use_two_column_display)
     end

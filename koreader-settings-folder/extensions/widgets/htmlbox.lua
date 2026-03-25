@@ -345,7 +345,7 @@ function HtmlBox:generateTextScrollWidget()
     --* two column display:
     if self.html2 then
         self.is_duo_scroll_widget = true
-        self.html_widget, self.html_widget1, self.html_widget2 = KOR.twocolumntext:getWidget({
+        self.html_widget, self.html_widget1, self.html_widget2 = KOR.columntexts:getDuoWidget({
             parent = self,
             column1_text = self.html,
             column2_text = self.html2,

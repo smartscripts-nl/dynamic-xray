@@ -5,8 +5,6 @@ local Blitbuffer = require("ffi/blitbuffer")
 --! some of these color (commented out) will be dynamically set depending on night mode display, via ((XrayController#resetDynamicXray)) > ((XrayController#toggleNightModeColors)):
 return {
 
-    --* see ((BLITBUFFER_COLORS)) for color definitions
-
     --* Blitbuffer.COLOR_DARK_GRAY (disabled color, substitutes de facto the missing Blitbuffer.COLOR_GRAY_8; colors go from COLOR_BLACK, COLOR_GRAY_1 to COLOR_GRAY_E AND COLOR_WHITE):
 
     --* these are toggleable colors, depending on nightmode enabled or not; in night mode these colors will be set to XraySettings.night_mode_color (by default: black) and so be displayed as white (in contrast); see in ((XrayController#toggleNightModeColors)):

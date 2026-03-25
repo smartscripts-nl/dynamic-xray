@@ -185,6 +185,12 @@ local XraySettings = WidgetContainer:new{
             },
             after_change_callback = "toggle_nightmode_colors",
         },
+        overview_tabs_columns_count = {
+            value = 3,
+            options = { 2, 3 },
+            explanation = _("This variable determines whether overview tabs like in the Xray Page Information Popup, or the Tag Group Viewer, will have three colums, or two."),
+            locked = 0,
+        },
         PN_infopanel_meta_indent = {
             value = 10,
             explanation = _("This variables enables the numbers of spaces used to indent the item meta information (hits, aliases etc.) in the PN item info panel at the bottom."),

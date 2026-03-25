@@ -502,13 +502,20 @@ function Dialogs:setTextBoxTexts(args)
         info2 = info2:gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
     end
     args.text2 = info2
+    --* for text in three columns:
+    local info3 = args.info3 or nil
+    if info3 then
+        info3 = KOR.html:htmlToPlainTextIfHtml(info3)
+        info3 = info3:gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
+    end
+    args.text3 = info3
 
     --* for a non-icon variant of a text with icons, e.g. as generated in ((XrayCallbacks#execExportXrayItemsCallback)):
-    self:setCopyForTextBox(args, info, info2)
+    self:setCopyForTextBox(args, info, info2, info3)
 end
 
 --- @private
-function Dialogs:setCopyForTextBox(args, info, info2)
+function Dialogs:setCopyForTextBox(args, info, info2, info3)
     if args.text_for_copy then
         return
     end
@@ -516,6 +523,8 @@ function Dialogs:setCopyForTextBox(args, info, info2)
     if args.info_icon_less then
         --* hotfix for initials in names:
         args.text_for_copy = args.info_icon_less:gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
+    elseif info and info2 and info3 then
+        args.text_for_copy = info .. "\n\n" .. info2 .. "\n\n" .. info3
     elseif info and info2 then
         args.text_for_copy = info .. "\n\n" .. info2
     else

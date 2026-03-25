@@ -1185,7 +1185,7 @@ function XrayViewsData:generateXrayExportOrLinkedItemInfo(items_count, item, ui_
         iindent = meta_indent
     end
 
-    if KOR.twocolumntext:useTwoColumnDisplay(items_count) then
+    if KOR.columntexts:useTwoColumnDisplay(items_count) then
         KOR.registry:set("split_to_half_max_length", true)
     end
     KOR.registry:set("add_icon_indent", true)

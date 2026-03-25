@@ -138,13 +138,13 @@ function XrayExporter:initData()
         return false
     end
 
-    local use_two_column_display = KOR.twocolumntext:useTwoColumnDisplay(#DX.vd.items)
+    local use_two_column_display = KOR.columntexts:useTwoColumnDisplay(#DX.vd.items)
     self.items, self.items2, self.iconless_items = self:generateXrayItemsOverview(DX.vd.items, "for_all_items_list", use_two_column_display)
 
-    use_two_column_display = KOR.twocolumntext:useTwoColumnDisplay(#DX.vd.persons)
+    use_two_column_display = KOR.columntexts:useTwoColumnDisplay(#DX.vd.persons)
     self.persons, self.persons2, self.iconless_persons = self:generateXrayItemsOverview(DX.vd.persons, "for_all_items_list", use_two_column_display)
 
-    KOR.twocolumntext:useTwoColumnDisplay(#DX.vd.terms)
+    use_two_column_display = KOR.columntexts:useTwoColumnDisplay(#DX.vd.terms)
     self.terms, self.terms2, self.iconless_terms = self:generateXrayItemsOverview(DX.vd.terms, "for_all_items_list", use_two_column_display)
 
     DX.ta:generateTagGroupsOverview()
@@ -173,7 +173,7 @@ function XrayExporter:generateXrayItemsOverview(items, mode, use_two_column_disp
     end
 
     --* returned here: column1, column2, info_iconless; column2 will be set to nil when usage of text columns wasn't active:
-    return KOR.twocolumntext:getColumnTexts(column1, column2, use_two_column_display, paragraphs_iconless)
+    return KOR.columntexts:getTwoColumnTexts(column1, column2, use_two_column_display, paragraphs_iconless)
 end
 
 function XrayExporter:showExportXrayItemsDialog()
