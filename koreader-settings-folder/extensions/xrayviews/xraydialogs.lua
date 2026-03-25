@@ -370,7 +370,7 @@ function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_info, hits_inf
         local subject = DX.s.UI_mode == "paragraph" and _(" in this paragraph") or _(" on this page")
         local target = DX.s.UI_mode == "paragraph" and _("the ENTIRE PAGE") or _("PARAGRAPHS")
         local new_trigger = DX.s.UI_mode == "paragraph" and _("the first line marked with a lightning icon") or _("a paragraph marked with a star")
-        --* the data below was populated in ((XrayUI#ReaderViewGenerateXrayInformation)):
+        --* the data below was populated in ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#addParagraphInfoItems)):
         local key_events_module = "XrayUIpageInfoViewer"
         local config = {
             title = matches_count_info .. subject,

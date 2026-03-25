@@ -32,6 +32,8 @@ local XrayTags = WidgetContainer:new{
     select_for_tag_items = {},
     select_for_tags_tag = nil,
 
+    names_group = nil,
+    names_group2 = nil,
     tag_group = nil,
     tag_group2 = nil,
     iconless_tag_group = nil,
@@ -147,6 +149,8 @@ function XrayTags:resetModule()
 end
 
 function XrayTags:resetTagGroups()
+    self.names_group = nil
+    self.names_group2 = nil
     self.tag_group = nil
     self.tag_group2 = nil
     self.iconless_tag_group = nil
@@ -310,6 +314,7 @@ function XrayTags:generateTagGroup(tag)
 
     --* column2 here will be set to nil if use_two_column_display is false:
     --* return as text: column1, column2, paragraphs_iconless:
+    self.names_group, self.names_group2, self.iconless_tag_group = KOR.twocolumntext:getColumnTexts(tag_group.names, nil, use_two_column_display, tag_group.paras_iconless)
     self.tag_group, self.tag_group2, self.iconless_tag_group = KOR.twocolumntext:getColumnTexts(tag_group.paras, nil, use_two_column_display, tag_group.paras_iconless)
 
     return taggroup_count
@@ -349,12 +354,17 @@ end
 --- @private
 function XrayTags:populateTagGroup(tag_group, tag, item, tagged_count, is_first_para)
     if is_first_para then
+        tag_group.names = {}
         tag_group.paras = {}
         tag_group.paras_iconless = {
             tag:upper() .. "\n\n"
         }
     end
     local paragraph, paragraph_iconless = DX.vd:generateXrayExportOrLinkedItemInfo(tagged_count, item, nil, is_first_para, "for_all_items_list")
+    local name = paragraph
+        :gsub("^\n", "")
+        :gsub("\n.+$", "")
+    table_insert(tag_group.names, name .. "\n")
     table_insert(tag_group.paras, paragraph .. "\n")
     table_insert(tag_group.paras_iconless, paragraph_iconless .. "\n")
 end
@@ -448,11 +458,21 @@ end
 
 function XrayTags:showTagGroup(tag)
     local taggroup_count = self:generateTagGroup(tag)
-    self.tag_group_viewer = KOR.dialogs:textBox({
+    self.tag_group_viewer = KOR.dialogs:textBoxTabbed(1, {
         title = _("Tag-group") .. ": " .. tag .. " (" .. taggroup_count .. ")",
         fullscreen = true,
-        info = self.tag_group,
-        info2 = self.tag_group2,
+        tabs = {
+            {
+                tab = _("overview"),
+                info = self.names_group,
+                info2 = self.names_group2,
+            },
+            {
+                tab = _("information"),
+                info = self.tag_group,
+                info2 = self.tag_group2,
+            },
+        },
         extra_buttons_start_pos = 2,
         extra_buttons = {
             KOR.buttoninfopopup:forXrayTagGroupPrevious({
