@@ -31,6 +31,7 @@ local InputDialog = require("extensions/widgets/inputdialog")
 local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")
 local MovableContainer = require("extensions/widgets/container/movablecontainer")
+local ScrollHtmlWidget = require("extensions/widgets/scrollhtmlwidget")
 local ScrollTextWidget = require("extensions/widgets/scrolltextwidget")
 local Size = require("extensions/modules/size")
 local TextBoxWidget = require("extensions/widgets/textboxwidget")
@@ -87,6 +88,7 @@ local TextViewer = InputContainer:extend{
     auto_para_direction = true,
     back_button_inserted = false,
     block_height_adaptation = false,
+    box_font_size = 16,
     button_font_face = "cfont",
     button_font_size = 20,
     button_font_weight = "bold",
@@ -94,9 +96,14 @@ local TextViewer = InputContainer:extend{
     buttons_table = nil,
     --* Optional callback called on CloseWidget, set by the widget which showed us (e.g., to request a full-screen refresh)
     close_callback = nil,
+    --* this is the default, but some widgets can set the content_type to "html" for a specific tab; e.g. see ((XrayInformation#showReliabilityIndicatorsExplanation)):
+    --! if the viewer has tabs with html content, the first tab MUST have plain text content, so self.dialog_height can be set in ((set TextViewer dialog height)), which prop will then be consumed in ((TextViewer#generateHtmlScrollWidget)):
+    --! TextViewer instances with html tabs must not have a bottom button table, because of problems otherwise with scrolling and searching:
+    content_type = "text",
     convert_big_dialogs_to_fullscreen = true,
     covers_fullscreen = false,
     default_hold_callback = nil, --* on each default button
+    dialog_height = nil,
     event_after_close = nil,
     key_events_module = nil,
     extra_buttons = nil,
@@ -576,6 +583,27 @@ function TextViewer:applyOverflowCorrections()
 end
 
 --- @private
+function TextViewer:generateHtmlScrollWidget(height)
+    --! if the viewer has tabs with html content, the first tab MUST have plain text content, so self.dialog_height can be set in ((set TextViewer dialog height)):
+    height = self.dialog_height or height
+    self.scroll_text_w = ScrollHtmlWidget:new {
+        html_body = self.text,
+        css = KOR.html:getHtmlBoxCss(),
+        default_font_size = Screen:scaleBySize(self.box_font_size),
+        width = self.computed_width,
+        height = height,
+        dialog = self,
+    }
+    self.textw = CenterContainer:new {
+        dimen = Geom:new {
+            w = self.computed_width,
+            h = height,
+        },
+        self.scroll_text_w,
+    }
+end
+
+--- @private
 function TextViewer:initTextWidget()
     local height = not self.text_padding_top_bottom and self.textw_height - 2 * self.text_padding - 2 * self.text_margin or self.textw_height - 2 * self.text_padding_top_bottom - 2 * self.text_margin
 
@@ -583,6 +611,12 @@ function TextViewer:initTextWidget()
         self.computed_width = self.computed_width - 2 * self.fullscreen_padding
     end
     local padding_right = self.fullscreen and 40 or 0
+
+    if self.content_type == "html" then
+        self:generateHtmlScrollWidget(height)
+        return
+    end
+
     if (self.block_height_adaptation or self.use_low_height) and self.use_scrolling_dialog ~= SCROLLING_FIXED_HEIGHT_WITHOUT_SCROLLBAR then
 
         if not self.screen_width then
@@ -688,6 +722,8 @@ function TextViewer:initTextWidget()
             self.scroll_text_w
         }
     end
+    -- #((set TextViewer dialog height))
+    self.dialog_height = self.textw:getSize().h
 end
 
 --- @private

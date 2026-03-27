@@ -2,27 +2,21 @@
 local require = require
 
 local BD = require("ui/bidi")
---local KOR = require("extensions/kor")
+local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
+local _ = KOR:initCustomTranslations()
 
 --- @class ClosingSwipes
 local ClosingSwipes = WidgetContainer:extend{
-    closing_gesture_information_DX = [[CLOSING FULLSCREEN DX DIALOGS WITH GESTURES
-
-* You can close fullscreen(!) DX dialogs by swiping diagonally on them.
-* This can also be done by swiping horizontally on them, UNLESS the dialog allows you to navigate to the next or previous item or page. In that case swiping horizontally will take you to the next or previous item or page.
-* EXCEPTION: the Items List can only be closed by swiping vertically.
-* Non-fullscreen DX dialogs will be moved when you swipe on them.
-]],
-    closing_gesture_information_html_DX = [[<p><strong>Closing fullscreen DX dialogs with gestures</strong></p>
+    closing_gesture_information_html_DX = _([[<p class="noindent"><strong>Closing fullscreen DX dialogs with gestures</strong></p>
 <p> </p>
 <ul>
 <li>You can close fullscreen(!) DX dialogs by swiping <i>diagonally</i> on them.</li>
 <li>This can also be done by swiping <i>horizontally</i> on them, <i>unless</i> the dialog allows you to navigate to the next or previous item or page. In that case swiping horizontally will take you to the next or previous item or page.</li>
 <li><strong>Exception</strong>: the Items List can only be closed by swiping <i>vertically</i>.</li>
 <li>Non-fullscreen DX dialogs will be moved when you swipe on them.</li>
-</ul>]]
+</ul>]])
 }
 
 function ClosingSwipes:handle(parent, arg, ges)

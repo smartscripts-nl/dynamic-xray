@@ -436,6 +436,7 @@ viewer = KOR.dialogs:textBox({ title = "Circa " .. count .. " ebooks toegevoegd"
 --* see ((DIALOGS))
 function Dialogs:textBox(args)
 
+    self:setTextBoxContentType(args)
     self:setTextBoxTexts(args)
     self:setTextBoxHeight(args)
     local config, external_search_string = self:getTextBoxConfig(args)
@@ -499,8 +500,29 @@ function Dialogs:getTextBoxConfig(args)
 end
 
 --- @private
+function Dialogs:setTextBoxContentType(args)
+    if not args.tabs then
+        args.content_type = "text"
+        return
+    end
+    local content_type = "text"
+    for i = 1, #args.tabs do
+        if args.tabs[i].is_active_tab then
+            --* content_type can be set to "html":
+            content_type = args.tabs[i].content_type
+            break
+        end
+    end
+    args.content_type = content_type
+end
+
+--- @private
 function Dialogs:setTextBoxTexts(args)
     local info = args.info or ""
+    if args.content_type == "html" then
+        args.text = info
+        return
+    end
     info = KOR.html:htmlToPlainTextIfHtml(info)
     --* hotfix for initials in names:
     info = info:gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")

@@ -275,18 +275,19 @@ function XrayInformation:showReliabilityIndicatorsExplanation()
             },
             {
                 tab = _("dialog buttons"),
-                info = [[TOP LEFT: PAGES OR PARAGRAPH BUTTON
-
-Toggle between xray markers for entire page or per paragraph.
-
-FOOTER BUTTONS
-
-Longpress a button to get an explanation of its function.
-]]
+                content_type = "html",
+                info = _([[<p class="noindent"><strong>Top left: pages or paragraph button</strong></p>
+<p> </p>
+<p class="noindent">Toggle between xray markers for entire page or per paragraph.</p>
+<p> </p>
+<p class="noindent"><strong>Footer buttons</strong></p>
+<p> </p>
+<p class="noindent">Longpress a button to get an explanation of its function.</p>]])
             },
             {
                 tab = _("gestures"),
-                info = KOR.closingswipes.closing_gesture_information_DX,
+                content_type = "html",
+                info = KOR.closingswipes.closing_gesture_information_html_DX,
             },
         }
     })
