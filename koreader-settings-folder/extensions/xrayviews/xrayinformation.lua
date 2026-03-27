@@ -255,28 +255,24 @@ end
 
 function XrayInformation:showReliabilityIndicatorsExplanation()
     KOR.dialogs:textBoxTabbed(1, {
-        title = "Uitleg bij dit venster",
+        title = _("Explanations for this dialog"),
+        no_overlay = true,
         is_standard_tabbed_dialog_lower = true,
         tabs = {
             {
-                tab = "betrouwbaarheidsikonen",
+                tab = _("reliability icons"),
                 info = self:getMatchReliabilityExplanation()
             },
             {
-                tab = "viewer-buttons",
-                info = [[PAGINA- OF ALINEA-IKOON LINKSBOVEN
+                tab = _("dialog buttons"),
+                info = [[TOP LEFT: PAGES OR PARAGRAPH BUTTON
 
-schakel tussen xray markeringen in de tekst voor de hele pagina of per alinea
+Toggle between xray markers for entire page or per paragraph.
 
-FOOTER-IKONEN
+FOOTER BUTTONS
 
-* lijst: ga naar lijst van xray-items in dit boek
-* wegwijzer: klikbare index van items
+Longpress a button to get an explanation of its function.
 ]]
-            },
-            {
-                tab = "index-buttons",
-                info = "Tik op een item om erheen te springen.\n\nEen item bewerken: houd de bijbehorende button langer ingedrukt en kies voor \"Bewerk\".\n"
             },
         }
     })

@@ -412,9 +412,13 @@ end
 
 function XrayButtons:forUiInfoAdditionalButtons(config, parent)
     config.extra_buttons = {
-        KOR.buttoninfopopup:forXrayShowMatchReliabilityExplanation({
-            icon_size_ratio = 0.58,
-        }),
+        {
+            icon = "back",
+            callback = function()
+                UIManager:close(parent.xray_ui_info_dialog)
+                parent.xray_ui_info_dialog = nil
+            end,
+        },
         KOR.buttoninfopopup:forXrayList({
             fgcolor = KOR.colors.button_label,
             callback = function()
@@ -445,6 +449,9 @@ end
 --- @param parent XrayDialogs
 function XrayButtons:forUiInfoTopLeft(target, new_trigger, parent)
     local buttons = {
+        KOR.buttoninfopopup:forXrayShowMatchReliabilityExplanation({
+            icon_size_ratio = 0.58,
+        }),
         KOR.buttoninfopopup:forXrayTogglePageOrParagraphInfo({
             icon = DX.s.UI_mode == "paragraph" and "paragraph" or "pages",
             callback = function()

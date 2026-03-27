@@ -454,17 +454,13 @@ end
 --* see ((DIALOGS))
 --* compare ((htmlBoxTabbed)):
 function Dialogs:textBoxTabbed(active_tab, args)
-    if self.tabbed_textbox then
-        UIManager:close(self.tabbed_textbox)
-    end
-
     KOR.tabfactory:setTabButtonAndContent(self, "textBoxTabbed", active_tab, args)
 
     --! in case of "info" factory functions in args.tabs, here now a prop "info" (having generated content!) will have been added to args; also a title_tab_callbacks prop will be added, which is used to display the tab buttons in the TitleBar:
-    self.tabbed_textbox = self:textBox(args)
-    self:registerWidget(self.tabbed_textbox)
+    local tabbed_textbox = self:textBox(args)
+    self:registerWidget(tabbed_textbox)
 
-    return self.tabbed_textbox
+    return tabbed_textbox
 end
 
 --- @private
