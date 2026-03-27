@@ -828,6 +828,7 @@ function XrayDialogs:showItemViewer(needle_item, props)
 
     local tabs = DX.b:getItemViewerTabs(props.main_info, props.hits_info, props.linked_items_info, props.quotes_info, props.linked_items_info2)
 
+    --* the Registry var will only be set when called from ((XrayController#showQuotesManager)) and we want to go immediately to the quotes tab:
     local active_tab = KOR.registry:getOnce("active_tab") or 1
     self.item_viewer = KOR.dialogs:htmlBoxTabbed(active_tab, {
         title = title,

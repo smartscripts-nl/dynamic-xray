@@ -23,7 +23,6 @@ function TabNavigator:init(tabs_table_buttons, active_tab, parent)
 end
 
 function TabNavigator:broadcastActivatedTab()
-    KOR.registry:set("active_tab", tn.active_tab)
     if tn.parent then
         tn.parent.active_tab = tn.active_tab
     end

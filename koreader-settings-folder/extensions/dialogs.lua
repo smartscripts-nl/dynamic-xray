@@ -27,6 +27,8 @@ local type = type
 --- @class Dialogs
 local Dialogs = WidgetContainer:extend{
     overlay = nil,
+    tabbed_htmlbox = nil,
+    tabbed_textbox = nil,
     widgets = {},
 }
 
@@ -139,7 +141,10 @@ function Dialogs:htmlBox(args)
             end
         end
     end
-    if config.content_type == "html" then
+    --* this can be the case when we were in the tab for linked items, but the next of previous item we now navigate to had no linked items and so no html:
+    if config.content_type == "html" and not config.html then
+        config.active_tab = 1
+    elseif config.content_type == "html" then
         config.html = config.html
             :gsub("%[%[%[", "<b>")
             :gsub("%]%]%]", "</b>")
@@ -159,10 +164,12 @@ end
 --* see ((DIALOGS))
 --* compare ((textBoxTabbed)):
 function Dialogs:htmlBoxTabbed(active_tab, args)
-    if self.tabbed_htmlbox then
+
+    if not args.name or (self.tabbed_htmlbox and self.tabbed_htmlbox.name == args.name) then
         UIManager:close(self.tabbed_htmlbox)
     end
 
+    --? strangely enough after tapping on a tab args is not the original args anymore, but extended with additional props, e.g. entry [1]; these args probably point to the widget instead; see e.g. call from ((calling parent method from tab)):
     KOR.tabfactory:setTabButtonAndContent(self, "htmlBoxTabbed", active_tab, args)
 
     --* in most cases make the tab fullscreen:
@@ -172,6 +179,7 @@ function Dialogs:htmlBoxTabbed(active_tab, args)
 
     --! in case of "html" factory functions in args.tabs, here now a prop "html" (having generated content!) will have been added to args; also a title_tab_callbacks prop will be added, which is used to display the tab buttons in the TitleBar:
     self.tabbed_htmlbox = self:htmlBox(args)
+    self.tabbed_htmlbox.name = args.name
     self:registerWidget(self.tabbed_htmlbox)
 
     return self.tabbed_htmlbox
@@ -454,13 +462,20 @@ end
 --* see ((DIALOGS))
 --* compare ((htmlBoxTabbed)):
 function Dialogs:textBoxTabbed(active_tab, args)
+
+    if not args.name or (self.tabbed_textbox and self.tabbed_textbox.name == args.name) then
+        UIManager:close(self.tabbed_textbox)
+    end
+
+    --? strangely enough after tapping on a tab args is not the original args anymore, but extended with additional props, e.g. entry [1]; these args probably point to the widget instead; see e.g. call from ((calling parent method from tab)):
     KOR.tabfactory:setTabButtonAndContent(self, "textBoxTabbed", active_tab, args)
 
     --! in case of "info" factory functions in args.tabs, here now a prop "info" (having generated content!) will have been added to args; also a title_tab_callbacks prop will be added, which is used to display the tab buttons in the TitleBar:
-    local tabbed_textbox = self:textBox(args)
-    self:registerWidget(tabbed_textbox)
+    self.tabbed_textbox = self:textBox(args)
+    self.tabbed_textbox.name = args.name
+    self:registerWidget(self.tabbed_textbox)
 
-    return tabbed_textbox
+    return self.tabbed_textbox
 end
 
 --- @private

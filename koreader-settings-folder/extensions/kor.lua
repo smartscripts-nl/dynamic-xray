@@ -12,6 +12,7 @@ local pairs = pairs
 --- @field buttoninfopopup ButtonInfoPopup
 --- @field buttonprops ButtonProps
 --- @field buttontablefactory ButtonTableFactory
+--- @field closingswipes ClosingSwipes
 --- @field colors Colors
 --- @field columntexts ColumnTexts
 --- @field databases Databases
@@ -71,6 +72,7 @@ local KOR = WidgetContainer:new{
 	buttonchoicepopup = nil,
 	buttoninfopopup = nil,
 	clipboard = nil,
+	closingswipes = nil,
 	colors = nil,
 	columntexts = nil,
 	dialogs = nil,
@@ -115,6 +117,7 @@ local KOR = WidgetContainer:new{
 		"buttontablefactory",
 		"buttonchoicepopup",
 		"buttoninfopopup",
+		"closingswipes",
 		"columntexts",
 		"ebookmetadata",
 		"filedirnames",

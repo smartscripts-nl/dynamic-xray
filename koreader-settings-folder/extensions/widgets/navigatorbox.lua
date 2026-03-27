@@ -1,12 +1,14 @@
 
 local require = require
 
+local BD = require("ui/bidi")
 local ButtonTable = require("extensions/widgets/buttontable")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Device = require("device")
 local Font = require("extensions/modules/font")
 local FrameContainer = require("extensions/widgets/container/framecontainer")
 local Geom = require("ui/geometry")
+local GestureRange = require("ui/gesturerange")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local KOR = require("extensions/kor")
@@ -112,6 +114,7 @@ function NavigatorBox:init()
     self:initFrames()
     self:setModuleProps()
     self:initHotkeys()
+    self:initTouch()
     self:setWidth()
     --* height will be computed below, after we build top and bottom components, when we know how much height they are taking
     self:generateTitleBar()
@@ -157,6 +160,26 @@ function NavigatorBox:initHotkeys()
     if self.hotkeys_configurator then
         self.hotkeys_configurator()
     end
+end
+
+function NavigatorBox:initTouch()
+    if not Device:isTouchDevice() then
+        return
+    end
+
+    local range = Geom:new{
+        x = 0, y = 0,
+        w = self.screen_width,
+        h = self.screen_height,
+    }
+    self.ges_events = {
+        Swipe = {
+            GestureRange:new{
+                ges = "swipe",
+                range = range,
+            },
+        },
+    }
 end
 
 --- @private
@@ -273,6 +296,10 @@ function NavigatorBox:onShow()
         return "flashui", self.box_frame.dimen
     end)
     return true
+end
+
+function NavigatorBox:onSwipe(arg, ges)
+    return KOR.closingswipes:handle(self, arg, ges)
 end
 
 function NavigatorBox:onClose()

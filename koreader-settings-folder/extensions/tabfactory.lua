@@ -100,6 +100,8 @@ function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
                         caller[tab_method](caller, tab.target_tab, args)
                         return
                     end
+                    -- #((calling parent method from tab))
+                    --* tab_method is e.g. textBoxTabbed:
                     caller[tab_method](caller, current, args)
                 end
             })

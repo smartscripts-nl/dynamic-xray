@@ -56,6 +56,7 @@ function XrayInformation:showGeneralDXTips(parent, active_tab)
         parent = parent or DX.pn,
         title = _("General DX tips"),
         modal = true,
+        name = "general_dx_tips",
         button_font_weight = "normal",
         --* htmlBox will always have a close_callback and therefor a close button; so no need to define a close_callback here...
         no_filter_button = true,
@@ -107,6 +108,10 @@ function XrayInformation:showGeneralDXTips(parent, active_tab)
     <li><strong>importing from books in another series:</strong><br />Sometimes your book is part of a follow-up series for a previous series. You can then import the items of that previous series by <em>longpressing the bucket icon</em> and then tap on the button "external".</li>
 </ul>]])
             },
+            {
+                tab = _("gestures"),
+                html = KOR.closingswipes.closing_gesture_information_html_DX,
+            },
         },
     })
     return true
@@ -134,7 +139,7 @@ function XrayInformation:showPageNavigatorHelp(parent, active_tab)
         no_buttons_row = true,
         tabs = {
             {
-                tab = _("Browsing"),
+                tab = _("browsing"),
                 html = _([[With the arrows in the right bottom corner you can browse through pages.<br>
     If you longpress the arrow buttons, PN will jump to the previous/next occurrence of the item shown in the bottom information panel.<br>
 <br>
@@ -145,7 +150,7 @@ With the target icon you can jump back to the page on which you started navigati
 With the XraySetting "PN_panels_font_size" (see cog icon in top left corner) you can change the font size of the side and bottom panels.]])
             },
             {
-                tab = _("Filtering"),
+                tab = _("filtering"),
                 html = _([[Tap on items in the side panel to see explantions of those items.<br>
 <br>
 <strong>Filtered browsing</strong><br>
@@ -157,8 +162,12 @@ If you longpress on an item in the side panel, that will be used as a filter cri
 Longpress on the filtered item in the side panel.]])
             },
             {
-                tab = _("Hotkeys"),
+                tab = _("hotkeys"),
                 html = self:getPageNavigatorHotkeysInfo(),
+            },
+            {
+                tab = _("gestures"),
+                html = KOR.closingswipes.closing_gesture_information_html_DX,
             },
         },
     })
@@ -257,6 +266,7 @@ function XrayInformation:showReliabilityIndicatorsExplanation()
     KOR.dialogs:textBoxTabbed(1, {
         title = _("Explanations for this dialog"),
         no_overlay = true,
+        name = "reliability_indicators_explanation",
         is_standard_tabbed_dialog_lower = true,
         tabs = {
             {
@@ -273,6 +283,10 @@ FOOTER BUTTONS
 
 Longpress a button to get an explanation of its function.
 ]]
+            },
+            {
+                tab = _("gestures"),
+                info = KOR.closingswipes.closing_gesture_information_DX,
             },
         }
     })
@@ -327,6 +341,7 @@ Shift+S = Show all hits in book
     KOR.dialogs:textBoxTabbed(initial_tab, {
         title = _("(BT) Hotkeys and more"),
         is_standard_tabbed_dialog = true,
+        no_overlay = true,
         tabs = {
             {
                 tab = _("In Items List"),

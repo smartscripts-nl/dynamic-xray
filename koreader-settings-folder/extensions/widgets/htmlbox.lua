@@ -198,68 +198,69 @@ end
 
 --- @private
 function HtmlBox:initTouch()
-
-    if Device:isTouchDevice() then
-        local range = Geom:new{
-            x = 0, y = 0,
-            w = self.screen_width,
-            h = self.screen_height,
-        }
-        self.ges_events = {
-            TapClose = {
-                GestureRange:new{
-                    ges = "tap",
-                    range = range,
-                },
-            },
-            Tap = {
-                GestureRange:new{
-                    ges = "tap",
-                    range = range,
-                },
-            },
-            Swipe = {
-                GestureRange:new{
-                    ges = "swipe",
-                    range = range,
-                },
-            },
-            --* This was for selection of a single word with simple hold
-            -- HoldWord = {
-            --     GestureRange:new{
-            --         ges = "hold",
-            --         range = function()
-            --             return self.region
-            --         end,
-            --     },
-            --     -- callback function when HoldWord is handled as args
-            --     args = function(word)
-            --         KOR.ui:handleEvent(
-            --             -- don't pass self.highlight to subsequent lookup, we want
-            --             -- the first to be the only one to unhighlight selection
-            --             -- when closed
-            --             KOR.dictionary:onLookupWord(word, true, {self.word_box})
-            --     end
-            -- },
-            --* Allow selection of one or more words (see textboxwidget.lua):
-            HoldStartText = {
-                GestureRange:new{
-                    ges = "hold",
-                    range = range,
-                },
-            },
-            HoldPanText = {
-                GestureRange:new{
-                    ges = "hold",
-                    range = range,
-                },
-            },
-            --* These will be forwarded to MovableContainer after some checks
-            ForwardingTouch = { GestureRange:new{ ges = "touch", range = range, }, },
-            ForwardingPan = { GestureRange:new{ ges = "pan", range = range, }, },
-            ForwardingPanRelease = { GestureRange:new{ ges = "pan_release", range = range, }, },
-        }
+    if not Device:isTouchDevice() then
+        return
     end
+
+    local range = Geom:new{
+        x = 0, y = 0,
+        w = self.screen_width,
+        h = self.screen_height,
+    }
+    self.ges_events = {
+        TapClose = {
+            GestureRange:new{
+                ges = "tap",
+                range = range,
+            },
+        },
+        Tap = {
+            GestureRange:new{
+                ges = "tap",
+                range = range,
+            },
+        },
+        Swipe = {
+            GestureRange:new{
+                ges = "swipe",
+                range = range,
+            },
+        },
+        --* This was for selection of a single word with simple hold
+        -- HoldWord = {
+        --     GestureRange:new{
+        --         ges = "hold",
+        --         range = function()
+        --             return self.region
+        --         end,
+        --     },
+        --     -- callback function when HoldWord is handled as args
+        --     args = function(word)
+        --         KOR.ui:handleEvent(
+        --             -- don't pass self.highlight to subsequent lookup, we want
+        --             -- the first to be the only one to unhighlight selection
+        --             -- when closed
+        --             KOR.dictionary:onLookupWord(word, true, {self.word_box})
+        --     end
+        -- },
+        --* Allow selection of one or more words (see textboxwidget.lua):
+        HoldStartText = {
+            GestureRange:new{
+                ges = "hold",
+                range = range,
+            },
+        },
+        HoldPanText = {
+            GestureRange:new{
+                ges = "hold",
+                range = range,
+            },
+        },
+        --* These will be forwarded to MovableContainer after some checks
+        ForwardingTouch = { GestureRange:new{ ges = "touch", range = range, }, },
+        ForwardingPan = { GestureRange:new{ ges = "pan", range = range, }, },
+        ForwardingPanRelease = { GestureRange:new{ ges = "pan_release", range = range, }, },
+    }
 end
 
 --* Used in init & update to instantiate the Scroll*Widget that self.html_widget points to
@@ -474,24 +475,7 @@ function HtmlBox:onHoldClose()
 end
 
 function HtmlBox:onSwipe(arg, ges)
-    if not self.movable then
-        local is_navigation_swipe = self.next_item_callback and self.prev_item_callback
-        if not is_navigation_swipe then
-            return false
-        end
-        local direction = BD.flipDirectionIfMirroredUILayout(ges.direction)
-        if direction == "west" then
-            self:next_item_callback()
-            return true
-        elseif direction == "east" then
-            self:prev_item_callback()
-            return true
-        end
-        return false
-    end
-
-    --* Let our MovableContainer handle swipe outside of definition
-    return self.movable:onMovableSwipe(arg, ges)
+    return KOR.closingswipes:handle(self, arg, ges)
 end
 
 function HtmlBox:onHoldStartText(_, ges)

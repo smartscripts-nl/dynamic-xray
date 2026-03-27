@@ -243,6 +243,7 @@ function TextViewer:onTapClose(arg, ges_ev)
 end
 
 function TextViewer:onClose()
+    KOR.dialogs:closeOverlay()
     if self.after_close_callback then
         self.after_close_callback()
     end
@@ -252,54 +253,42 @@ function TextViewer:onClose()
 end
 
 function TextViewer:onSwipe(arg, ges)
-    if ges.pos:intersectWith(self.textw.dimen) then
-        local direction = BD.flipDirectionIfMirroredUILayout(ges.direction)
-        if direction == "west" then
-            if self.next_item_callback then
-                self:next_item_callback()
-            else
-            self.scroll_text_w:scrollText(1)
-            end
-            return true
-        elseif direction == "east" then
-            if self.prev_item_callback then
-                self:prev_item_callback()
-            else
-            self.scroll_text_w:scrollText(-1)
-            end
-            return true
-        else
-            KOR.dialogs:closeOverlay()
-            --* trigger a full-screen HQ flashing refresh
-            UIManager:setDirty(nil, "full")
-            --* a long diagonal swipe may also be used for taking a screenshot,
-            --* so let it propagate
-            return false
-        end
+    if self.movable and not ges.pos:intersectWith(self.textw.dimen) then
+        --* Let our MovableContainer handle swipe outside of text
+        return self.movable:onMovableSwipe(arg, ges)
     end
-    --* Let our MovableContainer handle swipe outside of text
-    return self.movable:onMovableSwipe(arg, ges)
+
+    return KOR.closingswipes:handle(self, arg, ges)
 end
 
 --* The following handlers are similar to the ones in DictQuickLookup:
 --* we just forward to our MoveableContainer the events that our
 --* TextBoxWidget has not handled with text selection.
 function TextViewer:onHoldStartText(_, ges)
+    if not self.movable then
+        return
+    end
     --* Forward Hold events not processed by TextBoxWidget event handler
     --* to our MovableContainer
     return self.movable:onMovableHold(_, ges)
 end
 
 function TextViewer:onHoldPanText(_, ges)
+    if not self.movable then
+        return
+    end
     --* Forward Hold events not processed by TextBoxWidget event handler
     --* to our MovableContainer
     --* We only forward it if we did forward the Touch
     if self.movable._touch_pre_pan_was_inside then
-        return self.movable:onMovableHoldPan(arg, ges)
+        return self.movable:onMovableHoldPan(_, ges)
     end
 end
 
 function TextViewer:onHoldReleaseText(_, ges)
+    if not self.movable then
+        return
+    end
     --* Forward Hold events not processed by TextBoxWidget event handler
     --* to our MovableContainer
     return self.movable:onMovableHoldRelease(_, ges)
@@ -310,6 +299,9 @@ end
 --* unwanted moves of the window while we are selecting text in
 --* the definition widget.
 function TextViewer:onForwardingTouch(arg, ges)
+    if not self.movable then
+        return
+    end
     --* This Touch may be used as the Hold we don't get (for example,
     --* when we start our Hold on the bottom buttons)
     if not ges.pos:intersectWith(self.textw.dimen) then
@@ -321,6 +313,9 @@ function TextViewer:onForwardingTouch(arg, ges)
 end
 
 function TextViewer:onForwardingPan(arg, ges)
+    if not self.movable then
+        return
+    end
     --* We only forward it if we did forward the Touch or are currently moving
     if self.movable._touch_pre_pan_was_inside or self.movable._moving then
         return self.movable:onMovablePan(arg, ges)
@@ -328,6 +323,9 @@ function TextViewer:onForwardingPan(arg, ges)
 end
 
 function TextViewer:onForwardingPanRelease(arg, ges)
+    if not self.movable then
+        return
+    end
     --* We can forward onMovablePanRelease() does enough checks
     return self.movable:onMovablePanRelease(arg, ges)
 end
@@ -1185,7 +1183,7 @@ end
 --- @private
 function TextViewer:finalizeWidget()
     self.overflow_correction = nil
-    self.movable = MovableContainer:new{
+    self.movable = not self.fullscreen and MovableContainer:new{
         --* We'll handle these events ourselves, and call appropriate
         --* MovableContainer's methods when we didn't process the event
         ignore_events = {
@@ -1202,10 +1200,11 @@ function TextViewer:finalizeWidget()
     if not self.no_overlay and not self.fullscreen then
         self.overlay = KOR.dialogs:showOverlay()
     end
+    local widget = self.movable or self.frame
     self[1] = WidgetContainer:new{
         align = self.align,
         dimen = self.region,
-        self.movable,
+        widget,
     }
     --* make TextViewer instances closeable with ((Dialogs#closeAllWidgets)):
     KOR.dialogs:registerWidget(self)
@@ -1708,8 +1707,6 @@ function TextViewer:setScrollingMode()
             self.fullscreen = true
         end
         self.use_computed_height = false
-    else
-        self.fullscreen = false
     end
 end
 
@@ -1757,6 +1754,12 @@ function TextViewer:initRelatedSettings()
         self.block_height_adaptation = true
         self.no_fullscreen = true
     end
+    if not self.width or not self.screen_width then
+        return
+    end
+    local is_fullscreen = self.fullscreen or self.width >= self.screen_width
+    self.fullscreen = is_fullscreen
+    self.covers_fullscreen = is_fullscreen
 end
 
 return TextViewer
