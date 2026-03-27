@@ -14,9 +14,12 @@ local ClosingSwipes = WidgetContainer:extend{
 <ul>
 <li>You can close fullscreen(!) DX dialogs by swiping <i>diagonally</i> on them.</li>
 <li>This can also be done by swiping <i>horizontally</i> on them, <i>unless</i> the dialog allows you to navigate to the next or previous item or page. In that case swiping horizontally will take you to the next or previous item or page.</li>
-<li><strong>Exception</strong>: the Items List can only be closed by swiping <i>vertically</i>.</li>
 <li>Non-fullscreen DX dialogs will be moved when you swipe on them.</li>
-</ul>]])
+</ul>
+<p> </p>
+<p class="noindent"><strong>Exception</strong></p>
+<p> </p>
+<p class="noindent">The Items List can only be closed by swiping <i>vertically</i>.</p>]])
 }
 
 function ClosingSwipes:handle(parent, arg, ges)
