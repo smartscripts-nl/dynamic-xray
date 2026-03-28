@@ -276,13 +276,15 @@ function XrayInformation:showReliabilityIndicatorsExplanation()
             {
                 tab = _("dialog buttons"),
                 content_type = "html",
-                info = _([[<p class="noindent"><strong>Top left: pages or paragraph button</strong></p>
+                info = _([[<div class="noindent">
+<p><strong>Top left: pages or paragraph button</strong></p>
 <p> </p>
-<p class="noindent">Toggle between xray markers for entire page or per paragraph.</p>
+<p>Toggle between xray markers for entire page or per paragraph.</p>
 <p> </p>
-<p class="noindent"><strong>Footer buttons</strong></p>
+<p><strong>Footer buttons</strong></p>
 <p> </p>
-<p class="noindent">Longpress a button to get an explanation of its function.</p>]])
+<p>Longpress a button to get an explanation of its function.</p>
+</div>]])
             },
             {
                 tab = _("gestures"),

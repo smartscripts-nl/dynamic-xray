@@ -1,7 +1,6 @@
 
 local require = require
 
-local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 

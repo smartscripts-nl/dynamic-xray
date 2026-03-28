@@ -232,7 +232,7 @@ function Html:getHtmlBoxCss(additional_css)
             text-indent: 0 !important;
         }
 
-        div.poezie p {
+        div.poezie p, div.noindent p {
             text-indent: 0 !important;
         }
     ]]

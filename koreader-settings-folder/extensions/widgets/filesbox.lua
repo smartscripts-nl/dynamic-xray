@@ -7,13 +7,14 @@ local Device = require("device")
 local Font = require("extensions/modules/font")
 local FrameContainer = require("extensions/widgets/container/framecontainer")
 local Geom = require("ui/geometry")
+local GestureRange = require("ui/gesturerange")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local ImageWidget = require("ui/widget/imagewidget")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")
 local ProgressWidget = require("ui/widget/progresswidget")
-local ScrollableContainer = require("ui/widget/container/scrollablecontainer")
+local ScrollableContainer = require("extensions/widgets/container/scrollablecontainer")
 local Size = require("extensions/modules/size")
 local TextWidget = require("extensions/widgets/textwidget")
 local TitleBar = require("extensions/widgets/titlebar")
@@ -80,9 +81,10 @@ local FilesBox = InputContainer:extend{
 }
 
 function FilesBox:init()
-    self:initHotkeys()
-    self:setPadding()
     self:setModuleProps()
+    self:initHotkeys()
+    self:initTouch()
+    self:setPadding()
     self:initFrame()
     self:initRowSpacer()
     self:setWidth()
@@ -214,7 +216,7 @@ function FilesBox:getBoxButtons(params)
     local icon_size = math_floor(Screen:scaleBySize(generic_icon_size) * 0.9)
 
     local mark_active = DX.s.SeriesManager_mark_active_title_with_border and params.is_current_ebook
-    return ButtonTable:new {
+    return ButtonTable:new{
         no_separators = true,
         background = mark_active and self.active_item_background or KOR.colors.white,
         generate_active_icon = mark_active,
@@ -360,6 +362,10 @@ function FilesBox:onShow()
     return true
 end
 
+function FilesBox:onSwipe(arg, ges)
+    return KOR.closingswipes:handle(self, arg, ges)
+end
+
 function FilesBox:onClose()
     KOR.dialogs:unregisterWidget(self)
     UIManager:close(self)
@@ -429,9 +435,12 @@ function FilesBox:generateWidget()
                 h = self.screen_height - self.titlebar_height - 2 * self.padding_vertical_height,
             },
             show_parent = self,
+            -- #((make SeriesManager FilesBox closeable with gestures))
+            use_closing_gestures = true,
             --ignore_events = { "swipe" },
             main_content,
         }
+        KOR.dialogs:niceAlert("Hoera", "touch")
         table_insert(elements, self.cropping_widget)
         table_insert(elements, self.padding_vertical)
 
@@ -475,6 +484,27 @@ end
 --- @private
 function FilesBox:initHotkeys()
     KOR.keyevents:addHotkeysForFilesBox(self, self.key_events_module)
+end
+
+--- @private
+function FilesBox:initTouch()
+    if not Device:isTouchDevice() then
+        return
+    end
+
+    local range = Geom:new{
+        x = 0, y = 0,
+        w = self.screen_width,
+        h = self.screen_height,
+    }
+    self.ges_events = {
+        Swipe = {
+            GestureRange:new{
+                ges = "swipe",
+                range = range,
+            },
+        },
+    }
 end
 
 --- @private

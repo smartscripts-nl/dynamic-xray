@@ -1,7 +1,6 @@
 
 local require = require
 
-local BD = require("ui/bidi")
 local ButtonTable = require("extensions/widgets/buttontable")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Device = require("device")
