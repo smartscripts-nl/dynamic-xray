@@ -412,13 +412,6 @@ end
 
 function XrayButtons:forUiInfoAdditionalButtons(config, parent)
     config.extra_buttons = {
-        {
-            icon = "back",
-            callback = function()
-                UIManager:close(parent.xray_ui_info_dialog)
-                parent.xray_ui_info_dialog = nil
-            end,
-        },
         KOR.buttoninfopopup:forXrayList({
             fgcolor = KOR.colors.button_label,
             callback = function()
@@ -441,6 +434,12 @@ function XrayButtons:forUiInfoAdditionalButtons(config, parent)
             callback = function()
                 UIManager:close(parent.xray_ui_info_dialog)
                 return DX.cb:execExportXrayItemsCallback()
+            end
+        }),
+        KOR.buttoninfopopup:forSeriesCurrentBook({
+            callback = function()
+                UIManager:close(parent.xray_ui_info_dialog)
+                KOR.descriptiondialog:showSeriesForEbookPath()
             end
         }),
     }

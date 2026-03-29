@@ -215,7 +215,6 @@ end
 function ButtonInfoPopup:forSeriesCurrentBook(props)
 	return KOR.buttonprops:set({
 		icon = "seriesmanager",
-		icon_size_ratio = 0.5,
 		--* see ((KeyEvents#addSeriesManagerHotkey)) for the hotkey:
 		info = T(_("series manager icon | Show all books present on this e-reader of the series of which the current book is a member.\n\nHotkey %1 Shift+M"), KOR.icons.arrow_bare),
 		callback_label = _("show"),
