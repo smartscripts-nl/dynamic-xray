@@ -347,12 +347,17 @@ Shift+S = Show all hits in book
         no_overlay = true,
         tabs = {
             {
-                tab = _("In Items List"),
+                tab = _("in Items List"),
                 info = list_info,
             },
             {
-                tab = _("In item viewer"),
+                tab = _("in item viewer"),
                 info = viewer_info,
+            },
+            {
+                tab = _("gestures"),
+                content_type = "html",
+                info = KOR.closingswipes.closing_gesture_information_html_DX,
             },
         }
     })
