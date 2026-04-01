@@ -260,8 +260,8 @@ local XraySettings = WidgetContainer:new{
         },
         SeriesManager_columns_count = {
             value = 2,
-            options = { 2, 3 },
-            explanation = "Series Manager: determines in how many columns the items will be shown. The larger value can result in some lay-out issues",
+            options = { 1, 2, 3 },
+            explanation = _("Series Manager: determines in how many columns the items will be shown. The larger counts on devices with less screen estate might result in overflowing columns."),
             locked = 0,
             type = "number",
             after_change_callback = "series_manager_reload",
