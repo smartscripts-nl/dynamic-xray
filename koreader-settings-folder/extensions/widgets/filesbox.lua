@@ -271,7 +271,7 @@ function FilesBox:injectRows()
     self.content_widget = VerticalGroup:new{}
     count = #self.boxes
     for i = 1, count do
-        row_completed = i > 1 and (i % self.columns == 0 or i == count)
+        row_completed = self.columns == 1 or (i > 1 and (i % self.columns == 0 or i == count))
         if not row then
             row = HorizontalGroup:new{}
         end
