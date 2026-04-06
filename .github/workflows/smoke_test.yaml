@@ -1,0 +1,42 @@
+name: KOReader Patch Smoke Test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test-koreader:
+    runs-on: ubuntu-latest
+    env:
+      KO_VERSION: v2025.10
+      KO_APPIMAGE: koreader-appimage-x86_64-v2025.10.AppImage
+      KO_SHA256: 712f94c014a4e24420b7da1935759861cb286d3207a094e5a849be9077c620b9
+    steps:
+      - uses: actions/checkout@v4
+
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends xvfb
+
+      - name: Download KOReader AppImage
+        run: |
+          set -euxo pipefail
+          wget https://github.com/koreader/koreader/releases/download/${KO_VERSION}/${KO_APPIMAGE}
+          echo "${KO_SHA256}  ${KO_APPIMAGE}" | sha256sum -c
+          chmod +x ${KO_APPIMAGE}
+          ./${KO_APPIMAGE} --appimage-extract
+
+      - name: Smoke test — baseline (pre-patch, confirms KOReader runs and creates bookinfo_cache.sqlite3)
+        uses: coactions/setup-xvfb@v1
+        with:
+          run: .github/scripts/smoke_test.sh
+
+      - name: Install extension
+        run: cp -r koreader-settings-folder/* squashfs-root/
+        
+      - name: Smoke test — after patch
+        uses: coactions/setup-xvfb@v1
+        with:
+          run: .github/scripts/smoke_test.sh

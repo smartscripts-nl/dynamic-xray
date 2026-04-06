@@ -72,7 +72,6 @@ local XrayDataSaver = WidgetContainer:new{
                 "description",
                 "xray_type"	INTEGER NOT NULL DEFAULT 1,
                 "aliases",
-                "tags",
                 "linkwords",
                 "book_hits" INTEGER,
                 "chapter_hits",
