@@ -3,6 +3,9 @@
 --* because ReaderFooter is not really patchable, this manual edit is needed and has to be repeated after every KOReader update
 --! this is only an example; exact locations to edit can vary depending on current KOReader version
 --* you can find the locations to be modified by searching for "xray_items"
+--! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+--! WATCH OUT: if you remove the DX patch, remove all ReaderFooter modifications related to DX, such as they are suggested in this example; otherwise KOReader will crash!
+--! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 --! don't forget that the patches file patches ReaderFooter, so as to make the display of Xray items possible; see ((PATCH READERFOOTER)) in that file
 --* for an example of Xray items counts displayed in the footer see image 01b... in the README
 
