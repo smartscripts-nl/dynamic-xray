@@ -114,7 +114,7 @@ local symbol_prefix = {
         wifi_status_off = "",
         page_turning_inverted = "⇄",
         page_turning_regular = "⇉",
-        xray_items = KOR.icons.lightning_bare,
+        xray_items = "\u{26A1}",
     },
     compact_items = {
         time = nil,
@@ -478,7 +478,7 @@ footerTextGeneratorMap = {
         end
         --* this in page items count was set via ((XrayUI#ReaderViewInitParaOrPageData)) > ((XrayUI#updateStatusInFooter)):
         local current_page_count = KOR.registry:get("xray_items_on_page_count") or 0
-        return KOR.icons.lightning_bare .. current_page_count .. "/" .. #DX.vd.item_table[1]
+        return "\u{26A1}" .. current_page_count .. "/" .. #DX.vd.item_table[1]
     end,
 }
 
@@ -1061,7 +1061,7 @@ function ReaderFooter:textOptionTitles(option)
             self.custom_text_repetitions > 1 and
             string.format(" × %d", self.custom_text_repetitions) or ""),
         dynamic_filler = _("Dynamic filler"),
-        xray_items = T(_("Xray items (%1)"), KOR.icons.lightning_bare),
+        xray_items = T(_("Xray items (%1)"), "\u{26A1}"),
     }
     return option_titles[option]
 end
