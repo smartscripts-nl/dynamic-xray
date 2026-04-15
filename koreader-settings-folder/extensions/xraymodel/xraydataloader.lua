@@ -56,40 +56,43 @@ local XrayDataLoader = WidgetContainer:new{
            x.tags,
            x.linkwords,
            x.book_hits,
-
-           -- since no series
+           -- since no series:
            x.book_hits AS series_hits,
-
            x.chapter_hits,
            x.chapter_hits_data,
            o.chapters,
-
            b.title AS mentioned_in,
-
            x.name AS item_name,
+           q.pos_chapter_quotes
 
-           GROUP_CONCAT(
-                   q.ebook || '||' ||
-                   COALESCE(q.series_index, '???') || '||' ||
-                   COALESCE(q.ebook_title, '???') || '||' ||
-                   q.pos0 || '||' ||
-                   COALESCE(q.chapter, '???') || '||' ||
-                   q.quote,
-                   '@@'
-                   ORDER BY q.id
-           ) AS pos_chapter_quotes
+        FROM bookinfo b
+        JOIN xray_items x
+          ON x.ebook = b.filename
 
-            FROM bookinfo b
-            JOIN xray_items x
-                  ON x.ebook = b.filename
-            LEFT JOIN xray_quotes q
-                  ON q.ebook = x.ebook
-                     AND q.item_name = x.name
-            JOIN xray_books o ON o.ebook = b.filename
+        LEFT JOIN (
+            SELECT q.ebook,
+                   q.item_name,
+                   GROUP_CONCAT(
+                       q.ebook || '||' ||
+                       COALESCE(q.series_index, '???') || '||' ||
+                       COALESCE(q.ebook_title, '???') || '||' ||
+                       q.pos0 || '||' ||
+                       COALESCE(q.chapter, '???') || '||' ||
+                       q.quote,
+                       '@@'
+                       ORDER BY q.id
+                   ) AS pos_chapter_quotes
+            FROM xray_quotes q
+            GROUP BY q.ebook, q.item_name
+        ) q
+          ON q.ebook = x.ebook
+         AND q.item_name = x.name
 
-            WHERE b.filename = '%1'
-            GROUP BY x.id
-            ORDER BY %2;]],
+        LEFT JOIN xray_books o
+          ON x.ebook = o.ebook
+
+        WHERE b.filename = '%1'
+        ORDER BY %2;]],
 
         --* s.ebook, s.title, s.book_hits and s.chapter_hits will be null when the xray item only is found in one or more OTHER books in the series, but not in the current ebook:
         --* for prop pos_chapter_quotes compare ((XrayQuotes#generateQuotesList)):
