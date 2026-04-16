@@ -439,7 +439,7 @@ function XrayButtons:forUiInfoAdditionalButtons(config, parent)
         KOR.buttoninfopopup:forSeriesCurrentBook({
             callback = function()
                 UIManager:close(parent.xray_ui_info_dialog)
-                KOR.descriptiondialog:showSeriesForEbookPath()
+                KOR.seriesmanager:showSeriesForEbookPath()
             end
         }),
     }
