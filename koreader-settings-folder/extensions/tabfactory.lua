@@ -26,6 +26,8 @@ function TabFactory:setTabButtonAndContent(caller, tab_method, active_tab, args)
         active_tab = 1
     end
     args.active_tab = active_tab
+    --! make sure back button doesn't disappear when navigating between tabs:
+    args.back_button_inserted = false
 
     --* for usage with resp. ((Dialogs#htmlBox)), ((Dialogs#textBox)):
     local content_prop = tab_method == "htmlBoxTabbed" and "html" or "info"
