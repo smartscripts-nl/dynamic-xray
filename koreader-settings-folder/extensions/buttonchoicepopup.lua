@@ -23,6 +23,18 @@ local ButtonChoicePopup = WidgetContainer:new{
 
 --* ":\n" and separator ":\n\n" in buttons in this class will be replaced by the label words, in ((ButtonProps#setOverruleProps)):
 
+--* compare ((ButtonInfoPopup#forSeriesAll)):
+function ButtonChoicePopup:forSeriesCurrentBook(props)
+	return KOR.buttonprops:set({
+		icon = "seriesmanager",
+		info = T(_("series manager icon %1show series of current e-book%2show all series having more than one e-book on this device"), "| :", self.separator),
+		callback_label = _("current book"),
+		--! callback defined by calling module
+		hold_callback_label = _("series overview"),
+		--! hold_callback defined by calling module
+	}, props)
+end
+
 function ButtonChoicePopup:forTextViewerSearch(props)
 	return KOR.buttonprops:set({
 		icon = "appbar.search",

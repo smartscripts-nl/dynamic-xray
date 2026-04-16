@@ -212,11 +212,12 @@ function ButtonInfoPopup:forSearchResetFilter(props)
 	}, props)
 end
 
-function ButtonInfoPopup:forSeriesCurrentBook(props)
+--* compare ((ButtonChoicePopup#forSeriesCurrentBook)), used when the current e-book is part of a series; than choice between current series or all series:
+function ButtonInfoPopup:forSeriesAll(props)
 	return KOR.buttonprops:set({
 		icon = "seriesmanager",
 		--* see ((KeyEvents#addSeriesManagerHotkey)) for the hotkey:
-		info = T(_("series manager icon | Show all books present on this e-reader of the series of which the current book is a member.\n\nHotkey %1 Shift+M"), KOR.icons.arrow_bare),
+		info = T(_("series manager icon | Show all series having more than one e-book on this device.\n\nHotkey %1 Shift+M"), KOR.icons.arrow_bare),
 		callback_label = _("show"),
 		--! callback defined by calling module
 	}, props)

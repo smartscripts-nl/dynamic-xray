@@ -100,6 +100,7 @@ function SeriesManager:searchSerieMembers(full_path)
         ON lp.title = i.title AND lp.series = i.series
     WHERE i.series IS NOT NULL AND i.series != ''
     GROUP BY i.authors, i.series
+    HAVING series_count > 1
     ORDER BY i.authors, i.series;
     ]]
     -- AND i.series_index IS NOT NULL AND i.series_index != ''

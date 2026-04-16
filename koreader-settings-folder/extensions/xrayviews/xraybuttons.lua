@@ -22,6 +22,7 @@ local has_text = has_text
 local table = table
 local table_insert = table.insert
 local table_remove = table.remove
+local type = type
 
 local count
 
@@ -317,6 +318,9 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
         parent:restoreNavigator()
         self:showImportReadyNotification()
     end
+    local series_manager_button = self:getSeriesManagerButton(function()
+        parent:closePopupMenu()
+    end)
     return {{
         {
             icon = "back",
@@ -372,12 +376,7 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
                 return parent:showAddGlossaryNotification()
             end,
         }),
-        KOR.buttoninfopopup:forSeriesCurrentBook({
-            callback = function()
-                parent:closePopupMenu()
-                KOR.seriesmanager:showSeriesForEbookPath()
-            end
-        }),
+        series_manager_button,
     }}
 end
 
@@ -410,7 +409,43 @@ function XrayButtons:forPageNavigatorTopLeft(parent)
     return buttons
 end
 
+function XrayButtons:closeDialog(dialog)
+    if not dialog then
+        return
+    elseif type(dialog) == "function" then
+        dialog()
+        return
+    end
+    UIManager:close(dialog)
+end
+
+function XrayButtons:getSeriesManagerButton(dialog)
+
+    if not DX.m.current_series then
+        return KOR.buttoninfopopup:forSeriesAll({
+            callback = function()
+                self:closeDialog(dialog)
+                KOR.seriesmanager:searchSerieMembers()
+                KOR.seriesmanager:onShowSeriesList()
+            end
+        })
+    end
+
+    return KOR.buttonchoicepopup:forSeriesCurrentBook({
+        callback = function()
+            self:closeDialog(dialog)
+            KOR.seriesmanager:showSeriesForEbookPath()
+        end,
+        hold_callback = function()
+            self:closeDialog(dialog)
+            KOR.seriesmanager:searchSerieMembers()
+            KOR.seriesmanager:onShowSeriesList()
+        end,
+    })
+end
+
 function XrayButtons:forUiInfoAdditionalButtons(config, parent)
+    local series_manager_button = self:getSeriesManagerButton(parent.xray_ui_info_dialog)
     config.extra_buttons = {
         KOR.buttoninfopopup:forXrayList({
             fgcolor = KOR.colors.button_label,
@@ -436,12 +471,7 @@ function XrayButtons:forUiInfoAdditionalButtons(config, parent)
                 return DX.cb:execExportXrayItemsCallback()
             end
         }),
-        KOR.buttoninfopopup:forSeriesCurrentBook({
-            callback = function()
-                UIManager:close(parent.xray_ui_info_dialog)
-                KOR.seriesmanager:showSeriesForEbookPath()
-            end
-        }),
+        series_manager_button,
     }
 end
 
@@ -1126,7 +1156,9 @@ function XrayButtons:forListFooterRight(parent)
         parent:showListWithRestoredArguments()
         self:showImportReadyNotification()
     end
-    local buttons = {
+    local series_manager_button = Button:new(self:getSeriesManagerButton())
+    return {
+        series_manager_button,
         KOR.buttoninfopopup:forXrayPageNavigator(),
         KOR.buttoninfopopup:forXrayExport({
             callback = function()
@@ -1149,14 +1181,6 @@ function XrayButtons:forListFooterRight(parent)
             end,
         }),
     }
-    if DX.m.current_series then
-        table_insert(buttons, 1, Button:new(KOR.buttoninfopopup:forSeriesCurrentBook({
-            callback = function()
-                KOR.seriesmanager:showSeriesForEbookPath()
-            end
-        })))
-    end
-    return buttons
 end
 
 function XrayButtons:forListSubmenu()
