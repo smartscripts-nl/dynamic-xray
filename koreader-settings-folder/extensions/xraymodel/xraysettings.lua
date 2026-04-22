@@ -291,6 +291,13 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
             after_change_callback = "set_tab_buttons_font_size",
         },
+        UI_marker_callback = {
+            value = "page_information",
+            options = { "page_information", "page_navigator" },
+            explanation = _("Only in case of full page mode and Xray page marker displayed at the bottom of the screen (see UI_marker_position): if set to \"page_navigator\", show Page Navigator instead of page information popup."),
+            type = "string",
+            locked = 0,
+        },
         UI_marker_position = {
             value = "top",
             options = { "top", "middle", "bottom" },
