@@ -1156,7 +1156,7 @@ function XrayButtons:forListFooterRight(parent)
         parent:showListWithRestoredArguments()
         self:showImportReadyNotification()
     end
-    local series_manager_button = Button:new(self:getSeriesManagerButton())
+    local series_manager_button = self:getSeriesManagerButton()
     return {
         series_manager_button,
         KOR.buttoninfopopup:forXrayPageNavigator(),

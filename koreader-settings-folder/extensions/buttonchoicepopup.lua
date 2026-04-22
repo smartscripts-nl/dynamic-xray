@@ -27,7 +27,7 @@ local ButtonChoicePopup = WidgetContainer:new{
 function ButtonChoicePopup:forSeriesCurrentBook(props)
 	return KOR.buttonprops:set({
 		icon = "seriesmanager",
-		info = T(_("series manager icon %1show series of current e-book%2show all series having more than one e-book on this device"), "| :", self.separator),
+		info = T(_("series manager icon %1show all books of series to which the current e-book belongs%2show all series having more than one e-book on this device"), "| :", self.separator),
 		callback_label = _("current book"),
 		--! callback defined by calling module
 		hold_callback_label = _("series overview"),
