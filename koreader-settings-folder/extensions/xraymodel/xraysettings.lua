@@ -293,8 +293,8 @@ local XraySettings = WidgetContainer:new{
         },
         UI_marker_callback = {
             value = "page_information",
-            options = { "page_information", "page_navigator" },
-            explanation = _("Only in case of full page mode and Xray page marker displayed at the bottom of the screen (see UI_marker_position): if set to \"page_navigator\", show Page Navigator instead of page information popup."),
+            options = { "page_information_popup", "page_navigator" },
+            explanation = _("Only in case of full page UI mode: if set to \"page_navigator\", show Page Navigator instead of page information popup."),
             type = "string",
             locked = 0,
         },

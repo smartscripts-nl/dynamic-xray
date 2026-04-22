@@ -420,7 +420,13 @@ function XrayUI:ReaderViewPopulateInfoRects()
 
             --* paragraph_text only needed for debugging purposes, to ascertain we are looking at the correct paragraph:
             DX.d:showUiPageInfo(paragraph_names, paragraph_names2, paragraph_names3, paragraph_hits_info, paragraph_hits_info2, paragraph_text)
-        end
+        end,
+        hold_callback = function()
+            if DX.s.UI_mode == "page" and DX.s.UI_marker_callback == "page_information_popup" then
+                DX.c:showPageNavigator()
+                return
+            end
+        end,
     }
 end
 
