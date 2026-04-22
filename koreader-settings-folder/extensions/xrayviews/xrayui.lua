@@ -90,11 +90,24 @@ function XrayUI:drawMarker(c, rect)
         if DX.s.UI_mode == "page" then
             y_pos = y_pos - 7
         end
+
+        --* determine vertical position of Xray page marker icon:
+        local marker_height_corrected = c.marker_height + 10
+        if DX.s.UI_mode == "page" and DX.s.UI_marker_position == "bottom" then
+            y_pos = Screen:getHeight() - c.marker_height - 7
+                    --* correction for footer:
+                    - KOR.footer:getHeight()
+        elseif DX.s.UI_mode == "page" and DX.s.UI_marker_position == "middle" then
+            y_pos = math_floor(Screen:getHeight() / 2) - marker_height_corrected
+        else
+            y_pos = y_pos - 5
+        end
+
         marker:paintTo(bb, note_mark_pos_x, y_pos)
         marker_rect = {
             --* we make the rects somewhat wider and higher than the icons, to make them easily tappable:
             x = note_mark_pos_x - 5,
-            y = y_pos - 5,
+            y = y_pos,
             --* these c props were set via ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#getParaMarker)) > ((XrayUI#ReaderViewSetXrayContextProps)):
             w = c.marker_width + 10,
             h = c.marker_height + 10,
@@ -332,6 +345,7 @@ function XrayUI:ReaderViewInitParaOrPageData()
             marker_line_found = self:ReaderViewLoopThroughParagraphOrPage(p)
             if DX.s.UI_mode == "page" and marker_line_found then
                 self:updateStatusInFooter()
+                --* boolean, true:
                 return self.xray_info_found
             end
         end

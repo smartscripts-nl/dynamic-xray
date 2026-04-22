@@ -291,6 +291,13 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
             after_change_callback = "set_tab_buttons_font_size",
         },
+        UI_marker_position = {
+            value = "top",
+            options = { "top", "middle", "bottom" },
+            explanation = _("This setting determines where the Xray lightning marker (only in case of full page mode!) will be placed on the vertical axis of the page."),
+            type = "string",
+            locked = 0,
+        },
         UI_mode = {
             value = "page",
             options = { "page", "paragraph" },
