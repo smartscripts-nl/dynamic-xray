@@ -38,6 +38,7 @@ end
 --- @class XrayUI
 local XrayUI = WidgetContainer:new{
     families_matched_by_multiple_parts = {},
+    family_members_found = {},
     forbidden_words = {
         Look = 1,
         This = 1,
@@ -94,9 +95,7 @@ function XrayUI:drawMarker(c, rect)
         --* determine vertical position of Xray page marker icon:
         local marker_height_corrected = c.marker_height + 10
         if DX.s.UI_mode == "page" and DX.s.UI_marker_position == "bottom" then
-            y_pos = Screen:getHeight() - c.marker_height - 7
-                    --* correction for footer:
-                    - KOR.footer:getHeight()
+            y_pos = Screen:getHeight() - c.marker_height - 7 - KOR.footer:getHeight()
         elseif DX.s.UI_mode == "page" and DX.s.UI_marker_position == "middle" then
             y_pos = math_floor(Screen:getHeight() / 2) - marker_height_corrected
         else
@@ -519,12 +518,35 @@ end
 --- @private
 function XrayUI:getXrayItemsFoundInText(page_or_paragraph_text, tagged_items)
 
+    local hits, partial_hits, explanations, a_name_matched, an_alias_matched = self:loopThroughXrayItems(page_or_paragraph_text, tagged_items)
+    self:reduceFamilyMembers()
+
+    local skip_items = {}
+    if (a_name_matched or an_alias_matched) then
+
+        hits, explanations = self:reduceParagraphHits(hits, partial_hits, explanations)
+
+        hits, explanations, skip_items = self:removePartialHitsIfFullNameHitFound(hits, explanations, partial_hits)
+    end
+
+    if #hits == 0 then
+        return
+    end
+
+    DX.pn:cacheReliabilityIndicators(hits)
+
+    return hits, explanations, skip_items
+end
+
+--- @private
+function XrayUI:loopThroughXrayItems(page_or_paragraph_text, tagged_items)
     local partial_hits, hits, explanations = {}, {}, {}
     --local multiple_parts_count = 0
     local a_name_matched, an_alias_matched = false, false
     self.families_matched_by_multiple_parts = {}
+    self.family_members_found = {}
 
-    local xray_item, xname, hit_found, alias_match_found, names, short_names, xray_name, names_count, parts
+    local xray_item, hit_found, alias_match_found, names, short_names, xray_name, names_count, parts
     local subject = tagged_items or DX.vd.items
     subject = KOR.tables:shallowCopy(subject)
     count = #subject
@@ -546,8 +568,7 @@ function XrayUI:getXrayItemsFoundInText(page_or_paragraph_text, tagged_items)
         local lower_text = KOR.strings:lower(page_or_paragraph_text)
         names_count = #names
         for nr = 1, names_count do
-            xname = names[nr]
-            hit_found = self:matchNameInPageOrParagraph(page_or_paragraph_text, lower_text, xname, hits, partial_hits, explanations, xray_item, nr)
+            hit_found = self:matchNameInPageOrParagraph(page_or_paragraph_text, lower_text, hits, partial_hits, explanations, xray_item, nr)
             if hit_found then
                 a_name_matched = true
                 break
@@ -562,21 +583,7 @@ function XrayUI:getXrayItemsFoundInText(page_or_paragraph_text, tagged_items)
         end
     end
 
-    local skip_items = {}
-    if (a_name_matched or an_alias_matched) then
-
-        hits, explanations = self:reduceParagraphHits(hits, partial_hits, explanations)
-
-        hits, explanations, skip_items = self:removePartialHitsIfFullNameHitFound(hits, explanations, partial_hits)
-    end
-
-    if #hits == 0 then
-        return
-    end
-
-    DX.pn:cacheReliabilityIndicators(hits)
-
-    return hits, explanations, skip_items
+    return hits, partial_hits, explanations, a_name_matched, an_alias_matched
 end
 
 --- @private
@@ -602,8 +609,9 @@ end
 
 --* loop with all xray items through this function:
 --- @private
-function XrayUI:matchNameInPageOrParagraph(text, lower_text, needle, hits, partial_hits, explanations, item)
+function XrayUI:matchNameInPageOrParagraph(text, lower_text, hits, partial_hits, explanations, item)
     local xray_name = item.name
+    local needle = xray_name
     local has_family_name = needle:match(" ")
     local has_family_name_first = needle:match(",")
     local is_single_word = not has_family_name
@@ -618,7 +626,6 @@ function XrayUI:matchNameInPageOrParagraph(text, lower_text, needle, hits, parti
     end
 
     local ri = DX.i.match_reliability_indicators
-
     local matcher = needle:gsub("%-", "%%-")
     local plural_matcher
     if not matcher:match("s$") then
@@ -645,6 +652,10 @@ function XrayUI:matchNameInPageOrParagraph(text, lower_text, needle, hits, parti
         if has_family_name and not is_lower_case then
             self.families_matched_by_multiple_parts[family_name] = 0
             partial_hits[xray_name] = 0
+            if not self.family_members_found[family_name] then
+                self.family_members_found[family_name] = {}
+            end
+            table_insert(self.family_members_found[family_name], { xray_name, 2 })
             return true, 2
         end
         return true, 1
@@ -666,19 +677,30 @@ function XrayUI:matchNameInPageOrParagraph(text, lower_text, needle, hits, parti
     local match_found, left_side_match_found, right_side_match_found = false, false, false
     local matching_parts = ""
     local part
+    local first_name = name_parts[1]
     count = #name_parts
     for nr = 1, count do
         part = name_parts[nr]
         --* lower case needles must be at least 4 characters long, but for names with upper case characters in them no such condition is required:
-        if DX.m:isValidNeedle(part) and KOR.strings:hasWholeWordMatch(text, lower_text, mparts[nr]) then
+        if DX.m:isValidNeedle(part) and KOR.strings:hasWholeWordMatch(text, lower_text, mparts[nr])
+            --* prevent that e.g. "Mustapha Kemal" in ebook text would match for Xray item "Mustapha Aziz":
+            and not text:match(first_name .. " [A-Z][a-z]+")
+        then
             match_found = true
             if nr == 1 then
                 left_side_match_found = true
+
             elseif nr == #name_parts then
                 right_side_match_found = true
+                if not self.family_members_found[family_name] then
+                    self.family_members_found[family_name] = {}
+                end
+                table_insert(self.family_members_found[family_name], { xray_name, 1 })
             end
-            multiple_parts_count = multiple_parts_count + 1
-            matching_parts = matching_parts .. part .. ", "
+            if left_side_match_found or right_side_match_found then
+                multiple_parts_count = multiple_parts_count + 1
+                matching_parts = matching_parts .. part .. ", "
+            end
         end
     end
     if multiple_parts_count > 0 then
@@ -728,6 +750,32 @@ function XrayUI:ReaderHighlightGenerateXrayInformation(pos, mode)
     end
 end
 
+--- @private
+function XrayUI:reduceFamilyMembers()
+    local family_members_reduced = {}
+    local parts_count, fullname
+    for family_name, members in pairs(self.family_members_found) do
+        if not family_members_reduced[family_name] then
+            family_members_reduced[family_name] = {}
+        end
+        count = #members
+        if count == 1 then
+            fullname = members[1][1]
+            family_members_reduced[family_name][fullname] = true
+        else
+            for i = 1, count do
+                parts_count = members[i][2]
+                if parts_count > 1 then
+                    --* only store names with more than one part:
+                    fullname = members[i][1]
+                    family_members_reduced[family_name][fullname] = true
+                end
+            end
+        end
+    end
+    self.family_members_found = family_members_reduced
+end
+
 --* remove duplicated hits and hits by incorrect names matching another item's surname
 --- @private
 function XrayUI:reduceParagraphHits(hits, partial_hits, explanations)
@@ -748,7 +796,12 @@ function XrayUI:reduceParagraphHits(hits, partial_hits, explanations)
         partial_hits_count = partial_hits[xray_name]
         multiple_hits_count = self.families_matched_by_multiple_parts[family_name]
         skip_partial_match = multiple_hits_count == 0 and partial_hits_count and partial_hits_count > 0
-        if not processed_names[xray_name] then
+        if not processed_names[xray_name]
+            and (
+            not self.family_members_found[family_name]
+            or self.family_members_found[family_name][xray_name]
+        )
+        then
             --* whole name hits must always be kept:
             if multiple_hits_count == 0 and partial_hits_count == 0 then
                 table_insert(reduced, xray_item)
