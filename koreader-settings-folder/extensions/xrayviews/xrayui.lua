@@ -267,7 +267,7 @@ end
 function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanations, skip_xray_items, injected_nr, paragraph_hits_names, paragraph_hits_info)
     local more_button_added
 
-    local name = items[i].name
+    local name = DX.vd:addNonBreakableIndicator(items[i].name, items[i])
     if injected_names[name] or (skip_xray_items and skip_xray_items[name]) then
         return injected_nr
     end
@@ -661,8 +661,8 @@ function XrayUI:matchNameInPageOrParagraph(text, lower_text, hits, partial_hits,
         return true, 1
     end
 
-    --* for lowercase words and words without spaces we don't match by word parts:
-    if is_lower_case or is_single_word then
+    --* for lowercase words, words without spaces or "non-breakable" words we don't match by word parts:
+    if is_lower_case or is_single_word or item.non_breakable == 1 then
         return false, 0
     end
 

@@ -66,6 +66,7 @@ function XrayFormsData:initNewItemFormProps(name_from_selected_text, active_form
             item.xray_type = 3
         end
     end
+    item.non_breakable = 0
     local xray_type_stored = false
     --* this concerns the active tab of the Xray items list:
     if views_data.active_list_tab == 3 or tapped_words.active_tapped_word_tab == 3 then
@@ -124,6 +125,7 @@ function XrayFormsData:getItemCopy(item, xray_type)
         aliases = "",
         tags = "",
         xray_type = xray_type or 1,
+        non_breakable = 0,
         mentioned_in = nil,
         book_hits = 0,
         chapter_hits = '',
@@ -212,6 +214,7 @@ function XrayFormsData:saveUpdatedItem(field_values)
         tags = edited_props.tags,
         index = self.edit_item_index,
         xray_type = tonumber(edited_props.xray_type),
+        non_breakable = tonumber(edited_props.non_breakable),
         mentioned_in = views_data.items[self.edit_item_index].mentioned_in,
         series = parent.current_series,
     }
@@ -257,6 +260,7 @@ function XrayFormsData:convertFieldValuesToItemProps(values)
         --* this is field no 6:
         xray_type = xray_type,
         tags = has_text(values[7]) and KOR.strings:sortKeywords(values[7]) or "",
+        non_breakable = tonumber(values[8]) or 0,
     }
 end
 
@@ -312,6 +316,7 @@ function XrayFormsData:getFilteredItem(new_props, entire_series_hits, hits_in_bo
                 tags = new_props.tags,
                 linkwords = new_props.linkwords,
                 xray_type = new_props.xray_type,
+                non_breakable = new_props.non_breakable,
                 book_hits = hits_in_book,
                 chapter_hits = hits_in_chapter,
                 series_hits = entire_series_hits,
@@ -472,6 +477,7 @@ function XrayFormsData:needsFullUpdate(item)
         or self:isNotSameFieldValue(item.aliases, self.item_before_edit.aliases)
         or self:isNotSameFieldValue(item.short_names, self.item_before_edit.short_names)
         or self:isNotSameFieldValue(item.xray_type, self.item_before_edit.xray_type)
+        or self:isNotSameFieldValue(item.non_breakable, self.item_before_edit.non_breakable)
 end
 
 --* this method called upon rename/edit, toggle importance, toggle person/term of Xray item:
@@ -512,7 +518,7 @@ function XrayFormsData:getFormFields(item_copy, prefilled_field, name_from_selec
     local aliases_field = {
         text = item_copy.aliases,
         input_type = "text",
-        description = "Aliassen:",
+        description = _("Aliases") .. ":",
         info_popup_title = _("field: Aliases"),
         --* splitting of items done by ((XrayModel#splitByCommaOrSpace)):
         info_popup_text = _([[This field has space or comma separated terms, as aliases (of the main item name in the first tab). Can e.g. be a title or a nickname of a person.
@@ -541,6 +547,20 @@ If it is you intention that aliases shouldn't be separated by spaces, then use c
         cursor_at_end = true,
         input_face = self.other_fields_face,
         scroll = true,
+        allow_newline = false,
+        force_one_line_height = true,
+        margin = Size.margin.small,
+    }
+    local non_breakable_field = {
+        text = item_copy.non_breakable,
+        input_type = "number",
+        description = _("Non-breakable (0 or 1)"),
+        info_popup_title = _("field: Non-breakable"),
+        info_popup_text = _("If this value is set to 1, the name of the field will be non-breakable. This means this item will not be found by name parts (first name etc.). In dialogs non-breakable items will be marked with a lock after their name."),
+        tab = 2,
+        cursor_at_end = true,
+        input_face = self.other_fields_face,
+        scroll = false,
         allow_newline = false,
         force_one_line_height = true,
         margin = Size.margin.small,
@@ -625,7 +645,7 @@ only has lower case characters in the description.]]), KOR.icons.xray_person_imp
             margin = Size.margin.small,
         },
         {
-            text = prefilled_field == "name" and name_from_selected_text or item_copy.name or "",
+            text = prefilled_field == "name" and name_from_selected_text or (item_copy.name and item_copy.name:gsub(KOR.icons.lock_bare, "")) or "",
             input_type = "text",
             description = aliases and _("Name") .. " (" .. aliases .. "):  " .. icon or _("Name") .. ": " .. icon,
             info_popup_title = _("field") .. ": " .. _("Name"),
@@ -651,6 +671,8 @@ Enter with only lowercase characters [a-z], because then searches for these item
         table_insert(fields, linkwords_field)
         table_insert(fields, short_names_field)
         table_insert(fields, xray_type_field)
+        table_insert(fields, tags_field)
+        table_insert(fields, non_breakable_field)
     else
         --* insert 2 two field rows:
         table_insert(fields, {
@@ -661,8 +683,11 @@ Enter with only lowercase characters [a-z], because then searches for these item
             short_names_field,
             xray_type_field,
         })
+        table_insert(fields, {
+            tags_field,
+            non_breakable_field,
+        })
     end
-    table_insert(fields, tags_field)
 
     return fields
 end

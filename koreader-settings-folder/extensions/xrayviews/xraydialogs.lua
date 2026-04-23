@@ -819,7 +819,8 @@ end
 
 --- @private
 function XrayDialogs:showItemViewer(needle_item, props)
-    local title = props.icon .. props.name .. " (" .. props.index .. "/" .. props.current_items_count .. ")"
+    local name = DX.vd:addNonBreakableIndicator(props.name:gsub(KOR.icons.lock_bare, ""), needle_item)
+    local title = props.icon .. name .. " (" .. props.index .. "/" .. props.current_items_count .. ")"
 
     self.needle_name_for_list_page = needle_item.name
     local key_events_module = props.key_events_module

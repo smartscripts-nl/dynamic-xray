@@ -809,10 +809,11 @@ function XrayViewsData:filterAndAddItemToItemTables(items, n, search_needles, li
 
     --* now: build menu row if this subject list is active and (no filter or matched)
     if insert_item then
+        local name = self:addNonBreakableIndicator(item.name, item)
         list_item = {
             text = self:generateListItemText(item, reliability_indicator),
             id = item.id,
-            name = item.name,
+            name = name,
             description = item.description,
             xray_type = item.xray_type,
             short_names = item.short_names,
@@ -824,6 +825,7 @@ function XrayViewsData:filterAndAddItemToItemTables(items, n, search_needles, li
             chapter_hits = item.chapter_hits,
             series = parent.current_series,
             mentioned_in = item.mentioned_in,
+            non_breakable = item.non_breakable,
             index = #self.item_table_for_filter[1] + 1,
             callback = function()
                 UIManager:close(DX.d.xray_items_chooser_dialog)
@@ -1331,9 +1333,16 @@ function XrayViewsData:generateLinkwordsInfo(item, iindent, for_all_items_list)
     return linkwords, linkwords_iconless
 end
 
+function XrayViewsData:addNonBreakableIndicator(name, xray_item)
+    if xray_item.non_breakable == 1 then
+        return name .. KOR.icons.lock_bare
+    end
+    return name
+end
+
 --- @private
-function XrayViewsData:generateFirstLines(first_line, first_line_iconless, item, xray_type_icon, ui_explanation, meta_indent, is_also_for_export)
-    local name = item.name
+function XrayViewsData:generateFirstLines(first_line, first_line_iconless, xray_item, xray_type_icon, ui_explanation, meta_indent, is_also_for_export)
+    local name = self:addNonBreakableIndicator(xray_item.name, xray_item)
 
     --* here the info gets combined:
     -- #((xray items dialog add match reliability explanations))
@@ -1346,7 +1355,7 @@ function XrayViewsData:generateFirstLines(first_line, first_line_iconless, item,
     --! dont_indent_first_line here is crucial, to ensure the first line has no indentation:
     first_line = KOR.strings:splitLinesToMaxLength(first_line, meta_indent, nil, "dont_indent_first_line") .. "\n"
     if is_also_for_export then
-        local important_marker = (item.xray_type == 2 or item.xray_type == 4) and "!" or ""
+        local important_marker = (xray_item.xray_type == 2 or xray_item.xray_type == 4) and "!" or ""
         table_insert(first_line_iconless, important_marker)
         table_insert(first_line_iconless, name)
         table_insert(first_line_iconless, ui_explanation)
@@ -1371,7 +1380,8 @@ function XrayViewsData:generateListItemText(item, reliability_indicator)
     end
 
     --* we don't add sequence number here, because that will only be done after prioritizing and sorting items in the list, at end of ((XrayViewsData#getCurrentListTabItems)):
-    return reliability_indicator .. icon .. item.name .. hits_info .. ": " .. KOR.strings:lcfirst(item.description)
+    local name = self:addNonBreakableIndicator(item.name, item)
+    return reliability_indicator .. icon .. name .. hits_info .. ": " .. KOR.strings:lcfirst(item.description)
 end
 
 --- @private

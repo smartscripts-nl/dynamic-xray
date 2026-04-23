@@ -63,6 +63,7 @@ local XrayDataLoader = WidgetContainer:new{
            o.chapters,
            b.title AS mentioned_in,
            x.name AS item_name,
+           x.non_breakable,
            q.pos_chapter_quotes
 
         FROM bookinfo b
@@ -113,6 +114,7 @@ local XrayDataLoader = WidgetContainer:new{
              x.book_hits,
              x.chapter_hits,
              x.chapter_hits_data,
+             x.non_breakable,
              b.title,
              o.chapters
             FROM xray_items x
@@ -147,6 +149,7 @@ local XrayDataLoader = WidgetContainer:new{
                x.linkwords,
                x.description,
                x.xray_type,
+               x.non_breakable,
 
                x.book_hits,
                x.chapters,
@@ -187,26 +190,6 @@ local XrayDataLoader = WidgetContainer:new{
         get_series_name =
             "SELECT series FROM bookinfo WHERE directory || filename = 'safe_path' LIMIT 1;",
 
-        get_items_for_import_from_current_series = [[
-            WITH series_books AS (SELECT filename
-              FROM all_books
-              WHERE series = 'current_series'
-              AND filename != 'safe_path' -- exclude current book
-            )
-            SELECT DISTINCT x.name,
-                x.short_names,
-                x.description,
-                x.xray_type,
-                x.aliases,
-                x.tags,
-                x.linkwords
-            FROM xray_items x
-                JOIN series_books s ON x.ebook = s.filename
-            WHERE NOT EXISTS (SELECT 1
-                 FROM xray_items cur
-                 WHERE cur.ebook = 'safe_path' AND cur.name = x.name)
-            ORDER BY x.name;]],
-
         get_items_for_import_from_series = [[
             WITH series_books AS (
               SELECT filename
@@ -220,7 +203,8 @@ local XrayDataLoader = WidgetContainer:new{
                 x.xray_type,
                 x.aliases,
                 x.tags,
-                x.linkwords
+                x.linkwords,
+                x.non_breakable
             FROM xray_items x
             JOIN series_books s ON s.filename = x.ebook
             WHERE x.ebook != 'safe_path'
@@ -391,6 +375,7 @@ function XrayDataLoader:_addBookItem(result, i, book_index)
         short_names = result["short_names"][i] or "",
         description = result["description"][i] or "",
         xray_type = tonumber(result["xray_type"][i]) or 1,
+        non_breakable = tonumber(result["non_breakable"][i]) or 0,
         aliases = result["aliases"][i] or "",
         tags = result["tags"][i] or "",
         linkwords = result["linkwords"][i] or "",
@@ -416,6 +401,7 @@ function XrayDataLoader:_addSeriesItem(result, i, series_index)
         short_names = result["short_names"][i] or "",
         description = result["description"][i] or "",
         xray_type = tonumber(result["xray_type"][i]) or 1,
+        non_breakable = tonumber(result["non_breakable"][i]) or 0,
         aliases = result["aliases"][i] or "",
         tags = result["tags"][i] or "",
         linkwords = result["linkwords"][i] or "",

@@ -110,10 +110,10 @@ local XrayDataSaver = WidgetContainer:new{
             AND name = ?;]],
 
         insert_imported_items =
-            "INSERT OR IGNORE INTO xray_items (ebook, name, short_names, description, xray_type, aliases, tags, linkwords, book_hits, chapter_hits, chapter_hits_data) VALUES ('%1', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+            "INSERT OR IGNORE INTO xray_items (ebook, name, short_names, description, xray_type, non_breakable, aliases, tags, linkwords, book_hits, chapter_hits, chapter_hits_data) VALUES ('%1', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
 
         insert_item =
-            "INSERT INTO xray_items (ebook, name, short_names, description, xray_type, aliases, tags, linkwords) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+            "INSERT INTO xray_items (ebook, name, short_names, description, xray_type, non_breakable, aliases, tags, linkwords) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
 
         quote_delete =
             "DELETE FROM xray_quotes WHERE id = ?;",
@@ -141,7 +141,7 @@ local XrayDataSaver = WidgetContainer:new{
             WHERE id = ?;]],
 
         update_item =
-            "UPDATE xray_items SET name = ?, short_names = ?, description = ?, xray_type = ?, aliases = ?, tags = ?, linkwords = ?, book_hits = ?, chapter_hits = ? WHERE id = ?;",
+            "UPDATE xray_items SET name = ?, short_names = ?, description = ?, xray_type = ?, non_breakable = ?, aliases = ?, tags = ?, linkwords = ?, book_hits = ?, chapter_hits = ? WHERE id = ?;",
 
         --* this will similtanuously update the item in all ebooks of the series:
         update_item_for_entire_series = [[
@@ -151,6 +151,7 @@ local XrayDataSaver = WidgetContainer:new{
             short_names = ?,
             description = ?,
             xray_type = ?,
+            non_breakable = ?,
             aliases = ?,
             tags = ?,
             linkwords = ?
@@ -260,6 +261,9 @@ local XrayDataSaver = WidgetContainer:new{
         --* a second reset was needed after some updates to the hits counting system:
         [[
             UPDATE xray_items SET chapter_hits = NULL, chapter_hits_data = NULL WHERE 1;]],
+
+        [[
+            ALTER TABLE xray_items ADD COLUMN non_breakable INTEGER NOT NULL DEFAULT 0;]],
     },
     scheme_verification_queries = {
         "PRAGMA table_info('finished_books');",
@@ -443,6 +447,7 @@ function XrayDataSaver.storeImportedItemsFromSeries(series, is_other_series)
             short_names = result["short_names"][i],
             description = result["description"][i],
             xray_type = result["xray_type"][i],
+            non_breakable = tonumber(result["non_breakable"][i]) or 0,
             aliases = result["aliases"][i],
             tags = result["tags"][i],
             linkwords = result["linkwords"][i],
@@ -454,6 +459,7 @@ function XrayDataSaver.storeImportedItemsFromSeries(series, is_other_series)
             result["short_names"][i],
             result["description"][i],
             result["xray_type"][i],
+            tonumber(result["non_breakable"][i]) or 0,
             result["aliases"][i],
             result["tags"][i],
             result["linkwords"][i],
@@ -528,7 +534,7 @@ function XrayDataSaver.storeNewItem(new_item)
     local x = new_item
     --* set empty texts to nil; these might have been generated in ((MultiInputDialog#registerFieldValues)), when the user never opened a particular form tab for left the fields empty:
     self:setEmptyPropsToNil(x)
-    stmt:reset():bind(parent.current_ebook_basename, x.name, x.short_names, x.description, x.xray_type, x.aliases, x.tags, x.linkwords):step()
+    stmt:reset():bind(parent.current_ebook_basename, x.name, x.short_names, x.description, x.xray_type, x.non_breakable, x.aliases, x.tags, x.linkwords):step()
 
     --* retrieve the id of the newly added item, needed for ((XrayViewsData#updateAndSortAllItemTables)):
     new_item.id = KOR.databases:getNewItemId(conn)
@@ -558,9 +564,9 @@ function XrayDataSaver.storeUpdatedItem(item)
     --* this query will be used in both the series AND in current book display mode of the Items List, BUT ONLY IF a series for the current ebook is defined (so parent.current_series set):
     if parent.current_series then
         --! don't store hits here, because otherwise this count will be saved for all same items in ebooks in the series, but they should normally differ!:
-        stmt:reset():bind(x.name, x.short_names, x.description, x.xray_type, x.aliases, x.tags, x.linkwords, id, id):step()
+        stmt:reset():bind(x.name, x.short_names, x.description, x.xray_type, x.non_breakable, x.aliases, x.tags, x.linkwords, id, id):step()
     else
-        stmt:reset():bind(x.name, x.short_names, x.description, x.xray_type, x.aliases, x.tags, x.linkwords, x.book_hits, x.chapter_hits, id):step()
+        stmt:reset():bind(x.name, x.short_names, x.description, x.xray_type, x.non_breakable, x.aliases, x.tags, x.linkwords, x.book_hits, x.chapter_hits, id):step()
     end
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 

@@ -237,7 +237,8 @@ function XrayInfoPanel:generateItemMetaInfo(item, reliability_indicator)
 
     local icon = DX.vd:getItemTypeIcon(item, "bare")
     --* alias_indent suffixed with 2 spaces, because of icon .. " ":
-    local info = icon .. " " .. item.name .. "\n"
+    local name = DX.vd:addNonBreakableIndicator(item.name, item)
+    local info = icon .. " " .. name .. "\n"
 
     local meta_indent = self:getConfiguredInfoPanelIndentation()
 
