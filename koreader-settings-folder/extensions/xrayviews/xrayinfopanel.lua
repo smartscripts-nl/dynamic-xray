@@ -42,6 +42,15 @@ function XrayInfoPanel:resetProps()
     self.cached_sheight = nil
 end
 
+--* linked items info for some reason didn't have the same top padding as main panel items; this method fixes that:
+--- @private
+function XrayInfoPanel:addTopPadding(content)
+    if not content:match("^\n") then
+        return "\n" .. content
+    end
+    return content
+end
+
 function XrayInfoPanel:generateInfoPanel(data)
     self.parent = data.parent
     self.info_panel_text = data.info_panel_text
@@ -109,24 +118,28 @@ function XrayInfoPanel:getInfoPanelText()
 
     local active_side_button = DX.sp.active_side_buttons[DX.sp.active_side_tab]
     local side_button = DX.sp:getSideButton(active_side_button)
+    local content
 
     if KOR.registry:getOnce("edited_xray_item") and side_button then
-        return self:returnEditedInfoPanelText(side_button)
+        content = self:returnEditedInfoPanelText(side_button)
+        return self:addTopPadding(content)
     end
 
     --* the info panel texts per button were computed in ((XraySidePanels#addSideButton)):
     if has_text(DX.sp.info_panel_texts[DX.sp.active_side_tab][active_side_button]) then
-        return DX.sp.info_panel_texts[DX.sp.active_side_tab][active_side_button]
+        content = DX.sp.info_panel_texts[DX.sp.active_side_tab][active_side_button]
+        return self:addTopPadding(content)
     end
 
     if has_text(self.upon_load_panel_text) and active_side_button == 1 then
         --* this text was generated for the first item via ((XraySidePanels#markActiveSideButton)) > ((XraySidePanels#generateInfoTextForFirstSideButton))
-        return self.upon_load_panel_text
+        return self:addTopPadding(self.upon_load_panel_text)
     end
 
     --* xray_item.info_text for first button was generated in ((XraySidePanels#markActiveSideButton)) > ((XraySidePanels#generateInfoTextForFirstSideButton)):
     --* info_text for each button generated via ((XrayPages#markedItemRegister)) > ((XrayInfoPanel#getItemInfoText)) > ((XraySidePanels#addSideButton)):
-    return side_button and (side_button.info_text or self:getItemInfoText(side_button.xray_item, "for_info_panel")) or " "
+    content = side_button and (side_button.info_text or self:getItemInfoText(side_button.xray_item, "for_info_panel")) or " "
+    return self:addTopPadding(content)
 end
 
 --- @private
