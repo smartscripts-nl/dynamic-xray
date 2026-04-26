@@ -63,7 +63,7 @@ function XrayCallbacks:execGotoPrevPageCallback(goto_prev_item)
     if goto_prev_item then
         goto_prev_item = DX.sp:getCurrentTabItem()
     end
-    DX.p:toPrevNavigatorPage(goto_prev_item)
+    DX.p:toPrevNavigatorPage(goto_prev_item, "stay_at_top_of_page")
     return true
 end
 

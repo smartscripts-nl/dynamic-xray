@@ -294,7 +294,7 @@ function XrayPages:toNextNavigatorPage(goto_next_item)
     DX.pn:restoreNavigator()
 end
 
-function XrayPages:toPrevNavigatorPage(goto_prev_item)
+function XrayPages:toPrevNavigatorPage(goto_prev_item, stay_at_top_of_page)
     DX.sp:resetActiveSideButtons("XrayPages:toPrevNavigatorPage")
     local direction = -1
     --* navigation to previous tagged item hit:
@@ -315,6 +315,10 @@ function XrayPages:toPrevNavigatorPage(goto_prev_item)
         return
     end
     DX.pn:restoreNavigator()
+    --* this is truthy when navigating backwards with left arrow button in Page Navigator:
+    if stay_at_top_of_page then
+        return
+    end
     DX.pn:scrollToBottom()
 end
 
