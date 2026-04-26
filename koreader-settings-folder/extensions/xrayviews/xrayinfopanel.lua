@@ -42,9 +42,11 @@ function XrayInfoPanel:resetProps()
     self.cached_sheight = nil
 end
 
---* linked items info for some reason didn't have the same top padding as main panel items; this method fixes that:
 --- @private
-function XrayInfoPanel:addTopPadding(content)
+function XrayInfoPanel:ensureCorrectWhitespace(content)
+    --* sometimes there is a whiteline between line with name and description:
+    content = content:gsub("\n\n", "\n")
+    --* sometimes for linked items top padding is missing:
     if not content:match("^\n") then
         return "\n" .. content
     end
@@ -122,24 +124,24 @@ function XrayInfoPanel:getInfoPanelText()
 
     if KOR.registry:getOnce("edited_xray_item") and side_button then
         content = self:returnEditedInfoPanelText(side_button)
-        return self:addTopPadding(content)
+        return self:ensureCorrectWhitespace(content)
     end
 
     --* the info panel texts per button were computed in ((XraySidePanels#addSideButton)):
     if has_text(DX.sp.info_panel_texts[DX.sp.active_side_tab][active_side_button]) then
         content = DX.sp.info_panel_texts[DX.sp.active_side_tab][active_side_button]
-        return self:addTopPadding(content)
+        return self:ensureCorrectWhitespace(content)
     end
 
     if has_text(self.upon_load_panel_text) and active_side_button == 1 then
         --* this text was generated for the first item via ((XraySidePanels#markActiveSideButton)) > ((XraySidePanels#generateInfoTextForFirstSideButton))
-        return self:addTopPadding(self.upon_load_panel_text)
+        return self:ensureCorrectWhitespace(self.upon_load_panel_text)
     end
 
     --* xray_item.info_text for first button was generated in ((XraySidePanels#markActiveSideButton)) > ((XraySidePanels#generateInfoTextForFirstSideButton)):
     --* info_text for each button generated via ((XrayPages#markedItemRegister)) > ((XrayInfoPanel#getItemInfoText)) > ((XraySidePanels#addSideButton)):
     content = side_button and (side_button.info_text or self:getItemInfoText(side_button.xray_item, "for_info_panel")) or " "
-    return self:addTopPadding(content)
+    return self:ensureCorrectWhitespace(content)
 end
 
 --- @private
