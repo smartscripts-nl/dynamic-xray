@@ -66,7 +66,9 @@ function XrayFormsData:initNewItemFormProps(name_from_selected_text, active_form
             item.xray_type = 3
         end
     end
-    item.non_breakable = 0
+    if item then
+        item.non_breakable = 0
+    end
     local xray_type_stored = false
     --* this concerns the active tab of the Xray items list:
     if views_data.active_list_tab == 3 or tapped_words.active_tapped_word_tab == 3 then
