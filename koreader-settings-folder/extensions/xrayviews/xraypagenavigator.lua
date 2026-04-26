@@ -312,6 +312,7 @@ function XrayPageNavigator:setCurrentItem(item)
         self.current_item = nil
         return
     end
+    DX.sp:setProp("tapped_item", item)
     local id = item.id
     --! reference static items collection, to be more flexible after item updates:
     self.current_item = parent.items_by_id[id]

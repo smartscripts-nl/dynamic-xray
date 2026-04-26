@@ -610,7 +610,7 @@ end
 function ButtonInfoPopup:forXrayTagGroupSelector(props)
 	return KOR.buttonprops:set({
 		icon = "tags",
-		info = _("tags icon | Show the tag-group-selector, to choose a specific tag-group to display"),
+		info = _("tags icon | Show the tag-group-selector, to choose a specific tag-group to display.\n\nIf in a certain context there is an active/selected Xray item which is a member of one tag-group only, then immediately show that group."),
 		callback_label = _("show selector"),
 		--! callback defined by calling module
 	}, props)

@@ -28,6 +28,7 @@ local XraySidePanels = WidgetContainer:new{
     info_panel_texts = { {}, {} },
     linked_items = {},
     side_buttons = {},
+    tapped_item = nil,
 }
 
 function XraySidePanels:addSideButton(item, info_text)
@@ -59,6 +60,8 @@ function XraySidePanels:addSideButton(item, info_text)
           --! only items in side panel no 1 (main items) may modify self.current_item:
           if self.active_side_tab == 1 then
               DX.pn:setCurrentItem(item)
+          elseif item then
+              self.tapped_item = item
           end
           DX.pn:setActiveScrollPage()
           DX.pn:reloadPageNavigator()
@@ -295,6 +298,10 @@ function XraySidePanels:getCurrentTabItem()
 
     local button_index = self.active_side_buttons[2]
     return self.side_buttons[button_index][1].xray_item
+end
+
+function XraySidePanels:setProp(prop, value)
+    self[prop] = value
 end
 
 return XraySidePanels

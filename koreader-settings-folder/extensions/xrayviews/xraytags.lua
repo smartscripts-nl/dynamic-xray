@@ -447,7 +447,12 @@ end
 
 --* to select a tag-group to explore:
 --* compare for filtered-by-tag navigation in Page Navigator ((XrayTags#showTagFilterSelector)):
-function XrayTags:showTagGroupSelector()
+function XrayTags:showTagGroupSelector(xray_item)
+    if xray_item and has_text(xray_item.tags) and not xray_item.tags:match(" ") then
+        self:showTagGroup(xray_item.tags)
+        KOR.messages:notify(xray_item.name .. _(" is a member of the tag-group ") .. xray_item.tags, 5)
+        return
+    end
     local taggroups_with_totals = DX.m:getTagGroupsWithCountsWithTotals()
     if self:showNoTagsNotification(taggroups_with_totals) then
         return
@@ -484,6 +489,12 @@ function XrayTags:showTagGroup(tag)
         },
         extra_buttons_start_pos = 2,
         extra_buttons = {
+            KOR.buttoninfopopup:forXrayTagGroupSelector({
+                callback = function()
+                    UIManager:close(self.tag_group_viewer)
+                    DX.ta:showTagGroupSelector()
+                end,
+            }),
             KOR.buttoninfopopup:forXrayTagGroupPrevious({
                 callback = function()
                     local previous_tag = DX.ta:getPreviousTagGroup(tag)

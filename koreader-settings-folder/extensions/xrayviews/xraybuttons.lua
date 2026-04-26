@@ -248,7 +248,7 @@ function XrayButtons:forPageNavigator(parent)
                 DX.ta:showTagFilterSelector("page_navigator")
             end,
             hold_callback = function()
-                DX.ta:showTagGroupSelector()
+                DX.ta:showTagGroupSelector(DX.sp.tapped_item)
             end,
         }),
         KOR.buttoninfopopup:forXrayViewer({
@@ -577,6 +577,11 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
                 end,
             }),
             KOR.buttoninfopopup:forXrayPageNavigator(),
+            KOR.buttoninfopopup:forXrayTagGroupSelector({
+                callback = function()
+                    DX.ta:showTagGroupSelector(needle_item)
+                end
+            }),
             KOR.buttonchoicepopup:forXrayItemDelete({
                 icon = "dustbin",
                 icon_size_ratio = 0.5,
