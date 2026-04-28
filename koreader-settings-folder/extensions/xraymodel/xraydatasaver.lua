@@ -264,6 +264,10 @@ local XrayDataSaver = WidgetContainer:new{
 
         [[
             ALTER TABLE xray_items ADD COLUMN non_breakable INTEGER NOT NULL DEFAULT 0;]],
+
+        --* a third reset was needed after some updates to the hits counting system:
+        [[
+            UPDATE xray_items SET chapter_hits_data = NULL, chapter_hits = NULL WHERE 1;]],
     },
     scheme_verification_queries = {
         "PRAGMA table_info('finished_books');",
