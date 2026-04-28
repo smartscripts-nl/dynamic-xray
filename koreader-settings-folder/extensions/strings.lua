@@ -159,6 +159,9 @@ end
 
 --* only return ucfirst variant of string if it not contains uppercase characters:
 function Strings:lcfirst(str, force_only_first)
+    if not str then
+        return ""
+    end
     --* %u matches upper case characters:
     return (force_only_first and Utf8Proc.lowercase(util.fixUtf8(str, "?")) or str:gsub("^%u", string.lower))
 end

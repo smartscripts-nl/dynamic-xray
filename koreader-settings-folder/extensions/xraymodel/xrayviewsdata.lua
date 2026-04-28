@@ -1129,7 +1129,7 @@ function XrayViewsData:updateChapterHtmlIfMissing(item)
 end
 
 function XrayViewsData:getItemInfoHtml(item)
-    local info = item.description .. "<br>"
+    local info = item.description and item.description .. "<br>" or ""
 
     local meta_info = { "<table style='margin-top: 2.5em'>" }
     self:addAliasesHtml(meta_info, item)

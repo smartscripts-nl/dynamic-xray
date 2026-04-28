@@ -29,6 +29,7 @@ local views_data
 --- @class XrayFormsData
 local XrayFormsData = WidgetContainer:new{
     active_form_mode = nil,
+    checkbox_values = {},
     description_field_face = Font:getFace("x_smallinfofont", 19),
     edit_item_index = nil,
     form_item_id = nil,
@@ -45,7 +46,11 @@ function XrayFormsData:initDataHandlers(xray_model)
     views_data = DX.vd
 end
 
+--* compare ((XrayFormsData#initEditFormProps)):
 function XrayFormsData:initNewItemFormProps(name_from_selected_text, active_form_tab, item)
+
+    self.checkbox_values = {}
+
     local prefilled_field = "name"
     self.active_form_mode = "add"
     local is_text_from_selection = has_text(name_from_selected_text)
@@ -146,8 +151,10 @@ function XrayFormsData:resetItemProps(item_copy)
     end
 end
 
+--* compare ((XrayFormsData#initNewItemFormProps)):
 function XrayFormsData:initEditFormProps(item, reload_manager, active_form_tab)
     self.active_form_mode = "edit"
+    self.checkbox_values = {}
 
     DX.d:setProp("edit_args", {
         reload_manager = reload_manager,
@@ -262,7 +269,7 @@ function XrayFormsData:convertFieldValuesToItemProps(values)
         --* this is field no 6:
         xray_type = xray_type,
         tags = has_text(values[7]) and KOR.strings:sortKeywords(values[7]) or "",
-        non_breakable = tonumber(values[8]) or 0,
+        non_breakable = self.checkbox_values["non_breakable"] and 1 or 0,
     }
 end
 
@@ -511,6 +518,8 @@ function XrayFormsData:storeItemUpdates(mode, item)
 end
 
 --* compare ((XrayDialogs#showEditItemForm)):
+--* the fields defined here will be inserted via ((MultiInputDialog#generateRows)) → ((MultiInputDialog#insertSingleFieldRow)) or ((MultiInputDialog#insertTwoFieldRow)):
+--* the field values will be read in ((XrayController#saveNewItem)) or ((XrayFormsData#saveUpdatedItem)) → ((XrayFormsData#convertFieldValuesToItemProps)):
 --- @private
 function XrayFormsData:getFormFields(item_copy, prefilled_field, name_from_selected_text)
     local aliases = self:getAliasesText(item_copy)
@@ -553,18 +562,19 @@ If it is you intention that aliases shouldn't be separated by spaces, then use c
         force_one_line_height = true,
         margin = Size.margin.small,
     }
+    -- #((MultiInputDialog checkbox example))
+    self.checkbox_values["non_breakable"] = item_copy.non_breakable == 1
     local non_breakable_field = {
-        text = item_copy.non_breakable,
-        input_type = "number",
-        description = _("Non-breakable (0 or 1)"),
+        checked = item_copy.non_breakable,
+        type = "checkbox",
+        text = " " .. _("ignore name-parts"),
+        description = _("Non-breakable name:"),
+        callback = function()
+            self.checkbox_values["non_breakable"] = not self.checkbox_values["non_breakable"]
+        end,
         info_popup_title = _("field: Non-breakable"),
-        info_popup_text = _("If this value is set to 1, the name of the field will be non-breakable. This means this item will not be found by name parts (first name etc.). In dialogs non-breakable items will be marked with a lock after their name."),
+        info_popup_text = _("If this field has been checked, the name of the Xray item will be non-breakable. This means this item will not be found by name parts (first name etc.). In dialogs non-breakable items will be marked with a lock after their name."),
         tab = 2,
-        cursor_at_end = true,
-        input_face = self.other_fields_face,
-        scroll = false,
-        allow_newline = false,
-        force_one_line_height = true,
         margin = Size.margin.small,
     }
     local linkwords_field = {

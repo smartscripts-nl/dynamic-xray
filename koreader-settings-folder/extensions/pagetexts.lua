@@ -414,7 +414,7 @@ end
 --- @private
 function PageTexts:reduceHitMarkers(text)
     return text
-        --* remove duplicated markers:
+        --* remove duplicated partial name markers inside markers for full names (consisting of first and last names):
         :gsub("<strong><strong>([^<]+)</strong>", "<strong>%1")
         :gsub("<strong>([^<]+)</strong></strong>", "%1</strong>")
         --* eliminate names from other persons which have part of their name in common with an Xray item name:

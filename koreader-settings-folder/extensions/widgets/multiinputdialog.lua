@@ -7,6 +7,7 @@ local require = require
 local Blitbuffer = require("ffi/blitbuffer")
 local Button = require("extensions/widgets/button")
 local CenterContainer = require("ui/widget/container/centercontainer")
+local CheckButton = require("extensions/widgets/checkbutton")
 local Device = require("device")
 local Font = require("extensions/modules/font")
 local FrameContainer = require("extensions/widgets/container/framecontainer")
@@ -106,7 +107,10 @@ function MultiInputDialog:getAllTabsFieldsValues()
         --* these values were set in ((MultiInputDialog#fieldAddToInputs)):
         field = self.input_fields[i]
         local value_index = field.value_index
-        self.field_values[value_index] = field:getText()
+        --* checkboxes don't have method getText and don't have a value_index; see e.g. ((MultiInputDialog checkbox example)):
+        if self.field_values[value_index] then
+            self.field_values[value_index] = field.type == "checkbox" and field.checked and 1 or field:getText()
+        end
     end
     local values = {}
     count = #self.field_values
@@ -139,6 +143,10 @@ function MultiInputDialog:onFocus(inputbox)
     self:refreshDialog()
     --* focus new inputbox
     self._input_widget = inputbox
+    --* a checkbox — e.g. ((MultiInputDialog checkbox example)) — doesn't have the focus-method:
+    if not self._input_widget.focus then
+        return
+    end
     self._input_widget:focus()
     self._input_widget:onShowKeyboard()
 end
@@ -239,7 +247,15 @@ function MultiInputDialog:fieldAddToInputs(field_config, field_side)
         return field
     end
 
-    field = InputText:new(self.field_config)
+    field = field_config.type == "checkbox" and CheckButton:new{
+            text = field_config.text,
+            type = "checkbox",
+            checked = self.field_config.checked,
+            parent = self.field_config.parent,
+            callback = self.field_config.callback,
+        }
+        or
+        InputText:new(self.field_config)
     table_insert(self.input_fields, field)
     self:fieldAddToCurrentTabFields(field)
     if self.field_config.focused then
@@ -330,6 +346,15 @@ function MultiInputDialog:setFieldProps(field, field_side)
             self:setFieldProp(field.text, ""),
         hint =
             self:setFieldProp(field.hint, ""),
+
+        --* for checkboxes; see ((MultiInputDialog checkbox example)):
+        checked =
+            self:setFieldProp(field.checked == 1, false),
+        callback =
+            field.callback,
+        type =
+            field.type,
+
         description =
             field.description,
         info_popup_title =
@@ -411,6 +436,7 @@ function MultiInputDialog:insertIntoTargetContainer(group, is_field)
     end
 end
 
+--* compare ((MultiInputDialog#insertTwoFieldRow)):
 --- @private
 function MultiInputDialog:insertSingleFieldRow(field_config)
     if self.force_one_line_field then
@@ -434,6 +460,7 @@ function MultiInputDialog:insertSingleFieldRow(field_config)
     self:insertIntoTargetContainer(group, "is_field")
 end
 
+--* compare ((MultiInputDialog#insertSingleFieldRow)):
 --- @private
 function MultiInputDialog:insertTwoFieldRow(row)
     local desc_containers = {}
@@ -453,7 +480,7 @@ function MultiInputDialog:insertTwoFieldRow(row)
         if has_descriptions then
             desc_containers[field_side] = self:getDescriptionContainer(field, field_config)
         end
-        field_containers[field_side] = self:getFieldContainer(field)
+        field_containers[field_side] = self:getFieldContainer(field, field_config)
     end
 
     if has_descriptions then
@@ -588,10 +615,10 @@ function MultiInputDialog:editField(input, input_type, field_hint, allow_newline
 end
 
 --- @private
-function MultiInputDialog:getFieldContainer(field)
+function MultiInputDialog:getFieldContainer(field, field_config)
     local tile_width = self.full_width / self.fields_count
     local tile_height = field:getSize().h
-    local has_no_button = field.input_type == "number" and not field.custom_edit_button
+    local has_no_button = (field.input_type == "number" and not field.custom_edit_button) or field_config.type == "checkbox"
 
     --* don't add edit field buttons for regular number fields without a custom edit button:
     if has_no_button then
