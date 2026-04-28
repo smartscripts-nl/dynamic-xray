@@ -713,7 +713,10 @@ function InputDialog:onClose()
         --* Give back top line num and cursor position
         self.view_pos_callback(self._top_line_num, self._charpos)
     end
-    self._input_widget:onCloseKeyboard()
+    --* a checkbox doesn't have an onCloseKeyboard method; see ((MultiInputDialog checkbox example)):
+    if self._input_widget.onCloseKeyboard then
+        self._input_widget:onCloseKeyboard()
+    end
 end
 
 function InputDialog:refreshButtons()
