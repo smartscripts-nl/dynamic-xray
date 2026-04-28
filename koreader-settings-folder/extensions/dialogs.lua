@@ -663,6 +663,7 @@ function Dialogs:niceAlert(title, info, options)
         mono_face = options.mono_face,
         top_buttons_left = options.top_buttons_left,
         info_buttons = buttons,
+        move_to_top = options.move_to_top,
         title = title,
         called_externally = true,
         width = width,

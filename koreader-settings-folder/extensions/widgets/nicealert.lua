@@ -32,8 +32,6 @@ local math = math
 local table = table
 
 --- @class NiceAlert
---- @field show_parent ReaderUI
---- @field ui ReaderUI
 local NiceAlert = InputContainer:extend {
     dismissable = true, --* set to false if any button callback is required
     info_buttons = nil,
@@ -45,6 +43,7 @@ local NiceAlert = InputContainer:extend {
     --* make sure the dialog is always at the top, even above an active keyboard:
     modal = true,
     mono_face = false,
+    move_to_top = false,
     padding = Size.padding.large,
     show_parent = nil,
     tap_close_callback = nil,
@@ -161,18 +160,23 @@ function NiceAlert:generatePopupCallbackDialogWidget(info, width)
             content,
         },
     }
-    local widget = CenterContainer:new{
-        dimen = Screen:getSize(),
-        MovableContainer:new{
-            FrameContainer:new{
-                content_group,
-                background = KOR.colors.background,
-                bordersize = Size.border.window,
-                radius = Size.radius.window,
-                padding = 0
-            }
+    local movable_container = MovableContainer:new{
+        FrameContainer:new{
+            content_group,
+            background = KOR.colors.background,
+            bordersize = Size.border.window,
+            radius = Size.radius.window,
+            padding = 0
         }
     }
+    local widget = CenterContainer:new{
+        dimen = Screen:getSize(),
+        movable_container,
+    }
+    if self.move_to_top then
+        --* deriving the y-position from the height of the title bar for some reason doesnot work on my Boox device, so here hard coded value:
+        movable_container:moveToYPos(Screen:scaleBySize(45))
+    end
     local screen_height = Screen:getHeight()
     local widget_height = content_group:getSize().h
     if self.info_window_was_resized or widget_height <= screen_height then

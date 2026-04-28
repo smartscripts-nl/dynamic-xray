@@ -518,6 +518,10 @@ end
 
 --- @private
 function MultiInputDialog:getDescription(field, field_config, width)
+    --* limit width of popup info dialog:
+    if width >= self.screen_width - 20 then
+        width = math_floor(self.screen_width * 0.6)
+    end
     local text = field_config.info_popup_text and
         Button:new{
         text_icon = {
@@ -543,6 +547,8 @@ function MultiInputDialog:getDescription(field, field_config, width)
                 --* info_popup_title and info_popup_text e.g. defined in ((XrayFormsData#getFormFields)):
             KOR.dialogs:niceAlert(field_config.info_popup_title, field_config.info_popup_text, {
                 width = width,
+                --* otherwise dialog might remain partly visible, overlapping the keyboard, after closing the dialog:
+                move_to_top = true,
             })
         end,
     }
