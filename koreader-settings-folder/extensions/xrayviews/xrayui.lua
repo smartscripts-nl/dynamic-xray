@@ -682,7 +682,17 @@ function XrayUI:matchNameInPageOrParagraph(text, lower_text, hits, partial_hits,
     for nr = 1, count do
         part = name_parts[nr]
         --* lower case needles must be at least 4 characters long, but for names with upper case characters in them no such condition is required:
-        if DX.m:isValidNeedle(part) and KOR.strings:hasWholeWordMatch(text, lower_text, mparts[nr])
+        if DX.m:isValidNeedle(part) and
+            (
+                --* for first names don't allow a last name after it:
+                (nr == 1 and KOR.strings:hasWholeWordMatch(text, lower_text, mparts[nr], "first"))
+                or
+                (nr > 1 and nr < count and KOR.strings:hasWholeWordMatch(text, lower_text, mparts[nr]))
+                or
+                --* for last names don't allow first names etc. before them:
+                -- #((skip false positives for partial matching))
+                (nr == count and KOR.strings:hasWholeWordMatch(text, lower_text, mparts[nr], "last"))
+            )
             --* prevent that e.g. "Mustapha Kemal" in ebook text would match for Xray item "Mustapha Aziz":
             and not text:match(first_name .. " [A-Z][a-z]+")
         then

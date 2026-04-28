@@ -518,6 +518,8 @@ function XrayDataSaver.storeItemsTags(item_ids_and_tags)
     end
     --* do this to make sure we remove possibly now empty tag-groups after tag deletions:
     parent:updateAllTags()
+    --* to determine unique last names:
+    parent:updateLastNameCounts()
 
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 end

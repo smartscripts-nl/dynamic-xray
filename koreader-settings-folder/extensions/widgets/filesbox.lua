@@ -440,7 +440,6 @@ function FilesBox:generateWidget()
             --ignore_events = { "swipe" },
             main_content,
         }
-        KOR.dialogs:niceAlert("Hoera", "touch")
         table_insert(elements, self.cropping_widget)
         table_insert(elements, self.padding_vertical)
 

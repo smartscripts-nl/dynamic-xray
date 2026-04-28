@@ -4,6 +4,7 @@ local require = require
 local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 
+local has_no_text = has_no_text
 local has_text = has_text
 local math_max = math.max
 local math_min = math.min
@@ -27,13 +28,21 @@ local PageTexts = WidgetContainer:extend{
 }
 
 function PageTexts:countItemOccurrences(text, needles)
-    local rcount
-    local total_count = 0
-    for i = 1, #needles do
-        text, rcount = text:gsub("%f[%w_]" .. needles[i] .. "%f[^%w_]", "<strong>")
-        total_count = total_count + rcount
+
+    if has_no_text(text) then
+        return 0
     end
-    return total_count
+
+    local needle
+    --* these needles were determined in ((XrayViewsData#getXrayItemNameVariants)), where non unique last names were skipped, using the list of XrayModel.last_name_counts, which was determined in ((XrayModel#updateLastNameCounts)):
+    count = #needles
+    for i = 1, count do
+        needle = "%f[%w_](" .. needles[i] .. ")%f[^%w_]"
+        text = text:gsub(needle, "<strong>%1</strong>")
+    end
+    text = self:reduceHitMarkers(text)
+
+    return KOR.strings:substrCount(text, "<strong>")
 end
 
 function PageTexts:getAllHtmlContainersInPage(page_xp, start_page_no, include_punctuation, toc_title_condition)
@@ -331,6 +340,7 @@ function PageTexts:compressTextAroundMarkers(html, context)
     return table_concat(result, self.fragments_separator)
 end
 
+--* compare marking items in chapter text in ((PageTexts#getChapterText)), if needles given:
 function PageTexts:getChapterHits(chapter_index, needles, start_page, xp, end_xp)
     local chapter_text = KOR.document:getTextFromXPointers(xp, end_xp)
     local chapter_props = KOR.toc:getChapterPropsByIndex(chapter_index)
@@ -347,6 +357,7 @@ function PageTexts:getChapterHits(chapter_index, needles, start_page, xp, end_xp
     return self:countItemOccurrences(chapter_text, needles)
 end
 
+--* if needles given, mark hits in chapter text; compare ((PageTexts#getChapterHits)) > ((PageTexts#countItemOccurrences))
 function PageTexts:getChapterText(as_html, needles, current_page)
     current_page = current_page or KOR.ui:getCurrentPage()
     local xp = KOR.document:getPageXPointer(current_page)
@@ -354,15 +365,20 @@ function PageTexts:getChapterText(as_html, needles, current_page)
 
     local chapter_start_page = KOR.toc:getChapterStartPage(xp)
     local start_xp = KOR.document:getPageXPointer(chapter_start_page)
-    local next_chapter_start_page = KOR.toc:getNextChapter(current_page)
-    if not next_chapter_start_page then
-        return "", current_toc_title
-    end
+    local next_chapter_start_page = KOR.toc:getNextChapter(current_page) or KOR.document:getPageCount()
     local end_xp = KOR.document:getPageXPointer(next_chapter_start_page)
     local text = KOR.document:getTextFromXPointers(start_xp, end_xp)
 
     local non_current_chapter_start_lines = self:getNonCurrentChapterLinesCount(current_toc_title, chapter_start_page, start_xp)
 
+    local lines = KOR.strings:split(text, "\n")
+    for r = 1, non_current_chapter_start_lines do
+        table_remove(lines, 1)
+        self.garbage = r
+    end
+    text = table_concat(lines, "\n")
+
+    --* these needles were determined in ((XrayViewsData#getXrayItemNameVariants)), where non unique last names were skipped, using the list of XrayModel.last_name_counts, which was determined in ((XrayModel#updateLastNameCounts)):
     if needles then
         local needle
         count = #needles
@@ -370,14 +386,10 @@ function PageTexts:getChapterText(as_html, needles, current_page)
             needle = "%f[%w_](" .. needles[i] .. ")%f[^%w_]"
             text = text:gsub(needle, "<strong>%1</strong>")
         end
+        text = self:reduceHitMarkers(text)
         text = self:compressTextAroundMarkers(text, 300)
     end
-
-    local lines = KOR.strings:split(text, "\n")
-    for r = 1, non_current_chapter_start_lines do
-        table_remove(lines, 1)
-        self.garbage = r
-    end
+    lines = KOR.strings:split(text, "\n")
 
     if as_html then
         return "<p>" .. table_concat(lines, "</p>\n<p>") .. "</p>\n", current_toc_title
@@ -397,6 +409,17 @@ function PageTexts:getChapterTextBare(start_page, xp, end_xp)
         self.garbage = r
     end
     return table_concat(lines, "\n")
+end
+
+--- @private
+function PageTexts:reduceHitMarkers(text)
+    return text
+        --* remove duplicated markers:
+        :gsub("<strong><strong>([^<]+)</strong>", "<strong>%1")
+        :gsub("<strong>([^<]+)</strong></strong>", "%1</strong>")
+        --* eliminate names from other persons which have part of their name in common with an Xray item name:
+        :gsub("([A-Z][a-z]+) <strong>([^<]+)</strong>", "%1 %2")
+        :gsub("<strong>([^<]+)</strong> ([A-Z][a-z]+)", "%1 %2")
 end
 
 return PageTexts

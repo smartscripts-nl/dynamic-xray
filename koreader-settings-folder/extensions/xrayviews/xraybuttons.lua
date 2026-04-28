@@ -950,7 +950,7 @@ function XrayButtons:getItemViewerTabs(main_info, hits_info, linked_items_info, 
     local hits_tab_enabled, hits_tab_color = KOR.buttonprops:getButtonState(has_chapter_info)
     local tabs = {
         {
-            tab = _("main information"),
+            tab = _("information"),
             --* strangely enough usage of .redhat - defined in ((htmlbox.lua)) - forces a serif font for blockquotes, but not for paragraphs:
             html = "<div style='margin: 1em 2em' class='redhat'>" .. main_info .. "</div>",
         },

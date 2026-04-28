@@ -526,7 +526,7 @@ function XrayViewsData:getChapterHitsData(item)
     for page = start_page, last_page do
         chapter_text = chapter_text .. KOR.document:getPageText(page) .. "\n"
     end
-    chapter_hits = KOR.pagetexts:countItemOccurrences(chapter_text, needles, #chapter_positions)
+    chapter_hits = KOR.pagetexts:countItemOccurrences(chapter_text, needles)
     total_count = total_count + chapter_hits
     table_insert(chapter_hits_data, chapter_hits)
     if chapter_hits > max_hits then
@@ -1703,6 +1703,11 @@ function XrayViewsData:getXrayItemNameVariants(item)
         if has_text(item[prop]) then
             values = parent:splitByCommaOrSpace(item[prop])
             count = #values
+            --* if a last name is not unique (shared by multiple family members), don't use it as a criterium; e.g. to prevent false positives for chapter matches:
+            if prop == "name" and parent.last_name_counts[values[count]] and parent.last_name_counts[values[count]] > 1 then
+                table.remove(values)
+                count = #values
+            end
             for i = 1, count do
                 --* we are not interested in lower case parts of person names:
                 if not is_person or values[i]:match("[A-Z]") then

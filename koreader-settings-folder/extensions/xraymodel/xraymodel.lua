@@ -49,6 +49,7 @@ local XrayModel = WidgetContainer:new{
     persons_by_id = {},
     terms_by_id = {},
     items_prepared_for_basename = nil,
+    last_name_counts = {},
     min_match_word_length = 4,
     previous_series = nil,
     --* this table will be populated by ((XrayDataLoader#_addSeriesItem)):
@@ -162,6 +163,31 @@ function XrayModel:placeImportantItemsAtTop(items, sorting_direction)
     end)
 end
 
+--! this method must be called upon initialisation of data or AFTER a parent has initiated storage of the data into the database and in XrayViewsData:
+function XrayModel:updateLastNameCounts()
+
+    self.last_name_counts = {}
+    --* take UNFILTERED items as subject:
+    local items = DX.vd.item_table[1]
+    count = #items
+    for i = 1, count do
+        if self:isPerson(items[i]) then
+            --* update the table of last_name_counts:
+            self:addLastName(items[i].name)
+        end
+    end
+end
+
+--- @private
+function XrayModel:addLastName(full_name)
+    local last_name = full_name:match(",") and full_name:match("^[^,]+") or full_name:match("[A-Z][^ ]+$")
+    if not self.last_name_counts[last_name] then
+        self.last_name_counts[last_name] = 1
+    else
+        self.last_name_counts[last_name] = self.last_name_counts[last_name] + 1
+    end
+end
+
 function XrayModel:addTags(tags, id)
     return self:addAssociativeTags(tags, id)
 end
@@ -207,7 +233,6 @@ function XrayModel:addAssociativeTags(tags, id)
     end
     local tag
     local tag_items = DX.m:splitByCommaOrSpace(tags)
-    local a_tag_was_added = false
     for i = 1, #tag_items do
         tag = tag_items[i]
         --* this collection will e.g. be used for filtering the Items List:
@@ -215,12 +240,13 @@ function XrayModel:addAssociativeTags(tags, id)
             self.tags_associative[tag] = {
                 id,
             }
-            a_tag_was_added = true
+            --* i.e.: a tag was added:
+            return true
         else
             table_insert(self.tags_associative[tag], id)
         end
     end
-    return a_tag_was_added
+    return false
 end
 
 --- @private

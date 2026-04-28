@@ -428,14 +428,29 @@ function Strings:trim(s)
     return (s:gsub("^%s*(.-)%s*$", "%1"))
 end
 
-function Strings:hasWholeWordMatch(haystack, haystack_lower, needle)
+function Strings:hasWholeWordMatch(haystack, haystack_lower, needle, check_no_adjacent_name_parts)
     if not needle then
         return false
     end
 
     --* case sensitive search, mostly for Xray persons:
     if needle:match("[A-Z]") then
-        if haystack:match(self.whole_word_start .. needle .. self.whole_word_end) then
+        local has_match = haystack:match(self.whole_word_start .. needle .. self.whole_word_end)
+
+        if has_match and check_no_adjacent_name_parts == "first" then
+            --* if first name was found, but it has a last name after it, then don't count this as a match (for partial matching); see ((skip false positives for partial matching)):
+            local has_name_after = haystack:match(self.whole_word_start .. needle .. " [A-Z][a-z]+")
+            if has_name_after then
+                return false
+            end
+        elseif has_match and check_no_adjacent_name_parts == "last" then
+            --* if last name was found, but it has a first name before it, then don't count this as a match (for partial matching); see ((skip false positives for partial matching)):
+            local has_name_before = haystack:match("[A-Z][a-z]+ " .. needle .. self.whole_word_end)
+            if has_name_before then
+                return false
+            end
+        end
+        if has_match then
             return true
         end
 

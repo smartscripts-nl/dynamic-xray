@@ -266,6 +266,7 @@ function XrayDataLoader:loadAllItems(mode, force_refresh)
     end
 
     self:_loadAllData(mode)
+    parent:updateLastNameCounts()
 end
 
 function XrayDataLoader:loadGlossary(full_path)
