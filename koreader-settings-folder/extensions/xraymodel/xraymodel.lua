@@ -181,6 +181,9 @@ end
 --- @private
 function XrayModel:addLastName(full_name)
     local last_name = full_name:match(",") and full_name:match("^[^,]+") or full_name:match("[A-Z][^ ]+$")
+    if not last_name then
+        return
+    end
     if not self.last_name_counts[last_name] then
         self.last_name_counts[last_name] = 1
     else

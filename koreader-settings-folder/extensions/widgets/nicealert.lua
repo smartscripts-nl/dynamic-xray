@@ -171,6 +171,7 @@ function NiceAlert:generatePopupCallbackDialogWidget(info, width)
     }
     local widget = CenterContainer:new{
         dimen = Screen:getSize(),
+        covers_fullscreen = true,
         movable_container,
     }
     if self.move_to_top then
