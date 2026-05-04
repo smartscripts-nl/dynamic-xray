@@ -737,9 +737,10 @@ function XrayDataSaver.createAndModifyTables()
     if overrule_tables_creation then
         tables_were_created = false
     end
-    local conn = KOR.databases:getDBconn("XrayDataSaver:createAndModifyTables")
+    local conn
 
     if not tables_were_created then
+        conn = KOR.databases:getDBconn("XrayDataSaver:createAndModifyTables 1")
         --* make it WAL, if possible
         local pragma = Device:canUseWAL() and "WAL" or "TRUNCATE"
         conn:exec(string.format("PRAGMA journal_mode=%s;", pragma))
@@ -758,6 +759,9 @@ function XrayDataSaver.createAndModifyTables()
         version_index = DX.s[self.scheme_version_name] or 0
     end
     if version_index ~= update_tasks_count then
+        if not conn then
+            conn = KOR.databases:getDBconn("XrayDataSaver:createAndModifyTables 2")
+        end
         version_index = self.updateVersionIndex(conn, version_index)
     end
     if not version_index_was_saved then
@@ -769,10 +773,15 @@ function XrayDataSaver.createAndModifyTables()
         update_tasks_count == 0
         or version_index >= update_tasks_count
     then
-        conn = KOR.databases:closeConnections(conn)
+        if conn then
+            conn = KOR.databases:closeConnections(conn)
+        end
         return
     end
 
+    if not conn then
+        conn = KOR.databases:getDBconn("XrayDataSaver:createAndModifyTables 3")
+    end
     self.modifyTables(conn, update_tasks_count, version_index)
     --* update database_scheme_version in XraySettings:
     DX.s:saveSetting(self.scheme_version_name, update_tasks_count)
