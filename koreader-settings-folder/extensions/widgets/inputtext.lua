@@ -11,6 +11,7 @@ local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local KOR = require("extensions/kor")
+local Notification = require("ui/widget/notification")
 local ScrollTextWidget = require("extensions/widgets/scrolltextwidget")
 local Size = require("extensions/modules/size")
 local TextBoxWidget = require("extensions/widgets/textboxwidget")
@@ -191,7 +192,7 @@ local function initTouchEvents()
                 return true
             end
 
-            function InputText:onHoldTextBox(arg, ges)
+            function InputText:onHoldTextBox()
                 if self.parent.onSwitchFocus then
                     self.parent:onSwitchFocus(self)
                 end
