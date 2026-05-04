@@ -151,7 +151,7 @@ function HtmlWidget:init()
         KOR.buttoninfopopup:forHtmlCopy({
             callback = function()
                 local text = self.html:gsub("</?[^>]+>", "")
-                KOR.clipboard:copy(text)
+                Device.input.setClipboardText(text)
                 KOR.messages:notify("tekst naar klembord gekopieerd...")
             end,
         }),

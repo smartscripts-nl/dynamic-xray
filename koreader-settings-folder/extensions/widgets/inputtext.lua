@@ -1,6 +1,7 @@
 
 local require = require
 
+local Blitbuffer = require("ffi/blitbuffer")
 local CheckButton = require("ui/widget/checkbutton")
 local Device = require("device")
 local FocusManager = require("extensions/widgets/focusmanager")
@@ -17,6 +18,7 @@ local UIManager = require("ui/uimanager")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local util = require("util")
 local _ = require("gettext")
+local Screen = Device.screen
 
 local DX = DX
 local pairs = pairs
@@ -189,20 +191,119 @@ local function initTouchEvents()
                 return true
             end
 
-            function InputText:onHoldTextBox()
+            function InputText:onHoldTextBox(arg, ges)
                 if self.parent.onSwitchFocus then
                     self.parent:onSwitchFocus(self)
                 end
-
-                if self.disable_paste then
-                    self._hold_handled = true
-                    return
-                end
-
-                --* clipboard dialog
+                -- clipboard dialog
                 self._hold_handled = nil
                 if Device:hasClipboard() then
-                    KOR.clipboard:clipboardDialog(self)
+                    if self.do_select then
+                        -- select mode on
+                        if self.selection_start_pos then
+                            -- select end
+                            local selection_end_pos = self.charpos - 1
+                            if self.selection_start_pos > selection_end_pos then
+                                self.selection_start_pos, selection_end_pos = selection_end_pos + 1, self.selection_start_pos - 1
+                            end
+                            local txt = table.concat(self.charlist, "", self.selection_start_pos, selection_end_pos)
+                            Device.input.setClipboardText(txt)
+                            UIManager:show(Notification:new {
+                                text = _("Selection copied to clipboard."),
+                            })
+                            self.selection_start_pos = nil
+                            self.do_select = false
+                            self:initTextBox()
+                        else
+                            -- select start
+                            self.selection_start_pos = self.charpos
+                            UIManager:show(Notification:new {
+                                text = _("Set cursor to end of selection, then long-press in text box."),
+                            })
+                        end
+                        self._hold_handled = true
+                        return true
+                    end
+                    local clipboard_value = Device.input.getClipboardText()
+                    local is_clipboard_empty = clipboard_value == ""
+                    local clipboard_dialog
+                    clipboard_dialog = require("ui/widget/textviewer"):new {
+                        title = _("Clipboard"),
+                        show_menu = false,
+                        text = is_clipboard_empty and _("(empty)") or clipboard_value,
+                        fgcolor = is_clipboard_empty and Blitbuffer.COLOR_DARK_GRAY or Blitbuffer.COLOR_BLACK,
+                        width = math.floor(math.min(Screen:getWidth(), Screen:getHeight()) * 0.8),
+                        height = math.floor(math.max(Screen:getWidth(), Screen:getHeight()) * 0.4),
+                        justified = false,
+                        modal = true,
+                        stop_events_propagation = true,
+                        buttons_table = {
+                            {
+                                {
+                                    text = _("Copy all"),
+                                    callback = function()
+                                        UIManager:close(clipboard_dialog)
+                                        Device.input.setClipboardText(table.concat(self.charlist))
+                                        UIManager:show(Notification:new {
+                                            text = _("All text copied to clipboard."),
+                                        })
+                                    end,
+                                },
+                                {
+                                    text = _("Copy line"),
+                                    callback = function()
+                                        UIManager:close(clipboard_dialog)
+                                        local txt = table.concat(self.charlist, "", self:getStringPos())
+                                        Device.input.setClipboardText(txt)
+                                        UIManager:show(Notification:new {
+                                            text = _("Line copied to clipboard."),
+                                        })
+                                    end,
+                                },
+                                {
+                                    text = _("Copy word"),
+                                    callback = function()
+                                        UIManager:close(clipboard_dialog)
+                                        local txt = table.concat(self.charlist, "", self:getStringPos(true))
+                                        Device.input.setClipboardText(txt)
+                                        UIManager:show(Notification:new {
+                                            text = _("Word copied to clipboard."),
+                                        })
+                                    end,
+                                },
+                            },
+                            {
+                                {
+                                    text = _("Delete all"),
+                                    enabled = #self.charlist > 0,
+                                    callback = function()
+                                        UIManager:close(clipboard_dialog)
+                                        self:delAll()
+                                    end,
+                                },
+                                {
+                                    text = _("Select"),
+                                    callback = function()
+                                        UIManager:close(clipboard_dialog)
+                                        UIManager:show(Notification:new {
+                                            text = _("Set cursor to start of selection, then long-press in text box."),
+                                        })
+                                        self.do_select = true
+                                        self:initTextBox()
+                                    end,
+                                },
+                                {
+                                    text = _("Paste"),
+                                    enabled = not is_clipboard_empty,
+                                    callback = function()
+                                        UIManager:close(clipboard_dialog)
+                                        self:addChars(clipboard_value)
+                                    end,
+                                },
+                            },
+                        },
+                    }
+                    UIManager:show(clipboard_dialog)
                 end
                 self._hold_handled = true
                 return true

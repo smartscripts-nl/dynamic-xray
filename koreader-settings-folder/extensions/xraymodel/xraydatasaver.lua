@@ -113,7 +113,7 @@ local XrayDataSaver = WidgetContainer:new{
             "INSERT OR IGNORE INTO xray_items (ebook, name, short_names, description, xray_type, non_breakable, aliases, tags, linkwords, book_hits, chapter_hits, chapter_hits_data) VALUES ('%1', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
 
         insert_item =
-            "INSERT INTO xray_items (ebook, name, short_names, description, xray_type, non_breakable, aliases, tags, linkwords) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
+            "INSERT OR IGNORE INTO xray_items (ebook, name, short_names, description, xray_type, non_breakable, aliases, tags, linkwords) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
 
         quote_delete =
             "DELETE FROM xray_quotes WHERE id = ?;",
