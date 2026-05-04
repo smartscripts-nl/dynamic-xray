@@ -1,4 +1,3 @@
--- /home/alex/.config/koreader/settings/settings_manager.lua
 return {
     ["xray_settings"] = {
         ["batch_count_for_import"] = {

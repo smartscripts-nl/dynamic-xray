@@ -198,6 +198,7 @@ local XrayDataSaver = WidgetContainer:new{
     --* these table modifications for table bookinfo are run and depending on the setting "database_scheme_version" in G_reader_settings or ((XraySettings)), for the public version of DX:
     --* for creation of main DX table, see ((XrayDataSaver#createAndModifyTables)) > ((create main DX table)):
     scheme_alter_queries = {
+        --* 1:
         [[
             CREATE TABLE IF NOT EXISTS finished_books
             (
@@ -206,24 +207,31 @@ local XrayDataSaver = WidgetContainer:new{
                     unique
             );]],
 
+        --* 2:
         [[
             ALTER TABLE bookinfo ADD COLUMN rating_goodreads REAL;]],
 
+        --* 3:
         [[
             ALTER TABLE bookinfo ADD COLUMN publication_year INTEGER;]],
 
+        --* 4:
         [[
             ALTER TABLE bookinfo ADD COLUMN bookmarks INTEGER;]],
 
+        --* 5:
         [[
             ALTER TABLE bookinfo RENAME COLUMN bookmarks TO annotations;]],
 
+        --* 6:
         [[
             ALTER TABLE bookinfo ADD COLUMN stars INTEGER;]],
 
+        --* 7:
         [[
             ALTER TABLE xray_items ADD COLUMN chapter_hits_data;]],
 
+        --* 8:
         [[
             CREATE TABLE IF NOT EXISTS xray_books
             (
@@ -233,9 +241,11 @@ local XrayDataSaver = WidgetContainer:new{
                     unique
             );]],
 
+        --* 9:
         [[
             ALTER TABLE xray_items ADD COLUMN tags;]],
 
+        --* 10:
         [[
             CREATE TABLE IF NOT EXISTS xray_quotes
             (
@@ -252,45 +262,56 @@ local XrayDataSaver = WidgetContainer:new{
                 quote NOT NULL
             );]],
 
+        --* 11:
         [[
             ALTER TABLE bookinfo ADD COLUMN glossary;]],
 
+        --* 12:
         [[
             UPDATE xray_items SET chapter_hits = NULL, chapter_hits_data = NULL WHERE 1;]],
 
+        --* 13:
         --* a second reset was needed after some updates to the hits counting system:
         [[
             UPDATE xray_items SET chapter_hits = NULL, chapter_hits_data = NULL WHERE 1;]],
 
+        --* 14:
         [[
             ALTER TABLE xray_items ADD COLUMN non_breakable INTEGER NOT NULL DEFAULT 0;]],
 
+        --* 15:
         --* a third reset was needed after some updates to the hits counting system:
         [[
             UPDATE xray_items SET chapter_hits_data = NULL, chapter_hits = NULL WHERE 1;]],
+
+        --! when adding scheme modifations above, also add a scheme_verification_query below with the correct index!!
     },
     scheme_verification_queries = {
-        "PRAGMA table_info('finished_books');",
+        { "PRAGMA table_info('finished_books');", 1 },
 
-        "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'rating_goodreads';",
+        { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'rating_goodreads';", 2 },
 
-        "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'publication_year';",
+        { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'publication_year';", 3 },
 
-        "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'bookmarks';",
+        -- #((do field renamed check before original not renamed field creation))
+        --! run this check before checking for field "bookmarks" (next check); if "annotations" found, skip check for "bookmarks":
+        { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'annotations';", 5 },
 
-        "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'annotations';",
+        { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'bookmarks';", 4 },
 
-        "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'stars';",
+        { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'stars';", 6 },
 
-        "SELECT 1 FROM pragma_table_info('xray_items') WHERE name = 'chapter_hits_data';",
+        { "SELECT 1 FROM pragma_table_info('xray_items') WHERE name = 'chapter_hits_data';", 7 },
 
-        "PRAGMA table_info('xray_books');",
+        { "PRAGMA table_info('xray_books');", 8 },
 
-        "SELECT 1 FROM pragma_table_info('xray_items') WHERE name = 'tags';",
+        { "SELECT 1 FROM pragma_table_info('xray_items') WHERE name = 'tags';", 9 },
 
-        "PRAGMA table_info('xray_quotes');",
+        { "PRAGMA table_info('xray_quotes');", 10 },
 
-        "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'glossary';",
+        { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'glossary';", 11 },
+
+        { "SELECT 1 FROM pragma_table_info('xray_items') WHERE name = 'non_breakable';", 14 },
     },
     scheme_version_name = "database_scheme_version",
 }
@@ -736,15 +757,18 @@ function XrayDataSaver.createAndModifyTables()
         version_index_was_saved = false
         version_index = DX.s[self.scheme_version_name] or 0
     end
-    version_index = self.updateVersionIndex(conn, version_index)
+    if version_index ~= update_tasks_count then
+        version_index = self.updateVersionIndex(conn, version_index)
+    end
+    if not version_index_was_saved then
+        G_reader_settings:saveSetting("DX_" .. self.scheme_version_name, version_index)
+        DX.s:saveSetting(self.scheme_version_name, version_index)
+    end
 
     if
         update_tasks_count == 0
         or version_index >= update_tasks_count
     then
-        if not version_index_was_saved then
-            G_reader_settings:saveSetting("DX_" .. self.scheme_version_name, update_tasks_count)
-        end
         conn = KOR.databases:closeConnections(conn)
         return
     end
@@ -818,32 +842,30 @@ end
 --* check whether previous DX installations already created some tables or fields and update version_index accordingly:
 function XrayDataSaver.updateVersionIndex(conn, version_index)
 
-    --* problems for previous installation which already installed some tables or fields only occur in this case (because then DX tries to install already existing tables/fields):
-    if version_index > 0 then
-        return version_index
-    end
-
     local self = DX.ds
-
     local result
     count = #self.scheme_verification_queries
+    local query, index
+    local previous_index = 0
     for i = 1, count do
-        result = conn:exec(self.scheme_verification_queries[i])
-        if result then
-            version_index = i
-        --* account for rename of bookinfo.bookmarks to bookinfo.annotations:
-        elseif i == 3 and conn:exec(self.scheme_verification_queries[4]) then
-            version_index = 4
+        query = self.scheme_verification_queries[i][1]
+        index = self.scheme_verification_queries[i][2]
+        result = conn:exec(query)
+
+        --* second condition: see ((do field renamed check before original not renamed field creation)): here the renaming yields an higher index than the next check for the creation of the original field:
+        if result and index > previous_index then
+            version_index = index
+            previous_index = index
         --* table or field not present in db:
-        else
+        elseif not result then
             --* update database_scheme_version in XraySettings:
             DX.s:saveSetting(self.scheme_version_name, version_index)
             return version_index
         end
     end
 
-    --* correction for queries which only did reset *data* in xray_items table:
-    version_index = version_index + 2
+    --logger.warn("VERSIE OK", version_index)
+
     --* update database_scheme_version in XraySettings:
     DX.s:saveSetting(self.scheme_version_name, version_index)
     return version_index
