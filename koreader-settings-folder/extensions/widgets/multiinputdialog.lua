@@ -251,7 +251,7 @@ function MultiInputDialog:fieldAddToInputs(field_config, field_side)
             text = field_config.text,
             type = "checkbox",
             checked = self.field_config.checked,
-            parent = self.field_config.parent,
+            parent = self,
             callback = self.field_config.callback,
         }
         or
