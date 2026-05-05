@@ -141,11 +141,11 @@ local XrayDataSaver = WidgetContainer:new{
             WHERE id = ?;]],
 
         update_item =
-            "UPDATE xray_items SET name = ?, short_names = ?, description = ?, xray_type = ?, non_breakable = ?, aliases = ?, tags = ?, linkwords = ?, book_hits = ?, chapter_hits = ? WHERE id = ?;",
+            "UPDATE OR IGNORE xray_items SET name = ?, short_names = ?, description = ?, xray_type = ?, non_breakable = ?, aliases = ?, tags = ?, linkwords = ?, book_hits = ?, chapter_hits = ? WHERE id = ?;",
 
         --* this will similtanuously update the item in all ebooks of the series:
         update_item_for_entire_series = [[
-            UPDATE xray_items
+            UPDATE OR IGNORE xray_items
             SET
             name = ?,
             short_names = ?,
@@ -564,7 +564,8 @@ function XrayDataSaver.storeNewItem(new_item)
     stmt:reset():bind(parent.current_ebook_basename, x.name, x.short_names, x.description, x.xray_type, x.non_breakable, x.aliases, x.tags, x.linkwords):step()
 
     --* retrieve the id of the newly added item, needed for ((XrayViewsData#updateAndSortAllItemTables)):
-    new_item.id = KOR.databases:getNewItemId(conn)
+    --* this is better than using KOR.databases:getNewItemId(), to prevent errors after trying to add an already existing item once again:
+    new_item.id = DX.dl.getItemId(conn, x.name)
     --* to ensure only this item will be shown bold in the items list:
     DX.fd:setProp("last_modified_item_id", new_item.id)
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)

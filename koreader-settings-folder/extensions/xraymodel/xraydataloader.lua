@@ -187,8 +187,8 @@ local XrayDataLoader = WidgetContainer:new{
         get_book_glossary =
             "SELECT glossary FROM bookinfo WHERE directory || filename = 'safe_path';",
 
-        get_series_name =
-            "SELECT series FROM bookinfo WHERE directory || filename = 'safe_path' LIMIT 1;",
+        get_item_id =
+            "SELECT rowid FROM xray_items WHERE name = 'safe_path';",
 
         get_items_for_import_from_series = [[
             WITH series_books AS (
@@ -219,6 +219,9 @@ local XrayDataLoader = WidgetContainer:new{
             SELECT x.id, x.quote FROM xray_quotes x
             LEFT OUTER JOIN all_books a ON a.filename = x.ebook
             WHERE x.item_name = '%1' AND a.series = '%2' ORDER BY x.id;]],
+
+        get_series_name =
+            "SELECT series FROM bookinfo WHERE directory || filename = 'safe_path' LIMIT 1;",
 
         get_series_hits = [[
             SELECT SUM(x.book_hits) AS series_hits
@@ -428,6 +431,12 @@ function XrayDataLoader:convertChapterHitsData(chapter_hits)
     end
     local hits = KOR.strings:split(chapter_hits, ",")
     return KOR.tables:makeItemsNumerical(hits)
+end
+
+function XrayDataLoader.getItemId(conn, name)
+    local self = DX.dl
+    local sql = KOR.databases:injectSafePath(self.queries.get_item_id, name)
+    return conn:rowexec(sql)
 end
 
 function XrayDataLoader:getItemsCountForBook(file_basename)
