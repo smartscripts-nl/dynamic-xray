@@ -16,13 +16,13 @@ Example:
 
 local require = require
 
-local Blitbuffer = require("ffi/blitbuffer")
 local CheckMark = require("ui/widget/checkmark")
 local Font = require("extensions/modules/font")
 local FrameContainer = require("extensions/widgets/container/framecontainer")
 local GestureRange = require("ui/gesturerange")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local InputContainer = require("ui/widget/container/inputcontainer")
+local KOR = require("extensions/kor")
 local RadioMark = require("ui/widget/radiomark")
 local TextBoxWidget = require("extensions/widgets/textboxwidget")
 local UIManager = require("ui/uimanager")
@@ -42,7 +42,7 @@ local CheckButton = InputContainer:extend{
     enabled = true,
     radio = false, -- radio mark when true
     face = Font:getDefaultDialogFontFace(),
-    background = Blitbuffer.COLOR_WHITE,
+    background = KOR.colors.background,
     text = nil,
     parent = nil, -- parent widget, must be set by the caller
     width = nil, -- default value: parent widget's input widget width
@@ -78,7 +78,7 @@ function CheckButton:initCheckButton(checked)
         text = self.text,
         face = self.face,
         width = (self.width or self.parent._input_widget.width) - self._checkmark.dimen.w,
-        fgcolor = self.enabled and Blitbuffer.COLOR_BLACK or Blitbuffer.COLOR_DARK_GRAY,
+        fgcolor = self.enabled and KOR.colors.label_enabled or KOR.colors.label_disabled,
     }
     local textbox_shift = math_max(0, self._checkmark.baseline - self._textwidget:getBaseline())
     self._verticalgroup = VerticalGroup:new{

@@ -1435,7 +1435,7 @@ function XrayButtons:forItemEditorTypeSwitch(item_copy, button_props)
 
         --* make xray_type field focussed:
         --* this prop was set in ((configure custom edit button)):
-        local focusser = KOR.registry:getOnce("xray_type_focusser")
+        local focusser = KOR.registry:get("xray_type_focusser")
         --- @type MultiInputDialog parent
         local parent = focusser.parent
         parent:onSwitchFocus(focusser.field)

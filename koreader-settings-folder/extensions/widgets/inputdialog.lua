@@ -649,6 +649,7 @@ function InputDialog:onCloseWidget()
     self:onClose()
     --* re-instate global hotkeys which were disabled in ((InputDialog#onShow)):
     DX.c:addGlobalHotkeys()
+    KOR.registry:unset("xray_type_focusser")
     UIManager:setDirty(nil, self.fullscreen and "full" or function()
         return "ui", self.dialog_frame.dimen
     end)
