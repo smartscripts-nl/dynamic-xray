@@ -68,7 +68,10 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
 4. **⚠️ It's especially important that you copy koreader-settings-folder/patches/2-xray-patches.lua**:
    * **For Android**: to a subfolder "patches" in your KOReader settings folder!** Without this, DX won't be available in your installation.
    * **For Kobo/Kindle** (if a .adds folder is present): to a subfolder (create if not exists) "patches" of .adds/koreader
+   * **For Pocketbook** to a subfolder (create if not exists) "patches" of /koreader
 4. The "koreader-settings-folder" folder in this repository represents the settings folder of your koreader installation. In most cases, this target folder will be named "koreader". In its root you should find settings.reader.lua.
+   * **For Pocketbook** the program folder and the settings folder are one and the same: /koreader.
+
 5. In that target folder, create a folder patches if it doesn't exist yet and copy koreader-settings-folder/patches/2-xray-patches.lua to that target patches folder.
 6. Copy koreader-settings-folder/settings/settings_manager.lua to the settings subfolder of the koreader settings folder of your current installation (this folder should already be present and should contain many files, e.g. sqlite3-files for KOReader's databases).
 7. **⚠️ Check whether the database filename in your KOReader settings folder is "bookinfo_cache.sqlite3".** If not, go through the additional steps listed in [User has a database filename other than "bookinfo_cache.sqlite3"](#user-uses-a-database-file-other-than-bookinfo_cachesqlite3)
@@ -299,7 +302,6 @@ end
     * M = XrayModel > data handlers: XrayDataLoader, XrayDataSaver, XrayFormsData, XraySettings, XrayTappedWords and XrayViewsData (extensions)
     * V = XrayUI, XrayPageNavigator, XrayTranslations and XrayTranslationsManager, XrayDialogs and XrayButtons (extensions)
     * C = XrayController (plugin)
-* The XrayHelpers extension of DX version 1.0 does not exist anymore, its methods have been redistributed over the above extensions. 
 * In xray-info.lua you can find some explanations for programmers about the inner workings of DX. This file doesn't have a function in the plugin, is meant to be purely informational.
 * Since the KOR extensions system uses many heavily modified stock KOReader modules and widgets, these modified files are loaded instead of the stock versions from the subfolders "modules" and "widgets" under the "extensions" folder.
 * DeepWiki.com has an extensive analysis of the DX system. See [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/smartscripts-nl/dynamic-xray).
