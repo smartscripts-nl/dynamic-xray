@@ -74,6 +74,7 @@ local Button = InputContainer:extend{
     generate_inverted_icon = false,
     hidden = false,
     hold_callback = nil,
+    ignore_indicators_width = false,
     inhibit_input_after_click = false,
     icon = nil,
     icon_height = nil,
@@ -391,11 +392,16 @@ function Button:setWidgetContent()
     end
     if self.left_indicator then
         table_insert(widget, 1, self.left_indicator)
-        self.inner_width = self.inner_width + self.left_indicator_width
+        --* in ButtonTables we ignore the extra width for indicators:
+        if not self.ignore_indicators_width then
+            self.inner_width = self.inner_width + self.left_indicator_width
+        end
     end
     if self.right_indicator then
         table_insert(widget, self.right_indicator)
-        self.inner_width = self.inner_width + self.right_indicator_width
+        if not self.ignore_indicators_width then
+            self.inner_width = self.inner_width + self.right_indicator_width
+        end
     end
 
     local is_left_aligned = self.align == "left"
