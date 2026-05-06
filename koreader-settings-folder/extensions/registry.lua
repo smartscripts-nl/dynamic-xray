@@ -19,10 +19,16 @@ local Registry = WidgetContainer:new{
     half_screen_width = nil,
     info_callbacks_show_indicators = true,
     input_text_font_size = 20,
+    --* this acts as cache for Button.left_indicator etc.:
+    left_indicator = nil,
+    left_indicator_width = nil,
     line_height = 0.13,
     line_height_red_hat_text = 0.24,
     menu_subpages = {},
     return_to_list = false,
+    --* this acts as cache for Button.right_indicator etc.:
+    right_indicator = nil,
+    right_indicator_width = nil,
     scroll_messages = {
         "dynamische hoogte",
         "vaste hoogte met scroll",
