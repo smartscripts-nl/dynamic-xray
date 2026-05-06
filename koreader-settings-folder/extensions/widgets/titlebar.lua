@@ -32,6 +32,7 @@ local VerticalGroup = require("ui/widget/verticalgroup")
 local VerticalSpan = require("ui/widget/verticalspan")
 local Screen = Device.screen
 
+local DX = DX
 local G_reader_settings = G_reader_settings
 local math = math
 local math_floor = math.floor
@@ -972,7 +973,11 @@ function TitleBar:getHorizontalSpacerWidth(for_close_button)
         return Size.padding.buttonvertical
     end
 
-    return DX.s.is_android and Size.padding.fullscreen or Size.padding.large --* or Size.padding.titlebarbutton instead of large
+    if KOR.screenhelpers:isPortraitScreen() then
+        return Size.padding.titlebar
+    end
+
+    return Size.padding.large --* or Size.padding.titlebarbutton instead of large
 end
 
 --- @private

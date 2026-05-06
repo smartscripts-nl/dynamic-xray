@@ -45,6 +45,7 @@ local math = math
 local next = next
 local table = table
 local table_insert = table.insert
+local table_remove = table.remove
 local tonumber = tonumber
 local string = string
 local type = type
@@ -646,6 +647,7 @@ local Menu = FocusManager:extend{
     page_info = nil,
     page_return = nil,
 
+    use_minimal_footer_spacers = false,
     item_font = "smallinfofont",
     items_per_page_default = 14,
     items_per_page = nil,
@@ -821,10 +823,10 @@ function Menu:init(restore_dialog)
     --* group for items
     self.item_group = VerticalGroup:new{}
     --* group for page info
-    local chevron_left = "chevron.left"
-    local chevron_right = "chevron.right"
-    local chevron_first = "chevron.first"
-    local chevron_last = "chevron.last"
+        local chevron_left = "chevron-left"
+        local chevron_right = "chevron-right"
+        local chevron_first = "chevron-first"
+        local chevron_last = "chevron-last"
     if BD.mirroredUILayout() then
         chevron_left, chevron_right = chevron_right, chevron_left
         chevron_first, chevron_last = chevron_last, chevron_first
@@ -853,16 +855,6 @@ function Menu:init(restore_dialog)
         bordersize = 0,
         show_parent = self.show_parent,
     }
-    self.page_info_spacer = HorizontalSpan:new{
-        width = Screen:scaleBySize(16),
-    }
-    self.page_info_spacer_small = HorizontalSpan:new{
-        width = Screen:scaleBySize(8),
-    }
-    self.page_info_left_chev:hide()
-    self.page_info_right_chev:hide()
-    self.page_info_first_chev:hide()
-    self.page_info_last_chev:hide()
 
     local title_goto, type_goto, hint_func
     local buttons = {
@@ -960,18 +952,18 @@ function Menu:init(restore_dialog)
         call_hold_input_on_tap = true,
         bordersize = 0,
         text_font_face = "cfont",
-        text_font_size = 20,
+            text_font_size = 19,
         text_font_bold = false,
     }
     local footer_nav_elems = {
         self.page_info_first_chev,
-        self.page_info_spacer,
+        "chev_spacer",
         self.page_info_left_chev,
-        self.page_info_spacer,
+        "chev_spacer",
         self.page_info_text,
-        self.page_info_spacer,
+        "chev_spacer",
         self.page_info_right_chev,
-        self.page_info_spacer,
+        "chev_spacer",
         self.page_info_last_chev,
     }
 
@@ -1166,24 +1158,11 @@ function Menu:updatePageInfo(select_number)
             self:moveFocusTo(1, select_number)
         end
         --* update page information
-        self.page_info_text:setText(T(_("Page %1 of %2"), self.page, self.page_num))
+        self.page_info_text:setText(T(_("%1 of %2"), self.page, self.page_num))
         if self.page_num > 1 then
             self.page_info_text:enable()
         else
             self.page_info_text:disableWithoutDimming()
-        end
-
-        local hide_nav_arrows = #self.item_table <= self.perpage
-        if not hide_nav_arrows then
-            self.page_info_left_chev:show()
-            self.page_info_right_chev:show()
-            self.page_info_first_chev:show()
-            self.page_info_last_chev:show()
-        else
-            self.page_info_left_chev:hide()
-            self.page_info_right_chev:hide()
-            self.page_info_first_chev:hide()
-            self.page_info_last_chev:hide()
         end
         self.page_return_arrow:showHide(self.onReturn ~= nil)
 
@@ -1195,11 +1174,6 @@ function Menu:updatePageInfo(select_number)
     else
         self.page_info_text:setText(_("No items"))
         self.page_info_text:disableWithoutDimming()
-
-        self.page_info_left_chev:hide()
-        self.page_info_right_chev:hide()
-        self.page_info_first_chev:hide()
-        self.page_info_last_chev:hide()
         self.page_return_arrow:showHide(self.onReturn ~= nil)
     end
 end
@@ -1567,7 +1541,7 @@ function Menu:onClose()
         self:onCloseAllMenus()
     else
         --* back to parent menu
-        local parent_item_table = table.remove(self.item_table_stack, table_length)
+        local parent_item_table = table_remove(self.item_table_stack, table_length)
         self:switchItemTable(parent_item_table.title, parent_item_table)
     end
     KOR.registry:unset("hotkeys_update_method")
@@ -1788,13 +1762,26 @@ end
 --* insert footer buttons; additionally optionally inserts a filter button at the left end and an inverted page keys indicator at the right end:
 function Menu:injectFooterButtons(footer_nav_elems)
 
-    local nav_spacer = self.use_small_footer_buttons_spacer and self.page_info_spacer_small or self.page_info_spacer
+    self.page_info_spacer_small = self.page_info_spacer_small or HorizontalSpan:new{
+        width = Screen:scaleBySize(8),
+    }
+
+    local elements_width = 0
+    count = #footer_nav_elems
+    for i = 1, count do
+        if footer_nav_elems[i] ~= "chev_spacer" and footer_nav_elems[i] ~= "page_info_spacer" then
+            elements_width = elements_width + footer_nav_elems[i]:getSize().w
+        end
+    end
+
+    local nav_spacer = "page_info_spacer"
     local button, left_padding_arg, right_padding_arg
     if self.footer_buttons_left then
         count = #self.footer_buttons_left
         for i = 1, count do
-            left_padding_arg = not self.filter and i == 1 and "is_first_button_left"
+            left_padding_arg = not self.filter and i == count and "is_first_button_left"
             button = self:instantiateButton(self.footer_buttons_left[i], left_padding_arg)
+            elements_width = elements_width + button:getSize().w
             table_insert(footer_nav_elems, 1, button)
             table_insert(footer_nav_elems, 2, nav_spacer)
         end
@@ -1805,15 +1792,54 @@ function Menu:injectFooterButtons(footer_nav_elems)
             right_padding_arg = i == count and "is_last_button_right"
             table_insert(footer_nav_elems, nav_spacer)
             button = self:instantiateButton(self.footer_buttons_right[i], nil, right_padding_arg)
+            elements_width = elements_width + button:getSize().w
             table_insert(footer_nav_elems, button)
         end
     end
 
+    local filter_button
     if self.filter then
         local f = self.filter
-        local filter_button = self:getFilterButton(f.callback, f.reset_callback, f.hold_callback)
+        filter_button = self:getFilterButton(f.callback, f.reset_callback, f.hold_callback)
         table_insert(footer_nav_elems, 1, nav_spacer)
         table_insert(footer_nav_elems, 1, filter_button)
+    end
+
+    local width = 12
+    local swidth = Screen:scaleBySize(width)
+    count = #footer_nav_elems
+    local spacers_count = 0
+    for i = 1, count do
+        if footer_nav_elems == "chev_spacer" or footer_nav_elems == "page_info_spacer" then
+            spacers_count = spacers_count + 1
+            self.garbage = i
+        end
+    end
+    while self.inner_dimen.w - elements_width - spacers_count * swidth < 0 do
+        width = width - 1
+        swidth = Screen:scaleBySize(width)
+        if width < 3 then
+            break
+        end
+    end
+
+    -- #((footer spacers))
+    local chev_spacer = HorizontalSpan:new{
+        width = swidth,
+    }
+    local use_wide_spacers = not self.use_minimal_footer_spacers or KOR.screenhelpers:isLandscapeScreen()
+    local page_info_spacer = HorizontalSpan:new{
+        width = use_wide_spacers and swidth or Screen:scaleBySize(1),
+    }
+    --* substitute the spacer placeholders with actual spacers:
+    for i = 1, count do
+        if footer_nav_elems[i] == "chev_spacer" then
+            table_remove(footer_nav_elems, i)
+            table_insert(footer_nav_elems, i, chev_spacer)
+        elseif footer_nav_elems[i] == "page_info_spacer" then
+            table_remove(footer_nav_elems, i)
+            table_insert(footer_nav_elems, i, page_info_spacer)
+        end
     end
 end
 

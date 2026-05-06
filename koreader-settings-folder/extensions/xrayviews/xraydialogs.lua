@@ -504,11 +504,6 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
         dimen = Screen:getSize(),
     }
 
-    local title_icon
-    if DX.s.IL_show_xray_icon_in_title then
-        title_icon = (self.select_mode or DX.ta.select_for_tags) and "lightning-small-inverted" or "lightning-small"
-    end
-
     --* icon size for filter button set in ((Menu#getFilterButton)):
     local base_icon_size = 0.6
     local config = {
@@ -532,7 +527,6 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
             KOR.keyevents:unregisterSharedHotkeys(key_events_module)
         end,
         is_borderless = true,
-        title_icon = title_icon,
         top_buttons_left = not self.select_mode and DX.b:forListTopLeft(self),
         -- #((filter table example))
         filter = self:getListFilter(),

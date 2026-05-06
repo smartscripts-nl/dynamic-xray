@@ -183,6 +183,19 @@ function Button:setColors()
 end
 
 --- @private
+function Button:adaptChevronButtonsWidth()
+    if self.icon == "chevron-first" or self.icon == "chevron-left" or self.icon == "chevron-right" or self.icon == "chevron-last" then
+
+        local factor = 0.6
+        self.icon_width = self.icon_height and math_floor(self.icon_height * factor) or math_floor(DGENERIC_ICON_SIZE * factor)
+
+        return true
+    end
+
+    return false
+end
+
+--- @private
 function Button:computeFixedIconDims()
     if DX.s.icons_dont_force_ratio then
         return
@@ -917,7 +930,12 @@ function Button:ensureIconSize()
     end
     local size = self.icon_size_ratio and DGENERIC_ICON_SIZE * self.icon_size_ratio or DGENERIC_ICON_SIZE
     self.icon_height = Screen:scaleBySize(size)
-    self.icon_width = self.icon_height --* our icons are square
+
+    local chevron_button_width_was_set = self:adaptChevronButtonsWidth()
+    --* our icons are square, except for chevron buttons:
+    if not chevron_button_width_was_set then
+        self.icon_width = self.icon_height
+    end
 end
 
 function Button:generateTextLabel(label)
