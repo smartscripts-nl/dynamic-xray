@@ -647,7 +647,7 @@ local Menu = FocusManager:extend{
     page_info = nil,
     page_return = nil,
 
-    use_minimal_footer_spacers = false,
+    use_minimal_spacers = false,
     item_font = "smallinfofont",
     items_per_page_default = 14,
     items_per_page = nil,
@@ -817,6 +817,7 @@ function Menu:init(restore_dialog)
                 self:onClose()
             end or nil,
             show_parent = self.show_parent or self,
+            use_minimal_spacers = self.use_minimal_spacers,
         }
         self.title_bar = TitleBar:new(title_bar_config)
 
@@ -941,6 +942,7 @@ function Menu:init(restore_dialog)
         end
     end
 
+        -- #((Menu footer page info text))
     self.page_info_text = self.page_info_text or Button:new{
         text = "",
         hold_input = {
@@ -1165,7 +1167,6 @@ function Menu:updatePageInfo(select_number)
             self.page_info_text:disableWithoutDimming()
         end
         self.page_return_arrow:showHide(self.onReturn ~= nil)
-
         self.page_info_left_chev:enableDisable(self.page > 1)
         self.page_info_right_chev:enableDisable(self.page < self.page_num)
         self.page_info_first_chev:enableDisable(self.page > 1)
@@ -1206,6 +1207,7 @@ function Menu:updateItems(select_number)
     local item_shortcut, shortcut_style, item_tmp
     count = #self.item_table
     local idx_end = math.min(self.perpage, count)
+
     for idx = 1, idx_end do
         --* calculate index in item_table
         i = (self.page - 1) * self.perpage + idx
@@ -1805,8 +1807,12 @@ function Menu:injectFooterButtons(footer_nav_elems)
         table_insert(footer_nav_elems, 1, filter_button)
     end
 
-    local width = 12
-    local swidth = Screen:scaleBySize(width)
+    local is_landscape_screen = KOR.screenhelpers:isLandscapeScreen()
+    --* use wider spacers for my personal installation:
+    local dont_adapt_spacers = is_landscape_screen
+
+    --* on Boox Go 10.3 use same spacing in footer and in title bar:
+    local swidth = KOR.screenhelpers:getHorizontalSpacerWidth(nil, nil, self.use_minimal_spacers)
     count = #footer_nav_elems
     local spacers_count = 0
     for i = 1, count do
@@ -1815,30 +1821,27 @@ function Menu:injectFooterButtons(footer_nav_elems)
             self.garbage = i
         end
     end
-    while self.inner_dimen.w - elements_width - spacers_count * swidth < 0 do
-        width = width - 1
-        swidth = Screen:scaleBySize(width)
-        if width < 3 then
-            break
+    if not dont_adapt_spacers then
+        while self.inner_dimen.w - elements_width - spacers_count * swidth < 0 do
+            swidth = swidth - 1
+            if swidth < 2 then
+                break
+            end
         end
     end
 
     -- #((footer spacers))
-    local chev_spacer = HorizontalSpan:new{
+    local spacer = HorizontalSpan:new{
         width = swidth,
-    }
-    local use_wide_spacers = not self.use_minimal_footer_spacers or KOR.screenhelpers:isLandscapeScreen()
-    local page_info_spacer = HorizontalSpan:new{
-        width = use_wide_spacers and swidth or Screen:scaleBySize(1),
     }
     --* substitute the spacer placeholders with actual spacers:
     for i = 1, count do
         if footer_nav_elems[i] == "chev_spacer" then
             table_remove(footer_nav_elems, i)
-            table_insert(footer_nav_elems, i, chev_spacer)
+            table_insert(footer_nav_elems, i, spacer)
         elseif footer_nav_elems[i] == "page_info_spacer" then
             table_remove(footer_nav_elems, i)
-            table_insert(footer_nav_elems, i, page_info_spacer)
+            table_insert(footer_nav_elems, i, spacer)
         end
     end
 end

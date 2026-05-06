@@ -2,9 +2,12 @@
 local require = require
 
 local Geom = require("ui/geometry")
+local Size = require("ui/size")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local Screen = require("device").screen
+
+local DX = DX
 
 --- @class ScreenHelpers
 local ScreenHelpers = WidgetContainer:extend{}
@@ -43,5 +46,15 @@ function ScreenHelpers:refreshUI()
     end)
 end
 
+function ScreenHelpers:getHorizontalSpacerWidth(fullscreen, for_close_button)
+    if DX.s.is_mobile_device then
+        return Size.padding.fullscreen
+    end
+    if for_close_button and fullscreen then
+        return Size.padding.buttonvertical
+    end
+
+    return Size.padding.titlebar
+end
 
 return ScreenHelpers

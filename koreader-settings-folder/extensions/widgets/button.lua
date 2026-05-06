@@ -91,6 +91,8 @@ local Button = InputContainer:extend{
     is_tab_button = false,
     label_max_width = nil,
     lang = nil,
+    left_indicator = nil,
+    left_indicator_width = nil,
     margin = 0,
     max_width = nil,
     padding = Size.padding.button,
@@ -103,6 +105,8 @@ local Button = InputContainer:extend{
     radius = nil,
     readonly = false,
     readonly_inverted = false,
+    right_indicator = nil,
+    right_indicator_width = nil,
     show_hold_callback_indicator = false,
     text = nil, --* mandatory (unless icon is provided)
     text_font_bold = true,
@@ -273,20 +277,26 @@ end
 function Button:setLeftOrRightIndicator()
     --* this was set in ((Button#setHoldCallback)):
     if self.info_callbacks_show_indicators then
-        self.right_indicator = self:generateTextLabel {
+        self.right_indicator = self.right_indicator or self:generateTextLabel {
             text = ".",
             max_width = self.indicator_max_width,
             label_color = self.enabled and self.indicator_color or KOR.colors.button_disabled,
             outer_pad_width = 0,
         }
+        if not self.right_indicator_width then
+            self.right_indicator_width = self.right_indicator:getSize().w
+        end
 
     elseif self.show_hold_callback_indicator then
-        self.left_indicator = self:generateTextLabel {
+        self.left_indicator = self.left_indicator or self:generateTextLabel {
             text = KOR.icons.hold_callback_indicator_bare,
             max_width = self.indicator_max_width,
             label_color = self.enabled and self.indicator_color_darker or KOR.colors.button_disabled,
             outer_pad_width = 0,
         }
+        if not self.left_indicator_width then
+            self.left_indicator_width = self.left_indicator:getSize().w
+        end
     end
 end
 
@@ -381,9 +391,11 @@ function Button:setWidgetContent()
     end
     if self.left_indicator then
         table_insert(widget, 1, self.left_indicator)
+        self.inner_width = self.inner_width + self.left_indicator_width
     end
     if self.right_indicator then
         table_insert(widget, self.right_indicator)
+        self.inner_width = self.inner_width + self.right_indicator_width
     end
 
     local is_left_aligned = self.align == "left"

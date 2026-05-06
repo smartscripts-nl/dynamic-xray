@@ -146,6 +146,7 @@ local TitleBar = OverlapGroup:extend{
 
     --* dynamically set in ((TitleBar#setWidgetProps)):
     is_landscape_screen = true,
+    use_minimal_spacers = false,
 }
 
 function TitleBar:init()
@@ -461,6 +462,7 @@ end
 function TitleBar:injectTitleIntoMainContainer()
 
     local title_max_width = self.corrected_title_width or self.width - 2 * self.title_h_padding - self.top_left_buttons_reserved_width - self.top_right_buttons_reserved_width
+    self.corrected_title_width = title_max_width
 
     local subtitle_max_width = self.width - 2 * self.title_h_padding
 
@@ -689,7 +691,7 @@ end
 
 --- @private
 function TitleBar:injectTabButtonsLeft()
-    --? used by methods in ((TabFactory#setTabButtonAndContent)) > ((tabs in titlebar)) ??:
+    --? used by methods in ((TabFactory#setTabButtonAndContent)) ??:
     --* button props were set in ((Button#addTitleBarTabButtonProps)):
     self.tabs = {}
     if self.tab_buttons_left then
@@ -700,7 +702,7 @@ function TitleBar:injectTabButtonsLeft()
         local count = #self.tab_buttons_left
         for i = 1, count do
             button = self:instantiateButton(self.tab_buttons_left[i])
-            --? used by methods in ((TabFactory#setTabButtonAndContent)) > ((tabs in titlebar)) ??:
+            --? used by methods in ((TabFactory#setTabButtonAndContent)) ??:
             table_insert(self.tabs, button)
             table_insert(self.left_buttons_container, separator)
             table_insert(self.left_buttons_container, button)
@@ -784,10 +786,13 @@ end
 --- the groups generated here are only horizontally oriented
 --- @private
 function TitleBar:injectTopButtonsGroups()
-    --* under Android we need more horizontal spacing:
-    local spacer_width = self:getHorizontalSpacerWidth()
+
+    local spacer_width = KOR.screenhelpers:getHorizontalSpacerWidth(nil, nil, self.use_minimal_spacers)
     local count, button
-    local horizontal_spacer = HorizontalSpan:new{ width = spacer_width }
+    local horizontal_spacer = HorizontalSpan:new{
+        width = spacer_width,
+    }
+
     if self.top_buttons_left and not self.left_buttons_container_populated then
         count = #self.top_buttons_left
         for nr = 1, count do
@@ -844,7 +849,7 @@ function TitleBar:addCloseButtonRightSpacer()
         right_border_spacer = HorizontalSpan:new{ width = Size.padding.buttontable }
 
     else
-        right_border_spacer = HorizontalSpan:new{ width = self:getHorizontalSpacerWidth("for_close_button") }
+        right_border_spacer = HorizontalSpan:new{ width = KOR.screenhelpers:getHorizontalSpacerWidth(self.fullscreen, "for_close_button") }
     end
 
     table_insert(self.right_buttons_container, right_border_spacer)
@@ -962,22 +967,6 @@ function TitleBar:injectSideContainersRight()
             HorizontalSpan:new{ width = self.top_left_buttons_reserved_width },
         })
     end
-end
-
---- @private
-function TitleBar:getHorizontalSpacerWidth(for_close_button)
-    if DX.s.is_mobile_device then
-        return Size.padding.fullscreen
-    end
-    if for_close_button and self.fullscreen then
-        return Size.padding.buttonvertical
-    end
-
-    if KOR.screenhelpers:isPortraitScreen() then
-        return Size.padding.titlebar
-    end
-
-    return Size.padding.large --* or Size.padding.titlebarbutton instead of large
 end
 
 --- @private
