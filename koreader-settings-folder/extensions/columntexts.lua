@@ -15,6 +15,7 @@ local math_ceil = math.ceil
 local math_floor = math.floor
 local table_concat = table.concat
 local table_insert = table.insert
+local type = type
 
 local count
 
@@ -174,17 +175,14 @@ end
 
 function ColumnTexts:getThreeWidget(args)
 
-	local separator = "\n\n"
 	local parent = args.parent
-	--* the caller is responsible for supplying two texts, one for each of the columns:
-	local column1_text = args.column1_text
-		 :gsub("\n\n\n+", separator)
-	local column2_text = args.column2_text
-		 :gsub("^\n", "")
-		 :gsub("\n\n\n+", separator)
-	local column3_text = args.column3_text
-		 :gsub("^\n", "")
-		 :gsub("\n\n\n+", separator)
+	--* the caller is responsible for supplying the texts, one for each of the columns:
+	local column1_text = self:manipulateColumnTexts(1, args.column1_text)
+
+	local column2_text = self:manipulateColumnTexts(2, args.column2_text)
+
+	local column3_text = self:manipulateColumnTexts(3, args.column3_text)
+
 	local face = args.face
 	local width = args.width
 	local container_width = args.container_width
@@ -270,6 +268,24 @@ function ColumnTexts:getThreeWidget(args)
 	}
 
 	return widget, widget1, widget2, widget3
+end
+
+--- @private
+function ColumnTexts:manipulateColumnTexts(column_no, column_text)
+	local separator = "\n\n"
+	if type(column_text) == "function" then
+		column_text = column_text()
+	end
+	if not column_text then
+		return
+	end
+	if column_no == 1 then
+		return column_text:gsub("\n\n\n+", separator)
+	end
+
+	return column_text
+		:gsub("^\n", "")
+		:gsub("\n\n\n+", separator)
 end
 
 function ColumnTexts:resetCache()

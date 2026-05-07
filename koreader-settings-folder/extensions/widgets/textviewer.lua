@@ -47,6 +47,7 @@ local tr = KOR:initCustomTranslations()
 local Screen = Device.screen
 
 local DX = DX
+local has_no_text = has_no_text
 local io = io
 local math = math
 local math_floor = math.floor
@@ -1140,9 +1141,13 @@ function TextViewer:getDefaultButtons()
                 elseif self.text_for_copy then
                     copy_text = self.text_for_copy
                 end
+                if has_no_text(copy_text) then
+                    KOR.messages:notify(tr("text in current dialog/tab was empty"))
+                    return
+                end
                 copy_text = copy_text:gsub("\n\n\n+", "\n\n")
                 Device.input.setClipboardText(copy_text)
-                KOR.messages:notify(tr("text copied to clipboard..."))
+                KOR.messages:notify(tr("text copied to clipboard"))
             end,
         }),
         KOR.buttoninfopopup:forTextViewerOneScreenUp({

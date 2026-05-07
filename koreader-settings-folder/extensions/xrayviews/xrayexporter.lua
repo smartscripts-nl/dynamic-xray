@@ -63,6 +63,10 @@ function XrayExporter:getExportDialogInfo(active_tab, column_2)
     local spacer = active_tab == 4 and "\n" or "\n\n"
     local export_title = title:gsub(": ([^\n]+)", " " .. _("in") .. " \"" .. DX.m.current_title .. "\" (%1)") .. "\n" .. _("List generated") .. ": " .. os_date("%Y-%m-%d") .. spacer
 
+    if not data then
+        data = ""
+    end
+    --? shouldn't there be more columns here (3 and 4 are also sometimes defined: linked item, tag groups):
     if column_2 then
         return data
     end

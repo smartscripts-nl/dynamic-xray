@@ -20,6 +20,7 @@ local _ = KOR:initCustomTranslations()
 local Screen = require("device").screen
 
 local DX = DX
+local has_text = has_text
 local math = math
 local table = table
 local type = type
@@ -529,19 +530,21 @@ function Dialogs:setTextBoxTexts(args)
     args.text = info
 
     --* for text in two columns:
-    local info2 = args.info2 or nil
-    if info2 then
+    local info2 = args.info2 or ""
+    if has_text(info2) then
         info2 = KOR.html:htmlToPlainTextIfHtml(info2)
         info2 = info2:gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
     end
     args.text2 = info2
+
     --* for text in three columns:
-    local info3 = args.info3 or nil
-    if info3 then
+    local info3 = args.info3 or ""
+    if has_text(info3) then
         info3 = KOR.html:htmlToPlainTextIfHtml(info3)
         info3 = info3:gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
     end
     args.text3 = info3
+
 
     --* for a non-icon variant of a text with icons, e.g. as generated in ((XrayCallbacks#execExportXrayItemsCallback)):
     self:setCopyForTextBox(args, info, info2, info3)
