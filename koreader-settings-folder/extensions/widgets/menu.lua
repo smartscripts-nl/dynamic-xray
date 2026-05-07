@@ -1813,6 +1813,10 @@ function Menu:injectFooterButtons(footer_nav_elems)
 
     --* on Boox Go 10.3 use same spacing in footer and in title bar:
     local swidth = KOR.screenhelpers:getHorizontalSpacerWidth(nil, nil, self.use_minimal_spacers)
+    if not self.footer_buttons_left and not self.footer_buttons_right then
+        swidth = Size.padding.closebuttonpopupdialog
+    end
+
     count = #footer_nav_elems
     local spacers_count = 0
     for i = 1, count do
