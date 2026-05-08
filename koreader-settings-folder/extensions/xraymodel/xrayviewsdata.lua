@@ -1187,17 +1187,17 @@ function XrayViewsData:generateXrayExportOrLinkedItemInfo(items_count, item, ui_
         iindent = meta_indent
     end
 
-    if KOR.columntexts:useTwoColumnDisplay(items_count) then
-        KOR.registry:set("split_to_half_max_length", true)
-    end
+    KOR.columntexts:initDisplayColumnsCount(items_count)
     KOR.registry:set("add_icon_indent", true)
+    --* use smaller indent in case of 3-column-display:
+    if DX.s.overview_tabs_columns_count == 3 then
+        iindent = "    "
+    end
 
     local aliases, aliases_iconless = self:generateAliasesInfo(item, iindent, mode)
     local linkwords, linkwords_iconless = self:generateLinkwordsInfo(item, iindent, mode)
     local tags, tags_iconless = self:generateTagsInfo(item, iindent, mode)
     local hits, hits_iconless = self:generateHitsInfo(item, iindent, mode)
-
-    KOR.registry:unset("split_to_half_max_length", "add_icon_indent")
 
     -- #((use xray match reliability indicators))
     local xray_match_reliability_icon = DX.i:getMatchReliabilityIndicator("full_name")
@@ -1295,7 +1295,7 @@ function XrayViewsData:generateHitsInfo(item, iindent, for_all_items_list)
         hits_iconless = iindent .. noun .. hits_iconless
     end
 
-    return hits, hits_iconless
+    return KOR.strings:splitLinesToMaxLength(hits, iindent), hits_iconless
 end
 
 --- @private
@@ -1334,7 +1334,8 @@ function XrayViewsData:generateLinkwordsInfo(item, iindent, for_all_items_list)
 end
 
 function XrayViewsData:addNonBreakableIndicator(name, xray_item)
-    if xray_item.non_breakable == 1 then
+    --* second condition: don't allow duplication of non-breakable name indicator:
+    if xray_item.non_breakable == 1 and not name:match(KOR.icons.lock_bare) then
         return name .. KOR.icons.lock_bare
     end
     return name

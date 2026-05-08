@@ -945,7 +945,7 @@ function XrayButtons:forTranslationViewer(parent, translation)
     }
 end
 
-function XrayButtons:getItemViewerTabs(main_info, hits_info, linked_items_info, quotes_info, linked_items_info2)
+function XrayButtons:getItemViewerTabs(main_info, hits_info, linked_items_info, quotes_info, linked_items_info2, linked_items_info3)
     local has_chapter_info = hits_info ~= ""
     local hits_tab_enabled, hits_tab_color = KOR.buttonprops:getButtonState(has_chapter_info)
     local tabs = {
@@ -962,16 +962,29 @@ function XrayButtons:getItemViewerTabs(main_info, hits_info, linked_items_info, 
             html = "<div style='margin: 1em 2em' class='redhat'>" .. hits_info .. "</div>",
         },
     }
-    if has_text(linked_items_info2) and has_text(linked_items_info) then
+    local has_linked_items1 = has_text(linked_items_info)
+    local has_linked_items2 = has_text(linked_items_info2)
+    local has_linked_items3 = has_text(linked_items_info3)
+
+    local tab_name = _("linked items")
+    if has_linked_items3 and has_linked_items2 and has_linked_items1 then
         table_insert(tabs, {
-            tab = _("linked items"),
+            tab = tab_name,
+            html = linked_items_info,
+            html2 = linked_items_info2,
+            html3 = linked_items_info3,
+            content_type = "text",
+        })
+    elseif has_linked_items2 and has_linked_items1 then
+        table_insert(tabs, {
+            tab = tab_name,
             html = linked_items_info,
             html2 = linked_items_info2,
             content_type = "text",
         })
-    elseif has_text(linked_items_info) then
+    elseif has_linked_items1 then
         table_insert(tabs, {
-            tab = _("linked items"),
+            tab = tab_name,
             html = linked_items_info,
             content_type = "text",
         })

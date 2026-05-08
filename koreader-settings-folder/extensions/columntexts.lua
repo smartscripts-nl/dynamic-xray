@@ -22,23 +22,27 @@ local count
 --- @class ColumnTexts
 local ColumnTexts = WidgetContainer:extend{
 	is_landscape_screen = nil,
+	separator_needles = {
+		KOR.icons.xray_person_bare,
+		KOR.icons.xray_person_important_bare,
+		KOR.icons.xray_term_bare,
+		KOR.icons.xray_term_important_bare,
+	}
 }
 
-function ColumnTexts:getTwoColumnTexts(column1_items, column2_items, use_second_text_column, iconless_column, separator)
+function ColumnTexts:getOneColumnText(column1_items, separator)
+	if not separator then
+		separator = ""
+	end
+	return table_concat(column1_items, separator)
+end
+
+function ColumnTexts:getTwoColumnTexts(column1_items, column2_items, separator)
 	if not separator then
 		separator = ""
 	end
 	if not column2_items then
 		column2_items = {}
-	end
-	if iconless_column then
-		iconless_column = table_concat(iconless_column, separator)
-	end
-	if not use_second_text_column then
-		column1_items = table_concat(column1_items, separator)
-		column2_items = nil
-
-		return column1_items, column2_items, iconless_column
 	end
 
 	count = #column1_items
@@ -50,10 +54,10 @@ function ColumnTexts:getTwoColumnTexts(column1_items, column2_items, use_second_
 	column1_items = table_concat(column1_items, separator)
 	column2_items = table_concat(column2_items, separator)
 
-	return column1_items, column2_items, iconless_column
+	return column1_items, column2_items
 end
 
-function ColumnTexts:getThreeColumnTexts(column1_items, column2_items, column3_items, use_text_columns, iconless_column, separator)
+function ColumnTexts:getThreeColumnTexts(column1_items, column2_items, column3_items, separator)
 	if not separator then
 		separator = ""
 	end
@@ -62,16 +66,6 @@ function ColumnTexts:getThreeColumnTexts(column1_items, column2_items, column3_i
 	end
 	if not column3_items then
 		column3_items = {}
-	end
-	if iconless_column then
-		iconless_column = table_concat(iconless_column, separator)
-	end
-	if not use_text_columns then
-		column1_items = table_concat(column1_items, separator)
-		column2_items = nil
-		column3_items = nil
-
-		return column1_items, column2_items, column3_items, iconless_column
 	end
 
 	local target
@@ -95,7 +89,7 @@ function ColumnTexts:getThreeColumnTexts(column1_items, column2_items, column3_i
 	column2_items = table_concat(column2_items, separator)
 	column3_items = table_concat(column3_items, separator)
 
-	return column1_items, column2_items, column3_items, iconless_column
+	return column1_items, column2_items, column3_items
 end
 
 function ColumnTexts:getDuoWidget(args)
@@ -283,6 +277,16 @@ function ColumnTexts:manipulateColumnTexts(column_no, column_text)
 		return column_text:gsub("\n\n\n+", separator)
 	end
 
+	--* hotfixes: make sure items are always separated by a separator line; but not in the mentions tab of the XrayUI Page Information popup, were items are separated with only one linebreak, so in that case don't apply below fixes:
+	if column_text:match("\n\n") then
+		for i = 1, 4 do
+			column_text = column_text
+				:gsub(self.separator_needles[i], "\n" .. self.separator_needles[i])
+		end
+		column_text = column_text
+			:gsub("\n\n\n+", separator)
+	end
+
 	return column_text
 		:gsub("^\n", "")
 		:gsub("\n\n\n+", separator)
@@ -292,17 +296,38 @@ function ColumnTexts:resetCache()
 	self.is_landscape_screen = Screen:getWidth() > Screen:getHeight()
 end
 
-function ColumnTexts:useTwoColumnDisplay(items_count)
-	if not items_count or DX.s.is_mobile_device then
-		return false
+function ColumnTexts:initDisplayColumnsCount(items_count)
+	if not items_count then
+		return
 	end
+	if DX.s.is_mobile_device or DX.s.overview_tabs_columns_count == 1 then
+		self:unsetColumnVars(1)
+		return
+	end
+
 	if self.is_landscape_screen == nil then
 		self.is_landscape_screen = Screen:getWidth() > Screen:getHeight()
 	end
-	return
-		DX.s.show_items_in_two_columns
-		and items_count > 2
-		and self.is_landscape_screen
+	if items_count >= DX.s.overview_tabs_columns_count and self.is_landscape_screen then
+		if DX.s.overview_tabs_columns_count == 2 then
+			KOR.registry:set("split_lines_in_half", true)
+			self:unsetColumnVars(2)
+		else
+			KOR.registry:set("split_lines_in_thirds", true)
+			self:unsetColumnVars(3)
+		end
+	end
+end
+
+function ColumnTexts:unsetColumnVars(reset_mode)
+	if reset_mode == 1 then
+		KOR.registry:unset("split_lines_in_half", "split_lines_in_thirds", "add_icon_indent")
+		return
+	elseif reset_mode == 2 then
+		KOR.registry:unset("split_lines_in_thirds", "add_icon_indent")
+		return
+	end
+	KOR.registry:unset("split_lines_in_half", "add_icon_indent")
 end
 
 return ColumnTexts

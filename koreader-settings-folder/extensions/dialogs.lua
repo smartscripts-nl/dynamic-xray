@@ -544,28 +544,6 @@ function Dialogs:setTextBoxTexts(args)
         info3 = info3:gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
     end
     args.text3 = info3
-
-
-    --* for a non-icon variant of a text with icons, e.g. as generated in ((XrayCallbacks#execExportXrayItemsCallback)):
-    self:setCopyForTextBox(args, info, info2, info3)
-end
-
---- @private
-function Dialogs:setCopyForTextBox(args, info, info2, info3)
-    if args.text_for_copy then
-        return
-    end
-
-    if args.info_icon_less then
-        --* hotfix for initials in names:
-        args.text_for_copy = args.info_icon_less:gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
-    elseif info and info2 and info3 then
-        args.text_for_copy = info .. "\n\n" .. info2 .. "\n\n" .. info3
-    elseif info and info2 then
-        args.text_for_copy = info .. "\n\n" .. info2
-    else
-        args.text_for_copy = info
-    end
 end
 
 --- @private

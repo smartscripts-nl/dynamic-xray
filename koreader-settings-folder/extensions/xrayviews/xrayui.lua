@@ -201,6 +201,7 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
     local paragraph_hits_names3 = {}
     local paragraph_hits_info = {}
     local paragraph_hits_info2 = {}
+    local paragraph_hits_info3 = {}
     --* these items were generated via ((init xray sideline markers)) > ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#ReaderViewInitParaOrPageData)) > ((XrayUI#ReaderViewLoopThroughParagraphOrPage)) ((XrayUI#getXrayItemsFoundInText)):
     local items = xray_rects.hits[nr]
     local paragraph_matches_count
@@ -214,10 +215,7 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
     local injected_nr = 0
     local more_button_added
     count = #items
-    local use_second_text_column = KOR.columntexts:useTwoColumnDisplay(count)
-    if use_second_text_column then
-        KOR.registry:set("split_to_half_max_length", true)
-    end
+    KOR.columntexts:initDisplayColumnsCount(count)
     for i = 1, count do
         injected_nr, more_button_added = self:addParagraphInfoItems(
                 items,
@@ -234,24 +232,44 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
         end
     end
 
-    local use_third_text_column = #paragraph_hits_names >= 3 and DX.s.overview_tabs_columns_count == 3
-    if use_third_text_column then
-        paragraph_hits_names, paragraph_hits_names2, paragraph_hits_names3 = KOR.columntexts:getThreeColumnTexts(paragraph_hits_names, paragraph_hits_names2, paragraph_hits_names3, use_third_text_column, nil, "\n")
-    else
+    local names_separator = "\n"
+    local info_separator = "\n\n"
+
+    --* three column text:
+    if #paragraph_hits_names >= 3 and DX.s.overview_tabs_columns_count == 3 then
+
+        --* prepare columns for the overview tab:
+        paragraph_hits_names, paragraph_hits_names2, paragraph_hits_names3 = KOR.columntexts:getThreeColumnTexts(paragraph_hits_names, paragraph_hits_names2, paragraph_hits_names3, names_separator)
+
+        --* prepare columns for the information tab:
+        paragraph_hits_info, paragraph_hits_info2, paragraph_hits_info3 = KOR.columntexts:getThreeColumnTexts(paragraph_hits_info, paragraph_hits_info2, paragraph_hits_info3, info_separator)
+
+    --* two column text:
+    elseif #paragraph_hits_names >= 2 and DX.s.overview_tabs_columns_count == 2 then
+        --* prepare columns for the overview tab:
         --* paragraph_hits_names3 will be nil here:
-        paragraph_hits_names, paragraph_hits_names2, paragraph_hits_names3 = KOR.columntexts:getTwoColumnTexts(paragraph_hits_names, paragraph_hits_names2, use_second_text_column, nil, "\n")
+        paragraph_hits_names, paragraph_hits_names2, paragraph_hits_names3 = KOR.columntexts:getTwoColumnTexts(paragraph_hits_names, paragraph_hits_names2, names_separator)
+
+        --* prepare columns for the information tab:
+        paragraph_hits_info, paragraph_hits_info2 = KOR.columntexts:getTwoColumnTexts(paragraph_hits_info, paragraph_hits_info2, info_separator)
+
+    --* one column text:
+    else
+        --* prepare columns for the overview tab:
+        --* paragraph_hits_names2 and paragraph_hits_names3 will be nil here:
+        paragraph_hits_names, paragraph_hits_names2, paragraph_hits_names3 = KOR.columntexts:getOneColumnText(paragraph_hits_names, names_separator)
+
+        --* prepare columns for the information tab:
+        paragraph_hits_info, paragraph_hits_info2, paragraph_hits_info3 = KOR.columntexts:getOneColumnText(paragraph_hits_info, info_separator)
     end
 
-    paragraph_hits_info, paragraph_hits_info2 = KOR.columntexts:getTwoColumnTexts(paragraph_hits_info, paragraph_hits_info2, use_second_text_column, nil, "\n\n")
     paragraph_matches_count = injected_nr
     --* correction for indentation of first line in dialog; this should not be necessary:
     paragraph_hits_info = paragraph_hits_info:gsub("^ +", "")
 
-    KOR.registry:unset("split_to_half_max_length")
-
     -- #((xray paragraph info callback))
     --* callback defined in ((set xray info for paragraphs)) > ((XrayUI#ReaderViewPopulateInfoRects)) and calls ((XrayDialogs#showUiPageInfo)):
-    xray_rects.callback(paragraph_hits_names, paragraph_hits_names2, paragraph_hits_names3, paragraph_hits_info, paragraph_hits_info2, paragraph_matches_count, self.info_extra_button_rows, paragraph_text)
+    xray_rects.callback(paragraph_hits_names, paragraph_hits_names2, paragraph_hits_names3, paragraph_hits_info, paragraph_hits_info2, paragraph_hits_info3, paragraph_matches_count, paragraph_text)
 end
 
 --- @private
@@ -410,7 +428,7 @@ function XrayUI:ReaderViewPopulateInfoRects()
         explanations = self.paragraph_explanations,
         rects = self.rects_with_matches,
         --* paragraph_hits_info was generated in ((XrayUI#addParagraphInfoItems)):
-        callback = function(paragraph_names, paragraph_names2, paragraph_names3, paragraph_hits_info, paragraph_hits_info2, paragraph_text)
+        callback = function(paragraph_names, paragraph_names2, paragraph_names3, paragraph_hits_info, paragraph_hits_info2, paragraph_hits_info3, paragraph_text)
 
             if DX.s.UI_mode == "page" and DX.s.UI_marker_callback == "page_navigator" then
                 DX.c:showPageNavigator()
@@ -418,7 +436,7 @@ function XrayUI:ReaderViewPopulateInfoRects()
             end
 
             --* paragraph_text only needed for debugging purposes, to ascertain we are looking at the correct paragraph:
-            DX.d:showUiPageInfo(paragraph_names, paragraph_names2, paragraph_names3, paragraph_hits_info, paragraph_hits_info2, paragraph_text)
+            DX.d:showUiPageInfo(paragraph_names, paragraph_names2, paragraph_names3, paragraph_hits_info, paragraph_hits_info2, paragraph_hits_info3, paragraph_text)
         end,
         hold_callback = function()
             if DX.s.UI_mode == "page" and DX.s.UI_marker_callback == "page_information_popup" then

@@ -13,6 +13,7 @@ local DX = DX
 local has_no_items = has_no_items
 local math_ceil = math.ceil
 local os_date = os.date
+local table_concat = table.concat
 local table_insert = table.insert
 
 local count
@@ -22,10 +23,13 @@ local XrayExporter = WidgetContainer:new{
     active_tab = 1,
     items = nil,
     items2 = nil,
+    items3 = nil,
     persons = nil,
     persons2 = nil,
+    persons3 = nil,
     terms = nil,
     terms2 = nil,
+    terms3 = nil,
     iconless_items = nil,
     iconless_persons = nil,
     iconless_terms = nil,
@@ -42,9 +46,15 @@ function XrayExporter:resetCache()
     self.items = nil
     self.persons = nil
     self.terms = nil
+
     self.items2 = nil
     self.persons2 = nil
     self.terms2 = nil
+
+    self.items3 = nil
+    self.persons3 = nil
+    self.terms3 = nil
+
     self.iconless_items = nil
     self.iconless_persons = nil
     self.iconless_terms = nil
@@ -57,17 +67,17 @@ function XrayExporter:getTitle(active_tab)
 end
 
 --- @private
-function XrayExporter:getExportDialogInfo(active_tab, column_2)
+function XrayExporter:getExportDialogInfo(active_tab, columns)
     local title = self:getTitle(active_tab)
-    local data = self:getInfoText(active_tab, false, column_2)
+    local data = self:getInfoText(active_tab, false, columns)
     local spacer = active_tab == 4 and "\n" or "\n\n"
-    local export_title = title:gsub(": ([^\n]+)", " " .. _("in") .. " \"" .. DX.m.current_title .. "\" (%1)") .. "\n" .. _("List generated") .. ": " .. os_date("%Y-%m-%d") .. spacer
+    local export_title = title:gsub(": ([^\n]+)", " in \"" .. DX.m.current_title .. "\" (%1)") .. "\n" .. "Lijst aangemaakt: " .. os_date("%d-%m-%Y") .. spacer
 
     if not data then
         data = ""
     end
     --? shouldn't there be more columns here (3 and 4 are also sometimes defined: linked item, tag groups):
-    if column_2 then
+    if columns then
         return data
     end
 
@@ -76,9 +86,25 @@ function XrayExporter:getExportDialogInfo(active_tab, column_2)
 end
 
 --- @private
-function XrayExporter:getInfoText(active_tab, iconless, column_2)
+function XrayExporter:getInfoText(active_tab, iconless, columns)
+    local texts_for_copy = {
+        self.iconless_items,
+        self.iconless_persons,
+        self.iconless_terms,
+        DX.ta.iconless_tag_groups,
+    }
+
     local info_texts
-    if column_2 then
+    if columns == 3 then
+        info_texts = {
+            self.items3,
+            self.persons3,
+            self.terms3,
+            DX.ta.tag_groups3,
+        }
+        --* choose one of the above items:
+        return info_texts[active_tab]
+    elseif columns == 2 then
         info_texts = {
             self.items2,
             self.persons2,
@@ -91,19 +117,14 @@ function XrayExporter:getInfoText(active_tab, iconless, column_2)
 
     --* these collections were generated in ((XrayExporter#initData)):
     info_texts = iconless and
-        {
-            self.iconless_items,
-            self.iconless_persons,
-            self.iconless_terms,
-            DX.ta.iconless_tag_groups,
-        }
-    or
+        texts_for_copy
+        or
         {
             self.items,
             self.persons,
             self.terms,
             DX.ta.tag_groups,
-    }
+        }
 
     --* choose one of the above items:
     return info_texts[active_tab]
@@ -123,7 +144,7 @@ function XrayExporter:exportInfoToFile()
         self:getTitle(self.active_tab)
         .. "\n" .. _("List generated") .. ": " ..
         os_date("%Y-%m-%d") .. "\n\n" ..
-        self:getInfoText(self.active_tab, "iconless")
+        self:getInfoText(self.active_tab, "iconless", 1)
 
     self:addTagsOverview(info, self.active_tab)
     info = info:gsub("\n\n\n+", "\n\n")
@@ -142,42 +163,55 @@ function XrayExporter:initData()
         return false
     end
 
-    local use_two_column_display = KOR.columntexts:useTwoColumnDisplay(#DX.vd.items)
-    self.items, self.items2, self.iconless_items = self:generateXrayItemsOverview(DX.vd.items, "for_all_items_list", use_two_column_display)
+    KOR.columntexts:initDisplayColumnsCount(#DX.vd.items)
+    self.items, self.items2, self.items3 = self:generateXrayItemsOverview(DX.vd.items, "for_all_items_list", 1)
 
-    use_two_column_display = KOR.columntexts:useTwoColumnDisplay(#DX.vd.persons)
-    self.persons, self.persons2, self.iconless_persons = self:generateXrayItemsOverview(DX.vd.persons, "for_all_items_list", use_two_column_display)
+    KOR.columntexts:initDisplayColumnsCount(#DX.vd.persons)
+    self.persons, self.persons2, self.persons3 = self:generateXrayItemsOverview(DX.vd.persons, "for_all_items_list", 2)
 
-    use_two_column_display = KOR.columntexts:useTwoColumnDisplay(#DX.vd.terms)
-    self.terms, self.terms2, self.iconless_terms = self:generateXrayItemsOverview(DX.vd.terms, "for_all_items_list", use_two_column_display)
+    KOR.columntexts:initDisplayColumnsCount(#DX.vd.terms)
+    self.terms, self.terms2, self.terms3 = self:generateXrayItemsOverview(DX.vd.terms, "for_all_items_list", 3)
 
-    DX.ta:generateTagGroupsOverview()
+    DX.ta:generateTagGroupsOverview(4)
 
     return true
 end
 
 --- @param mode string Either "for_all_items_list" or "for_linked_items_tab"
-function XrayExporter:generateXrayItemsOverview(items, mode, use_two_column_display)
+function XrayExporter:generateXrayItemsOverview(items, mode, clipboard_tab_no)
     local paragraphs_iconless = {}
     local paragraph, paragraph_iconless
-    local column1, column2 = {}, {}
+    local column1, column2, column3 = {}, {}, {}
     count = #items
 
+    local use_two_column_display = DX.s.overview_tabs_columns_count == 2 and count >= 2
+    local use_three_column_display = DX.s.overview_tabs_columns_count == 3 and count >= 3
+
     local half_way = math_ceil(count / 2)
+    local third_way = math_ceil(count / 3)
     local is_top_column_item
     for i = 1, count do
         --* at the top of the second column we don't want to start with a line ending, so set is_top_column_item to true for that case:
-        is_top_column_item =
-            (not use_two_column_display and i == 1)
-            or
-            (use_two_column_display and (i == 1 or i == half_way + 1))
+        is_top_column_item = (not use_two_column_display and not use_three_column_display and i == 1)
+                or
+                (use_two_column_display and (i == 1 or i == half_way + 1))
+                or
+                (use_three_column_display and (i == 1 or i == third_way + 1 or i == 2 * third_way + 1))
         paragraph, paragraph_iconless = DX.vd:generateXrayExportOrLinkedItemInfo(count, items[i], nil, is_top_column_item, mode)
         table_insert(column1, paragraph)
         table_insert(paragraphs_iconless, paragraph_iconless)
     end
 
+    KOR.registry:setClipboardTabText(clipboard_tab_no, table_concat(paragraphs_iconless, "\n\n"))
+
     --* returned here: column1, column2, info_iconless; column2 will be set to nil when usage of text columns wasn't active:
-    return KOR.columntexts:getTwoColumnTexts(column1, column2, use_two_column_display, paragraphs_iconless)
+    if use_two_column_display then
+        return KOR.columntexts:getTwoColumnTexts(column1, column2)
+    elseif use_three_column_display then
+        return KOR.columntexts:getThreeColumnTexts(column1, column2, column3)
+    end
+
+    return KOR.columntexts:getOneColumnText(column1)
 end
 
 function XrayExporter:showExportXrayItemsDialog()
@@ -194,37 +228,73 @@ function XrayExporter:showExportXrayItemsDialog()
             {
                 tab = self.export_nouns[1],
                 info = function()
-                    return self:getExportDialogInfo(1)
+                    return self:getExportDialogInfo(1, 1)
                 end,
                 info2 = function()
-                    return self:getExportDialogInfo(1, "column_2")
+                    if DX.s.overview_tabs_columns_count < 2 then
+                        return nil
+                    end
+                    return self:getExportDialogInfo(1, 2)
+                end,
+                info3 = function()
+                    if DX.s.overview_tabs_columns_count < 3 then
+                        return nil
+                    end
+                    return self:getExportDialogInfo(1, 3)
                 end,
             },
             {
                 tab = self.export_nouns[2],
                 info = function()
-                    return self:getExportDialogInfo(2)
+                    return self:getExportDialogInfo(2, 1)
                 end,
                 info2 = function()
-                    return self:getExportDialogInfo(2, "column_2")
+                    if DX.s.overview_tabs_columns_count < 2 then
+                        return nil
+                    end
+                    return self:getExportDialogInfo(2, 2)
+                end,
+                info3 = function()
+                    if DX.s.overview_tabs_columns_count < 3 then
+                        return nil
+                    end
+                    return self:getExportDialogInfo(2, 3)
                 end,
             },
             {
                 tab = self.export_nouns[3],
                 info = function()
-                    return self:getExportDialogInfo(3)
+                    return self:getExportDialogInfo(3, 1)
                 end,
                 info2 = function()
-                    return self:getExportDialogInfo(3, "column_2")
+                    if DX.s.overview_tabs_columns_count < 2 then
+                        return nil
+                    end
+                    return self:getExportDialogInfo(3, 2)
+                end,
+                info3 = function()
+                    if DX.s.overview_tabs_columns_count < 3 then
+                        return nil
+                    end
+                    return self:getExportDialogInfo(3, 3)
                 end,
             },
             {
                 tab = self.export_nouns[4],
                 info = function()
-                    return self:getExportDialogInfo(4)
+                    return self:getExportDialogInfo(4, 1)
                 end,
                 info2 = function()
-                    return self:getExportDialogInfo(4, "column_2")
+                    if DX.s.overview_tabs_columns_count < 2 then
+                        return nil
+                    end
+                    return self:getExportDialogInfo(4, 2)
+                end,
+                info3 = function()
+                    if DX.s.overview_tabs_columns_count < 3 then
+                        return nil
+                    end
+                    return self:getExportDialogInfo(4, 3)
                 end,
             },
         },
@@ -241,6 +311,7 @@ function XrayExporter:showExportXrayItemsDialog()
                 end,
             })
         },
+        has_copy_button = true,
         top_buttons_left = top_buttons_left,
     })
     KOR.screenhelpers:refreshScreen()

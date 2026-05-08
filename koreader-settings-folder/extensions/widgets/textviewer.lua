@@ -48,6 +48,7 @@ local Screen = Device.screen
 
 local DX = DX
 local has_no_text = has_no_text
+local has_text = has_text
 local io = io
 local math = math
 local math_floor = math.floor
@@ -113,6 +114,7 @@ local TextViewer = InputContainer:extend{
     find_centered_lines_count = 5, --* line with find results to be not far from the center
     fixed_face = nil,
     fullscreen = false,
+    has_copy_button = false,
     height = nil,
     is_duo_scroll_widget = false,
     is_standard_tabbed_dialog = false,
@@ -150,8 +152,6 @@ local TextViewer = InputContainer:extend{
     text2 = nil,
     --* for three column display:
     text3 = nil,
-    --* for generating an icon-less copy of TextViewer.text:
-    text_for_copy = nil,
     text_margin = Size.margin.small,
     text_padding = Size.padding.large,
     text_padding_top_bottom = nil,
@@ -624,7 +624,7 @@ function TextViewer:initTextWidget()
             self.screen_width = Screen:getWidth()
         end
         --* three column display:
-        if self.text3 then
+        if has_text(self.text3) then
             self.is_three_scroll_widget = true
             self.scroll_text_w, self.scroll_text_w1, self.scroll_text_w2, self.scroll_text_w3 = KOR.columntexts:getThreeWidget({
                 parent = self,
@@ -637,7 +637,7 @@ function TextViewer:initTextWidget()
                 height = height,
             })
         --* two column display:
-        elseif self.text2 then
+        elseif has_text(self.text2) then
             self.is_duo_scroll_widget = true
             self.scroll_text_w, self.scroll_text_w1, self.scroll_text_w2 = KOR.columntexts:getDuoWidget({
                 parent = self,
@@ -1132,24 +1132,6 @@ function TextViewer:getDefaultButtons()
                 end
             end,
         }),
-        KOR.buttoninfopopup:forTextViewerCopy({
-            callback = function()
-                self:onClose()
-                local copy_text = self.text
-                if self.text_for_copy and type(self.text_for_copy) == "function" then
-                    copy_text = self.text_for_copy()
-                elseif self.text_for_copy then
-                    copy_text = self.text_for_copy
-                end
-                if has_no_text(copy_text) then
-                    KOR.messages:notify(tr("text in current dialog/tab was empty"))
-                    return
-                end
-                copy_text = copy_text:gsub("\n\n\n+", "\n\n")
-                Device.input.setClipboardText(copy_text)
-                KOR.messages:notify(tr("text copied to clipboard"))
-            end,
-        }),
         KOR.buttoninfopopup:forTextViewerOneScreenUp({
             callback = function()
                 if self.is_three_scroll_widget then
@@ -1214,7 +1196,29 @@ function TextViewer:getDefaultButtons()
             hold_callback = self.default_hold_callback,
         }),
     }
-    if self.is_three_scroll_widget or self.is_duo_scroll_widget then
+    if self.has_copy_button then
+        table_insert(default_buttons, 3, KOR.buttoninfopopup:forTextViewerCopy({
+            callback = function()
+                self:onClose()
+                --* these tab_texts for the clipboard were set via ((Registry#setClipboardTabText)):
+                local copy_text = KOR.clipboard.tab_texts[self.active_tab]
+                if has_no_text(copy_text) then
+                    KOR.messages:notify(tr("text in current dialog/tab was empty"))
+                    return
+                end
+                copy_text = copy_text
+                    :gsub("\n\n\n+", "\n\n")
+                    --* hotfix for initials in names:
+                    :gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
+                Device.input.setClipboardText(copy_text)
+                KOR.messages:notify(tr("text copied to clipboard"))
+            end,
+        }))
+    end
+    if self.info2 or self.is_three_scroll_widget or self.is_duo_scroll_widget then
+        --* remove search button:
+        table_remove(default_buttons, 1)
+        --* remove search to next separator button:
         table_remove(default_buttons, 1)
     end
 

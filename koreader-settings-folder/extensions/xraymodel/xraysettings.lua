@@ -182,8 +182,8 @@ local XraySettings = WidgetContainer:new{
         },
         overview_tabs_columns_count = {
             value = 3,
-            options = { 2, 3 },
-            explanation = _("This variable determines whether overview tabs like in the Xray Page Information Popup, or the Tag Group Viewer, will have three colums, or two."),
+            options = { 1, 2, 3 },
+            explanation = "This variable determines whether overview tabs like in the Xray Page Information Popup, or the Tag Group Viewer, will display their data in this number of columns.",
             locked = 0,
         },
         PN_infopanel_meta_indent = {
@@ -273,11 +273,6 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
             type = "number",
             after_change_callback = "series_manager_reload",
-        },
-        show_items_in_two_columns = {
-            value = true,
-            explanation = _("With this setting you can force the info in the linked items tabs of Item Viewer, or in the XrayUI page information popup, or in the Xray Items Exporter to be displayed in two columns (if set to true). This two column mode however will only be activated when you are also displaying KOReader in landscape mode."),
-            locked = 0,
         },
         tab_buttons_font_size = {
             value = 13,

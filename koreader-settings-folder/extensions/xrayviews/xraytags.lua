@@ -37,11 +37,15 @@ local XrayTags = WidgetContainer:new{
     names_group3 = nil,
     tag_group = nil,
     tag_group2 = nil,
-    iconless_tag_group = nil,
+
+    tag_group = nil,
+    tag_group2 = nil,
+    tag_group3 = nil,
 
     tag_groups = nil,
     tag_groups2 = nil,
-    iconless_tag_groups = nil,
+    tag_groups3 = nil,
+
     tags = nil,
     tags_concatenated = nil,
 }
@@ -153,13 +157,15 @@ function XrayTags:resetTagGroups()
     self.names_group = nil
     self.names_group2 = nil
     self.names_group3 = nil
+
     self.tag_group = nil
     self.tag_group2 = nil
-    self.iconless_tag_group = nil
+    self.tag_group3 = nil
 
     self.tag_groups = nil
     self.tag_groups2 = nil
-    self.iconless_tag_groups = nil
+    self.tag_groups3 = nil
+
     self.tags_concatenated = nil
 end
 
@@ -190,7 +196,8 @@ end
 --- @private
 function XrayTags:resetAllSelectionsForTag()
     local item_table = DX.d.xray_items_inner_menu.item_table
-    for i = 1, #item_table do
+    count = #item_table
+    for i = 1, count do
         self:resetItemForTagsSelection(item_table[i])
     end
     DX.d.xray_items_inner_menu:updateItems()
@@ -312,23 +319,28 @@ function XrayTags:generateTagGroup(tag)
         is_first_para = false
     end
     count = #tag_group.paras
-    local use_two_column_display = KOR.columntexts:useTwoColumnDisplay(count)
+    KOR.columntexts:initDisplayColumnsCount(count)
 
     --* column2 here will be set to nil if use_two_column_display is false:
-    --* return as text: column1, column2, paragraphs_iconless:
-    local use_three_column_display = #tag_group.names >= 3 and DX.s.overview_tabs_columns_count == 3
-    if use_three_column_display then
-        self.names_group, self.names_group2, self.names_group3 = KOR.columntexts:getThreeColumnTexts(tag_group.names, nil, nil, use_three_column_display)
-    else
+    --* return as text: column1, column2, column3:
+
+    count = #tag_group.names
+    if DX.s.overview_tabs_columns_count == 3 and count >= 3 then
+        self.names_group, self.names_group2, self.names_group3 = KOR.columntexts:getThreeColumnTexts(tag_group.names)
+
+    elseif DX.s.overview_tabs_columns_count == 2 and count >= 2 then
         --* self.names_group3 will always be nil here:
-        self.names_group, self.names_group2, self.names_group3 = KOR.columntexts:getTwoColumnTexts(tag_group.names, nil, use_two_column_display)
+        self.names_group, self.names_group2, self.names_group3 = KOR.columntexts:getTwoColumnTexts(tag_group.names)
+
+    else
+        --* self.names_group2 and self.names_group3 will always be nil here:
+        self.names_group, self.names_group2, self.names_group3 = KOR.columntexts:getOneColumnText(tag_group)
     end
-    self.tag_group, self.tag_group2, self.iconless_tag_group = KOR.columntexts:getTwoColumnTexts(tag_group.paras, nil, use_two_column_display, tag_group.paras_iconless)
 
     return taggroup_count
 end
 
-function XrayTags:generateTagGroupsOverview()
+function XrayTags:generateTagGroupsOverview(clipboard_tab_no)
     local items = DX.vd.items
     local paragraphs = {}
     local paragraphs_iconless = {}
@@ -352,11 +364,22 @@ function XrayTags:generateTagGroupsOverview()
         return
     end
 
-    local use_two_column_display = KOR.columntexts:useTwoColumnDisplay(count)
+    KOR.registry:setClipboardTabText(clipboard_tab_no, table_concat(paragraphs_iconless, "\n\n")
+        :gsub("^\n+", "", 1))
 
-    --* column2 here will be set to nil if use_two_column_display is false:
-    --* return as text: column1, column2, paragraphs_iconless:
-    self.tag_groups, self.tag_groups2, self.iconless_tag_groups = KOR.columntexts:getTwoColumnTexts(paragraphs, nil, use_two_column_display, paragraphs_iconless)
+    KOR.columntexts:initDisplayColumnsCount(count)
+    if DX.s.overview_tabs_columns_count == 3 and count >= 3 then
+        self.tag_groups, self.tag_groups2, self.tag_groups3 = KOR.columntexts:getThreeColumnTexts(paragraphs)
+
+    elseif DX.s.overview_tabs_columns_count == 2 and count >= 2 then
+        self.tag_groups, self.tag_groups2, self.tag_groups3 = KOR.columntexts:getTwoColumnTexts(paragraphs)
+
+    else
+
+        self.tag_groups, self.tag_groups2, self.tag_groups3 = KOR.columntexts:getOneColumnText(paragraphs)
+    end
+
+    self.tag_groups = self.tag_groups:gsub("^\n+", "")
 end
 
 --- @private
@@ -485,6 +508,7 @@ function XrayTags:showTagGroup(tag)
                 tab = _("information"),
                 info = self.tag_group,
                 info2 = self.tag_group2,
+                info3 = self.tag_group3,
             },
         },
         extra_buttons_start_pos = 2,
@@ -516,7 +540,6 @@ function XrayTags:showTagGroup(tag)
                 end,
             }),
         },
-        text_for_copy = self.iconless_tag_group,
     })
 end
 

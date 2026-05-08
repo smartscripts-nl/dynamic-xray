@@ -61,12 +61,16 @@ local HtmlBox = InputContainer:extend{
     has_items_editor = false,
     height = nil,
     html = nil,
-    --* for two column display of linked item in landscape display:
+    --* for two column display of linked items in landscape display:
     html2 = nil,
+    --* for three column display of linked items in landscape display:
+    html3 = nil,
     html_widget = nil,
     html_widget1 = nil,
     html_widget2 = nil,
+    html_widget3 = nil,
     is_duo_scroll_widget = false,
+    is_three_scroll_widget = false,
     key_events_module = nil,
     left_side_buttons = nil,
     modal = true,
@@ -302,8 +306,23 @@ end
 
 --- @private
 function HtmlBox:generateTextScrollWidget()
+    self.is_duo_scroll_widget = false
+    self.is_three_scroll_widget = false
     --* two column display:
-    if self.html2 then
+    if self.html3 then
+        self.is_three_scroll_widget = true
+        self.html_widget, self.html_widget1, self.html_widget2, self.html_widget3 = KOR.columntexts:getThreeWidget({
+            parent = self,
+            column1_text = self.html,
+            column2_text = self.html2,
+            column3_text = self.html3,
+            face = self.content_face,
+            width = self.swidth,
+            container_width = self.screen_width,
+            height = self.sheight,
+        })
+
+    elseif self.html2 then
         self.is_duo_scroll_widget = true
         self.html_widget, self.html_widget1, self.html_widget2 = KOR.columntexts:getDuoWidget({
             parent = self,
@@ -680,7 +699,12 @@ function HtmlBox:generateButtonTables()
                 id = "top",
                 vsync = true,
                 callback = function()
-                    if self.is_duo_scroll_widget then
+                    if self.is_three_scroll_widget then
+                        self.html_widget1:scrollToTop()
+                        self.html_widget2:scrollToTop()
+                        self.html_widget3:scrollToTop()
+                        return
+                    elseif self.is_duo_scroll_widget then
                         self.html_widget1:scrollToTop()
                         self.html_widget2:scrollToTop()
                         return
@@ -693,7 +717,12 @@ function HtmlBox:generateButtonTables()
                 id = "bottom",
                 vsync = true,
                 callback = function()
-                    if self.is_duo_scroll_widget then
+                    if self.is_three_scroll_widget then
+                        self.html_widget1:scrollToBottom()
+                        self.html_widget2:scrollToBottom()
+                        self.html_widget3:scrollToBottom()
+                        return
+                    elseif self.is_duo_scroll_widget then
                         self.html_widget1:scrollToBottom()
                         self.html_widget2:scrollToBottom()
                         return

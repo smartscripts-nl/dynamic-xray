@@ -349,9 +349,13 @@ function Strings:splitLinesToMaxLength(text, indent, first_word, dont_indent_fir
     end
     local max_length = DX.s.PN_info_panel_max_line_length
     --* this might e.g. be set in ((XrayViewsData#generateXrayExportOrLinkedItemInfo)):
-    if not is_iconless and KOR.registry:get("split_to_half_max_length") then
+    --* make line length correspond to the number of columns:
+    if not is_iconless and KOR.registry:get("split_lines_in_half") then
         max_length = math_floor(max_length / 2)
+    elseif not is_iconless and KOR.registry:get("split_lines_in_thirds") then
+        max_length = math_floor(max_length / 3)
     end
+
     if has_content(first_word) then
         text = first_word .. text
     end
