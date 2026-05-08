@@ -105,6 +105,18 @@ function ButtonChoicePopup:forXrayShowTagsDialogForList(props)
 	}, props)
 end
 
+function ButtonChoicePopup:forTextViewerCopy(props)
+	return KOR.buttonprops:set({
+		icon = "copy",
+		icon_size_ratio = 0.5,
+		info = _("copy icon | :copy the text to the clipboard.") .. self.separator .. _("idem & close dialog"),
+		callback_label = _("copy"),
+		--! callback defined by calling module
+		hold_callback_label = _("copy & close"),
+		--! hold_callback defined by calling module
+	}, props)
+end
+
 function ButtonChoicePopup:forXrayPageNavigatorShowTagsDialog(props)
 	--* the minus sign is a n_dash:
 	local state_marker = DX.pn.navigation_tag and "–" or "+"

@@ -223,16 +223,6 @@ function ButtonInfoPopup:forSeriesAll(props)
 	}, props)
 end
 
-function ButtonInfoPopup:forTextViewerCopy(props)
-	return KOR.buttonprops:set({
-		icon = "copy",
-		icon_size_ratio = 0.5,
-		info = _("copy icon | Copy the text to the clipboard."),
-		callback_label = _("copy"),
-		--! callback defined by calling module
-	}, props)
-end
-
 function ButtonInfoPopup:forTextViewerOneScreenDown(props)
 	return KOR.buttonprops:set({
 		icon = "down",

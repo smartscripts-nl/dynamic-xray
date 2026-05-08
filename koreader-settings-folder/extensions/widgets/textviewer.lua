@@ -1197,11 +1197,25 @@ function TextViewer:getDefaultButtons()
         }),
     }
     if self.has_copy_button then
-        table_insert(default_buttons, 3, KOR.buttoninfopopup:forTextViewerCopy({
+        table_insert(default_buttons, 3, KOR.buttonchoicepopup:forTextViewerCopy({
             callback = function()
+                --* these tab_texts for the clipboard were set via ((Registry#setClipboardTabText)):
+                local copy_text = KOR.registry.clipboard_tab_texts[self.active_tab]
+                if has_no_text(copy_text) then
+                    KOR.messages:notify(tr("text in current dialog/tab was empty"))
+                    return
+                end
+                copy_text = copy_text
+                    :gsub("\n\n\n+", "\n\n")
+                    --* hotfix for initials in names:
+                    :gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
+                Device.input.setClipboardText(copy_text)
+                KOR.messages:notify(tr("text copied to clipboard"))
+            end,
+            hold_callback = function()
                 self:onClose()
                 --* these tab_texts for the clipboard were set via ((Registry#setClipboardTabText)):
-                local copy_text = KOR.clipboard.tab_texts[self.active_tab]
+                local copy_text = KOR.registry.clipboard_tab_texts[self.active_tab]
                 if has_no_text(copy_text) then
                     KOR.messages:notify(tr("text in current dialog/tab was empty"))
                     return
