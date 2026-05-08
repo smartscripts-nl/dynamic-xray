@@ -1185,6 +1185,7 @@ function TextViewer:getDefaultButtons()
                 if self.is_three_scroll_widget then
                     self.scroll_text_w1:scrollToBottom()
                     self.scroll_text_w2:scrollToBottom()
+                    self.scroll_text_w3:scrollToBottom()
                     return
                 elseif self.is_duo_scroll_widget then
                     self.scroll_text_w1:scrollToBottom()
