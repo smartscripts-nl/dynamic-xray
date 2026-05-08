@@ -288,7 +288,8 @@ function ColumnTexts:manipulateColumnTexts(column_no, column_text)
 	end
 
 	return column_text
-		:gsub("^\n", "")
+		--* ensure column text aligns at top of column:
+		:gsub("^\n+", "", 1)
 		:gsub("\n\n\n+", separator)
 end
 
