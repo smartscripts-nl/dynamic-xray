@@ -274,6 +274,7 @@ function ColumnTexts:manipulateColumnTexts(column_no, column_text)
 		return
 	end
 	if column_no == 1 then
+		column_text = self:addMetadataTopPadding(column_text)
 		return column_text:gsub("\n\n\n+", separator)
 	end
 
@@ -287,10 +288,20 @@ function ColumnTexts:manipulateColumnTexts(column_no, column_text)
 			:gsub("\n\n\n+", separator)
 	end
 
+	column_text = self:addMetadataTopPadding(column_text)
 	return column_text
 		--* ensure column text aligns at top of column:
 		:gsub("^\n+", "", 1)
 		:gsub("\n\n\n+", separator)
+end
+
+--- @private
+function ColumnTexts:addMetadataTopPadding(text)
+	if not DX.s.items_metadata_add_top_padding then
+		return text
+	end
+	return text
+		:gsub("( +" .. KOR.icons.graph_bare .. ")", "\n%1")
 end
 
 function ColumnTexts:resetCache()
