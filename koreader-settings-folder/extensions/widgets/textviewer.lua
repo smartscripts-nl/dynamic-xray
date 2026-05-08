@@ -1113,6 +1113,7 @@ end
 
 --- @private
 function TextViewer:getDefaultButtons()
+    --* navigation buttons (go to top/bottom, or one screen down/up) are inserted in ((InputDialog#_addScrollButtons)):
     local default_buttons = {
         KOR.buttonchoicepopup:forTextViewerSearch({
             callback = function()
@@ -1198,7 +1199,7 @@ function TextViewer:getDefaultButtons()
         }),
     }
     if self.has_copy_button then
-        table_insert(default_buttons, 3, KOR.buttonchoicepopup:forTextViewerCopy({
+        table_insert(default_buttons, 2, KOR.buttonchoicepopup:forTextViewerCopy({
             callback = function()
                 --* these tab_texts for the clipboard were set via ((Registry#setClipboardTabText)):
                 local copy_text = KOR.registry.clipboard_tab_texts[self.active_tab]
@@ -1232,8 +1233,6 @@ function TextViewer:getDefaultButtons()
     end
     if self.info2 or self.is_three_scroll_widget or self.is_duo_scroll_widget then
         --* remove search button:
-        table_remove(default_buttons, 1)
-        --* remove search to next separator button:
         table_remove(default_buttons, 1)
     end
 
