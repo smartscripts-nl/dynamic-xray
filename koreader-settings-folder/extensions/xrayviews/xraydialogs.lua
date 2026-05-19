@@ -365,50 +365,55 @@ end
 --* extra buttons (from xray items) were populated in ((XrayUI#ReaderHighlightGenerateXrayInformation))
 --* current method called from callback in ((xray paragraph info callback)):
 function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_names3, hits_info, hits_info2, hits_info3, matches_count)
-    if not self.xray_ui_info_dialog and has_text(hits_info) then
-        local matches_count_info = matches_count == 1 and _("1 Xray item") or matches_count .. " " .. _("Xray items")
-        local subject = DX.s.UI_mode == "paragraph" and _(" in this paragraph") or _(" on this page")
-        local target = DX.s.UI_mode == "paragraph" and _("the ENTIRE PAGE") or _("PARAGRAPHS")
-        local new_trigger = DX.s.UI_mode == "paragraph" and _("the first line marked with a lightning icon") or _("a paragraph marked with a star")
-        --* the data below was populated in ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#addParagraphInfoItems)):
-        local key_events_module = "XrayUIpageInfoViewer"
-        local config = {
-            title = matches_count_info .. subject,
-            tabs = {
-                {
-                    tab = "vermeldingen",
-                    info = hits_names,
-                    info2 = hits_names2,
-                    info3 = hits_names3,
-                },
-                {
-                    tab = "informatie",
-                    info = hits_info,
-                    info2 = hits_info2,
-                    info3 = hits_info3,
-                },
-            },
-            fullscreen = true,
-            covers_fullscreen = true,
-            modal = false,
-            top_buttons_left = DX.b:forUiInfoTopLeft(target, new_trigger, self),
-            fixed_face = Font:getFace("x_smallinfofont", 19),
-            close_callback = function()
-                self.xray_ui_info_dialog = nil
-                KOR.dialogs:closeOverlay()
-            end,
-            hotkeys_configurator = function()
-                KOR.keyevents.addHotkeysForXrayUIpageInfoViewer(self, key_events_module)
-            end,
-            after_close_callback = function()
-                KOR.registry:unset("add_parent_hotkeys")
-                KOR.keyevents:unregisterSharedHotkeys(key_events_module)
-            end,
-        }
-        -- #((inject xray list buttons))
-        DX.b:forUiInfoAdditionalButtons(config, self)
-        self.xray_ui_info_dialog = KOR.dialogs:textBoxTabbed(1, config, self)
+    if self.xray_ui_info_dialog or has_no_text(hits_info) then
+        return
     end
+
+    local matches_count_info = matches_count == 1 and _("1 Xray item") or matches_count .. " " .. _("Xray items")
+    local subject = DX.s.UI_mode == "paragraph" and _(" in this paragraph") or _(" on this page")
+    local target = DX.s.UI_mode == "paragraph" and _("the ENTIRE PAGE") or _("PARAGRAPHS")
+    local new_trigger = DX.s.UI_mode == "paragraph" and _("the first line marked with a lightning icon") or _("a paragraph marked with a star")
+    --* the data below was populated in ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#addParagraphInfoItems)):
+    local key_events_module = "XrayUIpageInfoViewer"
+    local config = {
+        title = matches_count_info .. subject,
+        tabs = {
+            {
+                tab = "vermeldingen",
+                info = hits_names,
+                info2 = hits_names2,
+                info3 = hits_names3,
+            },
+            {
+                tab = "informatie",
+                info = hits_info,
+                info2 = hits_info2,
+                info3 = hits_info3,
+            },
+        },
+        fullscreen = true,
+        covers_fullscreen = true,
+        modal = false,
+        top_buttons_left = DX.b:forUiInfoTopLeft(target, new_trigger, self),
+        fixed_face = Font:getFace("x_smallinfofont", 19),
+        close_callback = function()
+            self.xray_ui_info_dialog = nil
+            KOR.dialogs:closeOverlay()
+        end,
+        hotkeys_configurator = function()
+            KOR.keyevents.addHotkeysForXrayUIpageInfoViewer(self, key_events_module)
+        end,
+        after_close_callback = function()
+            KOR.registry:unset("add_parent_hotkeys")
+            KOR.keyevents:unregisterSharedHotkeys(key_events_module)
+        end,
+    }
+    -- #((inject xray list buttons))
+    DX.b:forUiInfoAdditionalButtons(config, self)
+    KOR.registry:set("return_from_settings_callback", function()
+        self:showUiPageInfo(hits_names, hits_names2, hits_names3, hits_info, hits_info2, hits_info3, matches_count)
+    end)
+    self.xray_ui_info_dialog = KOR.dialogs:textBoxTabbed(1, config, self)
 end
 
 --- @private
@@ -670,6 +675,9 @@ function XrayDialogs:showList(focus_item, dont_show, select_mode)
     self.list_is_opened = true
 
     KOR.keyevents:addHotkeysForXrayList(self, key_events_module)
+    KOR.registry:set("return_from_settings_callback", function()
+        self:showListWithRestoredArguments()
+    end)
     UIManager:show(self.xray_items_chooser_dialog)
     self:showActionResultMessage()
 
@@ -827,6 +835,9 @@ function XrayDialogs:showItemViewer(needle_item, props)
 
     --* the Registry var will only be set when called from ((XrayController#showQuotesManager)) and we want to go immediately to the quotes tab:
     local active_tab = KOR.registry:getOnce("active_tab") or 1
+    KOR.registry:set("return_from_settings_callback", function()
+        self:showItemViewer(needle_item, props)
+    end)
     self.item_viewer = KOR.dialogs:htmlBoxTabbed(active_tab, {
         title = title,
         top_buttons_left = DX.b:forItemViewerTopLeft(self, needle_item),

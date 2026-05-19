@@ -175,6 +175,9 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
         chapters_count, ratio_per_chapter, occurrences_per_chapter = self:computeHistogramData(item)
     end
 
+    KOR.registry:set("return_from_settings_callback", function()
+        self:showNavigator(initial_browsing_page)
+    end)
     local key_events_module = "XrayPageNavigator"
     self.page_navigator = KOR.dialogs:navigatorBox({
         chapters_count = chapters_count,

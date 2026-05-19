@@ -492,6 +492,9 @@ function XrayTags:showTagGroupSelector(xray_item)
             KOR.buttoninfopopup:forXraySettings({
                 callback = function()
                     UIManager:close(self.tag_group_selector)
+                    KOR.registry:set("return_from_settings_callback", function()
+                        self:showTagGroupSelector(xray_item)
+                    end)
                     DX.s.showSettingsManager()
                 end
             }),
@@ -512,6 +515,9 @@ function XrayTags:showTagGroup(tag)
             KOR.buttoninfopopup:forXraySettings({
                 callback = function()
                     UIManager:close(self.tag_group_viewer)
+                    KOR.registry:set("return_from_settings_callback", function()
+                        self:showTagGroup(tag)
+                    end)
                     DX.s.showSettingsManager()
                 end
             }),

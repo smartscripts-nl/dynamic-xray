@@ -463,6 +463,7 @@ function SeriesManager:showContextDialog(item, full_path, is_non_series_item)
         }),
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
+                UIManager:close(self.context_dialog)
                 DX.s.showSettingsManager()
             end
         }),
@@ -477,6 +478,9 @@ function SeriesManager:showContextDialog(item, full_path, is_non_series_item)
         }))
     end
     local title = self:formatDialogTitle(item)
+    KOR.registry:set("return_from_settings_callback", function()
+        self:showContextDialog(item, full_path, is_non_series_item)
+    end)
     self.context_dialog = KOR.dialogs:filesBox({
         title = title,
         key_events_module = self.series_context_dialog_index,

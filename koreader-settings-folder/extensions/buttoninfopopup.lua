@@ -559,6 +559,15 @@ function ButtonInfoPopup:forXraySettings(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forXraySettingsReturnToCaller(props)
+	return KOR.buttonprops:set({
+		icon = "back-small",
+		info = _("back icon | Return to the dialog from which you opened these XraySettings."),
+		callback_label = _("return"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forXrayShowMatchReliabilityExplanation(props)
 	return KOR.buttonprops:set({
 		icon = "info-slender",

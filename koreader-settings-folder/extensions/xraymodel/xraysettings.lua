@@ -10,6 +10,7 @@ local _ = KOR:initCustomTranslations()
 
 local DX = DX
 local pairs = pairs
+local table_insert = table.insert
 local type = type
 
 --* DX.m and therefore DX.m:isPrivateDXversion not yet available here:
@@ -413,19 +414,31 @@ function XraySettings.showSettingsManager(active_tab)
     end
     self.active_tab = active_tab
 
+    local top_buttons_left = {
+        {
+            icon = "info-slender",
+            callback = function()
+                return self.settings_manager:showSettingsManagerInfo()
+            end,
+        },
+    }
+    local return_from_settings_callback = KOR.registry:get("return_from_settings_callback")
+    if return_from_settings_callback then
+        table_insert(top_buttons_left, KOR.buttoninfopopup:forXraySettingsReturnToCaller({
+            callback = function()
+                UIManager:close(self.tabbed_interface)
+                return_from_settings_callback()
+                KOR.registry:unset("return_from_settings_callback")
+            end,
+        }))
+    end
+
     self.settings_manager:setProp("active_tab", active_tab)
     self.tabbed_interface = KOR.tabbedlist:create({
         caller = self,
         caller_method = self.showSettingsManager,
         menu_manager = self.settings_manager,
-        top_buttons_left = {
-            {
-                icon = "info-slender",
-                callback = function()
-                    return self.settings_manager:showSettingsManagerInfo()
-                end,
-            },
-        },
+        top_buttons_left = top_buttons_left,
         populate_tab_items_callback = function()
             self.settings_manager:updateItemTableForTab()
         end,
