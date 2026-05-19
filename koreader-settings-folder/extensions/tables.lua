@@ -96,7 +96,7 @@ function Tables:populateWithPlaceholders(items_count, default_value)
     return temp
 end
 
-function Tables:associativeTableLength(itable)
+function Tables:getAssociativeTableLength(itable)
     local iteration = 0
     local garbage
     for _, v in pairs(itable) do

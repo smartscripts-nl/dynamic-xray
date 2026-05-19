@@ -22,12 +22,17 @@ local count
 --- @class ColumnTexts
 local ColumnTexts = WidgetContainer:extend{
 	is_landscape_screen = nil,
+	line_split_vars = {
+		"none",
+		"split_lines_in_half",
+		"split_lines_in_thirds",
+	},
 	separator_needles = {
 		KOR.icons.xray_person_bare,
 		KOR.icons.xray_person_important_bare,
 		KOR.icons.xray_term_bare,
 		KOR.icons.xray_term_important_bare,
-	}
+	},
 }
 
 function ColumnTexts:getOneColumnText(column1_items, separator)
@@ -312,23 +317,25 @@ function ColumnTexts:initDisplayColumnsCount(items_count)
 	if not items_count then
 		return
 	end
-	if DX.s.is_mobile_device or DX.s.overview_tabs_columns_count == 1 then
-		self:unsetColumnVars(1)
-		return
-	end
 
 	if self.is_landscape_screen == nil then
 		self.is_landscape_screen = Screen:getWidth() > Screen:getHeight()
 	end
-	if items_count >= DX.s.overview_tabs_columns_count and self.is_landscape_screen then
-		if DX.s.overview_tabs_columns_count == 2 then
-			KOR.registry:set("split_lines_in_half", true)
-			self:unsetColumnVars(2)
-		else
-			KOR.registry:set("split_lines_in_thirds", true)
-			self:unsetColumnVars(3)
-		end
+	if
+		DX.s.is_mobile_device
+		or DX.s.overview_tabs_columns_count == 1
+		or items_count < DX.s.overview_tabs_columns_count
+		or not self.is_landscape_screen
+	then
+		self:unsetColumnVars(1)
+		return
 	end
+
+	--* ccount can't be 1 here, that situation was handled at start of current method:
+	local ccount = DX.s.overview_tabs_columns_count
+	self:unsetColumnVars(ccount)
+
+	KOR.registry:set(self.line_split_vars[ccount], true)
 end
 
 function ColumnTexts:unsetColumnVars(reset_mode)
@@ -339,6 +346,7 @@ function ColumnTexts:unsetColumnVars(reset_mode)
 		KOR.registry:unset("split_lines_in_thirds", "add_icon_indent")
 		return
 	end
+	--* reset_mode == 3:
 	KOR.registry:unset("split_lines_in_half", "add_icon_indent")
 end
 

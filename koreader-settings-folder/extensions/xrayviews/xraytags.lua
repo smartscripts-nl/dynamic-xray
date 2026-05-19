@@ -35,8 +35,6 @@ local XrayTags = WidgetContainer:new{
     names_group = nil,
     names_group2 = nil,
     names_group3 = nil,
-    tag_group = nil,
-    tag_group2 = nil,
 
     tag_group = nil,
     tag_group2 = nil,
@@ -130,7 +128,7 @@ function XrayTags:addTagGroup(called_from_list)
 end
 
 function XrayTags:addTagsToItems()
-    if KOR.tables:associativeTableLength(self.select_for_tag_items) == 0 then
+    if KOR.tables:getAssociativeTableLength(self.select_for_tag_items) == 0 then
         KOR.messages:notify(_("you haven't selected any items for tag update yet"), 4)
         self:resetModule()
         DX.d:showListWithRestoredArguments()
@@ -313,6 +311,7 @@ function XrayTags:generateTagGroup(tag)
             table_insert(tagged_items, items[i])
         end
     end
+    --* this count will be returned at the end of the current method:
     local taggroup_count = #tagged_items
     for i = 1, taggroup_count do
         self:populateTagGroup(tag_group, tag, tagged_items[i], taggroup_count, is_first_para)
@@ -327,14 +326,17 @@ function XrayTags:generateTagGroup(tag)
     count = #tag_group.names
     if DX.s.overview_tabs_columns_count == 3 and count >= 3 then
         self.names_group, self.names_group2, self.names_group3 = KOR.columntexts:getThreeColumnTexts(tag_group.names)
+        self.tag_group, self.tag_group2, self.tag_group3 = KOR.columntexts:getThreeColumnTexts(tag_group.paras)
 
     elseif DX.s.overview_tabs_columns_count == 2 and count >= 2 then
         --* self.names_group3 will always be nil here:
         self.names_group, self.names_group2, self.names_group3 = KOR.columntexts:getTwoColumnTexts(tag_group.names)
+        self.tag_group, self.tag_group2, self.tag_group3 = KOR.columntexts:getTwoColumnTexts(tag_group.paras)
 
     else
         --* self.names_group2 and self.names_group3 will always be nil here:
-        self.names_group, self.names_group2, self.names_group3 = KOR.columntexts:getOneColumnText(tag_group)
+        self.names_group, self.names_group2, self.names_group3 = KOR.columntexts:getOneColumnText(tag_group.names)
+        self.tag_group, self.tag_group2, self.tag_group3 = KOR.columntexts:getOneColumnText(tag_group.paras)
     end
 
     return taggroup_count
@@ -367,7 +369,8 @@ function XrayTags:generateTagGroupsOverview(clipboard_tab_no)
     KOR.registry:setClipboardTabText(clipboard_tab_no, table_concat(paragraphs_iconless, "\n\n")
         :gsub("^\n+", "", 1))
 
-    KOR.columntexts:initDisplayColumnsCount(count)
+    --? do we need this still? Maybe to generate clipboard texts?:
+    --[[KOR.columntexts:initDisplayColumnsCount(count)
     if DX.s.overview_tabs_columns_count == 3 and count >= 3 then
         self.tag_groups, self.tag_groups2, self.tag_groups3 = KOR.columntexts:getThreeColumnTexts(paragraphs)
 
@@ -379,7 +382,7 @@ function XrayTags:generateTagGroupsOverview(clipboard_tab_no)
         self.tag_groups, self.tag_groups2, self.tag_groups3 = KOR.columntexts:getOneColumnText(paragraphs)
     end
 
-    self.tag_groups = self.tag_groups:gsub("^\n+", "")
+    self.tag_groups = self.tag_groups:gsub("^\n+", "")]]
 end
 
 --- @private
@@ -485,6 +488,14 @@ function XrayTags:showTagGroupSelector(xray_item)
         use_low_title = true,
         title_align = "center",
         font_weight = "normal",
+        top_buttons_left = {
+            KOR.buttoninfopopup:forXraySettings({
+                callback = function()
+                    UIManager:close(self.tag_group_selector)
+                    DX.s.showSettingsManager()
+                end
+            }),
+        },
         width_factor = 0.95,
         button_width = 0.33,
         buttons = DX.b:forTagGroupsSelector(self, "tag_group_selector", taggroups_with_totals),
@@ -497,6 +508,14 @@ function XrayTags:showTagGroup(tag)
     self.tag_group_viewer = KOR.dialogs:textBoxTabbed(1, {
         title = _("Tag-group") .. ": " .. tag .. " (" .. taggroup_count .. ")",
         fullscreen = true,
+        top_buttons_left = {
+            KOR.buttoninfopopup:forXraySettings({
+                callback = function()
+                    UIManager:close(self.tag_group_viewer)
+                    DX.s.showSettingsManager()
+                end
+            }),
+        },
         tabs = {
             {
                 tab = _("overview"),
