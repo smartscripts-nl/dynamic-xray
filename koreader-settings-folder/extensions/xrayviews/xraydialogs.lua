@@ -1037,6 +1037,14 @@ function XrayDialogs:showTappedWordCollectionPopup(buttons, buttons_count, tappe
         title = tapped_word .. KOR.icons.arrow .. buttons_count .. _(" xray items found:"),
         title_align = "center",
         use_low_title = true,
+        top_buttons_left = {
+            KOR.buttoninfopopup:forXraySettings({
+                callback = function()
+                    UIManager:close(self.xray_item_chooser)
+                    DX.s.showSettingsManager()
+                end
+            }),
+        },
         --no_overlay = true,
         after_close_callback = function()
             self.xray_item_chooser = nil

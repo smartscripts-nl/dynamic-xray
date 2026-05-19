@@ -77,13 +77,13 @@ function XrayTappedWords:getXrayItemAsDictionaryEntry(tapped_word)
 
             -- #((xray_item as dictionary plugin pre dialog))
             --* we only want to show the popup if there are more than one item found, because in case of only one item we can immediately show that in the Item Viewer:
-            if #items_found > 1 then
+            if not DX.s.TW_only_show_main_item and #items_found > 1 then
                 --* items will already be sorted by name or hits...
                 local buttons, buttons_count = DX.b:forItemsCollectionPopup(items_found, tapped_word)
                 DX.d:showTappedWordCollectionPopup(buttons, buttons_count, tapped_word)
                 return true
 
-            --* when only a single item found, show it immediately:
+                --* when only a single item found (or when DX.s.TW_only_show_main_item is set to true, in case of multiple related items), show this main item immediately:
             elseif #items_found > 0 then
                 --* false for called_from_list:
                 DX.d:viewItem(items_found[1], false, tapped_word)

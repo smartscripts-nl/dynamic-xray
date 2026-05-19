@@ -38,6 +38,7 @@ local XraySettings = WidgetContainer:new{
             explanation = _("If true, in the top left of several DX dialogs a lightbulb icon will be shown, with which the user can call general usage tips for DX."),
             locked = 0,
         },
+        --* hk stands for "hotkey":
         hk_add_item = {
             value = "A",
             explanation = _("To add a new Xray item, in the Item Viewer, the Items List or the Page Navigator.") .. hotkeys_warning,
@@ -148,6 +149,7 @@ local XraySettings = WidgetContainer:new{
             explanation = "If set to true, metadata of Xray items will be separated from their description with a empty line.",
             locked = 0,
         },
+        --* IV stands for the Item Viewer:
         IV_font_size = {
             value = 17,
             explanation = _("This variable determines the font size of the information in the Item Viewer dialog."),
@@ -191,6 +193,7 @@ local XraySettings = WidgetContainer:new{
             explanation = "This variable determines whether overview tabs like in the Xray Page Information Popup, or the Tag Group Viewer, will display their data in this number of columns.",
             locked = 0,
         },
+        --* PN stands for the PageNavigator:
         PN_infopanel_meta_indent = {
             value = 10,
             explanation = _("This variables enables the numbers of spaces used to indent the item meta information (hits, aliases etc.) in the PN item info panel at the bottom."),
@@ -286,6 +289,13 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
             after_change_callback = "set_tab_buttons_font_size",
         },
+        --* TW stands for TappedWords:
+        TW_only_show_main_item = {
+            value = false,
+            explanation = "If set to true, upon longpressing an Xray item in the book text don't show the popup with the main item + related items, but immediately show the main item in the Item Viewer. This saves you an additional tap to get to the Viewer.",
+            locked = 0,
+        },
+        --* UI stands for the UI Page Information popup:
         UI_marker_callback = {
             value = "page_information",
             options = { "page_information_popup", "page_navigator" },
