@@ -428,7 +428,7 @@ function XraySettings.showSettingsManager(active_tab)
             callback = function()
                 UIManager:close(self.tabbed_interface)
                 return_from_settings_callback()
-                KOR.registry:unset("return_from_settings_callback")
+                --! don't reset var "return_from_settings_callback" here, so its callback stays available (until a new one is defined)
             end,
         }))
     end
