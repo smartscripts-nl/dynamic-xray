@@ -5,6 +5,7 @@ local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 
 local DX = DX
+local math_min = math.min
 local tonumber = tonumber
 local type = type
 
@@ -21,7 +22,7 @@ function StatisticsHelpers:getPagesReadPercentage(full_path, percentage)
         if current_page and total_pages and total_pages > 0 then
             --* this is the format expected by ((SeriesManager#getMetaInformation)):
             --! so here we return data for the current ebook, so we return total_pages also, because more up-to-date than data retrieved from db:
-            return current_page .. "/" .. total_pages, current_page / total_pages, total_pages
+            return current_page .. "/" .. total_pages, math_min(1, current_page / total_pages), total_pages
         end
     end
 
@@ -32,7 +33,7 @@ function StatisticsHelpers:getPagesReadPercentage(full_path, percentage)
         if not current_page or not total_pages then
             return
         end
-        return percentage, current_page / total_pages
+        return percentage, math_min(1, current_page / total_pages)
     end
 end
 
