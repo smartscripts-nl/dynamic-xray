@@ -1013,8 +1013,7 @@ function XrayButtons:forItemViewerTopLeft(parent)
         KOR.buttoninfopopup:forXrayTranslations(),
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
-                UIManager:close(parent.item_viewer)
-                parent.item_viewer = nil
+                parent:closeItemViewer()
                 DX.s.showSettingsManager()
             end
         }),

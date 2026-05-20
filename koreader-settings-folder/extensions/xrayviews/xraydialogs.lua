@@ -410,9 +410,6 @@ function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_names3, hits_i
     }
     -- #((inject xray list buttons))
     DX.b:forUiInfoAdditionalButtons(config, self)
-    KOR.registry:set("return_from_settings_callback", function()
-        self:showUiPageInfo(hits_names, hits_names2, hits_names3, hits_info, hits_info2, hits_info3, matches_count)
-    end)
     self.xray_ui_info_dialog = KOR.dialogs:textBoxTabbed(1, config, self)
 end
 
@@ -795,6 +792,10 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
     if needle_item.index > current_items_count then
         needle_item.index = current_items_count
     end
+    KOR.registry:set("return_from_settings_callback", function()
+        self:closeItemViewer()
+        self:viewItem(needle_item, called_from_list, tapped_word, skip_item_search)
+    end)
     self:showItemViewer(needle_item, {
         icon = icon,
         name = name,
@@ -835,9 +836,6 @@ function XrayDialogs:showItemViewer(needle_item, props)
 
     --* the Registry var will only be set when called from ((XrayController#showQuotesManager)) and we want to go immediately to the quotes tab:
     local active_tab = KOR.registry:getOnce("active_tab") or 1
-    KOR.registry:set("return_from_settings_callback", function()
-        self:showItemViewer(needle_item, props)
-    end)
     self.item_viewer = KOR.dialogs:htmlBoxTabbed(active_tab, {
         title = title,
         top_buttons_left = DX.b:forItemViewerTopLeft(self, needle_item),

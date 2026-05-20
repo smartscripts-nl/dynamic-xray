@@ -195,6 +195,10 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
         return
     end
 
+    KOR.registry:set("return_from_settings_callback", function()
+        self:showParagraphInformation(xray_rects, nr, mode)
+    end)
+
     local paragraph_text = self.paragraph_texts[nr]
     local paragraph_hits_names = {}
     local paragraph_hits_names2 = {}

@@ -422,6 +422,7 @@ function XraySettings.showSettingsManager(active_tab)
             end,
         },
     }
+    --* these callbacks for now set in ((XrayUI#showParagraphInformation)), ((XrayDialogs#showList)), ((XrayDialogs#viewItem)), ((XrayPageNavigator#showNavigator)), ((XrayTags#showTagGroupSelector)), ((XrayTags#showTagGroup)), ((SeriesManager#showContextDialog)):
     local return_from_settings_callback = KOR.registry:get("return_from_settings_callback")
     if return_from_settings_callback then
         table_insert(top_buttons_left, KOR.buttoninfopopup:forXraySettingsReturnToCaller({
