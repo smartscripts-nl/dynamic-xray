@@ -33,9 +33,11 @@ local has_text = has_text
 local math_floor = math.floor
 local table = table
 local table_insert = table.insert
+local tonumber = tonumber
 local tostring = tostring
 
 local count
+local G_reader_settings = G_reader_settings
 --- @type XrayTranslations translations
 local translations
 
@@ -746,6 +748,65 @@ TO SERIES MODE %2 ?
         DX.vd.list_display_mode = mode
         DX.c:toggleBookOrSeriesMode(mode, focus_item, dont_show)
     end)
+end
+
+function XrayDialogs:showTopBookItems()
+
+    local db_items = DX.dl:getTopBookItems(DX.s.top_book_items_limit)
+    if not db_items then
+        KOR.messages:notify("nog geen items gedefinieerd voor het huidige e-boek.")
+        return
+    end
+    local item_table = {}
+    count = #db_items[1]
+    local add_spacer = count > 9
+    for i = 1, count do
+        local item = {
+            id = tonumber(db_items["id"][i]),
+            name = db_items["name"][i],
+        }
+        table_insert(item_table, {
+            text = KOR.strings:formatListItemNumber(i, T("%1 %2  -  %3: %4", KOR.icons.graph_bare, tonumber(db_items["book_hits"][i]), db_items["name"][i], db_items["description"][i]), add_spacer),
+            callback = function()
+                item = DX.vd:upgradeNeedleItem(item, {
+                    include_name_matches = true,
+                    is_exists_check = true,
+                })
+                KOR.registry:set("return_to_caller_callback", function()
+                    self:showTopBookItems()
+                end)
+                UIManager:close(self.most_mentioned_dialog)
+                self:viewItem(item)
+            end,
+        })
+    end
+
+    local dimen = Screen:getSize()
+    self.most_mentioned_dialog = CenterContainer:new {
+        dimen = dimen,
+        modal = true,
+    }
+    self.most_mentioned_menu = Menu:new {
+        show_parent = self.most_mentioned_dialog,
+        no_overlay = true,
+        width = dimen.w,
+        height = dimen.h,
+        is_borderless = true,
+        is_popout = false,
+        fullscreen = true,
+        no_overlay = true,
+        perpage = G_reader_settings:readSetting("items_per_page") or 14,
+        menu_name = "xray_top_book_items",
+        top_buttons_left = DX.b:forMostMentionedItems(self),
+    }
+    table_insert(self.most_mentioned_dialog, self.most_mentioned_menu)
+    self.most_mentioned_menu.close_callback = function()
+        UIManager:close(self.most_mentioned_dialog)
+    end
+    self.most_mentioned_menu:switchItemTable(_("Most often mentioned in current e-book"), item_table, self.most_mentioned_menu.page)
+    UIManager:show(self.most_mentioned_dialog)
+
+    KOR.dialogs:registerWidget(self.most_mentioned_dialog)
 end
 
 --- @private

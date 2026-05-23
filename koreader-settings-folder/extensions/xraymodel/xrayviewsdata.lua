@@ -559,7 +559,8 @@ function XrayViewsData:_doStrongMatchCheck(needle_item, matcher, args, t, for_re
     --* for checks whether an item exists we use very strict matching:
     exists = is_exists_check and
         (
-            existing_name == needle_item.name
+            existing_item.id == needle_item.id
+            or existing_name == needle_item.name
             or existing_name_inverted == needle_item.name
             or existing_name:match("^" .. matcher .. "[, ]")
             or existing_name:match(" " .. matcher .. "[, ]")

@@ -488,20 +488,10 @@ function XrayTags:showTagGroupSelector(xray_item)
         use_low_title = true,
         title_align = "center",
         font_weight = "normal",
-        top_buttons_left = {
-            KOR.buttoninfopopup:forXraySettings({
-                callback = function()
-                    UIManager:close(self.tag_group_selector)
-                    KOR.registry:set("return_from_settings_callback", function()
-                        self:showTagGroupSelector(xray_item)
-                    end)
-                    DX.s.showSettingsManager()
-                end
-            }),
-        },
+        top_buttons_left = DX.b:forTagGroupSelectorTopLeft(self, xray_item),
         width_factor = 0.95,
         button_width = 0.33,
-        buttons = DX.b:forTagGroupsSelector(self, "tag_group_selector", taggroups_with_totals),
+        buttons = DX.b:forTagGroupSelector(self, "tag_group_selector", taggroups_with_totals),
     }
     UIManager:show(self.tag_group_selector)
 end

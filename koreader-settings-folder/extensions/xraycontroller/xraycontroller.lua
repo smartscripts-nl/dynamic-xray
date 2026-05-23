@@ -275,6 +275,28 @@ function XrayController:doBatchImport(conn, stmt, count, callback)
     return conn, stmt
 end
 
+--* this method will be called by KOReader if the user checked the option to also remove the plugin setting upon removing DX:
+function XrayController:deletePluginSettings()
+    local ok, err
+    ok, err = self:deleteDxFiles()
+    if not ok then
+        return ok, err
+    end
+    ok, err = self:deleteDxDatabaseEntries()
+
+    return ok, err
+end
+
+--- @private
+function XrayController:deleteDxDatabaseEntries()
+
+end
+
+--- @private
+function XrayController:deleteDxFiles()
+
+end
+
 function XrayController:listHasReloadOrDontShowRequest(focus_item, dont_show)
     --* if no hits found with a filter, all lists and filters have been reset and we restart the list:
     --* self.list_title is set in ((XrayDialogs#initListDialog)):

@@ -541,10 +541,20 @@ function ButtonInfoPopup:forXrayQuotesManager(props)
 	}, props)
 end
 
+--* this method will be called when a Registry var "return_to_caller_callback" has been set, to return from a dialog to its calling dialog:
+function ButtonInfoPopup:forXrayReturnToCaller(props)
+	return KOR.buttonprops:set({
+		icon = "back-small",
+		info = _("back icon | Return to the dialog from which you opened the current item."),
+		callback_label = ("return"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forXraySaveTaggedItems(props)
 	return KOR.buttonprops:set({
 		icon = "save",
-		info = "floppy disk icon | Save selected items for the tag.",
+		info = _("floppy disk icon | Save selected items for the tag."),
 		callback_label = _("save"),
 		--! callback defined by calling module
 	}, props)
@@ -665,6 +675,15 @@ function ButtonInfoPopup:forXrayToggleSortingMode(props)
 	return KOR.buttonprops:set({
 		icon = "sort",
 		--* info and callback_label props will be defined by caller
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forXrayTopBookItems(props)
+	return KOR.buttonprops:set({
+		icon = "prize",
+		info = T(_("Show the %1 most often mentioned Xray items in the current e-book."), DX.s.top_book_items_limit),
+		callback_label = _("show"),
 		--! callback defined by calling module
 	}, props)
 end

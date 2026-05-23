@@ -188,6 +188,16 @@ function XrayUI:getParaMarker(bb)
 end
 
 --- @private
+function XrayUI:setReturnCallbacks(xray_rects, nr, mode)
+    KOR.registry:set("return_from_settings_callback", function()
+        self:showParagraphInformation(xray_rects, nr, mode)
+    end)
+    KOR.registry:set("return_to_caller_callback", function()
+        self:showParagraphInformation(xray_rects, nr, mode)
+    end)
+end
+
+--- @private
 function XrayUI:showParagraphInformation(xray_rects, nr, mode)
     if mode == "hold" then
         local current_epage = self:getCurrentPage()
@@ -195,9 +205,7 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
         return
     end
 
-    KOR.registry:set("return_from_settings_callback", function()
-        self:showParagraphInformation(xray_rects, nr, mode)
-    end)
+    self:setReturnCallbacks(xray_rects, nr, mode)
 
     local paragraph_text = self.paragraph_texts[nr]
     local paragraph_hits_names = {}

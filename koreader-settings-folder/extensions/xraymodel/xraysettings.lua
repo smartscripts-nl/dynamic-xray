@@ -290,6 +290,12 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
             after_change_callback = "set_tab_buttons_font_size",
         },
+        top_book_items_limit = {
+            value = 8,
+            explanation = _("This setting determines how many items mentioned the most in the current e-book will be shown in the Top Book Items list (prize icon)."),
+            type = "number",
+            locked = 0,
+        },
         --* TW stands for TappedWords:
         TW_only_show_main_item = {
             value = false,

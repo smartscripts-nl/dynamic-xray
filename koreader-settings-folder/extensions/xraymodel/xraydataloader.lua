@@ -228,6 +228,12 @@ local XrayDataLoader = WidgetContainer:new{
             FROM xray_items x
             JOIN bookinfo b ON b.filename = x.ebook
             WHERE x.name = '%1' AND b.series = '%2';]],
+
+        get_top_book_items = [[
+            SELECT id, name, book_hits, description
+            FROM xray_items
+            WHERE ebook = '%1'
+            ORDER BY book_hits DESC LIMIT %2;]],
     },
     queries_external = {
         --* used in ((XrayTranslations#loadAllTranslations)):
@@ -469,6 +475,15 @@ function XrayDataLoader:getItemsForImportFromSeries(conn, series)
     sql = KOR.databases:injectSafePath(sql, parent.current_ebook_basename)
 
     return conn:exec(sql)
+end
+
+function XrayDataLoader:getTopBookItems(limit)
+    local conn = KOR.databases:getDBconn("XrayDataLoader:getTopBookItems")
+    local file_basename = KOR.databases:escape(parent.current_ebook_basename)
+    local sql = T(self.queries.get_top_book_items, file_basename, limit)
+    local result = conn:exec(sql)
+    conn = KOR.databases:closeConnections(conn)
+    return result
 end
 
 function XrayDataLoader.getQuotesForItemByName(name)

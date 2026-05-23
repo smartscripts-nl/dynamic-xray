@@ -10,7 +10,7 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 local Screen = Device.screen
 
-local table = table
+local table_insert = table.insert
 
 --- @class TabbedList
 local TabbedList = WidgetContainer:extend{
@@ -37,6 +37,7 @@ function TabbedList:create(args)
         is_borderless = true,
         is_popout = false,
         fullscreen = true,
+        no_overlay = true,
         with_bottom_line = true,
         perpage = caller.items_per_page,
         menu_name = "xray_settings",
@@ -47,10 +48,9 @@ function TabbedList:create(args)
         onMenuHold = menu_manager.onMenuHoldSettings,
         _manager = menu_manager,
     }
-    table.insert(self.tabbed_dialog, self.tabbed_menu)
+    table_insert(self.tabbed_dialog, self.tabbed_menu)
     self.tabbed_menu.close_callback = function()
         UIManager:close(self.tabbed_dialog)
-        KOR.dialogs:closeOverlay()
     end
     --* makes the menu_parent via the caller update it items:
     args.populate_tab_items_callback()

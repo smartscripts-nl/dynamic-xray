@@ -49,7 +49,7 @@ local XrayButtons = WidgetContainer:new{
     xray_type_chooser = nil,
 }
 
---* this button is added to the general tag-group selector, for exploring the items of a tag-group, in ((XrayButtons#forTagGroupsSelector)), and to the select-tag-filter popup of Xray Page Navigator, in ((XrayTags#showTagFilterSelector)):
+--* this button is added to the general tag-group selector, for exploring the items of a tag-group, in ((XrayButtons#forTagGroupSelector)), and to the select-tag-filter popup of Xray Page Navigator, in ((XrayTags#showTagFilterSelector)):
 --- @param parent XrayTags
 function XrayButtons:addXrayTagGroupAddButton(buttons, buttons_per_row, parent, dialog_index)
     local add_button = KOR.buttoninfopopup:forXrayTagGroupAdd({
@@ -223,6 +223,40 @@ function XrayButtons:addMoreButton(buttons, indicator_buttons, props)
     })
 end
 
+--- @param parent XrayDialogs
+function XrayButtons:forMostMentionedItems(parent)
+    local buttons = {
+        {
+            icon = "info-slender",
+            callback = function()
+                KOR.dialogs:niceAlert("Most often mentioned Xray items", "You can open an item in Item Viewer by tapping on it.\n\nWith the back button in the upper left corner of the Viewer you can return to the current list.\n\nWith the XraySettings setting \"top_book_items_limit\" you can determine how many items will be shown in the current list.")
+            end,
+        },
+        KOR.buttoninfopopup:forXraySettings({
+            callback = function()
+                UIManager:close(parent.most_mentioned_dialog)
+                KOR.registry:set("return_from_settings_callback", function()
+                    parent:showTopBookItems()
+                end)
+                DX.s.showSettingsManager()
+            end
+        }),
+    }
+
+    --* e.g. set in ((XrayTags#showTagGroupSelector)):
+    local return_to_caller_callback = KOR.registry:getOnce("return_to_caller_callback")
+    if return_to_caller_callback then
+        table_insert(buttons, KOR.buttoninfopopup:forXrayReturnToCaller({
+            callback = function()
+                UIManager:close(parent.most_mentioned_dialog)
+                return_to_caller_callback()
+            end,
+        }))
+    end
+
+    return buttons
+end
+
 --- @param parent XrayPageNavigator
 function XrayButtons:forPageNavigator(parent)
     return {{
@@ -360,6 +394,13 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
                 return DX.cb:execShowItemOccurrencesCallback()
             end
         }),
+        KOR.buttoninfopopup:forXrayTopBookItems({
+            callback = function()
+                parent:closePopupMenu()
+                parent:closePageNavigator()
+                DX.d:showTopBookItems()
+            end,
+        }),
         KOR.buttoninfopopup:forXrayPageNavigatorShowPageBrowser({
             callback = function()
                 parent:closePopupMenu()
@@ -444,6 +485,7 @@ function XrayButtons:getSeriesManagerButton(dialog)
     })
 end
 
+--- @param parent XrayDialogs
 function XrayButtons:forUiInfoAdditionalButtons(config, parent)
     local series_manager_button = self:getSeriesManagerButton(parent.xray_ui_info_dialog)
     config.extra_buttons = {
@@ -464,6 +506,13 @@ function XrayButtons:forUiInfoAdditionalButtons(config, parent)
             callback = function()
                 DX.ta:showTagGroupSelector()
             end
+        }),
+        KOR.buttoninfopopup:forXrayTopBookItems({
+            callback = function()
+                UIManager:close(parent.xray_ui_info_dialog)
+                parent.xray_ui_info_dialog = nil
+                parent:showTopBookItems()
+            end,
         }),
         KOR.buttoninfopopup:forXrayExport({
             callback = function()
@@ -695,8 +744,9 @@ function XrayButtons:forSaveGlossary(parent, glossary, glossary_text, css_files)
      }}
 end
 
+--* add the main buttons for selecting a specific tag group:
 --- @param parent XrayTags
-function XrayButtons:forTagGroupsSelector(parent, dialog_index, tags)
+function XrayButtons:forTagGroupSelector(parent, dialog_index, tags)
     local buttons_per_row = 5
     local current_row
     count = #tags
@@ -718,6 +768,30 @@ function XrayButtons:forTagGroupsSelector(parent, dialog_index, tags)
     self:addXrayTagGroupAddButton(buttons, buttons_per_row, parent, dialog_index)
 
     return buttons
+end
+
+--- @param parent XrayTags
+function XrayButtons:forTagGroupSelectorTopLeft(parent, xray_item)
+    return {
+        KOR.buttoninfopopup:forXrayTopBookItems({
+            callback = function()
+                UIManager:close(parent.tag_group_selector)
+                KOR.registry:set("return_to_caller_callback", function()
+                    parent:showTagGroupSelector(xray_item)
+                end)
+                DX.d:showTopBookItems()
+            end
+        }),
+        KOR.buttoninfopopup:forXraySettings({
+            callback = function()
+                UIManager:close(parent.tag_group_selector)
+                KOR.registry:set("return_from_settings_callback", function()
+                    parent:showTagGroupSelector(xray_item)
+                end)
+                DX.s.showSettingsManager()
+            end
+        }),
+    }
 end
 
 --* compare ((XrayButtons#forItemViewer)) and buttons for list view ((XrayButtons#forListFooterLeft)), ((XrayButtons#forListFooterRight)), ((XrayButtons#forListContext)):
@@ -1019,6 +1093,15 @@ function XrayButtons:forItemViewerTopLeft(parent)
         }),
     }
     self:insertGeneralDXTipsButton(buttons, parent)
+    local return_to_caller_callback = KOR.registry:getOnce("return_to_caller_callback")
+    if return_to_caller_callback then
+        table_insert(buttons, KOR.buttoninfopopup:forXrayReturnToCaller({
+            callback = function()
+                parent:closeItemViewer()
+                return_to_caller_callback()
+            end,
+        }))
+    end
 
     return buttons
 end
@@ -1132,6 +1215,11 @@ Current sorting mode: %1.]]), current_sorting_mode:upper()),
                 DX.c:toggleSortingMode()
             end,
             show_parent = DX.c,
+        })),
+        Button:new(KOR.buttoninfopopup:forXrayTopBookItems({
+            callback = function()
+                DX.d:showTopBookItems()
+            end
         })),
         Button:new(KOR.buttonchoicepopup:forXrayShowTagsDialogForList({
             callback = function()
