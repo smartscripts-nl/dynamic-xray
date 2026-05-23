@@ -229,7 +229,7 @@ function XrayButtons:forMostMentionedItems(parent)
         {
             icon = "info-slender",
             callback = function()
-                KOR.dialogs:niceAlert("Most often mentioned Xray items", "You can open an item in Item Viewer by tapping on it.\n\nWith the back button in the upper left corner of the Viewer you can return to the current list.\n\nWith the XraySettings setting \"top_book_items_limit\" you can determine how many items will be shown in the current list.")
+                KOR.dialogs:niceAlert("Most often mentioned Xray items", "You can open an item in Item Viewer by tapping on it.\n\nWith the back button in the upper left corner of the Viewer you can return to the current list.\n\nWith the setting \"top_book_items_limit\" you can determine how many items will be shown in the current list.")
             end,
         },
         KOR.buttoninfopopup:forXraySettings({
@@ -492,31 +492,31 @@ function XrayButtons:forUiInfoAdditionalButtons(config, parent)
         KOR.buttoninfopopup:forXrayList({
             fgcolor = KOR.colors.button_label,
             callback = function()
-                UIManager:close(parent.xray_ui_info_dialog)
-                parent.xray_ui_info_dialog = nil
+                parent:closeUiInfoDialog("add_return_callback")
                 parent:showList()
             end
         }),
         KOR.buttoninfopopup:forXrayPageNavigator({
             callback = function()
+                parent:closeUiInfoDialog("add_return_callback")
                 DX.pn:showNavigator()
+            end,
+        }),
+        KOR.buttoninfopopup:forXrayTopBookItems({
+            callback = function()
+                parent:closeUiInfoDialog("add_return_callback")
+                parent:showTopBookItems()
             end,
         }),
         KOR.buttoninfopopup:forXrayTagGroupSelector({
             callback = function()
+                parent:closeUiInfoDialog("add_return_callback")
                 DX.ta:showTagGroupSelector()
             end
         }),
-        KOR.buttoninfopopup:forXrayTopBookItems({
-            callback = function()
-                UIManager:close(parent.xray_ui_info_dialog)
-                parent.xray_ui_info_dialog = nil
-                parent:showTopBookItems()
-            end,
-        }),
         KOR.buttoninfopopup:forXrayExport({
             callback = function()
-                UIManager:close(parent.xray_ui_info_dialog)
+                parent:closeUiInfoDialog("add_return_callback")
                 return DX.cb:execExportXrayItemsCallback()
             end
         }),
@@ -539,8 +539,7 @@ function XrayButtons:forUiInfoTopLeft(target, new_trigger, parent)
         KOR.buttoninfopopup:forXrayTranslations(),
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
-                UIManager:close(parent.xray_ui_info_dialog)
-                parent.xray_ui_info_dialog = nil
+                parent:closeUiInfoDialog("add_return_callback")
                 DX.s.showSettingsManager()
             end
         }),
@@ -772,7 +771,7 @@ end
 
 --- @param parent XrayTags
 function XrayButtons:forTagGroupSelectorTopLeft(parent, xray_item)
-    return {
+    local buttons = {
         KOR.buttoninfopopup:forXrayTopBookItems({
             callback = function()
                 UIManager:close(parent.tag_group_selector)
@@ -792,6 +791,20 @@ function XrayButtons:forTagGroupSelectorTopLeft(parent, xray_item)
             end
         }),
     }
+
+    local return_to_caller_callback = KOR.registry:getOnce("return_to_caller_callback")
+    if not return_to_caller_callback then
+        return buttons
+    end
+
+    table_insert(buttons, KOR.buttoninfopopup:forXrayReturnToCaller({
+        callback = function()
+            UIManager:close(parent.tag_group_selector)
+            return_to_caller_callback()
+        end,
+    }))
+
+    return buttons
 end
 
 --* compare ((XrayButtons#forItemViewer)) and buttons for list view ((XrayButtons#forListFooterLeft)), ((XrayButtons#forListFooterRight)), ((XrayButtons#forListContext)):

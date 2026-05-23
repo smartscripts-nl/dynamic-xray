@@ -55,6 +55,7 @@ local XrayUI = WidgetContainer:new{
     paragraphs_with_matches = nil,
     paragraph_texts = nil,
     rects_with_matches = nil,
+    return_to_caller_callback = nil,
     screen_width = nil,
     separator = " " .. KOR.icons.arrow_bare .. " ",
     skip_xray_items = nil,
@@ -192,9 +193,11 @@ function XrayUI:setReturnCallbacks(xray_rects, nr, mode)
     KOR.registry:set("return_from_settings_callback", function()
         self:showParagraphInformation(xray_rects, nr, mode)
     end)
-    KOR.registry:set("return_to_caller_callback", function()
+
+    self.return_to_caller_callback = function()
         self:showParagraphInformation(xray_rects, nr, mode)
-    end)
+    end
+    KOR.registry:set("return_to_caller_callback", self.return_to_caller_callback)
 end
 
 --- @private
@@ -975,13 +978,13 @@ function XrayUI:reset()
     self.xray_info_found = false
 end
 
+--- @param parent XrayDialogs
 function XrayUI:toggleParagraphOrPageMode(parent, target, new_trigger)
     local question = T(_([[Do you indeed want to toggle the Xray information display mode to %1?]]), target, new_trigger)
     KOR.dialogs:confirm(question, function()
         DX.s:toggleSetting("UI_mode", { "page", "paragraph" })
         if parent then
-            UIManager:close(parent.xray_ui_info_dialog)
-            parent.xray_ui_info_dialog = nil
+            parent:closeUiInfoDialog("add_return_callback")
         end
         UIManager:setDirty(nil, "full")
     end)

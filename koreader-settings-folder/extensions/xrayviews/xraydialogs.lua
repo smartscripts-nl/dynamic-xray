@@ -415,6 +415,11 @@ function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_names3, hits_i
     self.xray_ui_info_dialog = KOR.dialogs:textBoxTabbed(1, config, self)
 end
 
+function XrayDialogs:closeUiInfoDialog()
+    UIManager:close(self.xray_ui_info_dialog)
+    self.xray_ui_info_dialog = nil
+end
+
 --- @private
 function XrayDialogs:getListFilter()
     return {
@@ -1224,21 +1229,20 @@ function XrayDialogs:execShowHelpInfoCallback()
     return DX.i:showReliabilityIndicatorsExplanation()
 end
 
---- @param iparent XrayDialogs
-function XrayDialogs:execShowPageNavigatorCallback(iparent)
+--- @param parent XrayDialogs
+function XrayDialogs:execShowPageNavigatorCallback(parent)
     --? strange: many closings and nextTick needed to ensure the dialogs get closed and the navigator shown ; why don't we need this for XrayDialogs:execShowListCallback?:
-    UIManager:close(iparent.xray_ui_info_dialog)
-    UIManager:close(XrayDialogs.xray_ui_info_dialog)
+    parent:closeUiInfoDialog("add_return_callback")
     UIManager:nextTick(function()
         DX.pn:showNavigator()
     end)
     return true
 end
 
---- @param iparent XrayDialogs
-function XrayDialogs:execShowListCallback(iparent)
-    UIManager:close(iparent.xray_ui_info_dialog)
-    iparent:showList()
+--- @param parent XrayDialogs
+function XrayDialogs:execShowListCallback(parent)
+    parent:closeUiInfoDialog("add_return_callback")
+    parent:showList()
     return true
 end
 
