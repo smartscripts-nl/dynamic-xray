@@ -230,7 +230,7 @@ local XrayDataLoader = WidgetContainer:new{
             WHERE x.name = '%1' AND b.series = '%2';]],
 
         get_top_book_items = [[
-            SELECT id, name, book_hits, description
+            SELECT id, name, book_hits, description, xray_type
             FROM xray_items
             WHERE ebook = '%1'
             ORDER BY book_hits DESC LIMIT %2;]],
@@ -480,7 +480,7 @@ end
 function XrayDataLoader:getTopBookItems(limit)
     local conn = KOR.databases:getDBconn("XrayDataLoader:getTopBookItems")
     local file_basename = KOR.databases:escape(parent.current_ebook_basename)
-    local sql = T(self.queries.get_top_book_items, file_basename, limit)
+    local sql = limit == 0 and T(self.queries.get_top_book_items:gsub(" LIMIT %%2", "", 1), file_basename) or T(self.queries.get_top_book_items, file_basename, limit)
     local result = conn:exec(sql)
     conn = KOR.databases:closeConnections(conn)
     return result

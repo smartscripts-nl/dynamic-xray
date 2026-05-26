@@ -292,7 +292,7 @@ local XraySettings = WidgetContainer:new{
         },
         top_book_items_limit = {
             value = 8,
-            explanation = _("This setting determines how many items mentioned the most in the current e-book will be shown in the Top Book Items list (prize icon)."),
+            explanation = _("This setting determines how many items mentioned the most in the current e-book will be shown in the Top Book Items list (prize icon).\n\nSetting this value to zero will display ALL items, in descending order."),
             type = "number",
             locked = 0,
         },

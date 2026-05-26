@@ -771,7 +771,13 @@ function XrayDialogs:showTopBookItems()
             name = db_items["name"][i],
         }
         table_insert(item_table, {
-            text = KOR.strings:formatListItemNumber(i, T("%1 %2  -  %3: %4", KOR.icons.graph_bare, tonumber(db_items["book_hits"][i]), db_items["name"][i], db_items["description"][i]), add_spacer),
+            text = KOR.strings:formatListItemNumber(i, T("%1 %2  -  %3%4: %5",
+                KOR.icons.graph_bare,
+                tonumber(db_items["book_hits"][i]),
+                DX.vd.xray_type_icons[tonumber(db_items["xray_type"][i])],
+                db_items["name"][i],
+                db_items["description"][i]
+            ), add_spacer),
             callback = function()
                 item = DX.vd:upgradeNeedleItem(item, {
                     include_name_matches = true,
