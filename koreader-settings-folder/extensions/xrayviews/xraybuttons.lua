@@ -355,7 +355,7 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
     local series_manager_button = self:getSeriesManagerButton(function()
         parent:closePopupMenu()
     end)
-    return {{
+    local buttons = {{
         {
             icon = "back",
             callback = function()
@@ -394,13 +394,7 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
                 return DX.cb:execShowItemOccurrencesCallback()
             end
         }),
-        KOR.buttoninfopopup:forXrayTopBookItems({
-            callback = function()
-                parent:closePopupMenu()
-                parent:closePageNavigator()
-                DX.d:showTopBookItems()
-            end,
-        }),
+         --* for series top book items button will be injected here...
         KOR.buttoninfopopup:forXrayPageNavigatorShowPageBrowser({
             callback = function()
                 parent:closePopupMenu()
@@ -419,6 +413,18 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
         }),
         series_manager_button,
     }}
+
+    if DX.m.current_series then
+        table_insert(buttons, 7, KOR.buttoninfopopup:forXrayTopBookItems({
+            callback = function()
+                parent:closePopupMenu()
+                parent:closePageNavigator()
+                DX.d:showTopBookItems()
+            end,
+        }))
+    end
+
+    return buttons
 end
 
 --- @param parent XrayPageNavigator
@@ -502,12 +508,7 @@ function XrayButtons:forUiInfoAdditionalButtons(config, parent)
                 DX.pn:showNavigator()
             end,
         }),
-        KOR.buttoninfopopup:forXrayTopBookItems({
-            callback = function()
-                parent:closeUiInfoDialog("add_return_callback")
-                parent:showTopBookItems()
-            end,
-        }),
+        --* for series top book items button will be injected here...
         KOR.buttoninfopopup:forXrayTagGroupSelector({
             callback = function()
                 parent:closeUiInfoDialog("add_return_callback")
@@ -522,6 +523,15 @@ function XrayButtons:forUiInfoAdditionalButtons(config, parent)
         }),
         series_manager_button,
     }
+
+    if DX.m.current_series then
+        table_insert(config.extra_buttons, 3, KOR.buttoninfopopup:forXrayTopBookItems({
+            callback = function()
+                parent:closeUiInfoDialog("add_return_callback")
+                parent:showTopBookItems()
+            end,
+        }))
+    end
 end
 
 --- @param parent XrayDialogs
@@ -772,15 +782,7 @@ end
 --- @param parent XrayTags
 function XrayButtons:forTagGroupSelectorTopLeft(parent, xray_item)
     local buttons = {
-        KOR.buttoninfopopup:forXrayTopBookItems({
-            callback = function()
-                UIManager:close(parent.tag_group_selector)
-                KOR.registry:set("return_to_caller_callback", function()
-                    parent:showTagGroupSelector(xray_item)
-                end)
-                DX.d:showTopBookItems()
-            end
-        }),
+        --* for series top book items button will be injected here...
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
                 UIManager:close(parent.tag_group_selector)
@@ -791,6 +793,18 @@ function XrayButtons:forTagGroupSelectorTopLeft(parent, xray_item)
             end
         }),
     }
+
+    if DX.m.current_series then
+        table_insert(buttons, 1, KOR.buttoninfopopup:forXrayTopBookItems({
+            callback = function()
+                UIManager:close(parent.tag_group_selector)
+                KOR.registry:set("return_to_caller_callback", function()
+                    parent:showTagGroupSelector(xray_item)
+                end)
+                DX.d:showTopBookItems()
+            end
+        }))
+    end
 
     local return_to_caller_callback = KOR.registry:getOnce("return_to_caller_callback")
     if not return_to_caller_callback then
@@ -1229,11 +1243,8 @@ Current sorting mode: %1.]]), current_sorting_mode:upper()),
             end,
             show_parent = DX.c,
         })),
-        Button:new(KOR.buttoninfopopup:forXrayTopBookItems({
-            callback = function()
-                DX.d:showTopBookItems()
-            end
-        })),
+        --* for series button for toggling to book mode will be injected here...
+        --* for series top book items button will be injected here...
         Button:new(KOR.buttonchoicepopup:forXrayShowTagsDialogForList({
             callback = function()
                 DX.ta:showTagFilterSelector("list")
@@ -1252,6 +1263,11 @@ Current sorting mode: %1.]]), current_sorting_mode:upper()),
                 DX.d:showToggleBookOrSeriesModeDialog(focus_item, dont_show)
             end,
             show_parent = KOR.ui,
+        })))
+        table_insert(buttons, 3, Button:new(KOR.buttoninfopopup:forXrayTopBookItems({
+            callback = function()
+                DX.d:showTopBookItems()
+            end
         })))
     end
     return buttons
