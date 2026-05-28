@@ -423,7 +423,7 @@ end
 function ButtonInfoPopup:forXrayMultipleBookSeriesOverviews(props)
 	return KOR.buttonprops:set({
 		icon = "collections",
-		info = _("collections icon | Show a menu with special overviews for series of which DX detected at least two members."),
+		info = _("collections icon | Show a menu with special overviews for series of which DX detected at least two members.\n\nAvailable overviews:\n\n1) Items only mentioned in current e-book\n2) Items mentioned in all books of current series\n3) Most often mentioned items in current e-book"),
 		callback_label = _("show"),
 		--! callback defined by calling module
 	}, props)
