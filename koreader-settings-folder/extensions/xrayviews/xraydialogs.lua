@@ -225,6 +225,82 @@ function XrayDialogs:showNewItemForm(args)
     self.add_item_input:onShowKeyboard()
 end
 
+--* called from ((XrayDialogs#showMultipleBookSeriesActionsOverview)):
+function XrayDialogs:showMultipleBookSeriesActionResult(args)
+
+    local db_items = DX.dl[args.data_loader](DX.dl)
+    if not db_items then
+        KOR.messages:notify(_("as yet no items were defined for the current ebook"))
+        return
+    end
+    local item_table = {}
+    count = #db_items[1]
+    local add_spacer = count > 9
+    for i = 1, count do
+        local item = {
+            id = tonumber(db_items["id"][i]),
+            name = db_items["name"][i],
+        }
+        table_insert(item_table, {
+            text = KOR.strings:formatListItemNumber(i, T("%1 %2  -  %3%4: %5",
+                    KOR.icons.graph_bare,
+                    tonumber(db_items["book_hits"][i]),
+                    DX.vd.xray_type_icons[tonumber(db_items["xray_type"][i])],
+                    db_items["name"][i],
+                    db_items["description"][i]
+            ), add_spacer),
+            callback = function()
+                item = DX.vd:upgradeNeedleItem(item, {
+                    include_name_matches = true,
+                    is_exists_check = true,
+                })
+                KOR.registry:set("return_to_caller_callback", function()
+                    self:showMultipleBookSeriesActionResult(args)
+                end)
+                UIManager:close(self.current_book_only_dialog)
+                self:viewItem(item)
+            end,
+        })
+    end
+
+    KOR.registry:set("return_to_caller_callback", function()
+        self:showMultipleBookSeriesActionsOverview()
+    end)
+    local dimen = Screen:getSize()
+    self.action_dialog = CenterContainer:new {
+        dimen = dimen,
+        modal = true,
+    }
+    local additional_info = args.additional_info or ""
+    self.action_menu = Menu:new {
+        show_parent = self.action_dialog,
+        no_overlay = true,
+        width = dimen.w,
+        height = dimen.h,
+        is_borderless = true,
+        is_popout = false,
+        fullscreen = true,
+        no_overlay = true,
+        perpage = G_reader_settings:readSetting("items_per_page") or 14,
+        menu_name = "xray_top_book_items",
+        top_buttons_left = DX.b:forGenericPopupDialog(self.action_dialog, args.data_title, _("The hits counts in this dialog apply to the current ebook!\n\nBy tapping on an item you'll open it in the Item Viewer.\n\nWith the back button in the upper left corner of the Item Viewer you can then return to the current overview.") .. additional_info, function()
+            UIManager:close(self.action_dialog)
+            KOR.registry:set("return_from_settings_callback", function()
+                self:showMultipleBookSeriesActionResult(args)
+            end)
+            DX.s.showSettingsManager()
+        end),
+    }
+    table_insert(self.action_dialog, self.action_menu)
+    self.action_menu.close_callback = function()
+        UIManager:close(self.action_dialog)
+    end
+    self.action_menu:switchItemTable(args.data_title, item_table, self.action_menu.page)
+    UIManager:show(self.action_dialog)
+
+    KOR.dialogs:registerWidget(self.action_dialog)
+end
+
 function XrayDialogs:showDeleteItemConfirmation(delete_item, dialog, remove_all_instances_in_series)
     if not dialog then
         dialog = self.item_viewer
@@ -728,6 +804,90 @@ function XrayDialogs:closeListDialog()
     end
 end
 
+--* calls ((XrayDialogs#showMultipleBookSeriesActionResult)) for each item:
+function XrayDialogs:showMultipleBookSeriesActionsOverview()
+    local actions = {
+        {
+            _("Items only mentioned in the current e-book"),
+            "getCurrentBookItemsOnly",
+        },
+        {
+            _("Items mentioned in all books of the current series"),
+            "getInAllSeriesBooksItems",
+        },
+        {
+            _("Items most often mentioned in the current ebook"),
+            "getTopBookItems",
+        },
+    }
+    local item_table = {
+        {
+            text = "1. " .. actions[1][1],
+            callback = function()
+                UIManager:close(self.multiple_book_actions_dialog)
+                self:showMultipleBookSeriesActionResult({
+                    data_title = actions[1][1],
+                    data_loader = actions[1][2],
+                })
+            end,
+        },
+        {
+            text = "2. " .. actions[2][1],
+            callback = function()
+                UIManager:close(self.multiple_book_actions_dialog)
+                self:showMultipleBookSeriesActionResult({
+                    data_title = actions[2][1],
+                    data_loader = actions[2][2],
+                })
+            end,
+        },
+        {
+            text = "3. " .. actions[3][1],
+            callback = function()
+                UIManager:close(self.multiple_book_actions_dialog)
+                self:showMultipleBookSeriesActionResult({
+                    data_title = actions[3][1],
+                    data_loader = actions[3][2],
+                    additional_info = "\n\n" .. _("With the setting \"top_book_items_limit\"  you can determine how many items will be listed here. Setting top_book_items_limit to zero means: show ALL items."),
+                })
+            end,
+        },
+    }
+
+    local dimen = Screen:getSize()
+    self.multiple_book_actions_dialog = CenterContainer:new {
+        dimen = dimen,
+        modal = true,
+    }
+    self.multiple_book_actions_menu = Menu:new {
+        show_parent = self.multiple_book_actions_dialog,
+        no_overlay = true,
+        width = dimen.w,
+        height = dimen.h,
+        is_borderless = true,
+        is_popout = false,
+        fullscreen = true,
+        no_overlay = true,
+        perpage = G_reader_settings:readSetting("items_per_page") or 14,
+        menu_name = "multiple_book_series_menu",
+        top_buttons_left = DX.b:forGenericPopupDialog(self.multiple_book_actions_dialog, _("Overviews for series with multiple e-books"), _("Overviews for series with multiple e-books"), _("This overview of special actions will only be available when DX detected at least two books of the current series."), function()
+            UIManager:close(self.multiple_book_actions_dialog)
+            KOR.registry:set("return_from_settings_callback", function()
+                self:showMultipleBookSeriesActionsOverview()
+            end)
+            DX.s.showSettingsManager()
+        end),
+    }
+    table_insert(self.multiple_book_actions_dialog, self.multiple_book_actions_menu)
+    self.multiple_book_actions_menu.close_callback = function()
+        UIManager:close(self.multiple_book_actions_dialog)
+    end
+    self.multiple_book_actions_menu:switchItemTable(_("Overviews for series with multiple e-books"), item_table, self.multiple_book_actions_menu.page)
+    UIManager:show(self.multiple_book_actions_dialog)
+
+    KOR.dialogs:registerWidget(self.multiple_book_actions_dialog)
+end
+
 --- @private
 function XrayDialogs:_showNoHitsNotification(name)
     KOR.messages:notify(T("geen hits in het boek voor %1...", name), 5)
@@ -753,71 +913,6 @@ TO SERIES MODE %2 ?
         DX.vd.list_display_mode = mode
         DX.c:toggleBookOrSeriesMode(mode, focus_item, dont_show)
     end)
-end
-
-function XrayDialogs:showTopBookItems()
-
-    local db_items = DX.dl:getTopBookItems(DX.s.top_book_items_limit)
-    if not db_items then
-        KOR.messages:notify("nog geen items gedefinieerd voor het huidige e-boek.")
-        return
-    end
-    local item_table = {}
-    count = #db_items[1]
-    local add_spacer = count > 9
-    for i = 1, count do
-        local item = {
-            id = tonumber(db_items["id"][i]),
-            name = db_items["name"][i],
-        }
-        table_insert(item_table, {
-            text = KOR.strings:formatListItemNumber(i, T("%1 %2  -  %3%4: %5",
-                KOR.icons.graph_bare,
-                tonumber(db_items["book_hits"][i]),
-                DX.vd.xray_type_icons[tonumber(db_items["xray_type"][i])],
-                db_items["name"][i],
-                db_items["description"][i]
-            ), add_spacer),
-            callback = function()
-                item = DX.vd:upgradeNeedleItem(item, {
-                    include_name_matches = true,
-                    is_exists_check = true,
-                })
-                KOR.registry:set("return_to_caller_callback", function()
-                    self:showTopBookItems()
-                end)
-                UIManager:close(self.most_mentioned_dialog)
-                self:viewItem(item)
-            end,
-        })
-    end
-
-    local dimen = Screen:getSize()
-    self.most_mentioned_dialog = CenterContainer:new {
-        dimen = dimen,
-        modal = true,
-    }
-    self.most_mentioned_menu = Menu:new {
-        show_parent = self.most_mentioned_dialog,
-        no_overlay = true,
-        width = dimen.w,
-        height = dimen.h,
-        is_borderless = true,
-        is_popout = false,
-        fullscreen = true,
-        no_overlay = true,
-        perpage = G_reader_settings:readSetting("items_per_page") or 14,
-        menu_name = "xray_top_book_items",
-        top_buttons_left = DX.b:forMostMentionedItems(self),
-    }
-    table_insert(self.most_mentioned_dialog, self.most_mentioned_menu)
-    self.most_mentioned_menu.close_callback = function()
-        UIManager:close(self.most_mentioned_dialog)
-    end
-    self.most_mentioned_menu:switchItemTable(_("Most often mentioned in current e-book"), item_table, self.most_mentioned_menu.page)
-    UIManager:show(self.most_mentioned_dialog)
-
-    KOR.dialogs:registerWidget(self.most_mentioned_dialog)
 end
 
 --- @private

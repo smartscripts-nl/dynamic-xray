@@ -420,6 +420,15 @@ Hotkey %1 %2]], KOR.icons.arrow_bare, DX.s.hk_show_list),
 	}, props)
 end
 
+function ButtonInfoPopup:forXrayMultipleBookSeriesOverviews(props)
+	return KOR.buttonprops:set({
+		icon = "collections",
+		info = _("collections icon | Show a menu with special overviews for series of which DX detected at least two members."),
+		callback_label = _("show"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forXrayNextItem(props)
 	return KOR.buttonprops:set({
 		icon = "next",
@@ -675,15 +684,6 @@ function ButtonInfoPopup:forXrayToggleSortingMode(props)
 	return KOR.buttonprops:set({
 		icon = "sort",
 		--* info and callback_label props will be defined by caller
-		--! callback defined by calling module
-	}, props)
-end
-
-function ButtonInfoPopup:forXrayTopBookItems(props)
-	return KOR.buttonprops:set({
-		icon = "prize",
-		info = T(_("Show the %1 most often mentioned Xray items in the current e-book."), DX.s.top_book_items_limit),
-		callback_label = _("show"),
 		--! callback defined by calling module
 	}, props)
 end

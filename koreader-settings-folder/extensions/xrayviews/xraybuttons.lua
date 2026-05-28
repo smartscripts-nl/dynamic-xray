@@ -223,22 +223,17 @@ function XrayButtons:addMoreButton(buttons, indicator_buttons, props)
     })
 end
 
---- @param parent XrayDialogs
-function XrayButtons:forMostMentionedItems(parent)
+function XrayButtons:forGenericPopupDialog(parent_dialog, info_title, info_text, settings_callback)
     local buttons = {
         {
             icon = "info-slender",
             callback = function()
-                KOR.dialogs:niceAlert("Most often mentioned Xray items", "You can open an item in Item Viewer by tapping on it.\n\nWith the back button in the upper left corner of the Viewer you can return to the current list.\n\nWith the setting \"top_book_items_limit\" you can determine how many items will be shown in the current list.")
+                KOR.dialogs:niceAlert(info_title, info_text)
             end,
         },
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
-                UIManager:close(parent.most_mentioned_dialog)
-                KOR.registry:set("return_from_settings_callback", function()
-                    parent:showTopBookItems()
-                end)
-                DX.s.showSettingsManager()
+                settings_callback()
             end
         }),
     }
@@ -248,7 +243,7 @@ function XrayButtons:forMostMentionedItems(parent)
     if return_to_caller_callback then
         table_insert(buttons, KOR.buttoninfopopup:forXrayReturnToCaller({
             callback = function()
-                UIManager:close(parent.most_mentioned_dialog)
+                UIManager:close(parent_dialog)
                 return_to_caller_callback()
             end,
         }))
@@ -414,12 +409,15 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
         series_manager_button,
     }}
 
-    if DX.m.current_series then
-        table_insert(buttons, 7, KOR.buttoninfopopup:forXrayTopBookItems({
+    if DX.m.has_multiple_series_items then
+        table_insert(buttons[1], 7, KOR.buttoninfopopup:forXrayMultipleBookSeriesOverviews({
             callback = function()
                 parent:closePopupMenu()
                 parent:closePageNavigator()
-                DX.d:showTopBookItems()
+                KOR.registry:set("return_to_caller_callback", function()
+                    parent:restoreNavigator()
+                end)
+                DX.d:showMultipleBookSeriesActionsOverview()
             end,
         }))
     end
@@ -524,11 +522,11 @@ function XrayButtons:forUiInfoAdditionalButtons(config, parent)
         series_manager_button,
     }
 
-    if DX.m.current_series then
-        table_insert(config.extra_buttons, 3, KOR.buttoninfopopup:forXrayTopBookItems({
+    if DX.m.has_multiple_series_items then
+        table_insert(config.extra_buttons, 3, KOR.buttoninfopopup:forXrayMultipleBookSeriesOverviews({
             callback = function()
                 parent:closeUiInfoDialog("add_return_callback")
-                parent:showTopBookItems()
+                parent:showMultipleBookSeriesActionsOverview()
             end,
         }))
     end
@@ -794,14 +792,14 @@ function XrayButtons:forTagGroupSelectorTopLeft(parent, xray_item)
         }),
     }
 
-    if DX.m.current_series then
-        table_insert(buttons, 1, KOR.buttoninfopopup:forXrayTopBookItems({
+    if DX.m.has_multiple_series_items then
+        table_insert(buttons, 1, KOR.buttoninfopopup:forXrayMultipleBookSeriesOverviews({
             callback = function()
                 UIManager:close(parent.tag_group_selector)
                 KOR.registry:set("return_to_caller_callback", function()
                     parent:showTagGroupSelector(xray_item)
                 end)
-                DX.d:showTopBookItems()
+                DX.d:showMultipleBookSeriesActionsOverview()
             end
         }))
     end
@@ -1264,11 +1262,16 @@ Current sorting mode: %1.]]), current_sorting_mode:upper()),
             end,
             show_parent = KOR.ui,
         })))
-        table_insert(buttons, 3, Button:new(KOR.buttoninfopopup:forXrayTopBookItems({
-            callback = function()
-                DX.d:showTopBookItems()
-            end
-        })))
+        if DX.m.has_multiple_series_items then
+            KOR.registry:set("return_to_caller_callback", function()
+                DX.d:showListWithRestoredArguments()
+            end)
+            table_insert(buttons, 3, Button:new(KOR.buttoninfopopup:forXrayMultipleBookSeriesOverviews({
+                callback = function()
+                    DX.d:showMultipleBookSeriesActionsOverview()
+                end
+            })))
+        end
     end
     return buttons
 end

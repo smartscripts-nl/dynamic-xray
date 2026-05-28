@@ -43,7 +43,7 @@ local XrayDataLoader = WidgetContainer:new{
     queries = {
         --* querying series information (b.series and b.series_index), because this query will be used when DX is set in book display mode, but the individual books data can still contain series information:
         get_all_book_items = [[
-           SELECT x.id,
+           SELECT DISTINCT x.id,
            x.name,
            b.series,
            b.series_index,
@@ -98,94 +98,184 @@ local XrayDataLoader = WidgetContainer:new{
         --* s.ebook, s.title, s.book_hits and s.chapter_hits will be null when the xray item only is found in one or more OTHER books in the series, but not in the current ebook:
         --* for prop pos_chapter_quotes compare ((XrayQuotes#generateQuotesList)):
         get_all_series_items = [[
-           WITH
+        WITH book_xray_data AS (
+        SELECT x.id,
+           x.name,
+           x.xray_type,
+           x.aliases,
+           x.tags,
+           x.short_names,
+           x.linkwords,
+           x.description,
+           x.ebook,
+           x.book_hits,
+           x.chapter_hits,
+           x.chapter_hits_data,
+           x.non_breakable,
+           b.title,
+           o.chapters
+        FROM xray_items x
+                 JOIN bookinfo b
+                      ON b.filename = x.ebook
+                 LEFT OUTER JOIN xray_books o
+                      ON b.filename = o.ebook
+        WHERE x.ebook = 'safe_path'
+        ),
 
-           book_xray_data AS (
-            SELECT
-             x.id,
-             x.name,
-             x.xray_type,
-             x.aliases,
-             x.tags,
-             x.short_names,
-             x.linkwords,
-             x.description,
-             x.ebook,
-             x.book_hits,
-             x.chapter_hits,
-             x.chapter_hits_data,
-             x.non_breakable,
-             b.title,
-             o.chapters
+        series_data AS (
+            SELECT x.name,
+                   x.xray_type,
+                   b.series,
+                   SUM(x.book_hits) AS series_hits,
+
+                   GROUP_CONCAT(
+                           b.series_index || '. ' || b.title || ' (' || COALESCE(x.book_hits, 0) || ')',
+                           '|'
+                           ORDER BY b.series_index
+                   ) AS mentioned_in
+
             FROM xray_items x
-            JOIN bookinfo b ON b.filename = x.ebook
-            LEFT OUTER JOIN xray_books o ON b.filename = o.ebook
-            WHERE x.ebook = 'safe_path'),
+                     JOIN bookinfo b
+                          ON b.filename = x.ebook
 
-            series_data AS (
-                SELECT
-                x.name,
-                x.xray_type,
-                b.series,
-                SUM(x.book_hits) AS series_hits,
-                GROUP_CONCAT(
-                    b.series_index || '. ' || b.title || ' (' || COALESCE(x.book_hits, 0) || ')',
-                    '|'
-                    ORDER BY b.series_index
-                ) AS mentioned_in
-             FROM xray_items x
-               JOIN bookinfo b ON b.filename = x.ebook
-             WHERE b.series = '%1'
-               AND x.name IS NOT NULL
-               AND x.name != ''
-             GROUP BY x.name, x.xray_type, b.series)
+            WHERE b.series = '%1'
+              AND x.name IS NOT NULL
+              AND x.name != ''
 
-            SELECT
-               x.id,
-               x.name,
-               x.aliases,
-               x.tags,
-               x.short_names,
-               x.linkwords,
-               x.description,
-               x.xray_type,
-               x.non_breakable,
+            GROUP BY x.name,
+                     x.xray_type,
+                     b.series
+        ),
 
-               x.book_hits,
-               x.chapters,
-               x.chapter_hits,
-               x.chapter_hits_data,
-               x.ebook,
-               x.title,
+        quote_data AS (
+            SELECT q.series,
+                   q.item_name,
 
-               s.series,
-               s.series_hits,
-               s.mentioned_in,
+                   GROUP_CONCAT(
+                           q.ebook || '||' ||
+                           COALESCE(q.series_index, '???') || '||' ||
+                           COALESCE(q.ebook_title, '???') || '||' ||
+                           q.pos0 || '||' ||
+                           COALESCE(q.chapter, '???') || '||' ||
+                           q.quote,
+                           '@@'
+                           ORDER BY q.id
+                   ) AS pos_chapter_quotes
 
-               q.series_index,
-               q.item_name,
-                GROUP_CONCAT(
-                    q.ebook || '||' || COALESCE(q.series_index, '???') || '||' || COALESCE(q.ebook_title, '???') || '||' || q.pos0 || '||' || COALESCE(q.chapter, '???') || '||' || q.quote,
-                    '@@'
-                    ORDER BY q.id
-                ) AS pos_chapter_quotes
+            FROM xray_quotes q
+
+            GROUP BY q.series,
+                     q.item_name
+        )
+
+        SELECT DISTINCT x.id,
+           x.name,
+           x.aliases,
+           x.tags,
+           x.short_names,
+           x.linkwords,
+           x.description,
+           x.xray_type,
+           x.non_breakable,
+
+           x.book_hits,
+           x.chapters,
+           x.chapter_hits,
+           x.chapter_hits_data,
+           x.ebook,
+           x.title,
+
+           s.series,
+           s.series_hits,
+           s.mentioned_in,
+
+           q.pos_chapter_quotes
 
             FROM book_xray_data x
-            LEFT JOIN series_data s
-                   ON s.name = x.name
-                  AND s.xray_type = x.xray_type
-            LEFT JOIN xray_quotes q
-                   ON q.series = s.series AND q.item_name = x.name
 
-            GROUP BY x.id
+             LEFT JOIN series_data s
+                       ON s.name = x.name
+                           AND s.xray_type = x.xray_type
 
-            ORDER BY
-                (x.xray_type = 2 OR x.xray_type = 4) DESC,
-                %2,
-                x.name;]],
+             LEFT JOIN quote_data q
+                       ON q.series = s.series
+                           AND q.item_name = x.name
+
+            ORDER BY (x.xray_type = 2 OR x.xray_type = 4) DESC,
+             %2,
+             x.name;]],
+        --* %2 above = parent.sorting_method == "hits" and "s.series_hits DESC" or "s.name"
 
         get_book_glossary =
             "SELECT glossary FROM bookinfo WHERE directory || filename = 'safe_path';",
+
+        get_current_book_only_items = [[
+            WITH unique_series_names AS (SELECT b.series, x.name
+                 FROM xray_items x
+                      JOIN bookinfo b
+                           ON b.filename = x.ebook
+                 WHERE x.name IS NOT NULL
+                 GROUP BY b.series, x.name
+                 HAVING COUNT(DISTINCT x.ebook) = 1)
+
+            SELECT DISTINCT i.id,
+                   i.name,
+                   i.book_hits,
+                   i.description,
+                   i.xray_type,
+                   b.series
+
+            FROM xray_items i
+                 JOIN bookinfo b
+                      ON b.filename = i.ebook
+
+                 JOIN unique_series_names u
+                      ON u.series = b.series
+                          AND u.name = i.name
+
+            WHERE i.ebook = '%1'
+            ORDER BY i.book_hits DESC;]],
+
+        get_in_all_series_books_items = [[
+            WITH series_books AS (
+                SELECT COUNT(DISTINCT filename) AS total_books
+                FROM bookinfo
+                WHERE series = '%1'
+            ),
+
+            series_item_counts AS (
+                SELECT x.name,
+                       COUNT(DISTINCT x.ebook) AS item_book_count
+                FROM xray_items x
+                         JOIN bookinfo b
+                              ON b.filename = x.ebook
+                WHERE b.series = '%2'
+                  AND x.name IS NOT NULL
+                  AND x.name != ''
+                GROUP BY x.name
+            )
+
+            SELECT DISTINCT i.id,
+                   i.name,
+                   i.book_hits,
+                   i.description,
+                   i.xray_type,
+                   b.series
+
+            FROM xray_items i
+                 JOIN bookinfo b
+                      ON b.filename = i.ebook
+
+                 JOIN series_item_counts sic
+                      ON sic.name = i.name
+
+                 CROSS JOIN series_books sb
+
+            WHERE i.ebook = '%3' AND i.book_hits > 0
+              AND b.series = '%4'
+              AND sic.item_book_count = sb.total_books
+
+            ORDER BY i.book_hits DESC;]],
 
         get_item_id =
             "SELECT rowid FROM xray_items WHERE name = 'safe_path';",
@@ -217,8 +307,8 @@ local XrayDataLoader = WidgetContainer:new{
         --* compare ((XrayQuotes#generateQuotesList))
         qet_quotes_for_item_series = [[
             SELECT x.id, x.quote FROM xray_quotes x
-            LEFT OUTER JOIN all_books a ON a.filename = x.ebook
-            WHERE x.item_name = '%1' AND a.series = '%2' ORDER BY x.id;]],
+            LEFT OUTER JOIN bookinfo b ON b.filename = x.ebook
+            WHERE x.item_name = '%1' AND b.series = '%2' ORDER BY x.id;]],
 
         get_series_name =
             "SELECT series FROM bookinfo WHERE directory || filename = 'safe_path' LIMIT 1;",
@@ -313,6 +403,8 @@ function XrayDataLoader:_loadAllData(mode)
     if not result then
         return
     end
+    --* might be set to true in ((XrayDataLoader#_loadDataForSeries)):
+    parent.has_multiple_series_items = false
 
     self:_populateViewsDataBookChapters(result)
 
@@ -363,6 +455,9 @@ function XrayDataLoader:_loadDataForSeries(result)
     for i = 1, count do
         if has_text(result["tags"][i]) then
             parent:addTags(result["tags"][i], tonumber(result["id"][i]))
+            if not parent.has_multiple_series_items then
+                parent.has_multiple_series_items = KOR.strings:substrCount(result["mentioned_in"][i], "|") > 1
+            end
         end
         self:_addSeriesItem(result, i, series_index)
     end
@@ -439,6 +534,25 @@ function XrayDataLoader:convertChapterHitsData(chapter_hits)
     return KOR.tables:makeItemsNumerical(hits)
 end
 
+function XrayDataLoader:getCurrentBookItemsOnly()
+    local conn = KOR.databases:getDBconn("XrayDataLoader:getCurrentBookItemsOnly")
+    local file_basename = KOR.databases:escape(parent.current_ebook_basename)
+    local sql = T(self.queries.get_current_book_only_items, file_basename)
+    local result = conn:exec(sql)
+    conn = KOR.databases:closeConnections(conn)
+    return result
+end
+
+function XrayDataLoader:getInAllSeriesBooksItems()
+    local conn = KOR.databases:getDBconn("XrayDataLoader:getInAllSeriesBooksItems")
+    local file_basename = KOR.databases:escape(parent.current_ebook_basename)
+    local series_name = KOR.databases:escape(parent.current_series)
+    local sql = T(self.queries.get_in_all_series_books_items, series_name, series_name, file_basename, series_name)
+    local result = conn:exec(sql)
+    conn = KOR.databases:closeConnections(conn)
+    return result
+end
+
 function XrayDataLoader.getItemId(conn, name)
     local self = DX.dl
     local sql = KOR.databases:injectSafePath(self.queries.get_item_id, name)
@@ -480,7 +594,8 @@ end
 function XrayDataLoader:getTopBookItems(limit)
     local conn = KOR.databases:getDBconn("XrayDataLoader:getTopBookItems")
     local file_basename = KOR.databases:escape(parent.current_ebook_basename)
-    local sql = limit == 0 and T(self.queries.get_top_book_items:gsub(" LIMIT %%2", "", 1), file_basename) or T(self.queries.get_top_book_items, file_basename, limit)
+    local sql = limit == 0 and T(self.queries.get_top_book_items, file_basename) or T(self.queries.get_top_book_items, file_basename, limit)
+    sql = sql:gsub(" LIMIT %%2", "", 1)
     local result = conn:exec(sql)
     conn = KOR.databases:closeConnections(conn)
     return result

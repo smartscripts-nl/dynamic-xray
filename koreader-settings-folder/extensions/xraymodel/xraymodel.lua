@@ -46,11 +46,12 @@ local XrayModel = WidgetContainer:new{
     --! these 3 collections are reference collections that never will be fully reset after item updates or additions; e.g. used for Page Navigator side buttons:
     --* updates to these collections will be done through ((XrayModel#updateStaticReferenceCollections)):
     items_by_id = {},
-    persons_by_id = {},
-    terms_by_id = {},
+    --* this value will be set by ((XrayDataLoader#_loadAllData)) and optionally ((XrayDataLoader#_loadDataForSeries)):
+    has_multiple_series_items = false,
     items_prepared_for_basename = nil,
     last_name_counts = {},
     min_match_word_length = 4,
+    persons_by_id = {},
     previous_series = nil,
     --* this table will be populated by ((XrayDataLoader#_addSeriesItem)):
     series = {},
@@ -60,6 +61,7 @@ local XrayModel = WidgetContainer:new{
     tab_display_counts = { 0, 0, 0 },
     taggroups = {},
     tags_associative = {},
+    terms_by_id = {},
     use_tapped_word_data = false,
 }
 
