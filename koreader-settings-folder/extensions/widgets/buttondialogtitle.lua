@@ -120,6 +120,7 @@ function ButtonDialogTitle:init()
         title_top_padding = Screen:scaleBySize(6),
         button_padding = Screen:scaleBySize(5),
         title_face = face,
+        show_parent = self,
         top_buttons_left = self.top_buttons_left,
         top_buttons_right = self.top_buttons_right,
     }

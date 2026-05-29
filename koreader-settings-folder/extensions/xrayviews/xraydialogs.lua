@@ -67,7 +67,7 @@ local XrayDialogs = WidgetContainer:new{
     -- #((Xray-item edit dialog: tab buttons in TitleBar))
     title_tab_buttons_left = { _(" xray-item "), _(" metadata ") },
     xray_item_chooser = nil,
-    xray_items_chooser_dialog = nil,
+    xray_items_list = nil,
     --! self.xray_type_field_nr has to correspond to the index used to get the xray_type in ((XrayFormsData#convertFieldValuesToItemProps)); see also ((XrayDialogs#switchFocusForXrayType)):
     xray_type_field_nr = 4,
     xray_ui_info_dialog = nil,
@@ -254,18 +254,18 @@ function XrayDialogs:showMultipleBookSeriesActionResult(args)
                     include_name_matches = true,
                     is_exists_check = true,
                 })
-                KOR.registry:set("return_to_caller_callback", function()
-                    self:showMultipleBookSeriesActionResult(args)
-                end)
                 UIManager:close(self.current_book_only_dialog)
                 self:viewItem(item)
             end,
         })
     end
 
-    KOR.registry:set("return_to_caller_callback", function()
-        self:showMultipleBookSeriesActionsOverview()
-    end)
+    KOR.dialogsqueue:register({
+        id = "show_multiple_series_book_action_result",
+        restore = function()
+            self:showMultipleBookSeriesActionResult(args)
+        end,
+    })
     local dimen = Screen:getSize()
     self.action_dialog = CenterContainer:new {
         dimen = dimen,
@@ -283,11 +283,8 @@ function XrayDialogs:showMultipleBookSeriesActionResult(args)
         no_overlay = true,
         perpage = G_reader_settings:readSetting("items_per_page") or 14,
         menu_name = "xray_top_book_items",
-        top_buttons_left = DX.b:forGenericPopupDialog(self.action_dialog, args.data_title, _("The hits counts in this dialog apply to the current ebook!\n\nBy tapping on an item you'll open it in the Item Viewer.\n\nWith the back button in the upper left corner of the Item Viewer you can then return to the current overview.") .. additional_info, function()
+        top_buttons_left = DX.b:forGenericPopupDialog(args.data_title, _("The hits counts in this dialog apply to the current ebook!\n\nBy tapping on an item you'll open it in the Item Viewer.\n\nWith the back button in the upper left corner of the Item Viewer you can then return to the current overview.") .. additional_info, function()
             UIManager:close(self.action_dialog)
-            KOR.registry:set("return_from_settings_callback", function()
-                self:showMultipleBookSeriesActionResult(args)
-            end)
             DX.s.showSettingsManager()
         end),
     }
@@ -494,6 +491,13 @@ end
 function XrayDialogs:closeUiInfoDialog()
     UIManager:close(self.xray_ui_info_dialog)
     self.xray_ui_info_dialog = nil
+
+    KOR.dialogsqueue:register({
+        id = "show_ui_page_info",
+        restore = function()
+            DX.u.return_to_caller_callback()
+        end,
+    })
 end
 
 --- @private
@@ -543,7 +547,7 @@ function XrayDialogs:_prepareItemsForList(current_tab_items, items_for_select)
         end)
         or
         function()
-            UIManager:close(self.xray_items_chooser_dialog)
+            self:closeListDialog()
             self.needle_name_for_list_page = item.name
             self:viewItem(item, "called_from_list")
         end
@@ -586,14 +590,14 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
         title = title .. " " .. _("+tag:") .. " " .. DX.ta.select_for_tags_tag
     end
 
-    self.xray_items_chooser_dialog = CenterContainer:new{
+    self.xray_items_list = CenterContainer:new{
         dimen = Screen:getSize(),
     }
 
     --* icon size for filter button set in ((Menu#getFilterButton)):
     local base_icon_size = 0.6
     local config = {
-        show_parent = self.xray_items_chooser_dialog,
+        show_parent = self.xray_items_list,
         parent = nil,
         fullscreen = true,
         covers_fullscreen = true,
@@ -628,11 +632,11 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
     self.xray_items_inner_menu = Menu:new(config)
     DX.ta:initiateItemTagsSelection()
 
-    table_insert(self.xray_items_chooser_dialog, self.xray_items_inner_menu)
+    table_insert(self.xray_items_list, self.xray_items_inner_menu)
     self.xray_items_inner_menu.close_callback = function()
-        UIManager:close(self.xray_items_chooser_dialog)
-        KOR.dialogs:unregisterWidget(self.xray_items_chooser_dialog)
-        self.xray_items_chooser_dialog = nil
+        UIManager:close(self.xray_items_list)
+        KOR.dialogs:unregisterWidget(self.xray_items_list)
+        self.xray_items_list = nil
     end
 
     local subject = self.select_mode and items_for_select or current_tab_items
@@ -740,10 +744,13 @@ function XrayDialogs:showList(focus_item, dont_show, select_mode)
 
     self.item_requested = focus_item
     self.called_from_list = false
-    if self.xray_items_chooser_dialog then
-        UIManager:close(self.xray_items_chooser_dialog)
-        self.xray_items_chooser_dialog = nil
-    end
+    self:closeListDialog()
+    KOR.dialogsqueue:register({
+        id = "xray_items_list",
+        restore = function()
+            self:showListWithRestoredArguments()
+        end,
+    })
 
     if DX.c:listHasReloadOrDontShowRequest(focus_item, dont_show) then
         return
@@ -755,13 +762,10 @@ function XrayDialogs:showList(focus_item, dont_show, select_mode)
     self.list_is_opened = true
 
     KOR.keyevents:addHotkeysForXrayList(self, key_events_module)
-    KOR.registry:set("return_from_settings_callback", function()
-        self:showListWithRestoredArguments()
-    end)
-    UIManager:show(self.xray_items_chooser_dialog)
+    UIManager:show(self.xray_items_list)
     self:showActionResultMessage()
 
-    KOR.dialogs:registerWidget(self.xray_items_chooser_dialog)
+    KOR.dialogs:registerWidget(self.xray_items_list)
 end
 
 function XrayDialogs:selectListTab(tab_no, counts)
@@ -798,9 +802,9 @@ function XrayDialogs:onMenuHold(item)
 end
 
 function XrayDialogs:closeListDialog()
-    if self.xray_items_chooser_dialog then
-        UIManager:close(self.xray_items_chooser_dialog)
-        self.xray_items_chooser_dialog = nil
+    if self.xray_items_list then
+        UIManager:close(self.xray_items_list)
+        self.xray_items_list = nil
     end
 end
 
@@ -854,6 +858,12 @@ function XrayDialogs:showMultipleBookSeriesActionsOverview()
         },
     }
 
+    KOR.dialogsqueue:register({
+        id = "show_multiple_series_books_actions",
+        restore = function()
+            self:showMultipleBookSeriesActionsOverview()
+        end,
+    })
     local dimen = Screen:getSize()
     self.multiple_book_actions_dialog = CenterContainer:new {
         dimen = dimen,
@@ -870,11 +880,8 @@ function XrayDialogs:showMultipleBookSeriesActionsOverview()
         no_overlay = true,
         perpage = G_reader_settings:readSetting("items_per_page") or 14,
         menu_name = "multiple_book_series_menu",
-        top_buttons_left = DX.b:forGenericPopupDialog(self.multiple_book_actions_dialog, _("Overviews for series with multiple e-books"), _("Overviews for series with multiple e-books"), _("This overview of special actions will only be available when DX detected at least two books of the current series."), function()
+        top_buttons_left = DX.b:forGenericPopupDialog(_("Overviews for series with multiple e-books"), _("Overviews for series with multiple e-books"), _("This overview of special actions will only be available when DX detected at least two books of the current series."), function()
             UIManager:close(self.multiple_book_actions_dialog)
-            KOR.registry:set("return_from_settings_callback", function()
-                self:showMultipleBookSeriesActionsOverview()
-            end)
             DX.s.showSettingsManager()
         end),
     }
@@ -959,10 +966,13 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
     if needle_item.index > current_items_count then
         needle_item.index = current_items_count
     end
-    KOR.registry:set("return_from_settings_callback", function()
-        self:closeItemViewer()
-        self:viewItem(needle_item, called_from_list, tapped_word, skip_item_search)
-    end)
+    KOR.dialogsqueue:register({
+        id = "show_item_viewer",
+        restore = function()
+            self:closeItemViewer()
+            self:viewItem(needle_item, called_from_list, tapped_word, skip_item_search)
+        end,
+    })
     self:showItemViewer(needle_item, {
         icon = icon,
         name = name,
@@ -1333,7 +1343,7 @@ end
 --- @param parent XrayDialogs
 function XrayDialogs:execShowPageNavigatorCallback(parent)
     --? strange: many closings and nextTick needed to ensure the dialogs get closed and the navigator shown ; why don't we need this for XrayDialogs:execShowListCallback?:
-    parent:closeUiInfoDialog("add_return_callback")
+    parent:closeUiInfoDialog()
     UIManager:nextTick(function()
         DX.pn:showNavigator()
     end)
@@ -1342,7 +1352,7 @@ end
 
 --- @param parent XrayDialogs
 function XrayDialogs:execShowListCallback(parent)
-    parent:closeUiInfoDialog("add_return_callback")
+    parent:closeUiInfoDialog()
     parent:showList()
     return true
 end

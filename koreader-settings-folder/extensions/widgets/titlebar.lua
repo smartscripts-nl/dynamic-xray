@@ -42,6 +42,7 @@ local pairs = pairs
 local table_insert = table.insert
 local type = type
 
+local count
 local DGENERIC_ICON_SIZE = math_floor(G_defaults:readSetting("DGENERIC_ICON_SIZE") * 0.6)
 
 --- @class TitleBar
@@ -99,6 +100,7 @@ local TitleBar = OverlapGroup:extend{
 
     -- #((define desired height of title bar))
     computed_titlebar_height = 0,
+    dialog_queue_id = nil,
     is_popout_dialog = false,
     title_height = 0,
     top_left_buttons_height = 0,
@@ -200,6 +202,8 @@ end
 --- @private
 function TitleBar:setWidgetProps()
     self.is_landscape_screen = KOR.screenhelpers:isLandscapeScreen()
+
+    self.dialog_queue_id = KOR.dialogsqueue:getLastId()
 
     if self.submenu_buttontable then
         self.bottom_line_thickness = Size.line.thick
@@ -349,7 +353,7 @@ end
 function TitleBar:setButtonIconType(config, button)
     local props = { "icon", "icon_text", "text_icon", "icon_icon" }
     local prop
-    local count = #props
+    count = #props
     for i = 1, count do
         prop = props[i]
         if button[prop] then
@@ -694,24 +698,28 @@ function TitleBar:injectTabButtonsLeft()
     --? used by methods in ((TabFactory#setTabButtonAndContent)) ??:
     --* button props were set in ((Button#addTitleBarTabButtonProps)):
     self.tabs = {}
-    if self.tab_buttons_left then
-        local separator = self.is_landscape_screen and HorizontalSpan:new{ width = self.title_h_padding } or HorizontalSpan:new{ width = self.title_h_padding_portrait }
-        --* horizontal padding from the left:
-        table_insert(self.left_buttons_container, HorizontalSpan:new{ width = self.title_h_padding })
-        local button
-        local count = #self.tab_buttons_left
-        for i = 1, count do
-            button = self:instantiateButton(self.tab_buttons_left[i])
-            --? used by methods in ((TabFactory#setTabButtonAndContent)) ??:
-            table_insert(self.tabs, button)
-            table_insert(self.left_buttons_container, separator)
-            table_insert(self.left_buttons_container, button)
-        end
-
-        self.top_left_buttons_height = self.left_buttons_container:getSize().h
-
-        self.left_buttons_container_populated = true
+    if not self.tab_buttons_left then
+        return
     end
+
+    self:addDialogQueueButton(self.tab_buttons_left)
+
+    local separator = self.is_landscape_screen and HorizontalSpan:new{ width = self.title_h_padding } or HorizontalSpan:new{ width = self.title_h_padding_portrait }
+    --* horizontal padding from the left:
+    table_insert(self.left_buttons_container, HorizontalSpan:new{ width = self.title_h_padding })
+    local button
+    count = #self.tab_buttons_left
+    for i = 1, count do
+        button = self:instantiateButton(self.tab_buttons_left[i])
+        --? used by methods in ((TabFactory#setTabButtonAndContent)) ??:
+        table_insert(self.tabs, button)
+        table_insert(self.left_buttons_container, separator)
+        table_insert(self.left_buttons_container, button)
+    end
+
+    self.top_left_buttons_height = self.left_buttons_container:getSize().h
+
+    self.left_buttons_container_populated = true
 end
 
 --- @private
@@ -721,7 +729,7 @@ function TitleBar:injectTabButtonsRight()
     if self.tab_buttons_right then
         local button
         local separator = self.is_landscape_screen and HorizontalSpan:new{ width = self.title_h_padding } or HorizontalSpan:new{ width = self.title_h_padding_portrait }
-        local count = #self.tab_buttons_right
+        count = #self.tab_buttons_right
         for i = count, 1, -1 do
             button = self:instantiateButton(self.tab_buttons_right[i])
             --? used by methods in ((TabFactory#setTabButtonAndContent)) ??:
@@ -770,6 +778,10 @@ function TitleBar:addCloseButton()
             text_font_size = 14,
             text_font_bold = false,]]
             callback = function()
+                --* only a dialog registered in DialogsQueue may reset the dialogs queue:
+                if self.dialog_queue_id then
+                    KOR.dialogsqueue:reset()
+                end
                 self.close_callback()
             end,
             hold_callback = function()
@@ -781,6 +793,23 @@ function TitleBar:addCloseButton()
     }
 end
 
+function TitleBar:addDialogQueueButton(buttons)
+    if not buttons or not self.dialog_queue_id or not KOR.dialogsqueue:getParentId() or buttons[#buttons].icon == "back-small" then
+        return
+    end
+
+    table_insert(buttons, KOR.buttoninfopopup:forXrayReturnToCaller({
+        callback = function()
+            if self.close_callback then
+                self.close_callback()
+            else
+                UIManager:close(self.show_parent)
+            end
+            KOR.dialogsqueue:restorePrevious(self.dialog_queue_id)
+        end,
+    }))
+end
+
 --* compare ((TitleBar#setTopButtonsSizeAndCallbacks))
 --* compare ((TitleBar#getAdaptedTopButton))
 --- the groups generated here are only horizontally oriented
@@ -788,12 +817,15 @@ end
 function TitleBar:injectTopButtonsGroups()
 
     local spacer_width = KOR.screenhelpers:getHorizontalSpacerWidth(nil, nil, self.use_minimal_spacers)
-    local count, button
+    local button
     local horizontal_spacer = HorizontalSpan:new{
         width = spacer_width,
     }
 
     if self.top_buttons_left and not self.left_buttons_container_populated then
+
+        self:addDialogQueueButton(self.top_buttons_left)
+
         count = #self.top_buttons_left
         for nr = 1, count do
             button = self:instantiateButton(self.top_buttons_left[nr])
@@ -993,16 +1025,18 @@ end
 
 --- @private
 function TitleBar:replaceTopButtonsLeftByTabButtonsLeft()
-    if self.tab_buttons_left and self.top_buttons_left then
-        local button
-        local count = #self.top_buttons_left
-        for i = 1, count do
-            button = self.top_buttons_left[i]
-            button.bordersize = 0
-            table_insert(self.tab_buttons_left, 1, button)
-        end
-        self.top_buttons_left = nil
+    if not self.tab_buttons_left or not self.top_buttons_left then
+        return
     end
+
+    local button
+    count = #self.top_buttons_left
+    for i = 1, count do
+        button = self.top_buttons_left[i]
+        button.bordersize = 0
+        table_insert(self.tab_buttons_left, 1, button)
+    end
+    self.top_buttons_left = nil
 end
 
 --- @private

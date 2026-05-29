@@ -189,15 +189,11 @@ function XrayUI:getParaMarker(bb)
 end
 
 --- @private
-function XrayUI:setReturnCallbacks(xray_rects, nr, mode)
-    KOR.registry:set("return_from_settings_callback", function()
-        self:showParagraphInformation(xray_rects, nr, mode)
-    end)
-
+function XrayUI:setReturnCallback(xray_rects, nr, mode)
+    --* this callback will be called in ((XrayDialogs#closeUiInfoDialog)), where it will set a DialogsQueue entry:
     self.return_to_caller_callback = function()
         self:showParagraphInformation(xray_rects, nr, mode)
     end
-    KOR.registry:set("return_to_caller_callback", self.return_to_caller_callback)
 end
 
 --- @private
@@ -208,7 +204,8 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
         return
     end
 
-    self:setReturnCallbacks(xray_rects, nr, mode)
+    --! this call is crucial to be able to return to the Page Information popup from other dialogs:
+    self:setReturnCallback(xray_rects, nr, mode)
 
     local paragraph_text = self.paragraph_texts[nr]
     local paragraph_hits_names = {}
@@ -984,7 +981,7 @@ function XrayUI:toggleParagraphOrPageMode(parent, target, new_trigger)
     KOR.dialogs:confirm(question, function()
         DX.s:toggleSetting("UI_mode", { "page", "paragraph" })
         if parent then
-            parent:closeUiInfoDialog("add_return_callback")
+            parent:closeUiInfoDialog()
         end
         UIManager:setDirty(nil, "full")
     end)

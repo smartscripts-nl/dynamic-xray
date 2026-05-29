@@ -17,6 +17,7 @@ local pairs = pairs
 --- @field columntexts ColumnTexts
 --- @field databases Databases
 --- @field dialogs Dialogs
+--- @field dialogsqueue DialogsQueue
 --- @field document CreDocument
 --- @field ebookmetadata EbookMetadata
 --- @field filedirnames FileDirNames
@@ -76,6 +77,7 @@ local KOR = WidgetContainer:new{
 	colors = nil,
 	columntexts = nil,
 	dialogs = nil,
+	dialogsqueue = nil,
 	ebookmetadata = nil,
 	filedirnames = nil,
 	files = nil,
@@ -108,6 +110,7 @@ local KOR = WidgetContainer:new{
 	extensions_list = {
 		--! this first block contains extensions which are needed by other extensions and therefor must be initialized first:
 		"dialogs",
+		"dialogsqueue",
 		"files",
 		"tables",
 		"keyevents",

@@ -550,7 +550,7 @@ function ButtonInfoPopup:forXrayQuotesManager(props)
 	}, props)
 end
 
---* this method will be called when a Registry var "return_to_caller_callback" has been set, to return from a dialog to its calling dialog:
+--* this method will be called from ((TitleBar#addDialogQueueButton)), if a dialog has been registered to ((DialogsQueue)) and one or more previous dialogs are registered in that queue:
 function ButtonInfoPopup:forXrayReturnToCaller(props)
 	return KOR.buttonprops:set({
 		icon = "back-small",

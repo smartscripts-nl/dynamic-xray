@@ -230,6 +230,12 @@ function SeriesManager:onShowSeriesList(full_path)
         return true
     end
 
+    KOR.dialogsqueue:register({
+        id = "show_series_list",
+        restore = function()
+            self:onShowSeriesList(full_path)
+        end,
+    })
     self:populateSeries(result)
     count = #self.series
     if count == 0 then
@@ -478,9 +484,12 @@ function SeriesManager:showContextDialog(item, full_path, is_non_series_item)
         }))
     end
     local title = self:formatDialogTitle(item)
-    KOR.registry:set("return_from_settings_callback", function()
-        self:showContextDialog(item, full_path, is_non_series_item)
-    end)
+    KOR.dialogsqueue:register({
+        id = "show_series_manager",
+        restore = function()
+            self:showContextDialog(item, full_path, is_non_series_item)
+        end,
+    })
     self.context_dialog = KOR.dialogs:filesBox({
         title = title,
         key_events_module = self.series_context_dialog_index,

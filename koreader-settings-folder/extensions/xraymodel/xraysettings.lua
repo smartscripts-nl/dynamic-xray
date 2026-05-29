@@ -10,7 +10,6 @@ local _ = KOR:initCustomTranslations()
 
 local DX = DX
 local pairs = pairs
-local table_insert = table.insert
 local type = type
 
 --* DX.m and therefore DX.m:isPrivateDXversion not yet available here:
@@ -428,21 +427,17 @@ function XraySettings.showSettingsManager(active_tab)
             end,
         },
     }
-    --* these callbacks for now set in ((XrayUI#showParagraphInformation)), ((XrayDialogs#showList)), ((XrayDialogs#viewItem)), ((XrayPageNavigator#showNavigator)), ((XrayTags#showTagGroupSelector)), ((XrayTags#showTagGroup)), ((SeriesManager#showContextDialog)):
-    local return_from_settings_callback = KOR.registry:get("return_from_settings_callback")
-    if return_from_settings_callback then
-        table_insert(top_buttons_left, KOR.buttoninfopopup:forXraySettingsReturnToCaller({
-            callback = function()
-                UIManager:close(self.tabbed_interface)
-                return_from_settings_callback()
-                --! don't reset var "return_from_settings_callback" here, so its callback stays available (until a new one is defined)
-            end,
-        }))
-    end
 
+    KOR.dialogsqueue:register({
+        id = "show_settings_manager",
+        restore = function()
+            self.showSettingsManager(active_tab)
+        end,
+    })
     self.settings_manager:setProp("active_tab", active_tab)
     self.tabbed_interface = KOR.tabbedlist:create({
         caller = self,
+        show_parent = self,
         caller_method = self.showSettingsManager,
         menu_manager = self.settings_manager,
         top_buttons_left = top_buttons_left,

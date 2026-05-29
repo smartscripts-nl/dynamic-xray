@@ -277,7 +277,7 @@ function XrayViewsData:repopulateItemsPersonsTerms(item, skip_item_table)
                 self.items[i] = item
                 self.current_item = item
                 self.items[i].callback = function()
-                    UIManager:close(DX.d.xray_items_chooser_dialog)
+                    UIManager:close(DX.d.xray_items_list)
                     DX.d:setProp("needle_name_for_list_page", item.name)
                     DX.d:viewItem(item, "called_from_list")
                 end
@@ -829,8 +829,8 @@ function XrayViewsData:filterAndAddItemToItemTables(items, n, search_needles, li
             non_breakable = item.non_breakable,
             index = #self.item_table_for_filter[1] + 1,
             callback = function()
-                UIManager:close(DX.d.xray_items_chooser_dialog)
-                DX.d:setProp("needle_name_for_list_page", item.name)
+                UIManager:close(DX.d.xray_items_list)
+                DX.d:setProp("needle_name_for_list_page", item.name)UIManager:close(DX.d.xray_items_list)
                 DX.d:viewItem(item, "called_from_list")
             end
         }

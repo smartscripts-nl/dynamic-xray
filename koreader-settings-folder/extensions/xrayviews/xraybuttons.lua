@@ -223,8 +223,8 @@ function XrayButtons:addMoreButton(buttons, indicator_buttons, props)
     })
 end
 
-function XrayButtons:forGenericPopupDialog(parent_dialog, info_title, info_text, settings_callback)
-    local buttons = {
+function XrayButtons:forGenericPopupDialog(info_title, info_text, settings_callback)
+    return {
         {
             icon = "info-slender",
             callback = function()
@@ -237,19 +237,6 @@ function XrayButtons:forGenericPopupDialog(parent_dialog, info_title, info_text,
             end
         }),
     }
-
-    --* e.g. set in ((XrayTags#showTagGroupSelector)):
-    local return_to_caller_callback = KOR.registry:getOnce("return_to_caller_callback")
-    if return_to_caller_callback then
-        table_insert(buttons, KOR.buttoninfopopup:forXrayReturnToCaller({
-            callback = function()
-                UIManager:close(parent_dialog)
-                return_to_caller_callback()
-            end,
-        }))
-    end
-
-    return buttons
 end
 
 --- @param parent XrayPageNavigator
@@ -365,6 +352,7 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
         KOR.buttoninfopopup:forXrayList({
             callback = function()
                 parent:closePopupMenu()
+                parent:closePageNavigator()
                 return DX.cb:execShowListCallback()
             end
         }),
@@ -414,9 +402,6 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
             callback = function()
                 parent:closePopupMenu()
                 parent:closePageNavigator()
-                KOR.registry:set("return_to_caller_callback", function()
-                    parent:restoreNavigator()
-                end)
                 DX.d:showMultipleBookSeriesActionsOverview()
             end,
         }))
@@ -464,12 +449,13 @@ function XrayButtons:closeDialog(dialog)
     UIManager:close(dialog)
 end
 
-function XrayButtons:getSeriesManagerButton(dialog)
+--* parent_dialog can in some cases be a function that returns a dialog instance:
+function XrayButtons:getSeriesManagerButton(parent_dialog)
 
     if not DX.m.current_series then
         return KOR.buttoninfopopup:forSeriesAll({
             callback = function()
-                self:closeDialog(dialog)
+                self:closeDialog(parent_dialog)
                 KOR.seriesmanager:searchSerieMembers()
                 KOR.seriesmanager:onShowSeriesList()
             end
@@ -478,11 +464,11 @@ function XrayButtons:getSeriesManagerButton(dialog)
 
     return KOR.buttonchoicepopup:forSeriesCurrentBook({
         callback = function()
-            self:closeDialog(dialog)
+            self:closeDialog(parent_dialog)
             KOR.seriesmanager:showSeriesForEbookPath()
         end,
         hold_callback = function()
-            self:closeDialog(dialog)
+            self:closeDialog(parent_dialog)
             KOR.seriesmanager:searchSerieMembers()
             KOR.seriesmanager:onShowSeriesList()
         end,
@@ -496,26 +482,26 @@ function XrayButtons:forUiInfoAdditionalButtons(config, parent)
         KOR.buttoninfopopup:forXrayList({
             fgcolor = KOR.colors.button_label,
             callback = function()
-                parent:closeUiInfoDialog("add_return_callback")
+                parent:closeUiInfoDialog()
                 parent:showList()
             end
         }),
         KOR.buttoninfopopup:forXrayPageNavigator({
             callback = function()
-                parent:closeUiInfoDialog("add_return_callback")
+                parent:closeUiInfoDialog()
                 DX.pn:showNavigator()
             end,
         }),
         --* for series top book items button will be injected here...
         KOR.buttoninfopopup:forXrayTagGroupSelector({
             callback = function()
-                parent:closeUiInfoDialog("add_return_callback")
+                parent:closeUiInfoDialog()
                 DX.ta:showTagGroupSelector()
             end
         }),
         KOR.buttoninfopopup:forXrayExport({
             callback = function()
-                parent:closeUiInfoDialog("add_return_callback")
+                parent:closeUiInfoDialog()
                 return DX.cb:execExportXrayItemsCallback()
             end
         }),
@@ -525,7 +511,7 @@ function XrayButtons:forUiInfoAdditionalButtons(config, parent)
     if DX.m.has_multiple_series_items then
         table_insert(config.extra_buttons, 3, KOR.buttoninfopopup:forXrayMultipleBookSeriesOverviews({
             callback = function()
-                parent:closeUiInfoDialog("add_return_callback")
+                parent:closeUiInfoDialog()
                 parent:showMultipleBookSeriesActionsOverview()
             end,
         }))
@@ -547,7 +533,7 @@ function XrayButtons:forUiInfoTopLeft(target, new_trigger, parent)
         KOR.buttoninfopopup:forXrayTranslations(),
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
-                parent:closeUiInfoDialog("add_return_callback")
+                parent:closeUiInfoDialog()
                 DX.s.showSettingsManager()
             end
         }),
@@ -751,6 +737,29 @@ function XrayButtons:forSaveGlossary(parent, glossary, glossary_text, css_files)
      }}
 end
 
+--- @param parent XrayTags
+function XrayButtons:forTagFilter(parent)
+    return {
+        KOR.buttoninfopopup:forXrayTagGroupAdd({
+            callback = function()
+                UIManager:close(parent.choose_tag_filter_dialog)
+                --* to disable hotkeys which are active with loaded PageNavigator:
+                DX.pn:closePageNavigator()
+                UIManager:forceRePaint()
+                parent.select_for_tags = true
+                parent:addTagGroup()
+            end,
+        }),
+        KOR.buttoninfopopup:forXraySettings({
+            callback = function()
+                UIManager:close(parent.choose_tag_filter_dialog)
+                DX.vd:closeListDialog()
+                DX.s.showSettingsManager()
+            end
+        }),
+    }
+end
+
 --* add the main buttons for selecting a specific tag group:
 --- @param parent XrayTags
 function XrayButtons:forTagGroupSelector(parent, dialog_index, tags)
@@ -778,15 +787,12 @@ function XrayButtons:forTagGroupSelector(parent, dialog_index, tags)
 end
 
 --- @param parent XrayTags
-function XrayButtons:forTagGroupSelectorTopLeft(parent, xray_item)
+function XrayButtons:forTagGroupSelectorTopLeft(parent)
     local buttons = {
         --* for series top book items button will be injected here...
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
                 UIManager:close(parent.tag_group_selector)
-                KOR.registry:set("return_from_settings_callback", function()
-                    parent:showTagGroupSelector(xray_item)
-                end)
                 DX.s.showSettingsManager()
             end
         }),
@@ -796,25 +802,10 @@ function XrayButtons:forTagGroupSelectorTopLeft(parent, xray_item)
         table_insert(buttons, 1, KOR.buttoninfopopup:forXrayMultipleBookSeriesOverviews({
             callback = function()
                 UIManager:close(parent.tag_group_selector)
-                KOR.registry:set("return_to_caller_callback", function()
-                    parent:showTagGroupSelector(xray_item)
-                end)
                 DX.d:showMultipleBookSeriesActionsOverview()
             end
         }))
     end
-
-    local return_to_caller_callback = KOR.registry:getOnce("return_to_caller_callback")
-    if not return_to_caller_callback then
-        return buttons
-    end
-
-    table_insert(buttons, KOR.buttoninfopopup:forXrayReturnToCaller({
-        callback = function()
-            UIManager:close(parent.tag_group_selector)
-            return_to_caller_callback()
-        end,
-    }))
 
     return buttons
 end
@@ -1118,15 +1109,6 @@ function XrayButtons:forItemViewerTopLeft(parent)
         }),
     }
     self:insertGeneralDXTipsButton(buttons, parent)
-    local return_to_caller_callback = KOR.registry:getOnce("return_to_caller_callback")
-    if return_to_caller_callback then
-        table_insert(buttons, KOR.buttoninfopopup:forXrayReturnToCaller({
-            callback = function()
-                parent:closeItemViewer()
-                return_to_caller_callback()
-            end,
-        }))
-    end
 
     return buttons
 end
@@ -1263,9 +1245,6 @@ Current sorting mode: %1.]]), current_sorting_mode:upper()),
             show_parent = KOR.ui,
         })))
         if DX.m.has_multiple_series_items then
-            KOR.registry:set("return_to_caller_callback", function()
-                DX.d:showListWithRestoredArguments()
-            end)
             table_insert(buttons, 3, Button:new(KOR.buttoninfopopup:forXrayMultipleBookSeriesOverviews({
                 callback = function()
                     DX.d:showMultipleBookSeriesActionsOverview()
@@ -1287,19 +1266,20 @@ function XrayButtons:forListFooterRight(parent)
     end
 
     local dialog_close_callback = function()
-        UIManager:close(parent.xray_items_chooser_dialog)
+        parent:closeListDialog()
     end
     local upon_ready_callback = function()
         parent:showListWithRestoredArguments()
         self:showImportReadyNotification()
     end
-    local series_manager_button = self:getSeriesManagerButton()
+    local series_manager_button = self:getSeriesManagerButton(parent.xray_items_list)
     return {
         series_manager_button,
         KOR.buttoninfopopup:forXrayPageNavigator(),
         KOR.buttoninfopopup:forXrayExport({
             callback = function()
                 DX.pn:closePopupMenu()
+                parent:closeListDialog()
                 return DX.cb:execExportXrayItemsCallback()
             end
         }),
@@ -1373,8 +1353,7 @@ function XrayButtons:forListTopLeft(parent)
         KOR.buttoninfopopup:forXrayTranslations(),
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
-                UIManager:close(parent.xray_items_chooser_dialog)
-                parent.xray_items_chooser_dialog = nil
+                parent:closeListDialog()
                 DX.s.showSettingsManager()
             end
         }),

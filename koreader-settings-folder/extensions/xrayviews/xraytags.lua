@@ -18,12 +18,14 @@ local has_no_text = has_no_text
 local has_text = has_text
 local math = math
 local math_floor = math.floor
+local math_min = math.min
 local table = table
 local table_concat = table.concat
 local table_insert = table.insert
 local table_sort = table.sort
 
 local count
+local DGENERIC_ICON_SIZE = G_defaults:readSetting("DGENERIC_ICON_SIZE")
 
 --- @class XrayTags
 local XrayTags = WidgetContainer:new{
@@ -61,6 +63,9 @@ function XrayTags:showTagFilterSelector(mode)
     local button_width = math_floor(Screen:getWidth() / 6)
     count = #taggroups
     local dialog_width = count < buttons_per_row and count * button_width or buttons_per_row * button_width
+    --* add extra width for top buttons left:
+    dialog_width = dialog_width + 3 * DGENERIC_ICON_SIZE
+    dialog_width = math_min(Screen:getWidth() - 20, dialog_width)
     for i = 1, count do
         table_insert(buttons[row], {
             text = taggroups[i],
@@ -86,11 +91,11 @@ function XrayTags:showTagFilterSelector(mode)
             row = row + 1
         end
     end
-    DX.b:addXrayTagGroupAddButton(buttons, buttons_per_row, self, "choose_tag_filter_dialog")
 
     local subtitle = mode == "page_navigator" and _("browse between occurrences of tag group members") or _("filter the List by a tag")
     self.choose_tag_filter_dialog = ButtonDialogTitle:new{
         title = _("tag groups"),
+        top_buttons_left = DX.b:forTagFilter(self),
         subtitle = subtitle .. KOR.strings.ellipsis,
         width = dialog_width,
         buttons = buttons,
@@ -483,12 +488,18 @@ function XrayTags:showTagGroupSelector(xray_item)
     if self:showNoTagsNotification(taggroups_with_totals) then
         return
     end
+    KOR.dialogsqueue:register({
+        id = "tag_group_select",
+        restore = function()
+            self:showTagGroupSelector(xray_item)
+        end,
+    })
     self.tag_group_selector = ButtonDialogTitle:new{
         title = _("Choose a tag-group"),
         use_low_title = true,
         title_align = "center",
         font_weight = "normal",
-        top_buttons_left = DX.b:forTagGroupSelectorTopLeft(self, xray_item),
+        top_buttons_left = DX.b:forTagGroupSelectorTopLeft(self),
         width_factor = 0.95,
         button_width = 0.33,
         buttons = DX.b:forTagGroupSelector(self, "tag_group_selector", taggroups_with_totals),
@@ -505,9 +516,6 @@ function XrayTags:showTagGroup(tag)
             KOR.buttoninfopopup:forXraySettings({
                 callback = function()
                     UIManager:close(self.tag_group_viewer)
-                    KOR.registry:set("return_from_settings_callback", function()
-                        self:showTagGroup(tag)
-                    end)
                     DX.s.showSettingsManager()
                 end
             }),

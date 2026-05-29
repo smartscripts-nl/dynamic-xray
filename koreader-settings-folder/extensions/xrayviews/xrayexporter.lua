@@ -219,6 +219,12 @@ function XrayExporter:showExportXrayItemsDialog()
         return
     end
 
+    KOR.dialogsqueue:register({
+        id = "show_xray_export_dialog",
+        restore = function()
+            self:showExportXrayItemsDialog()
+        end,
+    })
     local top_buttons_left = DX.b:forExportItemsTopLeft()
     KOR.dialogs:textBoxTabbed(self.active_tab, {
         title_func = function()
