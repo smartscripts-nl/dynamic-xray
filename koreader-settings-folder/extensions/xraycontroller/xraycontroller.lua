@@ -519,7 +519,7 @@ function XrayController:showListConditionally(focus_item, show_list)
         return
     end
 
-    if (show_list or DX.d.called_from_list) and not DX.d.xray_item_chooser and not DX.d.edit_item_input and not DX.u.xray_ui_info_dialog then
+    if (show_list or DX.d.called_from_list) and not DX.d.xray_tapped_word_items_dialog and not DX.d.edit_item_input and not DX.u.xray_ui_info_dialog then
         DX.d:showList(focus_item)
     end
 end

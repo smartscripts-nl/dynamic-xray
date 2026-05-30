@@ -231,7 +231,7 @@ function SeriesManager:onShowSeriesList(full_path)
     end
 
     KOR.dialogsqueue:register({
-        id = "show_series_list",
+        id = "series_list",
         restore = function()
             self:onShowSeriesList(full_path)
         end,
@@ -485,7 +485,7 @@ function SeriesManager:showContextDialog(item, full_path, is_non_series_item)
     end
     local title = self:formatDialogTitle(item)
     KOR.dialogsqueue:register({
-        id = "show_series_manager",
+        id = "series_manager",
         restore = function()
             self:showContextDialog(item, full_path, is_non_series_item)
         end,

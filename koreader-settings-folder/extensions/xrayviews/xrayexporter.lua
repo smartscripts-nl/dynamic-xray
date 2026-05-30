@@ -220,7 +220,7 @@ function XrayExporter:showExportXrayItemsDialog()
     end
 
     KOR.dialogsqueue:register({
-        id = "show_xray_export_dialog",
+        id = "xray_export_dialog",
         restore = function()
             self:showExportXrayItemsDialog()
         end,

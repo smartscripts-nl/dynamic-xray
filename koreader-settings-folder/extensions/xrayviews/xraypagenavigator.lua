@@ -176,7 +176,7 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
     end
 
     KOR.dialogsqueue:register({
-        id = "show_page_navigator",
+        id = "page_navigator",
         restore = function()
             self:showNavigator(initial_browsing_page)
         end,

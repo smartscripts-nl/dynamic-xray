@@ -66,8 +66,8 @@ local XrayDialogs = WidgetContainer:new{
     select_mode = false,
     -- #((Xray-item edit dialog: tab buttons in TitleBar))
     title_tab_buttons_left = { _(" xray-item "), _(" metadata ") },
-    xray_item_chooser = nil,
     xray_items_list = nil,
+    xray_tapped_word_items_dialog = nil,
     --! self.xray_type_field_nr has to correspond to the index used to get the xray_type in ((XrayFormsData#convertFieldValuesToItemProps)); see also ((XrayDialogs#switchFocusForXrayType)):
     xray_type_field_nr = 4,
     xray_ui_info_dialog = nil,
@@ -261,7 +261,7 @@ function XrayDialogs:showMultipleBookSeriesActionResult(args)
     end
 
     KOR.dialogsqueue:register({
-        id = "show_multiple_series_book_action_result",
+        id = "multiple_series_book_action_result",
         restore = function()
             self:showMultipleBookSeriesActionResult(args)
         end,
@@ -493,7 +493,7 @@ function XrayDialogs:closeUiInfoDialog()
     self.xray_ui_info_dialog = nil
 
     KOR.dialogsqueue:register({
-        id = "show_ui_page_info",
+        id = "ui_page_info",
         restore = function()
             DX.u.return_to_caller_callback()
         end,
@@ -859,7 +859,7 @@ function XrayDialogs:showMultipleBookSeriesActionsOverview()
     }
 
     KOR.dialogsqueue:register({
-        id = "show_multiple_series_books_actions",
+        id = "multiple_series_books_actions",
         restore = function()
             self:showMultipleBookSeriesActionsOverview()
         end,
@@ -967,7 +967,7 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
         needle_item.index = current_items_count
     end
     KOR.dialogsqueue:register({
-        id = "show_item_viewer",
+        id = "item_viewer",
         restore = function()
             self:closeItemViewer()
             self:viewItem(needle_item, called_from_list, tapped_word, skip_item_search)
@@ -1091,6 +1091,13 @@ end
 
 --* compare this viewer for tapped words for the regular Item Viewer in ((XrayDialogs#viewItem)):
 function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_word)
+
+    KOR.dialogsqueue:register({
+        id = "tapped_word_item_viewer",
+        restore = function()
+            self:viewTappedWordItem(needle_item, called_from_list, tapped_word)
+        end,
+    })
 
     self.called_from_list = called_from_list
     local current_tab_items = DX.tw:getCurrentListTabItems()
@@ -1218,22 +1225,30 @@ end
 
 --* compare ((XrayButtons#handleMoreButtonClick)), for the popup after the user tapped on the "More..." button:
 function XrayDialogs:showTappedWordCollectionPopup(buttons, buttons_count, tapped_word)
+
+    --* so we can return to the TW popup from XraySettings:
+    KOR.dialogsqueue:register({
+        id = "tapped_word_popup",
+        restore = function()
+            self:showTappedWordCollectionPopup(buttons, buttons_count, tapped_word)
+        end,
+    })
     -- #((multiple related xray items found))
-    self.xray_item_chooser = ButtonDialogTitle:new{
+    self.xray_tapped_word_items_dialog = ButtonDialogTitle:new{
         title = tapped_word .. KOR.icons.arrow .. buttons_count .. _(" xray items found:"),
         title_align = "center",
         use_low_title = true,
         top_buttons_left = {
             KOR.buttoninfopopup:forXraySettings({
                 callback = function()
-                    UIManager:close(self.xray_item_chooser)
+                    self:closeTappedWordCollectionPopup()
                     DX.s.showSettingsManager()
                 end
             }),
         },
         --no_overlay = true,
         after_close_callback = function()
-            self.xray_item_chooser = nil
+            self.xray_tapped_word_items_dialog = nil
             --* remove the temporary table with related items for viewing:
             DX.tw:itemsUnregister()
         end,
@@ -1242,7 +1257,12 @@ function XrayDialogs:showTappedWordCollectionPopup(buttons, buttons_count, tappe
         --* so list of related items can be shown on top of this popup:
         modal = false,
     }
-    UIManager:show(self.xray_item_chooser)
+    UIManager:show(self.xray_tapped_word_items_dialog)
+end
+
+function XrayDialogs:closeTappedWordCollectionPopup()
+    UIManager:close(self.xray_tapped_word_items_dialog)
+    self.xray_tapped_word_items_dialog = nil
 end
 
 --- @private

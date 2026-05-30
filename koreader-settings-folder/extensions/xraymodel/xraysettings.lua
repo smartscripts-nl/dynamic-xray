@@ -429,7 +429,7 @@ function XraySettings.showSettingsManager(active_tab)
     }
 
     KOR.dialogsqueue:register({
-        id = "show_settings_manager",
+        id = "settings_manager",
         restore = function()
             self.showSettingsManager(active_tab)
         end,

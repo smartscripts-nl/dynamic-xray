@@ -1865,7 +1865,7 @@ NNon-bold items were either linked from a bold item or they have a linkword in c
             info = T(_([[search-list-icon | Show all occurrences of this Xray item in the current ebook.
 Sneltoets %1 H]]), KOR.icons.arrow_bare),
             callback = function()
-                UIManager:close(DX.d.xray_item_chooser)
+                DX.d:closeTappedWordCollectionPopup()
                 DX.c:viewItemHits(tapped_word)
             end,
         }),
@@ -1877,7 +1877,7 @@ Sneltoets %1 H]]), KOR.icons.arrow_bare),
         }),
         KOR.buttoninfopopup:forXrayItemAdd({
             callback = function()
-                UIManager:close(DX.d.xray_item_chooser)
+                DX.d:closeTappedWordCollectionPopup()
                 DX.c:onShowNewItemForm("")
             end,
         }),
