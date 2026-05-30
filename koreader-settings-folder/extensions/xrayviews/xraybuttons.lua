@@ -1789,7 +1789,7 @@ end
 
 --* called from ((XrayTappedWords#getXrayItemAsDictionaryEntry)) > ((multiple related xray items found)):
 --* items_found sorted and purged in ((XrayTappedWords#collectionSortAndPurge)):
-function XrayButtons:forItemsCollectionPopup(items_found, tapped_word)
+function XrayButtons:forItemsCollectionPopup(items_found, tapped_word, get_first_item_only)
     --* is_bold prop will here be added to items:
     local copies = DX.tw:collectionPopulateAndSort(items_found, tapped_word)
     --* copies here don't have reliability indicators yet...
@@ -1813,6 +1813,11 @@ function XrayButtons:forItemsCollectionPopup(items_found, tapped_word)
     -- #((store tapped word popup collection info))
     --* we use the status_icons to force the item type and reliability icons shown in the list of this collection to be the same as in the popup:
     DX.tw:setPopupResult(copies, status_icons)
+    --! this can only be done after setPopupResult, because otherwise XrayModel.popup_items would not be available and an eror would be triggered:
+    --* this param will be truthy when DX.s.TW_only_show_main_item is true and more than one Xray item was found based on the tapped word:
+    if get_first_item_only then
+        return copies[1]
+    end
 
     local combined_rows = {}
     count = #buttons

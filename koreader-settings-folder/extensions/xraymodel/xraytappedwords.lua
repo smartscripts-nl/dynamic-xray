@@ -75,16 +75,26 @@ function XrayTappedWords:getXrayItemAsDictionaryEntry(tapped_word)
         local items_found = self:itemExists(tapped_word, tapped_word)
         if items_found then
 
+            count = #items_found
+
             -- #((xray_item as dictionary plugin pre dialog))
             --* we only want to show the popup if there are more than one item found, because in case of only one item we can immediately show that in the Item Viewer:
-            if not DX.s.TW_only_show_main_item and #items_found > 1 then
+            if not DX.s.TW_only_show_main_item and count > 1 then
                 --* items will already be sorted by name or hits...
                 local buttons, buttons_count = DX.b:forItemsCollectionPopup(items_found, tapped_word)
                 DX.d:showTappedWordCollectionPopup(buttons, buttons_count, tapped_word)
                 return true
 
-                --* when only a single item found (or when DX.s.TW_only_show_main_item is set to true, in case of multiple related items), show this main item immediately:
-            elseif #items_found > 0 then
+            --* when DX.s.TW_only_show_main_item is set to true and multiple related items were found, only show main/first item:
+            elseif DX.s.TW_only_show_main_item and count > 1 then
+                --* items will already be sorted by name or hits...
+                local item = DX.b:forItemsCollectionPopup(items_found, tapped_word, "get_first_item_only")
+                --* false for called_from_list:
+                DX.d:viewItem(item, false, tapped_word)
+                return true
+
+            --* when only a single item found, show this item immediately:
+            elseif count == 1 then
                 --* false for called_from_list:
                 DX.d:viewItem(items_found[1], false, tapped_word)
                 return true

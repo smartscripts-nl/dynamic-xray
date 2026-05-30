@@ -1,11 +1,9 @@
 
 local require = require
 
---local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 
 local os_time = os.time
-local table = table
 local table_insert = table.insert
 local table_remove = table.remove
 
@@ -51,7 +49,6 @@ function DialogsQueue:register(queue_props)
     table_insert(self.queue, queue_props)
     self.dialog_ids[queue_props.id] = true
     self.last_id = queue_props.id
-    --KOR.debug:alertTable("DialogsQueue:register", "updated queue", self.queue)
 end
 
 function DialogsQueue:reset()
@@ -83,6 +80,7 @@ function DialogsQueue:restorePrevious(id)
     return true
 end
 
+--- @private
 function DialogsQueue:unregister(id)
     local pruned = {}
     self.dialog_ids[id] = nil
