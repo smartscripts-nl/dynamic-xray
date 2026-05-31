@@ -99,9 +99,9 @@ function ButtonChoicePopup:forXrayReturnToCaller(props)
 	return KOR.buttonprops:set({
 		icon = "back-small",
 		--! info defined by calling module
-		callback_label = "ga terug",
+		callback_label = _("go back"),
 		--! callback defined by calling module
-		hold_callback_label = "naar eerste",
+		hold_callback_label = _("to first"),
 		--! hold_callback defined by calling module
 	}, props)
 end
