@@ -194,6 +194,12 @@ function XrayDialogs:showNewItemForm(args)
         series_hits = item_copy.series_hits,
     })
 
+    KOR.dialogsqueue:register({
+        id = "new_xray_item_form",
+        restore = function()
+            self:showNewItemForm(args)
+        end,
+    })
     --! make sure we don't retain field values from previous form sessions; see also the crucial call to ((MultiInputDialog#resetRegistryValues)) on every init and tab-change of MultiInputDialog:
     DX.fd:resetItemProps(item_copy)
     self.add_item_input = MultiInputDialog:new{
@@ -314,6 +320,12 @@ function XrayDialogs:showEditItemForm(args)
     self:closeItemViewer()
     DX.pn:closePageNavigator()
 
+    KOR.dialogsqueue:register({
+        id = "edit_xray_item_form",
+        restore = function()
+            self:showEditItemForm(args)
+        end,
+    })
     --! making sure we don't retain field values from previous form sessions: crucial call to ((MultiInputDialog#resetRegistryValues)) on every init and tab-change of MultiInputDialog:
     self.edit_item_input = MultiInputDialog:new{
         title = KOR.icons.edit_bare .. " " .. item.name:gsub(" %(.+", ""):gsub(" %-.+", ""),
