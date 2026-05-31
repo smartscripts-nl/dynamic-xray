@@ -492,7 +492,6 @@ function XrayButtons:forUiInfoAdditionalButtons(config, parent)
                 DX.pn:showNavigator()
             end,
         }),
-        --* for series top book items button will be injected here...
         KOR.buttoninfopopup:forXrayTagGroupSelector({
             callback = function()
                 parent:closeUiInfoDialog()
@@ -505,11 +504,12 @@ function XrayButtons:forUiInfoAdditionalButtons(config, parent)
                 return DX.cb:execExportXrayItemsCallback()
             end
         }),
+        --* for multiple-book-series additional overviews button will be injected here...
         series_manager_button,
     }
 
     if DX.m.has_multiple_series_items then
-        table_insert(config.extra_buttons, 3, KOR.buttoninfopopup:forXrayMultipleBookSeriesOverviews({
+        table_insert(config.extra_buttons, 5, KOR.buttoninfopopup:forXrayMultipleBookSeriesOverviews({
             callback = function()
                 parent:closeUiInfoDialog()
                 parent:showMultipleBookSeriesActionsOverview()
