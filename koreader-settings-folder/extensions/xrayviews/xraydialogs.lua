@@ -239,7 +239,7 @@ function XrayDialogs:showMultipleBookSeriesActionResult(args)
         --? don't know why we need this, but without this the parent/calling dialog will be shown, instead of the actions overview dialog:
         self.multiple_book_actions_dialog = nil
         self:showMultipleBookSeriesActionsOverview()
-        return
+        return false
     end
     local item_table = DX.tw:prepareNonTappedItemsTable(db_items, args)
 
@@ -263,9 +263,10 @@ function XrayDialogs:showMultipleBookSeriesActionResult(args)
         is_borderless = true,
         is_popout = false,
         fullscreen = true,
+        modal = true,
         no_overlay = true,
         perpage = G_reader_settings:readSetting("items_per_page") or 14,
-        menu_name = "xray_top_book_items",
+        menu_name = "xray_multiple_book_series_action_result",
         top_buttons_left = DX.b:forGenericPopupDialog(args.data_title, _("The hits counts in this dialog apply to the current ebook!\n\nBy tapping on an item you'll open it in the Item Viewer.\n\nWith the back button in the upper left corner of the Item Viewer you can then return to the current overview.") .. additional_info, function()
             UIManager:close(self.action_dialog)
             DX.s.showSettingsManager()
@@ -279,6 +280,7 @@ function XrayDialogs:showMultipleBookSeriesActionResult(args)
     UIManager:show(self.action_dialog)
 
     KOR.dialogs:registerWidget(self.action_dialog)
+    return true
 end
 
 function XrayDialogs:showDeleteItemConfirmation(delete_item, dialog, remove_all_instances_in_series)
@@ -828,12 +830,15 @@ function XrayDialogs:showMultipleBookSeriesActionsOverview()
         table_insert(item_table, {
             text = i .. ". " .. actions[i][1],
             callback = function()
-                self:showMultipleBookSeriesActionResult({
+                local ok = self:showMultipleBookSeriesActionResult({
                     data_title = KOR.icons.xray_tapped_collection_bare .. " " .. actions[i][1],
                     data_loader = actions[i][2],
                     only_external_items = actions[i][3],
                     additional_info = actions[i][4],
                 })
+                if ok then
+                    UIManager:close(self.multiple_book_actions_dialog)
+                end
             end,
         })
     end
@@ -864,6 +869,9 @@ function XrayDialogs:showMultipleBookSeriesActionsOverview()
             UIManager:close(self.multiple_book_actions_dialog)
             DX.s.showSettingsManager()
         end),
+        close_callback = function()
+            UIManager:close(self.multiple_book_actions_dialog)
+        end,
     }
     table_insert(self.multiple_book_actions_dialog, self.multiple_book_actions_menu)
     self.multiple_book_actions_menu.close_callback = function()

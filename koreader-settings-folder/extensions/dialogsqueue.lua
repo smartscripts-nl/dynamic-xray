@@ -1,7 +1,9 @@
 
 local require = require
 
+local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
+local _ = KOR:initCustomTranslations()
 
 local os_time = os.time
 local table_insert = table.insert
@@ -12,10 +14,15 @@ local count
 --- @class DialogsQueue
 local DialogsQueue = WidgetContainer:extend{
     dialog_ids = {},
+    hold_action_alert_shown = false,
     last_id = nil,
     last_register_time = nil,
     queue = {},
 }
+
+function DialogsQueue:getFirstDialogDescription()
+    return self.queue[1].id:gsub("_", " ")
+end
 
 function DialogsQueue:getLastId()
     --* this way we can filter out dialogs which didn't register themselves via a call to ((DialogsQueue#register)):
@@ -31,6 +38,10 @@ end
 
 function DialogsQueue:getParentId()
     return #self.queue > 1 and self.queue[#self.queue - 1]
+end
+
+function DialogsQueue:getQueueCount()
+    return #self.queue
 end
 
 --* queue_props is a table containing an id and a "restore" method to return to the previous dialog:
@@ -49,6 +60,9 @@ function DialogsQueue:register(queue_props)
     table_insert(self.queue, queue_props)
     self.dialog_ids[queue_props.id] = true
     self.last_id = queue_props.id
+
+    --* sometimes previous dialogs are not closed; with this statement we fix that:
+    KOR.dialogs:closeAllWidgets()
 end
 
 function DialogsQueue:reset()
@@ -77,7 +91,30 @@ function DialogsQueue:restorePrevious(id)
     --* restore the previous dialog:
     self.queue[count - 1].restore()
 
+    if not self.hold_action_alert_shown then
+        KOR.dialogs:niceAlert(_("For your information"), _("You have used the button to return to a previous dialog.\n\nWhen you longpress this button, you'll be presented a dialog from which you can jump to the very first opened dialog in the dialog history.\n\nThis notifcation will disappear in 5 seconds and not be shown anymore during the current session..."), {
+            delay = 5,
+        })
+        self.hold_action_alert_shown = true
+    end
+
     return true
+end
+
+function DialogsQueue:returnToFirstDialog()
+    if #self.queue == 0 then
+        return
+    end
+    --* we want to exec this restore callback only after the dialogs queue has been reset; otherwise back button would be incorrectly shown in the titlebar:
+    local restore = KOR.tables:shallowCopy(self.queue[1].restore)
+    self.queue = {
+        self.queue[1]
+    }
+    self.dialog_ids = {
+        [self.queue[1].id] = true
+    }
+    self.last_id = self.queue[1].id
+    restore()
 end
 
 --- @private

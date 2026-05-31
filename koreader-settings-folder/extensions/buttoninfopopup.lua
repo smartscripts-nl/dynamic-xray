@@ -550,16 +550,6 @@ function ButtonInfoPopup:forXrayQuotesManager(props)
 	}, props)
 end
 
---* this method will be called from ((TitleBar#addDialogQueueButton)), if a dialog has been registered to ((DialogsQueue)) and one or more previous dialogs are registered in that queue:
-function ButtonInfoPopup:forXrayReturnToCaller(props)
-	return KOR.buttonprops:set({
-		icon = "back-small",
-		info = _("back icon | Return to the dialog from which you opened the current item."),
-		callback_label = ("return"),
-		--! callback defined by calling module
-	}, props)
-end
-
 function ButtonInfoPopup:forXraySaveTaggedItems(props)
 	return KOR.buttonprops:set({
 		icon = "save",

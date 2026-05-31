@@ -94,10 +94,22 @@ function ButtonChoicePopup:forXrayItemDelete(props)
 	}, props)
 end
 
+--* this method will be called from ((TitleBar#addDialogQueueButton)), if a dialog has been registered to ((DialogsQueue)) and one or more previous dialogs are registered in that queue:
+function ButtonChoicePopup:forXrayReturnToCaller(props)
+	return KOR.buttonprops:set({
+		icon = "back-small",
+		--! info defined by calling module
+		callback_label = "ga terug",
+		--! callback defined by calling module
+		hold_callback_label = "naar eerste",
+		--! hold_callback defined by calling module
+	}, props)
+end
+
 function ButtonChoicePopup:forXrayShowTagsDialogForList(props)
 	return KOR.buttonprops:set({
 		icon = "tags",
-		info = T(_("tags icon | :show popup for tag filters") .. self.separator .. _("show the tag-group-selector, to choose a specific tag-group to display"), KOR.icons.arrow_bare),
+		info = _("tags icon | :show popup for tag filters") .. self.separator .. _("show the tag-group-selector, to choose a specific tag-group to display"),
 		callback_label = _("show"),
 		--! callback defined by calling module
 		hold_callback_label = _("tag-groups"),
@@ -126,7 +138,7 @@ function ButtonChoicePopup:forXrayPageNavigatorShowTagsDialog(props)
 			text = " " .. state_marker,
 		},
 		icon = "tags",
-		info = T(_("tags icon | Activate (+) or disabled (-) browsing between members of a tag group") .. self.separator .. _("show the tag-group-selector, to choose a specific tag-group to display"), KOR.icons.arrow_bare),
+		info = _("tags icon | Activate (+) or disabled (-) browsing between members of a tag group") .. self.separator .. _("show the tag-group-selector, to choose a specific tag-group to display"),
 		callback_label = _("browse") .. " " .. state_marker,
 		--! callback defined by calling module
 		hold_callback_label = _("tag-groups"),

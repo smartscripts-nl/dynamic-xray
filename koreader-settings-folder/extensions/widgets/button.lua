@@ -173,7 +173,7 @@ function Button:init()
     self:initLabelWidget()
     self:adaptLabelSize()
     self:setWidgetContent()
-    self:adaptPaddings()
+    self:adaptVerticalPaddings()
     self:finalizeWidget()
 end
 
@@ -389,6 +389,7 @@ function Button:setWidgetContent()
             self.label_widget,
         }
     end
+    --* self.left_indicator is a table:
     if self.left_indicator then
         table_insert(widget, 1, self.left_indicator)
         --* in ButtonTables we ignore the extra width for indicators:
@@ -424,7 +425,7 @@ function Button:setWidgetContent()
 end
 
 --- @private
-function Button:adaptPaddings()
+function Button:adaptVerticalPaddings()
     self.padding_bottom = self.padding_v
     self.padding_top = self.padding_v
     if self.decrease_top_padding and self.decrease_top_padding > 0 then

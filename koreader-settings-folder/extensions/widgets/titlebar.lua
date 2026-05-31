@@ -30,7 +30,9 @@ local TextWidget = require("extensions/widgets/textwidget")
 local UIManager = require("ui/uimanager")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local VerticalSpan = require("ui/widget/verticalspan")
+local _ = KOR:initCustomTranslations()
 local Screen = Device.screen
+local T = require("ffi/util").template
 
 local DX = DX
 local G_reader_settings = G_reader_settings
@@ -40,6 +42,7 @@ local math_max = math.max
 local math_min = math.min
 local pairs = pairs
 local table_insert = table.insert
+local table_remove = table.remove
 local type = type
 
 local count
@@ -794,11 +797,15 @@ function TitleBar:addCloseButton()
 end
 
 function TitleBar:addDialogQueueButton(buttons)
-    if not buttons or not self.dialog_queue_id or not KOR.dialogsqueue:getParentId() or buttons[#buttons].icon == "back-small" then
+    if buttons and buttons[#buttons].icon == "back-small" then
+        table_remove(buttons)
+    end
+    if not buttons or not self.dialog_queue_id or not KOR.dialogsqueue:getParentId() or KOR.dialogsqueue:getQueueCount() < 2 then
         return
     end
 
-    table_insert(buttons, KOR.buttoninfopopup:forXrayReturnToCaller({
+    table_insert(buttons, KOR.buttonchoicepopup:forXrayReturnToCaller({
+        info = T(_("back icon | :return to the dialog from which you opened the current item\n\n:close current dialog and return to the first opened dialog - %1 - in the dialog history"), KOR.dialogsqueue:getFirstDialogDescription()),
         callback = function()
             if self.close_callback then
                 self.close_callback()
@@ -806,6 +813,14 @@ function TitleBar:addDialogQueueButton(buttons)
                 UIManager:close(self.show_parent)
             end
             KOR.dialogsqueue:restorePrevious(self.dialog_queue_id)
+        end,
+        hold_callback = function()
+            if self.close_callback then
+                self.close_callback()
+            else
+                UIManager:close(self.show_parent)
+            end
+            KOR.dialogsqueue:returnToFirstDialog()
         end,
     }))
 end
