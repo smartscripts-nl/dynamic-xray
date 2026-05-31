@@ -300,6 +300,39 @@ local XrayDataLoader = WidgetContainer:new{
             WHERE x.ebook != 'safe_path'
             ORDER BY x.name;]],
 
+        --* item props will be populated in ((XrayDataLoader#addExternalBooksItem)):
+        get_non_current_book_only_items = [[
+            SELECT i.name,
+                i.id,
+                i.short_names,
+                b.series,
+                i.book_hits,
+                SUM(i.book_hits) AS series_hits,
+                i.description,
+                i.xray_type,
+                i.non_breakable,
+                i.aliases,
+                i.tags,
+                i.linkwords,
+               GROUP_CONCAT(
+                       b.series_index || '. ' || b.title || ' (' || COALESCE(i.book_hits, 0) || ')',
+                       '|'
+                       ORDER BY b.series_index
+               ) AS mentioned_in
+
+            FROM xray_items i
+                 JOIN bookinfo b
+                      ON b.filename = i.ebook
+
+            WHERE b.series = '%1'
+              AND i.ebook != '%2'
+              AND NOT EXISTS (SELECT 1
+                  FROM xray_items r
+                  WHERE r.ebook = '%3'
+                    AND r.name = i.name)
+            GROUP BY i.name
+            ORDER BY series_hits DESC]],
+
         qet_quotes_for_item_book = [[
             SELECT id, quote FROM xray_quotes
             WHERE item_name = '%1' AND ebook = '%2' ORDER BY id;]],
@@ -521,6 +554,28 @@ function XrayDataLoader:_addSeriesItem(result, i, series_index)
 
     -- #((set xray item props))
     table_insert(parent.series[series_index], item)
+end
+
+function XrayDataLoader:addExternalBooksItem(result, i)
+
+    local id = result["id"][i]
+    return {
+        id = id,
+        series = result["series"][i],
+        name = result["name"][i],
+        short_names = result["short_names"][i] or "",
+        description = result["description"][i] or "",
+        xray_type = result["xray_type"][i] or 1,
+        non_breakable = result["non_breakable"][i] or 0,
+        aliases = result["aliases"][i] or "",
+        tags = result["tags"][i] or "",
+        linkwords = result["linkwords"][i] or "",
+        mentioned_in = result["mentioned_in"][i],
+        book_hits = 0,
+        series_hits = result["series_hits"][i] or 1,
+        --* we don't use chapter_hits, chapter_hits_data and post_chapter_quotes here, because when there are multiple external books, we can't determine which dataset to use for that...
+        pos_chapter_quotes = "",
+    }
 end
 
 --* compare ((XrayDataSaver#getChapterHitsDataForStorage)), where these data are prepared for storage:

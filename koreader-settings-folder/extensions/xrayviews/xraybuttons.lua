@@ -811,7 +811,45 @@ function XrayButtons:forTagGroupSelectorTopLeft(parent)
 end
 
 --* compare ((XrayButtons#forItemViewer)) and buttons for list view ((XrayButtons#forListFooterLeft)), ((XrayButtons#forListFooterRight)), ((XrayButtons#forListContext)):
+function XrayButtons:forExternalItemsViewer(needle_item, tapped_word)
+
+    local buttons = {
+        {
+            KOR.buttoninfopopup:forXrayPreviousItem({
+                callback = function()
+                    DX.d:viewPreviousTappedWordItem()
+                end,
+            }),
+            KOR.buttoninfopopup:forXrayNextItem({
+                callback = function()
+                    -- #((next related item via button))
+                    DX.d:viewNextTappedWordItem()
+                end,
+            }),
+            KOR.buttoninfopopup:forXrayItemDebug({
+                enabled = has_text(needle_item.name),
+                callback = function()
+                    DX.m:debugItem("XrayButtons:forTappedWordItemViewer", needle_item)
+                end,
+            }),
+            {
+                icon = "back",
+                icon_size_ratio = 0.55,
+                callback = function()
+                    DX.d:closeItemViewer()
+                end,
+            },
+        }
+    }
+
+    self:forItemViewerBottomContextButtons(buttons, needle_item, tapped_word)
+
+    return buttons
+end
+
+--* compare ((XrayButtons#forItemViewer)) and buttons for list view ((XrayButtons#forListFooterLeft)), ((XrayButtons#forListFooterRight)), ((XrayButtons#forListContext)):
 function XrayButtons:forTappedWordItemViewer(needle_item, called_from_list, tapped_word, book_hits)
+
     local buttons = {
         {
             KOR.buttoninfopopup:forXrayList({

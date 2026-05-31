@@ -33,7 +33,6 @@ local has_text = has_text
 local math_floor = math.floor
 local table = table
 local table_insert = table.insert
-local tonumber = tonumber
 local tostring = tostring
 
 local count
@@ -230,35 +229,13 @@ function XrayDialogs:showMultipleBookSeriesActionResult(args)
 
     local db_items = DX.dl[args.data_loader](DX.dl)
     if not db_items then
-        KOR.messages:notify(_("as yet no items were defined for the current ebook"))
+        KOR.messages:notify("no items found with this criterium")
+        --? don't know why we need this, but without this the parent/calling dialog will be shown, instead of the actions overview dialog:
+        self.multiple_book_actions_dialog = nil
+        self:showMultipleBookSeriesActionsOverview()
         return
     end
-    local item_table = {}
-    count = #db_items[1]
-    local add_spacer = count > 9
-    for i = 1, count do
-        local item = {
-            id = tonumber(db_items["id"][i]),
-            name = db_items["name"][i],
-        }
-        table_insert(item_table, {
-            text = KOR.strings:formatListItemNumber(i, T("%1 %2  -  %3%4: %5",
-                    KOR.icons.graph_bare,
-                    tonumber(db_items["book_hits"][i]),
-                    DX.vd.xray_type_icons[tonumber(db_items["xray_type"][i])],
-                    db_items["name"][i],
-                    db_items["description"][i]
-            ), add_spacer),
-            callback = function()
-                item = DX.vd:upgradeNeedleItem(item, {
-                    include_name_matches = true,
-                    is_exists_check = true,
-                })
-                UIManager:close(self.current_book_only_dialog)
-                self:viewItem(item)
-            end,
-        })
-    end
+    local item_table = DX.tw:prepareNonTappedItemsTable(db_items, args)
 
     KOR.dialogsqueue:register({
         id = "multiple_series_book_action_result",
@@ -810,53 +787,44 @@ end
 
 --* calls ((XrayDialogs#showMultipleBookSeriesActionResult)) for each item:
 function XrayDialogs:showMultipleBookSeriesActionsOverview()
+    --* booleans below: if true, then only items not present in the current ebook will be retrieved:
     local actions = {
         {
             _("Items only mentioned in the current e-book"),
             "getCurrentBookItemsOnly",
+            false,
         },
         {
             _("Items mentioned in all books of the current series"),
             "getInAllSeriesBooksItems",
+            false,
+        },
+        {
+            _("Items only mentioned in other books of current series"),
+            "getNonCurrentBookItemsOnly",
+            true,
         },
         {
             _("Items most often mentioned in the current ebook"),
-            "getTopBookItems",
+            false,
+            _("With the setting \"top_book_items_limit\"  you can determine how many items will be listed here. Setting top_book_items_limit to zero means: show ALL items."),
         },
     }
-    local item_table = {
-        {
-            text = "1. " .. actions[1][1],
+    local item_table = {}
+    count = #actions
+    for i = 1, count do
+        table_insert(item_table, {
+            text = i .. ". " .. actions[i][1],
             callback = function()
-                UIManager:close(self.multiple_book_actions_dialog)
                 self:showMultipleBookSeriesActionResult({
-                    data_title = actions[1][1],
-                    data_loader = actions[1][2],
+                    data_title = KOR.icons.xray_tapped_collection_bare .. " " .. actions[i][1],
+                    data_loader = actions[i][2],
+                    only_external_items = actions[i][3],
+                    additional_info = actions[i][4],
                 })
             end,
-        },
-        {
-            text = "2. " .. actions[2][1],
-            callback = function()
-                UIManager:close(self.multiple_book_actions_dialog)
-                self:showMultipleBookSeriesActionResult({
-                    data_title = actions[2][1],
-                    data_loader = actions[2][2],
-                })
-            end,
-        },
-        {
-            text = "3. " .. actions[3][1],
-            callback = function()
-                UIManager:close(self.multiple_book_actions_dialog)
-                self:showMultipleBookSeriesActionResult({
-                    data_title = actions[3][1],
-                    data_loader = actions[3][2],
-                    additional_info = "\n\n" .. _("With the setting \"top_book_items_limit\"  you can determine how many items will be listed here. Setting top_book_items_limit to zero means: show ALL items."),
-                })
-            end,
-        },
-    }
+        })
+    end
 
     KOR.dialogsqueue:register({
         id = "multiple_series_books_actions",
@@ -889,7 +857,7 @@ function XrayDialogs:showMultipleBookSeriesActionsOverview()
     self.multiple_book_actions_menu.close_callback = function()
         UIManager:close(self.multiple_book_actions_dialog)
     end
-    self.multiple_book_actions_menu:switchItemTable(_("Overviews for series with multiple e-books"), item_table, self.multiple_book_actions_menu.page)
+    self.multiple_book_actions_menu:switchItemTable(KOR.icons.xray_tapped_collection_bare .. " " .. _("Overviews for series with multiple e-books"), item_table, self.multiple_book_actions_menu.page)
     UIManager:show(self.multiple_book_actions_dialog)
 
     KOR.dialogs:registerWidget(self.multiple_book_actions_dialog)
@@ -962,6 +930,7 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
     if not needle_item.index then
         needle_item.index = DX.vd:getItemIndexById(needle_item.id)
     end
+
     --* this sometimes happens when we only just added a new item from the ebook text and want to view it immediately:
     if needle_item.index > current_items_count then
         needle_item.index = current_items_count
@@ -1003,6 +972,9 @@ end
 function XrayDialogs:showItemViewer(needle_item, props)
     local name = DX.vd:addNonBreakableIndicator(props.name:gsub(KOR.icons.lock_bare, ""), needle_item)
     local title = props.icon .. name .. " (" .. props.index .. "/" .. props.current_items_count .. ")"
+    if props.is_non_tapped_word_collection then
+        title = KOR.icons.xray_tapped_collection_bare .. " " .. title
+    end
 
     self.needle_name_for_list_page = needle_item.name
     local key_events_module = props.key_events_module
@@ -1017,7 +989,8 @@ function XrayDialogs:showItemViewer(needle_item, props)
         title = title,
         top_buttons_left = DX.b:forItemViewerTopLeft(self, needle_item),
         tabs = tabs,
-        bottom_widget = DX.s.IV_show_occurrences_histogram and self:generateOccurrencesHistogram(needle_item),
+        --* in external items viewer mode don't generate chapter histogram:
+        bottom_widget = not props.for_external_navigation and DX.s.IV_show_occurrences_histogram and self:generateOccurrencesHistogram(needle_item),
         window_size = "max",
         box_font_size = DX.s.IV_font_size,
         button_font_weight = "normal",
@@ -1063,7 +1036,11 @@ function XrayDialogs:getItemProps(needle_item)
     --* also by using this circumvention we ensure dynamic update of the prop after quotes were saved in ((XrayQuotes#saveQuote)) - there DX.m.items_by_id[id].pos_chapter_quotes is being updated dynamically:
     local id = needle_item.id
     needle_item.pos_chapter_quotes = DX.m.items_by_id[id].pos_chapter_quotes
-    local quotes_info = DX.q:generateQuotesList(needle_item)
+    local quotes_info
+    if DX.m.items_by_id[id] then
+        needle_item.pos_chapter_quotes = DX.m.items_by_id[id].pos_chapter_quotes
+        quotes_info = DX.q:generateQuotesList(needle_item)
+    end
 
     return name, icon, main_info, hits_info, linked_items_info, linked_items_info2, linked_items_info3, quotes_info
 end
@@ -1138,13 +1115,16 @@ function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_wo
         main_info = main_info,
         tapped_word = nil,
         book_hits = book_hits,
+        --* in external items viewer mode don't generate chapter histogram and add less buttons (see below):
+        is_non_tapped_word_collection = DX.tw.is_non_tapped_word_collection,
+        for_external_navigation = DX.tw.for_external_navigation,
         next_item_callback = function()
             self:viewNextTappedWordItem()
         end,
         prev_item_callback = function()
             self:viewPreviousTappedWordItem()
         end,
-        button_table = DX.b:forTappedWordItemViewer(needle_item, false, tapped_word, book_hits),
+        button_table = DX.tw.for_external_navigation and DX.b:forExternalItemsViewer(needle_item, tapped_word) or DX.b:forTappedWordItemViewer(needle_item, false, tapped_word, book_hits),
     })
     self:showActionResultMessage()
 end
