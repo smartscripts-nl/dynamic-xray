@@ -209,6 +209,7 @@ local XrayDataLoader = WidgetContainer:new{
         get_book_glossary =
             "SELECT glossary FROM bookinfo WHERE directory || filename = 'safe_path';",
 
+        --* this query is used by ((XrayDialogs#showMultipleBookSeriesActionsOverview)) > ((XrayDataLoader#getCurrentBookItemsOnly)):
         get_current_book_only_items = [[
             WITH unique_series_names AS (SELECT b.series, x.name
                  FROM xray_items x
@@ -236,6 +237,7 @@ local XrayDataLoader = WidgetContainer:new{
             WHERE i.ebook = '%1'
             ORDER BY i.book_hits DESC;]],
 
+        --* this query is used by ((XrayDialogs#showMultipleBookSeriesActionsOverview)) > ((XrayDataLoader#getInAllSeriesBooksItems)):
         get_in_all_series_books_items = [[
             WITH series_books AS (
                 SELECT COUNT(DISTINCT filename) AS total_books
@@ -300,6 +302,7 @@ local XrayDataLoader = WidgetContainer:new{
             WHERE x.ebook != 'safe_path'
             ORDER BY x.name;]],
 
+        --* this query is used by ((XrayDialogs#showMultipleBookSeriesActionsOverview)) > ((XrayDataLoader#getNonCurrentBookItemsOnly)):
         --* item props will be populated in ((XrayDataLoader#addExternalBooksItem)):
         get_non_current_book_only_items = [[
             SELECT i.name,
@@ -352,11 +355,43 @@ local XrayDataLoader = WidgetContainer:new{
             JOIN bookinfo b ON b.filename = x.ebook
             WHERE x.name = '%1' AND b.series = '%2';]],
 
+        --* this query is used by ((XrayDialogs#showMultipleBookSeriesActionsOverview)) > ((XrayDataLoader#getTopBookItems)):
         get_top_book_items = [[
             SELECT id, name, book_hits, description, xray_type
             FROM xray_items
             WHERE ebook = '%1'
             ORDER BY book_hits DESC LIMIT %2;]],
+
+        --* this query is used by ((XrayDialogs#showMultipleBookSeriesActionsOverview)) > ((XrayDataLoader#getUniqueItemsPerSeriesBook)):
+        get_unique_items_per_series_book = [[
+            WITH item_books AS (SELECT i.name,
+                   COUNT(DISTINCT b.filename) AS book_count
+            FROM xray_items i
+                     JOIN bookinfo b ON b.filename = i.ebook
+                    WHERE b.series = '%1'
+            GROUP BY i.name)
+            SELECT b.series,
+                b.series_index,
+                b.title AS book_title,
+                i.name,
+                i.id,
+                i.short_names,
+                i.book_hits,
+                i.book_hits AS series_hits,
+                i.description,
+                i.xray_type,
+                i.non_breakable,
+                i.aliases,
+                i.tags,
+                i.linkwords,
+                b.series_index || '. ' || b.title || ' (' || COALESCE(i.book_hits, 0) || ')' AS mentioned_in
+            FROM xray_items i
+                 JOIN bookinfo b
+                      ON b.filename = i.ebook
+                 JOIN item_books ib
+                      ON ib.name = i.name
+            WHERE b.series = '%2' and ib.book_count = 1
+            ORDER BY b.series_index, i.name;]],
     },
     queries_external = {
         --* used in ((XrayTranslations#loadAllTranslations)):
@@ -589,6 +624,7 @@ function XrayDataLoader:convertChapterHitsData(chapter_hits)
     return KOR.tables:makeItemsNumerical(hits)
 end
 
+--* this method is called by ((XrayDialogs#showMultipleBookSeriesActionsOverview)):
 function XrayDataLoader:getCurrentBookItemsOnly()
     local conn = KOR.databases:getDBconn("XrayDataLoader:getCurrentBookItemsOnly")
     local file_basename = KOR.databases:escape(parent.current_ebook_basename)
@@ -598,6 +634,7 @@ function XrayDataLoader:getCurrentBookItemsOnly()
     return result
 end
 
+--* this method is called by ((XrayDialogs#showMultipleBookSeriesActionsOverview)):
 function XrayDataLoader:getInAllSeriesBooksItems()
     local conn = KOR.databases:getDBconn("XrayDataLoader:getInAllSeriesBooksItems")
     local file_basename = KOR.databases:escape(parent.current_ebook_basename)
@@ -646,11 +683,35 @@ function XrayDataLoader:getItemsForImportFromSeries(conn, series)
     return conn:exec(sql)
 end
 
+--* this method is called by ((XrayDialogs#showMultipleBookSeriesActionsOverview)):
+function XrayDataLoader:getNonCurrentBookItemsOnly()
+    local conn = KOR.databases:getDBconn("XrayDataLoader:getNonCurrentBookItemsOnly")
+    local file_basename = KOR.databases:escape(parent.current_ebook_basename)
+    local series_name = KOR.databases:escape(parent.current_series)
+    local sql = T(self.queries.get_non_current_book_only_items, series_name, file_basename, file_basename)
+    --KOR.registry:set("latest-stmt", sql)
+    local result = conn:exec(sql)
+    conn = KOR.databases:closeConnections(conn)
+    return result
+end
+
+--* this method is called by ((XrayDialogs#showMultipleBookSeriesActionsOverview)):
 function XrayDataLoader:getTopBookItems(limit)
     local conn = KOR.databases:getDBconn("XrayDataLoader:getTopBookItems")
     local file_basename = KOR.databases:escape(parent.current_ebook_basename)
     local sql = limit == 0 and T(self.queries.get_top_book_items, file_basename) or T(self.queries.get_top_book_items, file_basename, limit)
     sql = sql:gsub(" LIMIT %%2", "", 1)
+    local result = conn:exec(sql)
+    conn = KOR.databases:closeConnections(conn)
+    return result
+end
+
+--* this method is called by ((XrayDialogs#showMultipleBookSeriesActionsOverview)):
+function XrayDataLoader:getUniqueItemsPerSeriesBook()
+    local conn = KOR.databases:getDBconn("XrayDataLoader:getUniqueItemsPerSeriesBook")
+    local series_name = KOR.databases:escape(parent.current_series)
+    local sql = T(self.queries.get_unique_items_per_series_book, series_name, series_name)
+    --KOR.registry:set("latest-stmt", sql)
     local result = conn:exec(sql)
     conn = KOR.databases:closeConnections(conn)
     return result

@@ -14,9 +14,12 @@ local has_text = has_text
 local pairs = pairs
 local table = table
 local table_insert = table.insert
+local table_remove = table.remove
 local tonumber = tonumber
+local unpack = unpack
 
 local count
+local count2
 --- @type XrayModel parent
 local parent
 --- @type XrayViewsData views_data
@@ -31,7 +34,7 @@ local XrayTappedWords = WidgetContainer:new{
     bottom_linked_items = nil,
     --* set via ((XrayDialogs#viewTappedWordItem)) > ((XrayTappedWords#registerCurrentItem))
     current_tapped_word_item = nil,
-    for_external_navigation = false,
+    has_only_external_items = false,
     items_collection = {},
     is_non_tapped_word_collection = false,
     popup_items = nil,
@@ -670,15 +673,50 @@ function XrayTappedWords:addLinkedItemCandidatesFor(candidates, term, index)
     end
 end
 
+--- @private
+function XrayTappedWords:getFormattedItemInfo(template, db_items, info_entries, item_no, args)
+    if not args.data_formatter then
+        return T("%1 %2  -  %3%4: %5",
+                KOR.icons.graph_bare,
+                tonumber(db_items["book_hits"][item_no]),
+                DX.vd.xray_type_icons[tonumber(db_items["xray_type"][item_no])],
+                db_items["name"][item_no],
+                db_items["description"][item_no]
+        )
+    end
+
+    local data = {}
+    local entry
+    for fi = 1, count2 do
+        entry = info_entries[fi]
+        if entry == "stats_icon" then
+            table_insert(data, KOR.icons.graph_bare)
+        elseif entry == "xray_type" then
+            table_insert(data, DX.vd.xray_type_icons[tonumber(db_items["xray_type"][item_no])])
+        else
+            table_insert(data, db_items[entry][item_no])
+        end
+    end
+    return T(template, unpack(data))
+end
+
 function XrayTappedWords:prepareNonTappedItemsTable(db_items, args)
     count = #db_items[1]
     local item_table = {}
     local add_spacer = count > 9
+    local formatted_text
     local converted = {}
+    local template, info_entries
+    if args.data_formatter then
+        template = args.data_formatter[1]
+        info_entries = KOR.tables:shallowCopy(args.data_formatter)
+        table_remove(info_entries, 1)
+        count2 = #info_entries
+    end
     for i = 1, count do
         local item
         local current = i
-        if args.only_external_items then
+        if args.has_only_external_items then
             item = DX.dl:addExternalBooksItem(db_items, i)
         else
             item = {
@@ -690,17 +728,12 @@ function XrayTappedWords:prepareNonTappedItemsTable(db_items, args)
                 is_exists_check = true,
             })
         end
+        formatted_text = self:getFormattedItemInfo(template, db_items, info_entries, i, args)
         --* because this prop is used in ((XrayDialogs#viewTappedWordItem)):
         item.tapped_index = current
         table_insert(converted, item)
         table_insert(item_table, {
-            text = KOR.strings:formatListItemNumber(i, T("%1 %2  -  %3%4: %5",
-                    KOR.icons.graph_bare,
-                    tonumber(db_items["book_hits"][i]),
-                    DX.vd.xray_type_icons[tonumber(db_items["xray_type"][i])],
-                    db_items["name"][i],
-                    db_items["description"][i]
-            ), add_spacer),
+            text = KOR.strings:formatListItemNumber(i, formatted_text, add_spacer),
             callback = function()
                 self.current_tapped_word_item = item
                 DX.d:viewTappedWordItem(item)
@@ -709,10 +742,10 @@ function XrayTappedWords:prepareNonTappedItemsTable(db_items, args)
     end
 
     db_items = converted
-    --* by adding args.only_external_items we ensure no occurrences histogram will be shown in the viewer en the viewer will only have navigation button and no edit buttons:
+    --* by adding args.has_only_external_items we ensure no occurrences histogram will be shown in the viewer en the viewer will only have navigation button and no edit buttons:
     self:setPopupResult(db_items, nil, {
         is_non_tapped_word_collection = true,
-        only_external_items = args.only_external_items,
+        has_only_external_items = args.has_only_external_items,
     })
     self:setTappedWordItems(db_items)
 
@@ -722,7 +755,7 @@ end
 --* this table was populated with icons in ((XrayButtons#forItemsCollectionPopup)) > ((store tapped word popup collection info)), and optionally will be used to generate a list of these items in ((XrayTappedWords#getCurrentListTabItems))
 function XrayTappedWords:setPopupResult(sorted_items, popup_icons, args)
     self.is_non_tapped_word_collection = args.is_non_tapped_word_collection
-    self.for_external_navigation = args.for_external_navigation
+    self.has_only_external_items = args.has_only_external_items
     self.popup_items = sorted_items
     count = #sorted_items
     self.popup_persons = {}

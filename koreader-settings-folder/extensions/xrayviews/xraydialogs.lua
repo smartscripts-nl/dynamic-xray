@@ -264,7 +264,6 @@ function XrayDialogs:showMultipleBookSeriesActionResult(args)
         is_popout = false,
         fullscreen = true,
         modal = true,
-        no_overlay = true,
         perpage = G_reader_settings:readSetting("items_per_page") or 14,
         menu_name = "xray_multiple_book_series_action_result",
         top_buttons_left = DX.b:forGenericPopupDialog(args.data_title, _("The hits counts in this dialog apply to the current ebook!\n\nBy tapping on an item you'll open it in the Item Viewer.\n\nWith the back button in the upper left corner of the Item Viewer you can then return to the current overview.") .. additional_info, function()
@@ -802,6 +801,7 @@ end
 --* calls ((XrayDialogs#showMultipleBookSeriesActionResult)) for each item:
 function XrayDialogs:showMultipleBookSeriesActionsOverview()
     --* booleans below: if true, then only items not present in the current ebook will be retrieved:
+    --* the retrieved data will be formatted for display in ((XrayTappedWords#prepareNonTappedItemsTable)):
     local actions = {
         {
             _("Items only mentioned in the current e-book"),
@@ -823,6 +823,22 @@ function XrayDialogs:showMultipleBookSeriesActionsOverview()
             false,
             _("With the setting \"top_book_items_limit\"  you can determine how many items will be listed here. Setting top_book_items_limit to zero means: show ALL items."),
         },
+        {
+            _("Unique items per e-book in the series"),
+            "getUniqueItemsPerSeriesBook",
+            true,
+            nil,
+            --* the retrieved data will be formatted for display in ((XrayTappedWords#prepareNonTappedItemsTable)):
+            {
+                "%1 %2 %3  -  %4%5: %6",
+                "book_title",
+                "stats_icon",
+                "book_hits",
+                "xray_type",
+                "name",
+                "description",
+            }
+        },
     }
     local item_table = {}
     count = #actions
@@ -833,8 +849,9 @@ function XrayDialogs:showMultipleBookSeriesActionsOverview()
                 local ok = self:showMultipleBookSeriesActionResult({
                     data_title = KOR.icons.xray_tapped_collection_bare .. " " .. actions[i][1],
                     data_loader = actions[i][2],
-                    only_external_items = actions[i][3],
+                    has_only_external_items = actions[i][3],
                     additional_info = actions[i][4],
+                    data_formatter = actions[i][5],
                 })
                 if ok then
                     UIManager:close(self.multiple_book_actions_dialog)
@@ -862,7 +879,6 @@ function XrayDialogs:showMultipleBookSeriesActionsOverview()
         is_borderless = true,
         is_popout = false,
         fullscreen = true,
-        no_overlay = true,
         perpage = G_reader_settings:readSetting("items_per_page") or 14,
         menu_name = "multiple_book_series_menu",
         top_buttons_left = DX.b:forGenericPopupDialog(_("Overviews for series with multiple e-books"), _("Overviews for series with multiple e-books"), _("This overview of special actions will only be available when DX detected at least two books of the current series."), function()
@@ -962,6 +978,8 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
             self:viewItem(needle_item, called_from_list, tapped_word, skip_item_search)
         end,
     })
+    --* this prop may only be truthy when viewing tapped word items and then controls whether ((XrayViewsData#addHitsHtml)) will be executed in ((XrayViewsData#getItemInfoHtml)):
+    DX.tw:setProp("has_only_external_items", false)
     self:showItemViewer(needle_item, {
         icon = icon,
         name = name,
@@ -974,7 +992,6 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
         linked_items_info2 = linked_items_info2,
         linked_items_info3 = linked_items_info3,
         quotes_info = quotes_info,
-        main_info = main_info,
         tapped_word = nil,
         book_hits = book_hits,
         next_item_callback = function()
@@ -1010,7 +1027,7 @@ function XrayDialogs:showItemViewer(needle_item, props)
         top_buttons_left = DX.b:forItemViewerTopLeft(self, needle_item),
         tabs = tabs,
         --* in external items viewer mode don't generate chapter histogram:
-        bottom_widget = not props.for_external_navigation and DX.s.IV_show_occurrences_histogram and self:generateOccurrencesHistogram(needle_item),
+        bottom_widget = not props.has_only_external_items and DX.s.IV_show_occurrences_histogram and self:generateOccurrencesHistogram(needle_item),
         window_size = "max",
         box_font_size = DX.s.IV_font_size,
         button_font_weight = "normal",
@@ -1132,19 +1149,18 @@ function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_wo
         linked_items_info2 = linked_items_info2,
         linked_items_info3 = linked_items_info3,
         quotes_info = quotes_info,
-        main_info = main_info,
         tapped_word = nil,
         book_hits = book_hits,
-        --* in external items viewer mode don't generate chapter histogram and add less buttons (see below):
+        --* in external items viewer mode don't generate chapter histogram and show less buttons (see below):
         is_non_tapped_word_collection = DX.tw.is_non_tapped_word_collection,
-        for_external_navigation = DX.tw.for_external_navigation,
+        has_only_external_items = DX.tw.has_only_external_items,
         next_item_callback = function()
             self:viewNextTappedWordItem()
         end,
         prev_item_callback = function()
             self:viewPreviousTappedWordItem()
         end,
-        button_table = DX.tw.for_external_navigation and DX.b:forExternalItemsViewer(needle_item, tapped_word) or DX.b:forTappedWordItemViewer(needle_item, false, tapped_word, book_hits),
+        button_table = DX.tw.has_only_external_items and DX.b:forExternalItemsViewer(needle_item, tapped_word) or DX.b:forTappedWordItemViewer(needle_item, false, tapped_word, book_hits),
     })
     self:showActionResultMessage()
 end

@@ -1135,7 +1135,9 @@ function XrayViewsData:getItemInfoHtml(item)
     self:addAliasesHtml(meta_info, item)
     self:addLinkWordsHtml(meta_info, item)
     self:addTagsHtml(meta_info, item)
-    self:addHitsHtml(meta_info, item)
+    if not DX.tw.has_only_external_items then
+        self:addHitsHtml(meta_info, item)
+    end
     self:addMentionedInHtml(meta_info, item)
     if #meta_info > 1 then
         table_insert(meta_info, "</table>")
