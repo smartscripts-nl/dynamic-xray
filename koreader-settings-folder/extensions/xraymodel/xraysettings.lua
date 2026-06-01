@@ -187,6 +187,11 @@ local XraySettings = WidgetContainer:new{
             },
             after_change_callback = "toggle_nightmode_colors",
         },
+        no_back_to_previous_dialog_notification = {
+            value = false,
+            explanation = "If set to true, no navigate-back-to_previous-dialog information popup will be shown. This setting can be set to true from that same information popup.",
+            locked = 0,
+        },
         overview_tabs_columns_count = {
             value = 3,
             options = { 1, 2, 3 },

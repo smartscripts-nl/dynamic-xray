@@ -654,7 +654,7 @@ function Dialogs:niceAlert(title, info, options)
     if delay then
         UIManager:scheduleIn(delay + 1, function()
             UIManager:close(self.nice_alert)
-            KOR.screenhelpers:refreshScreen()
+            UIManager:forceRePaint()
         end)
     end
     return self.nice_alert

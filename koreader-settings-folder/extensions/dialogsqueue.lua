@@ -2,9 +2,11 @@
 local require = require
 
 local KOR = require("extensions/kor")
+local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 
+local DX = DX
 local os_time = os.time
 local table_insert = table.insert
 local table_remove = table.remove
@@ -91,9 +93,18 @@ function DialogsQueue:restorePrevious(id)
     --* restore the previous dialog:
     self.queue[count - 1].restore()
 
-    if not self.hold_action_alert_shown then
-        KOR.dialogs:niceAlert(_("For your information"), _("You have used the button to return to a previous dialog.\n\nWhen you longpress this button, you'll be presented a dialog from which you can jump to the very first opened dialog in the dialog history.\n\nThis notifcation will disappear in 5 seconds and not be shown anymore during the current session..."), {
-            delay = 5,
+    if not self.hold_action_alert_shown and not DX.s.no_back_to_previous_dialog_notification then
+        KOR.dialogs:niceAlert(_("For your information"), _("You have used the button for returning to a previous dialog.\n\nWhen you longpress this button, you'll be presented a dialog from which you can jump to the very first opened dialog in the dialog history.\n\nThis notifcation will be displayed once per KOReader session, unless you disable it forever with the below button" .. KOR.strings.ellipsis), {
+            buttons = {{
+                {
+                    text = _("disable message") .. KOR.strings.ellipsis,
+                    callback = function()
+                        DX.s:saveSetting("no_back_to_previous_dialog_notification", true)
+                        UIManager:close(self.navigation_help_info)
+                        KOR.messages:notify(_("message disabled"))
+                    end,
+                }
+            }},
         })
         self.hold_action_alert_shown = true
     end
