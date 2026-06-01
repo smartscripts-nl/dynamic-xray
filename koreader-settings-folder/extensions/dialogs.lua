@@ -638,8 +638,7 @@ function Dialogs:niceAlert(title, info, options)
         title = "Ter informatie"
     end
     local prefix = no_white_space_prefix and "" or "\n"
-    local dialog
-    dialog = KOR.nicealert:new{
+    self.nice_alert = KOR.nicealert:new{
         info_text = prefix .. info .. "\n",
         mono_face = options.mono_face,
         top_buttons_left = options.top_buttons_left,
@@ -651,15 +650,14 @@ function Dialogs:niceAlert(title, info, options)
         ui = KOR.ui,
         show_parent = KOR.ui,
     }
-    UIManager:show(dialog)
+    UIManager:show(self.nice_alert)
     if delay then
         UIManager:scheduleIn(delay + 1, function()
-            UIManager:close(dialog)
+            UIManager:close(self.nice_alert)
             KOR.screenhelpers:refreshScreen()
         end)
-        return nil
     end
-    return dialog
+    return self.nice_alert
 end
 
 --* use timeout = nil for second argument when calling for no timeout:

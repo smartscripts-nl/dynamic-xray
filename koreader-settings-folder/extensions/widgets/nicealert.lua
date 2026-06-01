@@ -28,7 +28,7 @@ local Screen = Device.screen
 
 local DX = DX
 local has_content = has_content
-local math = math
+local math_floor = math.floor
 local table = table
 
 --- @class NiceAlert
@@ -45,6 +45,8 @@ local NiceAlert = InputContainer:extend {
     mono_face = false,
     move_to_top = false,
     padding = Size.padding.large,
+    screen_height = nil,
+    screen_width = nil,
     show_parent = nil,
     tap_close_callback = nil,
     title = nil,
@@ -53,6 +55,7 @@ local NiceAlert = InputContainer:extend {
 }
 
 function NiceAlert:init()
+    self:setScreenDims()
     self:setDialogWidth()
     self:initTouch()
     self:registerKeyEvents()
@@ -67,13 +70,20 @@ function NiceAlert:generateWidget()
 end
 
 --- @private
+function NiceAlert:setScreenDims()
+    local dims = Screen:getSize()
+    self.screen_height = dims.h
+    self.screen_width = dims.w
+end
+
+--- @private
 function NiceAlert:setDialogWidth()
     if self.width then
         return
     end
 
-    local screen_width = math.min(Screen:getWidth(), Screen:getHeight())
-    self.width = math.floor(screen_width * 0.7)
+    local width_factor = KOR.screenhelpers:getDialogWidthFactor()
+    self.width = math_floor(self.screen_width * width_factor)
 end
 
 --- @private
@@ -178,15 +188,15 @@ function NiceAlert:generatePopupCallbackDialogWidget(info, width)
         --* deriving the y-position from the height of the title bar for some reason doesnot work on my Boox device, so here hard coded value:
         movable_container:moveToYPos(Screen:scaleBySize(45))
     end
-    local screen_height = Screen:getHeight()
     local widget_height = content_group:getSize().h
-    if self.info_window_was_resized or widget_height <= screen_height then
+    if self.info_window_was_resized or widget_height <= self.screen_height then
         return widget
     end
     widget:free()
     self.info_window_was_resized = true
 
-    local box_height = math.floor(screen_height * 0.7)
+    local height_factor = KOR.screenhelpers:getDialogHeightFactor()
+    local box_height = math_floor(self.screen_height * height_factor)
     self:generateTextboxWidget(info, width, box_height)
 
     return self:generatePopupCallbackDialogWidget(info, width)
@@ -211,8 +221,8 @@ function NiceAlert:initTouch()
                     range = Geom:new{
                         x = 0,
                         y = 0,
-                        w = Screen:getWidth(),
-                        h = Screen:getHeight(),
+                        w = self.screen_height,
+                        h = self.screen_width,
                     }
                 }
             }

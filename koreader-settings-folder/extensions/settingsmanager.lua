@@ -205,7 +205,7 @@ function SettingsManager:showSettingsManagerInfo()
         self.list_title = "Dynamic Xray"
     end
     KOR.dialogs:niceAlert(T(_("Settings management %1"), self.list_title), T("Acronyms in the names of settings:\n\nIV = Item Viewer    PN = Page Navigator\nTW = Tapped Words   UI = UI Page Information popup\n\nItems with an %1, under the third tab, are computed settings. These you can't modify manually.\n\nIf you longpress a setting, you'll see an explanation of that setting.\n\nWith the hotkeys 1 through 3 on your physical (BT) keyboard, you can select a tab in the Settings Manager.", KOR.icons.lock_bare), {
-        width = math_floor(Screen:getWidth() * 0.58)
+        mono_face = true,
     })
 
     return true
