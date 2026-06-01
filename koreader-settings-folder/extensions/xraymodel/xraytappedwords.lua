@@ -693,7 +693,7 @@ function XrayTappedWords:getFormattedItemInfo(template, db_items, info_entries, 
             table_insert(data, KOR.icons.graph_bare)
         elseif entry == "xray_type" then
             table_insert(data, DX.vd.xray_type_icons[tonumber(db_items["xray_type"][item_no])])
-        else
+        elseif entry ~= "path" and entry ~= "series_index" then
             table_insert(data, db_items[entry][item_no])
         end
     end
@@ -704,9 +704,11 @@ function XrayTappedWords:prepareNonTappedItemsTable(db_items, args)
     count = #db_items[1]
     local item_table = {}
     local add_spacer = count > 9
-    local formatted_text
+    local formatted_text, heading_text
     local converted = {}
     local template, info_entries
+    local has_file_headings = args.has_file_headings
+    local previous_heading
     if args.data_formatter then
         template = args.data_formatter[1]
         info_entries = KOR.tables:shallowCopy(args.data_formatter)
@@ -732,6 +734,27 @@ function XrayTappedWords:prepareNonTappedItemsTable(db_items, args)
         --* because this prop is used in ((XrayDialogs#viewTappedWordItem)):
         item.tapped_index = current
         table_insert(converted, item)
+        if has_file_headings and db_items["path"] and db_items["path"][i] and db_items["path"][i] ~= previous_heading then
+            local db_path = db_items["path"][i]
+            heading_text = db_items["book_title"][i]
+            if db_items["series_index"][i] then
+                heading_text = db_items["series_index"][i] .. ". " .. heading_text
+            end
+            table_insert(item_table, {
+                text = heading_text,
+                bold = true,
+                callback = function()
+                    local full_path = db_path
+                    KOR.dialogs:closeAllWidgets()
+                    if full_path == KOR.ui.document.file then
+                        KOR.messages:notify("dit boek is reeds geopend")
+                        return
+                    end
+                    KOR.files:openFile(full_path)
+                end,
+            })
+            previous_heading = db_items["path"][i]
+        end
         table_insert(item_table, {
             text = KOR.strings:formatListItemNumber(i, formatted_text, add_spacer),
             callback = function()

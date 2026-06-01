@@ -373,6 +373,7 @@ local XrayDataLoader = WidgetContainer:new{
             SELECT b.series,
                 b.series_index,
                 b.title AS book_title,
+                b.directory || b.filename AS path,
                 i.name,
                 i.id,
                 i.short_names,

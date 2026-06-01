@@ -827,17 +827,20 @@ function XrayDialogs:showMultipleBookSeriesActionsOverview()
             _("Unique items per e-book in the series"),
             "getUniqueItemsPerSeriesBook",
             true,
-            nil,
+            "\n\n" .. _("By tapping on the bold book titles, you can open that book."),
             --* the retrieved data will be formatted for display in ((XrayTappedWords#prepareNonTappedItemsTable)):
             {
-                "%1 %2 %3  -  %4%5: %6",
-                "book_title",
+                "%1 %2  -  %3%4: %5",
+                --* path and series_index in ((XrayTappedWords#getFormattedItemInfo)) will only be used for injecting book title headings in ((XrayTappedWords#prepareNonTappedItemsTable)):
+                "path",
+                "series_index",
+
                 "stats_icon",
                 "book_hits",
                 "xray_type",
                 "name",
                 "description",
-            }
+            },
         },
     }
     local item_table = {}
@@ -852,6 +855,7 @@ function XrayDialogs:showMultipleBookSeriesActionsOverview()
                     has_only_external_items = actions[i][3],
                     additional_info = actions[i][4],
                     data_formatter = actions[i][5],
+                    has_file_headings = actions[i][2] == "getUniqueItemsPerSeriesBook",
                 })
                 if ok then
                     UIManager:close(self.multiple_book_actions_dialog)
