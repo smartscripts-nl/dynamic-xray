@@ -254,6 +254,7 @@ function XrayDialogs:showMultipleBookSeriesActionResult(args)
         dimen = dimen,
         modal = true,
     }
+    local prefix = args.has_only_external_items and "" or _("The hits counts in this dialog apply to the current ebook!") .. "\n\n"
     local additional_info = args.additional_info or ""
     self.action_menu = Menu:new {
         show_parent = self.action_dialog,
@@ -266,7 +267,7 @@ function XrayDialogs:showMultipleBookSeriesActionResult(args)
         modal = true,
         perpage = G_reader_settings:readSetting("items_per_page") or 14,
         menu_name = "xray_multiple_book_series_action_result",
-        top_buttons_left = DX.b:forGenericPopupDialog(args.data_title, _("The hits counts in this dialog apply to the current ebook!\n\nBy tapping on an item you'll open it in the Item Viewer.\n\nWith the back button in the upper left corner of the Item Viewer you can then return to the current overview.") .. additional_info, function()
+        top_buttons_left = DX.b:forGenericPopupDialog(args.data_title, prefix .. _("By tapping on an item you'll open it in the Item Viewer.\n\nWith the back button in the upper left corner of the Item Viewer you can then return to the current overview.") .. additional_info, function()
             UIManager:close(self.action_dialog)
             DX.s.showSettingsManager()
         end),
