@@ -62,6 +62,20 @@ local XrayDialogs = WidgetContainer:new{
     list_args = nil,
     list_is_opened = false,
     needle_name_for_list_page = "",
+    --* the retrieved data will be formatted for display in ((XrayTappedWords#prepareNonTappedItemsTable)):
+    sectioned_series_headings = "\n\n" .. _("By tapping on the bold book titles, you can open that book."),
+    sectioned_series_item_template = {
+        "%1 %2  -  %3%4: %5",
+        --* path and series_index in ((XrayTappedWords#getFormattedItemInfo)) will only be used for injecting book title headings in ((XrayTappedWords#prepareNonTappedItemsTable)):
+        "path",
+        "series_index",
+
+        "stats_icon",
+        "book_hits",
+        "xray_type",
+        "name",
+        "description",
+    },
     select_mode = false,
     -- #((Xray-item edit dialog: tab buttons in TitleBar))
     title_tab_buttons_left = { _(" xray-item "), _(" metadata ") },
@@ -818,6 +832,8 @@ function XrayDialogs:showMultipleBookSeriesActionsOverview()
             _("Items only mentioned in other books of current series"),
             "getNonCurrentBookItemsOnly",
             true,
+            self.sectioned_series_headings,
+            self.sectioned_series_item_template,
         },
         {
             _("Items most often mentioned in the current ebook"),
@@ -828,20 +844,8 @@ function XrayDialogs:showMultipleBookSeriesActionsOverview()
             _("Unique items per e-book in the series"),
             "getUniqueItemsPerSeriesBook",
             true,
-            "\n\n" .. _("By tapping on the bold book titles, you can open that book."),
-            --* the retrieved data will be formatted for display in ((XrayTappedWords#prepareNonTappedItemsTable)):
-            {
-                "%1 %2  -  %3%4: %5",
-                --* path and series_index in ((XrayTappedWords#getFormattedItemInfo)) will only be used for injecting book title headings in ((XrayTappedWords#prepareNonTappedItemsTable)):
-                "path",
-                "series_index",
-
-                "stats_icon",
-                "book_hits",
-                "xray_type",
-                "name",
-                "description",
-            },
+            self.sectioned_series_headings,
+            self.sectioned_series_item_template,
         },
     }
     local item_table = {}
@@ -856,7 +860,6 @@ function XrayDialogs:showMultipleBookSeriesActionsOverview()
                     has_only_external_items = actions[i][3],
                     additional_info = actions[i][4],
                     data_formatter = actions[i][5],
-                    has_file_headings = actions[i][2] == "getUniqueItemsPerSeriesBook",
                 })
                 if ok then
                     UIManager:close(self.multiple_book_actions_dialog)

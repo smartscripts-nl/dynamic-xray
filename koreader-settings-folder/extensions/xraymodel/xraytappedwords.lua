@@ -707,7 +707,7 @@ function XrayTappedWords:prepareNonTappedItemsTable(db_items, args)
     local formatted_text, heading_text
     local converted = {}
     local template, info_entries
-    local has_file_headings = args.has_file_headings
+    local has_file_headings = args.has_only_external_items
     local previous_heading
     if args.data_formatter then
         template = args.data_formatter[1]

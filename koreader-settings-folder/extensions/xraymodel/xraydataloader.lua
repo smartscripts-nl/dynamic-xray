@@ -309,6 +309,9 @@ local XrayDataLoader = WidgetContainer:new{
                 i.id,
                 i.short_names,
                 b.series,
+                b.series_index,
+                b.title AS book_title,
+                b.directory || b.filename AS path,
                 i.book_hits,
                 SUM(i.book_hits) AS series_hits,
                 i.description,
@@ -334,7 +337,7 @@ local XrayDataLoader = WidgetContainer:new{
                   WHERE r.ebook = '%3'
                     AND r.name = i.name)
             GROUP BY i.name
-            ORDER BY series_hits DESC]],
+            ORDER BY a.series_index, series_hits DESC]],
 
         qet_quotes_for_item_book = [[
             SELECT id, quote FROM xray_quotes
