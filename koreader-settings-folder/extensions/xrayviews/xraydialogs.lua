@@ -281,10 +281,11 @@ function XrayDialogs:showMultipleBookSeriesActionResult(args)
         modal = true,
         perpage = G_reader_settings:readSetting("items_per_page") or 14,
         menu_name = "xray_multiple_book_series_action_result",
-        top_buttons_left = DX.b:forGenericPopupDialog(args.data_title, prefix .. _("By tapping on an item you'll open it in the Item Viewer.\n\nWith the back button in the upper left corner of the Item Viewer you can then return to the current overview.") .. additional_info, function()
+        top_buttons_left = DX.b:forMultipleBookSeriesActions(args.data_title, prefix .. _("By tapping on an item you'll open it in the Item Viewer.\n\nWith the back button in the upper left corner of the Item Viewer you can then return to the current overview.") .. additional_info, function()
             UIManager:close(self.action_dialog)
             DX.s.showSettingsManager()
         end),
+        footer_buttons_right = DX.b:forMultipleBookSeriesActionsFooterRight(self.action_dialog),
     }
     table_insert(self.action_dialog, self.action_menu)
     self.action_menu.close_callback = function()
@@ -889,10 +890,11 @@ function XrayDialogs:showMultipleBookSeriesActionsOverview()
         fullscreen = true,
         perpage = G_reader_settings:readSetting("items_per_page") or 14,
         menu_name = "multiple_book_series_menu",
-        top_buttons_left = DX.b:forGenericPopupDialog(_("Overviews for series with multiple e-books"), _("Overviews for series with multiple e-books"), _("This overview of special actions will only be available when DX detected at least two books of the current series."), function()
+        top_buttons_left = DX.b:forMultipleBookSeriesActions(_("Overviews for series with multiple e-books"), _("Overviews for series with multiple e-books"), _("This overview of special actions will only be available when DX detected at least two books of the current series."), function()
             UIManager:close(self.multiple_book_actions_dialog)
             DX.s.showSettingsManager()
         end),
+        footer_buttons_right = DX.b:forMultipleBookSeriesActionsFooterRight(self.multiple_book_actions_dialog),
         close_callback = function()
             UIManager:close(self.multiple_book_actions_dialog)
         end,

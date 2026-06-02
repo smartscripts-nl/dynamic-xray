@@ -223,7 +223,7 @@ function XrayButtons:addMoreButton(buttons, indicator_buttons, props)
     })
 end
 
-function XrayButtons:forGenericPopupDialog(info_title, info_text, settings_callback)
+function XrayButtons:forMultipleBookSeriesActions(info_title, info_text, settings_callback)
     return {
         {
             icon = "info-slender",
@@ -235,6 +235,17 @@ function XrayButtons:forGenericPopupDialog(info_title, info_text, settings_callb
             callback = function()
                 settings_callback()
             end
+        }),
+    }
+end
+
+function XrayButtons:forMultipleBookSeriesActionsFooterRight(dialog)
+    return {
+        KOR.buttoninfopopup:forSeriesCurrentBook({
+            callback = function()
+                UIManager:close(dialog)
+                KOR.seriesmanager:showSeriesForEbookPath()
+            end,
         }),
     }
 end
