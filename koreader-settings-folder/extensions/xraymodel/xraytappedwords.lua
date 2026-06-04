@@ -40,6 +40,7 @@ local XrayTappedWords = WidgetContainer:new{
     popup_items = nil,
     popup_persons = nil,
     popup_terms = nil,
+    previous_book_heading = nil,
     relation_primary_prop = nil,
     relation_secondary_prop = nil,
     tapped_word = nil,
@@ -704,11 +705,9 @@ function XrayTappedWords:prepareNonTappedItemsTable(db_items, args)
     count = #db_items[1]
     local item_table = {}
     local add_spacer = count > 9
-    local formatted_text, heading_text
     local converted = {}
-    local template, info_entries
-    local has_file_headings = args.has_only_external_items
-    local previous_heading
+    local template, info_entries, formatted_text
+    local has_book_headings = args.has_only_external_items
     if args.data_formatter then
         template = args.data_formatter[1]
         info_entries = KOR.tables:shallowCopy(args.data_formatter)
@@ -734,27 +733,7 @@ function XrayTappedWords:prepareNonTappedItemsTable(db_items, args)
         --* because this prop is used in ((XrayDialogs#viewTappedWordItem)):
         item.tapped_index = current
         table_insert(converted, item)
-        if has_file_headings and db_items["path"] and db_items["path"][i] and db_items["path"][i] ~= previous_heading then
-            local db_path = db_items["path"][i]
-            heading_text = db_items["book_title"][i]
-            if db_items["series_index"][i] then
-                heading_text = db_items["series_index"][i] .. ". " .. heading_text
-            end
-            table_insert(item_table, {
-                text = heading_text,
-                bold = true,
-                callback = function()
-                    local full_path = db_path
-                    KOR.dialogs:closeAllWidgets()
-                    if full_path == KOR.ui.document.file then
-                        KOR.messages:notify("dit boek is reeds geopend")
-                        return
-                    end
-                    KOR.files:openFile(full_path)
-                end,
-            })
-            previous_heading = db_items["path"][i]
-        end
+        self:injectBookHeading(has_book_headings, item_table, db_items, i)
         table_insert(item_table, {
             text = KOR.strings:formatListItemNumber(i, formatted_text, add_spacer),
             callback = function()
@@ -773,6 +752,34 @@ function XrayTappedWords:prepareNonTappedItemsTable(db_items, args)
     self:setTappedWordItems(db_items)
 
     return item_table
+end
+
+--- @private
+function XrayTappedWords:injectBookHeading(has_headings, item_table, db_items, i)
+    if not has_headings or not db_items["path"] or not db_items["path"][i] or db_items["path"][i] == self.previous_book_heading then
+        return
+    end
+
+    local db_path = db_items["path"][i]
+    local heading_text = db_items["book_title"][i]
+    if db_items["series_index"][i] then
+        heading_text = db_items["series_index"][i] .. ". " .. heading_text
+    end
+    table_insert(item_table, {
+        text = heading_text,
+        bold = true,
+        callback = function()
+            local current_path = db_path
+            local full_path = KOR.devicepaths:getFullPath(current_path)
+            KOR.dialogs:closeAllWidgets()
+            if full_path == KOR.registry.current_ebook then
+                KOR.messages:notify(_("this book is already opened in the reader"))
+                return
+            end
+            KOR.files:openFile(full_path)
+        end,
+    })
+    self.previous_book_heading = db_items["path"][i]
 end
 
 --* this table was populated with icons in ((XrayButtons#forItemsCollectionPopup)) > ((store tapped word popup collection info)), and optionally will be used to generate a list of these items in ((XrayTappedWords#getCurrentListTabItems))
