@@ -760,19 +760,17 @@ function XrayTappedWords:injectBookHeading(has_headings, item_table, db_items, i
         return
     end
 
-    local db_path = db_items["path"][i]
     local heading_text = db_items["book_title"][i]
-    if db_items["series_index"][i] then
+    if has_text(db_items["series_index"][i]) then
         heading_text = db_items["series_index"][i] .. ". " .. heading_text
     end
     table_insert(item_table, {
         text = heading_text,
         bold = true,
         callback = function()
-            local current_path = db_path
-            local full_path = KOR.devicepaths:getFullPath(current_path)
+            local full_path = db_items["path"][i]
             KOR.dialogs:closeAllWidgets()
-            if full_path == KOR.registry.current_ebook then
+            if full_path == KOR.document.file then
                 KOR.messages:notify(_("this book is already opened in the reader"))
                 return
             end
