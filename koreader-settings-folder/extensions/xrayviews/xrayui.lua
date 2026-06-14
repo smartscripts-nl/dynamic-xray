@@ -915,7 +915,20 @@ function XrayUI:setParagraphsFromDocument()
     local ui_page = KOR.document and KOR.document.start_page_no or 1
 
     --* KOR.document.getPageXPointer not available in pdf's and paragraphs not determined in that case:
-    if not KOR.document or not KOR.document.getPageXPointer then
+    if not KOR.document or KOR.document.info.has_pages or not KOR.document.getPageXPointer then
+        return ui_page
+    end
+
+    local check_page = self.ui:getCurrentPage()
+
+    --! always retrieve page_text, for usage with VocabBuilder:
+    --* self.page_text can be reset by ((XrayUI#resetPageText)):
+    if ui_page ~= check_page or not self.page_text then
+        self.page_text = KOR.document:getPageText(ui_page)
+    end
+
+    --* in ui_mode "pages" we don't have to index every paragraph on the page:
+    if DX.s.UI_mode == "pages" then
         return ui_page
     end
 
@@ -924,8 +937,6 @@ function XrayUI:setParagraphsFromDocument()
     --! it's essential to reload this info from KOR.document; otherwise after tap on xray marker line and going back to the reader, the paragraphs info is lost and no sideline icon drawn:
     --? because information only generated on first page load?:
     self.paragraphs = KOR.document.paragraphs or {}
-
-    local check_page = KOR.document.info.has_pages and self.ui.paging.current_page or self.ui:getCurrentPage()
 
     if ui_page == check_page and #self.paragraphs > 0 then
         return ui_page
@@ -944,7 +955,6 @@ function XrayUI:setParagraphsFromDocument()
     --* if something went wrong while indexing paragraphs, or when we have an inspirational book and xray info is not important:
     if not self.paragraphs or #self.paragraphs == 0 then
         self.paragraphs = {}
-        return ui_page
     end
 
     return ui_page
@@ -973,6 +983,10 @@ function XrayUI:reset()
     self.skip_xray_items = nil
     self.xray_context_props = nil
     self.xray_info_found = false
+end
+
+function XrayUI:resetPageText()
+    self.page_text = nil
 end
 
 --- @param parent XrayDialogs

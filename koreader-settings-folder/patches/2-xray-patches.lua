@@ -130,6 +130,7 @@ SRELL_ERROR_CODES[666] = _("Expression may lead to an extremely long search time
 CreDocument.empty_line = " <br/>"
 CreDocument.paragraphs_cached = {}
 CreDocument.text_indent = "     "
+CreDocument.page_text = nil
 
 function CreDocument:setDocument()
     local ok
@@ -175,19 +176,28 @@ function CreDocument:getPageText(page_no)
     if has_no_text(xp) then
         return ""
     end
+
+    --* self.page_text can be populated farther below:
+    if self.page_text then
+        return self.page_text
+    end
+
     local next_page_no = page_no + 1
     local next_page_xp = self:getPageXPointer(next_page_no)
 
     --* if we have the xp of a next page, we can get the page text much quicker:
     if has_text(next_page_xp) then
-        return self:getPageTextFromXPs(xp, next_page_xp)
+        self.page_text = self:getPageTextFromXPs(xp, next_page_xp)
+        return self.page_text
     end
 
     local texts = select(2, KOR.pagetexts:getAllHtmlContainersInPage(xp, page_no))
     if has_no_items(texts) then
         return ""
     end
-    return table_concat(texts, "\n" .. self.text_indent)
+    self.page_text = table_concat(texts, "\n" .. self.text_indent)
+
+    return self.page_text
 end
 
 function CreDocument:getPageHtml(page_no, mark_text)
