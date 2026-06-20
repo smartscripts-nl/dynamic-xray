@@ -49,10 +49,10 @@ function XrayInformation:getMatchReliabilityIndicator(name)
     return self.match_reliability_indicators[name]
 end
 
-function XrayInformation:showGeneralDXTips(parent, active_tab)
+function XrayInformation:showGeneralDXTips(parent, initial_tab)
     local screen_dims = Screen:getSize()
 
-    KOR.dialogs:htmlBoxTabbed(active_tab or 1, {
+    KOR.dialogs:htmlBoxTabbed(initial_tab or 1, {
         parent = parent or DX.pn,
         title = _("General DX tips"),
         modal = true,
@@ -78,12 +78,21 @@ function XrayInformation:showGeneralDXTips(parent, active_tab)
 <li><strong>best format for person names:</strong><br />If a person is mainly mentioned by his/her last name in the book, then add the name in this format:<br /> <br /><em>LastName, FirstName</em><br/> <br />Doing so will make DX find more hits. In every other case you can best use this format:<br /> <br /><em>FirstName LastName</em><br /> </li>
 <li><strong>adding a description/definition from the current e-book:</strong><br />If you want to quickly add a description or definition (instead of a name) from the ebook text to the Xray items: select the (longer) text of that description and in the text selection popup choose "+ Xray item". The only thing left to do then is to type the name of the description/definition. This procedure will spare you a lot of typing.<br /> </li>
 <li><strong>quickly edit several items:</strong><br />By <em>longpressing an item in the Items List</em> you'll activate a popup context menu, from which you can edit the item. This is a quick way to edit several items quickly after each other from the Items List.<br /> </li>
-<li><strong>defining tag-groups:</strong><br />If you want to <em>be able to explore items as a related group</em> (e.g. by being associated to the same event or a same ship), then give each of these items the same tag. In Page Navigator or in the Exporter you can now explore these items as a group.<br /> </li>
 <li><strong>adding quotes</strong><br />from a text selection in the book you can - by tapping on the button "+ Xray quote" - <em>add your favorite or important quotes to an item</em>. By doing this you'll have them always quickly at hand in the Page Navigator or in the Item Viewer.<br />    After you added quotes to a Xray item, they will be listed in the quotes tab of the Item Viewer. There you'll see a floating speech bubble button, to activate the Quotes Manager. In this Manager you can view quotes, edit them or remove them. Tip: you can use this Manager to add your own notes to individual quotes.</li>
 </ul>]])
             },
             {
-                tab = _("navigation tips"),
+                tab = _("tag-groups"),
+                html = _([[
+    <p>Tag-groups are handy to show Xray items (e.g. members of a family, items being associated to the same event or a same ship, etc.) as a related group. You can then afterwards quickly inspect them.<br /> </p>
+    <ul>
+    <li><strong>overview of all groups</strong><br />A tappable overview of all groups can be called with:<ol><li>Shift+T on your (BT) keyboard</li><li>with a gesture which you assigned to "Show the Xray tag-group selector" (to be found under Dispatcher-section "Reader")</li><li>the tag-group icon (two tags) in several DX dialogs</li></ol><br /> </li>
+    <li><strong>inspect a group:</strong><br />tap on the name of a group in the overview of all groups (see above)<br /> </li>
+    <li><strong>defining groups:</strong><br /><ol><li>tap on the plus icon in the overview of all tag-groups</li>supply a name for the tag-group to be added (a tag-group-name which already exists is allowed)<li>select items by tapping on them (if you tap on an item which is already member of the tag-groups, you will be asked whether you want te remove this item from the group, or want to preserve it)</li><li>tap on the floppy icon at the bottom of the list to save the tag-group.</li></ol></li>
+    </ul>]])
+            },
+            {
+                tab = _("navigating"),
                 html = _([[<ul>
 <li><strong>the best way to navigate?</strong>
     <ol>
@@ -96,7 +105,7 @@ function XrayInformation:showGeneralDXTips(parent, active_tab)
 <ul>]])
             },
             {
-                tab = _("importing items"),
+                tab = _("importing"),
                 html = _([[<ul>
     <li><strong>how?</strong><br />with the bucket icon:
         <ol>
@@ -269,6 +278,7 @@ function XrayInformation:showReliabilityIndicatorsExplanation()
         no_overlay = true,
         name = "reliability_indicators_explanation",
         is_standard_tabbed_dialog_lower = true,
+        no_back_button = true,
         tabs = {
             {
                 tab = _("reliability icons"),
