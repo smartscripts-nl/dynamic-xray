@@ -88,7 +88,8 @@ function XrayInformation:showGeneralDXTips(parent, initial_tab)
     <ul>
     <li><strong>overview of all groups</strong><br />A tappable overview of all groups can be called with:<ol><li>Shift+T on your (BT) keyboard</li><li>with a gesture which you assigned to "Show the Xray tag-group selector" (to be found under Dispatcher-section "Reader")</li><li>the tag-group icon (two tags) in several DX dialogs</li></ol><br /> </li>
     <li><strong>inspect a group:</strong><br />tap on the name of a group in the overview of all groups (see above)<br /> </li>
-    <li><strong>defining groups:</strong><br /><ol><li>tap on the plus icon in the overview of all tag-groups</li>supply a name for the tag-group to be added (a tag-group-name which already exists is allowed)<li>select items by tapping on them (if you tap on an item which is already member of the tag-groups, you will be asked whether you want te remove this item from the group, or want to preserve it)</li><li>tap on the floppy icon at the bottom of the list to save the tag-group.</li></ol></li>
+    <li><strong>adding multiple items in one go:</strong><br /><ol><li>tap on the plus icon in the overview of all tag-groups</li>supply a name for the tag-group to be added (a tag-group-name which already exists is allowed)<li>select items by tapping on them (if you tap on an item which is already member of the tag-groups, you will be asked whether you want te remove this item from the group, or want to preserve it)</li><li>tap on the floppy icon at the bottom of the list to save the tag-group.</li></ol><br /> </li>
+    <li><strong>adding one item from the Item Editor:</strong><br />Enter one or more names of tag-groups in the field "Tags:", under the tab "Metadata".<br /> </li>
     </ul>]])
             },
             {
