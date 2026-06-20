@@ -23,6 +23,7 @@ local pcall = pcall
 local setmetatable = setmetatable
 local string = string
 local table = table
+local table_insert = table.insert
 
 --* We're going to need a few <linux/input.h> constants...
 local ffi = require("ffi")
@@ -125,9 +126,10 @@ local Input = {
     group = {
         --* Alex:
         CloseDialog = { "Up", "Down" },
+        --* support Boox Tappy in reading mode:
+        CloseButtonDialog = { "RPgFwd", "LPgFwd", " ", "RPgBack", "LPgBack" },
         --* Press = Enter:
         Confirm = { "Press", "Right", "/" },
-        --! see ((key definitions for external keyboard)); REALLY needed to catch BT keyboard input:
         FieldInput = {
             ".", " ", "/",
             "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
@@ -148,8 +150,9 @@ local Input = {
         PgFwd = { "RPgFwd", "LPgFwd", " ", "End" },
         PgBack = { "RPgBack", "LPgBack" },
         --* Left and Right keys disabled for scrolling text widgets, so those can be captured and used for going to next/previous tab/item in a dialog; see e.g. ((activate tabs by left and right keys for MultiConfirmBox)):
-        PgFwdScrollText = { " ", "End" },
-        PgBackScrollText = { "Home" },
+        --* "RPgFwd", "LPgFwd" and "RPgBack", "LPgBack": enable scrolling with Boox Tappy in reading mode:
+        PgFwdScrollText = { " ", "End", "RPgFwd", "LPgFwd" },
+        PgBackScrollText = { "Home", "RPgBack", "LPgBack" },
         Back = { "Back", "Left", "Home" },
         Any = {
             " ", ".", "/", "!", "?", ",", ":", ";", "-",
@@ -319,7 +322,7 @@ function Input:init()
     end
 
     if G_reader_settings:isTrue("backspace_as_back") then
-        table.insert(self.group.Back, "Backspace")
+        table_insert(self.group.Back, "Backspace")
     end
 
     --* setup inhibitInputUntil scheduling function
@@ -457,11 +460,11 @@ function Input:registerGestureAdjustHook(hook, hook_params)
     end
 end
 
-function Input:eventAdjustHook(ev)
+function Input:eventAdjustHook() --ev
     --* do nothing by default
 end
 
-function Input:gestureAdjustHook(ges)
+function Input:gestureAdjustHook() --ges
     --* do nothing by default
 end
 
@@ -598,7 +601,7 @@ function Input:setTimeout(slot, ges, cb, origin, delay)
         end
         item.deadline = deadline
     end
-    table.insert(self.timer_callbacks, item)
+    table_insert(self.timer_callbacks, item)
 
     --* NOTE: While the timescale is monotonic, we may interleave timers based on different delays, so we still need to sort...
     table.sort(self.timer_callbacks, function(v1, v2)
@@ -672,7 +675,7 @@ function Input:handleKeyBoardEv(ev)
                     --* and re-populate a minimal self.MTSlots array that simply switches them to the up state ;).
                     for _, slot in pairs(self.ev_slots) do
                         if slot.id ~= -1 then
-                            table.insert(self.MTSlots, slot)
+                            table_insert(self.MTSlots, slot)
                             slot.id = -1
                         end
                     end
@@ -749,7 +752,7 @@ function Input:handleKeyBoardEv(ev)
         --* And we use an array as a FIFO because we cannot guarantee that insertions and removals will interleave nicely.
         --* (This is all in the name of avoiding complexifying the common codepaths for events that should be few and far between).
         if self.fake_event_args[keycode] then
-            table.insert(self.fake_event_args[keycode], ev.value)
+            table_insert(self.fake_event_args[keycode], ev.value)
         end
         return keycode
     end
@@ -848,7 +851,7 @@ function Input:handlePowerManagementOnlyEv(ev)
 
     if self.fake_event_set[keycode] then
         if self.fake_event_args[keycode] then
-            table.insert(self.fake_event_args[keycode], ev.value)
+            table_insert(self.fake_event_args[keycode], ev.value)
         end
         return keycode
     end
@@ -878,7 +881,7 @@ function Input:handlePowerManagementOnlyEv(ev)
 end
 
 --* Empty event handler used to send input to the void
-function Input:voidEv(ev)
+function Input:voidEv() --ev
     return
 end
 
@@ -887,15 +890,15 @@ function Input:handleGenericEv(ev)
     return Event:new("GenericInput", ev)
 end
 
-function Input:handleMiscEv(ev)
+function Input:handleMiscEv() --ev
     --* overwritten by device implementation
 end
 
-function Input:handleGyroEv(ev)
+function Input:handleGyroEv() --ev
     --* setup by the Generic device implementation (for proper toggle handling)
 end
 
-function Input:handleSdlEv(ev)
+function Input:handleSdlEv() --ev
     --* overwritten by device implementation
 end
 
@@ -966,7 +969,7 @@ function Input:handleTouchEv(ev)
             local ges_evs = {}
             for _, touch_ges in ipairs(touch_gestures) do
                 self:gestureAdjustHook(touch_ges)
-                table.insert(ges_evs, Event:new("Gesture", self.gesture_detector:adjustGesCoordinate(touch_ges)))
+                table_insert(ges_evs, Event:new("Gesture", self.gesture_detector:adjustGesCoordinate(touch_ges)))
             end
             return ges_evs
         end
@@ -1007,7 +1010,7 @@ function Input:handleMixedTouchEv(ev)
             local ges_evs = {}
             for _, touch_ges in ipairs(touch_gestures) do
                 self:gestureAdjustHook(touch_ges)
-                table.insert(ges_evs, Event:new("Gesture", self.gesture_detector:adjustGesCoordinate(touch_ges)))
+                table_insert(ges_evs, Event:new("Gesture", self.gesture_detector:adjustGesCoordinate(touch_ges)))
             end
             return ges_evs
         end
@@ -1072,7 +1075,7 @@ function Input:handleTouchEvSnow(ev)
             local ges_evs = {}
             for _, touch_ges in ipairs(touch_gestures) do
                 self:gestureAdjustHook(touch_ges)
-                table.insert(ges_evs, Event:new("Gesture", self.gesture_detector:adjustGesCoordinate(touch_ges)))
+                table_insert(ges_evs, Event:new("Gesture", self.gesture_detector:adjustGesCoordinate(touch_ges)))
             end
             return ges_evs
         end
@@ -1132,7 +1135,7 @@ function Input:handleTouchEvPhoenix(ev)
             local ges_evs = {}
             for _, touch_ges in ipairs(touch_gestures) do
                 self:gestureAdjustHook(touch_ges)
-                table.insert(ges_evs, Event:new("Gesture", self.gesture_detector:adjustGesCoordinate(touch_ges)))
+                table_insert(ges_evs, Event:new("Gesture", self.gesture_detector:adjustGesCoordinate(touch_ges)))
             end
             return ges_evs
         end
@@ -1181,7 +1184,7 @@ function Input:handleTouchEvLegacy(ev)
             local ges_evs = {}
             for _, touch_ges in ipairs(touch_gestures) do
                 self:gestureAdjustHook(touch_ges)
-                table.insert(ges_evs, Event:new("Gesture", self.gesture_detector:adjustGesCoordinate(touch_ges)))
+                table_insert(ges_evs, Event:new("Gesture", self.gesture_detector:adjustGesCoordinate(touch_ges)))
             end
             return ges_evs
         end
@@ -1303,7 +1306,7 @@ end
 
 function Input:addSlot(value)
     self:initMtSlot(value)
-    table.insert(self.MTSlots, self:getMtSlot(value))
+    table_insert(self.MTSlots, self:getMtSlot(value))
     self.active_slots[value] = true
     self.cur_slot = value
 end
@@ -1523,6 +1526,7 @@ function Input:waitEvent(now, deadline)
                 --*       and we can't conditionally prevent evaluation of function arguments,
                 --*       so, just hide the whole thing behind a branch ;).
                 if event.type == C.EV_KEY then
+                    self.garbage = __
                     logger.dbg(string.format(
                         "key event => code: %d (%s), value: %s, time: %d.%06d",
                         event.code, self.event_map[event.code] or linux_evdev_key_code_map[event.code], event.value,
@@ -1558,7 +1562,7 @@ function Input:waitEvent(now, deadline)
             if event.type == C.EV_KEY then
                 local handled_ev = self:handleKeyBoardEv(event)
                 if handled_ev then
-                    table.insert(handled, handled_ev)
+                    table_insert(handled, handled_ev)
                 end
             elseif event.type == C.EV_ABS or event.type == C.EV_SYN then
                 local handled_evs = self:handleTouchEv(event)
@@ -1566,24 +1570,24 @@ function Input:waitEvent(now, deadline)
                 --* so more often than not, we just get a nil here ;).
                 if handled_evs then
                     for _, handled_ev in ipairs(handled_evs) do
-                        table.insert(handled, handled_ev)
+                        table_insert(handled, handled_ev)
                     end
                 end
             elseif event.type == C.EV_MSC then
                 local handled_ev = self:handleMiscEv(event)
                 if handled_ev then
-                    table.insert(handled, handled_ev)
+                    table_insert(handled, handled_ev)
                 end
             elseif event.type == C.EV_SDL then
                 local handled_ev = self:handleSdlEv(event)
                 if handled_ev then
-                    table.insert(handled, handled_ev)
+                    table_insert(handled, handled_ev)
                 end
             else
                 --* Received some other kind of event that we do not know how to specifically handle yet
                 local handled_ev = self:handleGenericEv(event)
                 if handled_ev then
-                    table.insert(handled, handled_ev)
+                    table_insert(handled, handled_ev)
                 end
             end
         end

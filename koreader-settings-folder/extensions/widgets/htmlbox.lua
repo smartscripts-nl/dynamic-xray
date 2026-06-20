@@ -1027,4 +1027,8 @@ function HtmlBox:setWidth()
     self.inner_width = self.width - 2 * self.frame_bordersize
 end
 
+function HtmlBox:onToPreviousTabWithShiftSpace()
+    return self:onToPreviousTab()
+end
+
 return HtmlBox

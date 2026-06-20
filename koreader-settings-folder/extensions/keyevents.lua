@@ -17,6 +17,21 @@ local count
 
 --- @class KeyEvents
 local KeyEvents = WidgetContainer:extend{
+    non_tabbed_dialogs_hotkeys = {
+        --! these callbacks must be present in the parent class:
+        ReadPrevItem = { { Input.group.PgBack }, doc = "read previous item" },
+        ReadPrevItemWithShiftSpace = Input.group.ShiftSpace,
+        ReadNextItem = { { Input.group.PgFwd }, doc = "read next item" },
+        ForceNextItem = { { Input.group.TabNext }, doc = "force next item" },
+        ForcePrevItem = { { Input.group.TabPrevious }, doc = "force previous item" },
+    },
+    tabbed_dialogs_hotkeys = {
+        ForceNextTab = { { Input.group.TabNext }, doc = "force next tab" },
+        ForcePreviousTab = { { Input.group.TabPrevious }, doc = "force previous tab" },
+        ToPreviousTab = { { Input.group.PgBack }, doc = "to previous tab" },
+        ToPreviousTabWithShiftSpace = Input.group.ShiftSpace,
+        ToNextTab = { { Input.group.PgFwd }, doc = "to next tab" },
+    },
     shared_hotkeys = {},
 }
 
@@ -33,57 +48,6 @@ function KeyEvents:addHotkeysForFilesBox(parent, key_events_module)
     self:addCloseHotkey(parent)
 end
 
---* here we add generic hotkeys for HtmlBox, but a caller might already have added specific hotkeys for that module:
---- @param parent HtmlBox
-function KeyEvents:addHotkeysForHtmlBox(parent, key_events_module)
-    if not Device:hasKeys() then
-        return
-    end
-    if not key_events_module then
-        key_events_module = "HtmlBox"
-    end
-
-    if parent.active_tab and parent.tabs_table_buttons then
-
-        parent.key_events = {
-            ReadPrevItem = { { Input.group.PgBack }, doc = "read prev item" },
-            ReadPrevItemWithShiftSpace = Input.group.ShiftSpace,
-            ReadNextItem = { { Input.group.PgFwd }, doc = "read next item" },
-            ToPreviousTab = { { Input.group.PgBack }, doc = "naar vorige tab" },
-            ToPreviousTabWithShiftSpace = Input.group.ShiftSpace,
-            ToNextTab = { { Input.group.PgFwd }, doc = "naar volgende tab" },
-            ForceNextTab = { { Input.group.TabNext }, doc = "forceer volgende tab" },
-            ForcePreviousTab = { { Input.group.TabPrevious }, doc = "forceer vorige tab" },
-        }
-        self:addCloseHotkey(parent)
-        -- #((set additional key events))
-        self:addAdditionalHotkeysHtmlBox(parent)
-
-        --* see ((TABS)) for more info:
-        --* initialize TabNavigator and callbacks:
-        KOR.tabnavigator:init(parent.tabs_table_buttons, parent.active_tab, parent.parent)
-        for i = 1, 8 do
-            local current = i
-            self:registerCustomKeyEvent(key_events_module, parent, current, "ActivateTab" .. current, function()
-                --* these callbacks were generated dynamically in ((generate tab navigation event handlers)):
-                return KOR.tabnavigator["onActivateTab" .. current](parent)
-            end)
-        end
-
-        return
-    end
-
-    parent.key_events = {
-        ReadPrevItem = { { Input.group.PgBack }, doc = "read prev item" },
-        ReadPrevItemWithShiftSpace = Input.group.ShiftSpace,
-        ReadNextItem = { { Input.group.PgFwd }, doc = "read next item" },
-        ForceNextItem = { { Input.group.TabNext }, doc = "forceer volgend item" },
-        ForcePrevItem = { { Input.group.TabPrevious }, doc = "forceer vorige item" },
-    }
-    self:addCloseHotkey(parent)
-    self:addAdditionalHotkeysHtmlBox(parent)
-end
-
 --* here we add generic hotkeys for NavigatorBox, but a caller might already have added specific hotkeys for that module:
 --- @param parent NavigatorBox
 function KeyEvents:addHotkeysForNavigatorBox(parent, key_events_module)
@@ -94,15 +58,18 @@ function KeyEvents:addHotkeysForNavigatorBox(parent, key_events_module)
         key_events_module = "NavigatorBox"
     end
 
-    parent.key_events = {
-        ReadPrevItem = { { Input.group.PgBack }, doc = "read prev item" },
-        ReadPrevItemWithShiftSpace = Input.group.ShiftSpace,
-        ReadNextItem = { { Input.group.PgFwd }, doc = "read next item" },
-        ForceNextItem = { { Input.group.TabNext }, doc = "forceer volgend item" },
-        ForcePrevItem = { { Input.group.TabPrevious }, doc = "forceer vorige item" },
-    }
+    parent.key_events = {}
+    self:addDialogHotkeys(parent, "non_tabbed")
     self:addCloseHotkey(parent)
-    self:addAdditionalHotkeysNavigatorBox(parent)
+    self:addAdditionalHotkeys(parent, key_events_module)
+end
+
+--- @private
+function KeyEvents:addDialogHotkeys(parent, mode)
+    local source = mode == "tabbed" and self.tabbed_dialogs_hotkeys or self.non_tabbed_dialogs_hotkeys
+    for callback, hotkeys in pairs(source) do
+        parent.key_events[callback] = hotkeys
+    end
 end
 
 --* here we add global hotkeys for ReaderUI:
@@ -128,11 +95,13 @@ function KeyEvents:addHotkeysForReaderUI(parent)
     readerui.key_events.ShowXrayListUI = { { "Shift", { "L" } } }
     readerui.onShowXrayListUI = function()
         DX.c:onShowList()
+        return true
     end
 
     readerui.key_events.ShowCurrentSeriesUI = { { "Shift", { "M" } } }
     readerui.onShowCurrentSeriesUI = function()
         DX.c:onShowCurrentSeries()
+        return true
     end
 
     readerui.key_events.ShowTagGroupSelectorUI = { { "Shift", { "T" } } }
@@ -144,10 +113,11 @@ function KeyEvents:addHotkeysForReaderUI(parent)
     readerui.key_events.ShowPageNavigatorUI = { { "Shift", { "X" } } }
     readerui.onShowPageNavigatorUI = function()
         DX.c:onShowPageNavigator()
+        return true
     end
 end
 
---* disable
+--* disable ReaderUI hotkeys:
 function KeyEvents:disableHotkeysForReaderUI()
     local is_docless = KOR.ui == nil or KOR.document == nil
     --* first condition: points to the event handler: don't create the method anew every time you open another ebook:
@@ -170,6 +140,19 @@ function KeyEvents:disableHotkeysForReaderUI()
     readerui.onShowPageNavigatorUI = nil
 end
 
+--- @param parent ScrollHtmlWidget
+function KeyEvents:addHotkeysForScrollHtmlWidget(parent)
+    if not Device:hasKeys() then
+        return
+    end
+    --* compare ((KeyEvents#addHotkeysForScrollTextWidget)):
+    parent.key_events = {
+        ScrollDown = { { Input.group.PgFwd } },
+        ScrollUp = { { Input.group.PgBack } },
+        ScrollUpWithShiftSpace = Input.group.ShiftSpace,
+    }
+end
+
 --* here we add generic hotkeys for ScrollTextWidget, but a caller might already have added specific hotkeys for that module:
 --- @param parent ScrollTextWidget
 function KeyEvents:addHotkeysForScrollTextWidget(parent, key_events_module)
@@ -180,6 +163,7 @@ function KeyEvents:addHotkeysForScrollTextWidget(parent, key_events_module)
         key_events_module = "ScrollTextWidget"
     end
 
+    --* compare ((KeyEvents#addHotkeysForScrollHtmlWidget)):
     parent.key_events = {
         ScrollDown = { { Input.group.PgFwdScrollText } },
         ScrollUp = { { Input.group.PgBackScrollText } },
@@ -189,6 +173,52 @@ function KeyEvents:addHotkeysForScrollTextWidget(parent, key_events_module)
     self:addCloseHotkey(parent)
 end
 
+--* here we add generic hotkeys for HtmlBox, but a caller might already have added specific hotkeys for that module:
+--* compare ((KeyEvents#addAdditionalHotkeys))
+--- @param parent HtmlBox
+function KeyEvents:addHotkeysForHtmlBox(parent, key_events_module)
+    if not Device:hasKeys() then
+        return
+    end
+    if not key_events_module then
+        key_events_module = "HtmlBox"
+    end
+
+    if parent.active_tab and parent.tabs_table_buttons then
+
+        parent.key_events = {
+            --! these callbacks must be present in the HmtlBox class:
+            ToNext = { { "N" } },
+            ToPrevious = { { "P" } },
+            ToNextSection = { { "Shift", { "N" } } },
+            ToPreviousSection = { { "Shift", { "P" } } },
+        }
+        self:addDialogHotkeys(parent, "tabbed")
+        self:addCloseHotkey(parent)
+        -- #((set additional key events))
+        self:addAdditionalHotkeys(parent, key_events_module)
+
+        --* see ((TABS)) for more info:
+        --* initialize TabNavigator and callbacks:
+        KOR.tabnavigator:init(parent.tabs_table_buttons, parent.active_tab, parent.parent)
+        for i = 1, 8 do
+            local current = i
+            self:registerCustomKeyEvent(key_events_module, parent, current, "ActivateTab" .. current, function()
+                --* these callbacks were generated dynamically in ((generate tab navigation event handlers)):
+                return KOR.tabnavigator["onActivateTab" .. current](parent)
+            end)
+        end
+
+        return
+    end
+
+    --* for non tabbed HtmlBoxes:
+    self:addDialogHotkeys(parent, "non_tabbed")
+    self:addCloseHotkey(parent)
+    self:addAdditionalHotkeys(parent, key_events_module)
+end
+
+--* compare ((KeyEvents#addAdditionalHotkeys))
 --- @param parent TextViewer
 function KeyEvents:addHotkeysForTextViewer(parent, key_events_module)
     if not Device:hasKeys() then
@@ -197,17 +227,12 @@ function KeyEvents:addHotkeysForTextViewer(parent, key_events_module)
     if not key_events_module then
         key_events_module = "TextViewer"
     end
+    parent.key_events = {}
 
     --* TextViewer instance with tabs:
     if parent.active_tab and parent.tabs_table_buttons then
 
-        parent.key_events = {
-            ToPreviousTab = { { Input.group.PgBack }, doc = "naar vorige tab" },
-            ToPreviousTabWithShiftSpace = Input.group.ShiftSpace,
-            ToNextTab = { { Input.group.PgFwd }, doc = "naar volgende tab" },
-            ForceNextTab = { { Input.group.TabNext }, doc = "forceer volgende tab" },
-            ForcePreviousTab = { { Input.group.TabPrevious }, doc = "forceer vorige tab" },
-        }
+        self:addDialogHotkeys(parent, "tabbed")
         --* see ((TABS)) for more info:
         --* initialize TabNavigator and callbacks:
         KOR.tabnavigator:init(parent.tabs_table_buttons, parent.active_tab, parent.parent)
@@ -221,17 +246,11 @@ function KeyEvents:addHotkeysForTextViewer(parent, key_events_module)
 
         --* TextViewer instance without tabs:
     else
-        parent.key_events = {
-            ReadPrevItem = { { Input.group.PgBack }, doc = "read prev item" },
-            ReadPrevItemWithShiftSpace = Input.group.ShiftSpace,
-            ReadNextItem = { { Input.group.PgFwd }, doc = "read next item" },
-            ForceNextItem = { { Input.group.TabNext }, doc = "forceer volgend item" },
-            ForcePrevItem = { { Input.group.TabPrevious }, doc = "forceer vorige item" },
-        }
+        self:addDialogHotkeys(parent, "non_tabbed")
     end
     self:addCloseHotkey(parent)
     self:addExtraButtonsHotkeys(parent, 1)
-    self:addAdditionalHotkeysTextViewer(parent)
+    self:addAdditionalHotkeys(parent, key_events_module, "for_textviewer")
 
     --* examples of hotkeys configurators: ((KeyEvents#addHotkeysForXrayPageNavigator)) and ((KeyEvents#addHotkeysForXrayItemViewer)):
     if parent.hotkeys_configurator then
@@ -725,8 +744,7 @@ function KeyEvents:addHotkeysForButtonDialog(parent)
     if not Device:hasKeys() then
         return
     end
-
-    self:addCloseHotkey(parent)
+    self:addCloseHotkey(parent, "for_button_dialog")
     if parent.additional_key_events then
         for label, set in pairs(parent.additional_key_events) do
             parent["on" .. label] = function()
@@ -776,8 +794,6 @@ function KeyEvents:registerHotkeysMenu(parent)
     end
 
     if Device:hasKeys() then
-        --* set up keyboard events
-        self:addCloseHotkey(parent)
         parent.key_events.NextPage = { { Input.group.PgFwd } }
         parent.key_events.PrevPage = { { Input.group.PgBack } }
         parent.key_events.PrevPageWithShiftSpace = Input.group.ShiftSpace
@@ -785,6 +801,7 @@ function KeyEvents:registerHotkeysMenu(parent)
         if parent.tab_labels and parent.activate_tab_callback then
             self:registerTabHotkeys(parent)
         end
+        self:addCloseHotkey(parent)
     end
 
     if Device:hasDPad() then
@@ -818,53 +835,29 @@ function KeyEvents:addExtraButtonsHotkeys(parent, no)
     end
 end
 
---* these additional_key_events might have been set by the caller of HtmlBox:
---- @param parent HtmlBox
-function KeyEvents:addAdditionalHotkeysHtmlBox(parent)
-    if parent.additional_key_events then
-        for label, hk_data in pairs(parent.additional_key_events) do
-            local close_box = hk_data[3] and true or false
-            if close_box then
-                UIManager:close(parent)
-            end
-            parent["on" .. label .. "HB"] = function()
-                return hk_data[2]()
-            end
-            parent.key_events[label] = hk_data[1]
-        end
+--* these additional_key_events might have been set by the caller of the class instance:
+--- @private
+--- @param parent HtmlBox, TextViewer or NavigatorBox
+function KeyEvents:addAdditionalHotkeys(parent, key_events_module, for_textviewer)
+    if not parent.additional_key_events then
+        return
     end
-end
 
---* these additional_key_events might have been set by the caller of NavigatorBox:
---- @param parent NavigatorBox
-function KeyEvents:addAdditionalHotkeysNavigatorBox(parent)
-    if parent.additional_key_events then
-        for label, hk_data in pairs(parent.additional_key_events) do
-            local close_box = hk_data[3] and true or false
-            if close_box then
-                UIManager:close(parent)
-            end
-            parent["on" .. label .. "NB"] = function()
-                return hk_data[2]()
-            end
-            parent.key_events[label] = hk_data[1]
+    local close_box, keep_textviewer_open
+    for label, hk_data in pairs(parent.additional_key_events) do
+    --? for TextViewer call UIManager:close() in the opposite way of ((KeyEvents#addAdditionalHotkeys)); is that correct?
+    close_box = hk_data[3] and true or false
+    --* see ((BookCountsDialog#_showDialog)) where hk_data[3] element is set:
+    keep_textviewer_open = close_box
+    if for_textviewer and keep_textviewer_open then
+            UIManager:close(parent)
+    elseif not for_textviewer and close_box then
+            UIManager:close(parent)
         end
-    end
-end
-
---- @param parent TextViewer
-function KeyEvents:addAdditionalHotkeysTextViewer(parent)
-    if parent.additional_key_events then
-        for label, hk_data in pairs(parent.additional_key_events) do
-            local keep_textviewer_open = hk_data[3] and true or false
-            parent["on" .. label .. "_TV"] = function()
-                if not keep_textviewer_open then
-                    UIManager:close(parent)
-                end
-                return hk_data[2]()
-            end
-            parent.key_events[label .. "_TV"] = hk_data[1]
+    parent["on" .. label .. key_events_module] = function()
+            return hk_data[2]()
         end
+        parent.key_events[label] = hk_data[1]
     end
 end
 
@@ -902,18 +895,22 @@ function KeyEvents:registerTabHotkeys(parent)
     end
 end
 
+--- @private
 --- @param parent Menu
 function KeyEvents:activateTab(parent, tab_no)
     parent.activate_tab_callback(tab_no)
 end
 
-function KeyEvents:addCloseHotkey(parent)
+--- @private
+function KeyEvents:addCloseHotkey(parent, for_button_dialog)
     if not parent.key_events then
         parent.key_events = {}
     end
-    parent.key_events["Close"] = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } }
+    local non_ubuntu_close_key = for_button_dialog and Input.group.CloseButtonDialog or Input.group.CloseDialog
+    parent.key_events["Close"] = DX.s.is_ubuntu and { { Input.group.Back } } or { { non_ubuntu_close_key } }
 end
 
+--- @private
 function KeyEvents:addSeriesManagerHotkey(actions)
     table_insert(actions, {
         label = "show_serie",
@@ -933,6 +930,7 @@ function KeyEvents:updateHotkeys(parent)
 end
 
 --* shared hotkey actions must be registered by calling ((KeyEvents#registerSharedHotkey)) from the method which registers hotkeys for a specific module:
+--- @private
 function KeyEvents:execTopMostSharedHotkey(key, key_events_module)
     local keys_registry = self.shared_hotkeys[key]
     if not keys_registry or #keys_registry == 0 or keys_registry[#keys_registry][1] ~= key_events_module then

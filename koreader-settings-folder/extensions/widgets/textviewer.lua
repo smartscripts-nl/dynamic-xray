@@ -187,7 +187,7 @@ function TextViewer:init()
     self:setPadding()
     self:initForDevice()
     self:initTouch()
-    KOR.keyevents:addHotkeysForTextViewer(self, self.key_events_module)
+    self:initHotkeys()
     self:initTitleBar()
     self:initScrollCallbacks()
     self:initButtons()
@@ -1617,6 +1617,11 @@ function TextViewer:initTitleBar()
     if not self.title then
         self.title = "dummy"
     end
+end
+
+--- @private
+function TextViewer:initHotkeys()
+    KOR.keyevents:addHotkeysForTextViewer(self, self.key_events_module)
 end
 
 --- @private
