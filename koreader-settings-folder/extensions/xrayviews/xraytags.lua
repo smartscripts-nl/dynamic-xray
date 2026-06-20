@@ -512,14 +512,7 @@ function XrayTags:showTagGroup(tag)
     self.tag_group_viewer = KOR.dialogs:textBoxTabbed(1, {
         title = _("Tag-group") .. ": " .. tag .. " (" .. taggroup_count .. ")",
         fullscreen = true,
-        top_buttons_left = {
-            KOR.buttoninfopopup:forXraySettings({
-                callback = function()
-                    UIManager:close(self.tag_group_viewer)
-                    DX.s.showSettingsManager()
-                end
-            }),
-        },
+        top_buttons_left = DX.b:forTagGroupViewerTopLeft(self),
         tabs = {
             {
                 tab = _("overview"),

@@ -817,6 +817,22 @@ function XrayButtons:forTagGroupSelectorTopLeft(parent)
             end
         }))
     end
+    self:insertGeneralDXTipsButton(buttons, parent, 2)
+
+    return buttons
+end
+
+--- @param parent XrayTags
+function XrayButtons:forTagGroupViewerTopLeft(parent)
+    local buttons = {
+        KOR.buttoninfopopup:forXraySettings({
+            callback = function()
+                UIManager:close(parent.tag_group_viewer)
+                DX.s.showSettingsManager()
+            end
+        }),
+    }
+    self:insertGeneralDXTipsButton(buttons, parent, 2)
 
     return buttons
 end
@@ -1412,11 +1428,11 @@ function XrayButtons:forListTopLeft(parent)
     return buttons
 end
 
-function XrayButtons:insertGeneralDXTipsButton(buttons, parent)
+function XrayButtons:insertGeneralDXTipsButton(buttons, parent, initial_tab)
     if DX.s.enable_global_DX_tips then
         table_insert(buttons, 1, KOR.buttoninfopopup:forXrayTips({
             callback = function()
-                return DX.i:showGeneralDXTips(parent)
+                return DX.i:showGeneralDXTips(parent, initial_tab)
             end,
         }))
     end
