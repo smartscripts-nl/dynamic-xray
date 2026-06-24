@@ -828,7 +828,9 @@ function XrayDataSaver.modifyTables(conn, update_tasks_count, version_index)
     for i = version_index + 1, update_tasks_count do
         if self.scheme_alter_queries[i] then
             sql = self.scheme_alter_queries[i]
-            conn:exec(sql)
+            pcall(function()
+                conn:exec(sql)
+            end)
         end
     end
 end
