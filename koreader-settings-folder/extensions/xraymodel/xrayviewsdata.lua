@@ -1694,34 +1694,36 @@ function XrayViewsData:getXrayItemNameVariants(item)
         --* check for cases when a Xray item name is mentioned in uppercase (e.g. in the intro text of a chapter):
         KOR.strings:upper(item.name),
     }
-    local is_person = parent:isPerson(item)
-    if not is_person and not item.name:match("[A-Z]") then
+    local is_term = parent:isTerm(item)
+    if is_term and not item.name:match("[A-Z]") then
         table_insert(needles, KOR.strings:ucfirst(item.name))
+        table_insert(needles, KOR.strings:upper(item.name))
     end
 
     local sources = { "name", "aliases", "short_names" }
-    local prop, values
     for s = 1, 3 do
-        prop = sources[s]
-        if has_text(item[prop]) then
-            values = parent:splitByCommaOrSpace(item[prop])
-            count = #values
-            --* if a last name is not unique (shared by multiple family members), don't use it as a criterium; e.g. to prevent false positives for chapter matches:
-            if prop == "name" and parent.last_name_counts[values[count]] and parent.last_name_counts[values[count]] > 1 then
-                table.remove(values)
-                count = #values
-            end
-            for i = 1, count do
-                --* we are not interested in lower case parts of person names:
-                if not is_person or values[i]:match("[A-Z]") then
-                    table_insert(needles, values[i])
-                    --* for all uppercase variants, e.g. in intro texts at the start of chapters:
-                    table_insert(needles, KOR.strings:upper(values[i]))
-                end
-            end
-        end
+        self:populateNeedles(needles, item, sources[s], is_term)
     end
     return needles
+end
+
+--- @private
+function XrayViewsData:populateNeedles(needles, item, prop, is_term)
+    if not has_text(item[prop]) then
+        return
+    end
+
+    --* if a last name is not unique (shared by multiple family members), don't use it as a criterium; e.g. to prevent false positives for chapter matches:
+    local parts = prop == "name" and parent:getNameParts(item) or parent:splitByCommaOrSpace(item[prop])
+    count = #parts
+    for i = 1, count do
+        --* we are not interested in lower case parts of person names:
+        if is_term or parts[i]:match("[A-Z]") then
+            table_insert(needles, parts[i])
+            --* for all uppercase variants, e.g. in intro texts at the start of chapters:
+            table_insert(needles, KOR.strings:upper(parts[i]))
+        end
+    end
 end
 
 function XrayViewsData:setFilterTypes(filter_types)

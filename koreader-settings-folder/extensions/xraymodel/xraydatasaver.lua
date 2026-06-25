@@ -25,6 +25,7 @@ local math_floor = math.floor
 local math_max = math.max
 local math_min = math.min
 local pairs = pairs
+local pcall = pcall
 local string = string
 local table = table
 local table_concat = table.concat

@@ -338,6 +338,7 @@ function XrayPages:gotoPageHitForItem(goto_item, direction)
         local item = DX.pn.page_navigator_filter_item
         local results, needle, case_insensitive
         --* if applicable, we only search for first names (then probably more accurate hits count):
+        --TODO if a family member is unique to that family, search for all variants, so also first name:
         needle = DX.m:getRealFirstOrSurName(item)
         --* for lowercase needles (terms instead of persons), we search case insensitive:
         case_insensitive = not needle:match("[A-Z]")

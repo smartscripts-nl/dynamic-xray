@@ -182,15 +182,51 @@ end
 
 --- @private
 function XrayModel:addLastName(full_name)
-    local last_name = full_name:match(",") and full_name:match("^[^,]+") or full_name:match("[A-Z][^ ]+$")
+    local last_name = self:getLastName(full_name)
     if not last_name then
         return
     end
     if not self.last_name_counts[last_name] then
         self.last_name_counts[last_name] = 1
-    else
-        self.last_name_counts[last_name] = self.last_name_counts[last_name] + 1
+        return
     end
+
+    self.last_name_counts[last_name] = self.last_name_counts[last_name] + 1
+end
+
+function XrayModel:getLastName(full_name)
+    --* if no space present, then there is no last name:
+    if not full_name:match(" ") then
+        return
+    end
+    return full_name:match(",") and full_name:match("^[^,]+") or full_name:match("[A-Z][^ ]+$")
+end
+
+function XrayModel:getNameParts(item)
+
+    --* if an item has no spaces, return name as the only part:
+    if not item.name:match(" ") then
+        return { item.name }
+    end
+
+    --* if an item is the only family member, return all its parts:
+    local full_name = item.name
+    local parts = self:splitByCommaOrSpace(full_name)
+    local is_only_family_member = self:isOnlyFamilyMember(item)
+    if is_only_family_member then
+        return parts
+    end
+
+    --* if an item is NOT the only family member, return only the non-family-name parts:
+    local last_name = self:getLastName(full_name)
+    local name_parts = {}
+    local pcount = #parts
+    for i = 1, pcount do
+        if parts[i] ~= last_name then
+            table_insert(name_parts, parts[i])
+        end
+    end
+    return name_parts
 end
 
 function XrayModel:addTags(tags, id)
@@ -511,9 +547,38 @@ function XrayModel:updateStaticReferenceCollections(id, item)
     end
 end
 
---- @private
+--* self.last_name_counts was populated in ((XrayModel#addLastName)):
+function XrayModel:isNotOnlyFamilyMember(item)
+    --* a term/thing is always the only "family" member and has no last name:
+    if self:isTerm(item) then
+        return false
+    end
+    local last_name = self:getLastName(item.name)
+    if not last_name then
+        return false
+    end
+    return self.last_name_counts[last_name] and self.last_name_counts[last_name] > 1
+end
+
+--* self.last_name_counts was populated in ((XrayModel#addLastName)):
+function XrayModel:isOnlyFamilyMember(item)
+    --* a term/thing is always the only "family" member and has no last name:
+    if self:isTerm(item) then
+        return true
+    end
+    local last_name = self:getLastName(item.name)
+    if not last_name then
+        return false
+    end
+    return self.last_name_counts[last_name] and self.last_name_counts[last_name] == 1
+end
+
 function XrayModel:isPerson(item)
     return item.xray_type <= 2
+end
+
+function XrayModel:isTerm(item)
+    return item.xray_type > 2
 end
 
 function XrayModel:loadGlossary(path)
