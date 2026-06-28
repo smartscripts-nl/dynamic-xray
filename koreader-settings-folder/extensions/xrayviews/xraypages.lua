@@ -4,7 +4,6 @@
 local require = require
 
 local KOR = require("extensions/kor")
-local Trapper = require("ui/trapper")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
@@ -14,8 +13,6 @@ local T = require("ffi/util").template
 local DX = DX
 local has_items = has_items
 local has_no_items = has_no_items
-local has_no_text = has_no_text
-local has_text = has_text
 local math_ceil = math.ceil
 local tonumber = tonumber
 
@@ -27,7 +24,9 @@ local XrayPages = WidgetContainer:new{
     browsing_page_new = nil,
     button_labels_injected = {},
     cached_html_by_page_no = {},
-    --* whole word name parts which may not be marked bold and trigger an item hit by themselves only; used in ((XrayPages#markItem)):
+    cached_page_texts = {},
+    --* whole word name parts which may not be marked bold and trigger an item hit by themselves only; used in ((XrayPages#checkTextMatch)):
+    --? but should this not also be used as option to ((Strings#split)), when determining items in ((XrayPages))?:
     forbidden_needle_parts = {
         ["De"] = true,
         ["La"] = true,
@@ -45,46 +44,6 @@ local XrayPages = WidgetContainer:new{
     search_also_in_opposite_direction = false,
 }
 
-function XrayPages:getNextPageFrom(results)
-    if not has_items(results) then
-        return
-    end
-    count = #results
-    local last_occurrence = KOR.document:getPageFromXPointer(results[count].start)
-    if self.browsing_page_current >= last_occurrence then
-        return
-    end
-    local page_no
-    local start = 1
-    local l_end = count
-    start, l_end = self:getNextLoopStartEnd(results, start, l_end, last_occurrence)
-    for i = start, l_end do
-        page_no = KOR.document:getPageFromXPointer(results[i].start)
-        if self:isValidNextFilteredItemPage(page_no, last_occurrence) then
-            return page_no
-        end
-    end
-end
-
-function XrayPages:getPreviousPageFrom(results)
-    count = #results
-    local first_occurrence = KOR.document:getPageFromXPointer(results[1].start)
-    if self.browsing_page_current <= first_occurrence then
-        return
-    end
-    local page_no
-    local start = count
-    local l_end = 1
-    start, l_end = self:getPreviousLoopStartEnd(results, start, l_end)
-    for i = start, l_end, -1 do
-        --* pageHasItemName example: if we made "Coram van Texel" the filter item, the script would search for occurrences of "Coram" and - but for this extra condition - yield back a false hit for "Farder Coram":
-        page_no = KOR.document:getPageFromXPointer(results[i].start)
-        if self:isValidPreviousFilteredItemPage(page_no, first_occurrence) then
-            return page_no
-        end
-    end
-end
-
 --- @private
 function XrayPages:showNextOrPreviousItemMessage(direction, needle)
     if self.search_also_in_opposite_direction then
@@ -93,107 +52,6 @@ function XrayPages:showNextOrPreviousItemMessage(direction, needle)
 
     local adjective = direction == 1 and _("next") or _("previous")
     KOR.messages:notify(T(_("go to %1 occurrence of \"%2\""), adjective, needle))
-        end
-
---- @private
-function XrayPages:setValidNextBrowsingPage(page_no, direction)
-    if not page_no then
-        return
-    end
-    if not self.browsing_page_new then
-        self.browsing_page_new = page_no
-        return
-    end
-
-    if direction == 1 and page_no > self.browsing_page_current and page_no < self.browsing_page_new then
-        self.browsing_page_new = page_no
-
-    elseif direction == -1 and page_no < self.browsing_page_current and page_no > self.browsing_page_new then
-        self.browsing_page_new = page_no
-    end
-    end
-
---- @private
-function XrayPages:isValidNextFilteredItemPage(page_no, last_occurrence)
-    --* pageHasItemName example: if we made "Coram van Texel" the filter item, the script would search for occurrences of "Coram" and - but for this extra condition - yield back a false hit for "Farder Coram":
-    return page_no > self.browsing_page_current and page_no <= last_occurrence and self:pageHasItemName(page_no)
-end
-
---- @private
-function XrayPages:isValidPreviousFilteredItemPage(page_no, first_occurrence)
-    --* pageHasItemName example: if we made "Coram van Texel" the filter item, the script would search for occurrences of "Coram" and - but for this extra condition - yield back a false hit for "Farder Coram":
-    return page_no < self.browsing_page_current and page_no >= first_occurrence and self:pageHasItemName(page_no)
-end
-
---- @private
-function XrayPages:getNextLoopStartEnd(results, start, l_end, last_occurrence)
-    local test_loops = 4
-    if count > 600 then
-        test_loops = 12
-    elseif count > 500 then
-        test_loops = 10
-    elseif count > 400 then
-        test_loops = 8
-    elseif count > 300 then
-        test_loops = 6
-    elseif count > 200 then
-        test_loops = 5
-    end
-    local needle_no, page_no, diff
-    for i = 1, test_loops do
-        diff = l_end - start
-        if diff < 4 then
-            return start, l_end
-        end
-        needle_no = start + math_ceil(diff / 2)
-        page_no = KOR.document:getPageFromXPointer(results[needle_no].start)
-        --* if the page is valid, we can subtract from l_end:
-        if self:isValidNextFilteredItemPage(page_no, last_occurrence) then
-            l_end = needle_no
-
-        --* if the page is not valid, we can use it as start marker:
-        else
-            start = needle_no
-            self.garbage = i
-        end
-    end
-    return start, l_end
-end
-
---- @private
-function XrayPages:getPreviousLoopStartEnd(results, start, l_end, first_occurrence)
-    local test_loops = 4
-    if count > 600 then
-        test_loops = 12
-    elseif count > 500 then
-        test_loops = 10
-    elseif count > 400 then
-        test_loops = 8
-    elseif count > 300 then
-        test_loops = 6
-    elseif count > 200 then
-        test_loops = 5
-    end
-    local needle_no, page_no, diff
-    --! initially start = count and l_end is 1, because we loop back from count to 1; so start is greater than l_end!
-    for i = 1, test_loops do
-        diff = l_end - start
-        if diff < 4 then
-            return start, l_end
-        end
-        needle_no = start + math_ceil(diff / 2)
-        page_no = KOR.document:getPageFromXPointer(results[needle_no].start)
-        --* if the page is valid, we can subtract from start:
-        if self:isValidPreviousFilteredItemPage(page_no, first_occurrence) then
-            start = needle_no
-
-        --* if the page is not valid, we can use it as end marker:
-        else
-            l_end = needle_no
-            self.garbage = i
-        end
-    end
-    return start, l_end
 end
 
 function XrayPages:jumpToPage()
@@ -254,13 +112,7 @@ end
 
 function XrayPages:resetCache()
     self.cached_html_by_page_no = {}
-end
-
-function XrayPages:getPageHtmlAndMarkItems(page_no, for_tagged_items)
-    local html = self:getPageHtmlForPage(page_no, for_tagged_items)
-    --* self.cached_html_and_buttons_by_page_no will be updated here:
-    --* side_buttons FOR SIDE PANEL TAB NO.1 de facto populated in ((XrayPages#markedItemRegister)) > ((XraySidePanels#addSideButton)):
-    return self:markItemsFoundInPageHtml(html, page_no)
+    self.cached_page_texts = {}
 end
 
 function XrayPages:toCurrentNavigatorPage()
@@ -278,7 +130,7 @@ function XrayPages:toNextNavigatorPage(goto_next_item)
         self:gotoPageHitForTaggedItem(direction)
         return
     --* navigation to next filtered item hit:
-    elseif DX.pn.page_navigator_filter_item or goto_next_item then
+    elseif DX.pn.filter_item or goto_next_item then
         self:gotoPageHitForItem(goto_next_item, direction)
         return
     end
@@ -302,7 +154,7 @@ function XrayPages:toPrevNavigatorPage(goto_prev_item, stay_at_top_of_page)
         self:gotoPageHitForTaggedItem(direction)
         return
     --* navigation to previous filtered item hit:
-    elseif DX.pn.page_navigator_filter_item or goto_prev_item then
+    elseif DX.pn.filter_item or goto_prev_item then
         self:gotoPageHitForItem(goto_prev_item, direction)
         return
     end
@@ -329,65 +181,80 @@ function XrayPages:toPrevOrNextNavigatorPage(goto_item)
     self:gotoPageHitForItem(goto_item, direction)
 end
 
+function XrayPages:resetPageForFilteredBrowsing()
+    self.browsing_page_new = nil
+end
+
 --- @private
 function XrayPages:gotoPageHitForItem(goto_item, direction)
-    Trapper:wrap(function()
-        if goto_item then
-            self:setTemporaryFilterItem(goto_item)
+    --* this temporarily sets DX.pn.filter_item:
+    if goto_item then
+        self:setTemporaryFilterItem(goto_item)
+    end
+    local item = DX.pn.filter_item
+    self:showNextOrPreviousItemMessage(direction, item.name)
+
+    --* self.browsing_page_new will be set to nil upon activating the item filter, via ((XrayPageNavigator#setFilter)) > ((XrayPages#resetPageForFilteredBrowsing)):
+    self.browsing_page_current = DX.pn.page_no
+    local max_page = KOR.document:getPageCount()
+    local other_page = self.browsing_page_new or self.browsing_page_current
+    local prev_page = other_page
+    other_page = self:modifyCheckPage(direction, other_page, max_page)
+
+    local found, hit
+    if other_page then
+        found, hit = self:pageHasItem(other_page, item)
+        --* pageHasItemName example: if we made "Coram van Texel" the filter item, the script would search for occurrences of "Coram" and - but for this extra condition - yield back a false hit for "Farder Coram":
+        if not self:pageHasItemName(other_page) then
+            found = false
         end
-        local item = DX.pn.page_navigator_filter_item
-        local results, needle, case_insensitive
-        --* if applicable, we only search for first names (then probably more accurate hits count):
-        --TODO if a family member is unique to that family, search for all variants, so also first name:
-        needle = DX.m:getRealFirstOrSurName(item)
-        --* for lowercase needles (terms instead of persons), we search case insensitive:
-        case_insensitive = not needle:match("[A-Z]")
+    end
 
-        self:showNextOrPreviousItemMessage(direction, needle)
+    if self:invalidItemPageHitHandled(found, direction, goto_item, other_page) then
+        self.browsing_page_new = prev_page
+        return false
+    end
 
-        --! using document:findAllTextWholeWords instead of document:findAllText here crucial to get exact hits count:
-        results = DX.pn.cached_hits_by_needle[needle] or KOR.document:findAllTextWholeWords(needle, case_insensitive, 0, 3000, false)
-        DX.pn.cached_hits_by_needle[needle] = results
-
-        self.browsing_page_new = nil
-        self.browsing_page_current = DX.pn.page_no
-
-        local next_page = direction == 1
-            and self:getNextPageFrom(results)
-            or self:getPreviousPageFrom(results)
-        self:setValidNextBrowsingPage(next_page, direction)
-
-        local no_page_found = not next_page
-        if self.search_also_in_opposite_direction and no_page_found then
-            --* search_also_in_opposite_direction is true when the search was initiated from ((XrayCallbacks#execPageNavigatorSearchItemCallback)) > ((XrayPages#toPrevOrNextNavigatorPage)); in that case we started searching backwards, but if that yielded no result, we'll now search in forward direction:
-            next_page = self:getNextPageFrom(results)
-            no_page_found = not next_page
-            self:setValidNextBrowsingPage(next_page, direction)
-        end
-
-        if has_no_text(item.aliases) then
-            self.search_also_in_opposite_direction = false
-            if no_page_found then
-                self:undoTemporaryFilterItem(goto_item)
-                self:showNoNextPreviousOccurrenceMessage(direction)
-                return
+    while not found and other_page do
+        other_page = self:modifyCheckPage(direction, other_page, max_page)
+        if other_page then
+            found, hit = self:pageHasItem(other_page, item) --, page_text
+            if not self:pageHasItemName(other_page) then
+                found = false
             end
-            self:handleItemHitFound(next_page)
-            --! this statement MUST be executed AFTER the previous one, because undoTemporaryFilterItem reset DX.pn.active_filter_name:
-            self:undoTemporaryFilterItem(goto_item)
+        end
+    end
+
+    if self:invalidItemPageHitHandled(found, direction, goto_item, other_page) then
+        self.browsing_page_new = prev_page
+        return false
+    end
+
+    --* we don't use second arg html here, because html generated and items marked in (()):
+    self:handleItemHitFound(self.browsing_page_new)
+    --! this statement MUST be executed AFTER the previous one, because undoTemporaryFilterItem reset DX.pn.active_filter_name:
+    self:undoTemporaryFilterItem(goto_item)
+
+    return true
+end
+
+--- @private
+function XrayPages:modifyCheckPage(direction, ref_page, max_page)
+    if direction == 1 then
+        ref_page = ref_page + 1
+        if ref_page > max_page then
             return
             end
+        self.browsing_page_new = ref_page
+        return ref_page
+    end
 
-        self:searchNextOrPreviousAliasHit(item, needle, case_insensitive, direction)
-
-        if self:invalidItemPageHitHandled(direction, goto_item) then
+    ref_page = ref_page - 1
+    if ref_page < 1 then
             return
         end
-
-        self:handleItemHitFound(self.browsing_page_new)
-        --! this statement MUST be executed AFTER the previous one, because undoTemporaryFilterItem reset DX.pn.active_filter_name:
-        self:undoTemporaryFilterItem(goto_item)
-    end)
+    self.browsing_page_new = ref_page
+    return ref_page
 end
 
 --- @private
@@ -402,31 +269,31 @@ end
 
 --- @private
 function XrayPages:gotoPageHitForTaggedItem(direction)
-    local page = DX.pn.page_no
+    local page_no = DX.pn.page_no
     local page_count = KOR.document:getPageCount()
-    if page == 1 and direction == -1 then
+    if page_no == 1 and direction == -1 then
         self:notifyNoPreviousOccurrences()
         return
-    elseif page == page_count and direction == 1 then
+    elseif page_no == page_count and direction == 1 then
         self:notifyNoNextOccurrences()
         return
     end
     local html
-    while page > 0 and page <= page_count do
+    while page_no > 0 and page_no <= page_count do
         if direction == 1 then
-            page = page + 1
+            page_no = page_no + 1
         else
-            page = page - 1
+            page_no = page_no - 1
         end
-        html = page > 0 and page <= page_count and self:getPageHtmlAndMarkItems(page, "for_tagged_items")
+        html = page_no > 0 and page_no <= page_count and self:markItemsFoundInPageHtml(page_no, "for_tagged_items")
 
         if html and html:find("<strong", 1, true) then
-            self:handleItemHitFound(page, html)
+            self:handleItemHitFound(page_no, html)
             return
-        elseif page == page_count and direction == 1 then
+        elseif page_no == page_count and direction == 1 then
             self:notifyNoNextOccurrences()
             return
-        elseif page == 1 and direction == - 1 then
+        elseif page_no == 1 and direction == -1 then
             self:notifyNoPreviousOccurrences()
             return
         end
@@ -434,10 +301,14 @@ function XrayPages:gotoPageHitForTaggedItem(direction)
 end
 
 --- @private
-function XrayPages:invalidItemPageHitHandled(direction, goto_item)
-    --* this prop should be set by ((XrayPages#setValidNextBrowsingPage)):
+function XrayPages:invalidItemPageHitHandled(found, direction, goto_item, other_page)
+    if found then
+        return false
+    end
+    --* first two props should be set by ((XrayPages#modifyCheckPage)):
     if
-        not self.browsing_page_new
+        not other_page
+        or not self.browsing_page_new
         or self.browsing_page_new == DX.pn.page_no
         or direction == 1 and self.browsing_page_new < DX.pn.page_no
         or direction == -1 and self.browsing_page_new > DX.pn.page_no
@@ -452,26 +323,11 @@ function XrayPages:invalidItemPageHitHandled(direction, goto_item)
     return false
 end
 
+--* this method updates the view in Page Navigator, with Xray items marked, via ((XrayPageNavigator#restoreNavigator)); see for further steps ((XRAY_ITEMS_DATA_FLOW)):
 --- @private
-function XrayPages:searchNextOrPreviousAliasHit(item, needle, case_insensitive, direction)
-    local aliases = DX.m:splitByCommaOrSpace(item.aliases)
-    local aliases_count = #aliases
-    local next_page, results
-        for a = 1, aliases_count do
-            results = DX.pn.cached_hits_by_needle[needle] or KOR.document:findAllTextWholeWords(aliases[a], case_insensitive, 0, 3000, false)
-            DX.pn:setCachedHitsByNeedle(needle, results)
-            next_page = direction == 1 and self:getNextPageFrom(results) or self:getPreviousPageFrom(results)
-            if not next_page and self.search_also_in_opposite_direction then
-                next_page = self:getNextPageFrom(results)
-        end
-            self:setValidNextBrowsingPage(next_page, direction)
-        end
-end
-
---- @private
-function XrayPages:handleItemHitFound(page, html)
+function XrayPages:handleItemHitFound(page_no, html)
     DX.pn:setProps(
-        { "page_no", page },
+        { "page_no", page_no },
         { "navigator_page_html", html },
         { "navigator_side_buttons", DX.sp.side_buttons }
     )
@@ -482,11 +338,55 @@ function XrayPages:handleItemHitFound(page, html)
 end
 
 --- @private
+function XrayPages:pageHasItem(page_no, item)
+
+    local text = self.cached_page_texts[page_no] or KOR.document:getPageText(page_no, "cleanup", "force_update")
+    self.cached_page_texts[page_no] = text
+
+    --* these needles (also containing aliases and short names!) and other filter item props were set in ((XrayPageNavigator#setFilter)):
+    local needles = DX.pn.filter_item.needles
+    local is_term = DX.pn.filter_item.is_term
+    local is_lowercase = DX.pn.filter_item.is_lowercase
+    local ncount = DX.pn.filter_item.needles_count
+    local needle
+    for i = 1, ncount do
+        needle = needles[i]
+        --* ncount is 1 when only matching for full name:
+        if ncount == 1 and self:checkTextMatch(text, needle) then
+            return true, item.name
+        elseif ncount > 1 and self:checkTextMatch(text, needle, is_term, is_lowercase) then
+            return true, needle
+        end
+    end
+
+    return false
+end
+
+--- @private
+function XrayPages:checkTextMatch(text, needle, is_term, is_lowercase)
+
+    local match_template = "%f[%a]%1%f[%A]"
+
+    --* len() > 2: for example don't mark "of" in "Consistorial Court of Discipline":
+    if not self.forbidden_needle_parts[needle] and needle:len() > 2 and text:match(T(match_template, needle)) then
+        return true
+    end
+
+    if is_term and is_lowercase then
+        needle = KOR.strings:upper(needle)
+        if not self.forbidden_needle_parts[needle] and needle:len() > 2 and text:match(T(match_template, needle)) then
+            return true
+        end
+    end
+    return false
+end
+
+--- @private
 function XrayPages:setTemporaryFilterItem(goto_item)
-    self.previous_filter_item = KOR.tables:shallowCopy(DX.pn.page_navigator_filter_item)
+    self.previous_filter_item = KOR.tables:shallowCopy(DX.pn.filter_item)
     self.previous_filter_name = DX.pn.active_filter_name
 
-    DX.pn:setProp("page_navigator_filter_item", KOR.tables:shallowCopy(goto_item))
+    DX.pn:setProp("filter_item", KOR.tables:shallowCopy(goto_item))
     DX.pn:setProp("active_filter_name", goto_item.name)
 end
 
@@ -495,7 +395,7 @@ function XrayPages:undoTemporaryFilterItem(goto_item)
     if not goto_item then
         return
     end
-    DX.pn:setProp("page_navigator_filter_item", self.previous_filter_item)
+    DX.pn:setProp("filter_item", self.previous_filter_item)
     DX.pn:setProp("active_filter_name", self.previous_filter_name)
 end
 
@@ -505,7 +405,23 @@ function XrayPages:showNoNextPreviousOccurrenceMessage(direction)
     KOR.messages:notify(T(_("no %1 occurrence of this item found..."), adjective))
 end
 
-function XrayPages:markItemsFoundInPageHtml(html, page_no)
+--- @private
+function XrayPages:isPruneSideButton(item)
+    local unique_label = md5(item.name)
+    if self.button_labels_injected[unique_label] then
+        return true
+    end
+    self.button_labels_injected[unique_label] = true
+    return false
+end
+
+--* e.g. called for generating page html in Page Navigator:
+--* self.cached_html_and_buttons_by_page_no will be updated here:
+function XrayPages:markItemsFoundInPageHtml(page_no, for_tagged_items)
+
+    local html = self:getPageHtmlForPage(page_no, for_tagged_items)
+    --* side_buttons FOR SIDE PANEL TAB NO.1 de facto populated in ((XrayPages#markedItemRegister)) > ((XraySidePanels#addSideButton)):
+
     DX.sp:resetSideButtons()
     self.button_labels_injected = {}
     DX.pn:setProp("page_no", page_no)
@@ -535,7 +451,12 @@ function XrayPages:markItemsFoundInPageHtml(html, page_no)
     self.prev_marked_item = nil
     self:initNonFilteredItemsLayout()
     for i = 1, count do
-        html = self:markItemsInHtml(html, hits[i], count)
+        self:markedItemRegister(hits[i])
+        if not DX.pn.active_filter_name or DX.pn.active_filter_name == hits[i].name then
+            html = self:markItemInHtml(html, hits[i], "strong")
+        else
+            html = self:markItemInHtml(html, hits[i], "em")
+        end
     end
     --* don't use cache if a filtered item was set (with its additional html):
     if not DX.pn.active_filter_name and not DX.pn.navigation_tag then
@@ -548,19 +469,12 @@ function XrayPages:markItemsFoundInPageHtml(html, page_no)
 end
 
 --- @private
-function XrayPages:markedItemRegister(item, html, word)
+function XrayPages:markedItemRegister(item)
 
     --* skip_item_registration might be set by ((XrayQuotes#markItemInHtml)), upon generating quotes html for an item:
-    if KOR.registry:get("skip_item_registration") then
-        local needle = DX.vd:getNeedleString(word, "for_substitution")
-        return self:markNeedleInHtml(html, needle)
-
-    elseif self:isPruneSideButton(item) then
-        return html
+    if self:isPruneSideButton(item) then
+        return
     end
-
-    local needle = DX.vd:getNeedleString(word, "for_substitution")
-    html = self:markNeedleInHtml(html, needle)
 
     local info_text = DX.ip:getItemInfoText(item)
     if info_text and not DX.ip.upon_load_panel_text then
@@ -571,154 +485,16 @@ function XrayPages:markedItemRegister(item, html, word)
     if DX.sp.active_side_tab == 1 then
         DX.sp:addSideButton(item, info_text)
     end
+    end
 
-    return html
-end
-
+--* compare ((XrayQuotes#markItemInHtml)):
 --- @private
-function XrayPages:isPruneSideButton(item)
-    local unique_label = md5(item.name)
-    if self.button_labels_injected[unique_label] then
-        return true
-    end
-    self.button_labels_injected[unique_label] = true
-    return false
-end
+function XrayPages:markItemInHtml(html, item, mark_format)
 
---- @private
-function XrayPages:markNeedleInHtml(html, needle, derived_name)
-
-    local mark_with_italics = KOR.registry:get("mark_items_in_italics")
-    local tag = mark_with_italics and "<em>" or "<strong>"
-    local close_tag = mark_with_italics and "</em>" or "</strong>"
-
-    if not DX.pn.active_filter_name and not derived_name then
-        return html:gsub(needle, tag .. "%1" .. close_tag)
-    elseif not DX.pn.active_filter_name then
-        return html:gsub(needle, tag .. derived_name .. close_tag)
-    end
-
-    if derived_name then
-        local non_active_layout = T(self.non_active_layout, derived_name)
-
-        return self.is_filter_item and html:gsub(needle, tag .. derived_name .. close_tag) or html:gsub(needle, non_active_layout)
-    end
-
-    return self.is_filter_item and html:gsub(needle, tag .. "%1" .. close_tag) or html:gsub(needle, self.non_active_layout)
-end
-
---- @private
-function XrayPages:markItemsInHtml(html, item, items_count)
-    if items_count > 1 then
-        if item.name == self.prev_marked_item then
-            return html
-        end
-        self.prev_marked_item = item.name
-    end
-    self.is_filter_item = DX.pn.active_filter_name == item.name
-
-    local subjects = {
-        "name",
-        "aliases",
-        "short_names",
-    }
-    for l = 1, 3 do
-        if has_text(item[subjects[l]]) then
-            html = self:markItem(item, item[subjects[l]], html, l)
-        end
-    end
-    return html
-end
-
---- @private
-function XrayPages:markItem(item, subject, html, loop_no)
-    local parts, parts_count, uc, was_marked_for_full
-
-    --* subject can be the name or the alias of an Xray item:
-    subject = KOR.strings:trim(subject)
-    html, was_marked_for_full = self:markFullNameHit(html, item, subject, loop_no)
-    html = self:markAliasHit(html, item, subject)
-
-    parts = KOR.strings:split(subject, ",? ")
-    parts_count = #parts
-    for i = 1, parts_count do
-        uc = parts[i]
-        --* len() > 2: for example don't mark "of" in "Consistorial Court of Discipline":
-        if not self.forbidden_needle_parts[uc] and (uc:match("[A-Z]") or uc:len() > 2) then
-            --* only from here to ((XrayPages#markedItemRegister)) side panel buttons are populated:
-            html = self:markPartialHits(html, item, uc, i, was_marked_for_full)
-        end
-    end
-    return html
-end
-
---- @private
-function XrayPages:markAliasHit(html, item)
-
-    local alias_matchers = KOR.strings:getKeywordsForMatchingFrom(item.aliases)
-    local needle
-    count = #alias_matchers
-    for i = 1, count do
-        needle = DX.vd:getNeedleString(alias_matchers[i], "for_substitution")
-        html = self:markNeedleInHtml(html, needle, item.aliases)
-    end
-
-    return html
-end
-
---- @private
-function XrayPages:markFullNameHit(html, item, subject, loop_no)
-    if item.reliability_indicator ~= DX.i:getMatchReliabilityIndicator("full_name") then
-        return html, false
-    end
-
-    local org_html = html
-    local needle = DX.vd:getNeedleString(subject, "for_substitution")
-    html = self:markNeedleInHtml(html, needle)
-    if not needle:match("s$") then
-        local subject_plural
-        needle, subject_plural = DX.vd:getNeedleStringPlural(subject, "for_substitution")
-        html = self:markNeedleInHtml(html, needle, subject_plural)
-    end
-
-    --* only replace swapped name for loop_no 1, because that's the full name:
-    if loop_no > 1 then
-        return html, org_html ~= html
-    end
-
-    local xray_name_swapped = KOR.strings:getNameSwapped(subject)
-    if not xray_name_swapped then
-        return html, org_html ~= html
-    end
-    needle = DX.vd:getNeedleString(xray_name_swapped)
-
-    return self:markNeedleInHtml(html, needle, xray_name_swapped), org_html ~= html
-end
-
---- @private
-function XrayPages:markPartialHits(html, item, uc, i, was_marked_for_full)
-    local is_term, lc, needle
-
-    local is_lowercase_person = DX.m:isPerson(item) and not uc:match("[A-Z]")
-    is_term = item.xray_type > 2
-    if (is_term or is_lowercase_person) and i == 1 then
-        uc = KOR.strings:ucfirst(uc)
-    end
-
-    needle = DX.vd:getNeedleString(uc)
-    local uc_needle_plural = DX.vd:getNeedleStringPlural(uc)
-    if was_marked_for_full or (html:match(needle) or html:match(uc_needle_plural)) then
-        --* return html and add item to buttons:
-        return self:markedItemRegister(item, html, uc)
-
-        --* for terms we also try to find lowercase variants of their names:
-    elseif is_term or is_lowercase_person then
-        lc = KOR.strings:lower(uc)
-        needle = DX.vd:getNeedleString(lc)
-        if html:match(needle) then
-            --* return html and add item to buttons:
-            return self:markedItemRegister(item, html, lc)
-        end
+    local needles = item.needles
+    local ni = #needles
+    for n = 1, ni do
+        html = html:gsub(needles[n], "<" .. mark_format .. ">%1</" .. mark_format .. ">")
     end
 
     return html

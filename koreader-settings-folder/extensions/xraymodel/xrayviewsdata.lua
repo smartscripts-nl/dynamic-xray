@@ -246,7 +246,7 @@ end
 function XrayViewsData:addItemToPersonsOrTerms(item)
     local item_copy = KOR.tables:shallowCopy(item)
     --* item_table tables and self.items, self.persons and self.terms will be sorted later on in ((XrayViewsData#updateAndSortAllItemTables)):
-    if DX.m:isPerson(item) then
+    if item.is_person then
         table_insert(self.item_table[2], item_copy)
         item_copy.index = #self.persons + 1
         table_insert(self.persons, item_copy)
@@ -493,10 +493,11 @@ function XrayViewsData:getAllTextHits(item)
     return total_count, chapter_hits_list, item.chapter_hits_data
 end
 
---* these data will be used for generating a chapter-occurrences-histogram in the PN info panel; current method called from ((XrayPageNavigator#setCurrentItem)):
+--* these data will be used for generating a chapter-occurrences-histogram in the PN info panel and Item Viewer; current method called from ((XrayPageNavigator#setCurrentItem)):
 function XrayViewsData:getChapterHitsData(item)
 
     --* build unified list of search terms:
+    --! don't use ((XrayDataLoader#addMatchingProps)) and item.needles here!:
     local needles = self:getXrayItemNameVariants(item)
 
     local xp, end_xp, start_page, chapter_hits
@@ -571,7 +572,6 @@ function XrayViewsData:_doStrongMatchCheck(needle_item, matcher, args, t, for_re
     end
 
     tapped_ok = not tapped_word
-        or tapped_word == existing_name
         or tapped_word == existing_name
         or (is_lower_needle and tapped_word == uc)
 
@@ -648,6 +648,9 @@ function XrayViewsData:upgradeNeedleItem(needle_item, args)
     if not args.is_exists_check and (not args.include_name_match or has_no_text(needle_item.name)) then
         return needle_item, false, false
     end
+
+    --TODO use item needles to detect matches!
+
     local for_relations = args.for_relations
     local matcher = needle_item.name:gsub("%-", "%%-")
     local partial_matches = {}
@@ -673,6 +676,7 @@ function XrayViewsData:upgradeNeedleItem(needle_item, args)
         needle_matches_fullname = false
         item_was_upgraded = true
         if for_relations then
+            --? return all related items?:
             return partial_matches, item_was_upgraded, needle_matches_fullname
         end
         return partial_matches[1], true, needle_matches_fullname
@@ -684,7 +688,7 @@ end
 --- @private
 function XrayViewsData:addMenuItemToItemTables(menu_item)
     table_insert(self.item_table_for_filter[1], menu_item)
-    if DX.m:isPerson(menu_item) then
+    if menu_item.is_person then
         table_insert(self.item_table_for_filter[2], menu_item)
     else
         table_insert(self.item_table_for_filter[3], menu_item)
@@ -809,30 +813,15 @@ function XrayViewsData:filterAndAddItemToItemTables(items, n, search_needles, li
 
     --* now: build menu row if this subject list is active and (no filter or matched)
     if insert_item then
-        local name = self:addNonBreakableIndicator(item.name, item)
-        list_item = {
-            text = self:generateListItemText(item, reliability_indicator),
-            id = item.id,
-            name = name,
-            description = item.description,
-            xray_type = item.xray_type,
-            short_names = item.short_names,
-            linkwords = item.linkwords,
-            aliases = item.aliases,
-            tags = item.tags,
-            book_hits = item.book_hits,
-            series_hits = item.series_hits,
-            chapter_hits = item.chapter_hits,
-            series = parent.current_series,
-            mentioned_in = item.mentioned_in,
-            non_breakable = item.non_breakable,
-            index = #self.item_table_for_filter[1] + 1,
-            callback = function()
-                DX.d:closeListDialog()
-                DX.d:setProp("needle_name_for_list_page", item.name)
-                DX.d:viewItem(item, "called_from_list")
-            end
-        }
+        list_item = KOR.tables:shallowCopy(item)
+        list_item.text = self:generateListItemText(item, reliability_indicator)
+        list_item.name = self:addNonBreakableIndicator(item.name, item)
+        list_item.index = #self.item_table_for_filter[1] + 1
+        list_item.callback = function()
+            DX.d:closeListDialog()
+            DX.d:setProp("needle_name_for_list_page", item.name)
+            DX.d:viewItem(item, "called_from_list")
+        end
 
         self:addMenuItemToItemTables(list_item)
     end
@@ -1201,12 +1190,9 @@ function XrayViewsData:generateXrayExportOrLinkedItemInfo(items_count, item, ui_
     local tags, tags_iconless = self:generateTagsInfo(item, iindent, mode)
     local hits, hits_iconless = self:generateHitsInfo(item, iindent, mode)
 
-    -- #((use xray match reliability indicators))
-    local xray_match_reliability_icon = DX.i:getMatchReliabilityIndicator("full_name")
-
     --! don't use has_text here, because for full name hits we don't add a text (i.e. the full name) after the reliability weight icon)! Under Ubuntu this is not a problem, but using has_text under Android causes explanation not to be shown:
     if has_content(ui_explanation) then
-        xray_match_reliability_icon = ui_explanation:match(self.separator .. "([^ ]+)")
+        --xray_match_reliability_icon = ui_explanation:match(self.separator .. "([^ ]+)")
 
     --* when we want to populate the linked items side panel:
     elseif not mode then
@@ -1218,7 +1204,7 @@ function XrayViewsData:generateXrayExportOrLinkedItemInfo(items_count, item, ui_
             table_insert(first_line, DX.i:getMatchReliabilityIndicator("linked_item") .. " ")
         end
     end
-    local xray_type_icon = DX.vd:getItemTypeIcon(item)
+    local xray_type_icon = self:getItemTypeIcon(item)
     first_line, first_line_iconless = self:generateFirstLines(first_line, first_line_iconless, item, xray_type_icon, ui_explanation, meta_indent, mode)
 
     local info = table_concat({
@@ -1248,7 +1234,7 @@ function XrayViewsData:generateXrayExportOrLinkedItemInfo(items_count, item, ui_
     end
 
     --* for Xray Page Information popup:
-    return info, xray_type_icon, xray_match_reliability_icon
+    return info, xray_type_icon
 end
 
 function XrayViewsData:addDescriptionDisplayIndentation(description)
@@ -1566,7 +1552,7 @@ function XrayViewsData:populateTypeTables()
     count = #self.items
     for i = 1, count do
         xray_item = self.items[i]
-        if DX.m:isPerson(xray_item) then
+        if xray_item.is_person then
             table_insert(self.persons, xray_item)
         else
             table_insert(self.terms, xray_item)
@@ -1602,6 +1588,8 @@ function XrayViewsData:setItems(items, from_result_set)
         return
     end
 
+    --* when we are here, we were called from ((XrayDataLoader#_loadAllData))...
+
     self.item_table[1] = items
     self.item_table[1] = parent:placeImportantItemsAtTop(self.item_table[1], -1)
     self.items = KOR.tables:shallowCopy(self.item_table[1])
@@ -1612,7 +1600,8 @@ function XrayViewsData:setItems(items, from_result_set)
     count = #self.item_table[1]
     for i = 1, count do
         item = self.item_table[1][i]
-        if DX.m:isPerson(item) then
+        if item.is_person then
+            self:addFamilyNameNeedle(item)
             table_insert(self.item_table[2], item)
         else
             table_insert(self.item_table[3], item)
@@ -1626,6 +1615,39 @@ function XrayViewsData:setItems(items, from_result_set)
     self.terms = KOR.tables:shallowCopy(self.item_table[3])
 end
 
+--* compare ((XrayDataLoader#addMatchingProps))
+--- @private
+function XrayViewsData:addFamilyNameNeedle(item)
+    --* this prop was set, if applicable, in ((XrayDataLoader#addMatchingProps)):
+    if not item.family_name then
+        return
+    end
+    if parent.last_name_counts[item.family_name] ~= 1 then
+        return
+    end
+
+    local needle = self:getNeedleString(item.family_name)
+    local needle_upper = self:getNeedleString(KOR.strings:upper(item.family_name))
+
+    --* pos 7 and 8: after first name and upper first name - see ((XrayModel#getNameParts)) and ((XrayModel#getNamePartsUI)):
+    local start_pos = item.needles_count >= 6 and 7 or item.needles_count + 1
+
+    table_insert(item.needles, start_pos, needle)
+    table_insert(item.needles, start_pos + 1, needle_upper)
+    item.needles_count = #item.needles
+
+    table_insert(item.needles_for_ui, start_pos, {
+        needle = needle,
+        reliability_indicator = DX.i.match_reliability_indicators.last_name,
+        explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.last_name
+    })
+    table_insert(item.needles_for_ui, start_pos + 1, {
+        needle = needle_upper,
+        reliability_indicator = DX.i.match_reliability_indicators.last_name,
+        explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.last_name
+    })
+end
+
 --* compare getting keywords via ((XrayModel#splitByCommaOrSpace)):
 --- @private
 function XrayViewsData:getKeywordsCount(text)
@@ -1636,6 +1658,10 @@ function XrayViewsData:getKeywordsCount(text)
 end
 
 function XrayViewsData:getNeedleString(word, for_substitution)
+    --* guard against adding word boundaries multiple times:
+    if word:match("%[") then
+        return word
+    end
     local matcher_esc = word:gsub("%-", "%%-")
     if for_substitution then
         return self.word_start .. "(" .. matcher_esc .. self.word_end .. ")"
@@ -1656,7 +1682,7 @@ function XrayViewsData:getNeedleStringPlural(word, for_substitution)
         word = word:gsub("s$", "")
     end
     if for_substitution then
-        return self.word_start .. "(" .. plural_matcher .. self.word_end .. ")", word
+        return self.word_start .. "(" .. plural_matcher .. ")" .. self.word_end, word
     end
     return self.word_start .. plural_matcher .. self.word_end
 end
@@ -1689,40 +1715,36 @@ end
 
 --* compare ((getNameVariants)), used to find hits when tapping on words in the ebook:
 function XrayViewsData:getXrayItemNameVariants(item)
+    local full_name = KOR.strings:getNameSwapped(item.name)
     local needles = {
-        item.name,
+        self:getNeedleString(full_name),
         --* check for cases when a Xray item name is mentioned in uppercase (e.g. in the intro text of a chapter):
-        KOR.strings:upper(item.name),
+        self:getNeedleString(KOR.strings:upper(full_name)),
     }
-    local is_term = parent:isTerm(item)
-    if is_term and not item.name:match("[A-Z]") then
-        table_insert(needles, KOR.strings:ucfirst(item.name))
-        table_insert(needles, KOR.strings:upper(item.name))
+    if item.is_term and not item.name:match("[A-Z]") then
+        table_insert(needles, self:getNeedleString(KOR.strings:ucfirst(full_name)))
     end
 
     local sources = { "name", "aliases", "short_names" }
     for s = 1, 3 do
-        self:populateNeedles(needles, item, sources[s], is_term)
+        self:populateNeedles(needles, item, sources[s])
     end
     return needles
 end
 
 --- @private
-function XrayViewsData:populateNeedles(needles, item, prop, is_term)
+function XrayViewsData:populateNeedles(needles, item, prop)
     if not has_text(item[prop]) then
         return
     end
 
-    --* if a last name is not unique (shared by multiple family members), don't use it as a criterium; e.g. to prevent false positives for chapter matches:
+    --* we are not interested in lower case parts of person names, so in getNameParts lowercase strings were already filtered out:
     local parts = prop == "name" and parent:getNameParts(item) or parent:splitByCommaOrSpace(item[prop])
     count = #parts
     for i = 1, count do
-        --* we are not interested in lower case parts of person names:
-        if is_term or parts[i]:match("[A-Z]") then
-            table_insert(needles, parts[i])
-            --* for all uppercase variants, e.g. in intro texts at the start of chapters:
-            table_insert(needles, KOR.strings:upper(parts[i]))
-        end
+        table_insert(needles, parts[i])
+        --* for all uppercase variants, e.g. in intro texts at the start of chapters:
+        table_insert(needles, self:getNeedleString(KOR.strings:upper(parts[i])))
     end
 end
 

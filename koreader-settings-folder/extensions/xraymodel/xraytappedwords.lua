@@ -311,7 +311,6 @@ function XrayTappedWords:collectionPopulateAndSort(items, tapped_word)
         copy.is_bold1 = xray_item.name:find(tapped_word, 1, true) and true or false
         copy.is_bold2 = has_text(xray_item.aliases) and xray_item.aliases:find(tapped_word, 1, true) and true or false
 
-
         --* is_bold prop MUST be set to either false or true, to be used in ((ButtonTable#init)):
         copy.is_bold = copy.is_bold1 or copy.is_bold2
         table_insert(copies, copy)
@@ -454,24 +453,26 @@ function XrayTappedWords:matchItemToTappedWord(tapped_word_collection, item, nee
         return
     end
 
+    local ri = DX.i.match_reliability_indicators
+
     --* include extact fullname match, if allowed:
     if include_name_match and (not tapped_word or tapped_word == item.name) and (item.tapped_index == needle_item.tapped_index or item.name == needle_item.name or item.name:match("^" .. needle_item.name .. "s$")) then
-        item.reliability_indicator = DX.i:getMatchReliabilityIndicator("full_name")
+        item.reliability_indicator = ri.full_name
         table_insert(tapped_word_collection, item)
         return
 
     elseif include_name_match and tapped_word and item.name:match("^" .. tapped_word_matcher) then
-        item.reliability_indicator = DX.i:getMatchReliabilityIndicator("first_name")
+        item.reliability_indicator = ri.first_name
         table_insert(tapped_word_collection, item)
         return
 
     elseif include_name_match and tapped_word and item.name:match(tapped_word_matcher .. "$") then
-        item.reliability_indicator = DX.i:getMatchReliabilityIndicator("last_name")
+        item.reliability_indicator = ri.last_name
         table_insert(tapped_word_collection, item)
         return
 
     elseif include_name_match and tapped_word and item.name:match(tapped_word_matcher) then
-        item.reliability_indicator = DX.i:getMatchReliabilityIndicator("partial_match")
+        item.reliability_indicator = ri.partial_match
         table_insert(tapped_word_collection, item)
         return
     end
@@ -482,7 +483,7 @@ function XrayTappedWords:matchItemToTappedWord(tapped_word_collection, item, nee
     for i = 1, count do
         alias = aliases[i]:gsub("%-", "%%-")
         if parent:hasExactMatch(item.aliases, alias) then
-            item.reliability_indicator = DX.i:getMatchReliabilityIndicator("alias")
+            item.reliability_indicator = ri.alias
             table_insert(tapped_word_collection, item)
             return
         end
@@ -514,7 +515,7 @@ function XrayTappedWords:getTypeAndReliabilityIcons(item)
     elseif alias_matches_with_tapped_word then
         status_indicators = ri.alias .. status_indicators
     else
-        status_indicators = DX.i:getMatchReliabilityIndicator("linked_item") .. status_indicators
+        status_indicators = ri.linked_item .. status_indicators
         --* show linked items with lighter status indicator icons:
         status_indicator_color = KOR.colors.xray_item_status_indicators_color
     end
@@ -782,8 +783,10 @@ end
 
 --* this table was populated with icons in ((XrayButtons#forItemsCollectionPopup)) > ((store tapped word popup collection info)), and optionally will be used to generate a list of these items in ((XrayTappedWords#getCurrentListTabItems))
 function XrayTappedWords:setPopupResult(sorted_items, popup_icons, args)
-    self.is_non_tapped_word_collection = args.is_non_tapped_word_collection
-    self.has_only_external_items = args.has_only_external_items
+    if args then
+        self.is_non_tapped_word_collection = args.is_non_tapped_word_collection
+        self.has_only_external_items = args.has_only_external_items
+    end
     self.popup_items = sorted_items
     count = #sorted_items
     self.popup_persons = {}
@@ -792,7 +795,7 @@ function XrayTappedWords:setPopupResult(sorted_items, popup_icons, args)
     for i = 1, count do
         item = self.popup_items[i]
         item.icons = popup_icons and popup_icons[i]
-        if DX.m:isPerson(item) then
+        if item.is_person then
             table_insert(self.popup_persons, item)
         else
             table_insert(self.popup_terms, item)

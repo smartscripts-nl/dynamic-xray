@@ -148,8 +148,26 @@ function Strings:sortKeywords(text)
     return text
 end
 
-function Strings:split(str, pat, capture_empty_entity)
-    return util.splitToArray(str, pat, capture_empty_entity)
+function Strings:split(str, pat, capture_empty_entity, options)
+    local parts = util.splitToArray(str, pat, capture_empty_entity)
+    if not options then
+        return parts
+    end
+
+    local pruned = {}
+    count = #parts
+    for i = 1, count do
+        if
+        (not options.min_length or (parts[i]:len() >= options.min_length))
+                and
+                (not options.skip_lowercase or parts[i]:match("[A-Z]"))
+                and
+                (not options.forbidden_needle_parts or parts[i]:match("[A-Z]"))
+        then
+            table_insert(pruned, parts[i])
+        end
+    end
+    return pruned
 end
 
 function Strings:substrCount(subject, needle)
@@ -478,13 +496,14 @@ function Strings:hasWholeWordMatch(haystack, haystack_lower, needle, check_no_ad
 end
 
 function Strings:getNameSwapped(name)
-    if not name:match(", ") then
-        return
+    if not name:match(",") then
+        return name
     end
     local parts = self:split(name, ", +")
     if #parts == 2 then
         return parts[2] .. " " .. parts[1]
     end
+    return name
 end
 
 return Strings

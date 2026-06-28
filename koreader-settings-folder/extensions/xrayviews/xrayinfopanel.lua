@@ -222,7 +222,7 @@ end
 --* this info will be consumed for the info panel in ((NavigatorBox#generateScrollWidget)):
 --* compare for generation of info_text for linked items: ((XrayViewsData#generateXrayExportOrLinkedItemInfo)):
 function XrayInfoPanel:getItemInfoText(item, for_info_panel)
-    --* the reliability_indicators were added and cached via ((XrayUI#getXrayItemsFoundInText)) > ((XrayUI#matchNameInPageOrParagraph)) and ((XrayUI#matchAliasesToParagraph)) > ((XrayPageNavigator#cacheReliabilityIndicators)), or via this statement:
+    --* the reliability_indicators were added and cached via ((XrayUI#getXrayItemsFoundInText)) > ((XrayPageNavigator#cacheReliabilityIndicators)), or via this statement:
     DX.pn:cacheReliabilityIndicator(item, DX.pn.page_no)
 
     local reliability_indicator = item.reliability_indicator or DX.pn.cached_reliability_indicators[item.name] and DX.pn.cached_reliability_indicators[item.name][DX.pn.page_no]

@@ -171,14 +171,14 @@ function CreDocument:findAllTextWholeWords(pattern, case_insensitive, nb_context
     return self._document:findAllText(pattern, case_insensitive, regex, max_hits, true, nb_context_words)
 end
 
-function CreDocument:getPageText(page_no)
+function CreDocument:getPageText(page_no, cleanup, force_update)
     local xp = self:getPageXPointer(page_no)
     if has_no_text(xp) then
         return ""
     end
 
     --* self.page_text can be populated farther below:
-    if self.page_text then
+    if not force_update and self.page_text then
         return self.page_text
     end
 
@@ -187,7 +187,8 @@ function CreDocument:getPageText(page_no)
 
     --* if we have the xp of a next page, we can get the page text much quicker:
     if has_text(next_page_xp) then
-        self.page_text = self:getPageTextFromXPs(xp, next_page_xp)
+        local text = self:getPageTextFromXPs(xp, next_page_xp)
+        self.page_text = cleanup and self:cleanupText(text) or text
         return self.page_text
     end
 
@@ -198,6 +199,23 @@ function CreDocument:getPageText(page_no)
     self.page_text = table_concat(texts, "\n" .. self.text_indent)
 
     return self.page_text
+end
+
+--- @private
+function CreDocument:cleanupText(text, keep_hyphens)
+    text = KOR.strings:removeNotes(text)
+    if not keep_hyphens then
+        text = text:gsub("%-", "")
+    end
+    return text
+       :gsub("%s+", " ")
+       :gsub("“", "")
+       :gsub("”", "")
+       :gsub("‘", "")
+       :gsub("’s", "")
+       :gsub("’", "")
+       :gsub("<[^>]+>", "")
+       :gsub("[%%.,;:?!]", "")
 end
 
 function CreDocument:getPageHtml(page_no, mark_text)

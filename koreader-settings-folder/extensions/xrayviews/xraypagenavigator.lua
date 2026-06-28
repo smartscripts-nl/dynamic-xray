@@ -29,11 +29,11 @@ local parent
 local XrayPageNavigator = WidgetContainer:new{
     active_filter_name = nil,
     cached_histogram_data = {},
-    cached_hits_by_needle = {},
     cached_html_and_buttons_by_page_no = {},
     cached_items_info = {},
     cached_reliability_indicators = {},
     current_item = nil,
+    filter_item = nil,
     --* this prop will be set from ((NavigatorBox#generateInfoButtons)):
     info_panel_width = nil,
     initial_browsing_page = nil,
@@ -43,7 +43,7 @@ local XrayPageNavigator = WidgetContainer:new{
     navigation_tag = nil,
     navigator_page_html = nil,
     navigator_side_buttons = nil,
-    page_navigator_filter_item = nil,
+    filter_item = nil,
     --* we need this item for computing linked item buttons in side panel no 2:
     parent_item = nil,
     popup_buttons = nil,
@@ -76,6 +76,7 @@ function XrayPageNavigator:addGlossary(glossary_boundaries)
         return
     end
     local example = glossary_text:sub(1, 250) .. KOR.strings.ellipsis
+
     self.save_glossary_dialog = KOR.dialogs:niceAlert((_"Save glossary"), _("You can save the glossary as HTML, or as text.\n\n* Advantage HTML: better readable.\n* Advantage text: searchable.") .. "\n\n" .. _("GLOSSARY TEXT:") .. "\n" .. example, {
         buttons = DX.b:forSaveGlossary(self, glossary, glossary_text, css_files)
     })
@@ -238,7 +239,7 @@ function XrayPageNavigator:computeHistogramData(item)
 
     --* for best speed do this only for current / actual item in the info panel, and not for all items in the side panel:
     if item and (overrule or not item.chapter_hits_data) then
-        item.chapter_hits_data = DX.vd:getChapterHitsData(item)
+        item.chapter_hits_data, max_value = DX.vd:getChapterHitsData(item)
         DX.ds.storeChapterHitsData(item)
     end
 
@@ -289,7 +290,7 @@ end
 
 function XrayPageNavigator:resetFilter()
     self:setActiveScrollPage()
-    self.page_navigator_filter_item = nil
+    self.filter_item = nil
     self.active_filter_name = nil
     DX.sp:resetActiveSideButtons("XrayPageNavigator:resetFilter")
     self:reloadPageNavigator()
@@ -304,8 +305,12 @@ function XrayPageNavigator:setFilter(item)
     end
     self:setActiveScrollPage()
     self.active_filter_name = item.name
-    self.page_navigator_filter_item = item
+
+    --! set the filter item:
+    self.filter_item = item
+
     DX.sp:resetActiveSideButtons("XrayPageNavigator:setFilter", "dont_reset_active_side_buttons")
+    DX.p:resetPageForFilteredBrowsing()
 
     self:reloadPageNavigator()
     KOR.messages:notify(T(_("filter set to %1"), item.name))
@@ -461,7 +466,7 @@ function XrayPageNavigator:loadDataForPage()
     end
 
     --* when we initiated browsing between tagged items, via ((XrayPages#getPageHtmlForPage)) and ((XrayPages#getPageHtmlForPage)) PageNavigator.navigator_page_html can be populated with html containing the tagged items:
-    html = self.navigation_tag and self.navigator_page_html or DX.p:getPageHtmlAndMarkItems(self.page_no)
+    html = self.navigation_tag and self.navigator_page_html or DX.p:markItemsFoundInPageHtml(self.page_no)
     self.navigator_page_html = nil
 
     --? eilas, when an item filter or a tag filter has been set, linked items for side panel no 2 have to be recomputed for some reason:
@@ -475,7 +480,6 @@ function XrayPageNavigator:resetCache()
     self.cached_histogram_data = {}
     self.cached_items_info = {}
     self.cached_html_and_buttons_by_page_no = {}
-    self.cached_hits_by_needle = {}
     self.cached_reliability_indicators = {}
     self.popup_menu_coords = nil
 end
@@ -486,10 +490,6 @@ end
 
 function XrayPageNavigator:setCachedInfoFor(item, info)
     self.cached_items_info[item.name] = info
-end
-
-function XrayPageNavigator:setCachedHitsByNeedle(needle, hits)
-    self.cached_hits_by_needle[needle] = hits
 end
 
 function XrayPageNavigator:closePageNavigator()

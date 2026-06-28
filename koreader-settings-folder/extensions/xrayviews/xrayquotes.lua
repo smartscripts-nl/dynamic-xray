@@ -7,7 +7,6 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 
 local DX = DX
-local has_text = has_text
 local math = math
 local table_concat = table.concat
 local table_insert = table.insert
@@ -105,11 +104,9 @@ function XrayQuotes:generateQuotesList(item)
     end
 
     html = table_concat(html, "<p> </p>")
-    text = table_concat(text, "\n \n")
-    KOR.registry:set("mark_items_in_italics", true)
-    html = self:markItemInHtml(html, item)
-    KOR.registry:unset("mark_items_in_italics")
-    return html, text
+    return
+        self:markItemInHtml(html, item),
+        table_concat(text, "\n \n")
 end
 
 function XrayQuotes:saveQuote(item)
@@ -175,22 +172,16 @@ function XrayQuotes:getQuotesFromItemProp(xray_item)
     return KOR.strings:split(xray_item.pos_chapter_quotes, "@@")
 end
 
+--* compare ((XrayPages#markItemInHtml)):
 --- @private
 function XrayQuotes:markItemInHtml(html, item)
 
-    --* to disable item registration in ((XrayPages#markedItemRegister)):
-    KOR.registry:set("skip_item_registration", true)
-    local subjects = {
-        "name",
-        "aliases",
-        "short_names",
-    }
-    for l = 1, 3 do
-        if has_text(item[subjects[l]]) then
-            html = DX.p:markItem(item, item[subjects[l]], html, l)
-        end
+    local needles = item.needles
+    local ni = #needles
+    for n = 1, ni do
+        html = html:gsub(needles[n], "<em>%1</em>")
     end
-    KOR.registry:unset("skip_item_registration")
+
     return html
 end
 

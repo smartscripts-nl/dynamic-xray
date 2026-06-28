@@ -102,6 +102,7 @@ end
 
 function XrayOccurrencesHistogram:getChapterHtml(n)
     local page = KOR.toc:getPageFromItemIndex(n) or 1
+    --! don't use ((XrayDataLoader#addMatchingProps)) and item.needles here!:
     local needles = DX.vd:getXrayItemNameVariants(self.occurrences_subject)
 
     return KOR.pagetexts:getChapterText("as_html", needles, page)

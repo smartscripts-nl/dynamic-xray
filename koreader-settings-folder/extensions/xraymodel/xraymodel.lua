@@ -43,11 +43,16 @@ local XrayModel = WidgetContainer:new{
     current_series_index = nil,
     current_title = nil,
     ebooks = {},
+    full_name_raw = nil,
+    full_name_needle = nil,
+    full_name_needle_upper = nil,
+    full_name_plural = nil,
+    full_name_plural_upper = nil,
+    --* this value will be set by ((XrayDataLoader#_loadAllData)) and optionally ((XrayDataLoader#_loadDataForSeries)):
+    has_multiple_series_items = false,
     --! these 3 collections are reference collections that never will be fully reset after item updates or additions; e.g. used for Page Navigator side buttons:
     --* updates to these collections will be done through ((XrayModel#updateStaticReferenceCollections)):
     items_by_id = {},
-    --* this value will be set by ((XrayDataLoader#_loadAllData)) and optionally ((XrayDataLoader#_loadDataForSeries)):
-    has_multiple_series_items = false,
     items_prepared_for_basename = nil,
     last_name_counts = {},
     min_match_word_length = 4,
@@ -106,20 +111,18 @@ function XrayModel:initDataHandlers()
 end
 
 function XrayModel:isPrivateDXversion(silent)
-    if IS_AUTHORS_DX_INSTALLATION then
-        if not silent then
-            KOR.messages:notify("functionality not available in authors' version of dx...")
-        end
-        return true
+    if not IS_AUTHORS_DX_INSTALLATION then
+        return false
     end
-    return false
+
+    if not silent then
+    KOR.messages:notify("functionality not available in authors' version of dx…")
+    end
+    return true
 end
 
 function XrayModel:isPublicDXversion()
-    if IS_AUTHORS_DX_INSTALLATION then
-        return false
-    end
-    return true
+    return not IS_AUTHORS_DX_INSTALLATION
 end
 
 --* lower case needles must be at least 4 characters long, but for names with upper case characters in them no such condition is required:
@@ -166,14 +169,14 @@ function XrayModel:placeImportantItemsAtTop(items, sorting_direction)
 end
 
 --! this method must be called upon initialisation of data or AFTER a parent has initiated storage of the data into the database and in XrayViewsData:
-function XrayModel:updateLastNameCounts()
+function XrayModel:updateLastNameCounts(items)
 
     self.last_name_counts = {}
     --* take UNFILTERED items as subject:
-    local items = DX.vd.item_table[1]
+    items = items or views_data.item_table[1]
     count = #items
     for i = 1, count do
-        if self:isPerson(items[i]) then
+        if items[i].family_name then
             --* update the table of last_name_counts:
             self:addLastName(items[i].name)
         end
@@ -202,31 +205,119 @@ function XrayModel:getLastName(full_name)
     return full_name:match(",") and full_name:match("^[^,]+") or full_name:match("[A-Z][^ ]+$")
 end
 
+--- @private
+function XrayModel:getUpperNeedle(needle)
+    return views_data:getNeedleString(KOR.strings:upper(needle))
+end
+
+--- @private
+function XrayModel:setFullNameVariants(item)
+    self.full_name_raw = KOR.strings:getNameSwapped(item.name)
+    self.full_name_needle = views_data:getNeedleString(self.full_name_raw)
+    self.full_name_needle_upper = self:getUpperNeedle(self.full_name_raw)
+    self.full_name_plural = views_data:getNeedleString(self.full_name_raw .. "s")
+    self.full_name_plural_upper = self:getUpperNeedle(self.full_name_raw .. "S")
+end
+
+--* needles returned are prepared for matching in current method:
+--* however, for ((XrayViewsData#getChapterHitsData)), e.g. in second tab for defining a new Xray item, we don't want to use patterns, so we find all instances:
 function XrayModel:getNameParts(item)
 
+    self:setFullNameVariants(item)
+
     --* if an item has no spaces, return name as the only part:
-    if not item.name:match(" ") then
-        return { item.name }
+    if not self.full_name_raw:match(" ") or item.non_breakable == 1 or item.is_term then
+        return {
+            self.full_name_needle,
+            self.full_name_needle_upper,
+            self.full_name_plural,
+            self.full_name_plural_upper,
+        }
     end
 
-    --* if an item is the only family member, return all its parts:
-    local full_name = item.name
-    local parts = self:splitByCommaOrSpace(full_name)
-    local is_only_family_member = self:isOnlyFamilyMember(item)
-    if is_only_family_member then
-        return parts
-    end
+    local name_parts = {
+        self.full_name_needle,
+        self.full_name_needle_upper,
+    }
 
-    --* if an item is NOT the only family member, return only the non-family-name parts:
-    local last_name = self:getLastName(full_name)
-    local name_parts = {}
-    local pcount = #parts
+    local parts = self:splitByCommaOrSpace(self.full_name_raw, false, "skip_lowercase", 3)
+
+    --* #parts - 1: skip check for last name, because we don't know yet whether the item/person is the only family member; that needle, if applicable, will be added in ((XrayViewsData#addFamilyNameNeedle)):
+    --? is this the correct procedure in all contexts?:
+    local pcount = #parts - 1
     for i = 1, pcount do
-        if parts[i] ~= last_name then
-            table_insert(name_parts, parts[i])
+        table_insert(name_parts, views_data:getNeedleString(parts[i]))
+        table_insert(name_parts, views_data:getNeedleString(KOR.strings:upper(parts[i])))
+    end
+
+    return name_parts
+end
+
+--* needles returned are prepared for matching in current method:
+--* however, for ((XrayViewsData#getChapterHitsData)), e.g. in second tab for defining a new Xray item, we don't want to use patterns, so we find all instances:
+function XrayModel:getNamePartsUI(item)
+
+    --* these needles are to be used in ...; this table needs to be numerical, with 3 items per item: needle, reliability_indicator, explanation; and they must be in sequence full names, first names, last names, aliases and short names, partial hits:
+    local needles_for_ui = {}
+
+    --* self.full_name_raw etc. were already set via ((XrayModel#getNameParts)) > ((XrayModel#setFullNameVariants)):
+    needles_for_ui = {
+        {
+            needle = self.full_name_needle,
+            reliability_indicator = DX.i.match_reliability_indicators.full_name,
+            explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.full_name
+        },
+        {
+            needle = self.full_name_needle_upper,
+            reliability_indicator = DX.i.match_reliability_indicators.full_name,
+            explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.full_name
+        },
+        {
+            needle = self.full_name_plural,
+            reliability_indicator = DX.i.match_reliability_indicators.full_name,
+            explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.full_name
+        },
+        {
+            needle = self.full_name_plural_upper,
+            reliability_indicator = DX.i.match_reliability_indicators.full_name,
+            explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.full_name
+        },
+    }
+
+    --* if an item has no spaces, return name as the only part:
+    if not item.name:match(" ") or item.non_breakable == 1 or item.is_term then
+        return needles_for_ui
+    end
+
+    --* from here on we are only dealing with persons...
+    --! whether an item is the only family member cannot here be determined yet, but we'll handle that in ((XrayViewsData#addFamilyNameNeedle))
+    --local is_only_family_member = self:isOnlyFamilyMember(item)
+    local parts = self:splitByCommaOrSpace(self.full_name_raw, false, "skip_lowercase", 3)
+    local pcount = #parts
+    --* pcount - 1: skip check for last name, because we don't know yet whether the item/person is the only family member; that needle, if applicable, will be added in ((XrayViewsData#addFamilyNameNeedle)):
+    for i = 1, pcount - 1 do
+        --* for first name also add upper case variant:
+        if i == 1 then
+            table_insert(needles_for_ui, {
+                needle = views_data:getNeedleString(parts[i]),
+                reliability_indicator = DX.i.match_reliability_indicators.first_name,
+                explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.first_name
+            })
+            table_insert(needles_for_ui, {
+                needle = views_data:getNeedleString(KOR.strings:upper(parts[i])),
+                reliability_indicator = DX.i.match_reliability_indicators.first_name,
+                explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.first_name
+            })
+        else
+            table_insert(needles_for_ui, {
+                needle = views_data:getNeedleString(parts[i]),
+                reliability_indicator = DX.i.match_reliability_indicators.partial_match,
+                explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.partial_match
+            })
         end
     end
-    return name_parts
+
+    return needles_for_ui
 end
 
 function XrayModel:addTags(tags, id)
@@ -238,7 +329,7 @@ function XrayModel:updateAllTags()
     --* if an edited item has no tags, then still we must loop through all items, because a tag might have been removed from the updated item:
     self.tags_associative = {}
     --* take UNFILTERED items as subject:
-    local items = DX.vd.item_table[1]
+    local items = views_data.item_table[1]
     count = #items
     for i = 1, count do
         --* update the associative table with tags:
@@ -258,7 +349,7 @@ function XrayModel:updateTags(item, mode)
     --* if an edited item has no tags, then still we must loop through all items, because a tag might have been removed from the updated item:
     self.tags_associative = {}
     --* take UNFILTERED items as subject:
-    local items = DX.vd.item_table[1]
+    local items = views_data.item_table[1]
     count = #items
     for i = 1, count do
         --* update the associative table with tags:
@@ -458,26 +549,19 @@ function XrayModel:removeMatchReliabilityIndicators(subject)
 end
 
 --* compare usage of ((Strings#sortKeywords)) in ((XrayFormsData#convertFieldValuesToItemProps)):
-function XrayModel:splitByCommaOrSpace(subject, add_singulars, skip_lowercase)
+function XrayModel:splitByCommaOrSpace(subject, add_singulars, skip_lowercase, min_length)
     if not subject then
         return
     end
     local separated_by_commas = subject:match(",")
-    local keywords
     local plural_keywords = {}
     --* in case of comma separated linkwords we want exact, non partly hits of these linkwords:
-    keywords = separated_by_commas and KOR.strings:split(subject, ", *") or KOR.strings:split(subject, " +")
+    local needle = separated_by_commas and ", *" or " +"
+    local keywords = KOR.strings:split(subject, needle, false, {
+        skip_lowercase = skip_lowercase,
+        min_length = min_length,
+    })
     count = #keywords
-    if skip_lowercase then
-        local pruned = {}
-        for i = 1, count do
-            if keywords[i]:match("[A-Z]") then
-                table_insert(pruned, keywords[i])
-            end
-        end
-        keywords = pruned
-        count = #keywords
-    end
     local keyword
     for nr = 1, count do
         keyword = keywords[nr]
@@ -540,7 +624,7 @@ function XrayModel:updateStaticReferenceCollections(id, item)
         self.terms_by_id[id] = nil
         return
     end
-    if self:isPerson(item) then
+    if item.is_person or self:isPerson(item) then
         self.persons_by_id[id] = item
     else
         self.terms_by_id[id] = item
@@ -550,7 +634,7 @@ end
 --* self.last_name_counts was populated in ((XrayModel#addLastName)):
 function XrayModel:isNotOnlyFamilyMember(item)
     --* a term/thing is always the only "family" member and has no last name:
-    if self:isTerm(item) then
+    if item.is_term or item.non_breakable == 1 then
         return false
     end
     local last_name = self:getLastName(item.name)
@@ -563,7 +647,7 @@ end
 --* self.last_name_counts was populated in ((XrayModel#addLastName)):
 function XrayModel:isOnlyFamilyMember(item)
     --* a term/thing is always the only "family" member and has no last name:
-    if self:isTerm(item) then
+    if item.is_term or item.non_breakable == 1 then
         return true
     end
     local last_name = self:getLastName(item.name)

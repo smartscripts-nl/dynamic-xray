@@ -437,7 +437,10 @@ function XrayDataLoader:loadAllItems(mode, force_refresh)
     end
 
     self:_loadAllData(mode)
-    parent:updateLastNameCounts()
+    local items = mode == "series" and parent.series[parent.current_series] or parent.ebooks[parent.current_ebook_basename] or {}
+    parent:updateLastNameCounts(items)
+
+    views_data:setItems(items, "from_resultset", "XrayDataLoader:_loadAllData")
 end
 
 function XrayDataLoader:loadGlossary(full_path)
@@ -536,6 +539,7 @@ function XrayDataLoader:_loadDataForSeries(result)
     parent:sortAndSetTags()
 end
 
+--* populate item props; compare ((XrayDataLoader#_addSeriesItem)):
 --- @private
 function XrayDataLoader:_addBookItem(result, i, book_index)
 
@@ -563,11 +567,13 @@ function XrayDataLoader:_addBookItem(result, i, book_index)
         chapter_hits_data = self:convertChapterHitsData(result["chapter_hits_data"][i]),
         pos_chapter_quotes = result["pos_chapter_quotes"][i],
     }
+    self:addMatchingProps(item)
     table_insert(parent.ebooks[book_index], item)
 
     parent:updateStaticReferenceCollections(id, item)
 end
 
+--* populate item props; compare ((XrayDataLoader#_addBookItem)):
 --- @private
 function XrayDataLoader:_addSeriesItem(result, i, series_index)
     local id = tonumber(result["id"][i])
@@ -589,10 +595,64 @@ function XrayDataLoader:_addSeriesItem(result, i, series_index)
         chapter_hits_data = self:convertChapterHitsData(result["chapter_hits_data"][i]),
         pos_chapter_quotes = result["pos_chapter_quotes"][i],
     }
+    self:addMatchingProps(item)
+    --logger.warn(item)
     parent:updateStaticReferenceCollections(id, item)
 
     -- #((set xray item props))
     table_insert(parent.series[series_index], item)
+end
+
+--* called from ((XrayDataLoader#_addBookItem)) and ((XrayDataLoader#_addSeriesItem)) upon plugin initialisation; called from ((XrayFormsData#saveNewItem)) and ((XrayFormsData#saveUpdatedItem)) upon adding/updating items:
+--- @private
+function XrayDataLoader:addMatchingProps(item)
+    item.is_person = parent:isPerson(item)
+    local full_name = KOR.strings:getNameSwapped(item.name)
+    if item.is_person and item.non_breakable ~= 1 then
+        item.family_name = full_name:match(" ([^ ]+)$")
+    end
+    item.is_term = not item.is_person
+    item.is_lowercase = not item.name:match("[A-Z]")
+    self:addMatchingPropsForName(item, full_name)
+    self:addMatchingPropsForAliasesAndShortNames(item)
+    item.needles_count = #item.needles
+end
+
+--- @private
+function XrayDataLoader:addMatchingPropsForName(item, full_name)
+    item.needles = parent:getNameParts(item)
+    item.needles_for_ui = parent:getNamePartsUI(item)
+    if item.is_term and item.is_lowercase then
+
+        table_insert(item.needles, 3, views_data:getNeedleString(KOR.strings:ucfirst(full_name)))
+
+        table_insert(item.needles_for_ui, 3, {
+            needle = views_data:getNeedleString(KOR.strings:ucfirst(full_name)),
+            reliability_indicator = DX.i.match_reliability_indicators.full_name,
+            explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.full_name
+        })
+    end
+end
+
+--- @private
+function XrayDataLoader:addMatchingPropsForAliasesAndShortNames(item)
+    local props = { "aliases", "short_names" }
+    local parts, parts_count, needle
+    for i = 1, 2 do
+        if item[props[i]] then
+            parts = item[props[i]]:match(",") and KOR.strings:split(item[props[i]], ", *") or KOR.strings:split(item[props[i]], " +")
+            parts_count = #parts
+            for p = 1, parts_count do
+                needle = DX.vd:getNeedleString(parts[p])
+                table_insert(item.needles, needle)
+                table_insert(item.needles_for_ui, {
+                    needle = needle,
+                    reliability_indicator = DX.i.match_reliability_indicators.alias,
+                    explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.alias
+                })
+            end
+        end
+    end
 end
 
 function XrayDataLoader:addExternalBooksItem(result, i)

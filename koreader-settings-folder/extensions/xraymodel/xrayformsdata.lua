@@ -138,6 +138,12 @@ function XrayFormsData:getItemCopy(item, xray_type)
         chapter_hits = '',
         series_hits = 0,
         series = parent.current_series,
+        --* these props are initiated upon loading all data in ((XrayDataLoader#addMatchingProps)); upon adding or updating items these props must also be updated:
+        needles = {},
+        needles_count = 0,
+        is_lower_case = false,
+        is_person = true,
+        is_term = false,
     }
 end
 
@@ -227,6 +233,7 @@ function XrayFormsData:saveUpdatedItem(field_values)
         mentioned_in = views_data.items[self.edit_item_index].mentioned_in,
         series = parent.current_series,
     }
+    DX.dl:addMatchingProps(edited_item)
     --* so as to force call to ((XrayViewsData#generateListItemText)) below to show the possible changed number of book_hits:
     --* this call adds props "book_hits" and "chapter_hits" to the item:
     views_data:setItemHits(edited_item, { store_book_hits = true, mode = "edit" })
@@ -416,6 +423,7 @@ function XrayFormsData.saveNewItem(new_item)
     end
 
     new_item.name = needle_name
+    DX.dl:addMatchingProps(new_item)
 
     --* this call also adds an id prop to item, needed for ((XrayViewsData#updateAndSortAllItemTables)):
     --* always reset filters when adding a new item, to prevent problems; disabled, because already run upon showing add new item form; see e.g. ((XrayButtons#forItemViewer)) or ((XrayCallbacks#execAddCallback)):
@@ -458,7 +466,7 @@ function XrayFormsData:toggleIsPersonOrTerm(toggle_item)
     for nr = 1, count do
         item = views_data.items[nr]
         if item.id == toggle_item.id then
-            if DX.m:isPerson(toggle_item) then
+            if toggle_item.is_person then
                 item.xray_type = item.xray_type + 2
             else
                 item.xray_type = item.xray_type - 2

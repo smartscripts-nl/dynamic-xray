@@ -432,7 +432,7 @@ function XrayButtons:forPageNavigatorTopLeft(parent)
         },
         KOR.buttoninfopopup:forXrayPageNavigatorFilter({
             callback = function()
-                if parent.page_navigator_filter_item then
+                if parent.filter_item then
                     return parent:resetFilter()
                 end
                 return parent:setFilter()
@@ -678,7 +678,7 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
                     local toggled_item = DX.fd:toggleIsPersonOrTerm(needle_item)
                     DX.ds.storeUpdatedItemType(toggled_item)
                     if DX.vd.active_list_tab > 1 then
-                        if DX.m:isPerson(toggled_item) then
+                        if toggled_item.is_person then
                             DX.vd:setProp("active_list_tab", 2)
                         else
                             DX.vd:setProp("active_list_tab", 3)
