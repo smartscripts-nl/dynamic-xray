@@ -240,9 +240,10 @@ local XraySettings = WidgetContainer:new{
         --* consumed in ((XrayPages#activateNonFilteredItemsLayout)):
         PN_non_filtered_items_layout = {
             value = "small-caps-italic",
-            options = { "small-caps", "small-caps-italic", "em", },
-            explanation = _("Page Navigator: when an item filter is set, the non-matching Xray items in the page will be marked with this lay-out."),
+            options = { "em", "small-caps", "small-caps-italic", "strong", },
+            explanation = "Page Navigator: when an item filter is set, the non-matching Xray items in the page will be marked with this lay-out.",
             locked = 0,
+            after_change_callback = "update_page_navigator_non_filtered_layout",
         },
         PN_panels_font_size = {
             value = 14,
@@ -374,6 +375,9 @@ local XraySettings = WidgetContainer:new{
         end,
         toggle_nightmode_colors = function()
             DX.c:toggleNightModeColors()
+        end,
+        update_page_navigator_non_filtered_layout = function()
+            DX.p:activateNonFilteredItemsLayout()
         end,
     },
     validators = {

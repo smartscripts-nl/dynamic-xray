@@ -34,9 +34,10 @@ local XrayPages = WidgetContainer:new{
     },
     is_filter_item = false,
     non_active_layout = nil,
-    non_filtered_items_marker_bold = "<strong>%1</strong>",
+    non_filtered_items_marker_em = "<em>%1</em>",
     non_filtered_items_marker_smallcaps = "<span style='font-variant: small-caps'>%1</span>",
     non_filtered_items_marker_smallcaps_italic = "<i style='font-variant: small-caps'>%1</i>",
+    non_filtered_items_marker_strong = "<strong>%1</strong>",
     non_filtered_layouts = nil,
     previous_filter_item = nil,
     previous_filter_name = nil,
@@ -427,10 +428,6 @@ function XrayPages:markItemsFoundInPageHtml(page_no, for_tagged_items)
     DX.pn:setProp("page_no", page_no)
     DX.ip:setProp("upon_load_panel_text", nil)
 
-    if not self.non_active_layout then
-        self:activateNonFilteredItemsLayout()
-    end
-
     local hits
     local tagged_items = DX.pn:getTaggedItems()
     if DX.pn.navigation_tag and has_items(tagged_items) then
@@ -449,7 +446,9 @@ function XrayPages:markItemsFoundInPageHtml(page_no, for_tagged_items)
 
     count = #hits
     self.prev_marked_item = nil
-    self:activateNonFilteredItemsLayout()
+    if not self.non_active_layout then
+        self:activateNonFilteredItemsLayout()
+    end
     for i = 1, count do
         self:markedItemRegister(hits[i])
         if not DX.pn.active_filter_name or DX.pn.active_filter_name == hits[i].name then
@@ -491,9 +490,10 @@ function XrayPages:markedItemRegister(item)
 function XrayPages:initNonFilteredItemsLayout()
     --* the indices here must correspond to the settings in ((non_filtered_items_layout)):
     self.non_filtered_layouts = {
+        ["em"] = self.non_filtered_items_marker_em,
         ["small-caps"] = self.non_filtered_items_marker_smallcaps,
         ["small-caps-italic"] = self.non_filtered_items_marker_smallcaps_italic,
-        ["bold"] = self.non_filtered_items_marker_bold,
+        ["strong"] = self.non_filtered_items_marker_strong,
     }
 end
 
