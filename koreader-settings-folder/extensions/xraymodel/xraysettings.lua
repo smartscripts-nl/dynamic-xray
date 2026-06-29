@@ -240,7 +240,7 @@ local XraySettings = WidgetContainer:new{
         --* consumed in ((XrayPages#activateNonFilteredItemsLayout)):
         PN_non_filtered_items_layout = {
             value = "small-caps-italic",
-            options = { "small-caps", "small-caps-italic", "bold", },
+            options = { "small-caps", "small-caps-italic", "em", },
             explanation = _("Page Navigator: when an item filter is set, the non-matching Xray items in the page will be marked with this lay-out."),
             locked = 0,
         },

@@ -834,8 +834,10 @@ function XrayViewsData:markItemInHtml(html, item, mark_format)
 
     local needle_props = item.needles
     local ni = #needle_props
+    --* first condition for XrayPages, when using layout for non filtered items via ((XrayPages#activateNonFilteredItemsLayout)), e.g. <span style='font-variant: small-caps'>%1</span>:
+    local marked_item = mark_format:match("<") and mark_format or self["mark_item_html_" .. mark_format]
     for n = 1, ni do
-        html = html:gsub(needle_props[n].needle, self["mark_item_html_" .. mark_format])
+        html = html:gsub(needle_props[n].needle, marked_item)
     end
 
     return html

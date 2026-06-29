@@ -449,13 +449,14 @@ function XrayPages:markItemsFoundInPageHtml(page_no, for_tagged_items)
 
     count = #hits
     self.prev_marked_item = nil
-    self:initNonFilteredItemsLayout()
+    self:activateNonFilteredItemsLayout()
     for i = 1, count do
         self:markedItemRegister(hits[i])
         if not DX.pn.active_filter_name or DX.pn.active_filter_name == hits[i].name then
             html = DX.vd:markItemInHtml(html, hits[i], "strong")
         else
-            html = DX.vd:markItemInHtml(html, hits[i], "em")
+            --* non_active_layout either "small-caps", "small-caps-italic", "em" (configured by XraySettings.PN_non_filtered_items_layout):
+            html = DX.vd:markItemInHtml(html, hits[i], self.non_active_layout)
         end
     end
     --* don't use cache if a filtered item was set (with its additional html):
