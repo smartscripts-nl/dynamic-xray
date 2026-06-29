@@ -45,6 +45,8 @@ local XrayViewsData = WidgetContainer:new{
     --* items, persons and terms props act as some kind of temporary data store (not influenced by filters etc.) for the current ebook xray items:
     items = {},
     list_display_mode = "series", --* or "book"
+    mark_item_html_em = "<em>%1</em>",
+    mark_item_html_strong = "<strong>%1</strong>",
     new_item_hits = nil,
     persons = {},
     --* this prop can be modified with the checkbox in ((XrayDialogs#showFilterDialog)):
@@ -826,6 +828,17 @@ function XrayViewsData:filterAndAddItemToItemTables(items, n, search_needles, li
         self:addMenuItemToItemTables(list_item)
     end
     return hits_registry
+end
+
+function XrayViewsData:markItemInHtml(html, item, mark_format)
+
+    local needle_props = item.needles
+    local ni = #needle_props
+    for n = 1, ni do
+        html = html:gsub(needle_props[n].needle, self["mark_item_html_" .. mark_format])
+    end
+
+    return html
 end
 
 --* loop for items which had full or partial matching AND had linkwords; now we search for those linkwords, to get all items linked to these main items:
@@ -1629,23 +1642,20 @@ function XrayViewsData:addFamilyNameNeedle(item)
     local needle = self:getNeedleString(item.family_name)
     local needle_upper = self:getNeedleString(KOR.strings:upper(item.family_name))
 
-    --* pos 7 and 8: after first name and upper first name - see ((XrayModel#getNameParts)) and ((XrayModel#getNamePartsUI)):
+    --* pos 7 and 8: after first name and upper first name - see ((XrayModel#getNameParts)):
     local start_pos = item.needles_count >= 6 and 7 or item.needles_count + 1
 
-    table_insert(item.needles, start_pos, needle)
-    table_insert(item.needles, start_pos + 1, needle_upper)
-    item.needles_count = #item.needles
-
-    table_insert(item.needles_for_ui, start_pos, {
+    table_insert(item.needles, start_pos, {
         needle = needle,
         reliability_indicator = DX.i.match_reliability_indicators.last_name,
         explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.last_name
     })
-    table_insert(item.needles_for_ui, start_pos + 1, {
+    table_insert(item.needles, start_pos + 1, {
         needle = needle_upper,
         reliability_indicator = DX.i.match_reliability_indicators.last_name,
         explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.last_name
     })
+    item.needles_count = #item.needles
 end
 
 --* compare getting keywords via ((XrayModel#splitByCommaOrSpace)):
@@ -1741,10 +1751,12 @@ function XrayViewsData:populateNeedles(needles, item, prop)
     --* we are not interested in lower case parts of person names, so in getNameParts lowercase strings were already filtered out:
     local parts = prop == "name" and parent:getNameParts(item) or parent:splitByCommaOrSpace(item[prop])
     count = #parts
+    local needle
     for i = 1, count do
-        table_insert(needles, parts[i])
+        needle = prop == "name" and parts[i].needle or parts[i]
+        table_insert(needles, needle)
         --* for all uppercase variants, e.g. in intro texts at the start of chapters:
-        table_insert(needles, self:getNeedleString(KOR.strings:upper(parts[i])))
+        table_insert(needles, self:getNeedleString(KOR.strings:upper(needle)))
     end
 end
 

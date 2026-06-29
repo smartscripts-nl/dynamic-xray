@@ -621,12 +621,8 @@ end
 --- @private
 function XrayDataLoader:addMatchingPropsForName(item, full_name)
     item.needles = parent:getNameParts(item)
-    item.needles_for_ui = parent:getNamePartsUI(item)
     if item.is_term and item.is_lowercase then
-
-        table_insert(item.needles, 3, views_data:getNeedleString(KOR.strings:ucfirst(full_name)))
-
-        table_insert(item.needles_for_ui, 3, {
+        table_insert(item.needles, 3, {
             needle = views_data:getNeedleString(KOR.strings:ucfirst(full_name)),
             reliability_indicator = DX.i.match_reliability_indicators.full_name,
             explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.full_name
@@ -644,8 +640,7 @@ function XrayDataLoader:addMatchingPropsForAliasesAndShortNames(item)
             parts_count = #parts
             for p = 1, parts_count do
                 needle = DX.vd:getNeedleString(parts[p])
-                table_insert(item.needles, needle)
-                table_insert(item.needles_for_ui, {
+                table_insert(item.needles, {
                     needle = needle,
                     reliability_indicator = DX.i.match_reliability_indicators.alias,
                     explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.alias

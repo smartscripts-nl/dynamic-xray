@@ -223,45 +223,11 @@ end
 --* however, for ((XrayViewsData#getChapterHitsData)), e.g. in second tab for defining a new Xray item, we don't want to use patterns, so we find all instances:
 function XrayModel:getNameParts(item)
 
-    self:setFullNameVariants(item)
-
-    --* if an item has no spaces, return name as the only part:
-    if not self.full_name_raw:match(" ") or item.non_breakable == 1 or item.is_term then
-        return {
-            self.full_name_needle,
-            self.full_name_needle_upper,
-            self.full_name_plural,
-            self.full_name_plural_upper,
-        }
-    end
-
-    local name_parts = {
-        self.full_name_needle,
-        self.full_name_needle_upper,
-    }
-
-    local parts = self:splitByCommaOrSpace(self.full_name_raw, false, "skip_lowercase", 3)
-
-    --* #parts - 1: skip check for last name, because we don't know yet whether the item/person is the only family member; that needle, if applicable, will be added in ((XrayViewsData#addFamilyNameNeedle)):
-    --? is this the correct procedure in all contexts?:
-    local pcount = #parts - 1
-    for i = 1, pcount do
-        table_insert(name_parts, views_data:getNeedleString(parts[i]))
-        table_insert(name_parts, views_data:getNeedleString(KOR.strings:upper(parts[i])))
-    end
-
-    return name_parts
-end
-
---* needles returned are prepared for matching in current method:
---* however, for ((XrayViewsData#getChapterHitsData)), e.g. in second tab for defining a new Xray item, we don't want to use patterns, so we find all instances:
-function XrayModel:getNamePartsUI(item)
-
     --* these needles are to be used in ...; this table needs to be numerical, with 3 items per item: needle, reliability_indicator, explanation; and they must be in sequence full names, first names, last names, aliases and short names, partial hits:
-    local needles_for_ui = {}
+    local needles = {}
 
-    --* self.full_name_raw etc. were already set via ((XrayModel#getNameParts)) > ((XrayModel#setFullNameVariants)):
-    needles_for_ui = {
+    self:setFullNameVariants(item)
+    needles = {
         {
             needle = self.full_name_needle,
             reliability_indicator = DX.i.match_reliability_indicators.full_name,
@@ -286,7 +252,7 @@ function XrayModel:getNamePartsUI(item)
 
     --* if an item has no spaces, return name as the only part:
     if not item.name:match(" ") or item.non_breakable == 1 or item.is_term then
-        return needles_for_ui
+        return needles
     end
 
     --* from here on we are only dealing with persons...
@@ -295,29 +261,21 @@ function XrayModel:getNamePartsUI(item)
     local parts = self:splitByCommaOrSpace(self.full_name_raw, false, "skip_lowercase", 3)
     local pcount = #parts
     --* pcount - 1: skip check for last name, because we don't know yet whether the item/person is the only family member; that needle, if applicable, will be added in ((XrayViewsData#addFamilyNameNeedle)):
+    --? is this the correct procedure in all contexts?:
     for i = 1, pcount - 1 do
-        --* for first name also add upper case variant:
-        if i == 1 then
-            table_insert(needles_for_ui, {
-                needle = views_data:getNeedleString(parts[i]),
-                reliability_indicator = DX.i.match_reliability_indicators.first_name,
-                explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.first_name
-            })
-            table_insert(needles_for_ui, {
-                needle = views_data:getNeedleString(KOR.strings:upper(parts[i])),
-                reliability_indicator = DX.i.match_reliability_indicators.first_name,
-                explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.first_name
-            })
-        else
-            table_insert(needles_for_ui, {
-                needle = views_data:getNeedleString(parts[i]),
-                reliability_indicator = DX.i.match_reliability_indicators.partial_match,
-                explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.partial_match
-            })
-        end
+        table_insert(needles, {
+            needle = views_data:getNeedleString(parts[i]),
+            reliability_indicator = DX.i.match_reliability_indicators.first_name,
+            explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.first_name
+        })
+        table_insert(needles, {
+            needle = views_data:getNeedleString(KOR.strings:upper(parts[i])),
+            reliability_indicator = DX.i.match_reliability_indicators.first_name,
+            explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.first_name
+        })
     end
 
-    return needles_for_ui
+    return needles
 end
 
 function XrayModel:addTags(tags, id)

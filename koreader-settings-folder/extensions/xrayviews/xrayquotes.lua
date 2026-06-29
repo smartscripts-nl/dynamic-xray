@@ -105,7 +105,7 @@ function XrayQuotes:generateQuotesList(item)
 
     html = table_concat(html, "<p> </p>")
     return
-        self:markItemInHtml(html, item),
+        DX.vd:markItemInHtml(html, item, "em"),
         table_concat(text, "\n \n")
 end
 
@@ -170,19 +170,6 @@ end
 --- @private
 function XrayQuotes:getQuotesFromItemProp(xray_item)
     return KOR.strings:split(xray_item.pos_chapter_quotes, "@@")
-end
-
---* compare ((XrayPages#markItemInHtml)):
---- @private
-function XrayQuotes:markItemInHtml(html, item)
-
-    local needles = item.needles
-    local ni = #needles
-    for n = 1, ni do
-        html = html:gsub(needles[n], "<em>%1</em>")
-    end
-
-    return html
 end
 
 return XrayQuotes

@@ -540,7 +540,7 @@ end
 function XrayUI:discoverXrayItems(page_or_paragraph_text, tagged_items)
     local items_found, explanations = {}, {}
 
-    local xray_item, needle, hit
+    local xray_item, needle_props, needle, hit
     local subject = tagged_items or DX.vd.items
     --* we need to do this because we assign item_indicators to the items found per page or paragraph (see below: xray_item.reliability_indicator = needle.reliability_indicator):
     local items_table = KOR.tables:shallowCopy(subject)
@@ -548,21 +548,22 @@ function XrayUI:discoverXrayItems(page_or_paragraph_text, tagged_items)
     for i = 1, count do
         -- #((get xray_item for XrayUI))
         xray_item = items_table[i]
-        count2 = #xray_item.needles_for_ui
+        count2 = #xray_item.needles
         for n = 1, count2 do
-            needle = xray_item.needles_for_ui[n]
-            hit = page_or_paragraph_text:match(needle.needle)
+            needle_props = xray_item.needles[n]
+            needle = needle_props.needle
+            hit = page_or_paragraph_text:match(needle)
             if hit then
                 --* first two props for consumption in
-                xray_item.reliability_indicator = needle.reliability_indicator
+                xray_item.reliability_indicator = needle_props.reliability_indicator
                 --* only for aliases and short names show an explanation of the match:
-                xray_item.match_explanation = needle.reliability_indicator == KOR.icons.xray_alias_bare and " (" .. hit .. ")"
+                xray_item.match_explanation = needle_props.reliability_indicator == KOR.icons.xray_alias_bare and " (" .. hit .. ")"
                 table_insert(items_found, xray_item)
-                table_insert(explanations, needle.explanation)
-                    break
-                end
+                table_insert(explanations, needle_props.explanation)
+                break
             end
         end
+    end
 
     return items_found, explanations
 end

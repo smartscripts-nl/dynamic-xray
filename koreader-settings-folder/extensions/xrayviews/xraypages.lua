@@ -350,7 +350,7 @@ function XrayPages:pageHasItem(page_no, item)
     local ncount = DX.pn.filter_item.needles_count
     local needle
     for i = 1, ncount do
-        needle = needles[i]
+        needle = needles[i].needle
         --* ncount is 1 when only matching for full name:
         if ncount == 1 and self:checkTextMatch(text, needle) then
             return true, item.name
@@ -453,9 +453,9 @@ function XrayPages:markItemsFoundInPageHtml(page_no, for_tagged_items)
     for i = 1, count do
         self:markedItemRegister(hits[i])
         if not DX.pn.active_filter_name or DX.pn.active_filter_name == hits[i].name then
-            html = self:markItemInHtml(html, hits[i], "strong")
+            html = DX.vd:markItemInHtml(html, hits[i], "strong")
         else
-            html = self:markItemInHtml(html, hits[i], "em")
+            html = DX.vd:markItemInHtml(html, hits[i], "em")
         end
     end
     --* don't use cache if a filtered item was set (with its additional html):
@@ -471,7 +471,7 @@ end
 --- @private
 function XrayPages:markedItemRegister(item)
 
-    --* skip_item_registration might be set by ((XrayQuotes#markItemInHtml)), upon generating quotes html for an item:
+    --* skip_item_registration might be set by ((XrayViewsData#markItemInHtml)), upon generating quotes html for an item:
     if self:isPruneSideButton(item) then
         return
     end
@@ -486,19 +486,6 @@ function XrayPages:markedItemRegister(item)
         DX.sp:addSideButton(item, info_text)
     end
     end
-
---* compare ((XrayQuotes#markItemInHtml)):
---- @private
-function XrayPages:markItemInHtml(html, item, mark_format)
-
-    local needles = item.needles
-    local ni = #needles
-    for n = 1, ni do
-        html = html:gsub(needles[n], "<" .. mark_format .. ">%1</" .. mark_format .. ">")
-    end
-
-    return html
-end
 
 function XrayPages:initNonFilteredItemsLayout()
     --* the indices here must correspond to the settings in ((non_filtered_items_layout)):
