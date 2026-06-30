@@ -214,8 +214,13 @@ end
 function XrayModel:setFullNameVariants(item)
     self.full_name_raw = KOR.strings:getNameSwapped(item.name)
     self.full_name_needle = views_data:getNeedleString(self.full_name_raw)
-    self.full_name_needle_upper = self:getUpperNeedle(self.full_name_raw)
     self.full_name_plural = views_data:getNeedleString(self.full_name_raw .. "s")
+
+    if not DX.s.PN_add_uppercase_filters then
+        return
+    end
+
+    self.full_name_needle_upper = self:getUpperNeedle(self.full_name_raw)
     self.full_name_plural_upper = self:getUpperNeedle(self.full_name_raw .. "S")
 end
 
@@ -234,21 +239,23 @@ function XrayModel:getNameParts(item)
             explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.full_name
         },
         {
-            needle = self.full_name_needle_upper,
-            reliability_indicator = DX.i.match_reliability_indicators.full_name,
-            explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.full_name
-        },
-        {
             needle = self.full_name_plural,
             reliability_indicator = DX.i.match_reliability_indicators.full_name,
             explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.full_name
         },
-        {
+    }
+    if DX.s.PN_add_uppercase_filters then
+        table_insert(needles, {
+            needle = self.full_name_needle_upper,
+            reliability_indicator = DX.i.match_reliability_indicators.full_name,
+            explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.full_name
+        })
+        table_insert(needles, {
             needle = self.full_name_plural_upper,
             reliability_indicator = DX.i.match_reliability_indicators.full_name,
             explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.full_name
-        },
-    }
+        })
+    end
 
     --* if an item has no spaces, return name as the only part:
     if not item.name:match(" ") or item.non_breakable == 1 or item.is_term then
@@ -268,11 +275,13 @@ function XrayModel:getNameParts(item)
             reliability_indicator = DX.i.match_reliability_indicators.first_name,
             explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.first_name
         })
-        table_insert(needles, {
-            needle = views_data:getNeedleString(KOR.strings:upper(parts[i])),
-            reliability_indicator = DX.i.match_reliability_indicators.first_name,
-            explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.first_name
-        })
+        if DX.s.PN_add_uppercase_filters then
+            table_insert(needles, {
+                needle = views_data:getNeedleString(KOR.strings:upper(parts[i])),
+                reliability_indicator = DX.i.match_reliability_indicators.first_name,
+                explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.first_name
+            })
+        end
     end
 
     return needles

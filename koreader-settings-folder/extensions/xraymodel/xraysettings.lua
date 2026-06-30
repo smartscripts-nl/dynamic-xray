@@ -199,6 +199,11 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
         },
         --* PN stands for the PageNavigator:
+        PN_add_uppercase_filters = {
+            value = false,
+            explanation = "If this setting is false, while navigating with a (double) filter set, uppercase variants of names will be skipped.\n\nThe advantage is that this'll make especially the double filter noticeably faster.\n\nThe con: upper case variants of names in the ebook will not be found. However: these variants are an exception - only in some books they are present in the starting lines of chapters.",
+            locked = 0,
+        },
         PN_infopanel_meta_indent = {
             value = 10,
             explanation = _("This variables enables the numbers of spaces used to indent the item meta information (hits, aliases etc.) in the PN item info panel at the bottom."),

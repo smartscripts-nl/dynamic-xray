@@ -16,6 +16,7 @@ local DX = DX
 --- @class ButtonInfoPopup
 local ButtonInfoPopup = WidgetContainer:new{
 	buttons = {},
+	PN_filter_nbs = _("\nNB 1: it will take noticeably longer time when many pages have to be analyzed with this double filter.\nNB 2: if the two items you are filtering for are spread over two adjacent pages, they will not be found.\nNB 3: with XraySettings.PN_add_uppercase_filters set to false, filters will be faster."),
 	use_caching = true,
 }
 
@@ -481,7 +482,7 @@ function ButtonInfoPopup:forXrayPageNavigatorFilter(props)
 end
 
 function ButtonInfoPopup:forXrayPageNavigatorFilterDouble(props)
-	local filter_info = _("double filter icon | Only show pages in which two to be selected Xray items are both present.\nNB 1: it will take noticeably longer time when many pages have to be analyzed with this double filter.\nNB 2: if the two items you are filtering for are spread over two adjacent pages, they will not be found.")
+	local filter_info = _("double filter icon | Only show pages in which two to be selected Xray items are both present.") .. self.PN_filter_nbs
 	local reset_filter_info = _("reset double filter icon | Reset double filter for Page Navigator.")
 	return KOR.buttonprops:set({
 		icon = DX.pn.filter_item_double and "filter-double-reset" or "filter-double",
@@ -566,7 +567,7 @@ end
 function ButtonInfoPopup:forXraySaveDoubleFilterItems(props)
 	return KOR.buttonprops:set({
 		icon = "save",
-		info = "diskette-ikoon | Save the two selected items for the double filter.\nNB 1: it will take noticeably longer time when many pages have to be analyzed with this double filter.\nNB 2: if the two items you are filtering for are spread over two adjacent pages, they will not be found.",
+		info = _("floppy disk icon | Save the two selected items for the double filter.") .. self.PN_filter_nbs,
 		callback_label = _("filter"),
 		--! callback defined by calling module
 	}, props)

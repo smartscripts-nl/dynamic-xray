@@ -1645,18 +1645,25 @@ function XrayViewsData:addFamilyNameNeedle(item)
     local needle_upper = self:getNeedleString(KOR.strings:upper(item.family_name))
 
     --* pos 7 and 8: after first name and upper first name - see ((XrayModel#getNameParts)):
-    local start_pos = item.needles_count >= 6 and 7 or item.needles_count + 1
+    local start_pos
+    if DX.s.PN_add_uppercase_filters then
+        start_pos = item.needles_count >= 6 and 7 or item.needles_count + 1
+    else
+        start_pos = item.needles_count >= 3 and 4 or item.needles_count + 1
+    end
 
     table_insert(item.needles, start_pos, {
         needle = needle,
         reliability_indicator = DX.i.match_reliability_indicators.last_name,
         explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.last_name
     })
-    table_insert(item.needles, start_pos + 1, {
-        needle = needle_upper,
-        reliability_indicator = DX.i.match_reliability_indicators.last_name,
-        explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.last_name
-    })
+    if DX.s.PN_add_uppercase_filters then
+        table_insert(item.needles, start_pos + 1, {
+            needle = needle_upper,
+            reliability_indicator = DX.i.match_reliability_indicators.last_name,
+            explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.last_name
+        })
+    end
     item.needles_count = #item.needles
 end
 
