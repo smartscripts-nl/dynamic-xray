@@ -10,6 +10,7 @@ local ImageViewer = require("ui/widget/imageviewer")
 local InfoMessage = require("extensions/widgets/infomessage")
 local InputDialog = require("extensions/widgets/inputdialog")
 local KOR = require("extensions/kor")
+local MultiConfirmBox = require("extensions/widgets/multiconfirmbox")
 local MultiInputDialog = require("extensions/widgets/multiinputdialog")
 local NavigatorBox = require("extensions/widgets/navigatorbox")
 local NiceAlert = require("extensions/widgets/nicealert")
@@ -184,6 +185,43 @@ function Dialogs:htmlBoxTabbed(active_tab, args)
     self:registerWidget(self.tabbed_htmlbox)
 
     return self.tabbed_htmlbox
+end
+
+function Dialogs:multiConfirm(question, buttons, options)
+    --* face can be a font label, but also a font object:
+    local face
+    if not question:match("^\n") then
+        question = "\n" .. question .. "\n"
+    end
+    if options then
+        if options.face and type(options.face) == "string" then
+            face = Font:getFace(options.face)
+        end
+        if options.show_icon == nil then
+            options.show_icon = true
+        end
+    else
+        options = {}
+    end
+    local dialog = MultiConfirmBox:new{
+        text = question,
+        face = face or Font:getFace("infofont"),
+        pos = options.pos,
+        alpha = options.alpha,
+        modal = true,
+        width_factor = options.width_factor or 1,
+        show_icon = options.show_icon or false,
+        next_item_callback = options.next_item_callback,
+        prev_item_callback = options.prev_item_callback,
+        overlay_close_callback = function()
+            self:closeSecondOverlay()
+            self:closeOverlay()
+        end,
+        wide_dialog = options.wide_dialog or false,
+        buttons = buttons,
+    }
+    UIManager:show(dialog)
+    return dialog
 end
 
 function Dialogs:navigatorBox(args)

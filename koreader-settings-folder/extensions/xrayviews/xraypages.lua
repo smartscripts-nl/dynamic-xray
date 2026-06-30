@@ -13,6 +13,7 @@ local T = require("ffi/util").template
 local DX = DX
 local has_items = has_items
 local has_no_items = has_no_items
+local math_abs = math.abs
 local math_ceil = math.ceil
 local tonumber = tonumber
 
@@ -82,7 +83,7 @@ function XrayPages:jumpToPage()
 end
 
 --- @private
-function XrayPages:pageHasItemName(page_no)
+function XrayPages:pageHasItemName(page_no, filter_name, filter_name2)
     local html = self:getPageHtmlForPage(page_no)
     local tagged_items = DX.pn:getTaggedItems()
     local hits = DX.u:getXrayItemsFoundInText(html, tagged_items)
@@ -90,10 +91,16 @@ function XrayPages:pageHasItemName(page_no)
         return false
     end
     local hcount = #hits
+    local found = 0
     for i = 1, hcount do
-        if hits[i].name == DX.pn.active_filter_name then
+        if not filter_name2 and hits[i].name == filter_name then
             return true
+        elseif filter_name2 and (hits[i].name == filter_name or hits[i].name == filter_name2) then
+            found = found + 1
         end
+    end
+    if filter_name2 and found == 2 then
+        return true
     end
     return false
 end
@@ -130,6 +137,10 @@ function XrayPages:toNextNavigatorPage(goto_next_item)
         --* via ((XrayPages#getPageHtmlForPage)) and ((XrayPages#getPageHtmlForPage)) PageNavigator.navigator_page_html can be populated with html containing the tagged items:
         self:gotoPageHitForTaggedItem(direction)
         return
+    --* navigation to next double filtered items hit:
+    elseif DX.pn.filter_item_double then
+        self:gotoPageHitForDuoItem(direction)
+        return
     --* navigation to next filtered item hit:
     elseif DX.pn.filter_item or goto_next_item then
         self:gotoPageHitForItem(goto_next_item, direction)
@@ -153,6 +164,10 @@ function XrayPages:toPrevNavigatorPage(goto_prev_item, stay_at_top_of_page)
     --* navigation to previous tagged item hit:
     if DX.pn.navigation_tag then
         self:gotoPageHitForTaggedItem(direction)
+        return
+    --* navigation to next double filtered items hit:
+    elseif DX.pn.filter_item_double then
+        self:gotoPageHitForDuoItem(direction)
         return
     --* navigation to previous filtered item hit:
     elseif DX.pn.filter_item or goto_prev_item then
@@ -206,7 +221,7 @@ function XrayPages:gotoPageHitForItem(goto_item, direction)
     if other_page then
         found, hit = self:pageHasItem(other_page, item)
         --* pageHasItemName example: if we made "Coram van Texel" the filter item, the script would search for occurrences of "Coram" and - but for this extra condition - yield back a false hit for "Farder Coram":
-        if not self:pageHasItemName(other_page) then
+        if not self:pageHasItemName(other_page, DX.pn.active_filter_name) then
             found = false
         end
     end
@@ -220,7 +235,7 @@ function XrayPages:gotoPageHitForItem(goto_item, direction)
         other_page = self:modifyCheckPage(direction, other_page, max_page)
         if other_page then
             found, hit = self:pageHasItem(other_page, item) --, page_text
-            if not self:pageHasItemName(other_page) then
+            if not self:pageHasItemName(other_page, DX.pn.active_filter_name) then
                 found = false
             end
         end
@@ -235,6 +250,62 @@ function XrayPages:gotoPageHitForItem(goto_item, direction)
     self:handleItemHitFound(self.browsing_page_new)
     --! this statement MUST be executed AFTER the previous one, because undoTemporaryFilterItem reset DX.pn.active_filter_name:
     self:undoTemporaryFilterItem(goto_item)
+
+    return true
+end
+
+--- @private
+function XrayPages:gotoPageHitForDuoItem(direction)
+
+    local subjects = T("\"%1\" + \"%2\"", DX.pn.filter_item.name, DX.pn.filter_item_double.name)
+
+    local patience = _("searching")
+    local message =
+        direction == 1 and
+        T("%1 %2 %3", subjects, KOR.icons.arrow_bare, patience)
+        or
+        T("%1 %2: %3", KOR.icons.arrow_left_bare, subjects, patience)
+    KOR.messages:notify(message)
+    UIManager:forceRePaint()
+
+    --* self.browsing_page_new will be set to nil upon activating the item filter, via ((XrayPageNavigator#setFilterDouble)) > ((XrayPages#resetPageForFilteredBrowsing)):
+    self.browsing_page_current = DX.pn.page_no
+    local max_page = KOR.document:getPageCount()
+    local other_page = self.browsing_page_new or self.browsing_page_current
+    local prev_page = other_page
+    other_page = self:modifyCheckPage(direction, other_page, max_page)
+
+    local found
+    if other_page then
+        found = self:pageHasDuoItem(other_page)
+        --* pageHasItemName example: if we made "Coram van Texel" the filter item, the script would search for occurrences of "Coram" and - but for this extra condition - yield back a false hit for "Farder Coram":
+        if not self:pageHasItemName(other_page, DX.pn.active_filter_name, DX.pn.active_filter_name_double) then
+            found = false
+        end
+    end
+
+    if self:invalidItemPageHitHandled(found, direction, nil, other_page) then
+        self.browsing_page_new = prev_page
+        return false
+    end
+
+    while not found and other_page do
+        other_page = self:modifyCheckPage(direction, other_page, max_page)
+        if other_page then
+            found = self:pageHasDuoItem(other_page)
+            if not self:pageHasItemName(other_page, DX.pn.active_filter_name, DX.pn.active_filter_double) then
+                found = false
+            end
+        end
+    end
+
+    if self:invalidItemPageHitHandled(found, direction, nil, other_page) then
+        self.browsing_page_new = prev_page
+        return false
+    end
+
+    --* we don't use second arg html here, because html generated and items marked in (()):
+    self:handleItemHitFound(self.browsing_page_new)
 
     return true
 end
@@ -353,10 +424,53 @@ function XrayPages:pageHasItem(page_no, item)
     for i = 1, ncount do
         needle = needles[i].needle
         --* ncount is 1 when only matching for full name:
-        if ncount == 1 and self:checkTextMatch(text, needle) then
+        if ncount == 1 and self:checkTextMatch(text, needle, is_term, is_lowercase) then
             return true, item.name
         elseif ncount > 1 and self:checkTextMatch(text, needle, is_term, is_lowercase) then
             return true, needle
+        end
+    end
+
+    return false
+end
+
+--- @private
+function XrayPages:pageHasDuoItem(page_no)
+
+    local text = self.cached_page_texts[page_no] or KOR.document:getPageText(page_no, "cleanup", "force_update")
+    self.cached_page_texts[page_no] = text
+
+    --* these needles (also containing aliases and short names!) and other filter item props were set in ((XrayPageNavigator#setFilterDouble)):
+    local needles = DX.pn.filter_item.needles
+    local is_term = DX.pn.filter_item.is_term
+    local is_lowercase = DX.pn.filter_item.is_lowercase
+    local ncount = DX.pn.filter_item.needles_count
+    local needle, item1_found
+    for i = 1, ncount do
+        needle = needles[i].needle
+        --* ncount is 1 when only matching for full name:
+        if ncount == 1 and self:checkTextMatch(text, needle, is_term, is_lowercase) then
+            item1_found = true
+            break
+        elseif ncount > 1 and self:checkTextMatch(text, needle, is_term, is_lowercase) then
+            item1_found = true
+            break
+        end
+    end
+    if not item1_found then
+        return false
+    end
+    needles = DX.pn.filter_item_double.needles
+    is_term = DX.pn.filter_item_double.is_term
+    is_lowercase = DX.pn.filter_item_double.is_lowercase
+    ncount = DX.pn.filter_item_double.needles_count
+    for i = 1, ncount do
+        needle = needles[i].needle
+        --* ncount is 1 when only matching for full name:
+        if ncount == 1 and self:checkTextMatch(text, needle, is_term, is_lowercase) then
+            return true
+        elseif ncount > 1 and self:checkTextMatch(text, needle, is_term, is_lowercase) then
+            return true
         end
     end
 
@@ -403,7 +517,75 @@ end
 --- @private
 function XrayPages:showNoNextPreviousOccurrenceMessage(direction)
     local adjective = direction == 1 and _("next") or _("previous")
-    KOR.messages:notify(T(_("no %1 occurrence of this item found..."), adjective))
+
+    local is_double_filter = DX.pn.filter_item_double
+    local message = is_double_filter and _("no %1 occurrence of these items found; what do you want to do now?") or _("no %1 occurrence of this item found; what do you want to do now?")
+    message = T(message, adjective)
+
+    local dialog
+    local opposite_direction = direction == 1 and _("previous") or _("next")
+    dialog = KOR.dialogs:multiConfirm(message, {
+        {
+            {
+                icon = "back",
+                callback = function()
+                    UIManager:close(dialog)
+                end
+            },
+            {
+                icon_text = {
+                    icon = "dustbin",
+                    text = _("filter"),
+                    text_font_bold = false,
+                },
+
+                callback = function()
+                    UIManager:close(dialog)
+                    if is_double_filter then
+                        DX.pn:resetFilterDouble()
+                        return
+                    end
+
+                    DX.pn:resetFilter()
+                end,
+            },
+            {
+                icon_text = {
+                    icon = "appbar.search",
+                    text_font_bold = false,
+                    text = opposite_direction,
+                },
+                callback = function()
+                    UIManager:close(dialog)
+                    direction = math_abs(direction - 1)
+                    if is_double_filter then
+                        self:gotoPageHitForDuoItem(direction)
+                        return
+                    end
+
+                    self:gotoPageHitForItem(self.goto_item, direction)
+                end,
+            },
+            {
+                icon_text = {
+                    icon = "add",
+                    text_font_bold = false,
+                    text = _("new filter"),
+                },
+                callback = function()
+                    UIManager:close(dialog)
+                    if is_double_filter then
+                        DX.pn:resetFilterDouble()
+                        DX.pn:setFilterDouble()
+                        return
+                    end
+
+                    DX.pn:resetFilter()
+                    DX.pn:setFilter()
+                end,
+            },
+        },
+    })
 end
 
 --- @private
@@ -451,10 +633,10 @@ function XrayPages:markItemsFoundInPageHtml(page_no, for_tagged_items)
     end
     for i = 1, count do
         self:markedItemRegister(hits[i])
-        if not DX.pn.active_filter_name or DX.pn.active_filter_name == hits[i].name then
+        if not DX.pn.active_filter_name or DX.pn.active_filter_name == hits[i].name or DX.pn.active_filter_name_double == hits[i].name then
             html = DX.vd:markItemInHtml(html, hits[i], "strong")
         else
-            --* non_active_layout either "small-caps", "small-caps-italic", "em" (configured by XraySettings.PN_non_filtered_items_layout):
+            --* non_active_layout either "em", "small-caps", "small-caps-italic", "strong" (configured by XraySettings.PN_non_filtered_items_layout):
             html = DX.vd:markItemInHtml(html, hits[i], self.non_active_layout)
         end
     end

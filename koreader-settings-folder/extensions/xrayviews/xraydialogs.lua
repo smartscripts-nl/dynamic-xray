@@ -594,6 +594,8 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
         title = select_mode_message
     elseif DX.ta.select_for_tags_tag then
         title = title .. " " .. _("+tag:") .. " " .. DX.ta.select_for_tags_tag
+    elseif DX.pn.do_double_filter_select then
+        title = title .. " - " .. _("set double filter:")
     end
 
     self.xray_items_list = CenterContainer:new{
@@ -627,7 +629,7 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
         -- #((filter table example))
         filter = self:getListFilter(),
         title_submenu_buttontable = DX.b:forListSubmenu(),
-        titlebar_inverted = self.select_mode or DX.ta.select_for_tags,
+        titlebar_inverted = self.select_mode or DX.ta.select_for_tags or DX.pn.do_double_filter_select,
         footer_buttons_left = not self.select_mode and DX.b:forListFooterLeft(focus_item, dont_show, base_icon_size),
         footer_buttons_right = not self.select_mode and DX.b:forListFooterRight(self),
         --! don't use after_close_callback or call ((XrayController#resetFilteredItems)), because then filtering items will not work at all!
@@ -637,6 +639,7 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
     }
     self.xray_items_inner_menu = Menu:new(config)
     DX.ta:initiateItemTagsSelection()
+    DX.pn:initiateDoubleItemFilter()
 
     table_insert(self.xray_items_list, self.xray_items_inner_menu)
     self.xray_items_inner_menu.close_callback = function()
@@ -751,12 +754,15 @@ function XrayDialogs:showList(focus_item, dont_show, select_mode)
     self.item_requested = focus_item
     self.called_from_list = false
     self:closeListDialog()
-    KOR.dialogsqueue:register({
-        id = "xray_items_list",
-        restore = function()
-            self:showListWithRestoredArguments()
-        end,
-    })
+    --* don't add Items List to ((DialogsQueue)) if it is only being used as items selector:
+    if not items_for_select and not DX.ta.select_for_tags_tag and not DX.pn.do_double_filter_select then
+        KOR.dialogsqueue:register({
+            id = "xray_items_list",
+            restore = function()
+                self:showListWithRestoredArguments()
+            end,
+        })
+    end
 
     if DX.c:listHasReloadOrDontShowRequest(focus_item, dont_show) then
         return

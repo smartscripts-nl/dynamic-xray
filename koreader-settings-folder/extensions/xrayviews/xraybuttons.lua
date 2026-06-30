@@ -432,10 +432,21 @@ function XrayButtons:forPageNavigatorTopLeft(parent)
         },
         KOR.buttoninfopopup:forXrayPageNavigatorFilter({
             callback = function()
+                if parent.self.filter_item_double then
+                    return
+                end
                 if parent.filter_item then
                     return parent:resetFilter()
                 end
                 return parent:setFilter()
+            end,
+        }),
+        KOR.buttoninfopopup:forXrayPageNavigatorFilterDouble({
+            callback = function()
+                if parent.filter_item_double then
+                    return parent:resetFilterDouble()
+                end
+                return parent:setFilterDouble()
             end,
         }),
         KOR.buttoninfopopup:forXrayTranslations(),
@@ -1271,6 +1282,15 @@ function XrayButtons:forListFooterLeft(focus_item, dont_show, base_icon_size)
                 end,
             })),
         }
+    elseif DX.pn.do_double_filter_select then
+        return {
+            Button:new(KOR.buttoninfopopup:forXraySaveDoubleFilterItems({
+                icon = "save",
+                callback = function()
+                    DX.pn:saveDoubleFilterItems()
+                end,
+            })),
+        }
     end
 
     local notify_list_display_mode = DX.vd.list_display_mode == "series" and _("series") or _("book")
@@ -1326,7 +1346,7 @@ end
 function XrayButtons:forListFooterRight(parent)
 
     --* when in selection mode for items to be added to a tag, don't show the buttons below:
-    if DX.ta.select_for_tags then
+    if DX.ta.select_for_tags or DX.pn.do_double_filter_select then
         return
     end
 
@@ -1385,6 +1405,10 @@ end
 
 --- @param parent XrayDialogs
 function XrayButtons:forListTopLeft(parent)
+
+    if DX.pn.do_double_filter_select then
+        return
+    end
 
     --* when in selection mode for items to be added to a tag, only show the toggle button for this select mode:
     if DX.ta.select_for_tags then

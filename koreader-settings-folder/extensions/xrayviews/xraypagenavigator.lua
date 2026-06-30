@@ -18,6 +18,7 @@ local T = require("ffi/util").template
 local DX = DX
 local has_no_items = has_no_items
 local has_no_text = has_no_text
+local pairs = pairs
 local table_insert = table.insert
 local unpack = unpack
 
@@ -28,12 +29,16 @@ local parent
 --- @class XrayPageNavigator
 local XrayPageNavigator = WidgetContainer:new{
     active_filter_name = nil,
+    active_filter_name_double = nil,
     cached_histogram_data = {},
     cached_html_and_buttons_by_page_no = {},
     cached_items_info = {},
     cached_reliability_indicators = {},
     current_item = nil,
+    do_double_filter_select = false,
+    double_filter_items = {},
     filter_item = nil,
+    filter_item_double = nil,
     --* this prop will be set from ((NavigatorBox#generateInfoButtons)):
     info_panel_width = nil,
     initial_browsing_page = nil,
@@ -88,7 +93,7 @@ function XrayPageNavigator:storeGlossary(glossary, content_type, css_files)
         glossary = self:prepareHtmlGlossary(glossary, css_files)
     end
     DX.ds.storeGlossary(glossary)
-    DX.m:setProp("current_ebook_glossary", glossary)
+    parent:setProp("current_ebook_glossary", glossary)
     self:showGlossary(glossary)
 end
 
@@ -120,7 +125,7 @@ end
 
 function XrayPageNavigator:showAddGlossaryNotification()
     KOR.dialogs:confirm(_("Do you indeed want to save a glossary for Page Navigator?"), function()
-        DX.pn:closePageNavigator()
+        self:closePageNavigator()
         KOR.registry:set("mark_glossary_boundaries", {})
         KOR.dialogs:niceAlert(_("Adding a glossary to Page Navigator"), "Browse now:\n\n1) to the start of the glossary in the ebook and mark the beginning thereof with a text selection;\n2) next repeat this for the end of the glossary.\n\nAfter this is done, the text of the glossary will be saved to the database and shown in a popup.\n\nYou can from now on view this glossary anytime, when in the current ebook, with Shift+G on your physical (BT) keyboard.")
     end)
@@ -128,11 +133,11 @@ function XrayPageNavigator:showAddGlossaryNotification()
 end
 
 function XrayPageNavigator:showGlossary(glossary)
-    if not glossary and not DX.m.current_ebook_glossary then
+    if not glossary and not parent.current_ebook_glossary then
         return self:showAddGlossaryNotification()
     end
     if not glossary then
-        glossary = DX.m.current_ebook_glossary
+        glossary = parent.current_ebook_glossary
     end
 
     local css = glossary:match("<style>([^>]+)</style>")
@@ -198,7 +203,7 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
         ratio_per_chapter = ratio_per_chapter,
         --* side_buttons were generated via ((XrayPages#markedItemRegister)) > ((XraySidePanels#addSideButton)):
         side_buttons = DX.sp.side_buttons,
-        title = DX.m.current_title .. " - p." .. self.page_no,
+        title = parent.current_title .. " - p." .. self.page_no,
         top_buttons_left = DX.b:forPageNavigatorTopLeft(self),
         window_size = "fullscreen",
         after_close_callback = function()
@@ -317,6 +322,122 @@ function XrayPageNavigator:setFilter(item)
     return true
 end
 
+function XrayPageNavigator:setFilterDouble()
+
+    --* selection of items happens in ((XrayPageNavigator#initiateDoubleItemFilter)):
+    self.do_double_filter_select = true
+    DX.c:onShowList()
+    KOR.messages:notify("selecteer nu 2 items", 4)
+
+    --* the setting of the filters will be handled in ((XrayPageNavigator#saveDoubleFilterItems)), after the user clicked on the save button at the bottom of the selection list...
+    return true
+end
+
+function XrayPageNavigator:resetFilterDouble()
+    self:setActiveScrollPage()
+    self.filter_item = nil
+    self.filter_item_double = nil
+    self.active_filter_name = nil
+    self.active_filter_name_double = nil
+    DX.sp:resetActiveSideButtons("XrayPageNavigator:resetFilterDouble")
+    self:reloadPageNavigator()
+    KOR.messages:notify(_("double filter was reset"))
+    return true
+end
+
+--- @private
+function XrayPageNavigator:resetItemForDoubleFilterSelection(item, for_one_item)
+    item.dim = nil
+    item.text = item.text:gsub(" " .. KOR.icons.checkboxes, "", 1)
+
+    --* then all items will be reset in a loop:
+    if not for_one_item then
+        return
+    end
+
+    self.double_filter_items[item.id] = nil
+    DX.d.xray_items_inner_menu:updateItems()
+end
+
+--- @private
+function XrayPageNavigator:resetAllSelectionsForDoubleFilter()
+    local item_table = DX.d.xray_items_inner_menu.item_table
+    count = #item_table
+    for i = 1, count do
+        self:resetItemForDoubleFilterSelection(item_table[i])
+    end
+    DX.d.xray_items_inner_menu:updateItems()
+
+    self.do_double_filter_select = false
+    self.double_filter_items = {}
+end
+
+function XrayPageNavigator:initiateDoubleItemFilter()
+    if not self.do_double_filter_select then
+        return
+    end
+
+    --- @type XrayPageNavigator manager
+    local manager = self
+    DX.d.xray_items_inner_menu.onMenuSelect = function(iparent, item)
+        if item.dim then
+            --* argument parent here not used, but added to silence code sniffing:
+            manager:resetItemForDoubleFilterSelection(item, "for_one_item", iparent)
+            return
+        end
+
+        item.dim = true
+        item.text = item.text:gsub("(%d+%.)", "%1 " .. KOR.icons.checkboxes, 1)
+        manager.double_filter_items[item.id] = true
+        DX.d.xray_items_inner_menu:updateItems()
+    end
+end
+
+--* the setting of the doublefilter was initiated in ((XrayPageNavigator#setFilterDouble)):
+--* the actual filtering happens in ((XrayPages#gotoPageHitForDuoItem)) > ((XrayPages#pageHasDuoItem)):
+function XrayPageNavigator:saveDoubleFilterItems()
+
+    --* self.double_filter_items populated in ((XrayPageNavigator#initiateDoubleItemFilter)):
+    if KOR.tables:getAssociativeTableLength(self.double_filter_items) < 2 then
+        KOR.messages:notify("je hebt niet minimaal 2 items geselecteerd", 4)
+        return
+    end
+
+    local filter1_id, filter2_id
+    for id in pairs(self.double_filter_items) do
+        if not filter1_id then
+            filter1_id = id
+        else
+            filter2_id = id
+            break
+        end
+    end
+
+    --! set the filter item:
+    self.filter_item  = parent.items_by_id[filter1_id]
+    self.filter_item_double  = parent.items_by_id[filter2_id]
+
+    self:resetAllSelectionsForDoubleFilter()
+    DX.d:closeListDialog()
+
+    self:setActiveScrollPage()
+    self.active_filter_name = self.filter_item.name
+    self.active_filter_name_double = self.filter_item_double.name
+
+    DX.sp:resetActiveSideButtons("XrayPageNavigator:saveDoubleFilterItems", "dont_reset_active_side_buttons")
+    DX.p:resetPageForFilteredBrowsing()
+
+    self:reloadPageNavigator()
+    local double_filter = _("double filter")
+    KOR.messages:notify(T("%1: \"%2\" + \"%3\"", double_filter, self.filter_item.name, self.filter_item_double.name), 4)
+end
+
+--- @private
+function XrayPageNavigator:resetDoubleFilterSelectProps()
+    self.do_double_filter_select = false
+    self.double_filter_items = {}
+end
+
 function XrayPageNavigator:setCurrentItem(item)
     --* when a page has no Xray items, set self.current_item to nil (so e.g. no occurrences histogram will be shown in the PN info panel):
     if not item then
@@ -383,11 +504,11 @@ function XrayPageNavigator:getTaggedItems()
     if not self.navigation_tag then
         return nil
     end
-    local ids = DX.m.tags_associative[self.navigation_tag]
+    local ids = parent.tags_associative[self.navigation_tag]
     local tagged_items = {}
     count = #ids
     for i = 1, count do
-        table_insert(tagged_items, DX.m.items_by_id[ids[i]])
+        table_insert(tagged_items, parent.items_by_id[ids[i]])
     end
     return tagged_items
 end

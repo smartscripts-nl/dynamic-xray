@@ -211,6 +211,7 @@ function XrayTags:initiateItemTagsSelection()
         return
     end
 
+    --- @type XrayTags manager
     local manager = self
     DX.d.xray_items_inner_menu.onMenuSelect = function(parent, item)
         if item.dim then

@@ -468,13 +468,26 @@ function ButtonInfoPopup:forXrayPageNavigatorContextButtons(props)
 end
 
 function ButtonInfoPopup:forXrayPageNavigatorFilter(props)
+	local single_filter_active = DX.pn.filter_item and not DX.pn.filter_item_double
 	local filter_info = _("filter icon | Filter pages for occurrences of the item currently displayed in the bottom info panel. So the Navigator only jump between pages which have this item.")
-	local reset_filter_info = _("filter icon | Reset the filter for Page Navigator.")
+	local reset_filter_info = _("reset filter icon | Reset the filter for Page Navigator.")
 	return KOR.buttonprops:set({
-		icon = DX.pn.filter_item and "filter-reset" or "filter",
+		icon = single_filter_active and "filter-reset" or "filter",
 		icon_size_ratio = 0.53,
-		info = DX.pn.filter_item and reset_filter_info or filter_info,
+		info = single_filter_active and reset_filter_info or filter_info,
 		callback_label = DX.pn.filter_item and _("reset filter") or _("filter"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forXrayPageNavigatorFilterDouble(props)
+	local filter_info = _("double filter icon | Only show pages in which two to be selected Xray items are both present.\nNB 1: it will take noticeably longer time when many pages have to be analyzed with this double filter.\nNB 2: if the two items you are filtering for are spread over two adjacent pages, they will not be found.")
+	local reset_filter_info = _("reset double filter icon | Reset double filter for Page Navigator.")
+	return KOR.buttonprops:set({
+		icon = DX.pn.filter_item_double and "filter-double-reset" or "filter-double",
+		icon_size_ratio = 0.53,
+		info = DX.pn.filter_item_double and reset_filter_info or filter_info,
+		callback_label = DX.pn.filter_item_double and _("reset double filter") or _("double filter"),
 		--! callback defined by calling module
 	}, props)
 end
@@ -546,6 +559,15 @@ function ButtonInfoPopup:forXrayQuotesManager(props)
 		icon = "quote",
 		info = _("bubble icon | Manage quotes for this Xray item."),
 		callback_label = _("show manager"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forXraySaveDoubleFilterItems(props)
+	return KOR.buttonprops:set({
+		icon = "save",
+		info = "diskette-ikoon | Save the two selected items for the double filter.\nNB 1: it will take noticeably longer time when many pages have to be analyzed with this double filter.\nNB 2: if the two items you are filtering for are spread over two adjacent pages, they will not be found.",
+		callback_label = _("filter"),
 		--! callback defined by calling module
 	}, props)
 end

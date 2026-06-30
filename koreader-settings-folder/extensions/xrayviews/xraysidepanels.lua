@@ -70,6 +70,9 @@ function XraySidePanels:addSideButton(item, info_text)
 
       --* for marking or unmarking an item as filter criterium:
       hold_callback = function()
+          if DX.pn.active_filter_name_double then
+              return false
+          end
           if DX.pn.active_filter_name == item.name then
               return DX.pn:resetFilter()
           end
@@ -118,7 +121,7 @@ function XraySidePanels:markActiveSideButton()
         button.text = button.text
             :gsub(self.active_item_marker, "")
             :gsub(self.filtered_item_marker, "")
-        if button.xray_item.name == DX.pn.active_filter_name then
+        if button.xray_item.name == DX.pn.active_filter_name or button.xray_item.name == DX.pn.active_filter_name_double then
             button.text = self.filtered_item_marker .. button.text
         end
 
@@ -287,8 +290,8 @@ function XraySidePanels:setSideButtons(buttons)
 end
 
 function XraySidePanels:resetSideButtons()
-    self.linked_items = {}
     self.side_buttons = {}
+    self.linked_items = {}
 end
 
 function XraySidePanels:getCurrentTabItem()
