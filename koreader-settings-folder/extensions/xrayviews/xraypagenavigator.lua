@@ -429,7 +429,7 @@ function XrayPageNavigator:saveDoubleFilterItems()
 
     self:reloadPageNavigator()
     local double_filter = _("double filter")
-    KOR.messages:notify(T("%1: \"%2\" + \"%3\"", double_filter, self.filter_item.name, self.filter_item_double.name), 4)
+    KOR.messages:notify(T("%1: %2 + %3", double_filter, self.filter_item.name, self.filter_item_double.name), 4)
 end
 
 --- @private

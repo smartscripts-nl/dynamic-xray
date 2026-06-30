@@ -257,7 +257,7 @@ end
 --- @private
 function XrayPages:gotoPageHitForDuoItem(direction)
 
-    local subjects = T("\"%1\" + \"%2\"", DX.pn.filter_item.name, DX.pn.filter_item_double.name)
+    local subjects = T("%1 + %2", DX.pn.filter_item.name, DX.pn.filter_item_double.name)
 
     local patience = _("searching")
     local message =
@@ -535,7 +535,7 @@ function XrayPages:showNoNextPreviousOccurrenceMessage(direction)
             {
                 icon_text = {
                     icon = "dustbin",
-                    text = _("filter"),
+                    text = " " .. _("filter"),
                     text_font_bold = false,
                 },
 
@@ -553,7 +553,7 @@ function XrayPages:showNoNextPreviousOccurrenceMessage(direction)
                 icon_text = {
                     icon = "appbar.search",
                     text_font_bold = false,
-                    text = opposite_direction,
+                    text = " " .. opposite_direction,
                 },
                 callback = function()
                     UIManager:close(dialog)
@@ -570,7 +570,7 @@ function XrayPages:showNoNextPreviousOccurrenceMessage(direction)
                 icon_text = {
                     icon = "add",
                     text_font_bold = false,
-                    text = _("new filter"),
+                    text = " " .. _("new filter"),
                 },
                 callback = function()
                     UIManager:close(dialog)
