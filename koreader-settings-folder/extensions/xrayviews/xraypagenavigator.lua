@@ -294,9 +294,9 @@ function XrayPageNavigator:cacheReliabilityIndicators(hits)
 end
 
 function XrayPageNavigator:resetFilter()
-    self:setActiveScrollPage()
     self.filter_item = nil
     self.active_filter_name = nil
+    self:setActiveScrollPage()
     DX.sp:resetActiveSideButtons("XrayPageNavigator:resetFilter")
     self:reloadPageNavigator()
     KOR.messages:notify(_("filter was reset"))
@@ -333,12 +333,17 @@ function XrayPageNavigator:setFilterDouble()
     return true
 end
 
-function XrayPageNavigator:resetFilterDouble()
-    self:setActiveScrollPage()
+--* on_reader_ready will only be truthy when called from ((XrayController#onReaderReady)):
+function XrayPageNavigator:resetFilterDouble(on_reader_ready)
     self.filter_item = nil
     self.filter_item_double = nil
     self.active_filter_name = nil
     self.active_filter_name_double = nil
+    if on_reader_ready then
+        return true
+    end
+
+    self:setActiveScrollPage()
     DX.sp:resetActiveSideButtons("XrayPageNavigator:resetFilterDouble")
     self:reloadPageNavigator()
     KOR.messages:notify(_("double filter was reset"))

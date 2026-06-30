@@ -353,6 +353,7 @@ function XrayController:onReaderReady()
     DX.m:loadGlossary(self.document.file)
     self:addGlobalHotkeys()
     self:resetDynamicXray(false, "do_full_update")
+    DX.pn:resetFilterDouble("on_reader_ready")
 end
 
 function XrayController:addGlobalHotkeys()
