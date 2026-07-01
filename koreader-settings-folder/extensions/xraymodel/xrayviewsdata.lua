@@ -1641,25 +1641,22 @@ function XrayViewsData:addFamilyNameNeedle(item)
         return
     end
 
-    local needle = self:getNeedleString(item.family_name)
-    local needle_upper = self:getNeedleString(KOR.strings:upper(item.family_name))
-
     --* pos 7 and 8: after first name and upper first name - see ((XrayModel#getNameParts)):
     local start_pos
-    if DX.s.PN_add_uppercase_filters then
+    if DX.s.PN_also_use_uppercase_needles then
         start_pos = item.needles_count >= 6 and 7 or item.needles_count + 1
     else
         start_pos = item.needles_count >= 3 and 4 or item.needles_count + 1
     end
 
     table_insert(item.needles, start_pos, {
-        needle = needle,
+        needle = self:getNeedleString(item.family_name),
         reliability_indicator = DX.i.match_reliability_indicators.last_name,
         explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.last_name
     })
-    if DX.s.PN_add_uppercase_filters then
+    if DX.s.PN_also_use_uppercase_needles then
         table_insert(item.needles, start_pos + 1, {
-            needle = needle_upper,
+            needle = self:getNeedleString(KOR.strings:upper(item.family_name)),
             reliability_indicator = DX.i.match_reliability_indicators.last_name,
             explanation = KOR.icons.arrow .. DX.i.match_reliability_indicators.last_name
         })
@@ -1764,8 +1761,10 @@ function XrayViewsData:populateNeedles(needles, item, prop)
     for i = 1, count do
         needle = prop == "name" and parts[i].needle or parts[i]
         table_insert(needles, needle)
-        --* for all uppercase variants, e.g. in intro texts at the start of chapters:
-        table_insert(needles, self:getNeedleString(KOR.strings:upper(needle)))
+        if DX.s.PN_also_use_uppercase_needles then
+            --* for all uppercase variants, e.g. in intro texts at the start of chapters:
+            table_insert(needles, self:getNeedleString(KOR.strings:upper(needle)))
+        end
     end
 end
 

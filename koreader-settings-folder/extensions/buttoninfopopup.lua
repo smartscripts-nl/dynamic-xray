@@ -16,7 +16,7 @@ local DX = DX
 --- @class ButtonInfoPopup
 local ButtonInfoPopup = WidgetContainer:new{
 	buttons = {},
-	PN_filter_nbs = _("\nNB 1: it will take noticeably longer time when many pages have to be analyzed with this double filter.\nNB 2: if the two items you are filtering for are spread over two adjacent pages, they will not be found.\nNB 3: with XraySettings.PN_add_uppercase_filters set to false, filters will be faster."),
+	PN_filter_nbs = _("\nNB 1: it will take noticeably longer time when many pages have to be analyzed with this double filter.\nNB 2: if the two items you are filtering for are spread over two adjacent pages, they will not be found.\nNB 3: with XraySettings.PN_also_use_uppercase_needles set to false, filters will be faster."),
 	use_caching = true,
 }
 
