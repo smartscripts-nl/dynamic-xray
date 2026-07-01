@@ -134,7 +134,7 @@ function XrayInformation:showPageNavigatorHelp(parent, active_tab)
 
     KOR.dialogs:htmlBoxTabbed(active_tab or 1, {
         parent = parent or DX.pn,
-        title = "Page Navigator hulp",
+        title = _("Page Navigator help"),
         modal = true,
         button_font_weight = "normal",
         --* htmlBox will always have a close_callback and therefor a close button; so no need to define a close_callback here...
@@ -172,6 +172,10 @@ If you longpress on an item in the side panel, that will be used as a filter cri
 <strong>Resetting the filter</strong><br>
 <br>
 Longpress on the filtered item in the side panel.]])
+            },
+            {
+                tab = _("viewer"),
+                html = _([[If you longpress a word marked with layout (in most cases bold or cursive) in the html box, the Xray item linked to this will be shown in the Item Viewer. In this way you can quikly inspect some additional information (e.g. linked items, mentions per chapter, etc.).<br /><br />With the back-button in the left half of the titlebar of the Viewer you can return to the Page Navigator.<br /><br />For now there's a bug which makes this back-button when you visit another tab in the Item Viewer. But you can return to the Page Navigator with the navigator icon in the bottom left corner.]])
             },
             {
                 tab = _("hotkeys"),

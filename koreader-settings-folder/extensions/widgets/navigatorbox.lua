@@ -194,7 +194,48 @@ function NavigatorBox:initTouch()
                 range = range,
             },
         },
+        HoldStartText = {
+            GestureRange:new {
+                ges = "hold",
+                range = range,
+            },
+        },
+        HoldReleaseText = {
+            GestureRange:new{
+                ges = "hold_release",
+                range = range,
+            },
+            --* callback function when HoldReleaseText is handled as args:
+            args = function(text)
+                if not text then
+                    KOR.messages:notify(_("hold text could not be determined"))
+                    return true
+                end
+                text = KOR.strings:cleanup(text)
+
+                -- #((NavigatorBox text hold callback))
+                local items_found = DX.tw:itemExists(text, text)
+                if not items_found then
+                    KOR.messages:notify(_("no xray item found for") .. " " .. text)
+                    return true
+                end
+
+                --* items will already be sorted by name or hits...
+                local item = DX.b:forItemsCollectionPopup(items_found, text, "get_first_item_only")
+                --* this is needed to make reloading Page Navigator possible:
+                self.page_navigator.page_navigator = nil
+                DX.d:viewItem(item)
+                KOR.messages:notify(_("back to page navigator: navigator icon bottom left"), 3)
+                return true
+            end
+        },
     }
+end
+
+--? these two methods apparently are needed to get ((NavigatorBox text hold callback)) to work:
+function NavigatorBox:onHoldStartText()
+end
+function NavigatorBox:onHoldReleaseText()
 end
 
 --- @private
