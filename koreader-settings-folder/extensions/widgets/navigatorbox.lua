@@ -225,7 +225,10 @@ function NavigatorBox:initTouch()
                 --* this is needed to make reloading Page Navigator possible:
                 self.page_navigator.page_navigator = nil
                 DX.d:viewItem(item)
-                KOR.messages:notify(_("back to page navigator: navigator icon bottom left"), 3)
+                if not DX.pn.return_from_item_viewer_message_shown then
+                    KOR.messages:notify(_("back to page navigator: navigator icon bottom left"), 3)
+                    DX.pn.return_from_item_viewer_message_shown = true
+                end
                 return true
             end
         },
