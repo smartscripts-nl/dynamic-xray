@@ -382,7 +382,7 @@ end
 
 --- @private
 function NavigatorBox:computeHeights()
-    if self.running_instance or self.dimensions_computed then
+    if self.dimensions_computed then
         return
     end
 
@@ -417,7 +417,7 @@ end
 
 --- @private
 function NavigatorBox:computeLineHeight()
-    if self.running_instance or self.dimensions_computed then
+    if self.dimensions_computed then
         return
     end
     local word_font_face = "tfont"
@@ -617,7 +617,7 @@ end
 
 --- @private
 function NavigatorBox:registerPopupMenuCoords()
-    if self.running_instance or self.dimensions_computed then
+    if self.dimensions_computed then
         return
     end
     local y_pos =
@@ -641,7 +641,7 @@ end
 
 --- @private
 function NavigatorBox:computeAvailableHeight()
-    if self.running_instance or self.dimensions_computed then
+    if self.dimensions_computed then
         return
     end
     self.avail_height = self.screen_height - self.margin_top - self.margin_bottom
@@ -657,7 +657,7 @@ end
 
 --- @private
 function NavigatorBox:setMargins()
-    if self.running_instance or self.dimensions_computed then
+    if self.dimensions_computed then
         return
     end
     --* Margin from screen edges
@@ -702,7 +702,7 @@ end
 
 --- @private
 function NavigatorBox:setPaddingAndSpacing()
-    if self.running_instance or self.dimensions_computed then
+    if self.dimensions_computed then
         return
     end
     --* This padding and the resulting width apply to the content
