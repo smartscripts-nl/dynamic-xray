@@ -75,6 +75,8 @@ local NavigatorBox = InputContainer:extend{
     --* this is the default, but some widgets can set the content_type to "text" for a specific tab; e.g. see ((XrayButtons#getItemViewerTabs)):
     content_type = "html",
     current_chapter_index = nil,
+    dimensions_computed = false,
+    expanded_css = nil,
     frame_content_fullscreen = nil,
     fullscreen = false,
     height = nil,
@@ -134,6 +136,11 @@ function NavigatorBox:init()
     self:generateWidget()
     self:registerPopupMenuCoords()
     self:finalizeWidget()
+    self.dimensions_computed = true
+end
+
+function NavigatorBox:reset()
+    self.dimensions_computed = false
 end
 
 --- @private
@@ -205,7 +212,7 @@ function NavigatorBox:generateInfoPanel()
           ratio_per_chapter = self.ratio_per_chapter,
         })
 
-    if self.running_instance then
+    if self.running_instance or self.dimensions_computed then
         return
     end
 
@@ -276,9 +283,12 @@ function NavigatorBox:generateScrollWidget()
         return
     end
 
+    if not self.expanded_css then
+        self.expanded_css = KOR.html:getHtmlBoxCss(self.css)
+    end
     self.html_widget = ScrollHtmlWidget:new{
         html_body = self.html,
-        css = KOR.html:getHtmlBoxCss(self.css),
+        css = self.expanded_css,
         default_font_size = Screen:scaleBySize(self.box_font_size),
         width = self.swidth,
         height = self.sheight,
@@ -324,7 +334,7 @@ function NavigatorBox:onClose()
         UIManager:close(menu)
     end
     self.running_instance = nil
-    DX.pn.page_navigator = nil
+    self.page_navigator.page_navigator = nil
     self.menu_opened = {}
     KOR.dialogs:unregisterWidget(self)
     UIManager:close(self)
@@ -372,7 +382,7 @@ end
 
 --- @private
 function NavigatorBox:computeHeights()
-    if self.running_instance then
+    if self.running_instance or self.dimensions_computed then
         return
     end
 
@@ -407,7 +417,7 @@ end
 
 --- @private
 function NavigatorBox:computeLineHeight()
-    if self.running_instance then
+    if self.running_instance or self.dimensions_computed then
         return
     end
     local word_font_face = "tfont"
@@ -607,7 +617,7 @@ end
 
 --- @private
 function NavigatorBox:registerPopupMenuCoords()
-    if self.running_instance then
+    if self.running_instance or self.dimensions_computed then
         return
     end
     local y_pos =
@@ -631,7 +641,7 @@ end
 
 --- @private
 function NavigatorBox:computeAvailableHeight()
-    if self.running_instance then
+    if self.running_instance or self.dimensions_computed then
         return
     end
     self.avail_height = self.screen_height - self.margin_top - self.margin_bottom
@@ -647,7 +657,7 @@ end
 
 --- @private
 function NavigatorBox:setMargins()
-    if self.running_instance then
+    if self.running_instance or self.dimensions_computed then
         return
     end
     --* Margin from screen edges
@@ -680,11 +690,6 @@ function NavigatorBox:setModuleProps()
 
     self.box_font_size = DX.s.is_mobile_device and 26 or 18
     self.content_face = Font:getFace("x_smallinfofont", self.box_font_size)
-    --self.content_face = Font:getFace("infofont", self.box_font_size)
-    local font_size_alt = self.box_font_size - 4
-    if font_size_alt < 8 then
-        font_size_alt = 8
-    end
     self.is_fullscreen = self.window_size == "fullscreen"
 
     --* Scrollable offsets of the various showResults* menus and submenus,
@@ -697,7 +702,7 @@ end
 
 --- @private
 function NavigatorBox:setPaddingAndSpacing()
-    if self.running_instance then
+    if self.running_instance or self.dimensions_computed then
         return
     end
     --* This padding and the resulting width apply to the content
@@ -712,7 +717,7 @@ end
 
 --- @private
 function NavigatorBox:setSeparator()
-    if self.running_instance then
+    if self.separator then
         return
     end
     self.separator = LineWidget:new{

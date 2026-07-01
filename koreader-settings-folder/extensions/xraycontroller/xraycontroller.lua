@@ -109,6 +109,8 @@ local require = require
 local Blitbuffer = require("ffi/blitbuffer")
 local Dispatcher = require("dispatcher")
 local KOR = require("extensions/kor")
+--* to be instantiated in ((XrayController#resetDynamicXray)):
+local NavigatorBox
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 require("extensions/helperfunctions")
@@ -689,6 +691,10 @@ function XrayController:resetDynamicXray(is_prepared, do_full_update)
     DX.sp:resetSideButtons()
     DX.pn:resetCache()
     DX.pn:setCurrentItem(nil)
+    if not NavigatorBox then
+        NavigatorBox = require("extensions/widgets/navigatorbox")
+    end
+    NavigatorBox:reset()
     DX.u:resetPageText()
     KOR.columntexts:resetCache()
     --? I don't know why we need this:
