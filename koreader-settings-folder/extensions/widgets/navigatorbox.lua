@@ -323,6 +323,8 @@ function NavigatorBox:onClose()
     for menu in pairs(self.menu_opened) do
         UIManager:close(menu)
     end
+    self.running_instance = nil
+    DX.pn.page_navigator = nil
     self.menu_opened = {}
     KOR.dialogs:unregisterWidget(self)
     UIManager:close(self)
