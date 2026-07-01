@@ -169,6 +169,8 @@ function XrayCallbacks:execViewItemCallback()
     if not current_tab_item then
         return true
     end
+    --! without this, Page Navigator couldn't be re-opened after calling Item Viewer from it:
+    DX.pn.page_navigator = nil
     DX.d:viewItem(current_tab_item)
     return true
 end
