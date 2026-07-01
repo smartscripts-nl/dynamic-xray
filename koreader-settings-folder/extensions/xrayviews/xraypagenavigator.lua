@@ -172,7 +172,6 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
         end
     end
     self.initial_browsing_page = initial_browsing_page or DX.u:getCurrentPage()
-    self:closePageNavigator()
     local html = self:loadDataForPage()
     local item = DX.sp:getCurrentTabItem()
     local chapters_count, ratio_per_chapter, occurrences_per_chapter
@@ -189,6 +188,8 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
     })
     local key_events_module = "XrayPageNavigator"
     self.page_navigator = KOR.dialogs:navigatorBox({
+        --* if Page Navigator is already running, speedup generation of its widget by re-using this instance:
+        running_instance = self.page_navigator,
         chapters_count = chapters_count,
         current_chapter_index = KOR.toc:getTocIndexByPage(DX.u:getCurrentPage()),
         html = html,

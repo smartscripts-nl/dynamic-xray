@@ -14,7 +14,6 @@ local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")
 local ScrollHtmlWidget = require("extensions/widgets/scrollhtmlwidget")
 local ScrollTextWidget = require("extensions/widgets/scrolltextwidget")
-local Size = require("extensions/modules/size")
 local TextWidget = require("extensions/widgets/textwidget")
 local TitleBar = require("extensions/widgets/titlebar")
 local UIManager = require("ui/uimanager")
@@ -24,6 +23,7 @@ local VerticalSpan = require("ui/widget/verticalspan")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 --local logger = require("logger")
 local Screen = Device.screen
+local Size = require("extensions/modules/size")
 local _ = KOR:initCustomTranslations()
 
 local DX = DX
@@ -31,6 +31,7 @@ local has_items = has_items
 local has_text = has_text
 local math = math
 local math_floor = math.floor
+local math_max = math.max
 local pairs = pairs
 local table = table
 local table_insert = table.insert
@@ -93,11 +94,11 @@ local NavigatorBox = InputContainer:extend{
     page_navigator = nil,
     prev_item_callback = nil,
     ratio_per_chapter = nil,
+    running_instance = nil,
     screen_height = nil,
     screen_width = nil,
     side_buttons = nil,
     side_buttons_width = Screen:scaleBySize(135),
-    side_panel_tab_activators = nil,
     title = nil,
     title_alignment = "left",
     titlebar = nil,
@@ -150,6 +151,14 @@ function NavigatorBox:initFrames()
     }
 end
 
+function NavigatorBox:updateWidget(config)
+    for key, value in pairs(config) do
+        self[key] = value
+    end
+    self:clear()
+    self:init()
+end
+
 --- @private
 function NavigatorBox:initHotkeys()
     KOR.keyevents:addHotkeysForNavigatorBox(self, self.key_events_module)
@@ -195,6 +204,10 @@ function NavigatorBox:generateInfoPanel()
           histogram_bottom_line_height = self.histogram_bottom_line_height,
           ratio_per_chapter = self.ratio_per_chapter,
         })
+
+    if self.running_instance then
+        return
+    end
 
     --* for consumption in ((NavigatorBox#generateScrollWidget)):
     self.swidth = self.info_panel_width
@@ -255,6 +268,11 @@ function NavigatorBox:generateScrollWidget()
             width = self.swidth,
             height = self.sheight,
         }
+        return
+    end
+
+    if self.running_instance then
+        self.html_widget:updateWidget(self.html)
         return
     end
 
@@ -352,6 +370,10 @@ end
 
 --- @private
 function NavigatorBox:computeHeights()
+    if self.running_instance then
+        return
+    end
+
     local buttons_height = self.button_table and self.button_table:getSize().h or 0
     local others_height =
         self.titlebar_height
@@ -383,10 +405,12 @@ end
 
 --- @private
 function NavigatorBox:computeLineHeight()
-    --* Lookup word
+    if self.running_instance then
+        return
+    end
     local word_font_face = "tfont"
     --* Ensure this word doesn't get smaller than its definition
-    local word_font_size = math.max(22, self.box_font_size)
+    local word_font_size = math_max(22, self.box_font_size)
     --* Get the line height of the normal font size, as a base for sizing this component
     if not self.word_line_height then
         local test_widget = TextWidget:new{
@@ -417,41 +441,40 @@ function NavigatorBox:generateSidePanel()
             has_items(pn.current_item.linked_items)
         )
 
-    local generate_tab_activators = has_linked_items or DX.sp.active_side_tab == 2
+    local has_side_buttons = #self.side_buttons > 0
+    local generate_tab_activators = has_side_buttons and (has_linked_items or DX.sp.active_side_tab == 2)
+    local side_panel_tab_activators
     if generate_tab_activators then
-        self.side_panel_tab_activators = DX.sp:generateSidePanelTabActivators(has_linked_items, self.side_buttons_width)
+        side_panel_tab_activators = DX.sp:generateSidePanelTabActivators(has_linked_items, self.side_buttons_width)
     end
 
-    --* self.avail_height was computed in ((NavigatorBox#computeAvailableHeight)):
-    self.spacer_width = self.avail_height
-        --* for top and bottom margin:
-        - 2 * self.content_top_margin:getSize().h
-        - self.side_buttons_table:getSize().h
-        - (generate_tab_activators and self.side_panel_tab_activators:getSize().h or 0)
-        - self.titlebar_height
-        - 2 * self.side_buttons_table_separator:getSize().h
+    local bottom_padding = self:generateSidePanelBottomPadding(has_side_buttons, side_panel_tab_activators)
 
-    local has_side_buttons = #self.side_buttons > 0
-    local bottom_padding = VerticalSpan:new{
-        width = self.spacer_width
-    }
-    self.side_panel = has_side_buttons and VerticalGroup:new{
+    if has_side_buttons and side_panel_tab_activators then
+        self.side_panel = VerticalGroup:new{
         align = "left",
         --* these buttons (or a spacer in case of no buttons) were generated in ((NavigatorBox#generateSidePanelButtons)):
         self.side_buttons_table,
         self.side_buttons_table_separator,
         bottom_padding,
         self.side_buttons_table_separator,
-        self.side_panel_tab_activators,
+        side_panel_tab_activators,
     }
-    or
-    VerticalGroup:new{
-        align = "left",
-        self.side_buttons_table,
-        bottom_padding,
-        self.side_buttons_table_separator,
-        self.side_panel_tab_activators,
-    }
+    elseif has_side_buttons then
+        self.side_panel = VerticalGroup:new{
+            align = "left",
+            --* these buttons (or a spacer in case of no buttons) were generated in ((NavigatorBox#generateSidePanelButtons)):
+            self.side_buttons_table,
+            self.side_buttons_table_separator,
+            bottom_padding,
+        }
+    else
+        self.side_panel = VerticalGroup:new{
+            align = "left",
+            self.side_buttons_table,
+            bottom_padding,
+        }
+    end
 end
 
 --- @private
@@ -465,6 +488,26 @@ function NavigatorBox:generateSidePanelButtons()
 end
 
 --- @private
+function NavigatorBox:generateSidePanelBottomPadding(has_side_buttons, side_panel_tab_activators)
+    --* self.avail_height was computed in ((NavigatorBox#computeAvailableHeight)):
+    self.spacer_width = self.avail_height
+        --* for top and bottom margin:
+        - 2 * self.content_top_margin:getSize().h
+        - self.side_buttons_table:getSize().h
+        - (side_panel_tab_activators and side_panel_tab_activators:getSize().h or 0)
+        - self.titlebar_height
+        - 2 * self.side_buttons_table_separator:getSize().h
+
+    if has_side_buttons and side_panel_tab_activators then
+        self.spacer_width = self.spacer_width - self.side_buttons_table_separator:getSize().h
+    end
+
+    return VerticalSpan:new{
+        width = self.spacer_width
+    }
+end
+
+--- @private
 function NavigatorBox:finalizeWidget()
     --* self.region was set in ((NavigatorBox#computeAvailableHeight)):
     self[1] = WidgetContainer:new{
@@ -473,12 +516,18 @@ function NavigatorBox:finalizeWidget()
         self.box_frame,
     }
 
-    --* we're a new window:
-    table_insert(NavigatorBox.window_list, self)
+    if not self.running_instance then
+        --* we're a new window:
+        table_insert(NavigatorBox.window_list, self)
+    end
 
     UIManager:setDirty(self, function()
         return "partial", self.box_frame.dimen
     end)
+
+    if self.running_instance then
+        return
+    end
 
     --* make NavigatorBox widget closeable with ((Dialogs#closeAllWidgets)):
     KOR.dialogs:registerWidget(self)
@@ -486,10 +535,6 @@ end
 
 --- @private
 function NavigatorBox:addFrameToContentWidget()
-    local has_side_buttons = #self.side_buttons > 0
-    if has_side_buttons then
-        self.spacer_width = self.spacer_width - self.side_buttons_table_separator:getSize().h
-    end
     local main_content = VerticalGroup:new{
         align = "left",
         self.html_widget,
@@ -550,16 +595,19 @@ function NavigatorBox:generateWidget()
     --? I don't know why I need this hack on my Bigme phone:
     if self.is_fullscreen and DX.s.is_mobile_device then
         local spacer = VerticalSpan:new{ width = Size.padding.large }
-        table.insert(elements, 2, spacer)
+        table_insert(elements, 2, spacer)
     end
 
     elements.align = "left"
-    table.insert(frame, elements)
+    table_insert(frame, elements)
     self.box_frame = FrameContainer:new(frame)
 end
 
 --- @private
 function NavigatorBox:registerPopupMenuCoords()
+    if self.running_instance then
+        return
+    end
     local y_pos =
         self.screen_height
         - self.content_padding_v
@@ -581,6 +629,9 @@ end
 
 --- @private
 function NavigatorBox:computeAvailableHeight()
+    if self.running_instance then
+        return
+    end
     self.avail_height = self.screen_height - self.margin_top - self.margin_bottom
 
     --* Region in which the window will be aligned center/top/bottom:
@@ -594,6 +645,9 @@ end
 
 --- @private
 function NavigatorBox:setMargins()
+    if self.running_instance then
+        return
+    end
     --* Margin from screen edges
     self.margin_top = not self.is_fullscreen and Size.margin.default or 0
     self.margin_bottom = not self.is_fullscreen and Size.margin.default or 0
@@ -641,8 +695,10 @@ end
 
 --- @private
 function NavigatorBox:setPaddingAndSpacing()
+    if self.running_instance then
+        return
+    end
     --* This padding and the resulting width apply to the content
-    --* below the title:  lookup word and definition
     self.content_padding_h = self.content_padding or Size.padding.closebuttonpopupdialog
     self.content_padding_v = Size.padding.fullscreen --* added via VerticalSpan
     self.content_width = self.width - 2 * self.content_padding_h
@@ -654,6 +710,9 @@ end
 
 --- @private
 function NavigatorBox:setSeparator()
+    if self.running_instance then
+        return
+    end
     self.separator = LineWidget:new{
         background = self.tabs_table and KOR.colors.tabs_table_separators or KOR.colors.line_separator,
         dimen = Geom:new{
@@ -665,6 +724,11 @@ end
 
 --- @private
 function NavigatorBox:generateTitleBar()
+    if self.running_instance then
+        self.titlebar:setTitle(self.title, "no_refresh")
+        return
+    end
+
     local config = {
         width = self.width,
         title = self.title,

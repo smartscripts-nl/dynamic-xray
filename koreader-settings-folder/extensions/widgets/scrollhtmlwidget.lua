@@ -50,7 +50,7 @@ function ScrollHtmlWidget:init()
     if not self.html_body then
         self.html_body = ""
     end
-    self.htmlbox_widget:setContent(self.html_body, self.css, self.default_font_size)
+    self:updateWidget()
 
     self.v_scroll_bar = VerticalScrollBar:new{
         enable = self.htmlbox_widget.page_count > 1,
@@ -95,6 +95,11 @@ function ScrollHtmlWidget:init()
             ScrollUpWithShiftSpace = Input.group.ShiftSpace,
         }
     end
+end
+
+function ScrollHtmlWidget:updateWidget(update_html)
+    local html_body = update_html or self.html_body
+    self.htmlbox_widget:setContent(html_body, self.css, self.default_font_size, self.is_xhtml, nil, self.html_resource_directory)
 end
 
 --* Not to be confused with ScrollTextWidget's updateScrollBar, which has user-visible effects.

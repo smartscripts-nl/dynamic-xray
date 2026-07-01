@@ -245,6 +245,12 @@ function Dialogs:navigatorBox(args)
             :gsub("%[%[%[", "<b>")
             :gsub("%]%]%]", "</b>")
     end
+    if args.running_instance then
+        --- @type NavigatorBox instance
+        local instance = args.running_instance
+        instance:updateWidget(config)
+        return instance
+    end
     local box = NavigatorBox:new(config)
     UIManager:show(box)
 
