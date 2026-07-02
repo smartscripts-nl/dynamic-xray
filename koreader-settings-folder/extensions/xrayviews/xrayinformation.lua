@@ -52,6 +52,7 @@ end
 function XrayInformation:showGeneralDXTips(parent, initial_tab)
     local screen_dims = Screen:getSize()
 
+    local indent = "\n   "
     KOR.dialogs:htmlBoxTabbed(initial_tab or 1, {
         parent = parent or DX.pn,
         title = _("General DX tips"),
@@ -81,6 +82,15 @@ function XrayInformation:showGeneralDXTips(parent, initial_tab)
 <li><strong>quickly edit several items:</strong><br />By <em>longpressing an item in the Items List</em> you'll activate a popup context menu, from which you can edit the item. This is a quick way to edit several items quickly after each other from the Items List.<br /> </li>
 <li><strong>adding quotes</strong><br />from a text selection in the book you can - by tapping on the button "+ Xray quote" - <em>add your favorite or important quotes to an item</em>. By doing this you'll have them always quickly at hand in the Page Navigator or in the Item Viewer.<br />    After you added quotes to a Xray item, they will be listed in the quotes tab of the Item Viewer. There you'll see a floating speech bubble button, to activate the Quotes Manager. In this Manager you can view quotes, edit them or remove them. Tip: you can use this Manager to add your own notes to individual quotes.</li>
 </ul>]])
+            },
+            {
+                tab = _("icons"),
+                content_type = "text",
+                html = indent .. KOR.icons.xray_person_bare .. _([[ = a person]]) ..
+                    indent .. KOR.icons.xray_person_important_bare .. _([[ = an important person]]) ..
+                    indent .. KOR.icons.xray_term_bare .. _([[ = a term/thing/concept]]) ..
+                    indent .. KOR.icons.xray_term_important_bare .. _([[ = an important term/thing/concept]]) ..
+                    indent .. KOR.icons.lock_bare .. _([[ = marks a non-breakable name]]),
             },
             {
                 tab = _("tag-groups"),
