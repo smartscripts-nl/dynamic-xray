@@ -40,6 +40,7 @@ local XrayExporter = WidgetContainer:new{
         _("terms"),
         _("tag-groups"),
     },
+    white_line = "\n\n",
 }
 
 function XrayExporter:resetCache()
@@ -70,7 +71,7 @@ end
 function XrayExporter:getExportDialogInfo(active_tab, columns)
     local title = self:getTitle(active_tab)
     local data = self:getInfoText(active_tab, false, columns)
-    local spacer = active_tab == 4 and "\n" or "\n\n"
+    local spacer = active_tab == 4 and "\n" or self.white_line
     local export_title = title:gsub(": ([^\n]+)", " in \"" .. DX.m.current_title .. "\" (%1)") .. "\n" .. "Lijst aangemaakt: " .. os_date("%d-%m-%Y") .. spacer
 
     if not data then
@@ -143,11 +144,11 @@ function XrayExporter:exportInfoToFile()
     local info =
         self:getTitle(self.active_tab)
         .. "\n" .. _("List generated") .. ": " ..
-        os_date("%Y-%m-%d") .. "\n\n" ..
+        os_date("%Y-%m-%d") .. self.white_line ..
         self:getInfoText(self.active_tab, "iconless", 1)
 
     self:addTagsOverview(info, self.active_tab)
-    info = info:gsub("\n\n\n+", "\n\n")
+    info = info:gsub("\n\n\n+", self.white_line)
 
     KOR.files:filePutcontents(DataStorage:getDataDir() .. "/xray-items.txt", info)
 
@@ -202,16 +203,16 @@ function XrayExporter:generateXrayItemsOverview(items, mode, clipboard_tab_no)
         table_insert(paragraphs_iconless, paragraph_iconless)
     end
 
-    KOR.registry:setClipboardTabText(clipboard_tab_no, table_concat(paragraphs_iconless, "\n\n"))
+    KOR.registry:setClipboardTabText(clipboard_tab_no, table_concat(paragraphs_iconless, self.white_line))
 
     --* returned here: column1, column2, info_iconless; column2 will be set to nil when usage of text columns wasn't active:
     if use_two_column_display then
-        return KOR.columntexts:getTwoColumnTexts(column1, column2)
+        return KOR.columntexts:getTwoColumnTexts(column1, column2, self.white_line)
     elseif use_three_column_display then
-        return KOR.columntexts:getThreeColumnTexts(column1, column2, column3)
+        return KOR.columntexts:getThreeColumnTexts(column1, column2, column3, self.white_line)
     end
 
-    return KOR.columntexts:getOneColumnText(column1)
+    return KOR.columntexts:getOneColumnText(column1, self.white_line)
 end
 
 function XrayExporter:showExportXrayItemsDialog()

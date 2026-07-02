@@ -8,6 +8,7 @@ local HorizontalSpan = require("ui/widget/horizontalspan")
 local KOR = require("extensions/kor")
 local ScrollTextWidget = require("extensions/widgets/scrolltextwidget")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
+--local logger = require("logger")
 local Screen = require("device").screen
 
 local DX = DX
@@ -85,12 +86,16 @@ function ColumnTexts:getThreeColumnTexts(column1_items, column2_items, column3_i
 	if overfloat_items == 2 then
 		second_column_limit = second_column_limit + 1
 	end
-	for i = first_column_limit + 1, count do
-		target = i <= second_column_limit and column2_items or column3_items
+	local first_column = {}
+	for i = 1, count do
+		if i <= first_column_limit then
+			target = first_column
+		else
+			target = i <= second_column_limit and column2_items or column3_items
+		end
 		table_insert(target, column1_items[i])
 	end
-	column1_items = KOR.tables:slice(column1_items, 1, first_column_limit)
-	column1_items = table_concat(column1_items, separator)
+	column1_items = table_concat(first_column, separator)
 	column2_items = table_concat(column2_items, separator)
 	column3_items = table_concat(column3_items, separator)
 
