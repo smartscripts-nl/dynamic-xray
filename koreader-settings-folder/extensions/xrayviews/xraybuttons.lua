@@ -1697,15 +1697,24 @@ function XrayButtons:forItemEditorTypeSwitch(item_copy, button_props)
     })
 end
 
-function XrayButtons:forExportItemsTopLeft()
-    return {
+--- @param parent XrayExporter
+function XrayButtons:forExportItemsTopLeft(parent)
+    local buttons = {
         {
             icon = "info-slender",
             callback = function()
                 KOR.dialogs:niceAlert(_("Information"), T(_("The sorting of the items in this list and the book or series mode follow the settings which you made for the Items List.\n\nHotkey for showing this list from Page Navigator %1 %2"), KOR.icons.arrow_bare, DX.s.hk_open_export_list))
             end
         },
+        KOR.buttoninfopopup:forXraySettings({
+            callback = function()
+                UIManager:close(parent.exporter_dialog)
+                DX.s.showSettingsManager()
+            end
+        }),
     }
+    DX.b:insertGeneralDXTipsButton(buttons, parent)
+    return buttons
 end
 
 function XrayButtons:forFilterDialog()

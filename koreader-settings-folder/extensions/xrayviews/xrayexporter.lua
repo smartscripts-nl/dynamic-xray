@@ -21,6 +21,7 @@ local count
 --- @class XrayExporter
 local XrayExporter = WidgetContainer:new{
     active_tab = 1,
+    exporter_dialog = nil,
     items = nil,
     items2 = nil,
     items3 = nil,
@@ -227,8 +228,8 @@ function XrayExporter:showExportXrayItemsDialog()
             self:showExportXrayItemsDialog()
         end,
     })
-    local top_buttons_left = DX.b:forExportItemsTopLeft()
-    KOR.dialogs:textBoxTabbed(self.active_tab, {
+    local top_buttons_left = DX.b:forExportItemsTopLeft(self)
+    self.exporter_dialog = KOR.dialogs:textBoxTabbed(self.active_tab, {
         title_func = function()
             return self:getTitle(self.active_tab)
         end,
