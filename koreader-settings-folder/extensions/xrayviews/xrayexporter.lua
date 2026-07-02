@@ -88,6 +88,7 @@ end
 
 --- @private
 function XrayExporter:getInfoText(active_tab, iconless, columns)
+    --* the tag-groups info below is generated via ((XrayExporter#initData)) > ((XrayTags#generateTagGroupsOverview)) > ((generate tag-groups info for XrayExporter)):
     local texts_for_copy = {
         self.iconless_items,
         self.iconless_persons,
@@ -232,6 +233,7 @@ function XrayExporter:showExportXrayItemsDialog()
             return self:getTitle(self.active_tab)
         end,
         tabs = {
+            --* all items:
             {
                 tab = self.export_nouns[1],
                 info = function()
@@ -250,6 +252,7 @@ function XrayExporter:showExportXrayItemsDialog()
                     return self:getExportDialogInfo(1, 3)
                 end,
             },
+            --* persons:
             {
                 tab = self.export_nouns[2],
                 info = function()
@@ -268,6 +271,7 @@ function XrayExporter:showExportXrayItemsDialog()
                     return self:getExportDialogInfo(2, 3)
                 end,
             },
+            --* terms:
             {
                 tab = self.export_nouns[3],
                 info = function()
@@ -286,6 +290,7 @@ function XrayExporter:showExportXrayItemsDialog()
                     return self:getExportDialogInfo(3, 3)
                 end,
             },
+            --* tag-groups:
             {
                 tab = self.export_nouns[4],
                 info = function()

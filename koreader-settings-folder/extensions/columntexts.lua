@@ -39,14 +39,14 @@ local ColumnTexts = WidgetContainer:extend{
 
 function ColumnTexts:getOneColumnText(column1_items, separator)
 	if not separator then
-		separator = ""
+		separator = self.white_line
 	end
 	return table_concat(column1_items, separator)
 end
 
 function ColumnTexts:getTwoColumnTexts(column1_items, column2_items, separator)
 	if not separator then
-		separator = ""
+		separator = self.white_line
 	end
 	if not column2_items then
 		column2_items = {}
@@ -66,7 +66,7 @@ end
 
 function ColumnTexts:getThreeColumnTexts(column1_items, column2_items, column3_items, separator)
 	if not separator then
-		separator = ""
+		separator = self.white_line
 	end
 	if not column2_items then
 		column2_items = {}

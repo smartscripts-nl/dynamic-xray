@@ -375,8 +375,9 @@ function XrayTags:generateTagGroupsOverview(clipboard_tab_no)
     KOR.registry:setClipboardTabText(clipboard_tab_no, table_concat(paragraphs_iconless, "\n\n")
         :gsub("^\n+", "", 1))
 
-    --? do we need this still? Maybe to generate clipboard texts?:
-    --[[KOR.columntexts:initDisplayColumnsCount(count)
+    -- #((generate tag-groups info for XrayExporter))
+    --! we need the code below, to get self.tag_groups etc. populated for ((XrayExporter#getInfoText)); otherwise the tag groups tab in XrayExporter would be empty!:
+    KOR.columntexts:initDisplayColumnsCount(count)
     if DX.s.overview_tabs_columns_count == 3 and count >= 3 then
         self.tag_groups, self.tag_groups2, self.tag_groups3 = KOR.columntexts:getThreeColumnTexts(paragraphs)
 
@@ -388,7 +389,7 @@ function XrayTags:generateTagGroupsOverview(clipboard_tab_no)
         self.tag_groups, self.tag_groups2, self.tag_groups3 = KOR.columntexts:getOneColumnText(paragraphs)
     end
 
-    self.tag_groups = self.tag_groups:gsub("^\n+", "")]]
+    self.tag_groups = self.tag_groups:gsub("^\n+", "")
 end
 
 --- @private
