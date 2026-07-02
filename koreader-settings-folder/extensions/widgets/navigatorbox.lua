@@ -200,12 +200,13 @@ function NavigatorBox:initTouch()
                 range = range,
             },
         },
-        HoldReleaseText = {
-            GestureRange:new{
-                ges = "hold_release",
+        TapText = {
+            GestureRange:new {
+                ges = "tap",
                 range = range,
             },
-            --* callback function when HoldReleaseText is handled as args:
+            --* callback function when TapText is handled as args:
+            --* tapped text determined via ((HtmlBoxWidget#onTapText)) > ((HtmlBoxWidget#updateHighlight)) > text, rects = getSelectedText(self.page_boxes, self.hold_start_pos, self.hold_end_pos):
             args = function(text)
                 if not text then
                     KOR.messages:notify(_("hold text could not be determined"))
@@ -213,7 +214,7 @@ function NavigatorBox:initTouch()
                 end
                 text = KOR.strings:cleanup(text)
 
-                -- #((NavigatorBox text hold callback))
+                -- #((NavigatorBox text tap callback))
                 local items_found = DX.tw:itemExists(text, text)
                 if not items_found then
                     KOR.messages:notify(_("no xray item found for") .. " " .. text)
@@ -235,11 +236,8 @@ function NavigatorBox:initTouch()
     }
 end
 
---? these two methods apparently are needed to get ((NavigatorBox text hold callback)) to work:
-function NavigatorBox:onHoldStartText()
-end
-function NavigatorBox:onHoldReleaseText()
-end
+--? this method apparently is needed to get ((NavigatorBox text tap callback)) to work:
+function NavigatorBox:onTapText() end
 
 --- @private
 function NavigatorBox:generateInfoPanel()

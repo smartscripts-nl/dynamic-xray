@@ -462,22 +462,28 @@ function HtmlBoxWidget:getLinkByPosition(pos)
     end
 end
 
-function HtmlBoxWidget:onTapText(arg, ges)
-    if G_reader_settings:isFalse("tap_to_follow_links") then
-        return
+function HtmlBoxWidget:onTapText(callback, ges)
+    if not callback then
+        return false
     end
 
-    if self.html_link_tapped_callback then
-        local pos = self:getPosFromAbsPos(ges.pos)
-        if pos then
-            local link = self:getLinkByPosition(pos)
-            if link then
-                self.garbage = arg
-                self.html_link_tapped_callback(link)
-                return true
-            end
-        end
+    self.hold_start_pos = Geom:new{
+        x = ges.pos.x - self.dimen.x,
+        y = ges.pos.y - self.dimen.y,
+    }
+    self.hold_end_pos = self.hold_start_pos
+
+    if self:updateHighlight() then
+        self:redrawHighlight()
     end
+
+    if not self.highlight_text then
+        return false
+    end
+
+    callback(self.highlight_text)
+
+    return true
 end
 
 function HtmlBoxWidget:setPageNumber(page_number)

@@ -175,7 +175,7 @@ Longpress on the filtered item in the side panel.]])
             },
             {
                 tab = _("viewer"),
-                html = _([[If you longpress a word marked with layout (in most cases bold or cursive) in the html box, the Xray item linked to this will be shown in the Item Viewer. In this way you can quikly inspect some additional information (e.g. linked items, mentions per chapter, etc.).<br /><br />With the back-button in the left half of the titlebar of the Viewer you can return to the Page Navigator.<br /><br />For now there's a bug which makes this back-button when you visit another tab in the Item Viewer. But you can return to the Page Navigator with the navigator icon in the bottom left corner.]])
+                html = _([[If you tap on a word marked with layout (in most cases bold or cursive) in the html box, the Xray item linked to this will be shown in the Item Viewer. In this way you can quikly inspect some additional information (e.g. linked items, mentions per chapter, etc.).<br /><br />With the back-button in the left half of the titlebar of the Viewer you can return to the Page Navigator.<br /><br />For now there's a bug which makes this back-button when you visit another tab in the Item Viewer. But you can return to the Page Navigator with the navigator icon in the bottom left corner.]])
             },
             {
                 tab = _("hotkeys"),
