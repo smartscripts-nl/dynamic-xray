@@ -34,6 +34,7 @@ local ColumnTexts = WidgetContainer:extend{
 		KOR.icons.xray_term_bare,
 		KOR.icons.xray_term_important_bare,
 	},
+	white_line = "\n\n",
 }
 
 function ColumnTexts:getOneColumnText(column1_items, separator)
@@ -104,14 +105,13 @@ end
 
 function ColumnTexts:getDuoWidget(args)
 
-	local separator = "\n\n"
 	local parent = args.parent
 	--* the caller is responsible for supplying two texts, one for each of the columns:
 	local column1_text = args.column1_text
-		:gsub("\n\n\n+", separator)
+		 :gsub("\n\n\n+", self.white_line)
 	local column2_text = args.column2_text
 		:gsub("^\n", "")
-		:gsub("\n\n\n+", separator)
+		 :gsub("\n\n\n+", self.white_line)
 	local face = args.face
 	local width = args.width
 	local container_width = args.container_width
@@ -276,7 +276,6 @@ end
 
 --- @private
 function ColumnTexts:manipulateColumnTexts(column_no, column_text)
-	local separator = "\n\n"
 	if type(column_text) == "function" then
 		column_text = column_text()
 	end
@@ -285,24 +284,24 @@ function ColumnTexts:manipulateColumnTexts(column_no, column_text)
 	end
 	if column_no == 1 then
 		column_text = self:addMetadataTopPadding(column_text)
-		return column_text:gsub("\n\n\n+", separator)
+		return column_text:gsub("\n\n\n+", self.white_line)
 	end
 
 	--* hotfixes: make sure items are always separated by a separator line; but not in the mentions tab of the XrayUI Page Information popup, were items are separated with only one linebreak, so in that case don't apply below fixes:
-	if column_text:match("\n\n") then
+	if column_text:match(self.white_line) then
 		for i = 1, 4 do
 			column_text = column_text
-				:gsub(self.separator_needles[i], "\n" .. self.separator_needles[i])
+				:gsub(self.separator_needles[i] .. " (%w)", "\n" .. self.separator_needles[i] .. " %1")
 		end
 		column_text = column_text
-			:gsub("\n\n\n+", separator)
+			:gsub("\n\n\n+", self.white_line)
 	end
 
 	column_text = self:addMetadataTopPadding(column_text)
 	return column_text
 		--* ensure column text aligns at top of column:
 		:gsub("^\n+", "", 1)
-		:gsub("\n\n\n+", separator)
+		:gsub("\n\n\n+", self.white_line)
 end
 
 --- @private
