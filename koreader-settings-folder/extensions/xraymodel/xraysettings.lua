@@ -440,6 +440,15 @@ function XraySettings.showSettingsManager(active_tab)
                 return self.settings_manager:showSettingsManagerInfo()
             end,
         },
+        KOR.buttoninfopopup:forXrayTranslations({
+            callback = function()
+                if DX.m:isPrivateDXversion() then
+                    return
+                end
+                UIManager:close(self.tabbed_interface)
+                DX.tm:manageTranslations()
+            end
+        }),
     }
 
     KOR.dialogsqueue:register({

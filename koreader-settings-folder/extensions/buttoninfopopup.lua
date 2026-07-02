@@ -724,12 +724,7 @@ function ButtonInfoPopup:forXrayTranslations(props)
 		icon = "translate",
 		info = "vertaal-ikoon | Vertaal teksten in de DX interface.",
 		callback_label = "vertaal",
-		callback = function()
-			if DX.m:isPrivateDXversion() then
-				return
-			end
-			DX.tm:manageTranslations()
-		end,
+		--! callback defined by calling module
 	}, props)
 end
 

@@ -17,7 +17,7 @@ local T = require("ffi/util").template
 
 local DX = DX
 local ipairs = ipairs
-local table = table
+local table_insert = table.insert
 
 --- @class XrayTranslationsManager
 local XrayTranslationsManager = WidgetContainer:new{
@@ -63,7 +63,7 @@ function XrayTranslationsManager:populateFilteredTranslations(translation)
     for _, itranslation in ipairs(self.translations) do
         local haystack = itranslation.text:lower()
         if haystack:match(needle) then
-            table.insert(self.filtered_translations, itranslation)
+            table_insert(self.filtered_translations, itranslation)
         end
     end
     if #self.filtered_translations == 0 then
@@ -102,10 +102,16 @@ function XrayTranslationsManager:getPreviousTranslation(translation)
 end
 
 function XrayTranslationsManager:manageTranslations(translation)
-    KOR.dialogs:showOverlay()
     if self.translations_chooser_dialog then
         UIManager:close(self.translations_chooser_dialog)
     end
+
+    KOR.dialogsqueue:register({
+        id = "translations_manager",
+        restore = function()
+            self:manageTranslations(translation)
+        end,
+    })
 
     self.translations_chooser_dialog = CenterContainer:new{
         dimen = Screen:getSize(),
@@ -153,7 +159,7 @@ function XrayTranslationsManager:manageTranslations(translation)
         perpage = self.items_per_page,
         _manager = self,
     }
-    table.insert(self.translations_chooser_dialog, self.translations_menu)
+    table_insert(self.translations_chooser_dialog, self.translations_menu)
     self.translations_menu.close_callback = function()
         UIManager:close(self.translations_chooser_dialog)
         KOR.dialogs:unregisterWidget(self.translations_chooser_dialog)
@@ -180,7 +186,7 @@ function XrayTranslationsManager:updateTranslationsTable(translation)
             UIManager:close(self.translations_menu)
             self:showTranslation(menu_item)
         end
-        table.insert(item_table, menu_item)
+        table_insert(item_table, menu_item)
     end
 
     title = _("Manage") .. " "

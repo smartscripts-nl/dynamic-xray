@@ -449,7 +449,6 @@ function XrayButtons:forPageNavigatorTopLeft(parent)
                 return parent:setFilterDouble()
             end,
         }),
-        KOR.buttoninfopopup:forXrayTranslations(),
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
                 DX.cb:execSettingsCallback(parent)
@@ -552,7 +551,6 @@ function XrayButtons:forUiInfoTopLeft(target, new_trigger, parent)
                 DX.u:toggleParagraphOrPageMode(parent, target, new_trigger)
             end,
         }),
-        KOR.buttoninfopopup:forXrayTranslations(),
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
                 parent:closeUiInfoDialog()
@@ -1176,7 +1174,6 @@ function XrayButtons:forItemViewerTopLeft(parent)
                 return DX.i:showListAndViewerHelp(2)
             end
         },
-        KOR.buttoninfopopup:forXrayTranslations(),
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
                 parent:closeItemViewer()
@@ -1439,7 +1436,6 @@ function XrayButtons:forListTopLeft(parent)
                 DX.ta:toggleItemsForTagsSelection()
             end,
         }),
-        KOR.buttoninfopopup:forXrayTranslations(),
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
                 parent:closeListDialog()
