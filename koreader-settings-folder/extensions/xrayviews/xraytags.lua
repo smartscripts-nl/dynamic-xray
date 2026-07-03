@@ -331,17 +331,17 @@ function XrayTags:generateTagGroup(tag)
 
     count = #tag_group.names
     if DX.s.overview_tabs_columns_count == 3 and count >= 3 then
-        self.names_group, self.names_group2, self.names_group3 = KOR.columntexts:getThreeColumnTexts(tag_group.names)
+        self.names_group, self.names_group2, self.names_group3 = KOR.columntexts:getThreeColumnTexts(tag_group.names, {}, {}, "\n")
         self.tag_group, self.tag_group2, self.tag_group3 = KOR.columntexts:getThreeColumnTexts(tag_group.paras)
 
     elseif DX.s.overview_tabs_columns_count == 2 and count >= 2 then
         --* self.names_group3 will always be nil here:
-        self.names_group, self.names_group2, self.names_group3 = KOR.columntexts:getTwoColumnTexts(tag_group.names)
+        self.names_group, self.names_group2, self.names_group3 = KOR.columntexts:getTwoColumnTexts(tag_group.names, {}, "\n")
         self.tag_group, self.tag_group2, self.tag_group3 = KOR.columntexts:getTwoColumnTexts(tag_group.paras)
 
     else
         --* self.names_group2 and self.names_group3 will always be nil here:
-        self.names_group, self.names_group2, self.names_group3 = KOR.columntexts:getOneColumnText(tag_group.names)
+        self.names_group, self.names_group2, self.names_group3 = KOR.columntexts:getOneColumnText(tag_group.names, "\n")
         self.tag_group, self.tag_group2, self.tag_group3 = KOR.columntexts:getOneColumnText(tag_group.paras)
     end
 
@@ -405,7 +405,8 @@ function XrayTags:populateTagGroup(tag_group, tag, item, tagged_count, is_first_
     local name = paragraph
         :gsub("^\n", "")
         :gsub("\n.+$", "")
-    table_insert(tag_group.names, name .. "\n")
+    --* linebreaks for names will be inserted in ((XrayTags#generateTagGroup)), via calls to ((ColumnTexts#getThreeColumnTexts)) etc., with separator argument set to "\n":
+    table_insert(tag_group.names, name)
     table_insert(tag_group.paras, paragraph .. "\n")
     table_insert(tag_group.paras_iconless, paragraph_iconless .. "\n")
 end

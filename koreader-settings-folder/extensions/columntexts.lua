@@ -67,10 +67,9 @@ function ColumnTexts:getThreeColumnTexts(column1_items, column2_items, column3_i
 	if not separator then
 		separator = KOR.strings.white_line
 	end
-	if not column2_items then
-		column2_items = {}
-	end
+	--* we assume that if column3_items isn't defined, then column2_items will also not be given:
 	if not column3_items then
+		column2_items = {}
 		column3_items = {}
 	end
 
