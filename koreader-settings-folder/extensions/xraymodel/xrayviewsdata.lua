@@ -1194,10 +1194,9 @@ function XrayViewsData:generateXrayExportOrLinkedItemInfo(items_count, item, ui_
     end
 
     KOR.columntexts:initDisplayColumnsCount(items_count)
-    KOR.registry:set("add_icon_indent", true)
     --* use smaller indent in case of 3-column-display:
     if DX.s.overview_tabs_columns_count == 3 then
-        iindent = "    "
+        iindent = "    "
     end
 
     local aliases, aliases_iconless = self:generateAliasesInfo(item, iindent, mode)
@@ -1222,12 +1221,12 @@ function XrayViewsData:generateXrayExportOrLinkedItemInfo(items_count, item, ui_
     local xray_type_icon = self:getItemTypeIcon(item)
     first_line, first_line_iconless = self:generateFirstLines(first_line, first_line_iconless, item, xray_type_icon, ui_explanation, meta_indent, mode)
 
+    local separator = DX.s.items_metadata_add_top_padding and KOR.strings.white_line or "\n"
     local info = table_concat({
         first_line,
         description,
-        "\n",
+        separator,
         hits,
-        "\n",
         aliases,
         linkwords,
         tags,
@@ -1237,9 +1236,8 @@ function XrayViewsData:generateXrayExportOrLinkedItemInfo(items_count, item, ui_
         info_iconless = table_concat({
             first_line_iconless,
             description,
-            "\n",
+            separator,
             hits_iconless,
-            "\n",
             aliases_iconless,
             linkwords_iconless,
             tags_iconless,
@@ -1289,16 +1287,16 @@ function XrayViewsData:generateHitsInfo(item, iindent, for_all_items_list)
         value = tonumber(item.book_hits)
         local separator = series_hits_added and ", " or KOR.icons.graph_bare .. " "
         local separator_iconless = series_hits_added and ", " or ""
-        hits = iindent .. hits .. separator .. _("book") .. " " .. tonumber(item.book_hits)
+        hits = hits .. separator .. _("book") .. " " .. tonumber(item.book_hits)
         hits_iconless = hits_iconless .. separator_iconless .. _("book") .. " " .. value
     end
 
     if for_all_items_list then
         local noun = "vermeldingen: "
-        hits_iconless = iindent .. noun .. hits_iconless
+        hits_iconless = noun .. hits_iconless
     end
 
-    return KOR.strings:splitLinesToMaxLength(hits, iindent), hits_iconless
+    return KOR.strings:splitLinesToMaxLength(hits, iindent) .. "\n", hits_iconless .. "\n"
 end
 
 --- @private

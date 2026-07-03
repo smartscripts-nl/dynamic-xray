@@ -10,6 +10,7 @@ local DX = DX
 local has_content = has_content
 local has_no_content = has_no_content
 local has_no_text = has_no_text
+local has_text = has_text
 local math_floor = math.floor
 local select = select
 local string = string
@@ -36,6 +37,7 @@ local Strings = WidgetContainer:extend{
     m_dash = "—",
     n_dash = "–",
     poem_max_line_length = 50,
+    white_line = "\n\n",
     whole_word_end = "%f[^%w_]",
     whole_word_start = "%f[%w_]",
 }
@@ -361,10 +363,56 @@ function Strings:removeNotes(text)
     return text:gsub(" ?%*", ""):gsub(" ?%†", ""):gsub(" ?%‡", "")
 end
 
-function Strings:splitLinesToMaxLength(text, indent, first_word, dont_indent_first_line, after_first_line_indent, is_iconless)
+--- @private
+function Strings:currentSplitLimit(max_length)
+    return max_length - (self.first_line and self.first_indent_len or self.rest_indent_len)
+end
+
+--- @private
+function Strings:currentSplitPrefix()
+    return self.first_line and "" or self.rest_indent
+end
+
+--- @private
+function Strings:splitParagraph(paragraph, lines, max_length)
+    local line = ""
+
+    self.first_indent_len = self.first_line_indent and self.first_line_indent:len() or 0
+    self.rest_indent_len = self.rest_indent and self.rest_indent:len() or 0
+
+    local prefix
+    for word in paragraph:gmatch("%S+") do
+        if line == "" then
+            line = word
+        elseif #line + 1 + #word <= self:currentSplitLimit(max_length) then
+            line = line .. " " .. word
+        elseif has_text(line) then
+            prefix = self:currentSplitPrefix()
+            if prefix then
+                line = prefix .. line
+            end
+            table_insert(lines, line)
+            self.first_line = false
+            line = word
+        end
+    end
+
+    prefix = self:currentSplitPrefix()
+    if prefix and has_text(line) then
+        line = prefix .. line
+    end
+    if has_text(line) then
+        table_insert(lines, line)
+    end
+end
+
+function Strings:splitLinesToMaxLength(text, first_line_indent, first_word, dont_indent_first_line, rest_indent, is_iconless)
+
     if has_no_content(text) then
         return ""
     end
+
+    self.rest_indent = rest_indent
     local max_length = DX.s.PN_info_panel_max_line_length
     --* this might e.g. be set in ((XrayViewsData#generateXrayExportOrLinkedItemInfo)):
     --* make line length correspond to the number of columns:
@@ -377,66 +425,34 @@ function Strings:splitLinesToMaxLength(text, indent, first_word, dont_indent_fir
     if has_content(first_word) then
         text = first_word .. text
     end
-    local test = text
-    if indent and not dont_indent_first_line then
-        test = indent .. text
+    if first_line_indent and not dont_indent_first_line then
+        text = first_line_indent .. text
     end
-    if test:len() <= max_length then
-        return test
+    --* the most simple case, no further adaptation needed:
+    if text:len() <= max_length then
+        return text
     end
-    local words = self:split(text, " ")
-    local lined_text = { "" }
-    local index = 1
-    local word, for_next_line, for_previous_line, parts, insert
-    count = #words
-    for i = 1, count do
-        word = words[i]
-        if word:match("\n") then
-            parts = self:split(word, "\n")
-            for_previous_line = parts[1]
-            for_next_line = parts[2]
-            test = lined_text[index] .. for_previous_line
+
+    local lines = {}
+    self.first_line = true
+
+    --* iterate over every line, preserving blank lines:
+    text = text:gsub("\r\n", "\n")
+
+    if text:sub(-1) ~= "\n" then
+        text = text .. "\n"
+    end
+
+    for paragraph in text:gmatch("(.-)\n") do
+        if paragraph == "" then
+            --* preserve blank line:
+            table_insert(lines, "")
         else
-            test = lined_text[index] .. word
-        end
-        if test:len() < max_length then
-            lined_text[index] = test .. " "
-            if for_next_line then
-                index = index + 1
-                table_insert(lined_text, for_next_line .. " ")
-            end
-        else
-            index = index + 1
-            if for_previous_line then
-                table_insert(lined_text, for_previous_line)
-                index = index + 1
-            end
-            insert = for_previous_line or word
-            table_insert(lined_text, insert .. " ")
+            self:splitParagraph(paragraph, lines, max_length)
         end
     end
 
-    local additional_indent = indent
-    --* e.g. set in ((XrayViewsData#generateXrayExportOrLinkedItemInfo)):
-    local add_icon_indent = KOR.registry:get("add_icon_indent")
-    if add_icon_indent then
-        local space = " "
-        additional_indent = indent .. space:rep(5)
-    end
-    count = #lined_text
-    for i = 1, count do
-        if indent and (not dont_indent_first_line or i > 1) then
-            if add_icon_indent and i > 1 then
-                indent = additional_indent
-            end
-            lined_text[i] = indent .. lined_text[i]
-        end
-        if after_first_line_indent and i > 1 then
-            lined_text[i] = after_first_line_indent .. lined_text[i]
-        end
-        lined_text[i] = lined_text[i]:gsub(" $", "")
-    end
-    return table_concat(lined_text, "\n")
+    return table_concat(lines, "\n")
 end
 
 function Strings:splitLinesToMaxLengthIconLess(text, indent, first_word, dont_indent_first_line, after_first_line_indent)
@@ -463,13 +479,13 @@ function Strings:hasWholeWordMatch(haystack, haystack_lower, needle, check_no_ad
         local has_match = haystack:match(self.whole_word_start .. needle .. self.whole_word_end)
 
         if has_match and check_no_adjacent_name_parts == "first" then
-            --* if first name was found, but it has a last name after it, then don't count this as a match (for partial matching); see ((skip false positives for partial matching)):
+            --* if first name was found, but it has a last name after it, then don't count this as a match (for partial matching):
             local has_name_after = haystack:match(self.whole_word_start .. needle .. " [A-Z][a-z]+")
             if has_name_after then
                 return false
             end
         elseif has_match and check_no_adjacent_name_parts == "last" then
-            --* if last name was found, but it has a first name before it, then don't count this as a match (for partial matching); see ((skip false positives for partial matching)):
+            --* if last name was found, but it has a first name before it, then don't count this as a match (for partial matching):
             local has_name_before = haystack:match("[A-Z][a-z]+ " .. needle .. self.whole_word_end)
             if has_name_before then
                 return false

@@ -34,19 +34,18 @@ local ColumnTexts = WidgetContainer:extend{
 		KOR.icons.xray_term_bare,
 		KOR.icons.xray_term_important_bare,
 	},
-	white_line = "\n\n",
 }
 
 function ColumnTexts:getOneColumnText(column1_items, separator)
 	if not separator then
-		separator = self.white_line
+		separator = KOR.strings.white_line
 	end
 	return table_concat(column1_items, separator)
 end
 
 function ColumnTexts:getTwoColumnTexts(column1_items, column2_items, separator)
 	if not separator then
-		separator = self.white_line
+		separator = KOR.strings.white_line
 	end
 	if not column2_items then
 		column2_items = {}
@@ -66,7 +65,7 @@ end
 
 function ColumnTexts:getThreeColumnTexts(column1_items, column2_items, column3_items, separator)
 	if not separator then
-		separator = self.white_line
+		separator = KOR.strings.white_line
 	end
 	if not column2_items then
 		column2_items = {}
@@ -108,10 +107,10 @@ function ColumnTexts:getDuoWidget(args)
 	local parent = args.parent
 	--* the caller is responsible for supplying two texts, one for each of the columns:
 	local column1_text = args.column1_text
-		 :gsub("\n\n\n+", self.white_line)
+		 :gsub("\n\n\n+", KOR.strings.white_line)
 	local column2_text = args.column2_text
 		:gsub("^\n", "")
-		 :gsub("\n\n\n+", self.white_line)
+		 :gsub("\n\n\n+", KOR.strings.white_line)
 	local face = args.face
 	local width = args.width
 	local container_width = args.container_width
@@ -283,34 +282,23 @@ function ColumnTexts:manipulateColumnTexts(column_no, column_text)
 		return
 	end
 	if column_no == 1 then
-		column_text = self:addMetadataTopPadding(column_text)
-		return column_text:gsub("\n\n\n+", self.white_line)
+		return column_text:gsub("\n\n\n+", KOR.strings.white_line)
 	end
 
 	--* hotfixes: make sure items are always separated by a separator line; but not in the mentions tab of the XrayUI Page Information popup, were items are separated with only one linebreak, so in that case don't apply below fixes:
-	if column_text:match(self.white_line) then
+	if column_text:match(KOR.strings.white_line) then
 		for i = 1, 4 do
 			column_text = column_text
 				:gsub(self.separator_needles[i] .. " (%w)", "\n" .. self.separator_needles[i] .. " %1")
 		end
 		column_text = column_text
-			:gsub("\n\n\n+", self.white_line)
+			:gsub("\n\n\n+", KOR.strings.white_line)
 	end
 
-	column_text = self:addMetadataTopPadding(column_text)
 	return column_text
 		--* ensure column text aligns at top of column:
 		:gsub("^\n+", "", 1)
-		:gsub("\n\n\n+", self.white_line)
-end
-
---- @private
-function ColumnTexts:addMetadataTopPadding(text)
-	if not DX.s.items_metadata_add_top_padding then
-		return text
-	end
-	return text
-		:gsub("( +" .. KOR.icons.graph_bare .. ")", "\n%1")
+		:gsub("\n\n\n+", KOR.strings.white_line)
 end
 
 function ColumnTexts:resetCache()
@@ -344,14 +332,14 @@ end
 
 function ColumnTexts:unsetColumnVars(reset_mode)
 	if reset_mode == 1 then
-		KOR.registry:unset("split_lines_in_half", "split_lines_in_thirds", "add_icon_indent")
+		KOR.registry:unset("split_lines_in_half", "split_lines_in_thirds")
 		return
 	elseif reset_mode == 2 then
-		KOR.registry:unset("split_lines_in_thirds", "add_icon_indent")
+		KOR.registry:unset("split_lines_in_thirds")
 		return
 	end
 	--* reset_mode == 3:
-	KOR.registry:unset("split_lines_in_half", "add_icon_indent")
+	KOR.registry:unset("split_lines_in_half")
 end
 
 return ColumnTexts
