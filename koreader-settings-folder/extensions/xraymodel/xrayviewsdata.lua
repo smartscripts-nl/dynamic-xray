@@ -18,6 +18,7 @@ local table = table
 local table_concat = table.concat
 local table_insert = table.insert
 local tonumber = tonumber
+local type = type
 
 local count, count2
 --- @type XrayDataLoader data_loader
@@ -878,7 +879,7 @@ function XrayViewsData:getBaseItemsCount()
     return #self.item_table[1]
 end
 
---* ((XrayViewsData#upgradeNeedleItem)) has to be called in the caller context, before calling getRelatedItems:
+--* ((XrayViewsData#upgradeNeedleItem)) has to be called in the caller context, before calling getLinkedItems:
 function XrayViewsData:getLinkedItems(needle_item)
 
     --* don't return here when needle_item has no linkwords, because we also search in the other xray items, to see if THEIR linkwords match to the name of the needle_item...
@@ -904,6 +905,20 @@ function XrayViewsData:getLinkedItems(needle_item)
         linked_items = parent:placeImportantItemsAtTop(linked_items, -1)
     end
     return linked_items, linked_names_index
+end
+
+--* ((XrayViewsData#upgradeNeedleItem)) has to be called in the caller context, before calling getTagGroupItems:
+function XrayViewsData:getTagGroupItems(needle_item)
+
+    local tag_group_items = {}
+    local tags = KOR.strings:splitByCommaOrSpace(needle_item.tags)
+    local tag_group
+    local tcount = #tags
+    for i = 1, tcount do
+        tag_group = tags[i]
+
+    end
+    return tag_group_items
 end
 
 --- @private
@@ -1182,6 +1197,12 @@ function XrayViewsData:generateXrayExportOrLinkedItemInfo(items_count, item, ui_
     local first_line_iconless = {
         linebreak,
     }
+
+    --* when generating data for the tag-groups tab in the Item Viewer, via ((XrayDialogs#getItemProps)) > ((XrayTags#getRelatedTagGroupItems)), names of tags will be inserted as uppercase strings:
+    if type(item) == "string" then
+        return linebreak .. item .. KOR.strings.white_line
+    end
+
     local iindent
     local meta_indent
     local description = self:addDescriptionDisplayIndentation(item.description)

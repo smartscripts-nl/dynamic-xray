@@ -134,7 +134,7 @@ end
 
 --- @private
 function XrayExporter:addTagsOverview(info, active_tab)
-    if active_tab < 4 or has_no_items(DX.m.taggroups) then
+    if active_tab < 4 or has_no_items(DX.m.tag_groups) then
         return info
     end
     return DX.ta:getTagsForExporterOverview(info)
@@ -179,7 +179,7 @@ function XrayExporter:initData()
     return true
 end
 
---- @param mode string Either "for_all_items_list" or "for_linked_items_tab"
+--- @param mode string Either "for_all_items_list", "for_linked_items_tab" or "for_tag_groups_tab"
 function XrayExporter:generateXrayItemsOverview(items, mode, clipboard_tab_no)
     local paragraphs_iconless = {}
     local paragraph, paragraph_iconless

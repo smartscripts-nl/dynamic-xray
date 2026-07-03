@@ -27,6 +27,7 @@ local Size = require("ui/size")
 local T = require("ffi/util").template
 
 local DX = DX
+local has_items = has_items
 local has_no_items = has_no_items
 local has_no_text = has_no_text
 local has_text = has_text
@@ -976,7 +977,7 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
     --* this sometimes is needed when we made an update to the hits computation routines:
     DX.vd:updateChapterHtmlIfMissing(needle_item)
 
-    local name, icon, main_info, hits_info, linked_items_info, linked_items_info2, linked_items_info3, quotes_info = self:getItemProps(needle_item)
+    local name, icon, main_info, hits_info, linked_items_info, linked_items_info2, linked_items_info3, tag_groups_info, tag_groups_info2, tag_groups_info3, quotes_info = self:getItemProps(needle_item)
 
     --! we need this when opening an item in the Item Viewer from Page Navigator:
     if not needle_item.index then
@@ -1007,6 +1008,9 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
         linked_items_info = linked_items_info,
         linked_items_info2 = linked_items_info2,
         linked_items_info3 = linked_items_info3,
+        tag_groups_info = tag_groups_info,
+        tag_groups_info2 = tag_groups_info2,
+        tag_groups_info3 = tag_groups_info3,
         quotes_info = quotes_info,
         tapped_word = nil,
         book_hits = book_hits,
@@ -1034,7 +1038,7 @@ function XrayDialogs:showItemViewer(needle_item, props)
 
     self.current_viewer_item = needle_item
 
-    local tabs = DX.b:getItemViewerTabs(props.main_info, props.hits_info, props.linked_items_info, props.quotes_info, props.linked_items_info2, props.linked_items_info3)
+    local tabs = DX.b:getItemViewerTabs(props.main_info, props.hits_info, props.linked_items_info, props.linked_items_info2, props.linked_items_info3, props.tag_groups_info, props.tag_groups_info2, props.tag_groups_info3, props.quotes_info)
 
     --* the Registry var will only be set when called from ((XrayController#showQuotesManager)) and we want to go immediately to the quotes tab:
     local active_tab = KOR.registry:getOnce("active_tab") or 1
@@ -1085,6 +1089,20 @@ function XrayDialogs:getItemProps(needle_item)
         linked_items_info, linked_items_info2, linked_items_info3 = DX.ex:generateXrayItemsOverview(linked_items, "for_linked_items_tab", 3)
     end
 
+    local tag_groups_info, tag_groups_info2, tag_groups_info3
+    if has_text(needle_item.tags) then
+        --* always refresh related tag-group items:
+        --if not needle_item.related_tag_group_items then
+        local tag_groups = DX.ta:getRelatedTagGroupItems(needle_item)
+        --end
+        if has_items(tag_groups) then
+            --* show tag-group items in two column display if that setting has been enabled AND the screen width is greater than its height:
+            KOR.columntexts:initDisplayColumnsCount(#tag_groups)
+            --* tag_groups_info2 will be nil when use_two_column_display was false:
+            tag_groups_info, tag_groups_info2, tag_groups_info3 = DX.ex:generateXrayItemsOverview(tag_groups, "for_tag_groups_tab", 4)
+        end
+    end
+
     --? hotfix: for some reason only viewer called from List doesn't have prop pos_chapter_quotes, so here we circumvent that by referencing DX.m.items_by_id, which DOES have the prop:
     --* also by using this circumvention we ensure dynamic update of the prop after quotes were saved in ((XrayQuotes#saveQuote)) - there DX.m.items_by_id[id].pos_chapter_quotes is being updated dynamically:
     local id = needle_item.id
@@ -1095,7 +1113,7 @@ function XrayDialogs:getItemProps(needle_item)
         quotes_info = DX.q:generateQuotesList(needle_item)
     end
 
-    return name, icon, main_info, hits_info, linked_items_info, linked_items_info2, linked_items_info3, quotes_info
+    return name, icon, main_info, hits_info, linked_items_info, linked_items_info2, linked_items_info3, tag_groups_info, tag_groups_info2, tag_groups_info3, quotes_info
 end
 
 function XrayDialogs:closeItemViewer()
@@ -1146,7 +1164,7 @@ function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_wo
     local book_hits = needle_item.book_hits
     DX.fd:setFormItemId(needle_item.id)
 
-    local name, icon, main_info, hits_info, linked_items_info, linked_items_info2, linked_items_info3, quotes_info = self:getItemProps(needle_item)
+    local name, icon, main_info, hits_info, linked_items_info, linked_items_info2, linked_items_info3, tag_groups_info, tag_groups_info2, tag_groups_info3, quotes_info = self:getItemProps(needle_item)
 
     --! if you want to show additional or specific props in the info, those props have to be added in ((XrayDataLoader#_loadAllData)) > ((set xray item props)), AND you have to add them to the menu_item props in ((XrayViewsData#filterAndPopulateItemTables))! Search for "mentioned_in" to see an example of this...
     if not hits_info then
@@ -1164,6 +1182,9 @@ function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_wo
         linked_items_info = linked_items_info,
         linked_items_info2 = linked_items_info2,
         linked_items_info3 = linked_items_info3,
+        tag_groups_info = tag_groups_info,
+        tag_groups_info2 = tag_groups_info2,
+        tag_groups_info3 = tag_groups_info3,
         quotes_info = quotes_info,
         tapped_word = nil,
         book_hits = book_hits,

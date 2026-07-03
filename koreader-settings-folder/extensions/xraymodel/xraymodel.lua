@@ -64,7 +64,7 @@ local XrayModel = WidgetContainer:new{
     sorting_method = "hits",
     switch_first_and_sur_name = false,
     tab_display_counts = { 0, 0, 0 },
-    taggroups = {},
+    tag_groups = {},
     tags_associative = {},
     terms_by_id = {},
     use_tapped_word_data = false,
@@ -146,11 +146,11 @@ function XrayModel:getSortingProp()
 end
 
 function XrayModel:getTagGroupsWithCountsWithTotals()
-    local taggroups = KOR.tables:shallowCopy(self.taggroups)
+    local tag_groups = KOR.tables:shallowCopy(self.tag_groups)
     local taggroups_with_totals = {}
-    count = #taggroups
+    count = #tag_groups
     for i = 1, count do
-        table_insert(taggroups_with_totals, taggroups[i] .. " (" .. #self.tags_associative[taggroups[i]] .. ")")
+        table_insert(taggroups_with_totals, tag_groups[i] .. " (" .. #self.tags_associative[tag_groups[i]] .. ")")
     end
     return taggroups_with_totals
 end
@@ -287,10 +287,6 @@ function XrayModel:getNameParts(item)
     return needles
 end
 
-function XrayModel:addTags(tags, id)
-    return self:addAssociativeTags(tags, id)
-end
-
 function XrayModel:updateAllTags()
 
     --* if an edited item has no tags, then still we must loop through all items, because a tag might have been removed from the updated item:
@@ -326,7 +322,7 @@ function XrayModel:updateTags(item, mode)
 end
 
 --- @private
-function XrayModel:addAssociativeTags(tags, id)
+function XrayModel:addTags(tags, id)
     if not has_text(tags) then
         return false
     end
@@ -350,15 +346,15 @@ end
 
 --- @private
 function XrayModel:sortAndSetTags()
-    self.taggroups = {}
+    self.tag_groups = {}
     for key in pairs(self.tags_associative) do
-        table_insert(self.taggroups, key)
+        table_insert(self.tag_groups, key)
     end
-    table_sort(self.taggroups)
+    table_sort(self.tag_groups)
 end
 
 function XrayModel:getAllAssignedTagsString()
-    return table_concat(self.taggroups, ", ")
+    return table_concat(self.tag_groups, ", ")
 end
 
 function XrayModel:toggleSortingMode()

@@ -1119,7 +1119,7 @@ function XrayButtons:forTranslationViewer(parent, translation)
     }
 end
 
-function XrayButtons:getItemViewerTabs(main_info, hits_info, linked_items_info, quotes_info, linked_items_info2, linked_items_info3)
+function XrayButtons:getItemViewerTabs(main_info, hits_info, linked_items_info, linked_items_info2, linked_items_info3, tag_groups_info, tag_groups_info2, tag_groups_info3, quotes_info)
     local has_chapter_info = hits_info ~= ""
     local hits_tab_enabled, hits_tab_color = KOR.buttonprops:getButtonState(has_chapter_info)
     local tabs = {
@@ -1136,12 +1136,12 @@ function XrayButtons:getItemViewerTabs(main_info, hits_info, linked_items_info, 
             html = "<div style='margin: 1em 2em' class='redhat'>" .. hits_info .. "</div>",
         },
     }
-    local has_linked_items1 = has_text(linked_items_info)
-    local has_linked_items2 = has_text(linked_items_info2)
-    local has_linked_items3 = has_text(linked_items_info3)
 
+    local has_tab1 = has_text(linked_items_info)
+    local has_tab2 = has_text(linked_items_info2)
+    local has_tab3 = has_text(linked_items_info3)
     local tab_name = _("linked items")
-    if has_linked_items3 and has_linked_items2 and has_linked_items1 then
+    if has_tab3 and has_tab2 and has_tab1 then
         table_insert(tabs, {
             tab = tab_name,
             html = linked_items_info,
@@ -1149,21 +1149,49 @@ function XrayButtons:getItemViewerTabs(main_info, hits_info, linked_items_info, 
             html3 = linked_items_info3,
             content_type = "text",
         })
-    elseif has_linked_items2 and has_linked_items1 then
+    elseif has_tab2 and has_tab1 then
         table_insert(tabs, {
             tab = tab_name,
             html = linked_items_info,
             html2 = linked_items_info2,
             content_type = "text",
         })
-    elseif has_linked_items1 then
+    elseif has_tab1 then
         table_insert(tabs, {
             tab = tab_name,
             html = linked_items_info,
             content_type = "text",
         })
     end
-    if has_text(quotes_info) then
+
+    has_tab1 = has_text(tag_groups_info)
+    has_tab2 = has_text(tag_groups_info2)
+    has_tab3 = has_text(tag_groups_info3)
+    tab_name = _("tag_groups")
+    if has_tab3 and has_tab2 and has_tab1 then
+        table_insert(tabs, {
+            tab = tab_name,
+            html = tag_groups_info,
+            html2 = tag_groups_info2,
+            html3 = tag_groups_info3,
+            content_type = "text",
+        })
+    elseif has_tab2 and has_tab1 then
+        table_insert(tabs, {
+            tab = tab_name,
+            html = tag_groups_info,
+            html2 = tag_groups_info2,
+            content_type = "text",
+        })
+    elseif has_tab1 then
+        table_insert(tabs, {
+            tab = tab_name,
+            html = tag_groups_info,
+            content_type = "text",
+        })
+    end
+
+   if has_text(quotes_info) then
         table_insert(tabs, {
             tab = _("quotes"),
             html = quotes_info,

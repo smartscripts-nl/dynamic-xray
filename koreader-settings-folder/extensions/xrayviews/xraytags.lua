@@ -24,7 +24,7 @@ local table_concat = table.concat
 local table_insert = table.insert
 local table_sort = table.sort
 
-local count
+local count, count2
 local DGENERIC_ICON_SIZE = G_defaults:readSetting("DGENERIC_ICON_SIZE")
 
 --- @class XrayTags
@@ -53,31 +53,31 @@ local XrayTags = WidgetContainer:new{
 --* e.g. used to select a tag for Page Navigator tagged items navigation:
 --* compare for selecting a tag-group to explore: ((XrayTags#showTagGroupSelector))
 function XrayTags:showTagFilterSelector(mode)
-    local taggroups = DX.m.taggroups
-    if self:showNoTagsNotification(taggroups, "with_explanation") then
+    local tag_groups = DX.m.tag_groups
+    if self:showNoTagsNotification(tag_groups, "with_explanation") then
         return
     end
     local buttons_per_row = 4
     local buttons = { {} }
     local row = 1
     local button_width = math_floor(Screen:getWidth() / 6)
-    count = #taggroups
+    count = #tag_groups
     local dialog_width = count < buttons_per_row and count * button_width or buttons_per_row * button_width
     --* add extra width for top buttons left:
     dialog_width = dialog_width + 3 * DGENERIC_ICON_SIZE
     dialog_width = math_min(Screen:getWidth() - 20, dialog_width)
     for i = 1, count do
         table_insert(buttons[row], {
-            text = taggroups[i],
+            text = tag_groups[i],
             font_bold = false,
             width = button_width,
             callback = function()
                 UIManager:close(self.choose_tag_filter_dialog)
                 if mode == "list" then
-                    DX.c:filterItemsByTag(taggroups[i])
+                    DX.c:filterItemsByTag(tag_groups[i])
 
                 else
-                    DX.pn:betweenTagsNavigationActivate(taggroups[i])
+                    DX.pn:betweenTagsNavigationActivate(tag_groups[i])
                     if DX.s.PN_show_tagged_items_navigation_alert then
                         KOR.dialogs:niceAlert(_("Tag group navigation"), T(_("You can now browse:\n\n* with the arrow buttons\n* or with N and P on your keyboard\n\nfrom page with tagged items to next/previous page with tagged items%1\n\nDisable this popup by setting PN_show_tagged_items_navigation_alert to false%2"), KOR.strings.ellipsis, KOR.strings.ellipsis), {
                             delay = 7,
@@ -173,8 +173,8 @@ function XrayTags:resetTagGroups()
 end
 
 function XrayTags:getTagsForExporterOverview(info)
-    local taggroups = self.tags_concatenated or table_concat(DX.m.taggroups, " - ")
-    self.tags_concatenated = taggroups
+    local tag_groups = self.tags_concatenated or table_concat(DX.m.tag_groups, " - ")
+    self.tags_concatenated = tag_groups
 
     info = KOR.strings:split(info, "\n", "capture_empty_entity")
     table_insert(info, 2, _("Tags in this overview") .. ": " .. self.tags_concatenated)
@@ -441,33 +441,56 @@ function XrayTags:populateTagGroups(tag_groups, item)
 end
 
 function XrayTags:getNextTagGroup(tag)
-    local taggroups = DX.m.taggroups
+    local tag_groups = DX.m.tag_groups
     local next_tag_index
-    count = #taggroups
+    count = #tag_groups
     for i = 1, count do
-        if taggroups[i] == tag then
+        if tag_groups[i] == tag then
             next_tag_index = i + 1
             if next_tag_index > count then
                 next_tag_index = 1
             end
-            return taggroups[next_tag_index]
+            return tag_groups[next_tag_index]
         end
     end
 end
 
 function XrayTags:getPreviousTagGroup(tag)
-    local taggroups = DX.m.taggroups
+    local tag_groups = DX.m.tag_groups
     local previous_tag_index
-    count = #taggroups
+    count = #tag_groups
     for i = 1, count do
-        if taggroups[i] == tag then
+        if tag_groups[i] == tag then
             previous_tag_index = i - 1
             if previous_tag_index < 1 then
                 previous_tag_index = count
             end
-            return taggroups[previous_tag_index]
+            return tag_groups[previous_tag_index]
         end
     end
+end
+
+function XrayTags:getRelatedTagGroupItems(needle_item)
+    local tags = DX.m:splitByCommaOrSpace(needle_item.tags)
+
+    local tag_group_ids, id, prefix
+    local related_tag_group_items = {}
+    local tcount = #tags
+    for i = 1, tcount do
+        tag_group_ids = DX.m.tags_associative[tags[i]]
+        count2 = tag_group_ids and #tag_group_ids or 0
+        if count2 > 1 then
+            prefix = i == 1 and "" or KOR.strings.white_line
+            table_insert(related_tag_group_items, prefix .. KOR.strings:upper(tags[i]))
+            for t = 1, count2 do
+                id = tag_group_ids[t]
+                if id ~= needle_item.id then
+                    table_insert(related_tag_group_items, DX.m.items_by_id[id])
+                end
+            end
+        end
+    end
+    return related_tag_group_items
 end
 
 function XrayTags:isSameTagGroup(tag, other_tag)

@@ -376,7 +376,7 @@ function XrayTappedWords:collectionSortAndPurge(needle_items, needle_matches_ful
 end
 
 --* include_name_match is only truthy when we pressed a word in the ebook text:
---* ((XrayViewsData#upgradeNeedleItem)) has to be called before calling getRelatedItems:
+--* ((XrayViewsData#upgradeNeedleItem)) has to be called before calling getLinkedItems:
 --- @private
 function XrayTappedWords:getCollection(needle_items, compare_multiple_items, include_name_match, needle_matches_fullname, tapped_word)
 
