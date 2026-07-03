@@ -423,6 +423,33 @@ end
 
 --- @param parent XrayPageNavigator
 function XrayButtons:forPageNavigatorTopLeft(parent)
+    local filter_button
+    filter_button = KOR.buttoninfopopup:forXrayPageNavigatorFilter({
+        callback = function()
+            if parent.filter_item_double then
+                return
+            end
+            if parent.filter_item then
+                filter_button:setIcon("filter")
+                return parent:resetFilter()
+            end
+            filter_button:setIcon("filter-reset")
+            return parent:setFilter()
+        end,
+    })
+
+    local double_filter_button
+    double_filter_button = KOR.buttoninfopopup:forXrayPageNavigatorFilterDouble({
+        callback = function()
+            if parent.filter_item_double then
+                double_filter_button:setIcon("filter-double")
+                return parent:resetFilterDouble()
+            end
+            double_filter_button:setIcon("filter-double-reset")
+            return parent:setFilterDouble()
+        end,
+    })
+
     local buttons = {
         {
             icon = "info-slender",
@@ -430,25 +457,8 @@ function XrayButtons:forPageNavigatorTopLeft(parent)
                 return DX.i:showPageNavigatorHelp(parent)
             end,
         },
-        KOR.buttoninfopopup:forXrayPageNavigatorFilter({
-            callback = function()
-                if parent.self.filter_item_double then
-                    return
-                end
-                if parent.filter_item then
-                    return parent:resetFilter()
-                end
-                return parent:setFilter()
-            end,
-        }),
-        KOR.buttoninfopopup:forXrayPageNavigatorFilterDouble({
-            callback = function()
-                if parent.filter_item_double then
-                    return parent:resetFilterDouble()
-                end
-                return parent:setFilterDouble()
-            end,
-        }),
+        filter_button,
+        double_filter_button,
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
                 DX.cb:execSettingsCallback(parent)

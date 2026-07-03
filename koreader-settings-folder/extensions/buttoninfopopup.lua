@@ -469,14 +469,19 @@ function ButtonInfoPopup:forXrayPageNavigatorContextButtons(props)
 end
 
 function ButtonInfoPopup:forXrayPageNavigatorFilter(props)
-	local single_filter_active = DX.pn.filter_item and not DX.pn.filter_item_double
 	local filter_info = _("filter icon | Filter pages for occurrences of the item currently displayed in the bottom info panel. So the Navigator only jump between pages which have this item.")
 	local reset_filter_info = _("reset filter icon | Reset the filter for Page Navigator.")
 	return KOR.buttonprops:set({
-		icon = single_filter_active and "filter-reset" or "filter",
+		icon = DX.pn.filter_item and "filter-reset" or "filter",
 		icon_size_ratio = 0.53,
-		info = single_filter_active and reset_filter_info or filter_info,
+		info = DX.pn.filter_item and reset_filter_info or filter_info,
+		info_update = function()
+			return DX.pn.filter_item and reset_filter_info or filter_info
+		end,
 		callback_label = DX.pn.filter_item and _("reset filter") or _("filter"),
+		callback_label_update = function()
+			return DX.pn.filter_item and _("reset filter") or _("filter")
+		end,
 		--! callback defined by calling module
 	}, props)
 end
@@ -488,7 +493,13 @@ function ButtonInfoPopup:forXrayPageNavigatorFilterDouble(props)
 		icon = DX.pn.filter_item_double and "filter-double-reset" or "filter-double",
 		icon_size_ratio = 0.53,
 		info = DX.pn.filter_item_double and reset_filter_info or filter_info,
+		info_update = function()
+			return DX.pn.filter_item_double and reset_filter_info or filter_info
+		end,
 		callback_label = DX.pn.filter_item_double and _("reset double filter") or _("double filter"),
+		callback_label_update = function()
+			return DX.pn.filter_item_double and _("reset double filter") or _("double filter")
+		end,
 		--! callback defined by calling module
 	}, props)
 end

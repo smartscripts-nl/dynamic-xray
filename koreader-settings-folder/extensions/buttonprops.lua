@@ -6,10 +6,11 @@ local require = require
 local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
+local _ = KOR:initCustomTranslations()
 
 local DX = DX
 local pairs = pairs
-local table = table
+local table_insert = table.insert
 local type = type
 
 local DGENERIC_ICON_SIZE = G_defaults:readSetting("DGENERIC_ICON_SIZE")
@@ -59,22 +60,26 @@ function ButtonProps:setAutoExec(callback)
 	return self.auto_exec_delay - self.auto_exec_delay_display_correction
 end
 
-function ButtonProps:initInfoCallback(parent_button)
+function ButtonProps:initInfoCallback(button_props)
+
 	local info_props = {}
-	self:setCustomIconForLastRemainingButton(parent_button)
-	for name, prop in pairs(parent_button.info_params) do
-		self:setParentButtonAndPopupProps(parent_button, info_props, name, prop)
+	self:setCustomIconForLastRemainingButton(button_props)
+	for name, prop in pairs(button_props.info_params) do
+		self:setParentButtonAndPopupProps(button_props, info_props, name, prop)
 	end
 
 	--* ButtonInfoPopup could have defined a overruling info_callback:
-	if not parent_button.info_callback then
+	if not button_props.info_callback then
 		--- only show the info callback upon tap:
-		parent_button["info_callback"] = function()
-			self:resetMovableState(parent_button)
+		button_props["info_callback"] = function()
+			self:resetMovableState(button_props)
+			if button_props.info_update then
+				info_props.info = button_props.info_update()
+			end
 			self:popupInfo(info_props)
 		end
 	end
-	parent_button["info_callbacks_show_indicators"] = true
+	button_props["info_callbacks_show_indicators"] = true
 end
 
 function ButtonProps:popupInfo(info_props)
@@ -89,6 +94,9 @@ function ButtonProps:popupInfo(info_props)
 	local info = info_props.info
 	local overruling_button_label = info_props.overruling_button_label
 	local callback = info_props.callback
+	if info_props.callback_label_update then
+		info_props.callback_label = info_props.callback_label_update()
+	end
 	local callback_label = info_props.callback_label:lower()
 	local font_face = "x_smallinfofont"
 	local font_size = 14
@@ -144,7 +152,7 @@ function ButtonProps:popupInfo(info_props)
 
 	if auto_exec_delay then
 		auto_exec_delay = auto_exec_delay - self.auto_exec_delay_display_correction
-		info = info .. "\n\nauto-exec in " .. auto_exec_delay .. " seconden..."
+		info = info .. "\n\n" .. _("auto-exec in") .. " " .. auto_exec_delay .. " " .. _("seconds...")
 	end
 
 	local args = {
@@ -153,18 +161,18 @@ function ButtonProps:popupInfo(info_props)
 	self.alert_dialog = KOR.dialogs:niceAlert(title, info, args)
 end
 
-function ButtonProps:initChoiceCallback(parent)
+function ButtonProps:initChoiceCallback(button_props)
 	local choice_props = {}
-	for name, prop in pairs(parent.choice_params) do
-		self:setParentButtonAndPopupProps(parent, choice_props, name, prop)
+	for name, prop in pairs(button_props.choice_params) do
+		self:setParentButtonAndPopupProps(button_props, choice_props, name, prop)
 	end
 
 	--- only show the popup info and choice dialog upon hold:
-	parent["hold_callback"] = function()
-		self:resetMovableState(parent)
+	button_props["hold_callback"] = function()
+		self:resetMovableState(button_props)
 		self:popupChoice(choice_props)
 	end
-	parent["show_hold_callback_indicator"] = true
+	button_props["show_hold_callback_indicator"] = true
 end
 
 function ButtonProps:popupChoice(choice_props)
@@ -193,14 +201,14 @@ function ButtonProps:popupChoice(choice_props)
 	local icon_text = icon and {
 		icon = icon,
 		icon_size_ratio = icon_size_ratio,
-		text = " " .. callback_label or " hoofdfunctie",
+		text = " " .. callback_label or " " .. _("main function"),
 	}
 
 	icon = self:setCustomIconForLastButton(icon, choice_props, hold_callback_label)
 	local icon_text_hold = icon and hold_callback and {
 		icon = icon,
 		icon_size_ratio = icon_size_ratio,
-		text = " " .. hold_callback_label or " nevenfunctie",
+		text = " " .. hold_callback_label or " " .. _("secondary function"),
 	}
 
 	local hold_text
@@ -242,7 +250,7 @@ function ButtonProps:popupChoice(choice_props)
 		 },
 	 }}
 	if hold_callback then
-		table.insert(buttons[1], 2, {
+		table_insert(buttons[1], 2, {
 			icon_text = icon_text_hold,
 			text = hold_text,
 			text_font_face = font_face,
@@ -500,7 +508,7 @@ function ButtonProps:injectAdditionalChoiceCallbacks(buttons, choice_props, prop
 			if ec.for_separate_rows then
 				KOR.buttontablefactory:injectButtonIntoTargetRows(buttons, item, 2, 3)
 			else
-				table.insert(buttons[1], 3, item)
+				table_insert(buttons[1], 3, item)
 			end
 		end
 	end
