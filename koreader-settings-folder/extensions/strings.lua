@@ -412,7 +412,8 @@ function Strings:splitLinesToMaxLength(text, first_line_indent, first_word, dont
         return ""
     end
 
-    self.rest_indent = rest_indent
+    --* let rest_indent be at least equal to first_line_indent, so no ugly soft wraps:
+    self.rest_indent = rest_indent or first_line_indent and first_line_indent .. "   "
     local max_length = DX.s.max_info_line_length
     --* this might e.g. be set in ((XrayViewsData#generateXrayExportOrLinkedItemInfo)):
     --* make line length correspond to the number of columns:
