@@ -174,6 +174,13 @@ local XraySettings = WidgetContainer:new{
             explanation = _("This variable determines whether a chapter-occurrences-histogram will be shown in the Item Viewer tabs (or not)."),
             locked = 0,
         },
+        max_info_line_length = {
+            value = 120,
+            explanation = _("This setting determines the max line length for information in the Page Navigator bottom info panel. For text in columns the max line length is derived from this value (e.g. divided by three for 3-column-texts). You can use this to prevent ugly soft line wraps."),
+            locked = 0,
+            type = "number",
+            after_change_callback = "reset_page_navigator_cache",
+        },
         night_mode_color = {
             value = 0,
             explanation = _("This settings determines which color will be used for displaying several UI elements IN NIGHT MODE. Valid values: 0 - 5. 0 = white, 5 = a lighter grade of white."),
@@ -190,12 +197,6 @@ local XraySettings = WidgetContainer:new{
         no_back_to_previous_dialog_notification = {
             value = false,
             explanation = "If set to true, no navigate-back-to_previous-dialog information popup will be shown. This setting can be set to true from that same information popup.",
-            locked = 0,
-        },
-        overview_tabs_columns_count = {
-            value = 3,
-            options = { 1, 2, 3 },
-            explanation = "This variable determines whether overview tabs like in the Xray Page Information Popup, or the Tag Group Viewer, will display their data in this number of columns.",
             locked = 0,
         },
         --* PN stands for the PageNavigator:
@@ -233,13 +234,6 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
             type = "number",
             after_change_callback = "reload_page_navigator",
-        },
-        PN_info_panel_max_line_length = {
-            value = 70,
-            explanation = "Page Navigator: this setting determines the max line length for information in the bottom info panel. You can use this to prevent ugly soft line wraps. If a text is displayed in two columns, this value will automatically be halved for this particular text.",
-            locked = 0,
-            type = "number",
-            after_change_callback = "reset_page_navigator_cache",
         },
         -- #((non_filtered_items_layout))
         --* consumed in ((XrayPages#activateNonFilteredItemsLayout)):
@@ -299,6 +293,12 @@ local XraySettings = WidgetContainer:new{
             type = "number",
             locked = 0,
             after_change_callback = "set_tab_buttons_font_size",
+        },
+        text_columns = {
+            value = 3,
+            options = { 1, 2, 3 },
+            explanation = _("This variable determines in how many columns columned texts will be displayed. Een example of this can be seen in the linked-items-tab in the Item Viewer."),
+            locked = 0,
         },
         top_book_items_limit = {
             value = 8,

@@ -314,8 +314,8 @@ function ColumnTexts:initDisplayColumnsCount(items_count)
 	end
 	if
 		DX.s.is_mobile_device
-		or DX.s.overview_tabs_columns_count == 1
-		or items_count < DX.s.overview_tabs_columns_count
+		or DX.s.text_columns == 1
+		or items_count < DX.s.text_columns
 		or not self.is_landscape_screen
 	then
 		self:unsetColumnVars(1)
@@ -323,7 +323,7 @@ function ColumnTexts:initDisplayColumnsCount(items_count)
 	end
 
 	--* ccount can't be 1 here, that situation was handled at start of current method:
-	local ccount = DX.s.overview_tabs_columns_count
+	local ccount = DX.s.text_columns
 	self:unsetColumnVars(ccount)
 
 	KOR.registry:set(self.line_split_vars[ccount], true)

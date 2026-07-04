@@ -239,7 +239,7 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
     local info_separator = "\n\n"
 
     --* three column text:
-    if #paragraph_hits_names >= 3 and DX.s.overview_tabs_columns_count == 3 then
+    if #paragraph_hits_names >= 3 and DX.s.text_columns == 3 then
 
         --* prepare columns for the overview tab:
         paragraph_hits_names, paragraph_hits_names2, paragraph_hits_names3 = KOR.columntexts:getThreeColumnTexts(paragraph_hits_names, paragraph_hits_names2, paragraph_hits_names3, names_separator)
@@ -248,7 +248,7 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
         paragraph_hits_info, paragraph_hits_info2, paragraph_hits_info3 = KOR.columntexts:getThreeColumnTexts(paragraph_hits_info, paragraph_hits_info2, paragraph_hits_info3, info_separator)
 
     --* two column text:
-    elseif #paragraph_hits_names >= 2 and DX.s.overview_tabs_columns_count == 2 then
+    elseif #paragraph_hits_names >= 2 and DX.s.text_columns == 2 then
         --* prepare columns for the overview tab:
         --* paragraph_hits_names3 will be nil here:
         paragraph_hits_names, paragraph_hits_names2, paragraph_hits_names3 = KOR.columntexts:getTwoColumnTexts(paragraph_hits_names, paragraph_hits_names2, names_separator)

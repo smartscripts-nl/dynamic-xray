@@ -88,7 +88,7 @@ function XrayInformation:showGeneralDXTips(parent, initial_tab)
 </ul>]])
             },
             {
-                tab = _("icons"),
+                tab = _("display"),
                 content_type = "text",
                 html = indent_simple .. _("ITEM TYPES") .. "\n" ..
                     indent .. KOR.icons.xray_person_bare .. _([[ = a person]]) ..
@@ -96,7 +96,8 @@ function XrayInformation:showGeneralDXTips(parent, initial_tab)
                     indent .. KOR.icons.xray_term_bare .. _([[ = a term/thing/concept]]) ..
                     indent .. KOR.icons.xray_term_important_bare .. _([[ = an important term/thing/concept]]) ..
                     indent .. KOR.icons.lock_bare .. _([[ = marks a non-breakable name]]) ..
-                    "\n\n" .. indent_simple .. _("HIT-RELIABILITY ICONS") .. "\n\n" .. self:getMatchReliabilityExplanation(indent_simple),
+                    "\n\n" .. indent_simple .. _("HIT-RELIABILITY ICONS") .. "\n\n" .. self:getMatchReliabilityExplanation(indent_simple)
+                        .. "\n" .. indent .. _("TEXT COLUMNS\n\nBy tweaking XraySettings.max_info_line_length you can try to make text in columns display (e.g. the linked items tab in the Item Viewer) display without soft line wraps.\n\nIf lines still are being wrapped, then try setting XraySettings.text_columns to a lower value."),
             },
             {
                 tab = _("tag-groups"),

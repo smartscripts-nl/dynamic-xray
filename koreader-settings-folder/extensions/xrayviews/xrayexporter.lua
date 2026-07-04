@@ -186,8 +186,8 @@ function XrayExporter:generateXrayItemsOverview(items, mode, clipboard_tab_no)
     local column1, column2, column3 = {}, {}, {}
     count = #items
 
-    local use_two_column_display = DX.s.overview_tabs_columns_count == 2 and count >= 2
-    local use_three_column_display = DX.s.overview_tabs_columns_count == 3 and count >= 3
+    local use_two_column_display = DX.s.text_columns == 2 and count >= 2
+    local use_three_column_display = DX.s.text_columns == 3 and count >= 3
 
     local half_way = math_ceil(count / 2)
     local third_way = math_ceil(count / 3)
@@ -241,13 +241,13 @@ function XrayExporter:showExportXrayItemsDialog()
                     return self:getExportDialogInfo(1, 1)
                 end,
                 info2 = function()
-                    if DX.s.overview_tabs_columns_count < 2 then
+                    if DX.s.text_columns < 2 then
                         return nil
                     end
                     return self:getExportDialogInfo(1, 2)
                 end,
                 info3 = function()
-                    if DX.s.overview_tabs_columns_count < 3 then
+                    if DX.s.text_columns < 3 then
                         return nil
                     end
                     return self:getExportDialogInfo(1, 3)
@@ -260,13 +260,13 @@ function XrayExporter:showExportXrayItemsDialog()
                     return self:getExportDialogInfo(2, 1)
                 end,
                 info2 = function()
-                    if DX.s.overview_tabs_columns_count < 2 then
+                    if DX.s.text_columns < 2 then
                         return nil
                     end
                     return self:getExportDialogInfo(2, 2)
                 end,
                 info3 = function()
-                    if DX.s.overview_tabs_columns_count < 3 then
+                    if DX.s.text_columns < 3 then
                         return nil
                     end
                     return self:getExportDialogInfo(2, 3)
@@ -279,13 +279,13 @@ function XrayExporter:showExportXrayItemsDialog()
                     return self:getExportDialogInfo(3, 1)
                 end,
                 info2 = function()
-                    if DX.s.overview_tabs_columns_count < 2 then
+                    if DX.s.text_columns < 2 then
                         return nil
                     end
                     return self:getExportDialogInfo(3, 2)
                 end,
                 info3 = function()
-                    if DX.s.overview_tabs_columns_count < 3 then
+                    if DX.s.text_columns < 3 then
                         return nil
                     end
                     return self:getExportDialogInfo(3, 3)
@@ -298,13 +298,13 @@ function XrayExporter:showExportXrayItemsDialog()
                     return self:getExportDialogInfo(4, 1)
                 end,
                 info2 = function()
-                    if DX.s.overview_tabs_columns_count < 2 then
+                    if DX.s.text_columns < 2 then
                         return nil
                     end
                     return self:getExportDialogInfo(4, 2)
                 end,
                 info3 = function()
-                    if DX.s.overview_tabs_columns_count < 3 then
+                    if DX.s.text_columns < 3 then
                         return nil
                     end
                     return self:getExportDialogInfo(4, 3)

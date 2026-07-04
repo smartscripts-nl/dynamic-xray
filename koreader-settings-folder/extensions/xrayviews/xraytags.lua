@@ -330,11 +330,11 @@ function XrayTags:generateTagGroup(tag)
     --* return as text: column1, column2, column3:
 
     count = #tag_group.names
-    if DX.s.overview_tabs_columns_count == 3 and count >= 3 then
+    if DX.s.text_columns == 3 and count >= 3 then
         self.names_group, self.names_group2, self.names_group3 = KOR.columntexts:getThreeColumnTexts(tag_group.names, {}, {}, "\n")
         self.tag_group, self.tag_group2, self.tag_group3 = KOR.columntexts:getThreeColumnTexts(tag_group.paras)
 
-    elseif DX.s.overview_tabs_columns_count == 2 and count >= 2 then
+    elseif DX.s.text_columns == 2 and count >= 2 then
         --* self.names_group3 will always be nil here:
         self.names_group, self.names_group2, self.names_group3 = KOR.columntexts:getTwoColumnTexts(tag_group.names, {}, "\n")
         self.tag_group, self.tag_group2, self.tag_group3 = KOR.columntexts:getTwoColumnTexts(tag_group.paras)
@@ -378,10 +378,10 @@ function XrayTags:generateTagGroupsOverview(clipboard_tab_no)
     -- #((generate tag-groups info for XrayExporter))
     --! we need the code below, to get self.tag_groups etc. populated for ((XrayExporter#getInfoText)); otherwise the tag groups tab in XrayExporter would be empty!:
     KOR.columntexts:initDisplayColumnsCount(count)
-    if DX.s.overview_tabs_columns_count == 3 and count >= 3 then
+    if DX.s.text_columns == 3 and count >= 3 then
         self.tag_groups, self.tag_groups2, self.tag_groups3 = KOR.columntexts:getThreeColumnTexts(paragraphs)
 
-    elseif DX.s.overview_tabs_columns_count == 2 and count >= 2 then
+    elseif DX.s.text_columns == 2 and count >= 2 then
         self.tag_groups, self.tag_groups2, self.tag_groups3 = KOR.columntexts:getTwoColumnTexts(paragraphs)
 
     else

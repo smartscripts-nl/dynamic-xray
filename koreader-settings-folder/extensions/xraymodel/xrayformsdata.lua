@@ -344,7 +344,7 @@ function XrayFormsData:getFilteredItem(new_props, entire_series_hits, hits_in_bo
 end
 
 function XrayFormsData:getTypeLabel(item)
-    return has_text(item.name) and KOR.strings:limitLength(item.name, DX.s.PN_info_panel_max_line_length) .. ": " or ""
+    return has_text(item.name) and KOR.strings:limitLength(item.name, DX.s.max_info_line_length) .. ": " or ""
 end
 
 function XrayFormsData:getAliasesText(item)
@@ -353,7 +353,7 @@ function XrayFormsData:getAliasesText(item)
     end
     local noun = item.aliases:match(" ") and _("aliases") or _("alias")
     noun = noun .. KOR.icons.arrow_bare .. " "
-    return KOR.strings:limitLength(noun .. " " .. item.aliases, DX.s.PN_info_panel_max_line_length)
+    return KOR.strings:limitLength(noun .. " " .. item.aliases, DX.s.max_info_line_length)
 end
 
 function XrayFormsData:getLinkwordsText(item)
@@ -362,7 +362,7 @@ function XrayFormsData:getLinkwordsText(item)
     end
     local noun = item.linkwords:match(" ") and _("link-terms") or _("link-term")
     noun = noun .. KOR.icons.arrow_bare .. " "
-    return KOR.strings:limitLength(noun .. " " .. item.linkwords, DX.s.PN_info_panel_max_line_length)
+    return KOR.strings:limitLength(noun .. " " .. item.linkwords, DX.s.max_info_line_length)
 end
 
 function XrayFormsData:getFormTabCallback(mode, active_form_tab, item_copy)

@@ -1216,7 +1216,7 @@ function XrayViewsData:generateXrayExportOrLinkedItemInfo(items_count, item, ui_
 
     KOR.columntexts:initDisplayColumnsCount(items_count)
     --* use smaller indent in case of 3-column-display:
-    if DX.s.overview_tabs_columns_count == 3 then
+    if DX.s.text_columns == 3 then
         iindent = "    "
     end
 
