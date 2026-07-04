@@ -26,19 +26,22 @@ local XrayInformation = WidgetContainer:extend {
     },
 }
 
---* called from ((XrayTappedWords#getXrayItemAsDictionaryEntry)), for info icon:
-function XrayInformation:getMatchReliabilityExplanation()
-    if self.match_reliability_explanations then
+--* e.g. called from ((XrayTappedWords#getXrayItemAsDictionaryEntry)), for info icon:
+function XrayInformation:getMatchReliabilityExplanation(indent)
+    if not indent and self.match_reliability_explanations then
         return self.match_reliability_explanations
+    end
+    if not indent then
+        indent = ""
     end
     local indicators = self.match_reliability_indicators
     local explanations = {
-        indicators.full_name .. _(" full name"),
-        indicators.alias .. _(" alias"),
-        indicators.first_name .. _(" first name"),
-        indicators.last_name .. _(" surname"),
-        indicators.partial_match .. _(" partial hit"),
-        indicators.linked_item .. _(" linked item"),
+        indent .. indicators.full_name .. _(" full name"),
+        indent .. indicators.alias .. _(" alias / short name"),
+        indent .. indicators.first_name .. _(" first name"),
+        indent .. indicators.last_name .. _(" surname"),
+        indent .. indicators.partial_match .. _(" partial hit"),
+        indent .. indicators.linked_item .. _(" linked item"),
     }
     self.match_reliability_explanations = table_concat(explanations, "\n") .. "\n\n" .. _([[The type of similarity determines the icon and indicates how reliable this hit is (a wrong hit might be shown). Full names and aliases are the most reliable of all.
 ]]) .. "\n"
@@ -53,6 +56,7 @@ function XrayInformation:showGeneralDXTips(parent, initial_tab)
     local screen_dims = Screen:getSize()
 
     local indent = "\n   "
+    local indent_simple = "   "
     KOR.dialogs:htmlBoxTabbed(initial_tab or 1, {
         parent = parent or DX.pn,
         title = _("General DX tips"),
@@ -86,11 +90,13 @@ function XrayInformation:showGeneralDXTips(parent, initial_tab)
             {
                 tab = _("icons"),
                 content_type = "text",
-                html = indent .. KOR.icons.xray_person_bare .. _([[ = a person]]) ..
+                html = indent_simple .. _("ITEM TYPES") .. "\n" ..
+                    indent .. KOR.icons.xray_person_bare .. _([[ = a person]]) ..
                     indent .. KOR.icons.xray_person_important_bare .. _([[ = an important person]]) ..
                     indent .. KOR.icons.xray_term_bare .. _([[ = a term/thing/concept]]) ..
                     indent .. KOR.icons.xray_term_important_bare .. _([[ = an important term/thing/concept]]) ..
-                    indent .. KOR.icons.lock_bare .. _([[ = marks a non-breakable name]]),
+                    indent .. KOR.icons.lock_bare .. _([[ = marks a non-breakable name]]) ..
+                    "\n\n" .. indent_simple .. _("HIT-RELIABILITY ICONS") .. "\n\n" .. self:getMatchReliabilityExplanation(indent_simple),
             },
             {
                 tab = _("tag-groups"),
