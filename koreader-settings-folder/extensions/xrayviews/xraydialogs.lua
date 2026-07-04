@@ -756,7 +756,7 @@ function XrayDialogs:showList(focus_item, dont_show, select_mode)
     self.called_from_list = false
     self:closeListDialog()
     --* don't add Items List to ((DialogsQueue)) if it is only being used as items selector:
-    if not items_for_select and not DX.ta.select_for_tags_tag and not DX.pn.do_double_filter_select then
+    if #items_for_select == 0 and not DX.ta.select_for_tags_tag and not DX.pn.do_double_filter_select then
         KOR.dialogsqueue:register({
             id = "xray_items_list",
             restore = function()
@@ -988,8 +988,9 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
     if needle_item.index > current_items_count then
         needle_item.index = current_items_count
     end
+    local dialog_queue_id = "item_viewer"
     KOR.dialogsqueue:register({
-        id = "item_viewer",
+        id = dialog_queue_id,
         restore = function()
             self:closeItemViewer()
             self:viewItem(needle_item, called_from_list, tapped_word, skip_item_search)
@@ -1001,6 +1002,7 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
         icon = icon,
         name = name,
         index = needle_item.index,
+        dialog_queue_id = dialog_queue_id,
         current_items_count = current_items_count,
         key_events_module = "XrayItemViewer",
         main_info = main_info,
@@ -1025,6 +1027,7 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
     self:showActionResultMessage()
 end
 
+--* this method was called from ((XrayDialogs#viewItem)) or ((XrayDialogs#viewTappedWordItem)):
 --- @private
 function XrayDialogs:showItemViewer(needle_item, props)
     local name = DX.vd:addNonBreakableIndicator(props.name:gsub(KOR.icons.lock_bare, ""), needle_item)
@@ -1046,6 +1049,7 @@ function XrayDialogs:showItemViewer(needle_item, props)
         title = title,
         top_buttons_left = DX.b:forItemViewerTopLeft(self, needle_item),
         tabs = tabs,
+        dialog_queue_id = props.dialog_queue_id,
         --* in external items viewer mode don't generate chapter histogram:
         bottom_widget = not props.has_only_external_items and DX.s.IV_show_occurrences_histogram and self:generateOccurrencesHistogram(needle_item),
         window_size = "max",
@@ -1140,8 +1144,9 @@ end
 --* compare this viewer for tapped words for the regular Item Viewer in ((XrayDialogs#viewItem)):
 function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_word)
 
+    local dialog_queue_id = "tapped_word_item_viewer"
     KOR.dialogsqueue:register({
-        id = "tapped_word_item_viewer",
+        id = dialog_queue_id,
         restore = function()
             self:viewTappedWordItem(needle_item, called_from_list, tapped_word)
         end,
@@ -1175,6 +1180,7 @@ function XrayDialogs:viewTappedWordItem(needle_item, called_from_list, tapped_wo
         icon = icon,
         name = name,
         index = needle_item.tapped_index,
+        dialog_queue_id = dialog_queue_id,
         current_items_count = current_items_count,
         key_events_module = "TappedWordViewer",
         main_info = main_info,

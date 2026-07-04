@@ -206,7 +206,10 @@ end
 function TitleBar:setWidgetProps()
     self.is_landscape_screen = KOR.screenhelpers:isLandscapeScreen()
 
-    self.dialog_queue_id = KOR.dialogsqueue:getLastId()
+    --* for tabbed interfaces initiated and handled after activating new tabs via ((Dialogs#htmlBoxTabbed)) or ((Dialogs#textBoxTabbed)), dialog_queue_id might be set there already, when defined in the caller; see e.g. ((XrayDialogs#viewItem)) and ((XrayDialogs#viewTappedWordItem)):
+    if not self.dialog_queue_id then
+        self.dialog_queue_id = KOR.dialogsqueue:getLastId()
+    end
 
     if self.submenu_buttontable then
         self.bottom_line_thickness = Size.line.thick

@@ -106,6 +106,7 @@ local TextViewer = InputContainer:extend{
     covers_fullscreen = false,
     default_hold_callback = nil, --* on each default button
     dialog_height = nil,
+    dialog_queue_id = nil,
     event_after_close = nil,
     key_events_module = nil,
     extra_buttons = nil,
@@ -1601,6 +1602,7 @@ function TextViewer:initTitleBar()
         close_callback = function()
             self:onClose()
         end,
+        dialog_queue_id = self.dialog_queue_id,
         tab_buttons_left = tab_buttons_left,
         show_parent = self,
         top_buttons_left = self.top_buttons_left,

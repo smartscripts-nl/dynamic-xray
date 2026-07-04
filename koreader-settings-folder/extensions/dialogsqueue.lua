@@ -55,7 +55,7 @@ function DialogsQueue:register(queue_props)
         return
     end
 
-    --! change position of already registered dialogs! (by removing the previous entry and then re-registering):
+    --! change position of already registered, earlier called dialogs! (by removing the previous entry and then re-registering):
     if self.dialog_ids[queue_props.id] then
         self:unregister(queue_props.id)
     end

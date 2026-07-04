@@ -54,8 +54,6 @@ local XrayPageNavigator = WidgetContainer:new{
     popup_buttons = nil,
     popup_menu = nil,
     popup_menu_coords = nil,
-    --* to be used in ((NavigatorBox text hold callback)):
-    return_from_item_viewer_message_shown = false,
     return_to_current_item = nil,
     return_to_item_no = nil,
     return_to_page = nil,

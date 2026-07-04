@@ -55,6 +55,7 @@ local HtmlBox = InputContainer:extend{
     content_type = "html",
     --* see for HtmlBox CSS ((Html#getHtmlBoxCss)):
     css = nil,
+    dialog_queue_id = nil,
     frame_content_fullscreen = nil,
     frame_content_windowed = nil,
     fullscreen = false,
@@ -987,6 +988,7 @@ function HtmlBox:generateTitleBar()
         close_hold_callback = function()
             self:onHoldClose()
         end,
+        dialog_queue_id = self.dialog_queue_id,
         has_small_close_button_padding = true,
         align = self.title_alignment,
         show_parent = self,
