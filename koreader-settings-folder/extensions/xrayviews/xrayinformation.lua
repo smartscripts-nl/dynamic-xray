@@ -124,6 +124,7 @@ function XrayInformation:showGeneralDXTips(parent, initial_tab)
     <li>Do you want to <em>explore all items in the current series or book</em>, then call the Items List. With a gesture defined by you, or with Shift+L on your physical (BT) keyboard. If you tap on a iten in the list, you can then explore relations between item via the context buttons in the footer of the Item Viewer.<br /> </li>
     </ol>
     </li>
+    <li><strong>returning to previous dialogs</strong><br />In many DX dialogs you can return to the previous dialog by tapping on the back-button in the left half of the title bar.<br /> </li>
     <li><strong>using the bars in the Occurrences-per-Chapter-Histogram</strong><br />In this Histogram in the Page Navigator you can <em>quickly inspect the locations in the chapter where the active item in the info panel is being mentioned</em>, by tapping on the bar belonging to that chapter. So you don't have to jump to the chapter in the ebook first, to do this.</li>
 <ul>]])
             },
