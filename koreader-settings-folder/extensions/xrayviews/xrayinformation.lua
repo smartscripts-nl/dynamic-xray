@@ -38,8 +38,8 @@ function XrayInformation:getMatchReliabilityExplanation(indent)
     local indicators = self.match_reliability_indicators
     local explanations = {
         indent .. indicators.full_name .. _(" full name"),
-        indent .. indicators.alias .. _(" alias"),
         indent .. indicators.short_name .. _(" short name"),
+        indent .. indicators.alias .. _(" alias"),
         indent .. indicators.first_name .. _(" first name"),
         indent .. indicators.last_name .. _(" surname"),
         indent .. indicators.partial_match .. _(" partial hit"),
@@ -61,7 +61,7 @@ function XrayInformation:showGeneralDXTips(parent, initial_tab)
     local indent_simple = "   "
     KOR.dialogs:htmlBoxTabbed(initial_tab or 1, {
         parent = parent or DX.pn,
-        title = _("General DX tips"),
+        title = _("General DX help/tips"),
         modal = true,
         name = "general_dx_tips",
         button_font_weight = "normal",
@@ -196,7 +196,7 @@ Longpress on the filtered item in the side panel.]])
             },
             {
                 tab = _("viewer"),
-                html = _([[If you tap on a word marked with layout (in most cases bold or cursive) in the html box, the Xray item linked to this will be shown in the Item Viewer. In this way you can quikly inspect some additional information (e.g. linked items, mentions per chapter, etc.).<br /><br />With the back-button in the left half of the titlebar of the Viewer you can return to the Page Navigator.<br /><br />For now there's a bug which makes this back-button when you visit another tab in the Item Viewer. But you can return to the Page Navigator with the navigator icon in the bottom left corner.]])
+                html = _([[If you tap or longpress on a word marked with layout (in most cases bold or cursive) in the html box, the Xray item linked to this will be shown in the Item Viewer. In this way you can quikly inspect some additional information (e.g. linked items, mentions per chapter, etc.).<br /><br />With the back-button in the left half of the titlebar of the Viewer you can return to the Page Navigator.<br /><br />For now there's a bug which makes this back-button when you visit another tab in the Item Viewer. But you can return to the Page Navigator with the navigator icon in the bottom left corner.]])
             },
             {
                 tab = _("hotkeys"),

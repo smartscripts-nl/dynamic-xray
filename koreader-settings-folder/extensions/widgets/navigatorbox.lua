@@ -200,6 +200,16 @@ function NavigatorBox:initTouch()
                 range = range,
             },
         },
+        HoldReleaseText = {
+            GestureRange:new {
+                ges = "hold_release",
+                range = range,
+            },
+            --* callback function when HoldReleaseText is handled as args:
+            args = function(text)
+                return self:handleBoxGesture(text)
+            end
+        },
         TapText = {
             GestureRange:new {
                 ges = "tap",
@@ -208,36 +218,42 @@ function NavigatorBox:initTouch()
             --* callback function when TapText is handled as args:
             --* tapped text determined via ((HtmlBoxWidget#onTapText)) > ((HtmlBoxWidget#updateHighlight)) > text, rects = getSelectedText(self.page_boxes, self.hold_start_pos, self.hold_end_pos):
             args = function(text)
-                if not text then
-                    KOR.messages:notify(_("hold text could not be determined"))
-                    return true
-                end
-                text = KOR.strings:cleanup(text)
-
-                -- #((NavigatorBox text tap callback))
-                local items_found = DX.tw:itemExists(text, text)
-                if not items_found then
-                    KOR.messages:notify(_("no xray item found for") .. " " .. text)
-                    return true
-                end
-
-                --* items will already be sorted by name or hits...
-                local item = DX.b:forItemsCollectionPopup(items_found, text, "get_first_item_only")
-                --* this is needed to make reloading Page Navigator possible:
-                self.page_navigator.page_navigator = nil
-                DX.d:viewItem(item)
-                if not DX.pn.return_from_item_viewer_message_shown then
-                    KOR.messages:notify(_("back to page navigator: navigator icon bottom left"), 3)
-                    DX.pn.return_from_item_viewer_message_shown = true
-                end
-                return true
+                return self:handleBoxGesture(text)
             end
         },
     }
 end
 
---? this method apparently is needed to get ((NavigatorBox text tap callback)) to work:
+--- @private
+function NavigatorBox:handleBoxGesture(text)
+    if not text then
+        KOR.messages:notify("tekst niet bepaald")
+        return true
+    end
+    text = KOR.strings:cleanup(text)
+
+    local items_found = DX.tw:itemExists(text, text)
+    if not items_found then
+        KOR.messages:notify("geen xray item gevonden voor " .. text)
+        return true
+    end
+
+    --* items will already be sorted by name or hits...
+    local item = DX.b:forItemsCollectionPopup(items_found, text, "get_first_item_only")
+    --* this is needed to make reloading Page Navigator possible:
+    self.page_navigator.page_navigator = nil
+    DX.d:viewItem(item)
+    if not DX.pn.return_from_item_viewer_message_shown then
+        KOR.messages:notify("terug naar Pagina Navigator: navigator-ikoon linksonder", 3)
+        DX.pn.return_from_item_viewer_message_shown = true
+    end
+    return true
+end
+
+--? these methods apparently are needed as a kind of hooks to get ((NavigatorBox#handleBoxGesture)) to work with tapping and long press gestures:
 function NavigatorBox:onTapText() end
+function NavigatorBox:onHoldStartText() end
+function NavigatorBox:onHoldReleaseText() end
 
 --- @private
 function NavigatorBox:generateInfoPanel()
