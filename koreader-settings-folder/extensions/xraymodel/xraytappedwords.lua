@@ -580,7 +580,14 @@ function XrayTappedWords:doSimpleSearchScoreMatch(item)
     local short_names_lower = item.short_names:lower()
     local description = item.description:lower()
     local needle_lower = "%f[%w]" .. DX.vd.filter_string:lower() .. "%f[%W]"
-    return (name_lower:match(needle_lower) or description:match(needle_lower) or aliases_lower:match(needle_lower) or short_names_lower:match(needle_lower)) and 100, DX.i:getMatchReliabilityIndicator("full_name") or 0, nil
+    if name_lower:match(needle_lower) or description:match(needle_lower) then
+        return 100, DX.i:getMatchReliabilityIndicator("partial_match")
+    elseif aliases_lower:match(needle_lower) then
+        return 100, DX.i:getMatchReliabilityIndicator("alias")
+    elseif short_names_lower:match(needle_lower) then
+        return 100, DX.i:getMatchReliabilityIndicator("short_name")
+    end
+    return 0, nil
 end
 
 --- @private
@@ -596,7 +603,7 @@ function XrayTappedWords:getMatchingRulesFromFilterString()
         end, indicator = "alias" },
         { score = 100, key = "short_names", does_match = function(v)
             return v == needle
-        end, indicator = "alias" },
+        end, indicator = "short_name" },
 
         { score = 70, key = "name", does_match = function(v)
             return v:sub(1, nlen) == needle
@@ -614,7 +621,7 @@ function XrayTappedWords:getMatchingRulesFromFilterString()
 
         { score = 50, key = "short_names", does_match = function(v)
             return v:find(needle, 1, true)
-        end, indicator = "alias" },
+        end, indicator = "short_name" },
 
         { score = 40, key = "name", does_match = function(v)
             return v:find(needle, 1, true)
@@ -625,6 +632,9 @@ function XrayTappedWords:getMatchingRulesFromFilterString()
         { score = 30, key = "aliases", does_match = function(v)
             return v:find(needle, 1, true)
         end, indicator = "alias" },
+        { score = 30, key = "short_names", does_match = function(v)
+            return v:find(needle, 1, true)
+        end, indicator = "short_name" },
         { score = 20, key = "linkwords", does_match = function(v)
             return v:find(needle, 1, true)
         end, indicator = "linked_item" },

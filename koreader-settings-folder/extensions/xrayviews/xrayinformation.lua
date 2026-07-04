@@ -22,6 +22,7 @@ local XrayInformation = WidgetContainer:extend {
         last_name = KOR.icons.xray_half_right_bare,
         partial_match = KOR.icons.xray_partial_bare,
         linked_item = KOR.icons.xray_link_bare,
+        short_name = KOR.icons.xray_short_name_bare,
         tag = KOR.icons.tag_open_bare,
     },
 }
@@ -37,7 +38,8 @@ function XrayInformation:getMatchReliabilityExplanation(indent)
     local indicators = self.match_reliability_indicators
     local explanations = {
         indent .. indicators.full_name .. _(" full name"),
-        indent .. indicators.alias .. _(" alias / short name"),
+        indent .. indicators.alias .. _(" alias"),
+        indent .. indicators.short_name .. _(" short name"),
         indent .. indicators.first_name .. _(" first name"),
         indent .. indicators.last_name .. _(" surname"),
         indent .. indicators.partial_match .. _(" partial hit"),
@@ -88,18 +90,6 @@ function XrayInformation:showGeneralDXTips(parent, initial_tab)
 </ul>]])
             },
             {
-                tab = _("display"),
-                content_type = "text",
-                html = indent_simple .. _("ITEM TYPES") .. "\n" ..
-                    indent .. KOR.icons.xray_person_bare .. _([[ = a person]]) ..
-                    indent .. KOR.icons.xray_person_important_bare .. _([[ = an important person]]) ..
-                    indent .. KOR.icons.xray_term_bare .. _([[ = a term/thing/concept]]) ..
-                    indent .. KOR.icons.xray_term_important_bare .. _([[ = an important term/thing/concept]]) ..
-                    indent .. KOR.icons.lock_bare .. _([[ = marks a non-breakable name]]) ..
-                    "\n\n" .. indent_simple .. _("HIT-RELIABILITY ICONS") .. "\n\n" .. self:getMatchReliabilityExplanation(indent_simple)
-                        .. "\n" .. indent .. _("TEXT COLUMNS\n\nBy tweaking XraySettings.max_info_line_length you can try to make text in columns display (e.g. the linked items tab in the Item Viewer) display without soft line wraps.\n\nIf lines still are being wrapped, then try setting XraySettings.text_columns to a lower value."),
-            },
-            {
                 tab = _("tag-groups"),
                 html = _([[
     <p>Tag-groups are handy to show Xray items (e.g. members of a family, items being associated to the same event or a same ship, etc.) as a related group. You can then afterwards quickly inspect them.<br /> </p>
@@ -109,6 +99,20 @@ function XrayInformation:showGeneralDXTips(parent, initial_tab)
     <li><strong>adding multiple items in one go:</strong><br /><ol><li>tap on the plus icon in the overview of all tag-groups</li>supply a name for the tag-group to be added (a tag-group-name which already exists is allowed)<li>select items by tapping on them (if you tap on an item which is already member of the tag-groups, you will be asked whether you want te remove this item from the group, or want to preserve it)</li><li>tap on the floppy icon at the bottom of the list to save the tag-group.</li></ol><br /> </li>
     <li><strong>adding one item from the Item Editor:</strong><br />Enter one or more names of tag-groups in the field <em>Tags:</em>, under the tab <em>Metadata</em>.<br /> </li>
     </ul>]])
+            },
+            {
+                tab = _("display"),
+                content_type = "text",
+                html = indent_simple .. _("ITEM TYPES") .. "\n" ..
+                    indent .. KOR.icons.xray_person_bare .. _([[ a person]]) ..
+                    indent .. KOR.icons.xray_person_important_bare .. _([[ an important person]]) ..
+                    indent .. KOR.icons.xray_term_bare .. _([[ a term/thing/concept]]) ..
+                    indent .. KOR.icons.xray_term_important_bare .. _([[ an important term/thing/concept]]) ..
+                    "\n" .. indent .. _("ITEM PROPS") .. "\n" ..
+                    indent .. KOR.icons.tag_open_bare .. _([[ item has one or more tags]]) ..
+                    indent .. KOR.icons.lock_bare .. _([[ marks a non-breakable name]]) ..
+                    "\n\n" .. indent_simple .. _("HIT-RELIABILITY ICONS") .. "\n\n" .. self:getMatchReliabilityExplanation(indent_simple)
+                        .. "\n" .. indent .. _("TEXT COLUMNS\n\nBy tweaking XraySettings.max_info_line_length you can try to make text in columns display (e.g. the linked items tab in the Item Viewer) display without soft line wraps.\n\nIf information-lines still are being wrapped, then try setting XraySettings.text_columns to a lower value."),
             },
             {
                 tab = _("navigating"),

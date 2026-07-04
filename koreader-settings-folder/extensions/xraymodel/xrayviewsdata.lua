@@ -605,16 +605,17 @@ function XrayViewsData:_doWeakMatchCheck(t, needle, args, partial_matches, for_r
     --* check for cases when the user tapped on a Xray item name part which was all in uppercase (e.g. in the intro text of a chapter), so then convert it to ucfirst here:
     if args.tapped_word and args.tapped_word:match("^[-A-Z]+$") then
         local matcher = KOR.strings:ucfirst(args.tapped_word):gsub("%-", "%%-")
-        if (
-            has_text(item.aliases) and item.aliases:match(matcher)
-        )
-        or
-        (
-            has_text(item.short_names) and item.short_names:match(matcher)
-        )
-        then
+        if has_text(item.aliases) and item.aliases:match(matcher) then
             if for_relations then
                 item.reliability_indicator = DX.i:getMatchReliabilityIndicator("alias")
+            end
+            table_insert(partial_matches, item)
+            --* item_was_upgraded:
+            return true
+
+        elseif has_text(item.short_names) and item.short_names:match(matcher) then
+            if for_relations then
+                item.reliability_indicator = DX.i:getMatchReliabilityIndicator("short_name")
             end
             table_insert(partial_matches, item)
             --* item_was_upgraded:

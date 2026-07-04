@@ -125,6 +125,8 @@ return {
     --* book+:
     xray_series_mode_bare = "\u{E28B}+",
     xray_settings_bare = "\u{F013}", -- cog
+    xray_short_name = "\u{F410}" .. spacer, -- zip file
+    xray_short_name_bare = "\u{F410}",
     xray_tapped_collection = "\u{E70D}" .. spacer,
     xray_tapped_collection_bare = "\u{E70D}",
     xray_term_bare = "\u{EDE7}",
