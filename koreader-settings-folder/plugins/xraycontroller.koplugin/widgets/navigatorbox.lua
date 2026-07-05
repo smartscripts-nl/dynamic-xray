@@ -1,0 +1,827 @@
+
+local require = require
+
+local ButtonTable = require("widgets/buttontable")
+local CenterContainer = require("ui/widget/container/centercontainer")
+local Device = require("device")
+local Font = require("modules/font")
+local FrameContainer = require("widgets/container/framecontainer")
+local Geom = require("ui/geometry")
+local GestureRange = require("ui/gesturerange")
+local HorizontalGroup = require("ui/widget/horizontalgroup")
+local InputContainer = require("ui/widget/container/inputcontainer")
+local KOR = require("extensions/kor")
+local LineWidget = require("ui/widget/linewidget")
+local ScrollHtmlWidget = require("widgets/scrollhtmlwidget")
+local ScrollTextWidget = require("widgets/scrolltextwidget")
+local TextWidget = require("widgets/textwidget")
+local TitleBar = require("widgets/titlebar")
+local UIManager = require("ui/uimanager")
+local VerticalGroup = require("ui/widget/verticalgroup")
+local VerticalScrollBar = require("ui/widget/verticalscrollbar")
+local VerticalSpan = require("ui/widget/verticalspan")
+local WidgetContainer = require("ui/widget/container/widgetcontainer")
+--local logger = require("logger")
+local Screen = Device.screen
+local Size = require("modules/size")
+local _ = KOR:initCustomTranslations()
+
+local DX = DX
+local has_items = has_items
+local has_text = has_text
+local math = math
+local math_floor = math.floor
+local math_max = math.max
+local pairs = pairs
+local table = table
+local table_insert = table.insert
+
+-- Inject scroll page method for ScrollHtmlWidget
+ScrollHtmlWidget.scrollToPage = function(self, page_num)
+    if page_num > self.htmlbox_widget.page_count then
+        page_num = self.htmlbox_widget.page_count
+    end
+    self.htmlbox_widget:setPageNumber(page_num)
+    self:_updateScrollBar()
+    self.htmlbox_widget:freeBb()
+    self.htmlbox_widget:_render()
+    UIManager:setDirty(self.dialog, function()
+        return "partial", self.dimen
+    end)
+end
+
+ScrollHtmlWidget.scrollToPage = function(self, page_num)
+    if page_num > self.htmlbox_widget.page_count then
+        page_num = self.htmlbox_widget.page_count
+    end
+    self.htmlbox_widget:setPageNumber(page_num)
+    self:_updateScrollBar()
+    self.htmlbox_widget:freeBb()
+    self.htmlbox_widget:_render()
+    UIManager:setDirty(self.dialog, function()
+        return "partial", self.dimen
+    end)
+end
+
+--- @class NavigatorBox
+--- @field page_navigator XrayPageNavigator
+local NavigatorBox = InputContainer:extend{
+    additional_key_events = nil,
+    after_close_callback = nil,
+    align = "center",
+    chapter_occurrences_histogram = nil,
+    chapters_count = nil,
+    content_padding = nil,
+    --* this is the default, but some widgets can set the content_type to "text" for a specific tab; e.g. see ((XrayButtons#getItemViewerTabs)):
+    content_type = "html",
+    current_chapter_index = nil,
+    dimensions_computed = false,
+    expanded_css = nil,
+    frame_content_fullscreen = nil,
+    fullscreen = false,
+    height = nil,
+    histogram_bottom_line_height = 0,
+    histogram_height = 0,
+    html = nil,
+    info_panel_buttons = nil,
+    info_panel_text = nil,
+    --* this prop will be set from ((NavigatorBox#generateInfoButtons)):
+    info_panel_width = nil,
+    --* set by ((XrayPageNavigator#showNavigator)):
+    key_events_module = nil,
+    modal = true,
+    next_item_callback = nil,
+    occurrences_subject = nil,
+    occurrences_per_chapter = nil,
+    page_navigator = nil,
+    prev_item_callback = nil,
+    ratio_per_chapter = nil,
+    running_instance = nil,
+    screen_height = nil,
+    screen_width = nil,
+    side_buttons = nil,
+    side_buttons_width = Screen:scaleBySize(135),
+    title = nil,
+    title_alignment = "left",
+    titlebar = nil,
+    titlebar_height = nil,
+    top_buttons_left = nil,
+    width = nil,
+    --* Static class member, holds a ref to the currently opened widgets (in instantiation order).
+    window_list = {},
+    window_size = "fullscreen",
+}
+
+function NavigatorBox:init()
+    self:initFrames()
+    self:setModuleProps()
+    self:initHotkeys()
+    self:initTouch()
+    self:setWidth()
+    --* height will be computed below, after we build top and bottom components, when we know how much height they are taking
+    self:generateTitleBar()
+    self:setPaddingAndSpacing()
+    self:computeLineHeight()
+    self:generateSidePanelButtons()
+    self:setMargins()
+    self:computeAvailableHeight()
+    self:setSeparator()
+    self:computeHeights()
+    self:generateInfoButtons()
+    self:generateChapterOccurrencesHistogram()
+    self:generateInfoPanel()
+    self:generateScrollWidget()
+    self:generateSidePanel()
+    self:addFrameToContentWidget()
+    self:generateWidget()
+    self:registerPopupMenuCoords()
+    self:finalizeWidget()
+    self.dimensions_computed = true
+end
+
+function NavigatorBox:reset()
+    self.dimensions_computed = false
+end
+
+--- @private
+function NavigatorBox:initFrames()
+    self.frame_content_fullscreen = {
+        radius = 0,
+        bordersize = 0,
+        fullscreen = true,
+        covers_fullscreen = true,
+        padding = 0,
+        margin = 0,
+        background = KOR.colors.background,
+        --* make the borders white to hide them completely:
+        color = KOR.colors.background,
+    }
+end
+
+function NavigatorBox:updateWidget(config)
+    for key, value in pairs(config) do
+        self[key] = value
+    end
+    self:clear()
+    self:init()
+end
+
+--- @private
+function NavigatorBox:initHotkeys()
+    KOR.keyevents:addHotkeysForNavigatorBox(self, self.key_events_module)
+
+    --! we need this call to restore hotkeys for the dialog every time a new tab gets activated (and therefore the dialog reloaded):
+    --* examples of hotkeys configurators: ((KeyEvents#addHotkeysForXrayPageNavigator)) and ((KeyEvents#addHotkeysForXrayItemViewer)):
+    if self.hotkeys_configurator then
+        self.hotkeys_configurator()
+    end
+end
+
+function NavigatorBox:initTouch()
+    if not Device:isTouchDevice() then
+        return
+    end
+
+    local range = Geom:new{
+        x = 0, y = 0,
+        w = self.screen_width,
+        h = self.screen_height,
+    }
+    self.ges_events = {
+        Swipe = {
+            GestureRange:new{
+                ges = "swipe",
+                range = range,
+            },
+        },
+        HoldStartText = {
+            GestureRange:new {
+                ges = "hold",
+                range = range,
+            },
+        },
+        HoldReleaseText = {
+            GestureRange:new {
+                ges = "hold_release",
+                range = range,
+            },
+            --* callback function when HoldReleaseText is handled as args:
+            args = function(text)
+                return self:handleBoxGesture(text)
+            end
+        },
+        TapText = {
+            GestureRange:new {
+                ges = "tap",
+                range = range,
+            },
+            --* callback function when TapText is handled as args:
+            --* tapped text determined via ((HtmlBoxWidget#onTapText)) > ((HtmlBoxWidget#updateHighlight)) > text, rects = getSelectedText(self.page_boxes, self.hold_start_pos, self.hold_end_pos):
+            args = function(text)
+                return self:handleBoxGesture(text)
+            end
+        },
+    }
+end
+
+--- @private
+function NavigatorBox:handleBoxGesture(text)
+    if not text then
+        KOR.messages:notify("tekst niet bepaald")
+        return true
+    end
+    text = KOR.strings:cleanup(text)
+
+    --* use a fake item to find the real item we are interested in:
+    local item, item_was_upgraded = DX.vd:upgradeNeedleItem({
+        name = text,
+        alias = text,
+        short_names = text,
+    }, { is_exists_check = true })
+    if not item_was_upgraded then
+        KOR.messages:notify("geen xray item gevonden voor " .. text)
+        return true
+    end
+
+    --* this is needed to make reloading Page Navigator possible:
+    self.page_navigator.page_navigator = nil
+    DX.d:viewItem(item)
+    return true
+end
+
+--? these methods apparently are needed as a kind of hooks to get ((NavigatorBox#handleBoxGesture)) to work with tapping and long press gestures:
+function NavigatorBox:onTapText() end
+function NavigatorBox:onHoldStartText() end
+function NavigatorBox:onHoldReleaseText() end
+
+--- @private
+function NavigatorBox:generateInfoPanel()
+    self.info_panel, self.info_panel_separator, self.info_panel_height, self.info_panel_separator_height, self.sheight =
+        DX.ip:generateInfoPanel({
+          parent = self,
+          info_panel_text = self.info_panel_text,
+          info_panel_width = self.info_panel_width,
+          screen_height = self.screen_height,
+          content_height = self.content_height,
+          info_panel_nav_buttons_height = self.info_panel_nav_buttons_height,
+          histogram_height = self.histogram_height,
+          histogram_bottom_line_height = self.histogram_bottom_line_height,
+          ratio_per_chapter = self.ratio_per_chapter,
+        })
+
+    if self.running_instance or self.dimensions_computed then
+        return
+    end
+
+    --* for consumption in ((NavigatorBox#generateScrollWidget)):
+    self.swidth = self.info_panel_width
+end
+
+--- @private
+function NavigatorBox:generateChapterOccurrencesHistogram()
+    self.chapter_occurrences_histogram = DX.oh:generateChapterOccurrencesHistogram({
+        for_page_navigator = true,
+        occurrences_subject = self.occurrences_subject,
+        occurrences_per_chapter = self.occurrences_per_chapter,
+        ratio_per_chapter = self.ratio_per_chapter,
+        current_chapter_index = self.current_chapter_index,
+        container_width = self.info_panel_width,
+        chapters_count = self.chapters_count,
+        histogram_height = self.histogram_height,
+        histogram_bottom_line_height = self.histogram_bottom_line_height,
+    })
+end
+
+--- @private
+function NavigatorBox:generateInfoButtons()
+    --? for some reason self.side_buttons_table not available when we click on the Item Viewer button; because then self.side_buttons not set at the start of ((XraySidePanels#generateSidePanelButtons)) and the script returns, without generating the side buttons:
+    self.info_panel_width = self.side_buttons_table and self.content_width - self.side_buttons_table:getSize().w or self.content_width
+
+    self.page_navigator.info_panel_width = self.info_panel_width
+
+    local buttons = ButtonTable:new{
+        width = self.info_panel_width,
+        --* these buttons were generated in ((XrayButtons#forPageNavigator)):
+        buttons = self.info_panel_buttons,
+        show_parent = self,
+        button_font_weight = "normal",
+    }
+
+    self.info_panel_nav_buttons_height = buttons:getSize().h
+    self.info_panel_nav_buttons = CenterContainer:new {
+        dimen = Geom:new {
+            w = self.info_panel_width,
+            h = self.info_panel_nav_buttons_height,
+        },
+        buttons,
+    }
+end
+
+--* Used in init & update to instantiate the Scroll*Widget that self.html_widget points to
+--- @private
+function NavigatorBox:generateScrollWidget()
+    --* this is the default, but some widgets can set the content_type to "text" for a specific tab; e.g. see ((XrayButtons#getItemViewerTabs)):
+    if self.content_type == "text" then
+        self.html_widget = ScrollTextWidget:new{
+            text = self.html,
+            face = self.content_face,
+            line_height = KOR.registry.line_height or 0.95,
+            alignment = "left",
+            justified = false,
+            dialog = self,
+            width = self.swidth,
+            height = self.sheight,
+        }
+        return
+    end
+
+    if self.running_instance then
+        self.html_widget:updateWidget(self.html)
+        return
+    end
+
+    if not self.expanded_css then
+        self.expanded_css = KOR.html:getHtmlBoxCss(self.css)
+    end
+    self.html_widget = ScrollHtmlWidget:new{
+        html_body = self.html,
+        css = self.expanded_css,
+        default_font_size = Screen:scaleBySize(self.box_font_size),
+        width = self.swidth,
+        height = self.sheight,
+        dialog = self,
+    }
+end
+
+function NavigatorBox:onCloseWidget()
+
+    if self.after_close_callback then
+        self.after_close_callback()
+    end
+    self.additional_key_events = nil
+
+    --* Drop our ref from the static class member
+    for i = #NavigatorBox.window_list, 1, -1 do
+        local window = NavigatorBox.window_list[i]
+        --* We should only find a single match, but, better safe than sorry...
+        if window == self then
+            table.remove(NavigatorBox.window_list, i)
+        end
+    end
+
+    --* NOTE: Drop region to make it a full-screen flash
+    UIManager:setDirty(nil, function()
+        return "flashui", nil
+    end)
+end
+
+function NavigatorBox:onShow()
+    UIManager:setDirty(self, function()
+        return "flashui", self.box_frame.dimen
+    end)
+    return true
+end
+
+function NavigatorBox:onSwipe(arg, ges)
+    return KOR.closingswipes:handle(self, arg, ges)
+end
+
+function NavigatorBox:onClose()
+    for menu in pairs(self.menu_opened) do
+        UIManager:close(menu)
+    end
+    self.running_instance = nil
+    self.page_navigator.page_navigator = nil
+    self.menu_opened = {}
+    KOR.dialogs:unregisterWidget(self)
+    UIManager:close(self)
+    KOR.dialogs:closeAllOverlays()
+
+    return true
+end
+
+function NavigatorBox:onReadNextItem()
+    if not self.next_item_callback then
+        return false
+    end
+    self:next_item_callback()
+    return true
+end
+
+function NavigatorBox:onReadPrevItem()
+    if not self.prev_item_callback then
+        return false
+    end
+    self:prev_item_callback()
+    return true
+end
+
+function NavigatorBox:onReadPrevItemWithShiftSpace()
+    return self:onReadPrevItem()
+end
+
+--! this method and the next one are needed to jump to a next or previous page when pressing Space and Shift+Space on a physical (BT) keyboard:
+function NavigatorBox:onForceNextItem()
+    if not self.next_item_callback then
+        return false
+    end
+    self:next_item_callback()
+    return true
+end
+
+function NavigatorBox:onForcePrevItem()
+    if not self.prev_item_callback then
+        return false
+    end
+    self:prev_item_callback()
+    return true
+end
+
+--- @private
+function NavigatorBox:computeHeights()
+    if self.dimensions_computed then
+        return
+    end
+
+    local buttons_height = self.button_table and self.button_table:getSize().h or 0
+    local others_height =
+        self.titlebar_height
+        + Size.line.thick
+        + 2 * self.content_top_margin:getSize().h
+        + buttons_height
+
+    --* To properly adjust the definition to the height of text, we need
+    --* the line height a ScrollTextWidget will use for the current font
+    --* size (we'll then use this perfect height for ScrollTextWidget,
+    --* but also for ScrollHtmlWidget, where it doesn't matter).
+    if not self.content_line_height then
+        local test_widget = ScrollTextWidget:new{
+            text = "z",
+            face = self.content_face,
+            width = self.content_width,
+            height = self.content_height,
+            for_measurement_only = true, --* flag it as a dummy, so it won't trigger any bogus repaint/refresh...
+        }
+        self.content_line_height = test_widget:getLineHeight()
+        test_widget:free(true)
+    end
+
+    -- #((set NavigatorBox dialog height))
+    --* compare ((set NavigatorBox dialog width))
+    self.height = self.avail_height
+    self.content_height = self.height - others_height
+end
+
+--- @private
+function NavigatorBox:computeLineHeight()
+    if self.dimensions_computed then
+        return
+    end
+    local word_font_face = "tfont"
+    --* Ensure this word doesn't get smaller than its definition
+    local word_font_size = math_max(22, self.box_font_size)
+    --* Get the line height of the normal font size, as a base for sizing this component
+    if not self.word_line_height then
+        local test_widget = TextWidget:new{
+            text = "z",
+            face = Font:getFace(word_font_face, word_font_size),
+        }
+        self.word_line_height = test_widget:getSize().h
+        test_widget:free()
+    end
+end
+
+--- @private
+function NavigatorBox:generateSidePanel()
+
+    local pn = self.page_navigator
+    if not pn then
+        return
+    end
+
+    --* self.page_navigator.current_item is set from the callback of a side_button in ((XraySidePanels#addSideButton)) and when marking the active button in ((XraySidePanels#markActiveSideButton)):
+    --! the linked_items prop for the current_item were set in ((XraySidePanels#computeLinkedItems)):
+    local has_linked_items =
+        DX.sp.active_side_tab == 1
+        and pn.current_item
+        and (
+            has_text(pn.current_item.linkwords)
+            or
+            has_items(pn.current_item.linked_items)
+        )
+
+    local has_side_buttons = #self.side_buttons > 0
+    local generate_tab_activators = has_side_buttons and (has_linked_items or DX.sp.active_side_tab == 2)
+    local side_panel_tab_activators
+    if generate_tab_activators then
+        side_panel_tab_activators = DX.sp:generateSidePanelTabActivators(has_linked_items, self.side_buttons_width)
+    end
+
+    local bottom_padding = self:generateSidePanelBottomPadding(has_side_buttons, side_panel_tab_activators)
+
+    if has_side_buttons and side_panel_tab_activators then
+        self.side_panel = VerticalGroup:new{
+        align = "left",
+        --* these buttons (or a spacer in case of no buttons) were generated in ((NavigatorBox#generateSidePanelButtons)):
+        self.side_buttons_table,
+        self.side_buttons_table_separator,
+        bottom_padding,
+        self.side_buttons_table_separator,
+        side_panel_tab_activators,
+    }
+    elseif has_side_buttons then
+        self.side_panel = VerticalGroup:new{
+            align = "left",
+            --* these buttons (or a spacer in case of no buttons) were generated in ((NavigatorBox#generateSidePanelButtons)):
+            self.side_buttons_table,
+            self.side_buttons_table_separator,
+            bottom_padding,
+        }
+    else
+        self.side_panel = VerticalGroup:new{
+            align = "left",
+            self.side_buttons_table,
+            bottom_padding,
+        }
+    end
+end
+
+--- @private
+function NavigatorBox:generateSidePanelButtons()
+    --* these side panel buttons were generated in ((XrayPages#markItemsFoundInPageHtml)) > ((XrayPages#markedItemRegister)):
+    if not self.page_navigator or not self.side_buttons then
+        return
+    end
+
+    self.side_buttons_table, self.side_buttons_table_separator = DX.sp:generateSidePanelButtons(self.side_buttons_width, self.screen_height)
+end
+
+--- @private
+function NavigatorBox:generateSidePanelBottomPadding(has_side_buttons, side_panel_tab_activators)
+    --* self.avail_height was computed in ((NavigatorBox#computeAvailableHeight)):
+    self.spacer_width = self.avail_height
+        --* for top and bottom margin:
+        - 2 * self.content_top_margin:getSize().h
+        - self.side_buttons_table:getSize().h
+        - (side_panel_tab_activators and side_panel_tab_activators:getSize().h or 0)
+        - self.titlebar_height
+        - 2 * self.side_buttons_table_separator:getSize().h
+
+    if has_side_buttons and side_panel_tab_activators then
+        self.spacer_width = self.spacer_width - self.side_buttons_table_separator:getSize().h
+    end
+
+    return VerticalSpan:new{
+        width = self.spacer_width
+    }
+end
+
+--- @private
+function NavigatorBox:finalizeWidget()
+    --* self.region was set in ((NavigatorBox#computeAvailableHeight)):
+    self[1] = WidgetContainer:new{
+        align = "top",
+        dimen = self.region,
+        self.box_frame,
+    }
+
+    if not self.running_instance then
+        --* we're a new window:
+        table_insert(NavigatorBox.window_list, self)
+    end
+
+    UIManager:setDirty(self, function()
+        return "partial", self.box_frame.dimen
+    end)
+
+    if self.running_instance then
+        return
+    end
+
+    --* make NavigatorBox widget closeable with ((Dialogs#closeAllWidgets)):
+    KOR.dialogs:registerWidget(self)
+end
+
+--- @private
+function NavigatorBox:addFrameToContentWidget()
+    local main_content = VerticalGroup:new{
+        align = "left",
+        self.html_widget,
+        self.info_panel_separator,
+        self.info_panel_nav_buttons,
+        self.info_panel_separator,
+        self.info_panel,
+    }
+    if DX.s.PN_show_chapter_hits_histogram then
+        table_insert(main_content, self.chapter_occurrences_histogram)
+    end
+    self.content_widget = FrameContainer:new{
+        padding = 0,
+        padding_left = self.content_padding_h,
+        padding_right = 0,
+        margin = 0,
+        bordersize = 0,
+        CenterContainer:new{
+            dimen = Geom:new{
+                w = self.content_width,
+                h = self.content_height,
+            },
+            HorizontalGroup:new{
+                align = "center",
+                main_content,
+                FrameContainer:new{
+                    padding = 0,
+                    margin = 0,
+                    color = KOR.colors.line_separator,
+                    bordersize = Size.line.medium,
+                    self.side_panel,
+                }
+            }
+        },
+    }
+end
+
+--- @private
+function NavigatorBox:generateWidget()
+
+    local frame = self.frame_content_fullscreen
+    local content_height = self.content_widget:getSize().h
+    local elements = VerticalGroup:new{
+        self.titlebar,
+        self.separator,
+        self.content_top_margin,
+        --* content
+        CenterContainer:new{
+            dimen = Geom:new{
+                w = self.width,
+                h = content_height,
+            },
+            self.content_widget,
+        },
+        self.content_bottom_margin,
+    }
+
+    --? I don't know why I need this hack on my Bigme phone:
+    if self.is_fullscreen and DX.s.is_mobile_device then
+        local spacer = VerticalSpan:new{ width = Size.padding.large }
+        table_insert(elements, 2, spacer)
+    end
+
+    elements.align = "left"
+    table_insert(frame, elements)
+    self.box_frame = FrameContainer:new(frame)
+end
+
+--- @private
+function NavigatorBox:registerPopupMenuCoords()
+    if self.dimensions_computed then
+        return
+    end
+    local y_pos =
+        self.screen_height
+        - self.content_padding_v
+        --* histogram height props were set in ((NavigatorBox#setModuleProps)):
+        - self.histogram_height
+        + self.histogram_bottom_line_height
+        --* info panel heights were computed in ((XrayInfoPanel#generateInfoPanel)):
+        - self.info_panel_height
+        + math_floor(self.info_panel_nav_buttons_height / 2)
+        - self.info_panel_separator_height
+
+    local x_pos = self.content_padding_h + VerticalScrollBar:getSize().w + Size.line.medium
+
+    KOR.registry:set("popup_menu_coords", {
+        x = x_pos,
+        y = y_pos,
+    })
+end
+
+--- @private
+function NavigatorBox:computeAvailableHeight()
+    if self.dimensions_computed then
+        return
+    end
+    self.avail_height = self.screen_height - self.margin_top - self.margin_bottom
+
+    --* Region in which the window will be aligned center/top/bottom:
+    self.region = Geom:new{
+        x = 0,
+        y = self.is_fullscreen and 0 or self.margin_top,
+        w = self.screen_width,
+        h = self.avail_height,
+    }
+end
+
+--- @private
+function NavigatorBox:setMargins()
+    if self.dimensions_computed then
+        return
+    end
+    --* Margin from screen edges
+    self.margin_top = not self.is_fullscreen and Size.margin.default or 0
+    self.margin_bottom = not self.is_fullscreen and Size.margin.default or 0
+    if KOR.ui and KOR.ui.view and KOR.ui.view.footer_visible then
+        --* We want to let the footer visible (as it can show time, battery level
+        --* and wifi state, which might be useful when spending time reading
+        --* definitions or wikipedia articles)
+        if not self.is_fullscreen then
+            self.margin_bottom = self.margin_bottom + KOR.ui.view.footer:getHeight()
+        end
+    end
+end
+
+--- @private
+function NavigatorBox:setModuleProps()
+    self.screen_height = Screen:getHeight()
+    self.screen_width = Screen:getWidth()
+    self.window_size = "fullscreen"
+    if self.tabs_table_buttons then
+        self.title_alignment = "center"
+    end
+    KOR.tabnavigator:broadcastActivatedTab()
+
+    if DX.s.PN_show_chapter_hits_histogram then
+        self.histogram_height = Screen:scaleBySize(25)
+        self.histogram_bottom_line_height = Size.line.thin
+    end
+
+    self.box_font_size = DX.s.is_mobile_device and 26 or 18
+    self.content_face = Font:getFace("x_smallinfofont", self.box_font_size)
+    self.is_fullscreen = self.window_size == "fullscreen"
+
+    --* Scrollable offsets of the various showResults* menus and submenus,
+    --* so we can reopen them in the same state they were when closed.
+    self.menu_scrolled_offsets = {}
+    --* We'll also need to close any opened such menu when closing this NavigatorBox
+    --* (needed if closing all DictQuickLookups via long-press on Close on the top one)
+    self.menu_opened = {}
+end
+
+--- @private
+function NavigatorBox:setPaddingAndSpacing()
+    if self.dimensions_computed then
+        return
+    end
+    --* This padding and the resulting width apply to the content
+    self.content_padding_h = self.content_padding or Size.padding.closebuttonpopupdialog
+    self.content_padding_v = Size.padding.fullscreen --* added via VerticalSpan
+    self.content_width = self.width - 2 * self.content_padding_h
+
+    --* Spans between components
+    self.content_top_margin = VerticalSpan:new{ width = self.content_padding_v }
+    self.content_bottom_margin = VerticalSpan:new{ width = self.content_padding_v }
+end
+
+--- @private
+function NavigatorBox:setSeparator()
+    if self.separator then
+        return
+    end
+    self.separator = LineWidget:new{
+        background = self.tabs_table and KOR.colors.tabs_table_separators or KOR.colors.line_separator,
+        dimen = Geom:new{
+            w = self.width,
+            h = Size.line.thick,
+        }
+    }
+end
+
+--- @private
+function NavigatorBox:generateTitleBar()
+    if self.running_instance then
+        self.titlebar:setTitle(self.title, "no_refresh")
+        return
+    end
+
+    local config = {
+        width = self.width,
+        title = self.title,
+        title_face = Font:getFace("smallinfofontbold"),
+        --* NavigatorBox delivers the separator, so we don't want a separator in the titlebar:
+        with_bottom_line = false,
+        close_callback = function()
+            self:onClose()
+        end,
+        close_hold_callback = function()
+            self:onHoldClose()
+        end,
+        has_small_close_button_padding = true,
+        align = self.title_alignment,
+        show_parent = self,
+        lang = self.lang_out,
+        top_buttons_left = self.top_buttons_left,
+
+        less_title_top_padding = false,
+    }
+    self.titlebar = TitleBar:new(config)
+    self.titlebar_height = self.titlebar:getSize().h
+end
+
+--- @private
+function NavigatorBox:setWidth()
+    -- #((set NavigatorBox dialog width))
+    --* compare ((set NavigatorBox dialog height))
+    self.width = self.screen_width
+end
+
+return NavigatorBox

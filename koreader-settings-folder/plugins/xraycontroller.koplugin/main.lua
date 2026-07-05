@@ -1,4 +1,4 @@
 
-local XrayController = require("extensions/xraycontroller/xraycontroller")
+local XrayController = require("xraycontroller/xraycontroller")
 
 return XrayController

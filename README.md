@@ -45,7 +45,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 
 ## DX under Android
 
-DX should now be also loadable under Android. If you tried to install it previously and sometime later updated to the latest version, it might be that KOReader crashes the first time. But after that crash it should from then on load, with DX enabled.
+DX should now be also loadable under Android.
 
 ## Use cases
 
@@ -58,34 +58,32 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
 
 1. Clone this repo somewhere. From there:
    * **For Android**: copy _the contents of_ all folders under "koreader-settings-folder" to the corresponding folders under the settings folder (almost always named "koreader") of your KOReader installation.
-      * **⚠️ NB: Don't overwrite entire folders in this target folder with the folders from the repository!** The only folders which you can safely overwrite are "extensions" and "plugins/xraycontroller.koplugin".
-      * **⚠️ NB 2: the contents of the subfolder "icons" must be copied to the corresponding folder under the KOReader settings folder**, to have custom icons shown in the DX interface.
-      * NB 3: thanks to the patches DX applies to KOReader, the plugin XrayController will also be loaded from KOReader's settings folder...
+      * **⚠️ NB: Don't overwrite entire folders in this target folder with the folders from the repository!** The only folder which you can safely overwrite is "plugins/xraycontroller.koplugin".
+      * NB 2: thanks to the patches DX applies to KOReader, the plugin XrayController will also be loaded from KOReader's settings folder...
    * **For Kobo/Kindle** (if a .adds folder is present):
-     * copy _the contents of_ koreader-settings-folder/icons to .adds/koreader/resources/icons
-     * copy the _folder_ koreader-settings-folder/extensions to .adds/koreader
      * copy the _folder_ koreader-settings-folder/plugins/xraycontroller.koplugin to .adds/koreader/plugins
-4. **⚠️ It's especially important that you copy koreader-settings-folder/patches/2-xray-patches.lua**:
+2. **⚠️ It's especially important that you copy koreader-settings-folder/patches/2-xray-patches.lua**:
    * **For Android**: to a subfolder "patches" in your KOReader settings folder!** Without this, DX won't be available in your installation.
    * **For Kobo/Kindle** (if a .adds folder is present): to a subfolder (create if not exists) "patches" of .adds/koreader
    * **For Pocketbook** to a subfolder (create if not exists) "patches" of /koreader
-4. The "koreader-settings-folder" folder in this repository represents the settings folder of your koreader installation. In most cases, this target folder will be named "koreader". In its root you should find settings.reader.lua.
+3. The "koreader-settings-folder" folder in this repository represents the settings folder of your koreader installation. In most cases, this target folder will be named "koreader". In its root you should find settings.reader.lua.
    * **For Pocketbook** the program folder and the settings folder are one and the same: /koreader.
 
-5. In that target folder, create a folder patches if it doesn't exist yet and copy koreader-settings-folder/patches/2-xray-patches.lua to that target patches folder.
-6. Copy koreader-settings-folder/settings/settings_manager.lua to the settings subfolder of the koreader settings folder of your current installation (this folder should already be present and should contain many files, e.g. sqlite3-files for KOReader's databases).
-7. **⚠️ Check whether the database filename in your KOReader settings folder is "bookinfo_cache.sqlite3".** If not, go through the additional steps listed in [User has a database filename other than "bookinfo_cache.sqlite3"](#user-uses-a-database-file-other-than-bookinfo_cachesqlite3)
-8. If you want to let KOReader's footer display Xray items counts (see image 1b... under [Images](#images)), you'll have to manually edit readerfooter.lua (because it's not patchable). An example of this is provided in manual-file-edit-examples/readerfooter.lua. See the comments at the start of that file.
-9. It is possible to add a button to the dictionary lookup results dialog, with which to add the looked-up word to the Xray items. This cannot be done via a patch, but requires a manual edit of dictquicklookup.lua. See
+4. In that target folder, create a folder patches if it doesn't exist yet and copy koreader-settings-folder/patches/2-xray-patches.lua to that target patches folder.
+5. Copy koreader-settings-folder/settings/settings_manager.lua to the settings subfolder of the koreader settings folder of your current installation (this folder should already be present and should contain many files, e.g. sqlite3-files for KOReader's databases).
+6. **⚠️ Check whether the database filename in your KOReader settings folder is "bookinfo_cache.sqlite3".** If not, go through the additional steps listed in [User has a database filename other than "bookinfo_cache.sqlite3"](#user-uses-a-database-file-other-than-bookinfo_cachesqlite3)
+7. If you want to let KOReader's footer display Xray items counts (see image 1b... under [Images](#images)), you'll have to manually edit readerfooter.lua (because it's not patchable). An example of this is provided in manual-file-edit-examples/readerfooter.lua. See the comments at the start of that file.
+8. It is possible to add a button to the dictionary lookup results dialog, with which to add the looked-up word to the Xray items. This cannot be done via a patch, but requires a manual edit of dictquicklookup.lua. See
    manual-file-edit-examples/dictquicklookup.lua for an example.
-10. It is **⚠️highly recommended to let KOReader display its keyboard in compact mode**, so you have enough space
+9. It is **⚠️highly recommended to let KOReader display its keyboard in compact mode**, so you have enough space
    available for the multiple-field DX forms. You can enable this compact display mode from the main KOReader menu: Cog icon > Device > Keyboard > Keyboard appearance settings > enable checkbox "compact".
 
-NB: sometimes, if a previous DX installation failed, and you try to install it a second time, KOReader crashes. This can be caused by a DX routine which tries to install all missing DX database tables and fields. But if you then restart KOReader, all should be fine.
+NB: most icons specific for DX will be loaded from the xraycontroller.koplugin/icons folder.
 
 ### Updating to new versions
 
-When you clone new versions of DX, make sure you also **⚠️ update the patch file** on your device. Otherwise, you might be confronted with crashes...
+Make sure the file 2-xray-patches.lua is present in your patches folder. It will probably almost never have to be updated, because the patching of your KOReader will de facto be done by
+plugins/xraycontroller.koplugin/dx-patches.lua (which will be called by 2-xray-patches.lua).
 
 ### Entering your own translations for the DX interface
 
