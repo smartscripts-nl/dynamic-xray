@@ -3,7 +3,7 @@
 
 local require = require
 
-local ButtonTable = require("widgets/buttontable")
+local ButtonTable = require("xrayviews/widgets/buttontable")
 local Geom = require("ui/geometry")
 local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")

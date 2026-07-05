@@ -4,9 +4,9 @@
 local require = require
 
 local CenterContainer = require("ui/widget/container/centercontainer")
-local InputDialog = require("widgets/inputdialog")
+local InputDialog = require("xrayviews/widgets/inputdialog")
 local KOR = require("extensions/kor")
-local Menu = require("widgets/menu")
+local Menu = require("xrayviews/widgets/menu")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local Screen = require("device").screen

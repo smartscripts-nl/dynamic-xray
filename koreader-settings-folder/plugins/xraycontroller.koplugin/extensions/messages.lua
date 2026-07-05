@@ -3,7 +3,7 @@ local require = require
 
 local Font = require("modules/font")
 local KOR = require("extensions/kor")
-local Notification = require("widgets/notification")
+local Notification = require("xrayviews/widgets/notification")
 local Trapper = require("ui/trapper")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")

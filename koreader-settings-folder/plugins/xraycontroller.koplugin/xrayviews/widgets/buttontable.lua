@@ -1,9 +1,9 @@
 
 local require = require
 
-local Button = require("widgets/button")
+local Button = require("xrayviews/widgets/button")
 local Device = require("device")
-local FocusManager = require("widgets/focusmanager")
+local FocusManager = require("xrayviews/widgets/focusmanager")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")

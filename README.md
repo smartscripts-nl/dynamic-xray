@@ -78,7 +78,7 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
 9. It is **⚠️highly recommended to let KOReader display its keyboard in compact mode**, so you have enough space
    available for the multiple-field DX forms. You can enable this compact display mode from the main KOReader menu: Cog icon > Device > Keyboard > Keyboard appearance settings > enable checkbox "compact".
 
-NB: most icons specific for DX will be loaded from the xraycontroller.koplugin/icons folder.
+NB: icons specific for DX will be loaded from the xraycontroller.koplugin/xrayviews/icons folder.
 
 ### Updating to new versions
 

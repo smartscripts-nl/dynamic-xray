@@ -3,7 +3,7 @@
 
 local require = require
 
-local ButtonDialogTitle = require("widgets/buttondialogtitle")
+local ButtonDialogTitle = require("xrayviews/widgets/buttondialogtitle")
 local Device = require("device")
 local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")

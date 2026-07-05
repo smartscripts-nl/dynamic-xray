@@ -1,11 +1,11 @@
 --[[
-Subclass of ImageWidget to show icons
+Subclass of ImageWidgetActive to show icons
 ]]
 
 local require = require
 
 local DataStorage = require("datastorage")
-local ImageWidget = require("ui/widget/imagewidget")
+local ImageWidgetInverted = require("xrayviews/widgets/imagewidgetinverted")
 local Screen = require("device").screen
 local lfs = require("libs/libkoreader-lfs")
 --local logger = require("logger")
@@ -17,7 +17,6 @@ local table_insert = table.insert
 
 local DGENERIC_ICON_SIZE = G_defaults:readSetting("DGENERIC_ICON_SIZE")
 
--- #((source folders for icons))
 --* directories to look for icons by name, with any of the accepted suffixes:
 local ICONS_DIRS = {
     --* default icons (material design light):
@@ -40,29 +39,29 @@ local ICON_NOT_FOUND = "resources/icons/icon-not-found.svg"
 -- Icon filepath location cache
 local ICONS_PATH = {}
 
---- @class IconWidget
-local IconWidget = ImageWidget:extend{
+--- @class IconWidgetInverted
+local IconWidgetInverted = ImageWidgetInverted:extend{
     -- The icon filename should be provided without any path
     icon = ICON_NOT_FOUND, -- show this if not provided
-    -- See ImageWidget for other available options,
+    -- See ImageWidgetActive for other available options,
     -- we only start with a few different defaults, that can
     -- be overriden by callers.
     width = Screen:scaleBySize(DGENERIC_ICON_SIZE), -- our icons are square
     height = Screen:scaleBySize(DGENERIC_ICON_SIZE),
     alpha = false, --- @note: Our icons have a transparent background, but, by default, we flatten them at caching time.
-    ---        Our caller may choose to override that by setting this to true, in which case,
-    ---        the alpha layer will be kept intact, and we'll do alpha-blending at blitting time.
-    is_icon = true, -- avoid dithering in ImageWidget#paintTo
+                   ---        Our caller may choose to override that by setting this to true, in which case,
+                   ---        the alpha layer will be kept intact, and we'll do alpha-blending at blitting time.
+    is_icon = true, -- avoid dithering in ((ImageWidgetActive#paintTo))
 }
 
-function IconWidget:init()
+function IconWidgetInverted:init()
     if self.image or self.file then
-        -- In case we're created with one of these: just be an ImageWidget.
+        -- In case we're created with one of these: just be an ImageWidgetActive.
         return
     end
 
     --! try to load icons specifically for DX first:
-    local dx_icons_path = DX.c:getPath() .. "/icons"
+    local dx_icons_path = DX.c:getPath() .. "/xrayviews/icons"
     --logger.warn("dx_icons_path", dx_icons_path)
     table_insert(ICONS_DIRS, 1, dx_icons_path)
 
@@ -78,7 +77,7 @@ function IconWidget:init()
             for e = 1, count2 do
                 ext = ICONS_EXTS[e]
                 path = dir .. "/" .. self.icon .. ext
-                if lfs_attributes(path, "mode") == "file" then
+                if lfs.attributes(path, "mode") == "file" then
                     self.file = path
                     break
                 end
@@ -94,4 +93,4 @@ function IconWidget:init()
     end
 end
 
-return IconWidget
+return IconWidgetInverted

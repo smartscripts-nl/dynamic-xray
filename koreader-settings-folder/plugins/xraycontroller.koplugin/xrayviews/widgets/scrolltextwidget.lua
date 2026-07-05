@@ -14,8 +14,8 @@ local HorizontalSpan = require("ui/widget/horizontalspan")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local KOR = require("extensions/kor")
 local Math = require("optmath")
-local TextBoxWidget = require("widgets/textboxwidget")
-local VerticalScrollBar = require("widgets/verticalscrollbar")
+local TextBoxWidget = require("xrayviews/widgets/textboxwidget")
+local VerticalScrollBar = require("xrayviews/widgets/verticalscrollbar")
 local UIManager = require("ui/uimanager")
 local Screen = Device.screen
 

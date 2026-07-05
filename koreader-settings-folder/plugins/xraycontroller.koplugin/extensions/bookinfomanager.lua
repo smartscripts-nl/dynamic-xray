@@ -8,7 +8,7 @@ local Device = require("device")
 local DocumentRegistry = require("document/documentregistry")
 --! don't use Dialogs!!! Use InfoMessage instead...
 local FileManagerBookInfo = require("apps/filemanager/filemanagerbookinfo")
-local InfoMessage = require("widgets/infomessage")
+local InfoMessage = require("xrayviews/widgets/infomessage")
 local KOR = require("extensions/kor")
 local RenderImage = require("ui/renderimage")
 local SQ3 = require("lua-ljsqlite3/init")

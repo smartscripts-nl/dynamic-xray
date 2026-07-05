@@ -7,7 +7,7 @@ local require = require
 
 local BD = require("ui/bidi")
 local Device = require("device")
-local HtmlBoxWidget = require("widgets/htmlboxwidget")
+local HtmlBoxWidget = require("xrayviews/widgets/htmlboxwidget")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
@@ -15,7 +15,7 @@ local HorizontalSpan = require("ui/widget/horizontalspan")
 local InputContainer = require("ui/widget/container/inputcontainer")
 --local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
-local VerticalScrollBar = require("widgets/verticalscrollbar")
+local VerticalScrollBar = require("xrayviews/widgets/verticalscrollbar")
 local Input = require("modules/input")
 local Screen = Device.screen
 

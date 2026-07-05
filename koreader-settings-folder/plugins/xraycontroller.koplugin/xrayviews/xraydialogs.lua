@@ -6,18 +6,18 @@
 
 local require = require
 
-local Button = require("widgets/button")
-local ButtonDialogTitle = require("widgets/buttondialogtitle")
+local Button = require("xrayviews/widgets/button")
+local ButtonDialogTitle = require("xrayviews/widgets/buttondialogtitle")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local CheckButton = require("ui/widget/checkbutton")
 local Event = require("ui/event")
 local Font = require("modules/font")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local HorizontalSpan = require("ui/widget/horizontalspan")
-local InputDialog = require("widgets/inputdialog")
+local InputDialog = require("xrayviews/widgets/inputdialog")
 local KOR = require("extensions/kor")
-local Menu = require("widgets/menu")
-local MultiInputDialog = require("widgets/multiinputdialog")
+local Menu = require("xrayviews/widgets/menu")
+local MultiInputDialog = require("xrayviews/widgets/multiinputdialog")
 local UIManager = require("ui/uimanager")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")

@@ -42,7 +42,7 @@ A button dialog widget that shows a grid of buttons.
 local require = require
 
 local BottomContainer = require("ui/widget/container/bottomcontainer")
-local ButtonTable = require("widgets/buttontable")
+local ButtonTable = require("xrayviews/widgets/buttontable")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Device = require("device")
 local Font = require("modules/font")
@@ -51,7 +51,7 @@ local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local KOR = require("extensions/kor")
-local MovableContainer = require("widgets/container/movablecontainer")
+local MovableContainer = require("xrayviews/widgets/container/movablecontainer")
 local ScrollableContainer = require("ui/widget/container/scrollablecontainer")
 local Size = require("modules/size")
 local TextWidget = require("ui/widget/textwidget")

@@ -5,7 +5,7 @@ local require = require
 
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Geom = require("ui/geometry")
-local HistogramWidget = require("widgets/histogramwidget")
+local HistogramWidget = require("xrayviews/widgets/histogramwidget")
 local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")
 local UIManager = require("ui/uimanager")

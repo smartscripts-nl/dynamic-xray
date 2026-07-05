@@ -43,7 +43,7 @@ local count
 
 local BD = require("ui/bidi")
 local BookStatusWidget = require("ui/widget/bookstatuswidget")
-local Button = require("widgets/button")
+local Button = require("xrayviews/widgets/button")
 local CanvasContext = require("document/canvascontext")
 local CheckButton = require("ui/widget/checkbutton")
 --- @class CreDocument
@@ -55,7 +55,7 @@ local InfoMessage = require("ui/widget/infomessage")
 local InputDialog = require("ui/widget/inputdialog")
 local KOR = require("extensions/kor")
 local LuaSettings = require("luasettings")
-local Menu = require("widgets/menu")
+local Menu = require("xrayviews/widgets/menu")
 --- @class ReaderDictionary
 local ReaderDictionary = require("apps/reader/modules/readerdictionary")
 local ReaderFooter = require("apps/reader/modules/readerfooter")

@@ -3,11 +3,11 @@
 
 local require = require
 
-local ButtonDialog = require("widgets/buttondialog")
+local ButtonDialog = require("xrayviews/widgets/buttondialog")
 local Font = require("modules/font")
 local KOR = require("extensions/kor")
-local MovableContainer = require("widgets/container/movablecontainer")
-local ScrollTextWidget = require("widgets/scrolltextwidget")
+local MovableContainer = require("xrayviews/widgets/container/movablecontainer")
+local ScrollTextWidget = require("xrayviews/widgets/scrolltextwidget")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()

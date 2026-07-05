@@ -3,12 +3,12 @@
 
 local require = require
 
-local Button = require("widgets/button")
-local ButtonDialog = require("widgets/buttondialog")
+local Button = require("xrayviews/widgets/button")
+local ButtonDialog = require("xrayviews/widgets/buttondialog")
 local CenterContainer = require("ui/widget/container/centercontainer")
-local InputDialog = require("widgets/inputdialog")
+local InputDialog = require("xrayviews/widgets/inputdialog")
 local KOR = require("extensions/kor")
-local Menu = require("widgets/menu")
+local Menu = require("xrayviews/widgets/menu")
 local Screen = require("device").screen
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")

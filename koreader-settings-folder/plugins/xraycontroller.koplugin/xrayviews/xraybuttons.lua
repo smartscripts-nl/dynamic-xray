@@ -3,9 +3,9 @@
 
 local require = require
 
-local Button = require("widgets/button")
-local ButtonDialogTitle = require("widgets/buttondialogtitle")
-local ButtonTable = require("widgets/buttontable")
+local Button = require("xrayviews/widgets/button")
+local ButtonDialogTitle = require("xrayviews/widgets/buttondialogtitle")
+local ButtonTable = require("xrayviews/widgets/buttontable")
 local Event = require("ui/event")
 local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")

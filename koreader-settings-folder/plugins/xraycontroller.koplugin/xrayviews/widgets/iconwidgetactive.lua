@@ -5,7 +5,7 @@ Subclass of ImageWidgetActive to show icons
 local require = require
 
 local DataStorage = require("datastorage")
-local ImageWidgetActive = require("widgets/imagewidgetactive")
+local ImageWidgetActive = require("xrayviews/widgets/imagewidgetactive")
 local Screen = require("device").screen
 local lfs = require("libs/libkoreader-lfs")
 
@@ -60,7 +60,7 @@ function IconWidgetActive:init()
     end
 
     --! try to load icons specifically for DX first:
-    local dx_icons_path = DX.c:getPath() .. "/icons"
+    local dx_icons_path = DX.c:getPath() .. "/xrayviews/icons"
     --logger.warn("dx_icons_path", dx_icons_path)
     table_insert(ICONS_DIRS, 1, dx_icons_path)
 

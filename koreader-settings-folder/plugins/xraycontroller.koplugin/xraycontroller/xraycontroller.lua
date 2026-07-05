@@ -696,7 +696,7 @@ function XrayController:resetDynamicXray(is_prepared, do_full_update)
     DX.pn:resetCache()
     DX.pn:setCurrentItem(nil)
     if not NavigatorBox then
-        NavigatorBox = require("widgets/navigatorbox")
+        NavigatorBox = require("xrayviews/widgets/navigatorbox")
     end
     NavigatorBox:reset()
     DX.u:resetPageText()

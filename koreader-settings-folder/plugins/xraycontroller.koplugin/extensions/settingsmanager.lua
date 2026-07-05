@@ -1,7 +1,7 @@
 
 local require = require
 
-local ButtonDialogTitle = require("widgets/buttondialogtitle")
+local ButtonDialogTitle = require("xrayviews/widgets/buttondialogtitle")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local DataStorage = require("datastorage")
 local KOR = require("extensions/kor")

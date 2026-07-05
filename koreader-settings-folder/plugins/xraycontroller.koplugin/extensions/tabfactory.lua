@@ -1,7 +1,7 @@
 
 local require = require
 
-local ButtonTable = require("widgets/buttontable")
+local ButtonTable = require("xrayviews/widgets/buttontable")
 local KOR = require("extensions/kor")
 local Size = require("modules/size")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
