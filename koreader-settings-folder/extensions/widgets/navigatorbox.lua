@@ -232,14 +232,17 @@ function NavigatorBox:handleBoxGesture(text)
     end
     text = KOR.strings:cleanup(text)
 
-    local items_found = DX.tw:itemExists(text, text)
-    if not items_found then
+    --* use a fake item to find the real item we are interested in:
+    local item, item_was_upgraded = DX.vd:upgradeNeedleItem({
+        name = text,
+        alias = text,
+        short_names = text,
+    }, { is_exists_check = true })
+    if not item_was_upgraded then
         KOR.messages:notify("geen xray item gevonden voor " .. text)
         return true
     end
 
-    --* items will already be sorted by name or hits...
-    local item = DX.b:forItemsCollectionPopup(items_found, text, "get_first_item_only")
     --* this is needed to make reloading Page Navigator possible:
     self.page_navigator.page_navigator = nil
     DX.d:viewItem(item)
