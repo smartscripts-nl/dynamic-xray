@@ -89,11 +89,7 @@ plugins/xraycontroller.koplugin/dx-patches.lua (which will be called by 2-xray-p
 
 As of 2025-12-25 translations are now stored in the table xray_translations in the database. This table will be automatically created upon KOReader start. The translations are lazily stored in that table, only when requested.
 
-This will make the code and updates much easier to maintain for me _and_ for cloners... Users can translate texts in the TranslationsManager, which is reachable from the bubbles icon in the:
-* top left corner of the list of Xray items
-* top left corner of the information popup called with a tap on a Xray marker (lightning or star) in the ebook text
-* top left corner of the Xray Item Viewer dialog
-* the most left main menu item → Dynamic Xray → Translate interface
+This will make the code and updates much easier to maintain for me _and_ for cloners... Users can translate texts in the TranslationsManager, which is reachable from the bubbles icon in the left half of title bar of the XraySettings dialog.
 
 ## Usage tips
 
