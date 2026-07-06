@@ -844,6 +844,16 @@ end
 --- @param parent XrayTags
 function XrayButtons:forTagGroupViewerTopLeft(parent)
     local buttons = {
+        {
+            icon = "info-slender",
+            callback = function()
+                KOR.dialogs:niceAlert(_("Tag Group Viewer: help"), _([[With the buttons arrow-left and -right you can browse to the previous or next tag-group.
+
+With the buttons arrow-up and -down you can navigate synchronized through the text columns.
+
+The number of context buttons per row with names of Xray items at the bottom of the tab "overview" is determined by XraySetttings.tag_group_viewer_max_context_buttons. The default value for this variable is 5.]]))
+            end,
+        },
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
                 UIManager:close(parent.tag_group_viewer)
