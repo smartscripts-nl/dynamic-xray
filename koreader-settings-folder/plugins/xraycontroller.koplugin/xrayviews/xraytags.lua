@@ -546,8 +546,9 @@ end
 
 function XrayTags:showTagGroup(tag)
 
+    local dialog_queue_id = "show_tag_group"
     KOR.dialogsqueue:register({
-        id = "show_tag_group",
+        id = dialog_queue_id,
         restore = function()
             self:showTagGroup(tag)
         end,
@@ -558,6 +559,7 @@ function XrayTags:showTagGroup(tag)
         title = _("Tag-group") .. ": " .. tag .. " (" .. taggroup_count .. ")",
         fullscreen = true,
         top_buttons_left = DX.b:forTagGroupViewerTopLeft(self),
+        dialog_queue_id = dialog_queue_id,
         tabs = {
             {
                 tab = _("overview"),
