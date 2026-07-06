@@ -40,7 +40,8 @@ function ColumnTexts:getOneColumnText(column1_items, separator)
 	if not separator then
 		separator = KOR.strings.white_line
 	end
-	return table_concat(column1_items, separator)
+	local text = table_concat(column1_items, separator)
+	return text:gsub("\n\n\n+", "\n\n")
 end
 
 function ColumnTexts:getTwoColumnTexts(column1_items, column2_items, separator)
