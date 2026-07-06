@@ -10,20 +10,14 @@ local require = require
 --* ============ LOAD EXTENSIONS SYSTEM ===============
 
 local lfs = require("libs/libkoreader-lfs")
-local logger = require("logger")
 
-local package = package
-local G_reader_settings = G_reader_settings
 local lfs_attributes = lfs.attributes
-local lfs_dir = lfs.dir
-local table = table
-local table_insert = table.insert
-local type = type
-
-local count
 
 local controller_path
 local function locatePatcher()
+    local table_insert = table.insert
+    local type = type
+    local count
     --* code adapted from PluginLoader:
     local DEFAULT_PLUGIN_PATH = "plugins"
     local lookup_path_list = { DEFAULT_PLUGIN_PATH }
@@ -43,11 +37,12 @@ local function locatePatcher()
                 end
             end
         else
-            logger.err("extra_plugin_paths config only accepts string or table value")
+            require("logger").err("extra_plugin_paths config only accepts string or table value")
         end
     end
 
     count = #lookup_path_list
+    local lfs_dir = lfs.dir
     local lookup_path
     for i = 1, count do
         lookup_path = lookup_path_list[i]
