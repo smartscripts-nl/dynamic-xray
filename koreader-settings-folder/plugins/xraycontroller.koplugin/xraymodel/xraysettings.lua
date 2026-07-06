@@ -294,6 +294,12 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
             after_change_callback = "set_tab_buttons_font_size",
         },
+        tag_group_viewer_max_context_buttons = {
+            value = 5,
+            type = "number",
+            explanation = _("This variable determines how many context/item buttons will be added at the lower part of the Tag Group Viewer."),
+            locked = 0,
+        },
         text_columns = {
             value = 3,
             options = { 1, 2, 3 },

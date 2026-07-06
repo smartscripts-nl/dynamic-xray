@@ -103,6 +103,8 @@ local TextViewer = InputContainer:extend{
     --! TextViewer instances with html tabs must not have a bottom button table, because of problems otherwise with scrolling and searching:
     content_type = "text",
     convert_big_dialogs_to_fullscreen = true,
+    context_buttons = nil,
+    context_buttons_tab = nil,
     covers_fullscreen = false,
     default_hold_callback = nil, --* on each default button
     dialog_height = nil,
@@ -1288,6 +1290,7 @@ function TextViewer:initButtons()
 
     local buttons = self:addDefaultButtons()
     self:insertExtraButtons(buttons)
+    self:insertContextButtons(buttons)
     self:generateButtons(buttons)
 end
 
@@ -1329,6 +1332,19 @@ function TextViewer:insertBackButton(buttons)
         hold_callback = self.default_hold_callback,
     })
     self.back_button_inserted = true
+end
+
+--* e.g. used for ((XrayTags#showTagGroup)), to add buttons for viewing items to first tab:
+--- @private
+function TextViewer:insertContextButtons(buttons)
+    if not self.context_buttons or self.active_tab ~= self.context_buttons_tab then
+        return
+    end
+
+    count = #self.context_buttons
+    for i = count, 1, -1 do
+        table_insert(buttons, 1, self.context_buttons[i])
+    end
 end
 
 --- @private

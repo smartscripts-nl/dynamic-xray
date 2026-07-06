@@ -319,9 +319,20 @@ function XrayTags:generateTagGroup(tag)
     end
     --* this count will be returned at the end of the current method:
     local taggroup_count = #tagged_items
+    local max_context_buttons_per_row = DX.s.tag_group_viewer_max_context_buttons
+    local remainder = max_context_buttons_per_row
+    local context_buttons = { {} }
+    local row = 1
     for i = 1, taggroup_count do
         self:populateTagGroup(tag_group, tag, tagged_items[i], taggroup_count, is_first_para)
         is_first_para = false
+        table_insert(context_buttons[row], DX.b:getItemButton(tagged_items[i]))
+        remainder = i % max_context_buttons_per_row
+        if remainder == 0 and i < taggroup_count then
+            remainder = max_context_buttons_per_row
+            table_insert(context_buttons, {})
+            row = row + 1
+        end
     end
     count = #tag_group.paras
     KOR.columntexts:initDisplayColumnsCount(count)
@@ -345,7 +356,7 @@ function XrayTags:generateTagGroup(tag)
         self.tag_group, self.tag_group2, self.tag_group3 = KOR.columntexts:getOneColumnText(tag_group.paras)
     end
 
-    return taggroup_count
+    return taggroup_count, context_buttons
 end
 
 function XrayTags:generateTagGroupsOverview(clipboard_tab_no)
@@ -534,7 +545,15 @@ function XrayTags:showTagGroupSelector(xray_item)
 end
 
 function XrayTags:showTagGroup(tag)
-    local taggroup_count = self:generateTagGroup(tag)
+
+    KOR.dialogsqueue:register({
+        id = "show_tag_group",
+        restore = function()
+            self:showTagGroup(tag)
+        end,
+    })
+
+    local taggroup_count, context_buttons = self:generateTagGroup(tag)
     self.tag_group_viewer = KOR.dialogs:textBoxTabbed(1, {
         title = _("Tag-group") .. ": " .. tag .. " (" .. taggroup_count .. ")",
         fullscreen = true,
@@ -553,6 +572,8 @@ function XrayTags:showTagGroup(tag)
                 info3 = self.tag_group3,
             },
         },
+        context_buttons = context_buttons,
+        context_buttons_tab = 1,
         extra_buttons_start_pos = 2,
         extra_buttons = {
             KOR.buttoninfopopup:forXrayTagGroupSelector({

@@ -1849,12 +1849,30 @@ function XrayButtons:addLinkedItemsAsContextButtonsForViewer(buttons, needle_ite
             item_hold_callback = function(citem, iicon)
                 KOR.dialogs:textBox({
                     title = iicon .. citem.name,
-                    info = DX.m:getItemInfo(citem),
+                    info = DX.vd:getItemInfo(citem),
                     use_computed_height = true,
                 })
             end,
         })
     end
+end
+
+function XrayButtons:getItemButton(item)
+    local icon = DX.vd:getItemTypeIcon(item)
+    local item_hits
+    if DX.m.current_series then
+        item_hits = has_items(item.series_hits) and " (" .. item.series_hits .. ") " or ""
+    else
+        item_hits = has_items(item.book_hits) and " (" .. item.book_hits .. ") " or ""
+    end
+    return {
+        text = item.name:lower() .. item_hits .. icon,
+        font_bold = false,
+        text_font_face = "redhat",
+        callback = function()
+            DX.d:viewLinkedItem(item)
+        end,
+    }
 end
 
 --- @private
@@ -1877,7 +1895,7 @@ function XrayButtons:insertViewerContextButton(row, item, tapped_word)
             KOR.dialogs:textBox({
                 title = icon .. " " .. item.name,
                 title_shrink_font_to_fit = true,
-                info = DX.m:getItemInfo(item),
+                info = DX.vd:getItemInfo(item),
                 use_computed_height = true,
             })
         end,

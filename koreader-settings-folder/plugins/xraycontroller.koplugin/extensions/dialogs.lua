@@ -568,10 +568,10 @@ function Dialogs:setTextBoxTexts(args)
         args.text = info
         return
     end
+
     info = KOR.html:htmlToPlainTextIfHtml(info)
     --* hotfix for initials in names:
-    info = info:gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
-    args.text = info
+    args.text = info:gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
 
     --* for text in two columns:
     local info2 = args.info2 or ""
