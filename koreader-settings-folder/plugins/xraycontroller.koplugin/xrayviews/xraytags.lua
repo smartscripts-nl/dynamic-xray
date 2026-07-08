@@ -319,21 +319,12 @@ function XrayTags:generateTagGroup(tag)
     end
     --* this count will be returned at the end of the current method:
     local taggroup_count = #tagged_items
-    local max_context_buttons_per_row = DX.s.tag_group_viewer_max_context_buttons
-    local remainder = max_context_buttons_per_row
-    local context_buttons = { {} }
-    local row = 1
     for i = 1, taggroup_count do
         self:populateTagGroup(tag_group, tag, tagged_items[i], taggroup_count, is_first_para)
         is_first_para = false
-        table_insert(context_buttons[row], DX.b:getItemButton(tagged_items[i]))
-        remainder = i % max_context_buttons_per_row
-        if remainder == 0 and i < taggroup_count then
-            remainder = max_context_buttons_per_row
-            table_insert(context_buttons, {})
-            row = row + 1
-        end
     end
+    local context_buttons = DX.b:populateContextItemsRows(tagged_items, taggroup_count)
+
     count = #tag_group.paras
     KOR.columntexts:initDisplayColumnsCount(count)
 

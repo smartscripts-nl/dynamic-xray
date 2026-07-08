@@ -854,7 +854,7 @@ function XrayButtons:forTagGroupViewerTopLeft(parent)
 
 With the buttons arrow-up and -down you can scroll synchronized through the text columns.
 
-The maximum number of context buttons per row with names of Xray items at the bottom of the tab "overview" is determined by "tag_group_viewer_max_context_buttons" in the DX settings. The default value for this variable is 5.]]))
+The maximum number of context buttons per row with names of Xray items at the bottom of the tab "overview" is determined by "max_context_items_per_row" in the DX settings. The default value for this variable is 5.]]))
             end,
         },
         KOR.buttoninfopopup:forXraySettings({
@@ -1870,6 +1870,29 @@ function XrayButtons:addLinkedItemsAsContextButtonsForViewer(buttons, needle_ite
     end
 end
 
+function XrayButtons:populateContextItemsRows(items, icount)
+    if not items then
+        return
+    end
+    if not icount then
+        icount = #items
+    end
+    local max_context_buttons_per_row = DX.s.max_context_items_per_row
+    local remainder = max_context_buttons_per_row
+    local context_buttons = { {} }
+    local row = 1
+    for i = 1, icount do
+        table_insert(context_buttons[row], self:getItemButton(items[i]))
+        remainder = i % max_context_buttons_per_row
+        if remainder == 0 and i < icount then
+            remainder = max_context_buttons_per_row
+            table_insert(context_buttons, {})
+            row = row + 1
+        end
+    end
+    return context_buttons
+end
+
 function XrayButtons:getItemButton(item)
     local icon = DX.vd:getItemTypeIcon(item)
     local item_hits
@@ -1881,7 +1904,8 @@ function XrayButtons:getItemButton(item)
     return {
         text = item.name:lower() .. item_hits .. icon,
         font_bold = false,
-        text_font_face = "redhat",
+        text_font_face = "x_smallinfofont",
+        font_size = self.tapped_item_text_font_size,
         callback = function()
             DX.d:viewLinkedItem(item)
         end,

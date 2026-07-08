@@ -211,6 +211,8 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
     local paragraph_hits_info3 = {}
     --* these items were generated via ((init xray sideline markers)) > ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#ReaderViewInitParaOrPageData)) > ((XrayUI#ReaderViewLoopThroughParagraphOrPage)) ((XrayUI#getXrayItemsFoundInText)):
     local items = xray_rects.hits[nr]
+    --* for consumption in ((XrayDialogs#showUiPageInfo)):
+    KOR.registry:set("xray_ui_items", items)
     local paragraph_matches_count
     local xray_explanations = xray_rects.explanations[nr]
 

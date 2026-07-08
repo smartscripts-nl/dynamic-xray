@@ -68,6 +68,7 @@ function DialogsQueue:register(queue_props)
 end
 
 function DialogsQueue:reset()
+    self.last_id = nil
     self.last_register_time = nil
     self.dialog_ids = {}
     self.queue = {}

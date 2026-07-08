@@ -174,6 +174,12 @@ local XraySettings = WidgetContainer:new{
             explanation = _("This variable determines whether a chapter-occurrences-histogram will be shown in the Item Viewer tabs (or not)."),
             locked = 0,
         },
+        max_context_items_per_row = {
+            value = 5,
+            type = "number",
+            explanation = "This variable determines how many context/item buttons will be added at the lower part of the Tag Group Viewer and Xray Page Information Popup.",
+            locked = 0,
+        },
         max_info_line_length = {
             value = 120,
             explanation = _("This setting determines the max line length for information in the Page Navigator bottom info panel. For text in columns the max line length is derived from this value (e.g. divided by three for 3-column-texts). You can use this to prevent ugly soft line wraps."),
@@ -293,12 +299,6 @@ local XraySettings = WidgetContainer:new{
             type = "number",
             locked = 0,
             after_change_callback = "set_tab_buttons_font_size",
-        },
-        tag_group_viewer_max_context_buttons = {
-            value = 5,
-            type = "number",
-            explanation = _("This variable determines how many context/item buttons will be added at the lower part of the Tag Group Viewer."),
-            locked = 0,
         },
         text_columns = {
             value = 3,

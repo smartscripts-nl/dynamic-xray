@@ -451,6 +451,20 @@ function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_names3, hits_i
         return
     end
 
+    --* for this popup always reset the dialogs queue, because it will never be called from another module:
+    KOR.dialogsqueue:reset()
+    local dialogs_queue_id = "xray_ui_page_information"
+    KOR.dialogsqueue:register({
+        id = dialogs_queue_id,
+        restore = function()
+            self:showUiPageInfo(hits_names, hits_names2, hits_names3, hits_info, hits_info2, hits_info3, matches_count, haystack_text)
+        end,
+    })
+
+    --* these items were registered in ((XrayUI#showParagraphInformation)):
+    local ui_items = KOR.registry:get("xray_ui_items")
+    local context_buttons = DX.b:populateContextItemsRows(ui_items)
+
     local matches_count_info = matches_count == 1 and _("1 Xray item") or matches_count .. " " .. _("Xray items")
     local subject = DX.s.UI_mode == "paragraph" and _(" in this paragraph") or _(" on this page")
     local target = DX.s.UI_mode == "paragraph" and _("the ENTIRE PAGE") or _("PARAGRAPHS")
@@ -473,6 +487,9 @@ function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_names3, hits_i
                 info3 = hits_info3,
             },
         },
+        context_buttons = context_buttons,
+        context_buttons_tab = 1,
+        dialogs_queue_id = dialogs_queue_id,
         fullscreen = true,
         covers_fullscreen = true,
         modal = false,
