@@ -10,16 +10,14 @@ local _ = KOR:initCustomTranslations()
 --- @class ClosingSwipes
 local ClosingSwipes = WidgetContainer:extend{
     closing_gesture_information_html_DX = _([[<div class="noindent">
-<p class='first-item'><strong>Closing fullscreen DX dialogs with gestures</strong></p>
-<p> </p>
+<p class='first-item heading'><strong>Closing fullscreen DX dialogs with gestures</strong></p>
 <ul>
 <li>You can close fullscreen(!) DX dialogs by swiping <i>diagonally</i> on them.</li>
 <li>This can also be done by swiping <i>horizontally</i> on them, <i>unless</i> the dialog allows you to navigate to the next or previous item or page. In that case swiping horizontally will take you to the next or previous item or page.</li>
 <li>Swiping horizontally of diagonally can also be used to close the <i>Series Manager</i>. By swiping <i>vertically</i> you can browse through the books of the series displayed.</li>
 </ul>
 <p> </p>
-<p><strong>Exceptions</strong></p>
-<p> </p>
+<p class='heading'><strong>Exceptions</strong></p>
 <ul>
 <li>The Items List can only be closed by swiping <i>vertically</i>.</li>
 <li>Non-fullscreen DX dialogs will be moved when you swipe on them.</li>

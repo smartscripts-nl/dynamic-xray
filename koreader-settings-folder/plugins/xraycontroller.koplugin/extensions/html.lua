@@ -239,6 +239,10 @@ function Html:getHtmlBoxCss(additional_css)
         p.first-item {
             margin-top: .7em !important;
         }
+
+        p.heading {
+            margin-bottom: .3em;
+        }
     ]]
     --* For reference, MuPDF declarations with absolute units:
     --*  "blockquote{margin:1em 40px}"
