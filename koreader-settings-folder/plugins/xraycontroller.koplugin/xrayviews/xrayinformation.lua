@@ -45,8 +45,7 @@ function XrayInformation:getMatchReliabilityExplanation(indent)
         indent .. indicators.partial_match .. _(" partial hit"),
         indent .. indicators.linked_item .. _(" linked item"),
     }
-    self.match_reliability_explanations = table_concat(explanations, "\n") .. "\n\n" .. _([[The type of similarity determines the icon and indicates how reliable this hit is (a wrong hit might be shown). Full names and aliases are the most reliable of all.
-]]) .. "\n"
+    self.match_reliability_explanations = table_concat(explanations, "\n") .. "\n\n" .. _([[The item-icon indicates how reliable the item's mention in the text is (a wrong hit might be shown). Full names and aliases are the most reliable of all.]]) .. "\n"
     return self.match_reliability_explanations
 end
 
@@ -309,11 +308,11 @@ function XrayInformation:showReliabilityIndicatorsExplanation()
         no_back_button = true,
         tabs = {
             {
-                tab = _("reliability icons"),
+                tab = _("item-icons"),
                 info = self:getMatchReliabilityExplanation()
             },
             {
-                tab = _("dialog buttons"),
+                tab = _("buttons"),
                 content_type = "html",
                 info = _([[<div class="noindent">
 <p class='first-item heading'><strong>Top left: pages or paragraph button</strong></p>
