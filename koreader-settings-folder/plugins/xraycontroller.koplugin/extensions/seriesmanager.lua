@@ -217,6 +217,8 @@ function SeriesManager:getCacheIndex(full_path)
     return md5(full_path)
 end
 
+--* show list of all e-books on the device:
+--* arg full_path will most times be nil here:
 function SeriesManager:onShowSeriesList(full_path)
 
     local result = self:getCachedResultset(full_path)
@@ -413,6 +415,7 @@ function SeriesManager:resetData()
 end
 
 function SeriesManager:showContextDialogForNonSeriesBook(full_path)
+
     local result = self:getNonSeriesData(full_path)
     if not result then
         return false
@@ -437,6 +440,7 @@ function SeriesManager:showContextDialogForNonSeriesBook(full_path)
     return true
 end
 
+--* show the series for a particular ebook:
 --* data for item were retrieved in ((SeriesManager#populateSeries)):
 --- @private
 function SeriesManager:showContextDialog(item, full_path, is_non_series_item)
@@ -667,13 +671,15 @@ function SeriesManager:showContextDialogForCurrentEbook(result, full_path)
     if not result then
         result = self:searchSerieMembers(full_path)
     end
-    if result and full_path then -- and #result[1] == 1
-        self:populateSeries(result)
-        local series_name = result["series_name"][1]
-        if self.series_table_indexed[series_name] then
-            self:showContextDialog(self.series_table_indexed[series_name], full_path)
-            return true
-        end
+    if not result or not full_path then
+        return false
+    end
+
+    self:populateSeries(result)
+    local series_name = result["series_name"][1]
+    if self.series_table_indexed[series_name] then
+        self:showContextDialog(self.series_table_indexed[series_name], full_path)
+        return true
     end
 
     return false

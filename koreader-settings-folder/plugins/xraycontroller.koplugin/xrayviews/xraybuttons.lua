@@ -486,6 +486,7 @@ function XrayButtons:getSeriesManagerButton(parent_dialog)
     if not DX.m.current_series then
         return KOR.buttoninfopopup:forSeriesAll({
             callback = function()
+                DX.pn:closePageNavigator()
                 self:closeDialog(parent_dialog)
                 KOR.seriesmanager:searchSerieMembers()
                 KOR.seriesmanager:onShowSeriesList()
@@ -495,10 +496,12 @@ function XrayButtons:getSeriesManagerButton(parent_dialog)
 
     return KOR.buttonchoicepopup:forSeriesCurrentBook({
         callback = function()
+            DX.pn:closePageNavigator()
             self:closeDialog(parent_dialog)
             KOR.seriesmanager:showSeriesForEbookPath()
         end,
         hold_callback = function()
+            DX.pn:closePageNavigator()
             self:closeDialog(parent_dialog)
             KOR.seriesmanager:searchSerieMembers()
             KOR.seriesmanager:onShowSeriesList()
@@ -849,9 +852,9 @@ function XrayButtons:forTagGroupViewerTopLeft(parent)
             callback = function()
                 KOR.dialogs:niceAlert(_("Tag Group Viewer: help"), _([[With the buttons arrow-left and -right you can browse to the previous or next tag-group.
 
-With the buttons arrow-up and -down you can navigate synchronized through the text columns.
+With the buttons arrow-up and -down you can scroll synchronized through the text columns.
 
-The number of context buttons per row with names of Xray items at the bottom of the tab "overview" is determined by XraySetttings.tag_group_viewer_max_context_buttons. The default value for this variable is 5.]]))
+The maximum number of context buttons per row with names of Xray items at the bottom of the tab "overview" is determined by "tag_group_viewer_max_context_buttons" in the DX settings. The default value for this variable is 5.]]))
             end,
         },
         KOR.buttoninfopopup:forXraySettings({
