@@ -71,13 +71,13 @@ end
 function XrayExporter:getExportDialogInfo(active_tab, columns)
     local title = self:getTitle(active_tab)
     local data = self:getInfoText(active_tab, false, columns)
+    --? for tag-groups use smaller spacing?:
     local spacer = active_tab == 4 and "\n" or KOR.strings.white_line
     local export_title = title:gsub(": ([^\n]+)", " in \"" .. DX.m.current_title .. "\" (%1)") .. "\n" .. "Lijst aangemaakt: " .. os_date("%d-%m-%Y") .. spacer
 
     if not data then
         data = ""
     end
-    --? shouldn't there be more columns here (3 and 4 are also sometimes defined: linked item, tag groups):
     if columns then
         return data
     end
@@ -222,8 +222,9 @@ function XrayExporter:showExportXrayItemsDialog()
         return
     end
 
+    local dialog_queue_id = "xray_export_dialog"
     KOR.dialogsqueue:register({
-        id = "xray_export_dialog",
+        id = dialog_queue_id,
         restore = function()
             self:showExportXrayItemsDialog()
         end,
@@ -233,11 +234,14 @@ function XrayExporter:showExportXrayItemsDialog()
         title_func = function()
             return self:getTitle(self.active_tab)
         end,
+        dialog_queue_id = dialog_queue_id,
         tabs = {
             --* all items:
             {
                 tab = self.export_nouns[1],
                 info = function()
+                    --? this setting of the active tab shouldn't be necessary, but for some reason is:
+                    self.active_tab = 1
                     return self:getExportDialogInfo(1, 1)
                 end,
                 info2 = function()
@@ -257,6 +261,7 @@ function XrayExporter:showExportXrayItemsDialog()
             {
                 tab = self.export_nouns[2],
                 info = function()
+                    self.active_tab = 2
                     return self:getExportDialogInfo(2, 1)
                 end,
                 info2 = function()
@@ -276,6 +281,7 @@ function XrayExporter:showExportXrayItemsDialog()
             {
                 tab = self.export_nouns[3],
                 info = function()
+                    self.active_tab = 3
                     return self:getExportDialogInfo(3, 1)
                 end,
                 info2 = function()
@@ -295,6 +301,7 @@ function XrayExporter:showExportXrayItemsDialog()
             {
                 tab = self.export_nouns[4],
                 info = function()
+                    self.active_tab = 4
                     return self:getExportDialogInfo(4, 1)
                 end,
                 info2 = function()

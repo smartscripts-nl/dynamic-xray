@@ -45,7 +45,7 @@ function XrayInformation:getMatchReliabilityExplanation(indent)
         indent .. indicators.partial_match .. _(" partial hit"),
         indent .. indicators.linked_item .. _(" linked item"),
     }
-    self.match_reliability_explanations = table_concat(explanations, "\n") .. "\n\n" .. _([[The item-icon indicates how reliable the item's mention in the text is (a wrong hit might be shown). Full names and aliases are the most reliable of all.]]) .. "\n"
+    self.match_reliability_explanations = table_concat(explanations, "\n") .. "\n\n" .. _([[The item-icon indicates how reliable the item's mention in the text is (a wrong hit might be shown). Full names, short(ened) names and aliases are the most reliable of all.]]) .. "\n"
     return self.match_reliability_explanations
 end
 
