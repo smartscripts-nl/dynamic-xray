@@ -1314,7 +1314,7 @@ function XrayViewsData:generateHitsInfo(item, iindent, for_all_items_list)
     end
 
     if for_all_items_list then
-        local noun = "vermeldingen: "
+        local noun = _("mentions") .. ": "
         hits_iconless = noun .. hits_iconless
     end
 

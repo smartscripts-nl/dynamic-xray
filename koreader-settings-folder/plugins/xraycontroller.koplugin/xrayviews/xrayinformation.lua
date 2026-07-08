@@ -316,9 +316,13 @@ function XrayInformation:showReliabilityIndicatorsExplanation()
                 tab = _("dialog buttons"),
                 content_type = "html",
                 info = _([[<div class="noindent">
-<p><strong>Top left: pages or paragraph button</strong></p>
+<p class='first-item'><strong>Top left: pages or paragraph button</strong></p>
 <p> </p>
 <p>Toggle between xray markers for entire page or per paragraph.</p>
+<p> </p>
+<p><strong>Context buttons for items</strong><p>
+<p> </p>
+<p>With these buttons the item on which you tap will be opened in the Item Viewer, to show additional information (e.g. hits per chapter). With the back-to-previous-dialog-button in the left half of Item Viewer's title bar you can return to the current dialog. How many context buttons per row will maximally be shown is determined by the setting "max_context_items_per_row" in the DX settings The default value for this variable is 5.</p>
 <p> </p>
 <p><strong>Footer buttons</strong></p>
 <p> </p>

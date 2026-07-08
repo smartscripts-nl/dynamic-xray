@@ -475,13 +475,13 @@ function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_names3, hits_i
         title = matches_count_info .. subject,
         tabs = {
             {
-                tab = "vermeldingen",
+                tab = _("mentions"),
                 info = hits_names,
                 info2 = hits_names2,
                 info3 = hits_names3,
             },
             {
-                tab = "informatie",
+                tab = _("information"),
                 info = hits_info,
                 info2 = hits_info2,
                 info3 = hits_info3,

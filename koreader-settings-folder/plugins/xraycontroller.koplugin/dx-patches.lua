@@ -409,7 +409,7 @@ function ReaderToc:getTocPathInfoForText(pos0, context_info, has_own_title)
             context_info = ""
         end
     else
-        title = context_info or "Informatie"
+        title = context_info or _("Information")
         context_info = ""
     end
     local chapters = self:getFullTocTitleByPage(pos0)

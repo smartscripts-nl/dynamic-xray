@@ -10,7 +10,7 @@ local _ = KOR:initCustomTranslations()
 --- @class ClosingSwipes
 local ClosingSwipes = WidgetContainer:extend{
     closing_gesture_information_html_DX = _([[<div class="noindent">
-<p><strong>Closing fullscreen DX dialogs with gestures</strong></p>
+<p class='first-item'><strong>Closing fullscreen DX dialogs with gestures</strong></p>
 <p> </p>
 <ul>
 <li>You can close fullscreen(!) DX dialogs by swiping <i>diagonally</i> on them.</li>

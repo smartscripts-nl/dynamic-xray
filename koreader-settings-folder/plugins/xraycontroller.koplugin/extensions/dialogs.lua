@@ -679,7 +679,7 @@ function Dialogs:niceAlert(title, info, options)
     })
     ]]
     if not title then
-        title = "Ter informatie"
+        title = _("Information")
     end
     local prefix = no_white_space_prefix and "" or "\n"
     self.nice_alert = KOR.nicealert:new{

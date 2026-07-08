@@ -250,7 +250,7 @@ function InfoMessage:init()
                 self[1] = nil
                 KOR.dialogs:unregisterWidget(self)
                 return KOR.dialogs:textBox({
-                    title = "Ter informatie",
+                    title = _("Information"),
                     info = self.text,
                     height = math.floor(Screen:getHeight() * 9 / 10),
                     no_buttons_row = true,

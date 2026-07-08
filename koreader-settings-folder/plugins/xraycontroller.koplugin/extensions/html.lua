@@ -235,6 +235,10 @@ function Html:getHtmlBoxCss(additional_css)
         div.poezie p, div.noindent p {
             text-indent: 0 !important;
         }
+
+        p.first-item {
+            margin-top: .7em !important;
+        }
     ]]
     --* For reference, MuPDF declarations with absolute units:
     --*  "blockquote{margin:1em 40px}"
