@@ -71,7 +71,7 @@ local XraySettings = WidgetContainer:new{
         },
         hk_open_export_list = {
             value = "X",
-            explanation = "Opens a popup with all Xray items as sorted in the Items List and with info per item as shown in Page Information Popup. For copying and then printing, if you like." .. hotkeys_warning,
+            explanation = _("Opens a popup with all Xray items as sorted in the Items List and with info per item as shown in Page Information Popup. For copying and then printing, if you like.") .. hotkeys_warning,
             locked = 0,
         },
         hk_open_xray_settings_from_page_navigator = {
@@ -81,12 +81,12 @@ local XraySettings = WidgetContainer:new{
         },
         hk_page_navigator_jump_to_page_no = {
             value = "U",
-            explanation = "Open the dialog for jUmping to a specific page nUmber." .. hotkeys_warning,
+            explanation = _("Open the dialog for jUmping to a specific page nUmber.") .. hotkeys_warning,
             locked = 0,
         },
         hk_page_navigator_popup_menu = {
             value = "M",
-            explanation = "Toggle the Page Navigator popup menu with additional actions." .. hotkeys_warning,
+            explanation = _("Toggle the Page Navigator popup menu with additional actions.") .. hotkeys_warning,
             locked = 0,
         },
         hk_show_pagebrowser_from_page_navigator = {
@@ -146,7 +146,7 @@ local XraySettings = WidgetContainer:new{
         },
         items_metadata_add_top_padding = {
             value = true,
-            explanation = "If set to true, metadata of Xray items will be separated from their description with a empty line.",
+            explanation = _("If set to true, metadata of Xray items will be separated from their description with a empty line."),
             locked = 0,
         },
         --* IV stands for the Item Viewer:
@@ -177,7 +177,7 @@ local XraySettings = WidgetContainer:new{
         max_context_items_per_row = {
             value = 5,
             type = "number",
-            explanation = "This variable determines how many context/item buttons will be added at the lower part of the Tag Group Viewer and Xray Page Information Popup.",
+            explanation = _("This variable determines how many context/item buttons will be added at the lower part of the Tag Group Viewer and Xray Page Information Popup."),
             locked = 0,
         },
         max_info_line_length = {
@@ -202,13 +202,18 @@ local XraySettings = WidgetContainer:new{
         },
         no_back_to_previous_dialog_notification = {
             value = false,
-            explanation = "If set to true, no navigate-back-to_previous-dialog information popup will be shown. This setting can be set to true from that same information popup.",
+            explanation = _("If set to true, no navigate-back-to_previous-dialog information popup will be shown. This setting can be set to true from that same information popup."),
             locked = 0,
         },
         --* PN stands for the PageNavigator:
         PN_also_use_uppercase_needles = {
             value = false,
-            explanation = "If this setting is false, navigation through Page Navigator will be noticeably faster, because uppercase variants of names will be skipped. This is especially true when a double filter was set.\n\nThe con: uppercase variants of names in the ebook will not be found. However: these variants are an exception - only in some books they are present in the starting lines of chapters.",
+            explanation = _("If this setting is false, navigation through Page Navigator will be noticeably faster, because uppercase variants of names will be skipped. This is especially true when a double filter was set.\n\nThe con: uppercase variants of names in the ebook will not be found. However: these variants are an exception - only in some books they are present in the starting lines of chapters."),
+            locked = 0,
+        },
+        PN_hide_filter_buttons = {
+            value = false,
+            explanation = _("Page Navigator: if this settings is set to true, no filter buttons will be shown in the left half of the title bar. This can be handy when your screen width is too small to accomodate these icons, or can be usefull to unclutter PN when you don't intend to use these icons. Note that you can still activate an item filter by longpressing items in PN's sidepanel."),
             locked = 0,
         },
         PN_infopanel_meta_indent = {
@@ -246,7 +251,7 @@ local XraySettings = WidgetContainer:new{
         PN_non_filtered_items_layout = {
             value = "small-caps-italic",
             options = { "em", "small-caps", "small-caps-italic", "strong", },
-            explanation = "Page Navigator: when an item filter is set, the non-matching Xray items in the page will be marked with this lay-out.",
+            explanation = _("Page Navigator: when an item filter is set, the non-matching Xray items in the page will be marked with this lay-out."),
             locked = 0,
             after_change_callback = "update_page_navigator_non_filtered_layout",
         },
@@ -315,7 +320,7 @@ local XraySettings = WidgetContainer:new{
         --* TW stands for TappedWords:
         TW_only_show_main_item = {
             value = false,
-            explanation = "If set to true, upon longpressing an Xray item in the book text don't show the popup with the main item + related items, but immediately show the main item in the Item Viewer. This saves you an additional tap to get to the Viewer.",
+            explanation = _("If set to true, upon longpressing an Xray item in the book text don't show the popup with the main item + related items, but immediately show the main item in the Item Viewer. This saves you an additional tap to get to the Viewer."),
             locked = 0,
         },
         --* UI stands for the UI Page Information popup:

@@ -240,7 +240,7 @@ function XrayExporter:showExportXrayItemsDialog()
             {
                 tab = self.export_nouns[1],
                 info = function()
-                    --? this setting of the active tab shouldn't be necessary, but for some reason is:
+                    --? this setting of the active tab shouldn't be necessary, but for some reason is, for forcing ((XrayExporter#getTitle)) to set the correct title:
                     self.active_tab = 1
                     return self:getExportDialogInfo(1, 1)
                 end,
