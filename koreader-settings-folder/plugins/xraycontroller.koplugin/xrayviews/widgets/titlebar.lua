@@ -101,6 +101,7 @@ local TitleBar = OverlapGroup:extend{
 
     show_parent = nil,
 
+    close_button_inserted = false,
     -- #((define desired height of title bar))
     computed_titlebar_height = 0,
     dialog_queue_id = nil,
@@ -761,41 +762,56 @@ end
 --* see also ((addCloseButtonRightSpacer)):
 --- @private
 function TitleBar:addCloseButton()
-    if self.no_close_button or self.tab_buttons_right or not self.close_callback then
+    if self.no_close_button or not self.close_callback or self.close_button_inserted then
         return
     end
 
     self.has_top_buttons_right = true
+    local add_to_other_buttons = self.top_buttons_right
+
+    --* don't insert close button repeatedly:
+    if add_to_other_buttons and self.top_buttons_right[#self.top_buttons_right].is_close_button then
+        return
+    end
 
     local icon_height = KOR.buttonprops:getFixedIconHeight("for_close_button")
 
     --* in this case we need a smaller spaer above the close button in ((TitleBar#addVerticalSpacers)) > ((lower spacer above close button)), because for some reason the button would not be vertically centered otherwise:
-    self.has_only_close_button_on_right_side = true
+    self.has_only_close_button_on_right_side = not add_to_other_buttons
     self.has_top_buttons = true
 
-    self.top_buttons_right = {
-        Button:new({
-            icon = self.titlebar_inverted and "close-inverted" or "close",
-            icon_height = icon_height,
-            icon_width = icon_height,
-            background = self.titlebar_inverted and self.inverted_background_color or KOR.colors.white,
-            generate_inverted_icon = self.titlebar_inverted,
-            --[[text = "x",
-            text_font_size = 14,
-            text_font_bold = false,]]
-            callback = function()
-                --* only a dialog registered in DialogsQueue may reset the dialogs queue:
-                if self.dialog_queue_id then
-                    KOR.dialogsqueue:reset()
-                end
-                self.close_callback()
-            end,
-            hold_callback = function()
-                if self.close_hold_callback then
-                    self.close_hold_callback()
-                end
+    local close_button = Button:new({
+        icon = self.titlebar_inverted and "close-inverted" or "close",
+        icon_height = icon_height,
+        icon_width = icon_height,
+        is_close_button = true,
+        background = self.titlebar_inverted and self.inverted_background_color or KOR.colors.white,
+        generate_inverted_icon = self.titlebar_inverted,
+        --[[text = "x",
+        text_font_size = 14,
+        text_font_bold = false,]]
+        callback = function()
+            --* only a dialog registered in DialogsQueue may reset the dialogs queue:
+            if self.dialog_queue_id then
+                KOR.dialogsqueue:reset()
             end
-        }),
+            self.close_callback()
+        end,
+        hold_callback = function()
+            if self.close_hold_callback then
+                self.close_hold_callback()
+            end
+        end
+    })
+
+    if add_to_other_buttons then
+        table_insert(self.top_buttons_right, close_button)
+        self.close_button_inserted = true
+        return
+    end
+
+    self.top_buttons_right = {
+        close_button,
     }
 end
 

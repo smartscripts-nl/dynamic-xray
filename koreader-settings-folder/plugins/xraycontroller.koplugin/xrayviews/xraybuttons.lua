@@ -424,33 +424,6 @@ end
 
 --- @param parent XrayPageNavigator
 function XrayButtons:forPageNavigatorTopLeft(parent)
-    local filter_button
-    filter_button = KOR.buttoninfopopup:forXrayPageNavigatorFilter({
-        callback = function()
-            if parent.filter_item_double then
-                return
-            end
-            if parent.filter_item then
-                filter_button:setIcon("filter")
-                return parent:resetFilter()
-            end
-            filter_button:setIcon("filter-reset")
-            return parent:setFilter()
-        end,
-    })
-
-    local double_filter_button
-    double_filter_button = KOR.buttoninfopopup:forXrayPageNavigatorFilterDouble({
-        callback = function()
-            if parent.filter_item_double then
-                double_filter_button:setIcon("filter-double")
-                return parent:resetFilterDouble()
-            end
-            double_filter_button:setIcon("filter-double-reset")
-            return parent:setFilterDouble()
-        end,
-    })
-
     local buttons = {
         {
             icon = "info-slender",
@@ -458,8 +431,6 @@ function XrayButtons:forPageNavigatorTopLeft(parent)
                 return DX.i:showPageNavigatorHelp(parent)
             end,
         },
-        filter_button,
-        double_filter_button,
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
                 DX.cb:execSettingsCallback(parent)
@@ -471,7 +442,11 @@ function XrayButtons:forPageNavigatorTopLeft(parent)
     return buttons
 end
 
-function XrayButtons:forPageNavigatorTopLeft(parent)
+--- @param parent XrayPageNavigator
+function XrayButtons:forPageNavigatorTopRight(parent)
+    if DX.s.PN_hide_filter_buttons then
+        return
+    end
     local filter_button
     filter_button = KOR.buttoninfopopup:forXrayPageNavigatorFilter({
         callback = function()
@@ -486,7 +461,6 @@ function XrayButtons:forPageNavigatorTopLeft(parent)
             return parent:setFilter()
         end,
     })
-
     local double_filter_button
     double_filter_button = KOR.buttoninfopopup:forXrayPageNavigatorFilterDouble({
         callback = function()
@@ -499,26 +473,10 @@ function XrayButtons:forPageNavigatorTopLeft(parent)
         end,
     })
 
-    local buttons = {
-        {
-            icon = "info-slender",
-            callback = function()
-                return DX.i:showPageNavigatorHelp(parent)
-            end,
-        },
-        KOR.buttoninfopopup:forXraySettings({
-            callback = function()
-                DX.cb:execSettingsCallback(parent)
-            end
-        }),
+    return {
+        filter_button,
+        double_filter_button,
     }
-    if not DX.s.PN_hide_filter_buttons then
-        table_insert(buttons, 2, double_filter_button)
-        table_insert(buttons, 2, filter_button)
-    end
-    self:insertGeneralDXTipsButton(buttons, parent)
-
-    return buttons
 end
 
 function XrayButtons:closeDialog(dialog)

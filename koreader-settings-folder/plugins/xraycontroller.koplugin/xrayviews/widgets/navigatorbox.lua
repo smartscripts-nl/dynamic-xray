@@ -106,6 +106,7 @@ local NavigatorBox = InputContainer:extend{
     titlebar = nil,
     titlebar_height = nil,
     top_buttons_left = nil,
+    top_buttons_right = nil,
     width = nil,
     --* Static class member, holds a ref to the currently opened widgets (in instantiation order).
     window_list = {},
@@ -810,6 +811,7 @@ function NavigatorBox:generateTitleBar()
         show_parent = self,
         lang = self.lang_out,
         top_buttons_left = self.top_buttons_left,
+        top_buttons_right = self.top_buttons_right,
 
         less_title_top_padding = false,
     }

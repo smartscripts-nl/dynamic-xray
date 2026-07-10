@@ -206,6 +206,7 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
         side_buttons = DX.sp.side_buttons,
         title = parent.current_title .. " - p." .. self.page_no,
         top_buttons_left = DX.b:forPageNavigatorTopLeft(self),
+        top_buttons_right = DX.b:forPageNavigatorTopRight(self),
         window_size = "fullscreen",
         after_close_callback = function()
             KOR.registry:unset("add_parent_hotkeys")
