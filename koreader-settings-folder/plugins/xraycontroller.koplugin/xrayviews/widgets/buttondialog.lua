@@ -248,11 +248,15 @@ function ButtonDialog:onCloseWidget()
 end
 
 function ButtonDialog:onTapClose()
-    KOR.dialogs:closeAllOverlays()
-    UIManager:close(self)
+    --* don't close all widgets when caller has provided a tap_close_callback; then more finegrained control of what to close and what to do:
     if self.tap_close_callback then
         self.tap_close_callback()
+        return true
     end
+
+    KOR.dialogs:closeAllOverlays()
+    UIManager:close(self)
+    KOR.dialogs:closeAllWidgets()
     return true
 end
 
