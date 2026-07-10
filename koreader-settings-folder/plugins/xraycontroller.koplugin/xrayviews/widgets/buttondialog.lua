@@ -86,6 +86,7 @@ local ButtonDialog = InputContainer:extend{
     -- (depending on what the screen height allows) to compute the height.
     rows_per_page = nil, -- number or array of numbers
 
+    do_only_tap_close_callback = false,
     readonly = false,
     button_lines = 2,
 
@@ -248,10 +249,12 @@ function ButtonDialog:onCloseWidget()
 end
 
 function ButtonDialog:onTapClose()
-    --* don't close all widgets when caller has provided a tap_close_callback; then more finegrained control of what to close and what to do:
     if self.tap_close_callback then
         self.tap_close_callback()
-        return true
+        --* don't close all widgets when caller has provided a tap_close_callback and we don't want to execute other actions; then more finegrained control of what to close and what to do:
+        if self.do_only_tap_close_callback then
+            return true
+        end
     end
 
     KOR.dialogs:closeAllOverlays()

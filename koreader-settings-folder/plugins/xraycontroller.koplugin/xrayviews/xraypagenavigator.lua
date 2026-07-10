@@ -679,6 +679,7 @@ function XrayPageNavigator:createPopupMenu()
         --* these buttons were populated in ((XrayButtons#forPageNavigatorPopupButtons)):
         buttons = self.popup_buttons,
         forced_width = self.info_panel_width,
+        do_only_tap_close_callback = true,
         tap_close_callback = function()
             self:closePopupMenu()
         end,
