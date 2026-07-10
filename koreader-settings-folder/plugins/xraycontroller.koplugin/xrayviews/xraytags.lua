@@ -133,7 +133,7 @@ function XrayTags:addTagGroup(called_from_list)
 end
 
 function XrayTags:addTagsToItems()
-    if KOR.tables:getAssociativeTableLength(self.select_for_tag_items) == 0 then
+    if KOR.tables:getTableLength(self.select_for_tag_items) == 0 then
         KOR.messages:notify(_("you haven't selected any items for tag update yet"), 4)
         self:resetModule()
         DX.d:showListWithRestoredArguments()

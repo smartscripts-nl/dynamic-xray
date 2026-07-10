@@ -367,7 +367,7 @@ end
 --- @private
 function XrayUI:updateStatusInFooter()
     --* for consumption in footer:
-    KOR.registry:set("xray_items_on_page_count", KOR.tables:getAssociativeTableLength(self.hits))
+    KOR.registry:set("xray_items_on_page_count", KOR.tables:getTableLength(self.hits))
     --* force update of footer, to show correct number of current Xray items on page:
     KOR.footer:onUpdateFooter()
 end

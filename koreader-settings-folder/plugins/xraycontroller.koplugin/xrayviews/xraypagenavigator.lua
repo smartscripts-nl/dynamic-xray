@@ -405,7 +405,7 @@ end
 function XrayPageNavigator:saveDoubleFilterItems()
 
     --* self.double_filter_items populated in ((XrayPageNavigator#initiateDoubleItemFilter)):
-    if KOR.tables:getAssociativeTableLength(self.double_filter_items) < 2 then
+    if KOR.tables:getTableLength(self.double_filter_items) < 2 then
         KOR.messages:notify("je hebt niet minimaal 2 items geselecteerd", 4)
         return
     end
