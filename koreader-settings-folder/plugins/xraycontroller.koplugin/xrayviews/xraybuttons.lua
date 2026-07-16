@@ -757,7 +757,7 @@ end
 
 function XrayButtons:forItemViewerTopRight(needle_item)
     local favorites_name = _("Favorites")
-    local is_favorite = needle_item.tags and needle_item.tags:match(favorites_name)
+    local is_favorite = DX.ta:itemHasTag(needle_item, favorites_name)
     return {
         KOR.buttoninfopopup:forXrayToggleFavoriteItem({
             icon = is_favorite and "heart-black" or "heart",

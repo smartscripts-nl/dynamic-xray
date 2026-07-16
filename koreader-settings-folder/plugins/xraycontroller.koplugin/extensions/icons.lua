@@ -67,6 +67,10 @@ return {
     edit_bare = "\u{F044}",
     erase = "\u{F014}" .. spacer, -- recycle bin
     erase_bare = "\u{F014}",
+    favorite = "\u{E9D4}" .. spacer,
+    favorite_bare = "\u{E9D4}",
+    favorite_closed = "\u{E9D0}" .. spacer,
+    favorite_closed_bare = "\u{E9D0}",
     file_open = "\u{F016}" .. spacer,
     file_open_bare = "\u{F016}",
     filter = "\u{E932}",

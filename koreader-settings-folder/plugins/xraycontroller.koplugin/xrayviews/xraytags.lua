@@ -182,6 +182,10 @@ function XrayTags:getTagsForExporterOverview(info)
     return table_concat(info, "\n")
 end
 
+function XrayTags:itemHasTag(item, tag)
+    return has_text(item.tags) and item.tags:match(tag) or false
+end
+
 --- @private
 function XrayTags:resetItemForTagsSelection(item, for_one_item)
     item.dim = nil
@@ -221,7 +225,7 @@ function XrayTags:initiateItemTagsSelection()
         end
 
         local matcher = KOR.strings:prepareNeedleForMatching(manager.select_for_tags_tag, "with_word_boundaries")
-        if has_text(item.tags) and item.tags:match(matcher) then
+        if self:itemHasTag(item, matcher) then
 
             manager.tag_exists_alert = KOR.dialogs:niceAlert(_("Tag already assigned"), T(_("This item already has the tag \"%1\"%2\n\n* choose \"remove\" to remove the tag\n* choose \"forget\" to deselect the item\n\nPreviously defined tag-groups:\n%3"), manager.select_for_tags_tag, KOR.strings.ellipsis, DX.m:getAllAssignedTagsString()), {
                 modal = true,
@@ -313,7 +317,7 @@ function XrayTags:generateTagGroup(tag)
     local tagged_items = {}
     count = #items
     for i = 1, count do
-        if has_text(items[i].tags) and items[i].tags:match(needle) then
+        if self:itemHasTag(items[i], needle) then
             table_insert(tagged_items, items[i])
         end
     end

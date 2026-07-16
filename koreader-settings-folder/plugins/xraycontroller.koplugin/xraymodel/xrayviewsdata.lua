@@ -1405,7 +1405,16 @@ function XrayViewsData:generateListItemText(item, reliability_indicator)
 
     --* we don't add sequence number here, because that will only be done after prioritizing and sorting items in the list, at end of ((XrayViewsData#getCurrentListTabItems)):
     local name = self:addNonBreakableIndicator(item.name, item)
-    return reliability_indicator .. icon .. name .. hits_info .. ": " .. KOR.strings:lcfirst(item.description)
+    local favorite_marker = DX.ta:itemHasTag(item, _("Favorites")) and KOR.icons.favorite_closed or ""
+    return table_concat({
+        reliability_indicator,
+        icon,
+        favorite_marker,
+        name,
+        hits_info,
+        ": ",
+        KOR.strings:lcfirst(item.description),
+    }, "")
 end
 
 --- @private
