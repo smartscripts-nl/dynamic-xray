@@ -764,19 +764,7 @@ function XrayButtons:forItemViewerTopRight(needle_item)
             info = is_favorite and _("heart icon | Remove this item from tag-group \"") .. favorites_name .. "\"" or _("heart icon | Add this item to tag-group \"") .. favorites_name .. "\"",
             callback_label = is_favorite and _("remove") or _("add"),
             callback = function()
-                if is_favorite then
-                    DX.ta:itemRemoveTag(needle_item, favorites_name)
-                    KOR.messages:notify(_("item removed from tag-group") .. " " .. favorites_name)
-                else
-                    DX.ta:itemAddTag(needle_item, favorites_name)
-                    KOR.messages:notify(_("item added to tag-group") .. " " .. favorites_name)
-                end
-                DX.ds.storeUpdatedItem(needle_item)
-                DX.vd:registerUpdatedItem(needle_item)
-                DX.d:closeItemViewer()
-                DX.ta:resetTagGroups()
-                DX.m:updateAllTags()
-                KOR.dialogsqueue:reloadLastDialog()
+                DX.c:itemToggleFavoritesTag(needle_item, favorites_name, is_favorite)
             end,
         })
     }
