@@ -1040,6 +1040,7 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
             self:viewPreviousItem(DX.vd.current_item)
         end,
         button_table = DX.b:forItemViewer(needle_item, called_from_list, tapped_word, book_hits),
+        top_buttons_right = DX.b:forItemViewerTopRight(needle_item),
     })
     self:showActionResultMessage()
 end
@@ -1065,6 +1066,7 @@ function XrayDialogs:showItemViewer(needle_item, props)
     self.item_viewer = KOR.dialogs:htmlBoxTabbed(active_tab, {
         title = title,
         top_buttons_left = DX.b:forItemViewerTopLeft(self, needle_item),
+        top_buttons_right = props.top_buttons_right,
         tabs = tabs,
         dialog_queue_id = props.dialog_queue_id,
         --* in external items viewer mode don't generate chapter histogram:

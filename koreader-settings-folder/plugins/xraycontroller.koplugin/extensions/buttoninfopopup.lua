@@ -658,6 +658,12 @@ function ButtonInfoPopup:forXrayTagGroupSelector(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forXrayToggleFavoriteItem(props)
+	return KOR.buttonprops:set({
+		--! icon, info, callback_label and callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forXrayToggleImportantItem(props)
 	return KOR.buttonprops:set({
 		fgcolor = KOR.colors.button_label,

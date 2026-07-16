@@ -100,11 +100,12 @@ function ButtonProps:popupInfo(info_props)
 	local callback_label = info_props.callback_label:lower()
 	local font_face = "x_smallinfofont"
 	local font_size = 14
-	local font_bold = true
+	local font_bold = info_props.font_bold ~= false and info_props.text_font_bold ~= false
 
 	local icon_text = icon and {
 		icon = icon,
 		icon_size_ratio = icon_size_ratio,
+		icons_size_ratio_forced = info_props.icon_size_ratio_forced,
 		text = " " .. callback_label or " voer uit",
 	} or nil
 	--* we have a text icon:
@@ -120,6 +121,7 @@ function ButtonProps:popupInfo(info_props)
 			 text_font_face = font_face,
 			 text_font_size = font_size,
 			 font_bold = font_bold,
+			 text_font_bold = font_bold,
 			 callback = function()
 				 self:execOrShowButtonDisabledMessage(callback, info_props)
 			 end
@@ -471,11 +473,11 @@ function ButtonProps:injectAdditionalChoiceCallbacks(buttons, choice_props, prop
 	if choice_props.extra_callbacks then
 
 		local icon = props.icon
-		local icon_size_ratio = props.icon_size_ratio
+		local icon_size_ratio = props.icon_size_ratio or props.icon_size_ratio_forced
 		local text = props.text
 		local font_face = props.font_face
 		local font_size = props.font_size
-		local font_bold = props.font_bold
+		local font_bold = props.font_bold ~= false and props.text_font_bold ~= false
 
 		local extra_callbacks = choice_props.extra_callbacks
 		for i = 1, #extra_callbacks do
@@ -501,6 +503,7 @@ function ButtonProps:injectAdditionalChoiceCallbacks(buttons, choice_props, prop
 				text_font_face = font_face,
 				text_font_size = font_size,
 				font_bold = font_bold,
+				text_font_bold = font_bold,
 				callback = function()
 					self:execOrShowButtonDisabledMessage(extra_callback, choice_props)
 				end

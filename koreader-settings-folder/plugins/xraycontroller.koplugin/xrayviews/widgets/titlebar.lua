@@ -381,6 +381,8 @@ function TitleBar:getAdaptedTopButton(button)
         config = {
             text = button.text,
             bordersize = 0,
+            font_bold = button.font_bold,
+            text_font_bold = button.text_font_bold,
             callback = button.callback,
             hold_callback = button.hold_callback,
             info_callback = button.info_callback,
@@ -396,11 +398,13 @@ function TitleBar:getAdaptedTopButton(button)
             icon_height = button.icon_size,
             --icon_size_ratio = button.icon_size_ratio or 0.6,
             bordersize = 0,
+            icon_size_ratio = button.icon_size_ratio,
+            icon_size_ratio_forced = button.icon_size_ratio_forced,
             callback = button.callback,
             hold_callback = button.hold_callback,
             info_callback = button.info_callback,
             generate_inverted_icon = self.titlebar_inverted,
-            allow_flash = not G_reader_settings:isTrue("night_mode"),
+            allow_flash = G_reader_settings:isNilOrFalse("night_mode"),
             show_parent = self.show_parent,
             for_titlebar = true,
         }

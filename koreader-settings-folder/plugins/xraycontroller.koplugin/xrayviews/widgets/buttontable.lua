@@ -275,6 +275,8 @@ function ButtonTable:generateButton(btn_entry, max_button_height, default_button
     --* generate_active_icon can be set on the ButtonTable self, to color all its buttons - see ((FilesBox#getBoxButtons)) -, but also on individual buttons, e.g. for tag filter navigation in Page Navigator - see ((XrayButtons#forPageNavigator)):
     config.generate_active_icon = self.generate_active_icon or btn_entry.generate_active_icon
     config.increase_top_padding = self.increase_top_padding
+    config.icon_size_ratio = btn_entry.icon_size_ratio
+    config.icon_size_ratio_forced = btn_entry.icon_size_ratio_forced
     config.margin = 0
     config.padding = Size.padding.buttontable --* a bit taller than standalone buttons, for easier tap
     config.padding_h = btn_entry.align == "left" and Size.padding.large or Size.padding.button

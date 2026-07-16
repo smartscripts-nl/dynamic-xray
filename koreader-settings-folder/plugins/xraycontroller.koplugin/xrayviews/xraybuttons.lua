@@ -755,6 +755,38 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
     return buttons
 end
 
+function XrayButtons:forItemViewerTopRight(needle_item)
+    local favorites_name = _("Favorites")
+    local is_favorite = needle_item.tags and needle_item.tags:match(favorites_name)
+    return {
+        KOR.buttoninfopopup:forXrayToggleFavoriteItem({
+            icon = is_favorite and "heart-black" or "heart",
+            info = is_favorite and _("heart icon | Remove this item from tag-group \"") .. favorites_name .. "\"" or _("heart icon | Add this item to tag-group \"") .. favorites_name .. "\"",
+            callback_label = is_favorite and _("remove") or _("add"),
+            callback = function()
+                if is_favorite then
+                    needle_item.tags = needle_item.tags
+                      :gsub(favorites_name, "")
+                      :gsub("  +", " ")
+                    KOR.messages:notify(_("item removed from tag-group") .. " " .. favorites_name)
+                elseif has_text(needle_item.tags) then
+                    needle_item.tags = needle_item.tags .. " " .. favorites_name
+                    KOR.messages:notify(_("item added to tag-group") .. " " .. favorites_name)
+                else
+                    needle_item.tags = favorites_name
+                    KOR.messages:notify(_("item added to tag-group") .. " " .. favorites_name)
+                end
+                DX.ds.storeUpdatedItem(needle_item)
+                DX.vd:registerUpdatedItem(needle_item)
+                DX.d:closeItemViewer()
+                DX.ta:resetTagGroups()
+                DX.m:updateAllTags()
+                KOR.dialogsqueue:reloadLastDialog()
+            end,
+        })
+    }
+end
+
 --- @param parent XrayPageNavigator
 function XrayButtons:forSaveGlossary(parent, glossary, glossary_text, css_files)
     return {{

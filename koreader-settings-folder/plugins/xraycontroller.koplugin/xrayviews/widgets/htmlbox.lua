@@ -95,6 +95,7 @@ local HtmlBox = InputContainer:extend{
     title_tab_buttons_left = nil,
     title_tab_callbacks = nil,
     top_buttons_left = nil,
+    top_buttons_right = nil,
     width = nil,
     --* Static class member, holds a ref to the currently opened widgets (in instantiation order).
     window_list = {},
@@ -994,6 +995,7 @@ function HtmlBox:generateTitleBar()
         show_parent = self,
         lang = self.lang_out,
         top_buttons_left = self.top_buttons_left,
+        top_buttons_right = self.top_buttons_right,
 
         less_title_top_padding = DX.s.is_tablet_device and self.tabs_table_buttons and true or false,
     }

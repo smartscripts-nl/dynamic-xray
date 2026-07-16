@@ -67,6 +67,10 @@ function DialogsQueue:register(queue_props)
     KOR.dialogs:closeAllWidgets()
 end
 
+function DialogsQueue:reloadLastDialog()
+    self.queue[#self.queue].restore()
+end
+
 function DialogsQueue:reset()
     self.last_id = nil
     self.last_register_time = nil
