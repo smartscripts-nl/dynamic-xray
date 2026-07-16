@@ -184,7 +184,8 @@ end
 
 function XrayTags:itemAddTag(item, tag)
     if has_text(item.tags) then
-        item.tags = item.tags .. " " .. tag
+        local separator = item.tags:match(",") and ", " or " "
+        item.tags = item.tags .. separator .. tag
         return
     end
 
@@ -198,7 +199,7 @@ end
 function XrayTags:itemRemoveTag(item, tag)
     if has_text(item.tags) then
         item.tags = item.tags
-            :gsub(tag, "")
+            :gsub(tag .. ",? ?", "")
             :gsub("  +", " ")
     end
 end

@@ -277,16 +277,16 @@ function XrayController:doBatchImport(conn, stmt, count, callback)
     return conn, stmt
 end
 
-function XrayController:itemToggleFavoritesTag(needle_item, favorites_name, is_favorite)
+function XrayController:itemToggleFavoritesTag(item, favorites_name, is_favorite)
     if is_favorite then
-        DX.ta:itemRemoveTag(needle_item, favorites_name)
+        DX.ta:itemRemoveTag(item, favorites_name)
         KOR.messages:notify(_("item removed from tag-group") .. " " .. favorites_name)
     else
-        DX.ta:itemAddTag(needle_item, favorites_name)
+        DX.ta:itemAddTag(item, favorites_name)
         KOR.messages:notify(_("item added to tag-group") .. " " .. favorites_name)
     end
-    DX.ds.storeUpdatedItem(needle_item)
-    DX.vd:registerUpdatedItem(needle_item)
+    DX.ds.storeUpdatedItem(item)
+    DX.vd:registerUpdatedItem(item)
     DX.d:closeItemViewer()
     DX.ta:resetTagGroups()
     DX.m:updateAllTags()
