@@ -182,8 +182,25 @@ function XrayTags:getTagsForExporterOverview(info)
     return table_concat(info, "\n")
 end
 
+function XrayTags:itemAddTag(item, tag)
+    if has_text(item.tags) then
+        item.tags = item.tags .. " " .. tag
+        return
+    end
+
+    item.tags = tag
+end
+
 function XrayTags:itemHasTag(item, tag)
     return has_text(item.tags) and item.tags:match(tag) or false
+end
+
+function XrayTags:itemRemoveTag(item, tag)
+    if has_text(item.tags) then
+        item.tags = item.tags
+            :gsub(tag, "")
+            :gsub("  +", " ")
+    end
 end
 
 --- @private

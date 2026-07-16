@@ -765,15 +765,10 @@ function XrayButtons:forItemViewerTopRight(needle_item)
             callback_label = is_favorite and _("remove") or _("add"),
             callback = function()
                 if is_favorite then
-                    needle_item.tags = needle_item.tags
-                      :gsub(favorites_name, "")
-                      :gsub("  +", " ")
+                    DX.ta:itemRemoveTag(needle_item, favorites_name)
                     KOR.messages:notify(_("item removed from tag-group") .. " " .. favorites_name)
-                elseif has_text(needle_item.tags) then
-                    needle_item.tags = needle_item.tags .. " " .. favorites_name
-                    KOR.messages:notify(_("item added to tag-group") .. " " .. favorites_name)
                 else
-                    needle_item.tags = favorites_name
+                    DX.ta:itemAddTag(needle_item, favorites_name)
                     KOR.messages:notify(_("item added to tag-group") .. " " .. favorites_name)
                 end
                 DX.ds.storeUpdatedItem(needle_item)
