@@ -1372,7 +1372,7 @@ function XrayViewsData:generateFirstLines(first_line, first_line_iconless, xray_
     -- #((xray items dialog add match reliability explanations))
     table_insert(first_line, xray_type_icon)
     if DX.ta:itemHasTag(xray_item, _("Favorites")) then
-        table_insert(first_line, KOR.icons.favorite_closed)
+        table_insert(first_line, KOR.icons.favorite_closed_bare .. " ")
     end
     table_insert(first_line, name)
     if ui_explanation then
@@ -1408,7 +1408,7 @@ function XrayViewsData:generateListItemText(item, reliability_indicator)
 
     --* we don't add sequence number here, because that will only be done after prioritizing and sorting items in the list, at end of ((XrayViewsData#getCurrentListTabItems)):
     local name = self:addNonBreakableIndicator(item.name, item)
-    local favorite_marker = DX.ta:itemHasTag(item, _("Favorites")) and KOR.icons.favorite_closed or ""
+    local favorite_marker = DX.ta:itemHasTag(item, _("Favorites")) and KOR.icons.favorite_closed_bare .. " " or ""
     return table_concat({
         reliability_indicator,
         icon,

@@ -227,7 +227,7 @@ function XrayInfoPanel:getItemInfoText(item, for_info_panel)
 
     local reliability_indicator = item.reliability_indicator or DX.pn.cached_reliability_indicators[item.name] and DX.pn.cached_reliability_indicators[item.name][DX.pn.page_no]
     reliability_indicator = reliability_indicator and reliability_indicator .. " " or ""
-    local fav_indicator = DX.ta:itemHasTag(item, _("Favorites")) and KOR.icons.favorite_closed or ""
+    local fav_indicator = DX.ta:itemHasTag(item, _("Favorites")) and KOR.icons.favorite_closed_bare .. " " or ""
 
     --* this cached info was set farther below in the current method:
     if DX.pn.cached_items_info[item.name] then
