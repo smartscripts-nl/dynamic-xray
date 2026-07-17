@@ -1371,6 +1371,9 @@ function XrayViewsData:generateFirstLines(first_line, first_line_iconless, xray_
     --* here the info gets combined:
     -- #((xray items dialog add match reliability explanations))
     table_insert(first_line, xray_type_icon)
+    if DX.ta:itemHasTag(xray_item, _("Favorites")) then
+        table_insert(first_line, KOR.icons.favorite_closed)
+    end
     table_insert(first_line, name)
     if ui_explanation then
         table_insert(first_line, ui_explanation)

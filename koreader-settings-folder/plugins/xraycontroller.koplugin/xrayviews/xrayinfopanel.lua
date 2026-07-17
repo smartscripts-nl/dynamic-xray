@@ -227,12 +227,13 @@ function XrayInfoPanel:getItemInfoText(item, for_info_panel)
 
     local reliability_indicator = item.reliability_indicator or DX.pn.cached_reliability_indicators[item.name] and DX.pn.cached_reliability_indicators[item.name][DX.pn.page_no]
     reliability_indicator = reliability_indicator and reliability_indicator .. " " or ""
+    local fav_indicator = DX.ta:itemHasTag(item, _("Favorites")) and KOR.icons.favorite_closed or ""
 
     --* this cached info was set farther below in the current method:
     if DX.pn.cached_items_info[item.name] then
         --* if an item was cached, don't add linebreaks to the linebreak already present in the cached info:
         local prefix = for_info_panel and "" or "\n"
-        local info = prefix .. reliability_indicator .. DX.pn.cached_items_info[item.name]
+        local info = prefix .. reliability_indicator .. fav_indicator .. DX.pn.cached_items_info[item.name]
         if not info:match("^\n") then
             return "\n" .. info
         end
@@ -240,20 +241,20 @@ function XrayInfoPanel:getItemInfoText(item, for_info_panel)
     end
 
     local info
-    info, reliability_indicator = self:generateItemMetaInfo(item, reliability_indicator)
+    info, reliability_indicator = self:generateItemMetaInfo(item, reliability_indicator, fav_indicator)
 
     return reliability_indicator .. info
 end
 
 --- @private
-function XrayInfoPanel:generateItemMetaInfo(item, reliability_indicator)
+function XrayInfoPanel:generateItemMetaInfo(item, reliability_indicator, fav_indicator)
     local reliability_indicator_placeholder = item.reliability_indicator and "  " or ""
     DX.pn:setProp("sub_info_separator", "")
 
     local icon = DX.vd:getItemTypeIcon(item, "bare")
     --* alias_indent suffixed with 2 spaces, because of icon .. " ":
     local name = DX.vd:addNonBreakableIndicator(item.name, item)
-    local info = icon .. " " .. name .. "\n"
+    local info = icon .. " " .. fav_indicator .. name .. "\n"
 
     local meta_indent = self:getConfiguredInfoPanelIndentation()
 
