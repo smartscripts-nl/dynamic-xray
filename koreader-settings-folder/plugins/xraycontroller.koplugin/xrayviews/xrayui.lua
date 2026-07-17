@@ -296,7 +296,8 @@ function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanation
     local match_explanation = items[i].match_explanation or ""
 
     local match_block, type_icon = DX.vd:generateXrayExportOrLinkedItemInfo(nil, items[i], xray_explanations[i], injected_nr)
-    table_insert(paragraph_hits_names, type_icon .. match_reliability_icon .. " " .. name .. match_explanation)
+    local fav_indicator = DX.ta:itemHasTag(items[i], _("Favorites")) and KOR.icons.favorite_closed_prefix or ""
+    table_insert(paragraph_hits_names, type_icon .. match_reliability_icon .. " " .. name .. fav_indicator .. match_explanation)
     table_insert(paragraph_hits_info, match_block)
 
     more_button_added = DX.b:addTappedWordCollectionButton(self.info_extra_button_rows, nil, nil, items[i], {

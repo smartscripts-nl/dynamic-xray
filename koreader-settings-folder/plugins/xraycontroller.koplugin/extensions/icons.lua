@@ -70,6 +70,7 @@ return {
     favorite = "\u{E9D4}" .. spacer,
     favorite_bare = "\u{E9D4}",
     favorite_closed = "\u{E9D0}" .. spacer,
+    favorite_closed_prefix = spacer .. "\u{E9D0}",
     favorite_closed_bare = "\u{E9D0}",
     file_open = "\u{F016}" .. spacer,
     file_open_bare = "\u{F016}",
