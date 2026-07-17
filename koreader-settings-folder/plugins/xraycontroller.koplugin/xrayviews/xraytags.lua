@@ -182,14 +182,26 @@ function XrayTags:getTagsForExporterOverview(info)
     return table_concat(info, "\n")
 end
 
+--- @private
+function XrayTags:getItemTagsTable(item)
+    local tags = item.tags
+    local separator = tags:match(",") and ", " or " "
+    if separator == ", " then
+        tags = tags:gsub(", ?$", "")
+    end
+    return KOR.strings:split(tags, ",? +"), separator
+end
+
 function XrayTags:itemAddTag(item, tag)
-    if has_text(item.tags) then
-        local separator = item.tags:match(",") and ", " or " "
-        item.tags = item.tags .. separator .. tag
+    if has_no_text(item.tags) then
+        item.tags = tag
         return
     end
 
-    item.tags = tag
+    local tags, separator = self:getItemTagsTable(item)
+    table_insert(tags, tag)
+    table_sort(tags)
+    item.tags = table_concat(tags, separator)
 end
 
 function XrayTags:itemHasTag(item, tag)
@@ -197,25 +209,19 @@ function XrayTags:itemHasTag(item, tag)
 end
 
 function XrayTags:itemRemoveTag(item, tag)
-    if has_text(item.tags) then
-        item.tags = item.tags
-            :gsub(tag .. ",? ?", "")
-            :gsub("  +", " ")
-    end
-end
-
---- @private
-function XrayTags:resetItemForTagsSelection(item, for_one_item)
-    item.dim = nil
-    item.text = item.text:gsub(" " .. KOR.icons.checkboxes, "", 1)
-
-    --* then all items will be reset in a loop:
-    if not for_one_item then
+    if has_no_text(item.tags) then
         return
     end
 
-    self.select_for_tag_items[item.id] = nil
-    DX.d.xray_items_inner_menu:updateItems()
+    local tags, separator = self:getItemTagsTable(item)
+    count = #tags
+    local pruned = {}
+    for i = 1, count do
+        if tags[i] ~= tag then
+            table_insert(pruned, tags[i])
+        end
+    end
+    item.tags = table_concat(pruned, separator)
 end
 
 --- @private
