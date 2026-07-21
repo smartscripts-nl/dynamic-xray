@@ -10,7 +10,6 @@ local DX = DX
 local has_content = has_content
 local has_no_content = has_no_content
 local has_no_text = has_no_text
-local has_text = has_text
 local math_floor = math.floor
 local select = select
 local string = string
@@ -386,7 +385,7 @@ function Strings:splitParagraph(paragraph, lines, max_length)
             line = word
         elseif #line + 1 + #word <= self:currentSplitLimit(max_length) then
             line = line .. " " .. word
-        elseif has_text(line) then
+        elseif has_content(line) then
             prefix = self:currentSplitPrefix()
             if prefix then
                 line = prefix .. line
@@ -398,10 +397,10 @@ function Strings:splitParagraph(paragraph, lines, max_length)
     end
 
     prefix = self:currentSplitPrefix()
-    if prefix and has_text(line) then
+    if prefix and has_content(line) then
         line = prefix .. line
     end
-    if has_text(line) then
+    if has_content(line) then
         table_insert(lines, line)
     end
 end
