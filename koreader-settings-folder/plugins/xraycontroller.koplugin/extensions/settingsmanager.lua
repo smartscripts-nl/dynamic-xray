@@ -293,7 +293,7 @@ function SettingsManager:chooseSetting(key, current_nr, current_value, options, 
                 UIManager:close(self.option_chooser)
                 self:saveSetting(key, options[current])
                 self:changeMenuSetting(key, options[current], current_nr)
-                KOR.messages:notify(_("setting ") .. key .. _(" modified to ") .. tostring(options[current]), 4)
+                KOR.messages:notify(key .. _(" modified to ") .. tostring(options[current]), 4)
                 self:handleAfterChangeCallback(key, options[current])
             end
         })
@@ -342,7 +342,7 @@ function SettingsManager:setNumber(key, current_nr, current_value, validator_pro
             local value = is_decimal and spin.value/100 or spin.value
             self:saveSetting(key, value)
             self:changeMenuSetting(key, value, current_nr)
-            KOR.messages:notify(_("setting ") .. key .. _(" modified to ") .. tostring(value), 4)
+            KOR.messages:notify(key .. _(" modified to ") .. tostring(value), 4)
             self:handleAfterChangeCallback(key, value)
         end,
         close_callback = function()
@@ -434,7 +434,7 @@ function SettingsManager:handleNewValue(new_value, key, current_nr, itype)
     end
     self:saveSetting(key, new_value)
     self:changeMenuSetting(key, new_value, current_nr)
-    KOR.messages:notify(_("settting ") .. key .. _(" modified to ") .. tostring(new_value), 4)
+    KOR.messages:notify(key .. _(" modified to ") .. tostring(new_value), 4)
     self:handleAfterChangeCallback(key, new_value)
 end
 

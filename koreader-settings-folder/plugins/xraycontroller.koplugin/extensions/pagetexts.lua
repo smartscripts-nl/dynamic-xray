@@ -172,10 +172,19 @@ end
 --- @private
 function PageTexts:setParagraphStart()
     if self.current_elem_no ~= self.start_elem_no then
-        self.paragraph_start = self.paragraph_start
+        self.paragraph_start = self:computeElementStart(self.paragraph_start)
+    end
+end
+
+function PageTexts:computeElementStart(pos0_or_pos1)
+    --* compare substitutions in ((PageTexts#getHtmlElementIndex)):
+    return pos0_or_pos1
         :gsub("%[%d+%]%.%d+$", "[1].0")
         :gsub("text%(%)%.%d+$", "text().0")
-    end
+        --* remove sub, sup, span and a like in /body/DocFragment[13]/body/section/section[1]/p[18]/sup[5]/a/text().0:
+        :gsub("/a/", "/")
+        :gsub("/su[bp]%[%d+%]/", "/")
+        :gsub("/span%[%d+%]/", "/")
 end
 
 function PageTexts:getHtmlElementIndex(position)
@@ -192,11 +201,15 @@ function PageTexts:getHtmlElementIndex(position)
     /body/DocFragment[13]/body/section/section[1]/p[18]/sup[5]/a/text().0
     or
     /body/DocFragment[13]/body/div[1]/p[16]/text()[1].0
+    or
+    /body/DocFragment[13]/body/section/section[1]/p[18]/sup[5]/a/text().0
     ]]
 
     position = position
         :gsub("^/body.+/body/", "", 1)
-        :gsub("su[bp]%[%d+%]/", "", 1)
+        :gsub("/su[bp]%[%d+%]/", "/", 1)
+        :gsub("/span%[%d+%]/", "/")
+        :gsub("/span/", "/")
         :gsub("/text%(%)%[%d+%]", "", 1)
         :gsub("/text%(%)", "", 1)
     --* previous replacements reduce above markers to:
@@ -208,6 +221,8 @@ function PageTexts:getHtmlElementIndex(position)
     section/section[1]/p[18]/a/.0
     or
     div[1]/p[16].0
+    or
+    section/section[1]/p[18]/a/.0
     ]]
     --* so if there are 3 numerical indices, then we have a container element, so we remove the container index number here:
     position = position:gsub("%[%d+%](/[a-zA-Z0-9]+%[%d+%])", "%1", 1)
