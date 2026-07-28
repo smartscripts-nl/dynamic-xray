@@ -224,6 +224,7 @@ local InputDialog = FocusManager:extend {
     title_shrink_font_to_fit = true,
     title_multilines = false,
     title_tab_buttons_left = nil,
+    top_buttons_right = nil,
     _input_widget = nil,
 
     --* for internal use
@@ -324,6 +325,7 @@ function InputDialog:init()
         submenu_buttontable = submenu_buttontable,
         tab_buttons_left = tab_buttons_left,
         top_buttons_left = top_buttons_left,
+        top_buttons_right = self.top_buttons_right,
         show_parent = self,
     } or nil
 

@@ -98,7 +98,7 @@ end
 --- @return boolean signalling whether the user was redirected to the viewer (true), or not (false)
 function XrayDialogs:closeForm(mode)
     KOR.dialogs:closeAllOverlays()
-    KOR.registry:unset("xray_item_type_chosen")
+    KOR.registry:unset("xray_item_type_chosen", "chapter_hits_texts")
     if mode == "add" then
         UIManager:close(self.add_item_input)
         self.add_item_input = nil
@@ -221,6 +221,7 @@ function XrayDialogs:showNewItemForm(args)
         title = title,
         title_shrink_font_to_fit = true,
         title_tab_buttons_left = self.title_tab_buttons_left,
+        top_buttons_right = DX.b:forNewItemFormTopRight(),
         active_tab = active_form_tab,
         --* tab_callback can be called from ((InputDialog#init)); activate_tab_callback as used in several KeyEvents definitions not needed here:
         tab_callback = DX.fd:getFormTabCallback("add", active_form_tab, item_copy),

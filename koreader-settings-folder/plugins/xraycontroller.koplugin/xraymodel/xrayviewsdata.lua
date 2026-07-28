@@ -48,6 +48,8 @@ local XrayViewsData = WidgetContainer:new{
     list_display_mode = "series", --* or "book"
     mark_item_html_em = "<em>%1</em>",
     mark_item_html_strong = "<strong>%1</strong>",
+    --* determines how many item hit previews will maximally be shown when tapping on the target button in the Add New Item form:
+    max_new_item_previews = 60,
     new_item_hits = nil,
     persons = {},
     --* this prop can be modified with the checkbox in ((XrayDialogs#showFilterDialog)):
@@ -223,10 +225,13 @@ function XrayViewsData:setItemHits(item, args)
         return self:_returnCachedHits(item, for_display_mode)
     end
 
-    local book_hits, chapter_hits, chapter_hits_data = self:getAllTextHits(item)
+    local book_hits, chapter_hits, chapter_hits_data, chapter_hits_texts = self:getAllTextHits(item)
     item.book_hits = book_hits
     item.chapter_hits = chapter_hits
     item.chapter_hits_data = chapter_hits_data
+    if has_items(chapter_hits_texts) then
+        KOR.registry:set("chapter_hits_text", table_concat(chapter_hits_texts, ""))
+    end
     --* chapter_hits could be zero after query, so here we signal the current method that in that case the query shouldn't be repeated:
     item.chapter_query_done = true
 
@@ -469,8 +474,8 @@ end
 --! this method will only be called upon creating a new or updating an existing item:
 function XrayViewsData:getAllTextHits(item)
 
-    local max_hits, total_count
-    item.chapter_hits_data, max_hits, total_count = self:getChapterHitsData(item)
+    local max_hits, total_count, chapter_hits_texts
+    item.chapter_hits_data, max_hits, total_count, chapter_hits_texts = self:getChapterHitsData(item)
 
     local present_as_table = not DX.s.is_mobile_device
 
@@ -493,7 +498,7 @@ function XrayViewsData:getAllTextHits(item)
 
     local chapter_hits_list = self:generateChaptersListHtml(chapter_list_items, present_as_table, max_hits)
 
-    return total_count, chapter_hits_list, item.chapter_hits_data
+    return total_count, chapter_hits_list, item.chapter_hits_data, chapter_hits_texts
 end
 
 --* these data will be used for generating a chapter-occurrences-histogram in the PN info panel and Item Viewer; current method called from ((XrayPageNavigator#setCurrentItem)):
@@ -503,9 +508,11 @@ function XrayViewsData:getChapterHitsData(item)
     --! don't use ((XrayDataLoader#addMatchingProps)) and item.needles here!:
     local needles = self:getXrayItemNameVariants(item)
 
-    local xp, end_xp, start_page, chapter_hits
+    --- @type string chapter_texts
+    local xp, end_xp, start_page, chapter_hits, condensed_chapter_text
     local chapter_positions = KOR.toc:getTocXpointers()
     local chapter_hits_data = {}
+    local chapter_texts_data = {}
     local max_hits = 0
     local total_count = 0
     count = #chapter_positions
@@ -513,9 +520,13 @@ function XrayViewsData:getChapterHitsData(item)
         xp = chapter_positions[i][1]
         start_page = chapter_positions[i][2]
         end_xp = chapter_positions[i + 1][1]
-        chapter_hits = KOR.pagetexts:getChapterHits(i, needles, start_page, xp, end_xp)
+        chapter_hits, condensed_chapter_text = KOR.pagetexts:getChapterHits(i, needles, start_page, xp, end_xp)
         total_count = total_count + chapter_hits
         table_insert(chapter_hits_data, chapter_hits)
+        --* limit the number of text hits to be shown when adding a new Xray item:
+        if chapter_hits > 0 and total_count < self.max_new_item_previews then
+            table_insert(chapter_texts_data, condensed_chapter_text)
+        end
         if chapter_hits > max_hits then
             max_hits = chapter_hits
         end
@@ -526,16 +537,19 @@ function XrayViewsData:getChapterHitsData(item)
     start_page = last_toc_item.page
     local last_page = KOR.document:getPageCount()
     local chapter_text = ""
-    for page = start_page, last_page do
-        chapter_text = chapter_text .. KOR.document:getPageText(page) .. "\n"
+    --* we can't determine text on last page, so use last_page - 1 as end point:
+    for page = start_page, last_page - 1 do
+        chapter_text = chapter_text .. KOR.document:getPageText(page, nil, "force_update") .. "\n"
     end
-    chapter_hits = KOR.pagetexts:countItemOccurrences(chapter_text, needles)
+    chapter_hits, condensed_chapter_text = KOR.pagetexts:countItemOccurrences(chapter_text, needles)
     total_count = total_count + chapter_hits
     table_insert(chapter_hits_data, chapter_hits)
+    table_insert(chapter_texts_data, condensed_chapter_text)
     if chapter_hits > max_hits then
         max_hits = chapter_hits
     end
-    return chapter_hits_data, max_hits, total_count
+
+    return chapter_hits_data, max_hits, total_count, chapter_texts_data
 end
 
 --* compare ((XrayViewsData#getXrayItemNameVariants)):
@@ -908,20 +922,6 @@ function XrayViewsData:getLinkedItems(needle_item)
     return linked_items, linked_names_index
 end
 
---* ((XrayViewsData#upgradeNeedleItem)) has to be called in the caller context, before calling getTagGroupItems:
-function XrayViewsData:getTagGroupItems(needle_item)
-
-    local tag_group_items = {}
-    local tags = KOR.strings:splitByCommaOrSpace(needle_item.tags)
-    local tag_group
-    local tcount = #tags
-    for i = 1, tcount do
-        tag_group = tags[i]
-
-    end
-    return tag_group_items
-end
-
 --- @private
 function XrayViewsData:addLinkedItem(needle_item, haystack_item, linked_names_index, linked_items)
     if haystack_item.name == needle_item.name then
@@ -1133,6 +1133,7 @@ function XrayViewsData:addHitsHtml(meta_info, item)
     if parent.current_series and item.series_hits then
         table_insert(meta_info, T(self.item_meta_info_template, _("Hits in series") .. ":", tonumber(item.series_hits)))
     end
+    --* book_hits were populated via ((XrayFormsData#initNewItemFormProps)) > ((XrayViewsData#setItemHits)) > ((XrayViewsData#getAllTextHits)):
     if item.book_hits then
         table_insert(meta_info, T(self.item_meta_info_template, _("Hits in book") .. ":", tonumber(item.book_hits)))
     end
@@ -1789,10 +1790,14 @@ function XrayViewsData:populateNeedles(needles, item, prop)
     --* we are not interested in lower case parts of person names, so in getNameParts lowercase strings were already filtered out:
     local parts = prop == "name" and parent:getNameParts(item) or parent:splitByCommaOrSpace(item[prop])
     count = #parts
-    local needle
+    local needle, singular
     for i = 1, count do
         needle = prop == "name" and parts[i].needle or parts[i]
         table_insert(needles, needle)
+        if prop == "name" and item.name:match("s$") and not item.name:match(" ") then
+            singular = item.name:gsub("s$", "")
+            table_insert(needles, singular)
+        end
         if DX.s.PN_also_use_uppercase_needles then
             --* for all uppercase variants, e.g. in intro texts at the start of chapters:
             table_insert(needles, self:getNeedleString(KOR.strings:upper(needle)))

@@ -430,6 +430,15 @@ function ButtonInfoPopup:forXrayMultipleBookSeriesOverviews(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forXrayNewItemHitExamples(props)
+	return KOR.buttonprops:set({
+		icon = "target2",
+		info = _("target icon | Show some examples of hits for this item in the current e-book."),
+		callback_label = _("show"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forXrayNextItem(props)
 	return KOR.buttonprops:set({
 		icon = "next",

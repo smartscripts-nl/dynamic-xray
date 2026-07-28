@@ -13,6 +13,7 @@ local table = table
 local table_concat = table.concat
 local table_insert = table.insert
 local table_remove = table.remove
+local table_sort = table.sort
 local tonumber = tonumber
 
 local count
@@ -22,7 +23,7 @@ local PageTexts = WidgetContainer:extend{
     current_elem_no = nil,
     paragraph_end = nil,
     paragraph_start = nil,
-    fragments_separator = "\n…\n________\n",
+    fragments_separator = "</p><p class='separator'>________</p><p class='noindent'>",
     start_elem_no = nil,
     start_page_no = nil,
 }
@@ -30,7 +31,7 @@ local PageTexts = WidgetContainer:extend{
 function PageTexts:countItemOccurrences(text, needles)
 
     if has_no_text(text) then
-        return 0
+        return 0, ""
     end
 
     local needle
@@ -40,9 +41,15 @@ function PageTexts:countItemOccurrences(text, needles)
         needle = "%f[%w_](" .. needles[i] .. ")%f[^%w_]"
         text = text:gsub(needle, "<strong>%1</strong>")
     end
+    if not text:match("<strong>") then
+        return 0, ""
+    end
+    --! this doesn't condense the text to less context around <strong> elements!:
     text = self:reduceHitMarkers(text)
 
-    return KOR.strings:substrCount(text, "<strong>")
+    return
+        KOR.strings:substrCount(text, "<strong>"),
+        text
 end
 
 function PageTexts:getAllHtmlContainersInPage(page_xp, start_page_no, include_punctuation, toc_title_condition)
@@ -187,6 +194,7 @@ function PageTexts:computeElementStart(pos0_or_pos1)
         :gsub("/span%[%d+%]/", "/")
 end
 
+--* compare substitutions in ((PageTexts#computeElementStart)):
 function PageTexts:getHtmlElementIndex(position)
     if not position then
         return 1
@@ -207,7 +215,7 @@ function PageTexts:getHtmlElementIndex(position)
 
     position = position
         :gsub("^/body.+/body/", "", 1)
-        :gsub("/su[bp]%[%d+%]/", "/", 1)
+        :gsub("/su[bp]%[%d+%]/", "/")
         :gsub("/span%[%d+%]/", "/")
         :gsub("/span/", "/")
         :gsub("/text%(%)%[%d+%]", "", 1)
@@ -238,12 +246,15 @@ function PageTexts:getHtmlElementIndex(position)
     ]]
 
     local element_type, element_number = position:match("([piv])%[(%d+)")
+    local element_name = "p"
     if element_type == "p" then
         element_type = "paragraph"
     elseif element_type == "i" then --* for "li"
         element_type = "list"
+        element_name = "li"
     elseif element_type == "v" then
         element_type = "div"
+        element_name = "div"
     end
     if not element_number then
         element_type = "paragraph"
@@ -251,7 +262,7 @@ function PageTexts:getHtmlElementIndex(position)
     end
 
     --* return main html elem number (is first number match in tail of position):
-    return tonumber(element_number), element_type
+    return tonumber(element_number), element_type, element_name
 end
 
 --- @private
@@ -284,7 +295,7 @@ local function utf8_char_positions(str)
     return positions
 end
 
-function PageTexts:compressTextAroundMarkers(html, context)
+function PageTexts:condenseTextAroundMarkers(html, context)
     context = context or 300
 
     local char_pos = utf8_char_positions(html)
@@ -321,7 +332,7 @@ function PageTexts:compressTextAroundMarkers(html, context)
         return ""
     end
 
-    table.sort(ranges, function(a, b)
+    table_sort(ranges, function(a, b)
         return a.from_char < b.from_char
     end)
 
@@ -349,6 +360,10 @@ function PageTexts:compressTextAroundMarkers(html, context)
         byte_to = char_pos[r.to_char + 1]
         byte_to = byte_to and (byte_to - 1) or #html
         line = html:sub(byte_from, byte_to):gsub("^[,.?!;:a-z] ", "")
+        --* remove possibly broken words at start and end of line:
+        line = line
+            :gsub("^[^ ]+ ", "")
+            :gsub(" [^ ]+$", "")
         table_insert(result, line)
     end
 
@@ -369,7 +384,14 @@ function PageTexts:getChapterHits(chapter_index, needles, start_page, xp, end_xp
     end
     chapter_text = table_concat(lines, "\n")
 
-    return self:countItemOccurrences(chapter_text, needles)
+    local ccount, marked_text = self:countItemOccurrences(chapter_text, needles)
+
+    --* now condense the marked (by strong elements) texts:
+    local condensed_text = has_text(marked_text) and self:condenseTextAroundMarkers(marked_text, 300, "return_as_html") or ""
+
+    return
+        ccount,
+        condensed_text
 end
 
 --* if needles given, mark hits in chapter text; compare ((PageTexts#getChapterHits)) > ((PageTexts#countItemOccurrences))
@@ -402,12 +424,12 @@ function PageTexts:getChapterText(as_html, needles, current_page)
             text = text:gsub(needle, "<strong>%1</strong>")
         end
         text = self:reduceHitMarkers(text)
-        text = self:compressTextAroundMarkers(text, 300)
+        text = self:condenseTextAroundMarkers(text, 300)
     end
     lines = KOR.strings:split(text, "\n")
 
     if as_html then
-        return "<p>" .. table_concat(lines, "</p>\n<p>") .. "</p>\n", current_toc_title
+        return "<p class='noindent'>" .. table_concat(lines, "</p>\n<p>") .. "</p>\n", current_toc_title
     end
 
     return table_concat(lines, "\n"), current_toc_title

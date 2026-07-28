@@ -8,6 +8,7 @@ local util = require("util")
 local G_reader_settings = G_reader_settings
 local has_no_text = has_no_text
 local table = table
+local table_concat = table.concat
 local table_insert = table.insert
 
 local count
@@ -117,7 +118,7 @@ function Html:textToHtml(text)
     for i = 1, count do
         self:formatHtmlLine(lines[i], result)
     end
-    local html = table.concat(result, "\n")
+    local html = table_concat(result, "\n")
     if self.in_poetry >= self.poetry_limit_lines then
         html = html .. "</div>"
     end
@@ -173,7 +174,7 @@ function Html:formatHtmlLine(line, result)
             return
         end
 
-        -- poetry ends on long line
+        --* poetry ends on long line:
         self:closePoetry(result, self:paragraph(line, is_blank))
         self.in_poetry = 0
         return
@@ -228,11 +229,12 @@ function Html:getHtmlBoxCss(additional_css)
             text-indent: 1.5em;
         }
 
-        h1 + p, h2 + p, h3 + p, h4 + p, p + p.chaptertitle, p.noindent, p.whitespace + p {
-            text-indent: 0 !important;
+        p.separator {
+            margin-bottom: 1em;
+            text-align: center;
         }
 
-        div.poezie p, div.noindent p {
+        h1 + p, h2 + p, h3 + p, h4 + p, p + p.chaptertitle, p.noindent, p.no-indent, p.whitespace + p, div.poezie p, div.noindent p, div.no-indent p, p + p.separator {
             text-indent: 0 !important;
         }
 

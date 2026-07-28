@@ -164,33 +164,52 @@ function CreDocument:findAllTextWholeWords(pattern, case_insensitive, nb_context
 end
 
 function CreDocument:getPageText(page_no, cleanup, force_update)
+    if not page_no then
+        return ""
+    end
     local xp = self:getPageXPointer(page_no)
     if has_no_text(xp) then
         return ""
     end
 
-    --* self.page_text can be populated farther below:
+    --* self.page_text will be set farther below:
     if not force_update and self.page_text then
         return self.page_text
     end
 
+    local text
     local next_page_no = page_no + 1
     local next_page_xp = self:getPageXPointer(next_page_no)
 
     --* if we have the xp of a next page, we can get the page text much quicker:
     if has_text(next_page_xp) then
-        local text = self:getPageTextFromXPs(xp, next_page_xp)
-        self.page_text = cleanup and self:cleanupText(text) or text
-        return self.page_text
+        text = self:getPageTextFromXPs(xp, next_page_xp)
+        text = self:cleanupText(text)
+        if not force_update then
+            self.page_text = text
+        end
+        return text
     end
 
     local texts = select(2, KOR.pagetexts:getAllHtmlContainersInPage(xp, page_no))
     if has_no_items(texts) then
         return ""
     end
-    self.page_text = table_concat(texts, "\n" .. self.text_indent)
+    if cleanup then
+        text = table_concat(texts, " " .. self.text_indent)
+        text = self:cleanupText(text)
+        if not force_update then
+            self.page_text = text
+        end
+        return text
+    end
 
-    return self.page_text
+    text = table_concat(texts, "\n" .. self.text_indent)
+    if not force_update then
+        self.page_text = text
+    end
+
+    return text
 end
 
 --- @private

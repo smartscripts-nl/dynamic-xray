@@ -251,6 +251,25 @@ function XrayButtons:forMultipleBookSeriesActionsFooterRight(dialog)
     }
 end
 
+function XrayButtons:forNewItemFormTopRight()
+    if not KOR.registry:get("chapter_hits_text") then
+        return
+    end
+
+    return {
+        KOR.buttoninfopopup:forXrayNewItemHitExamples({
+            callback = function()
+                --* item.chapter_hits_data was populated via ((XrayFormsData#initNewItemFormProps)) > ((XrayViewsData#setItemHits)) > ((XrayViewsData#getAllTextHits)) > ((XrayViewsData#getChapterHitsData)) > ((PageTexts#getChapterHits)) > ((PageTexts#countItemOccurrences)):
+                KOR.dialogs:htmlBox({
+                    title = _("Some examples of item hits"),
+                    html = T("<p class='noindent'>%1</p>", KOR.registry:get("chapter_hits_text")),
+                    fullscreen = true,
+                })
+            end
+        }),
+    }
+end
+
 --- @param parent XrayPageNavigator
 function XrayButtons:forPageNavigator(parent)
     return {{
