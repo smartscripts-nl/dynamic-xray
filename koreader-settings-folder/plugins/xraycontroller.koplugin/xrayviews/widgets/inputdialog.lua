@@ -1304,4 +1304,8 @@ function InputDialog:onActivateNextTab()
     return true
 end
 
+function InputDialog:scrollToBottom()
+    self._input_widget:scrollToBottom()
+end
+
 return InputDialog

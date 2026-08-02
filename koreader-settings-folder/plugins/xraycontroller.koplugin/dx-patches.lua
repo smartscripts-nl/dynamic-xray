@@ -357,8 +357,18 @@ end
 local orig_onLookupWord = ReaderDictionary.onLookupWord
 -- #((ReaderDictionary#onLookupWord))
 ReaderDictionary.onLookupWord = function(self, word, is_sane, boxes, highlight, link, dict_close_callback)
+
+    local skip_reference_info = KOR.registry:getOnce("skip_reference_info")
+
     --* if an Xray item was recognized, show its info instead of the Dictionary dialog:
     if DX.tw:getXrayItemAsDictionaryEntry(word) then
+        if highlight then
+            highlight:clear()
+        end
+        return true
+
+    -- #((show reference info instead of dictionary popup))
+    elseif not skip_reference_info and KOR.referenceinfo:getReferenceInfoAsDictionaryEntry(word) then
         if highlight then
             highlight:clear()
         end
@@ -545,6 +555,19 @@ ReaderHighlight.init = function(self)
                 })
                 --* see ((XrayDialogs#_prepareItemsForList)) for the callback to be supplied with the selected item:
                 DX.c:onShowList(nil, false, "save_quote")
+            end,
+        }
+    end)
+    self:addToHighlightDialog("42_add_reference_info", function(this)
+        return {
+            text = tr("+ Reference info"),
+            callback = function()
+                local info = util.cleanupSelectedText(this.selected_text.text)
+                this:onClose()
+
+                KOR.dialogs:confirm("Geselecteerde tekst aan de naslaginformatie toevoegen?", function()
+                    KOR.referenceinfo:addInfo(info)
+               end)
             end,
         }
     end)

@@ -144,11 +144,49 @@ function ButtonInfoPopup:forMenuToLetter(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forReferenceInfoCopy(props)
+	return KOR.buttonprops:set({
+		icon = "copy",
+		icon_size_ratio = 0.5,
+		info = _("copy icon | To copy ALL of the reference-information for the current e-book to the clipboard."),
+		callback_label = _("copy"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forReferenceInfoErase(props)
+	return KOR.buttonprops:set({
+		icon = "dustbin",
+		info = _("dustbin icon | Remove all reference-information for this book."),
+		callback_label = _("remove"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forReferenceInfoSave(props)
+	return KOR.buttonprops:set({
+		icon = "save",
+		info = _("floppy disk icon | Save the reference-information."),
+		callback_label = _("save"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forReferenceInfoSwitchToDictionary(props)
+	return KOR.buttonprops:set({
+		icon = "book",
+		icon_size_ratio = 0.6,
+		info = _("book icon | Search for the referenced word in the Dictionary."),
+		callback_label = _("dictionary"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forResetField(props)
 	return KOR.buttonprops:set({
 		icon = "reset",
 		info = _("reset icon | Reset above field, remove its contents."),
-		callback_label = "reset",
+		callback_label = _("reset"),
 		--! callback defined by calling module
 	}, props)
 end
