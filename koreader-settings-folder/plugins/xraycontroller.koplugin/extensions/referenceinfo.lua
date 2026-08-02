@@ -12,6 +12,7 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 
 local has_content = has_content
+local has_no_text = has_no_text
 local has_text = has_text
 local table_insert = table.insert
 local type = type
@@ -44,10 +45,10 @@ end
 
 function ReferenceInfo:addInfo(info)
     local previous_info = self:get("remove_whitespace_at_end")
-    if not previous_info or not previous_info:match("[a-z]") then
+    if has_no_text(previous_info) then
         previous_info = ""
     else
-        previous_info = previous_info .. "\n\n========================\n\n"
+        previous_info = previous_info .. "\n"
     end
     self:save(previous_info .. info)
 end
