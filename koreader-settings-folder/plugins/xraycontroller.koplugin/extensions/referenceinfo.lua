@@ -130,6 +130,7 @@ function ReferenceInfo:edit(referenced_info, scroll_to_text)
         scroll_by_pan = true,
         buttons = buttons,
         search_value = scroll_to_text,
+        case_sensitive = true,
         --* Set/save view and cursor position callback
         view_pos_callback = function(top_line_num, charpos)
             --* This same callback is called with no argument to get initial position, and with arguments to give back final position when closed.
@@ -154,7 +155,6 @@ function ReferenceInfo:edit(referenced_info, scroll_to_text)
         editor:toggleKeyboard("force_hidden")
     end
     if scroll_to_text then
-        KOR.registry:set("scroll_to_text", scroll_to_text)
         --* to display found entry at the top of the dialog, if possible, or otherwise somewhere in the center:
         editor:scrollToBottom()
         editor:findCallback("force_hidden", nil, true)
@@ -168,7 +168,6 @@ function ReferenceInfo:getReferenceInfoAsDictionaryEntry(tapped_word)
         return false
     end
 
-    local is_lower_case = not tapped_word:match("[A-Z]") or tapped_word:match("^[-a-z0-9 ,.:;!?]+$")
     local singular = tapped_word:gsub("s$", "")
     if singular == tapped_word then
         singular = nil
@@ -178,16 +177,8 @@ function ReferenceInfo:getReferenceInfoAsDictionaryEntry(tapped_word)
     --* don't allow larger strings which contain a saved name to trigger matches:
     if spaces_count <= 1 then
         local needle, needle_singular
-        if is_lower_case then
-            reference_info = reference_info:lower()
-            needle = tapped_word .. ":"
-            if singular then
-                needle_singular = singular .. ":"
-            end
-        else
-            needle = tapped_word
-            needle_singular = singular
-        end
+        needle = tapped_word
+        needle_singular = singular
         if reference_info:match(needle) then
             self:edit(reference_info, needle)
             return true
