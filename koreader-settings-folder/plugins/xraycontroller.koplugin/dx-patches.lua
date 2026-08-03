@@ -565,7 +565,16 @@ ReaderHighlight.init = function(self)
                 local info = util.cleanupSelectedText(this.selected_text.text)
                 this:onClose()
 
-                KOR.dialogs:confirm("Geselecteerde tekst aan de naslaginformatie toevoegen?", function()
+                KOR.registry:set("title", _("+Reference-information"))
+                KOR.registry:set("top_buttons_left", {
+                    {
+                        icon = "info-slender",
+                        callback = function()
+                            DX.i:showReferenceInfoInformation()
+                        end,
+                    }
+                })
+                KOR.dialogs:confirm(_("Do you want to add the selected text to the reference-information for this book?"), function()
                     KOR.referenceinfo:addInfo(info)
                end)
             end,

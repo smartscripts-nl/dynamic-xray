@@ -22,9 +22,11 @@ local Screen = require("device").screen
 
 local DX = DX
 local has_text = has_text
-local math = math
-local table = table
+local math_floor = math.floor
+local table_insert = table.insert
 local type = type
+
+local count
 
 --- @class Dialogs
 local Dialogs = WidgetContainer:extend{
@@ -43,7 +45,8 @@ end
 --* alas, we can't use UIManager:broadcastEvent(Event:new("Close")) here, because that also closes KOReader:
 function Dialogs:closeAllWidgets()
     local widget
-    for i = #self.widgets, 1, -1 do
+    count = #self.widgets
+    for i = count, 1, -1 do
         widget = self.widgets[i]
         UIManager:close(widget)
         self.widgets[i] = nil
@@ -53,9 +56,10 @@ function Dialogs:closeAllWidgets()
 end
 
 function Dialogs:closeTopWidget()
-    local widget = self.widgets[#self.widgets]
+    count = #self.widgets
+    local widget = self.widgets[count]
     UIManager:close(widget)
-    self.widgets[#self.widgets] = nil
+    self.widgets[count] = nil
     KOR.screenhelpers:refreshDialog()
 end
 
@@ -73,7 +77,7 @@ function Dialogs:computePagePosition(dialogOrPage)
 end
 
 function Dialogs:registerWidget(widget)
-    table.insert(self.widgets, widget)
+    table_insert(self.widgets, widget)
 end
 
 function Dialogs:unregisterWidget(iwidget)
@@ -296,9 +300,11 @@ function Dialogs:confirm(question, callback, cancel_callback, wide_dialog, show_
             UIManager:close(self.confirm_dialog)
             old_callback()
         end
-        table.insert(buttons[1], 2, confirm_middle_button)
+        table_insert(buttons[1], 2, confirm_middle_button)
     end
     self.confirm_dialog = ConfirmBox:new{
+        title = KOR.registry:getOnce("title"),
+        top_buttons_left = KOR.registry:getOnce("top_buttons_left"),
         text = question,
         wide_dialog = wide_dialog,
         face = face or Font:getDefaultDialogFontFace(),
@@ -354,7 +360,7 @@ function Dialogs:prompt(args)
         save_button,
     }}
     if args.middle_callback and args.middle_callback_icon then
-        table.insert(buttons, 2, {
+        table_insert(buttons, 2, {
             icon = args.middle_callback_icon,
             callback = function()
                 local newval = args.fields and prompt_dialog:getFields() or prompt_dialog:getInputText()
@@ -363,7 +369,7 @@ function Dialogs:prompt(args)
             end,
         })
     elseif args.middle_callback and args.middle_callback_text then
-        table.insert(buttons, 2, {
+        table_insert(buttons, 2, {
             text = args.middle_callback_text,
             callback = function()
                 local newval = args.fields and prompt_dialog:getFields() or prompt_dialog:getInputText()
@@ -621,7 +627,7 @@ function Dialogs:setTextBoxHeight(args)
     --* here only props which are needed for computations:
     local org_height = args.height or Screen:getHeight() - 80
 
-    args.height = org_height or math.floor(Screen:getHeight() * 0.8)
+    args.height = org_height or math_floor(Screen:getHeight() * 0.8)
     args.use_computed_height = args.use_computed_height or false
     args.text_padding_left_right = text_padding_left_right
 end

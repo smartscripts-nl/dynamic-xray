@@ -37,6 +37,7 @@ local MovableContainer = require("xrayviews/widgets/container/movablecontainer")
 local ScrollTextWidget = require("xrayviews/widgets/scrolltextwidget")
 local Size = require("modules/size")
 local TextBoxWidget = require("xrayviews/widgets/textboxwidget")
+local TitleBar = require("xrayviews/widgets/titlebar")
 local TopContainer = require("ui/widget/container/topcontainer")
 local UIManager = require("ui/uimanager")
 local VerticalGroup = require("ui/widget/verticalgroup")
@@ -47,8 +48,9 @@ local Screen = Device.screen
 
 local DX = DX
 local ipairs = ipairs
-local math = math
-local table = table
+local math_floor = math.floor
+local math_min = math.min
+local table_insert = table.insert
 
 --- @class ConfirmBox
 local ConfirmBox = InputContainer:extend{
@@ -76,6 +78,8 @@ local ConfirmBox = InputContainer:extend{
     wide_dialog = false,
     alpha = nil,
     pos = nil,
+    title = nil,
+    top_buttons_left = nil,
 }
 
 function ConfirmBox:init()
@@ -107,7 +111,7 @@ function ConfirmBox:init()
     end
 
     --* needed for ConfirmBox:getAddedWidgetAvailableWidth():
-    self.text_widget_width = math.floor(math.min(Screen:getWidth(), Screen:getHeight()) * width_factor)
+    self.text_widget_width = math_floor(math_min(Screen:getWidth(), Screen:getHeight()) * width_factor)
 
     local text_widget = self.wide_dialog and ScrollTextWidget:new{
         text = self.text,
@@ -117,12 +121,12 @@ function ConfirmBox:init()
         justified = false,
         dialog = self,
         width = self.text_widget_width,
-        height = math.floor(Screen:getHeight() * 0.8),
+        height = math_floor(Screen:getHeight() * 0.8),
     }
      or TextBoxWidget:new{
         text = self.text,
         face = self.face,
-        width = math.floor(math.min(Screen:getWidth(), Screen:getHeight()) * width_factor),
+        width = math_floor(math_min(Screen:getWidth(), Screen:getHeight()) * width_factor),
     }
     local content = self.show_icon and HorizontalGroup:new{
         align = "center",
@@ -176,9 +180,9 @@ function ConfirmBox:init()
         local rownum = self.other_buttons_first and 0 or 1
         for i, buttons_row in ipairs(self.other_buttons) do
             local row = {}
-            table.insert(buttons, rownum + i, row)
+            table_insert(buttons, rownum + i, row)
             for ___, button in ipairs(buttons_row) do
-                table.insert(row, {
+                table_insert(row, {
                     text = button.text,
                     callback = function()
                         self.garbage = ___
@@ -202,20 +206,45 @@ function ConfirmBox:init()
         show_parent = self,
     }
 
-    local frame = FrameContainer:new{
-        background = Blitbuffer.COLOR_WHITE,
-        margin = self.margin,
-        radius = Size.radius.window,
-        padding = self.padding,
-        padding_bottom = 0, --* no padding below buttontable
-        VerticalGroup:new{
-            align = "left",
-            content,
-            --* Add same vertical space after than before content
-            VerticalSpan:new{ width = self.margin + self.padding },
-            button_table,
+    local frame
+    if self.title then
+        local title_bar = TitleBar:new{
+            title = self.title,
+            top_buttons_left = self.top_buttons_left,
+            width = content:getSize().w + self.margin + self.padding,
         }
-    }
+        frame = FrameContainer:new{
+            background = Blitbuffer.COLOR_WHITE,
+            margin = self.margin,
+            radius = Size.radius.window,
+            padding = self.padding,
+            padding_bottom = 0, --* no padding below buttontable
+            VerticalGroup:new{
+                align = "left",
+                title_bar,
+                content,
+                --* Add same vertical space after than before content
+                VerticalSpan:new{ width = self.margin + self.padding },
+                button_table,
+            }
+        }
+    else
+        frame = FrameContainer:new{
+            background = Blitbuffer.COLOR_WHITE,
+            margin = self.margin,
+            radius = Size.radius.window,
+            padding = self.padding,
+            padding_bottom = 0, --* no padding below buttontable
+            VerticalGroup:new{
+                align = "left",
+                content,
+                --* Add same vertical space after than before content
+                VerticalSpan:new{ width = self.margin + self.padding },
+                button_table,
+            }
+        }
+    end
+
     self.movable = MovableContainer:new{
         alpha = self.alpha,
         frame,
