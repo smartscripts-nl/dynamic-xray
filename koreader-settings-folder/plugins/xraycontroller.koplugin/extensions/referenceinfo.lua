@@ -1,6 +1,8 @@
 
 --* saved reference info can be shown instead of DictQuickLookup widget if a term was found in the reference info; see ((ReaderDictionary#onLookupWord)) > ((show reference info instead of dictionary popup))
 
+--! the reference-info must have entries on separate lines in either this format: "entry: explanation", or "entry explanation" !
+
 local require = require
 
 local Device = require("device")
@@ -53,7 +55,7 @@ function ReferenceInfo:addInfo(info)
     self:save(previous_info .. info)
 end
 
-function ReferenceInfo:edit(referenced_info, scroll_to_text)
+function ReferenceInfo:showEditor(referenced_info, scroll_to_text)
     --* in the case called from the description dialog:
     if referenced_info then
         UIManager:close(self.viewer)
@@ -164,29 +166,33 @@ end
 
 function ReferenceInfo:getReferenceInfoAsDictionaryEntry(tapped_word)
 
+    --* don't allow larger strings which contain a saved name to trigger matches:
+    if tapped_word:match(" ") then
+        return false
+    end
+
     local reference_info = self:get()
     if not reference_info then
         return false
     end
 
-    local singular = tapped_word:gsub("s$", "")
-    if singular == tapped_word then
-        singular = nil
+    local needle_singular
+    local match_needle_singular = tapped_word:gsub("s$", "")
+    if match_needle_singular == tapped_word then
+        match_needle_singular = nil
+    else
+        needle_singular = match_needle_singular
+        match_needle_singular = "(^|\n)" .. match_needle_singular .. "%f[%A]"
     end
 
-    local spaces_count = KOR.strings:substrCount(tapped_word, " ")
-    --* don't allow larger strings which contain a saved name to trigger matches:
-    if spaces_count <= 1 then
-        local needle, needle_singular
-        needle = tapped_word
-        needle_singular = singular
-        if reference_info:match(needle) then
-            self:edit(reference_info, needle)
-            return true
-        elseif needle_singular and reference_info:match(needle_singular) then
-            self:edit(reference_info, needle_singular)
-            return true
-        end
+    local match_needle = "(^|\n)" .. tapped_word .. "%f[%A]"
+    --* make search for needles more specific: only register hits when term is at the start or the start of a line of the reference-information, and the end of the needle is at a word_boundary:
+    if KOR.strings:group_match(reference_info, match_needle) then
+        self:showEditor(reference_info, tapped_word)
+        return true
+    elseif match_needle_singular and KOR.strings:group_match(reference_info, match_needle_singular) then
+        self:showEditor(reference_info, needle_singular)
+        return true
     end
     return false
 end

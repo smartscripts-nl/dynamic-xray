@@ -522,4 +522,19 @@ function Strings:getNameSwapped(name)
     return name
 end
 
+--* add support for matching by capture groups;
+--* example call: if KOR.strings:group_match(reference_info, "(^|\n)" .. needle) then ...
+function Strings:group_match(text, needle)
+    local group = needle:match("%(([^)]+)%)")
+    needle = needle:gsub("%([^)]+%)", "")
+    local parts = self:split(group, "|")
+    local pcount = #parts
+    for i = 1, pcount do
+        if text:match(parts[i] .. needle) then
+            return parts[i] .. needle
+        end
+    end
+    return false
+end
+
 return Strings
