@@ -125,7 +125,7 @@ local XrayDataSaver = WidgetContainer:new{
         store_book_chapters =
             "INSERT OR IGNORE INTO xray_books (ebook, chapters) VALUES (?, ?);",
 
-        store_xray_information = "UPDATE bookinfo SET glossary = ? WHERE directory || filename = 'safe_path';",
+        store_xray_information = "UPDATE bookinfo SET xray_reference_info = ? WHERE directory || filename = 'safe_path';",
 
         update_chapter_hits_data = [[
             UPDATE xray_items
@@ -199,7 +199,7 @@ local XrayDataSaver = WidgetContainer:new{
     --* these table modifications for table bookinfo are run and depending on the setting "database_scheme_version" in G_reader_settings or ((XraySettings)), for the public version of DX:
     --* for creation of main DX table, see ((XrayDataSaver#createAndModifyTables)) > ((create main DX table)):
     scheme_alter_queries = {
-        --* 1:
+        --* update 1:
         [[
             CREATE TABLE IF NOT EXISTS finished_books
             (
@@ -208,31 +208,31 @@ local XrayDataSaver = WidgetContainer:new{
                     unique
             );]],
 
-        --* 2:
+        --* update 2:
         [[
             ALTER TABLE bookinfo ADD COLUMN rating_goodreads REAL;]],
 
-        --* 3:
+        --* update 3:
         [[
             ALTER TABLE bookinfo ADD COLUMN publication_year INTEGER;]],
 
-        --* 4:
+        --* update 4:
         [[
             ALTER TABLE bookinfo ADD COLUMN bookmarks INTEGER;]],
 
-        --* 5:
+        --* update 5:
         [[
             ALTER TABLE bookinfo RENAME COLUMN bookmarks TO annotations;]],
 
-        --* 6:
+        --* update 6:
         [[
             ALTER TABLE bookinfo ADD COLUMN stars INTEGER;]],
 
-        --* 7:
+        --* update 7:
         [[
             ALTER TABLE xray_items ADD COLUMN chapter_hits_data;]],
 
-        --* 8:
+        --* update 8:
         [[
             CREATE TABLE IF NOT EXISTS xray_books
             (
@@ -242,11 +242,11 @@ local XrayDataSaver = WidgetContainer:new{
                     unique
             );]],
 
-        --* 9:
+        --* update 9:
         [[
             ALTER TABLE xray_items ADD COLUMN tags;]],
 
-        --* 10:
+        --* update 10:
         [[
             CREATE TABLE IF NOT EXISTS xray_quotes
             (
@@ -263,56 +263,75 @@ local XrayDataSaver = WidgetContainer:new{
                 quote NOT NULL
             );]],
 
-        --* 11:
+        --* update 11:
         [[
             ALTER TABLE bookinfo ADD COLUMN glossary;]],
 
-        --* 12:
+        --* update 12:
         [[
             UPDATE xray_items SET chapter_hits = NULL, chapter_hits_data = NULL WHERE 1;]],
 
-        --* 13:
+        --* update 13:
         --* a second reset was needed after some updates to the hits counting system:
         [[
             UPDATE xray_items SET chapter_hits = NULL, chapter_hits_data = NULL WHERE 1;]],
 
-        --* 14:
+        --* update 14:
         [[
             ALTER TABLE xray_items ADD COLUMN non_breakable INTEGER NOT NULL DEFAULT 0;]],
 
-        --* 15:
+        --* update 15:
         --* a third reset was needed after some updates to the hits counting system:
         [[
             UPDATE xray_items SET chapter_hits_data = NULL, chapter_hits = NULL WHERE 1;]],
 
+        --* update 16:
+        [[
+            ALTER TABLE bookinfo RENAME COLUMN glossary TO xray_reference_info;]],
+
         --! when adding scheme modifations above, also add a scheme_verification_query below with the correct index!!
     },
     scheme_verification_queries = {
+        --* check update 1:
         { "PRAGMA table_info('finished_books');", 1 },
 
+        --* check update 2:
         { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'rating_goodreads';", 2 },
 
+        --* check update 3:
         { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'publication_year';", 3 },
 
+        --* check update 5:
         -- #((do field renamed check before original not renamed field creation))
-        --! run this check before checking for field "bookmarks" (next check); if "annotations" found, skip check for "bookmarks":
+        --! run this check before checking for field "bookmarks" (next check); if field "annotations" found, skip check for field "bookmarks":
         { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'annotations';", 5 },
 
+        --* check update 4:
         { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'bookmarks';", 4 },
 
+        --* check update 6:
         { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'stars';", 6 },
 
+        --* check update 7:
         { "SELECT 1 FROM pragma_table_info('xray_items') WHERE name = 'chapter_hits_data';", 7 },
 
+        --* check update 8:
         { "PRAGMA table_info('xray_books');", 8 },
 
+        --* check update 9:
         { "SELECT 1 FROM pragma_table_info('xray_items') WHERE name = 'tags';", 9 },
 
+        --* check update 10:
         { "PRAGMA table_info('xray_quotes');", 10 },
 
+        --* check update 11:
         { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'glossary';", 11 },
 
+        --* check update 14:
         { "SELECT 1 FROM pragma_table_info('xray_items') WHERE name = 'non_breakable';", 14 },
+
+        --* check update 16:
+        { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'xray_reference_info';", 16 },
     },
     scheme_version_name = "database_scheme_version",
 }
@@ -439,7 +458,7 @@ end
 function XrayDataSaver.storeXrayInformation(information)
     local self = DX.ds
 
-    local conn = KOR.databases:getDBconn("XrayDataSaver:storeGlossary")
+    local conn = KOR.databases:getDBconn("XrayDataSaver:storeXrayInformation")
     local sql = KOR.databases:injectSafePath(self.queries.store_xray_information, parent.current_ebook_full_path)
     local stmt = conn:prepare(sql)
     stmt:reset():bind(information):step()

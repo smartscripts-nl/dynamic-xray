@@ -89,7 +89,7 @@ function XrayInformation:showReferenceInformation(initial_tab)
 <p class="heading">Requirements for texts to be added</p>
 <ul>
 <li>Each of the items therein must have its own separate line.</li>
-<li>Each of those lines must start with either:<br /> <br /><em>[entry]: [explanation]</em><br />of:<br /><em>[entry] [explanation]</em><br />of:<br /><em>[entry] \n [explanation]</em></li>
+<li>The items must always be the first words on their respective lines.</li>
 </ul>
 <p class="heading">Gesture</p><p class="noindent">You can define a gesture to quickly call the Glossary. To do so, choose the callback <em>Show Glossary</em> under the Dispatcher section <em>Reader</em>.</p>]]),
             },

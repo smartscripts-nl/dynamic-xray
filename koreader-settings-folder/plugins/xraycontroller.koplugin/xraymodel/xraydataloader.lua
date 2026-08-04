@@ -395,7 +395,7 @@ local XrayDataLoader = WidgetContainer:new{
             ORDER BY b.series_index, i.book_hits DESC, i.name;]],
 
         get_xray_reference_information =
-            "SELECT glossary FROM bookinfo WHERE directory || filename = 'safe_path';",
+            "SELECT xray_reference_info FROM bookinfo WHERE directory || filename = 'safe_path';",
     },
     queries_external = {
         --* used in ((XrayTranslations#loadAllTranslations)):
