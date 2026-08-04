@@ -100,8 +100,8 @@ function XrayCallbacks:execSettingsCallback(iparent)
 end
 
 --- @param iparent XrayPageNavigator
-function XrayCallbacks:execShowGlossaryCallback(iparent)
-    return iparent:showGlossary()
+function XrayCallbacks:execShowXrayReferenceInformationCallback(iparent)
+    return iparent:showXrayReferenceInformation()
 end
 
 function XrayCallbacks:execShowHelpInfoCallback()

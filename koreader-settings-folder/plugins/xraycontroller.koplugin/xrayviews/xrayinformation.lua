@@ -53,8 +53,53 @@ function XrayInformation:getMatchReliabilityIndicator(name)
     return self.match_reliability_indicators[name]
 end
 
-function XrayInformation:showGlossaryInformation()
-    KOR.dialogs:niceAlert(_("+Glossary per book"), _("If you have added selected texts to the Glossary of a book - by selecting that information in the book and tapping on \"+ Add to Glossary\" in the popup -, you can from then on look up terms in that Glossary by longpressing words in the e-book.\n\nRequirements for the reference-information: each of the items therein must have its own separate line, and each of those lines must start with either:\n\"[item]: [expanation]\"\nor:\n\"[item] [explanation]\"\nor:\n\"[item]\n[explanation]\""))
+function XrayInformation:showReferenceInformation(initial_tab)
+    local screen_dims = Screen:getSize()
+    local target = initial_tab == 2 and _("Xray Reference Information") or _("Glossary")
+    KOR.dialogs:htmlBoxTabbed(initial_tab or 1, {
+        title = _("+Add to") .. " " .. target,
+        parent = self,
+        modal = true,
+        name = "glossary_information",
+        button_font_weight = "normal",
+        --* htmlBox will always have a close_callback and therefor a close button; so no need to define a close_callback here...
+        no_filter_button = true,
+        title_shrink_font_to_fit = true,
+        text_padding_top_bottom = Screen:scaleBySize(10),
+        window_size = {
+            h = screen_dims.h * 0.9,
+            w = screen_dims.w * 0.8,
+        },
+        after_close_callback = function()
+            KOR.registry:unset("add_parent_hotkeys")
+        end,
+        no_buttons_row = true,
+        top_buttons_left = {
+            {
+                icon = "add",
+                callback = function()
+                    self:showReferenceInformation()
+                end,
+            }
+        },
+        tabs = {
+            {
+                tab = _("Glossary"),
+                html = _([[<p class="top-block">If you have added texts to the Glossary of the current e-book - by selecting them and tapping on "+ Add to Glossary" in the selected text popup -, you can from then on quickly lookup words by longpressing them in the e-book text.</p>
+<p class="heading">Requirements for texts to be added</p>
+<ul>
+<li>Each of the items therein must have its own separate line.</li>
+<li>Each of those lines must start with either:<br /> <br /><em>[entry]: [explanation]</em><br />of:<br /><em>[entry] [explanation]</em><br />of:<br /><em>[entry] \n [explanation]</em></li>
+</ul>
+<p class="heading">Gesture</p><p class="noindent">You can define a gesture to quickly call the Glossary. To do so, choose the callback <em>Show Glossary</em> under the Dispatcher section <em>Reader</em>.</p>]]),
+            },
+            {
+                tab = _("Xray Reference Information"),
+                html = _([[<p class="top-block">Via the index icon in the PageNavigator popup menu you can save Xray Reference Information.</p><p class="next-block">This can for example be very handy to save timeline information as given in an e-book.</p><p class="next-block">Because this information can optionally be saved as HTML, even saving and viewing HTML tables is possible...</p>
+<p class="heading">Gesture</p><p class="noindent">You can define a gesture to view the Xray Reference Information outside of Page Navigator. To do so, choose the callback <em>Xray Reference Information: show/add</em> under the Dispatcher section <em>Reader</em>.</p>]]),
+            }
+        },
+    })
 end
 
 function XrayInformation:showGeneralDXTips(parent, initial_tab)
@@ -84,7 +129,7 @@ function XrayInformation:showGeneralDXTips(parent, initial_tab)
             {
                 icon = "add",
                 callback = function()
-                    self:showGlossaryInformation()
+                    self:showReferenceInformation()
                 end,
             }
         },

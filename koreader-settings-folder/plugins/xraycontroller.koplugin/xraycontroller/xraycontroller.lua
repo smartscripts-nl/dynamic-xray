@@ -241,7 +241,14 @@ function XrayController:onDispatcherRegisterActions()
     Dispatcher:registerAction("add_xray_item", { category = "none", event = "AddNewXrayItem", title = DX.d:getControllerEntryName("Add an Xray item"), reader = true })
     Dispatcher:registerAction("show_series_manager", { category = "none", event = "ShowSeriesManager", title = _("Show Series Manager"), reader = true })
     Dispatcher:registerAction("show_series_manager_current_ebook", { category = "none", event = "ShowCurrentSeries", title = _("Show series and/or metadata for current e-book"), reader = true })
-    Dispatcher:registerAction("show_book_glossary", { category = "none", event = "ShowCurrentBookGlossary", title = _("Show/add glossary for current book"), reader = true })
+
+    --* compare ((show book Glossary event handler)) and the help information under ((XrayInformation#showReferenceInformation)):
+    Dispatcher:registerAction("show_xray_information", { category = "none", event = "ShowXrayReferenceInformation", title = _("Xray Reference Information: show/add"), reader = true })
+
+    --* compare event handler for showing Xray Information: ((XrayController#onShowXrayReferenceInformation)) and the help information under ((XrayInformation#showReferenceInformation)):
+    -- #((show book Glossary event handler))
+    Dispatcher:registerAction("show_glossary", { category = "none", event = "ShowGlossary", title = _("Show Glossary"), reader = true })
+
     Dispatcher:registerAction("show_tag_group_selector", { category = "none", event = "ShowTagGroupSelector", title = _("Show the Xray tag-group selector"), reader = true })
 end
 
@@ -323,8 +330,13 @@ function XrayController:onShowSeriesManager()
     return true
 end
 
-function XrayController:onShowCurrentBookGlossary()
-    DX.pn:showGlossary()
+function XrayController:onShowGlossary()
+    KOR.glossary:showEditor()
+    return true
+end
+
+function XrayController:onShowXrayReferenceInformation()
+    DX.pn:showShowXrayInformation()
     return true
 end
 

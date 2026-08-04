@@ -206,9 +206,6 @@ local XrayDataLoader = WidgetContainer:new{
              x.name;]],
         --* %2 above = parent.sorting_method == "hits" and "s.series_hits DESC" or "s.name"
 
-        get_book_glossary =
-            "SELECT glossary FROM bookinfo WHERE directory || filename = 'safe_path';",
-
         --* this query is used via ((XrayDialogs#showMultipleBookSeriesActionResult)) > ((XrayDataLoader#getCurrentBookItemsOnly)):
         get_current_book_only_items = [[
             WITH unique_series_names AS (SELECT b.series, x.name
@@ -396,6 +393,9 @@ local XrayDataLoader = WidgetContainer:new{
                       ON ib.name = i.name
             WHERE b.series = '%2' and ib.book_count = 1
             ORDER BY b.series_index, i.book_hits DESC, i.name;]],
+
+        get_xray_reference_information =
+            "SELECT glossary FROM bookinfo WHERE directory || filename = 'safe_path';",
     },
     queries_external = {
         --* used in ((XrayTranslations#loadAllTranslations)):
@@ -443,12 +443,12 @@ function XrayDataLoader:loadAllItems(mode, force_refresh)
     views_data:setItems(items, "from_resultset", "XrayDataLoader:_loadAllData")
 end
 
-function XrayDataLoader:loadGlossary(full_path)
-    local sql = KOR.databases:injectSafePath(self.queries.get_book_glossary, full_path)
-    local conn = KOR.databases:getDBconn("XrayDataLoader:loadGlossary")
-    local glossary = conn:rowexec(sql)
+function XrayDataLoader:loadXrayReferenceInformation(full_path)
+    local sql = KOR.databases:injectSafePath(self.queries.get_xray_reference_information, full_path)
+    local conn = KOR.databases:getDBconn("XrayDataLoader:loadXrayReferenceInformation")
+    local information = conn:rowexec(sql)
     conn = KOR.databases:closeConnections(conn)
-    return glossary
+    return information
 end
 
 --- @private

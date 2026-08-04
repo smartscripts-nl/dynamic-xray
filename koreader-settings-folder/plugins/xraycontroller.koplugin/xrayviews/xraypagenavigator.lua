@@ -57,7 +57,7 @@ local XrayPageNavigator = WidgetContainer:new{
     return_to_current_item = nil,
     return_to_item_no = nil,
     return_to_page = nil,
-    save_glossary_dialog = nil,
+    save_xray_information_dialog = nil,
     screen_width = nil,
     scroll_to_page = nil,
 }
@@ -72,18 +72,18 @@ function XrayPageNavigator:restoreNavigator()
     self:showNavigator(self.initial_browsing_page)
 end
 
-function XrayPageNavigator:addGlossary(glossary_boundaries)
+function XrayPageNavigator:addXrayInformation(information_boundaries)
 
-    local glossary, css_files = KOR.document:getHTMLFromXPointers(glossary_boundaries[1], glossary_boundaries[2])
-    local glossary_text = KOR.document:getTextFromXPointers(glossary_boundaries[1], glossary_boundaries[2])
-    KOR.registry:unset("mark_glossary_boundaries")
-    if has_no_text(glossary) then
+    local information, css_files = KOR.document:getHTMLFromXPointers(information_boundaries[1], information_boundaries[2])
+    local glossary_text = KOR.document:getTextFromXPointers(information_boundaries[1], information_boundaries[2])
+    KOR.registry:unset("mark_xray_information_boundaries")
+    if has_no_text(information) then
         return
     end
     local example = glossary_text:sub(1, 250) .. KOR.strings.ellipsis
 
-    self.save_glossary_dialog = KOR.dialogs:niceAlert((_"Save glossary"), _("You can save the glossary as HTML, or as text.\n\n* Advantage HTML: better readable.\n* Advantage text: searchable.") .. "\n\n" .. _("GLOSSARY TEXT:") .. "\n" .. example, {
-        buttons = DX.b:forSaveGlossary(self, glossary, glossary_text, css_files)
+    self.save_xray_information_dialog = KOR.dialogs:niceAlert((_"Save Xray Reference Information"), _("You can save the information as HTML, or as text.\n\n* Advantage HTML: better readable.\n* Advantage text: searchable.") .. "\n\n" .. _("REFERENCE INFORMATION:") .. "\n" .. example, {
+        buttons = DX.b:forSaveXrayInformation(self, information, glossary_text, css_files)
     })
 end
 
@@ -93,7 +93,7 @@ function XrayPageNavigator:storeGlossary(glossary, content_type, css_files)
         glossary = self:prepareHtmlGlossary(glossary, css_files)
     end
     DX.ds.storeGlossary(glossary)
-    parent:setProp("current_ebook_glossary", glossary)
+    parent:setProp("current_ebook_reference_information", glossary)
     self:showGlossary(glossary)
 end
 
@@ -123,32 +123,41 @@ h1, h2, h3, h4, h5, h6 {
     return "<style>" .. css .. "</style>\n" .. glossary
 end
 
-function XrayPageNavigator:showAddGlossaryNotification()
-    KOR.dialogs:confirm(_("Do you indeed want to save a glossary for Page Navigator?"), function()
+function XrayPageNavigator:showAddXrayInformationNotification()
+    KOR.dialogs:confirm(_("Do you indeed want to save a text to the Xray Reference Information?"), function()
         self:closePageNavigator()
-        KOR.registry:set("mark_glossary_boundaries", {})
-        KOR.dialogs:niceAlert(_("Adding a glossary to Page Navigator"), "Browse now:\n\n1) to the start of the glossary in the ebook and mark the beginning thereof with a text selection;\n2) next repeat this for the end of the glossary.\n\nAfter this is done, the text of the glossary will be saved to the database and shown in a popup.\n\nYou can from now on view this glossary anytime, when in the current ebook, with Shift+G on your physical (BT) keyboard.")
+        KOR.registry:set("mark_xray_information_boundaries", {})
+        KOR.dialogs:niceAlert(_("Adding Xray Reference Information to Page Navigator"), "Browse now:\n\n1) to the start of the information in the ebook and mark the beginning thereof with a text selection;\n2) next repeat this for the end of the information.\n\nAfter this is done, the Reference Information will be saved to the database and shown in a popup.\n\nYou can from now on view this information anytime, when in the current ebook, with Shift+G on your physical (BT) keyboard.")
     end)
     return true
 end
 
-function XrayPageNavigator:showGlossary(glossary)
-    if not glossary and not parent.current_ebook_glossary then
-        return self:showAddGlossaryNotification()
+--* items for this XrayInformation were added in ((XrayPageNavigator#addXrayInformation)):
+function XrayPageNavigator:showXrayReferenceInformation(information)
+    if not information and not parent.current_ebook_reference_information then
+        return self:showAddXrayInformationNotification()
     end
-    if not glossary then
-        glossary = parent.current_ebook_glossary
+    if not information then
+        information = parent.current_ebook_reference_information
     end
 
-    local css = glossary:match("<style>([^>]+)</style>")
+    local css = information:match("<style>([^>]+)</style>")
     if css then
-        glossary = glossary:gsub("^.+</style>", "", 1)
+        information = information:gsub("^.+</style>", "", 1)
     end
     KOR.dialogs:textOrHtmlBox({
-        title = _("Glossary"),
+        title = _("Xray Reference Information"),
+        top_buttons_left = {
+            {
+                icon = "info-slender",
+                callback = function()
+                    DX.i:showReferenceInformation(2)
+                end,
+            }
+        },
         fullscreen = true,
         css = css,
-        content = glossary,
+        content = information,
     })
     return true
 end
@@ -335,7 +344,7 @@ function XrayPageNavigator:setFilterDouble()
     return true
 end
 
---* on_reader_ready will only be truthy when called from ((XrayController#onReaderReady)):
+--* on_reader_ready will only be truthy when called via ((XrayController#onReaderReady)):
 function XrayPageNavigator:resetFilterDouble(on_reader_ready)
     self.filter_item = nil
     self.filter_item_double = nil

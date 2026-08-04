@@ -48,10 +48,10 @@ function ButtonChoicePopup:forTextViewerSearch(props)
 	}, props)
 end
 
-function ButtonChoicePopup:forXrayGlossary(props)
+function ButtonChoicePopup:forXrayReferenceInformation(props)
 	return KOR.buttonprops:set({
 		icon = "index",
-		info = "signpost icon | :show glossary" .. self.separator .. "add glossary",
+		info = "signpost icon | :show Xray Reference Information" .. self.separator .. "add information",
 		callback_label = _("show"),
 		--! callback defined by calling module
 		hold_callback_label = _("add"),

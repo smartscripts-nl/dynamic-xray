@@ -38,7 +38,7 @@ local views_data
 local XrayModel = WidgetContainer:new{
     current_ebook_basename = nil,
     current_ebook_full_path = nil,
-    current_ebook_glossary = nil,
+    current_ebook_reference_information = nil,
     current_series = nil,
     current_series_index = nil,
     current_title = nil,
@@ -629,7 +629,7 @@ function XrayModel:isTerm(item)
 end
 
 function XrayModel:loadGlossary(path)
-    self.current_ebook_glossary = data_loader:loadGlossary(path)
+    self.current_ebook_reference_information = data_loader:loadXrayReferenceInformation(path)
 end
 
 function XrayModel:markItemsPreparedForCurrentEbook()

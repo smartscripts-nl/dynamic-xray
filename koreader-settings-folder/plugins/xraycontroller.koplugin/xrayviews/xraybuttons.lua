@@ -415,14 +415,14 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
                 return DX.cb:execShowPageBrowserCallback(parent)
             end,
         }),
-        KOR.buttonchoicepopup:forXrayGlossary({
+        KOR.buttonchoicepopup:forXrayReferenceInformation({
             callback = function()
                 parent:closePopupMenu()
-                return DX.cb:execShowGlossaryCallback(parent)
+                return DX.cb:execShowXrayReferenceInformationCallback(parent)
             end,
             hold_callback = function()
                 parent:closePopupMenu()
-                return parent:showAddGlossaryNotification()
+                return parent:showAddXrayInformationNotification()
             end,
         }),
         series_manager_button,
@@ -790,7 +790,7 @@ function XrayButtons:forItemViewerTopRight(needle_item)
 end
 
 --- @param parent XrayPageNavigator
-function XrayButtons:forSaveGlossary(parent, glossary, glossary_text, css_files)
+function XrayButtons:forSaveXrayInformation(parent, glossary, glossary_text, css_files)
     return {{
          {
              icon = "back",
@@ -801,13 +801,13 @@ function XrayButtons:forSaveGlossary(parent, glossary, glossary_text, css_files)
          {
              text = _("HTML"),
              callback = function()
-                 parent:storeGlossary(glossary, "html", css_files)
+                 parent:storeXrayInformation(glossary, "html", css_files)
              end,
          },
          {
              text = _("text"),
              callback = function()
-                 parent:storeGlossary(glossary_text, "text")
+                 parent:storeXrayInformation(glossary_text, "text")
              end,
          },
      }}

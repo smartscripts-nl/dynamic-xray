@@ -234,16 +234,22 @@ function Html:getHtmlBoxCss(additional_css)
             text-align: center;
         }
 
-        h1 + p, h2 + p, h3 + p, h4 + p, p + p.chaptertitle, p.noindent, p.no-indent, p.whitespace + p, div.poezie p, div.noindent p, div.no-indent p, p + p.separator {
+        h1 + p, h2 + p, h3 + p, h4 + p, p + p.chaptertitle, p.noindent, p.no-indent, p.whitespace + p, div.poezie p, div.noindent p, div.no-indent p, p + p.separator, p.heading, p.top-block, p.next-block {
             text-indent: 0 !important;
         }
 
-        p.first-item {
+        p.top-block {
             margin-top: .7em !important;
         }
 
         p.heading {
+            margin-top: 1em;
             margin-bottom: .3em;
+            font-weight: bold;
+        }
+
+        p.next-block {
+            margin-top: 1em;
         }
     ]]
     --* For reference, MuPDF declarations with absolute units:

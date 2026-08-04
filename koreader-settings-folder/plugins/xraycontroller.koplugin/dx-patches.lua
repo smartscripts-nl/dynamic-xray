@@ -569,7 +569,7 @@ ReaderHighlight.init = function(self)
                     {
                         icon = "info-slender",
                         callback = function()
-                            DX.i:showGlossaryInformation()
+                            DX.i:showReferenceInformation()
                         end,
                     }
                 })
@@ -587,17 +587,17 @@ end
 
 local orig_onShowHighlightMenu = ReaderHighlight.onShowHighlightMenu
 ReaderHighlight.onShowHighlightMenu = function(self, index)
-    local glossary_boundaries = KOR.registry:get("mark_glossary_boundaries")
-    if glossary_boundaries then
-        if #glossary_boundaries == 0 then
-            table_insert(glossary_boundaries, self.selected_text.pos0)
+    local information_boundaries = KOR.registry:get("mark_xray_information_boundaries")
+    if information_boundaries then
+        if #information_boundaries == 0 then
+            table_insert(information_boundaries, self.selected_text.pos0)
             self:onClose()
-            KOR.messages:notify(tr("start of glossary has been registered; now mark the end of it"))
+            KOR.messages:notify(tr("start of information text has been registered; now mark the end of it"))
             return
         end
-        table_insert(glossary_boundaries, self.selected_text.pos1)
+        table_insert(information_boundaries, self.selected_text.pos1)
         self:onClose()
-        DX.pn:addGlossary(glossary_boundaries)
+        DX.pn:addGlossary(information_boundaries)
         return
     end
     orig_onShowHighlightMenu(self, index)
@@ -1099,7 +1099,7 @@ function ReaderSearch:onShowFulltextSearchInput()
     -- #((initial readersearch dialog))
     self.input_dialog = InputDialog:new{
         title = tr("Enter text to search for"),
-        width = math.floor(math.min(Screen:getWidth(), Screen:getHeight()) * 0.9),
+        width = math_floor(math.min(Screen:getWidth(), Screen:getHeight()) * 0.9),
         input = self.last_search_text or self.ui.doc_settings:readSetting("fulltext_search_last_search_text"),
         buttons = {
             {

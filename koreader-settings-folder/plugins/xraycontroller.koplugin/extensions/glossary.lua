@@ -12,6 +12,7 @@ local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 
+local DX = DX
 local has_content = has_content
 local has_no_text = has_no_text
 local has_text = has_text
@@ -131,7 +132,7 @@ function Glossary:showEditor(referenced_info, scroll_to_text)
         }))
     end
 
-    editor = InputDialog:new {
+    editor = InputDialog:new{
         title = title,
         input = referenced_info,
         input_hint = "",
@@ -146,6 +147,14 @@ function Glossary:showEditor(referenced_info, scroll_to_text)
         buttons = buttons,
         search_value = scroll_to_text,
         case_sensitive = true,
+        top_buttons_left = {
+            {
+                icon = "info-slender",
+                callback = function()
+                    DX.i:showReferenceInformation(1)
+                end,
+            }
+        },
         --* Set/save view and cursor position callback
         view_pos_callback = function(top_line_num, charpos)
             --* This same callback is called with no argument to get initial position, and with arguments to give back final position when closed.
