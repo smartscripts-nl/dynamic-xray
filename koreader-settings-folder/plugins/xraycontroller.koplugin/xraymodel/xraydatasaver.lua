@@ -301,13 +301,11 @@ local XrayDataSaver = WidgetContainer:new{
         --* check update 3:
         { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'publication_year';", 3 },
 
-        --* check update 5:
-        -- #((do field renamed check before original not renamed field creation))
-        --! run this check before checking for field "bookmarks" (next check); if field "annotations" found, skip check for field "bookmarks":
-        { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'annotations';", 5 },
-
         --* check update 4:
         { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'bookmarks';", 4 },
+
+        --* check update 5:
+        { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'annotations';", 5 },
 
         --* check update 6:
         { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'stars';", 6 },
@@ -875,24 +873,23 @@ end
 function XrayDataSaver.updateVersionIndex(conn, version_index)
 
     local self = DX.ds
-    local result
     count = #self.scheme_verification_queries
-    local query, index
-    local previous_index = 0
-    for i = 1, count do
-        query = self.scheme_verification_queries[i][1]
-        index = self.scheme_verification_queries[i][2]
-        result = conn:exec(query)
 
-        --* second condition: see ((do field renamed check before original not renamed field creation)): here the renaming yields an higher index than the next check for the creation of the original field:
-        if result and index > previous_index then
-            version_index = index
-            previous_index = index
-        --* table or field not present in db:
-        elseif not result then
+    local last_update_query = self.scheme_verification_queries[count][1]
+    local last_update_index = self.scheme_verification_queries[count][2]
+    if conn:exec(last_update_query) then
+        return last_update_index
+    end
+
+    local update_query, update_index, result
+    for i = count - 1, 1, -1 do
+        update_query = self.scheme_verification_queries[i][1]
+        update_index = self.scheme_verification_queries[i][2]
+        result = conn:exec(update_query)
+        if result then
             --* update database_scheme_version in XraySettings:
-            DX.s:saveSetting(self.scheme_version_name, version_index)
-            return version_index
+            DX.s:saveSetting(self.scheme_version_name, update_index)
+            return update_index
         end
     end
 
