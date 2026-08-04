@@ -358,7 +358,7 @@ local orig_onLookupWord = ReaderDictionary.onLookupWord
 -- #((ReaderDictionary#onLookupWord))
 ReaderDictionary.onLookupWord = function(self, word, is_sane, boxes, highlight, link, dict_close_callback)
 
-    local skip_reference_info = KOR.registry:getOnce("skip_reference_info")
+    local skip_glossary = KOR.registry:getOnce("skip_glossary")
 
     --* if an Xray item was recognized, show its info instead of the Dictionary dialog:
     if DX.tw:getXrayItemAsDictionaryEntry(word) then
@@ -367,8 +367,8 @@ ReaderDictionary.onLookupWord = function(self, word, is_sane, boxes, highlight, 
         end
         return true
 
-    -- #((show reference info instead of dictionary popup))
-    elseif not skip_reference_info and KOR.referenceinfo:getReferenceInfoAsDictionaryEntry(word) then
+    -- #((show glossary popup instead of dictionary popup))
+    elseif not skip_glossary and KOR.glossary:getGlossaryEntryAsDictionaryEntry(word) then
         if highlight then
             highlight:clear()
         end
@@ -558,25 +558,28 @@ ReaderHighlight.init = function(self)
             end,
         }
     end)
-    self:addToHighlightDialog("42_add_reference_info", function(this)
+    self:addToHighlightDialog("42_add_glossary", function(this)
         return {
-            text = tr("+ Reference info"),
+            text = tr("+ Add to Glossary"),
             callback = function()
                 local info = util.cleanupSelectedText(this.selected_text.text)
-                this:onClose()
 
-                KOR.registry:set("title", _("+Reference-information"))
+                KOR.registry:set("title", _("+Add to Glossary"))
                 KOR.registry:set("top_buttons_left", {
                     {
                         icon = "info-slender",
                         callback = function()
-                            DX.i:showReferenceInfoInformation()
+                            DX.i:showGlossaryInformation()
                         end,
                     }
                 })
-                KOR.dialogs:confirm(_("Do you want to add the selected text to the reference-information for this book?"), function()
-                    KOR.referenceinfo:addInfo(info)
-               end)
+                KOR.dialogs:confirm(_("Do you want to add the selected text to the Glossary for this book?"), function()
+                    KOR.glossary:addInfo(info)
+                    this:onClose()
+               end,
+                function()
+                    this:onClose()
+                end)
             end,
         }
     end)

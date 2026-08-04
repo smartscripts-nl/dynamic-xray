@@ -69,6 +69,44 @@ function ButtonInfoPopup:forBookOpen(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forGlossaryCopy(props)
+	return KOR.buttonprops:set({
+		icon = "copy",
+		icon_size_ratio = 0.5,
+		info = _("copy icon | To copy the entire Glossary for the current e-book to the clipboard."),
+		callback_label = _("copy"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forGlossaryErase(props)
+	return KOR.buttonprops:set({
+		icon = "dustbin",
+		info = _("dustbin icon | Remove the entire Glossary for the current e-book."),
+		callback_label = _("remove"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forGlossarySave(props)
+	return KOR.buttonprops:set({
+		icon = "save",
+		info = _("floppy disk icon | Save text in this dialog to the glossary."),
+		callback_label = _("save"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forGlossarySwitchToDictionary(props)
+	return KOR.buttonprops:set({
+		icon = "book",
+		icon_size_ratio = 0.6,
+		info = _("book icon | Search for the Glossary entry in the Dictionary."),
+		callback_label = _("dictionary"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forInputDialogSearchFirst(props)
 	return KOR.buttonprops:set({
 		text = KOR.icons.first,
@@ -140,44 +178,6 @@ function ButtonInfoPopup:forMenuToLetter(props)
 		text_font_bold = false,
 		info = _("Jump to first item starting with the character you entered."),
 		callback_label = _("go"),
-		--! callback defined by calling module
-	}, props)
-end
-
-function ButtonInfoPopup:forReferenceInfoCopy(props)
-	return KOR.buttonprops:set({
-		icon = "copy",
-		icon_size_ratio = 0.5,
-		info = _("copy icon | To copy ALL of the reference-information for the current e-book to the clipboard."),
-		callback_label = _("copy"),
-		--! callback defined by calling module
-	}, props)
-end
-
-function ButtonInfoPopup:forReferenceInfoErase(props)
-	return KOR.buttonprops:set({
-		icon = "dustbin",
-		info = _("dustbin icon | Remove all reference-information for this book."),
-		callback_label = _("remove"),
-		--! callback defined by calling module
-	}, props)
-end
-
-function ButtonInfoPopup:forReferenceInfoSave(props)
-	return KOR.buttonprops:set({
-		icon = "save",
-		info = _("floppy disk icon | Save the reference-information."),
-		callback_label = _("save"),
-		--! callback defined by calling module
-	}, props)
-end
-
-function ButtonInfoPopup:forReferenceInfoSwitchToDictionary(props)
-	return KOR.buttonprops:set({
-		icon = "book",
-		icon_size_ratio = 0.6,
-		info = _("book icon | Search for the referenced word in the Dictionary."),
-		callback_label = _("dictionary"),
 		--! callback defined by calling module
 	}, props)
 end

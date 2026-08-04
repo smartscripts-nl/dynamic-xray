@@ -22,6 +22,7 @@ local pairs = pairs
 --- @field ebookmetadata EbookMetadata
 --- @field filedirnames FileDirNames
 --- @field files Files
+--- @field glossary Glossary
 --- @field html Html
 --- @field icons Icons
 --- @field itemsmanager ItemsManager
@@ -30,7 +31,6 @@ local pairs = pairs
 --- @field list List
 --- @field messages Messages
 --- @field pagetexts PageTexts
---- @field referenceinfo ReferenceInfo
 --- @field registry Registry
 --- @field screenhelpers ScreenHelpers
 --- @field seriesmanager SeriesManager
@@ -82,6 +82,7 @@ local KOR = WidgetContainer:new{
 	ebookmetadata = nil,
 	filedirnames = nil,
 	files = nil,
+	glossary = nil,
 	html = nil,
 	icons = nil,
 	itemsmanager = nil,
@@ -90,7 +91,6 @@ local KOR = WidgetContainer:new{
 	list = nil,
 	messages = nil,
 	pagetexts = nil,
-	referenceinfo = nil,
 	registry = nil,
 	screenhelpers = nil,
 	seriesmanager = nil,
@@ -126,13 +126,13 @@ local KOR = WidgetContainer:new{
 		"columntexts",
 		"ebookmetadata",
 		"filedirnames",
+		"glossary",
 		"html",
 		"itemsmanager",
 		"labels",
 		"list",
 		"messages",
 		"pagetexts",
-		"referenceinfo",
 		"screenhelpers",
 		"seriesmanager",
 		"sidecar",

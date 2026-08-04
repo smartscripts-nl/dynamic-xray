@@ -1,7 +1,6 @@
+--* saved glossary info can be shown instead of DictQuickLookup widget if a term was found in the glossary; see ((ReaderDictionary#onLookupWord)) > ((show glossary popup instead of dictionary popup))
 
---* saved reference info can be shown instead of DictQuickLookup widget if a term was found in the reference info; see ((ReaderDictionary#onLookupWord)) > ((show reference info instead of dictionary popup))
-
---! the reference-info must have entries on separate lines in either this format: "entry: explanation", or "entry explanation" !
+--! the glossary must have entries on separate lines in either this format: "entry: explanation", or "entry explanation", or "entry\nexplanation" !
 
 local require = require
 
@@ -19,18 +18,19 @@ local has_text = has_text
 local table_insert = table.insert
 local type = type
 
---* class for maintaining reference info pertaining to current ebook (e.g. list of characters, word explanations, etc.)
---- @class ReferenceInfo
-local ReferenceInfo = WidgetContainer:extend{
+--* class for maintaining a glossary pertaining to current ebook (e.g. list of characters, word explanations, etc.)
+--- @class Glossary
+local Glossary = WidgetContainer:extend {
+    last_edit_pos = nil,
     line_end = "\n",
-    reference_info_last_edit_pos = nil,
 }
 
-function ReferenceInfo:get(remove_whitespace_at_end)
-    --* this info could have been saved from the Referentie-button in ReaderHighlight:
+function Glossary:get(remove_whitespace_at_end)
+    --* this info could have been saved from the Glossary-button in ReaderHighlight:
     local doc_settings = KOR.ui.doc_settings
-    local info = doc_settings:readSetting("reference_info") or false
-    if not has_text(info) then
+    self:convertFromOldFormat(doc_settings)
+    local info = doc_settings.glossary or doc_settings:readSetting("glossary") or false
+    if not info then
         return false
     end
     if remove_whitespace_at_end then
@@ -45,7 +45,19 @@ function ReferenceInfo:get(remove_whitespace_at_end)
     return info
 end
 
-function ReferenceInfo:addInfo(info)
+--- @private
+function Glossary:convertFromOldFormat(doc_settings)
+    local old_info = doc_settings.reference_info or doc_settings:readSetting("reference_info") or false
+    if old_info then
+        doc_settings.glossary = old_info
+        doc_settings:saveSetting("glossary", old_info)
+        doc_settings.reference_info = nil
+        doc_settings:delSetting("reference_info")
+        doc_settings:flush()
+    end
+end
+
+function Glossary:addInfo(info)
     local previous_info = self:get("remove_whitespace_at_end")
     if has_no_text(previous_info) then
         previous_info = ""
@@ -55,7 +67,7 @@ function ReferenceInfo:addInfo(info)
     self:save(previous_info .. info)
 end
 
-function ReferenceInfo:showEditor(referenced_info, scroll_to_text)
+function Glossary:showEditor(referenced_info, scroll_to_text)
     --* in the case called from the description dialog:
     if referenced_info then
         UIManager:close(self.viewer)
@@ -68,35 +80,35 @@ function ReferenceInfo:showEditor(referenced_info, scroll_to_text)
     end
     --- @type InputDialog editor
     local editor
-    local action = has_info and _("View/edit") or _("Add:")
-    local title = action .. " " .. _("reference-info")
+    local action = has_info and _("View/edit") or _("Add to")
+    local title = action .. " " .. _("glossary")
     local buttons = {
         {
-            KOR.buttoninfopopup:forReferenceInfoErase({
+            KOR.buttoninfopopup:forGlossaryErase({
                 callback = function()
-                    KOR.dialogs:confirm(_("Are you sure you want to remove ALL reference information?"), function()
+                    KOR.dialogs:confirm(_("Are you sure you want to remove the entire glossary?"), function()
                         UIManager:close(editor)
                         self:save(nil)
                     end)
                 end,
             }),
-            KOR.buttoninfopopup:forReferenceInfoCopy({
+            KOR.buttoninfopopup:forGlossaryCopy({
                 callback = function()
                     local info = has_content(editor:getInputText()) or nil
                     if info then
                         info = KOR.strings:trim(info)
                         Device.input.setClipboardText(info)
-                        KOR.messages:notify(_("reference-information copied"))
+                        KOR.messages:notify(_("glossary copied"))
                     end
                 end,
             }),
-            KOR.buttoninfopopup:forReferenceInfoSave({
+            KOR.buttoninfopopup:forGlossarySave({
                 callback = function()
                     local info = has_content(editor:getInputText()) or nil
                     UIManager:close(editor)
                     info = self:addWhiteSpaceAtEnd(info)
                     self:save(info)
-                    KOR.messages:notify(_("reference-information saved"))
+                    KOR.messages:notify(_("information added to glossary"))
                 end,
             }),
             {
@@ -110,20 +122,20 @@ function ReferenceInfo:showEditor(referenced_info, scroll_to_text)
     }
     if has_text(scroll_to_text) then
         title = title .. " - " .. scroll_to_text
-
-        table_insert(buttons[1], 2, KOR.buttoninfopopup:forReferenceInfoSwitchToDictionary({
+        table_insert(buttons[1], 2, KOR.buttoninfopopup:forGlossarySwitchToDictionary({
             callback = function()
                 UIManager:close(editor)
-                KOR.registry:set("skip_reference_info", true)
-                KOR.ui.dictionary:onLookupWord(scroll_to_text)
+                KOR.registry:set("skip_glossary", true)
+                KOR.dictionary:onLookupWord(scroll_to_text)
             end,
         }))
     end
-    editor = InputDialog:new{
+
+    editor = InputDialog:new {
         title = title,
         input = referenced_info,
         input_hint = "",
-        input_face = Font:getFace("smallinfofont", 14),
+        input_face = Font:getFontFamily("Red Hat Text", 18),
         para_direction_rtl = false,
         lang = "en",
         fullscreen = true,
@@ -138,9 +150,9 @@ function ReferenceInfo:showEditor(referenced_info, scroll_to_text)
         view_pos_callback = function(top_line_num, charpos)
             --* This same callback is called with no argument to get initial position, and with arguments to give back final position when closed.
             if top_line_num and charpos then
-                self.reference_info_last_edit_pos = { top_line_num, charpos }
+                self.last_edit_pos = { top_line_num, charpos }
             else
-                local prev_pos = self.reference_info_last_edit_pos
+                local prev_pos = self.last_edit_pos
                 if type(prev_pos) == "table" and prev_pos[1] and prev_pos[2] then
                     return prev_pos[1], prev_pos[2]
                 end
@@ -164,15 +176,16 @@ function ReferenceInfo:showEditor(referenced_info, scroll_to_text)
     end
 end
 
-function ReferenceInfo:getReferenceInfoAsDictionaryEntry(tapped_word)
+function Glossary:getGlossaryEntryAsDictionaryEntry(tapped_word)
+    KOR.debug:methodcall("Glossary#getGlossaryEntryAsDictionaryEntry")
 
     --* don't allow larger strings which contain a saved name to trigger matches:
     if tapped_word:match(" ") then
         return false
     end
 
-    local reference_info = self:get()
-    if not reference_info then
+    local glossary = self:get()
+    if not glossary then
         return false
     end
 
@@ -186,19 +199,20 @@ function ReferenceInfo:getReferenceInfoAsDictionaryEntry(tapped_word)
     end
 
     local match_needle = "(^|\n)" .. tapped_word .. "%f[%A]"
-    --* make search for needles more specific: only register hits when term is at the start or the start of a line of the reference-information, and the end of the needle is at a word_boundary:
-    if KOR.strings:group_match(reference_info, match_needle) then
-        self:showEditor(reference_info, tapped_word)
+    --* make search for needles more specific: only register hits when term is at the start or the start of a line of the glossary, and the end of the needle is at a word_boundary:
+    if KOR.strings:group_match(glossary, match_needle) then
+        self:showEditor(glossary, tapped_word)
         return true
-    elseif match_needle_singular and KOR.strings:group_match(reference_info, match_needle_singular) then
-        self:showEditor(reference_info, needle_singular)
+    elseif match_needle_singular and KOR.strings:group_match(glossary, match_needle_singular) then
+        self:showEditor(glossary, needle_singular)
         return true
     end
     return false
 end
 
---* add extra whitespace to the end of the reference_info, so searches after tapping on a person in the book which is mentioned in the reference info will always be shown at the top of the editor:
-function ReferenceInfo:addWhiteSpaceAtEnd(info)
+--* add extra whitespace to the end of the glossary, so searches after tapping on a person in the book which is mentioned in the glossary will always be shown at the top of the editor:
+--- @private
+function Glossary:addWhiteSpaceAtEnd(info)
     if not info then
         return info
     end
@@ -208,7 +222,8 @@ function ReferenceInfo:addWhiteSpaceAtEnd(info)
     return info
 end
 
-function ReferenceInfo:removeWhiteSpaceAtEnd(info)
+--- @private
+function Glossary:removeWhiteSpaceAtEnd(info)
     if not info then
         return info
     end
@@ -219,10 +234,11 @@ function ReferenceInfo:removeWhiteSpaceAtEnd(info)
     return info
 end
 
-function ReferenceInfo:save(info)
-    KOR.ui.doc_settings:saveSetting("reference_info", info)
+--- @private
+function Glossary:save(info)
+    KOR.ui.doc_settings:saveSetting("glossary", info)
     KOR.ui.doc_settings:flush()
-    KOR.ui.doc_settings.reference_info = info
+    KOR.ui.doc_settings.glossary = info
 end
 
-return ReferenceInfo
+return Glossary

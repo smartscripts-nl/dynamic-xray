@@ -523,7 +523,7 @@ function Strings:getNameSwapped(name)
 end
 
 --* add support for matching by capture groups;
---* example call: if KOR.strings:group_match(reference_info, "(^|\n)" .. needle) then ...
+--* example call: if KOR.strings:group_match(glossary, "(^|\n)" .. needle) then ...
 function Strings:group_match(text, needle)
     local group = needle:match("%(([^)]+)%)")
     needle = needle:gsub("%([^)]+%)", "")

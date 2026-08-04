@@ -53,8 +53,8 @@ function XrayInformation:getMatchReliabilityIndicator(name)
     return self.match_reliability_indicators[name]
 end
 
-function XrayInformation:showReferenceInfoInformation()
-    KOR.dialogs:niceAlert(_("+Reference-information for books"), _("If you have saved reference-information for a book - by selecting that information in the book and tapping on \"+ Reference info\" in the popup -, you can from then on look up information for entries in the reference-information by longpressing those entries in the text of the e-book.\n\nSuper handy for looking up information quickly, without having to first navigate to the reference-information section in the e-book...\n\nRequirements for the reference-information: each of the items therein must have its own separate line, and each of those lines must start with either:\n\"[item]: [expanation]\"\nor:\n\"[item] [explanation]\"\nor:\n\"[item]\n[explanation]\""))
+function XrayInformation:showGlossaryInformation()
+    KOR.dialogs:niceAlert(_("+Glossary per book"), _("If you have added selected texts to the Glossary of a book - by selecting that information in the book and tapping on \"+ Add to Glossary\" in the popup -, you can from then on look up terms in that Glossary by longpressing words in the e-book.\n\nRequirements for the reference-information: each of the items therein must have its own separate line, and each of those lines must start with either:\n\"[item]: [expanation]\"\nor:\n\"[item] [explanation]\"\nor:\n\"[item]\n[explanation]\""))
 end
 
 function XrayInformation:showGeneralDXTips(parent, initial_tab)
@@ -84,7 +84,7 @@ function XrayInformation:showGeneralDXTips(parent, initial_tab)
             {
                 icon = "add",
                 callback = function()
-                    self:showReferenceInfoInformation()
+                    self:showGlossaryInformation()
                 end,
             }
         },
