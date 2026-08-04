@@ -14,6 +14,9 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 * The Page Navigator module now offers an extra side tab to quickly inspect Xray items which are linked to the items named in the page. From there can then edit them, view more details about them or search all their locations in the current ebook. You can see this feature in action in the [videos section](#videos).
 * The Page Navigator has an occurrences-per-chapter-histogram at the bottom.
 * DX has a Series Manager for listing the books in a series. The items in this Manager have action buttons, for viewing large covers, descriptions, reading progress, annotations count, opening the e-book, etc. An example of this manager can be seen in the last image under [Images](#images).
+* DX has a Xray Reference Information popup (callable with the index-button in de Page Navigator popup menu), where the use can e.g. store timeline-information for a book. The user can assign a gesture for calling this popup outside of Page Navigator. 
+* DX also has a Glossary popup, to show a Glossary from the book stored there. The user can assign a gesture for calling
+  this popup. When the user longpresses a word in the ebook text and that word is an item in the Glossary, the explanation for that item will be shown in the Glossary popup.
 
 ## Table of contents in this readme
 - [DX under Android](#dx-under-android)
