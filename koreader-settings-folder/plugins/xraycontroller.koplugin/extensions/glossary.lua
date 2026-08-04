@@ -1,6 +1,7 @@
+
 --* saved glossary info can be shown instead of DictQuickLookup widget if a term was found in the glossary; see ((ReaderDictionary#onLookupWord)) > ((show glossary popup instead of dictionary popup))
 
---! the glossary must have entries on separate lines in either this format: "entry: explanation", or "entry explanation", or "entry\nexplanation" !
+--! the glossary must have entries on separate lines, with the item names at the start of lines !
 
 local require = require
 

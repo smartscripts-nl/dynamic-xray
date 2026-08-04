@@ -72,42 +72,42 @@ function XrayPageNavigator:restoreNavigator()
     self:showNavigator(self.initial_browsing_page)
 end
 
-function XrayPageNavigator:addXrayInformation(information_boundaries)
+function XrayPageNavigator:addXrayReferenceInformation(information_boundaries)
 
     local information, css_files = KOR.document:getHTMLFromXPointers(information_boundaries[1], information_boundaries[2])
-    local glossary_text = KOR.document:getTextFromXPointers(information_boundaries[1], information_boundaries[2])
+    local information_text = KOR.document:getTextFromXPointers(information_boundaries[1], information_boundaries[2])
     KOR.registry:unset("mark_xray_information_boundaries")
     if has_no_text(information) then
         return
     end
-    local example = glossary_text:sub(1, 250) .. KOR.strings.ellipsis
+    local example = information_text:sub(1, 250) .. KOR.strings.ellipsis
 
     self.save_xray_information_dialog = KOR.dialogs:niceAlert((_"Save Xray Reference Information"), _("You can save the information as HTML, or as text.\n\n* Advantage HTML: better readable.\n* Advantage text: searchable.") .. "\n\n" .. _("REFERENCE INFORMATION:") .. "\n" .. example, {
-        buttons = DX.b:forSaveXrayInformation(self, information, glossary_text, css_files)
+        buttons = DX.b:forSaveXrayInformation(self, information, information_text, css_files)
     })
 end
 
-function XrayPageNavigator:storeGlossary(glossary, content_type, css_files)
-    UIManager:close(self.save_glossary_dialog)
+function XrayPageNavigator:storeXrayReferenceInformation(information, content_type, css_files)
+    UIManager:close(self.save_xray_information_dialog)
     if content_type == "html" then
-        glossary = self:prepareHtmlGlossary(glossary, css_files)
+        information = self:prepareHtmlXrayInformation(information, css_files)
     end
-    DX.ds.storeGlossary(glossary)
-    parent:setProp("current_ebook_reference_information", glossary)
-    self:showGlossary(glossary)
+    DX.ds.storeXrayReferenceInformation(information)
+    parent:setProp("current_ebook_reference_information", information)
+    self:showXrayReferenceInformation(information)
 end
 
 --- @private
-function XrayPageNavigator:prepareHtmlGlossary(glossary, css_files)
+function XrayPageNavigator:prepareHtmlXrayInformation(information, css_files)
     local remove = { "DocFragment", "body", "section", "a", "inlineBox", "autoBoxing" }
     for i = 1, #remove do
-        glossary = glossary
+        information = information
             :gsub("</" .. remove[i] .. ">", "")
             :gsub("<" .. remove[i] .. "[^>]*>", "")
     end
-    glossary = "<html><body>" .. glossary .. "</body></html>"
+    information = "<html><body>" .. information .. "</body></html>"
     if has_no_items(css_files) then
-        return glossary
+        return information
     end
 
     local css = ""
@@ -120,7 +120,7 @@ h1, h2, h3, h4, h5, h6 {
     margin-top: 1.5em !important;
 }
 ]]
-    return "<style>" .. css .. "</style>\n" .. glossary
+    return "<style>" .. css .. "</style>\n" .. information
 end
 
 function XrayPageNavigator:showAddXrayInformationNotification()
@@ -132,7 +132,7 @@ function XrayPageNavigator:showAddXrayInformationNotification()
     return true
 end
 
---* items for this XrayInformation were added in ((XrayPageNavigator#addXrayInformation)):
+--* items for this XrayInformation were added in ((XrayPageNavigator#addXrayReferenceInformation)):
 function XrayPageNavigator:showXrayReferenceInformation(information)
     if not information and not parent.current_ebook_reference_information then
         return self:showAddXrayInformationNotification()

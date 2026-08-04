@@ -795,7 +795,7 @@ function XrayButtons:forSaveXrayInformation(parent, glossary, glossary_text, css
          {
              icon = "back",
              callback = function()
-                 UIManager:close(parent.save_glossary_dialog)
+                 UIManager:close(parent.save_xray_information_dialog)
              end,
          },
          {

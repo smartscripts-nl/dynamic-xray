@@ -453,10 +453,10 @@ function XrayDataSaver:getChapterHitsDataForStorage(chapter_hits_data)
     return table_concat(chapter_hits_data, ",")
 end
 
-function XrayDataSaver.storeXrayInformation(information)
+function XrayDataSaver.storeXrayReferenceInformation(information)
     local self = DX.ds
 
-    local conn = KOR.databases:getDBconn("XrayDataSaver:storeXrayInformation")
+    local conn = KOR.databases:getDBconn("XrayDataSaver:storeXrayReferenceInformation")
     local sql = KOR.databases:injectSafePath(self.queries.store_xray_information, parent.current_ebook_full_path)
     local stmt = conn:prepare(sql)
     stmt:reset():bind(information):step()
