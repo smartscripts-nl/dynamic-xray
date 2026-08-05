@@ -444,9 +444,10 @@ function XrayDialogs:notifyFilterResult(filter_active, filtered_count)
     end
 end
 
---* information for this dialog was generated in ((ReaderView#paintTo)) > ((XrayUI#ReaderViewGenerateXrayInformation))
+--* information for this dialog was generated via ((ReaderView#paintTo)) > ((XrayUI#ReaderViewGenerateXrayInformation))
 --* extra buttons (from xray items) were populated in ((XrayUI#ReaderHighlightGenerateXrayInformation))
 --* current method called from callback in ((xray paragraph info callback)):
+--* dialog item entries and icons were generated via ((XrayUI#getXrayItemsFoundInText)) > ((XrayUI#discoverXrayItems)) > upon tap on marker item: ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((XrayUI#showParagraphInformation)) > ((XrayUI#addParagraphInfoItems)) > ((XrayViewsData#generateXrayExportOrLinkedItemInfo)) > ((XrayViewsData#getItemTypeIcon)) > here we ask for bare type icons, so in ((XrayViewsData#generateFirstLines)) we add an extra space after the item type icon:
 function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_names3, hits_info, hits_info2, hits_info3, matches_count)
     if self.xray_ui_info_dialog or has_no_text(hits_info) then
         return

@@ -1241,7 +1241,7 @@ function XrayViewsData:generateXrayExportOrLinkedItemInfo(items_count, item, ui_
             table_insert(first_line, DX.i:getMatchReliabilityIndicator("linked_item") .. " ")
         end
     end
-    local xray_type_icon = self:getItemTypeIcon(item)
+    local xray_type_icon = self:getItemTypeIcon(item, "bare")
     first_line, first_line_iconless = self:generateFirstLines(first_line, first_line_iconless, item, xray_type_icon, ui_explanation, meta_indent, mode)
 
     local separator = DX.s.items_metadata_add_top_padding and KOR.strings.white_line or "\n"
@@ -1374,6 +1374,9 @@ function XrayViewsData:generateFirstLines(first_line, first_line_iconless, xray_
     table_insert(first_line, xray_type_icon)
     if DX.ta:itemHasTag(xray_item, _("Favorites")) then
         table_insert(first_line, KOR.icons.favorite_closed_bare .. " ")
+    else
+        --* in ((XrayViewsData#generateXrayExportOrLinkedItemInfo)) we asked for bare icons through self:getItemTypeIcon(item, "bare"), so here we have to insert a space to separate the item type icon from the name of the item:
+        table_insert(first_line, " ")
     end
     table_insert(first_line, name)
     if ui_explanation then
