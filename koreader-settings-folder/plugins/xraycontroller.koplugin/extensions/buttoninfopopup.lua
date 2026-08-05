@@ -79,6 +79,15 @@ function ButtonInfoPopup:forGlossaryCopy(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forGlossaryEditor(props)
+	return KOR.buttonprops:set({
+		icon = "edit",
+		info = _("edit icon | Edit the Glossary."),
+		callback_label = _("edit"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forGlossaryErase(props)
 	return KOR.buttonprops:set({
 		icon = "dustbin",
@@ -103,6 +112,15 @@ function ButtonInfoPopup:forGlossarySwitchToDictionary(props)
 		icon_size_ratio = 0.6,
 		info = _("book icon | Search for the Glossary entry in the Dictionary."),
 		callback_label = _("dictionary"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forGlossaryViewer(props)
+	return KOR.buttonprops:set({
+		icon = "list",
+		info = _("list icon | Go to the Glossary Viewer."),
+		callback_label = _("go"),
 		--! callback defined by calling module
 	}, props)
 end

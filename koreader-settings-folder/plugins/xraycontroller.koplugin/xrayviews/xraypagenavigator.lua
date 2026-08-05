@@ -133,10 +133,18 @@ function XrayPageNavigator:showAddXrayInformationNotification()
 end
 
 --* items for this XrayInformation were added in ((XrayPageNavigator#addXrayReferenceInformation)):
+--* compare ((Glossary#showGlossaryViewer)):
 function XrayPageNavigator:showXrayReferenceInformation(information)
+    local glossary = KOR.glossary:get()
     if not information and not parent.current_ebook_reference_information then
+        if glossary then
+            --* show Glossary instead of missing Reference Information:
+            KOR.glossary:showGlossaryViewer()
+            return true
+        end
         return self:showAddXrayInformationNotification()
     end
+
     if not information then
         information = parent.current_ebook_reference_information
     end
@@ -145,6 +153,32 @@ function XrayPageNavigator:showXrayReferenceInformation(information)
     if css then
         information = information:gsub("^.+</style>", "", 1)
     end
+
+    if glossary then
+        KOR.dialogs:htmlBoxTabbed(1, {
+            title = _("Xray Reference Information + Glossary"),
+            tabs = {
+                {
+                    tab = _("reference-information"),
+                    html = information,
+                    content_type = information:match("<") and "html" or "text",
+                },
+                {
+                    tab = _("glossary"),
+                    html = KOR.glossary:getHtmlList(glossary),
+                },
+            },
+            top_buttons_left = {
+                icon = "info-slender",
+                callback = function()
+                    DX.i:showReferenceInformation(2)
+                end,
+            },
+            fullscreen = true,
+        })
+        return true
+    end
+
     KOR.dialogs:textOrHtmlBox({
         title = _("Xray Reference Information"),
         top_buttons_left = {

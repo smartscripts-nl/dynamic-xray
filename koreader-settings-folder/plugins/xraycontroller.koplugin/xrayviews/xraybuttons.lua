@@ -2115,6 +2115,44 @@ Sneltoets %1 H]]), KOR.icons.arrow_bare),
     return buttons, buttons_count
 end
 
+--- @param parent Glossary
+function XrayButtons:forGlossaryEditorTopLeft(parent)
+    return {
+        {
+            icon = "info-slender",
+            callback = function()
+                DX.i:showReferenceInformation(1)
+            end,
+        },
+        KOR.buttoninfopopup:forGlossaryViewer({
+            callback = function()
+                UIManager:close(parent.editor)
+                parent.editor = nil
+                parent:showGlossaryViewer()
+            end,
+        }),
+    }
+end
+
+--- @param parent Glossary
+function XrayButtons:forGlossaryViewerTopLeft(parent)
+    return {
+        {
+            icon = "info-slender",
+            callback = function()
+                DX.i:showReferenceInformation(1)
+            end,
+        },
+        KOR.buttoninfopopup:forGlossaryEditor({
+            callback = function()
+                UIManager:close(parent.viewer)
+                parent.viewer = nil
+                parent:showGlossaryEditor()
+            end,
+        }),
+    }
+end
+
 --- @param mode string either "add" or "edit"
 function XrayButtons:forItemEditor(mode, active_form_tab, reload_manager)
     local edit_or_type_change_button = active_form_tab == 1 and

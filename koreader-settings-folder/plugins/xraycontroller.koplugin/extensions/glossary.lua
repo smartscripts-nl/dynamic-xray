@@ -26,8 +26,10 @@ local count
 --* class for maintaining a glossary pertaining to current ebook (e.g. list of characters, word explanations, etc.)
 --- @class Glossary
 local Glossary = WidgetContainer:extend {
+    editor = nil,
     last_edit_pos = nil,
     line_end = "\n",
+    viewer = nil,
 }
 
 function Glossary:get(remove_whitespace_at_end)
@@ -133,7 +135,7 @@ function Glossary:showGlossaryEditor(glossary, scroll_to_text)
         }))
     end
 
-    editor = InputDialog:new{
+    self.editor = InputDialog:new{
         title = title,
         input = glossary,
         input_hint = "",
@@ -148,14 +150,7 @@ function Glossary:showGlossaryEditor(glossary, scroll_to_text)
         buttons = buttons,
         search_value = scroll_to_text,
         case_sensitive = true,
-        top_buttons_left = {
-            {
-                icon = "info-slender",
-                callback = function()
-                    DX.i:showReferenceInformation(1)
-                end,
-            }
-        },
+        top_buttons_left = DX.b:forGlossaryEditorTopLeft(self),
         --* Set/save view and cursor position callback
         view_pos_callback = function(top_line_num, charpos)
             --* This same callback is called with no argument to get initial position, and with arguments to give back final position when closed.
@@ -171,46 +166,67 @@ function Glossary:showGlossaryEditor(glossary, scroll_to_text)
         end,
         copy_button_text = _("Copy"),
         copy_callback = function()
-            Device.input.setClipboardText(editor:getInputText())
+            Device.input.setClipboardText(self.editor:getInputText())
         end,
     }
-    UIManager:show(editor)
-    editor:onShowKeyboard(true)
+    UIManager:show(self.editor)
+    self.editor:onShowKeyboard(true)
     if has_info then
-        editor:toggleKeyboard("force_hidden")
+        self.editor:toggleKeyboard("force_hidden")
     end
     if scroll_to_text then
         --* to display found entry at the top of the dialog, if possible, or otherwise somewhere in the center:
-        editor:scrollToBottom()
-        editor:findCallback("force_hidden", nil, true)
+        self.editor:scrollToBottom()
+        self.editor:findCallback("force_hidden", nil, true)
     end
 end
 
 --* only shown when Glossary was called through a gesture:
+--* compare ((XrayPageNavigator#showXrayReferenceInformation))
 function Glossary:showGlossaryViewer()
     local glossary = self:get()
     if not has_content(glossary) then
         KOR.messages:notify(_("you haven't saved glossary-information as yet"))
+        --* show Reference Information instead of missing Glossary:
+        if DX.m.current_ebook_reference_information then
+            DX.pn:showXrayReferenceInformation(DX.m.current_ebook_reference_information)
+        else
         DX.i:showReferenceInformation(1)
+        end
         return
     end
 
-    KOR.dialogs:htmlBox({
+    local buttons = DX.b:forGlossaryViewerTopLeft(self)
+
+    --* if Reference Information available, show that in a second tab:
+    if DX.m.current_ebook_reference_information then
+        self.viewer = KOR.dialogs:htmlBoxTabbed(1, {
+            title = _("Glossary + Xray Reference Information"),
+            tabs = {
+                {
+                    tab = _("glossary"),
+                    html = self:getHtmlList(glossary),
+                },
+                {
+                    tab = _("reference information"),
+                    html = DX.m.current_ebook_reference_information,
+                    content_type = DX.m.current_ebook_reference_information:match("<") and "html" or "text",
+                },
+            },
+            top_buttons_left = buttons,
+            fullscreen = true,
+        })
+        return
+    end
+
+    self.viewer = KOR.dialogs:htmlBox({
         title = _("Glossary"),
         html = self:getHtmlList(glossary),
-        top_buttons_left = {
-            {
-                icon = "info-slender",
-                callback = function()
-                    DX.i:showReferenceInformation(1)
-                end,
-            }
-        },
+        top_buttons_left = buttons,
         fullscreen = true,
     })
 end
 
---- @private
 function Glossary:getHtmlList(glossary)
     local lines = KOR.strings:split(glossary, "\n")
     count = #lines
@@ -223,7 +239,7 @@ function Glossary:getHtmlList(glossary)
         return "<ul>" .. table_concat(lines, "\n") .. "</ul>"
     end
 
-    local separator = lines[1]:match("[-:]") or lines[1]:match("—") or lines[1]:match("–")
+    local separator = lines[1]:match(":") or lines[1]:match(" %-") or lines[1]:match("—") or lines[1]:match("–")
     if not separator then
         separator = " "
     end
