@@ -35,6 +35,8 @@ end
 
 --- @class XrayUI
 local XrayUI = WidgetContainer:new{
+    cached_dims = {},
+    cached_markers = nil,
     forbidden_words = {
         Look = 1,
         This = 1,
@@ -103,7 +105,7 @@ function XrayUI:drawMarker(c, rect)
             --* we make the rects somewhat wider and higher than the icons, to make them easily tappable:
             x = note_mark_pos_x - 5,
             y = y_pos,
-            --* these c props were set via ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#getParaMarker)) > ((XrayUI#ReaderViewSetXrayContextProps)):
+            --* these c props were set via ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#getMarker)) > ((XrayUI#ReaderViewSetXrayContextProps)):
             w = c.marker_width + 10,
             h = c.marker_height + 10,
         }
@@ -164,23 +166,47 @@ function XrayUI:getMarkerIconXpos(c, rect)
 end
 
 --- @private
-function XrayUI:getParaMarker(bb)
-    local marker, marker_width, marker_height
-    if bb then
-        -- #((set xray marker size))
-        --* compare ((set xray marker position))
-        local font_size = DX.s.UI_mode == "paragraph" and 10 or 18
-        marker = TextWidget:new{
-            text = DX.s.UI_mode == "paragraph" and KOR.icons.xray_item or KOR.icons.lightning_bare,
-            face = Font:getFace("smallinfofont", font_size),
-            fgcolor = KOR.colors.xray_page_or_paragraph_match_marker,
-            padding = 0,
-        }
-        local icon_dims = marker:getSize()
-        marker_height = icon_dims.h
-        marker_width = icon_dims.w
+function XrayUI:getMarker(bb)
+    if not bb then
+        return
     end
-    return marker, marker_width, marker_height
+
+    if not self.cached_markers then
+        local face = "smallinfofont"
+        local color = KOR.colors.xray_page_or_paragraph_match_marker
+        self.cached_markers = {
+            paragraph = TextWidget:new{
+                text = KOR.icons.xray_item,
+                face = Font:getFace(face, 10),
+                fgcolor = color,
+                padding = 0,
+            },
+            page = TextWidget:new{
+                text = KOR.icons.lightning_bare,
+                face = Font:getFace(face, 18),
+                fgcolor = color,
+                padding = 0,
+            },
+        }
+        -- #((set xray marker size))
+        local icon_dims = self.cached_markers["paragraph"]:getSize()
+        self.cached_dims["paragraph"] = {
+            height = icon_dims.h,
+            width = icon_dims.w,
+        }
+
+        icon_dims = self.cached_markers["page"]:getSize()
+        self.cached_dims["page"] = {
+            height = icon_dims.h,
+            width = icon_dims.w,
+        }
+    end
+
+    --* compare ((set xray marker position))
+
+    return self.cached_markers[DX.s.UI_mode],
+        self.cached_dims[DX.s.UI_mode].width,
+        self.cached_dims[DX.s.UI_mode].height
 end
 
 --- @private
@@ -322,7 +348,7 @@ function XrayUI:ReaderViewGenerateXrayInformation(ui, bb, x, y)
     self.ui = ui
     self.page = self:setParagraphsFromDocument()
     self.hits = {}
-    local marker, marker_width, marker_height = self:getParaMarker(bb)
+    local marker, marker_width, marker_height = self:getMarker(bb)
     self.xray_page_info_rects = nil
     self:ReaderViewSetXrayContextProps(marker, marker_width, marker_height, bb, x, y)
     -- #((set xray info for paragraphs))

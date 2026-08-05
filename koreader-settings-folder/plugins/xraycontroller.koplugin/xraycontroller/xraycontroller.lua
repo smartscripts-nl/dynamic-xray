@@ -22,7 +22,7 @@ The views layer has three main streams:
 8) The Items List has a checkbox-button in the top left corner to select multiple items and to assign a tag to all those items in one fell swoop (or remove that tag for items which already had it). See ((XrayTags#toggleItemsForTagsSelection)) > ((XrayTags#initiateItemTagsSelection)) > ((XrayTags#addTagsToItems)) > ((XrayDataSaver#storeItemsTags)), and images 3b... and 3c... in the README. The tag-groups created in this way can be viewed in the 4th tab of the Xray Exporter.
     Tag-groups can be very handy to e.g. see all persons/terms belonging to one party in a conflict together, or to group logically linked concepts together.
 9) DX has a Xray Reference Information popup (callable with the index-button in de Page Navigator popup menu), where the use can e.g. store timeline-information for a book. See ((XrayController#onShowXrayReferenceInformation)) > ((XrayPageNavigator#showXrayReferenceInformation)). The user can assign a gesture for calling this popup outside of Page Navigator.
-10) DX also has a Glossary popup, to show a Glossary from the book stored there. The user can assign a gesture for calling this popup. See ((Glossary#showEditor)). When the user longpresses a word in the ebook text and that word is an item in the Glossary, the explanation for that item will be shown in the Glossary popup.
+10) DX also has a Glossary popup, to show a Glossary from the book stored there. The user can assign a gesture for calling this popup. See ((Glossary#showGlossaryEditor)). When the user longpresses a word in the ebook text and that word is an item in the Glossary, the explanation for that item will be shown in the Glossary popup.
 
 The user will have the most Kindle-like experience when he/she opens the Page Navigator - see ((XrayController#onShowPageNavigator)). In this navigator all Xray items in a page will be marked bold and they will be mentioned in a side panel. Tapping on items in the side panel will put an explanation of that item in the bottom panel. You can even filter the content of the Navigator for a specific Xray item, so it will only show pages which contain that item.
 
@@ -332,7 +332,7 @@ function XrayController:onShowSeriesManager()
 end
 
 function XrayController:onShowGlossary()
-    KOR.glossary:showEditor()
+    KOR.glossary:showGlossaryEditor()
     return true
 end
 

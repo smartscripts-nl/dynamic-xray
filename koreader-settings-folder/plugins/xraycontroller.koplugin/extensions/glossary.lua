@@ -69,7 +69,7 @@ function Glossary:addInfo(info)
     self:save(previous_info .. info)
 end
 
-function Glossary:showEditor(referenced_info, scroll_to_text)
+function Glossary:showGlossaryEditor(referenced_info, scroll_to_text)
     --* in the case called from the description dialog:
     if referenced_info then
         UIManager:close(self.viewer)
@@ -211,10 +211,10 @@ function Glossary:getGlossaryEntryAsDictionaryEntry(tapped_word)
     local match_needle = "(^|\n)" .. tapped_word .. "%f[%A]"
     --* make search for needles more specific: only register hits when term is at the start or the start of a line of the glossary, and the end of the needle is at a word_boundary:
     if KOR.strings:group_match(glossary, match_needle) then
-        self:showEditor(glossary, tapped_word)
+        self:showGlossaryEditor(glossary, tapped_word)
         return true
     elseif match_needle_singular and KOR.strings:group_match(glossary, match_needle_singular) then
-        self:showEditor(glossary, needle_singular)
+        self:showGlossaryEditor(glossary, needle_singular)
         return true
     end
     return false

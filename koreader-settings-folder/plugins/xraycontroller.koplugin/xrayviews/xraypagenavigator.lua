@@ -82,7 +82,7 @@ function XrayPageNavigator:addXrayReferenceInformation(information_boundaries)
     end
     local example = information_text:sub(1, 250) .. KOR.strings.ellipsis
 
-    self.save_xray_information_dialog = KOR.dialogs:niceAlert((_"Save Xray Reference Information"), _("You can save the information as HTML, or as text.\n\n* Advantage HTML: better readable.\n* Advantage text: searchable.") .. "\n\n" .. _("REFERENCE INFORMATION:") .. "\n" .. example, {
+    self.save_xray_information_dialog = KOR.dialogs:niceAlert((_"Save Xray Reference Information"), _("You can save the information as HTML, or as text.\n\n* Advantage HTML: looks nicer.\n* Advantage text: searchable.") .. "\n\n" .. _("REFERENCE INFORMATION:") .. "\n" .. example, {
         buttons = DX.b:forSaveXrayInformation(self, information, information_text, css_files)
     })
 end
