@@ -223,8 +223,12 @@ function Glossary:getHtmlList(glossary)
         return "<ul>" .. table_concat(lines, "\n") .. "</ul>"
     end
 
+    local separator = lines[1]:match("[-:]") or lines[1]:match("—") or lines[1]:match("–")
+    if not separator then
+        separator = " "
+    end
     for i = 1, count do
-        lines[i] = lines[i]:gsub("^([^ ]+)", "<li class='glossary'><strong>%1</strong>", 1) .. "</li>"
+        lines[i] = lines[i]:gsub("^([^%" .. separator .. "]+)", "<li class='glossary'><strong>%1</strong>", 1) .. "</li>"
     end
     return "<ul>" .. table_concat(lines, "\n") .. "</ul>"
 end
