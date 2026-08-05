@@ -42,12 +42,16 @@ local DX = DX
 local G_reader_settings = G_reader_settings
 local has_text = has_text
 local math = math
+local math_ceil = math.ceil
+local math_floor = math.floor
+local math_max = math.max
+local math_min = math.min
+local math_random = math.random
 local next = next
-local table = table
 local table_insert = table.insert
 local table_remove = table.remove
 local tonumber = tonumber
-local string = string
+local string_format = string.format
 local type = type
 
 local count
@@ -71,7 +75,7 @@ function ItemShortCutIcon:init()
     local radius = 0
     local background = KOR.colors.background
     if self.style == "rounded_corner" then
-        radius = math.floor(self.width / 2)
+        radius = math_floor(self.width / 2)
     elseif self.style == "grey_square" then
         background = KOR.colors.background_gray
     end
@@ -129,7 +133,7 @@ local MenuItem = InputContainer:extend{
 
 function MenuItem:init()
     self.content_width = self.dimen.w - 2 * Size.padding.fullscreen
-    local icon_width = math.floor(self.dimen.h * 4/5)
+    local icon_width = math_floor(self.dimen.h * 4/5)
     local shortcut_icon_dimen = Geom:new{
         x = 0,
         y = 0,
@@ -193,7 +197,7 @@ function MenuItem:init()
     local state_indent = self.table.indent or 0
     local state_width = state_indent + self.state_w
     local state_container = LeftContainer:new{
-        dimen = Geom:new{w = math.floor(self.content_width / 2), h = self.dimen.h},
+        dimen = Geom:new{w = math_floor(self.content_width / 2), h = self.dimen.h},
         HorizontalGroup:new{
             HorizontalSpan:new{
                 width = state_indent,
@@ -320,8 +324,8 @@ function MenuItem:init()
             --* And adjust their baselines for proper centering and alignment
             --* (We made sure the font sizes wouldn't exceed self.dimen.h, so we
             --* get only non-negative pad_top here, and we're moving them down.)
-            local name_missing_pad_top = math.floor( (self.dimen.h - name_height) / 2)
-            local mdtr_missing_pad_top = math.floor( (self.dimen.h - mdtr_height) / 2)
+            local name_missing_pad_top = math_floor( (self.dimen.h - name_height) / 2)
+            local mdtr_missing_pad_top = math_floor( (self.dimen.h - mdtr_height) / 2)
             name_baseline = name_baseline + name_missing_pad_top
             mdtr_baseline = mdtr_baseline + mdtr_missing_pad_top
             local baselines_diff = Math.round(name_baseline - mdtr_baseline)
@@ -364,7 +368,7 @@ function MenuItem:init()
         end
         --* To keep item readable, do not decrease font size by more than 8 points
         --* relative to the specified font size, being not smaller than 12 absolute points.
-        local min_font_size = math.max(12, self.font_size - 8)
+        local min_font_size = math_max(12, self.font_size - 8)
         --* First, try with specified font size: short text might fit
         if not make_item_name(self.font_size) then
             --* It doesn't, try with min font size: very long text might not fit
@@ -384,7 +388,7 @@ function MenuItem:init()
                 local good_font_size = min_font_size
                 local item_name_is_good = true
                 while true do
-                    local test_font_size = math.floor((good_font_size + bad_font_size) / 2)
+                    local test_font_size = math_floor((good_font_size + bad_font_size) / 2)
                     if test_font_size == good_font_size then --* +1 would be bad_font_size
                         if not item_name_is_good then
                             make_item_name(good_font_size)
@@ -495,7 +499,7 @@ function MenuItem:getDotsText(face)
         local unit_w = tmp:getSize().w
         tmp:free()
         --* (We assume/expect no kerning will happen between consecutive units)
-        local nb_units = math.ceil(screen_w / unit_w)
+        local nb_units = math_ceil(screen_w / unit_w)
         local min_width = unit_w * 3 --* have it not shown if smaller than this
         local text = unit:rep(nb_units)
         _dots_cached_info = {
@@ -704,6 +708,7 @@ local Menu = FocusManager:extend{
     enable_bold_words = false,
 }
 
+--- @private
 function Menu:_recalculateDimen()
     self.perpage = self.items_per_page or G_reader_settings:readSetting("items_per_page") or self.items_per_page_default
     self.span_width = 0
@@ -711,7 +716,7 @@ function Menu:_recalculateDimen()
     local bottom_height = 0
     local top_height = 0
     if self.page_return_arrow and self.page_info_text then
-        bottom_height = math.max(self.page_return_arrow:getSize().h, self.page_info_text:getSize().h)
+        bottom_height = math_max(self.page_return_arrow:getSize().h, self.page_info_text:getSize().h)
             + 2 * Size.padding.button
     end
     if self.title_bar and not self.no_title then
@@ -721,8 +726,8 @@ function Menu:_recalculateDimen()
         end
     end
     height_dim = self.inner_dimen.h - bottom_height - top_height
-    local item_height = math.floor(height_dim / self.perpage)
-    self.span_width = math.floor((height_dim - (self.perpage * item_height)) / 2 - 1)
+    local item_height = math_floor(height_dim / self.perpage)
+    self.span_width = math_floor((height_dim - (self.perpage * item_height)) / 2 - 1)
     self.item_dimen = Geom:new{
         x = 0, y = 0,
         w = self.inner_dimen.w,
@@ -788,7 +793,7 @@ function Menu:init(restore_dialog)
             title_icon = self.title_icon,
             for_collection = self.collection,
             with_bottom_line = self.with_bottom_line,
-            bottom_line_thickness = self.with_bottom_line and Size.line.thick or Size.line.thin,
+            bottom_line_thickness = Size.line.thin,
             bottom_line_color = self.bottom_line_color,
             bottom_line_h_padding = self.bottom_line_h_padding,
             title = self.title,
@@ -918,7 +923,7 @@ function Menu:init(restore_dialog)
                         filename = Utf8Proc.lowercase(util.fixUtf8(FFIUtil.basename(v.path), "?"))
                         i = filename:find(search_string)
                         if i == 1 and not v.is_go_up then
-                            self:onGotoPage(math.ceil(k / self.perpage))
+                                self:onGotoPage(math_ceil(k / self.perpage))
                             break
                         end
                     end
@@ -929,7 +934,7 @@ function Menu:init(restore_dialog)
     else
         table_insert(buttons[1], 2, KOR.buttoninfopopup:forMenuGotoRandomPage({
             callback = function()
-                local page = math.random(1, self.page_num)
+                    local page = math_random(1, self.page_num)
                 self:onGotoPage(page)
                 self.page_info_text:closeInputDialog()
             end,
@@ -938,11 +943,11 @@ function Menu:init(restore_dialog)
         --* was number, but forced to string, because we also can enter first name of author:
         type_goto = "string"
         hint_func = function()
-            return string.format("(1 - %s)", self.page_num)
+            return string_format("(1 - %s)", self.page_num)
         end
     end
 
-        -- #((Menu footer page info text))
+    -- #((Menu footer page info text))
     self.page_info_text = self.page_info_text or Button:new{
         text = "",
         hold_input = {
@@ -1039,7 +1044,7 @@ function Menu:init(restore_dialog)
         bordersize = self.border_size,
         padding = 0,
         margin = 0,
-        radius = self.is_popout and math.floor(self.dimen.w * (1/20)) or 0,
+        radius = self.is_popout and math_floor(self.dimen.w * (1/20)) or 0,
         content
     }
 
@@ -1099,7 +1104,7 @@ function Menu:init(restore_dialog)
     if #self.item_table > 0 then
         --* if the table is not yet initialized, this call
         --* must be done manually:
-        self.page = math.ceil((self.item_table.current or 1) / self.perpage)
+        self.page = math_ceil((self.item_table.current or 1) / self.perpage)
     end
     if self.path_items then
         self:refreshPath()
@@ -1150,6 +1155,7 @@ function Menu:onCloseWidget()
     KOR.dialogs:closeOverlay()
 end
 
+--- @private
 function Menu:updatePageInfo(select_number)
     --* hotfix:
     self.perpage = tonumber(self.perpage)
@@ -1206,7 +1212,7 @@ function Menu:updateItems(select_number)
     local i
     local item_shortcut, shortcut_style, item_tmp
     count = #self.item_table
-    local idx_end = math.min(self.perpage, count)
+    local idx_end = math_min(self.perpage, count)
 
     for idx = 1, idx_end do
         --* calculate index in item_table
@@ -1293,7 +1299,7 @@ function Menu:switchItemTable(new_title, new_item_table, select_number, itemmatc
     if select_number == nil then
         self.page = 1
     elseif select_number > 0 then
-        self.page = math.ceil(select_number / self.perpage)
+        self.page = math_ceil(select_number / self.perpage)
     else
         self.page = 1
     end
@@ -1309,7 +1315,7 @@ function Menu:switchItemTable(new_title, new_item_table, select_number, itemmatc
         for num = 1, count do
             item = new_item_table[num]
             if key ~= "filter" and item[key] == value then
-                self.page = math.floor((num-1) / self.perpage) + 1
+                self.page = math_floor((num-1) / self.perpage) + 1
                 if not KOR.registry:get("dont_bolden_active_menu_items") then
                     item.bold = true
                 end
@@ -1319,7 +1325,7 @@ function Menu:switchItemTable(new_title, new_item_table, select_number, itemmatc
                 target_key = value.target_key
                 if item[target_key]:lower():match(filter) then
                     if not first_filtered_item_found then
-                        self.page = math.floor((num - 1) / self.perpage) + 1
+                        self.page = math_floor((num - 1) / self.perpage) + 1
                     end
                     first_filtered_item_found = true
                     item.bold = true
@@ -1345,7 +1351,7 @@ function Menu:switchItemTable(new_title, new_item_table, select_number, itemmatc
 
     --* make sure current page is in right page range
     if new_item_table then
-        local max_pages = math.ceil(#new_item_table / self.perpage)
+        local max_pages = math_ceil(#new_item_table / self.perpage)
         if self.page > max_pages then
             self.page = max_pages
         end
@@ -1461,6 +1467,7 @@ function Menu:onMenuHold()
     return true
 end
 
+--- @private
 function Menu:onNextPage()
 
     if self.onNext and self.page == self.page_num - 1 then
@@ -1489,6 +1496,7 @@ function Menu:onNextPage()
     return true
 end
 
+--- @private
 function Menu:onPrevPage()
     if self.page > 1 then
         self.page = self.page - 1
@@ -1503,6 +1511,7 @@ function Menu:onPrevPage()
     return true
 end
 
+--- @private
 function Menu:onFirstPage()
     self.page = 1
     self:storeActivePage()
@@ -1513,6 +1522,7 @@ function Menu:onFirstPage()
     return true
 end
 
+--- @private
 function Menu:onLastPage()
     self.page = self.page_num
     self:storeActivePage()
@@ -1523,6 +1533,7 @@ function Menu:onLastPage()
     return true
 end
 
+--- @private
 function Menu:onGotoPage(page)
     self.page = page
     self:storeActivePage()
@@ -1652,13 +1663,13 @@ end
 function Menu.getItemFontSize(perpage)
     --* Get adjusted font size for the given nb of items per page:
     --* item font size between 14 and 24 for better matching
-    return math.floor(24 - ((perpage - 6) * (1/18)) * 10)
+    return math_floor(24 - ((perpage - 6) * (1/18)) * 10)
 end
 
 function Menu.getItemMandatoryFontSize(perpage)
     --* Get adjusted font size for the given nb of items per page:
     --* "mandatory" font size between 12 and 18 for better matching
-    return math.floor(18 - (perpage - 6) * (1/3))
+    return math_floor(18 - (perpage - 6) * (1/3))
 end
 
 function Menu.getMenuText(item)
@@ -1669,7 +1680,7 @@ function Menu.getMenuText(item)
         text = item.text
     end
     if item.sub_item_table ~= nil or item.sub_item_table_func then
-        text = string.format(sub_item_format, text)
+        text = string_format(sub_item_format, text)
     end
     return text
 end
@@ -1693,6 +1704,7 @@ end
 
 --* fix for KOReaders fullscreen Menus not updating when navigating through subpages or closing them:
 --* also now used to register subpages of collection dialogs:
+--- @private
 function Menu:registerCollectionSubPage(register_collection_subpage)
     -- #((set collection subpage))
     if register_collection_subpage and self.collection then
@@ -1702,9 +1714,10 @@ function Menu:registerCollectionSubPage(register_collection_subpage)
 end
 
 function Menu:getCurrentPage(select_number)
-    return math.floor(select_number / self.perpage) + 1
+    return math_floor(select_number / self.perpage) + 1
 end
 
+--- @private
 function Menu:gotoCharacter(input)
     local letter = input or self.page_info_text.input_dialog:getInputText():lower()
     if has_text(letter) then
@@ -1714,7 +1727,7 @@ function Menu:gotoCharacter(input)
             text = self.item_table[nr].text
             word_start = text:match("([A-Za-z]+)")
             if word_start and word_start:sub(1, 1):lower() == letter then
-                page = math.ceil(nr / self.perpage)
+                page = math_ceil(nr / self.perpage)
                 self:onGotoPage(page)
                 self.page_info_text:closeInputDialog()
                 return
@@ -1725,10 +1738,11 @@ function Menu:gotoCharacter(input)
 end
 
 function Menu:onGotoItemNr(nr)
-    local page = math.ceil(nr / self.perpage)
+    local page = math_ceil(nr / self.perpage)
     self:onGotoPage(page)
 end
 
+--- @private
 function Menu:getFilterButton(callback, reset_callback, hold_callback)
     local filter_active = self:isFilterActive()
 
@@ -1762,6 +1776,7 @@ function Menu:getFilterButton(callback, reset_callback, hold_callback)
 end
 
 --* insert footer buttons; additionally optionally inserts a filter button at the left end and an inverted page keys indicator at the right end:
+--- @private
 function Menu:injectFooterButtons(footer_nav_elems)
 
     self.page_info_spacer_small = self.page_info_spacer_small or HorizontalSpan:new{
@@ -1851,8 +1866,9 @@ function Menu:injectFooterButtons(footer_nav_elems)
     end
 end
 
+--- @private
 function Menu:calculatePageNum()
-    self.page_num = math.ceil(#self.item_table / self.perpage)
+    self.page_num = math_ceil(#self.item_table / self.perpage)
     --* fix current page if out of range
     if self.page_num > 0 and self.page > self.page_num then
         self.page = self.page_num
@@ -1860,6 +1876,7 @@ function Menu:calculatePageNum()
     self:storeActivePage()
 end
 
+--- @private
 function Menu:isFilterActive()
     if not self.filter then
         return false
@@ -1868,6 +1885,7 @@ function Menu:isFilterActive()
     return self.filter.state == "filtered" or has_text(self.filter.filter)
 end
 
+--- @private
 function Menu:isBoldItem(i)
     if self:isFilterActive() then
         return false
@@ -1878,6 +1896,7 @@ function Menu:isBoldItem(i)
     return self.item_table.current == i
 end
 
+--- @private
 function Menu:resetAllBoldItems()
     count = #self.item_table
     for i = 1, count do
@@ -1885,6 +1904,7 @@ function Menu:resetAllBoldItems()
     end
 end
 
+--- @private
 function Menu:showFilteredItemsCountInTitle(new_title)
     if not new_title then
         return
@@ -1908,6 +1928,7 @@ function Menu:refreshTabButtons(tab_buttons_left, tab_buttons_right)
 end
 
 --* called via ((Menu#onScreenResize)) > ((Menu#init)):
+--- @private
 function Menu:restoreTitleAfterScreenResize()
     local restore_title = KOR.registry:getOnce("restore_title")
     if restore_title and self.title == "Geen titel" then
@@ -1915,6 +1936,7 @@ function Menu:restoreTitleAfterScreenResize()
     end
 end
 
+--- @private
 function Menu:storeActivePage()
     if self.module then
         KOR.registry:setMenuPage(self.module, self.page)
@@ -1924,6 +1946,7 @@ function Menu:storeActivePage()
 end
 
 --* under Android, text characters and previous subpage covers were showing through the book covers:
+--- @private
 function Menu:refreshDialog()
     if (G_reader_settings:isNilOrFalse("fast_menu_display") and self.covers_fullscreen)
     or
@@ -1939,6 +1962,7 @@ function Menu:refreshDialog()
     end
 end
 
+--- @private
 function Menu:detectAndSetFullscreenState()
     self.screen_w = Screen:getWidth()
     self.screen_h = Screen:getHeight()
@@ -1950,6 +1974,7 @@ function Menu:detectAndSetFullscreenState()
     end
 end
 
+--- @private
 function Menu:instantiateButton(button, is_first_button_left, is_last_button_right)
     local is_table = type(button) == "table"
     if not DX.s.is_mobile_device or not is_table then
@@ -1958,11 +1983,12 @@ function Menu:instantiateButton(button, is_first_button_left, is_last_button_rig
     end
 
     button.icon_size_ratio = button.icon_size_ratio and button.icon_size_ratio or 0.6
-    button.icon_size_ratio = math.floor(button.icon_size_ratio)
+    button.icon_size_ratio = math_floor(button.icon_size_ratio)
     self:addPaddingForFirstAndLastFooterButtons(button, is_first_button_left, is_last_button_right)
     return Button:new(button)
 end
 
+--- @private
 function Menu:addPaddingForFirstAndLastFooterButtons(button, is_first_button_left, is_last_button_right)
     if is_first_button_left then
         button.padding_left = Size.padding.outerfooterbutton

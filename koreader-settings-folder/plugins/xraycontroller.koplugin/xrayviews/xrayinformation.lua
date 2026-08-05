@@ -74,18 +74,10 @@ function XrayInformation:showReferenceInformation(initial_tab)
             KOR.registry:unset("add_parent_hotkeys")
         end,
         no_buttons_row = true,
-        top_buttons_left = {
-            {
-                icon = "add",
-                callback = function()
-                    self:showReferenceInformation()
-                end,
-            }
-        },
         tabs = {
             {
                 tab = _("Glossary"),
-                html = _([[<p class="top-block">If you have added texts to the Glossary of the current e-book - by selecting them and tapping on "+ Add to Glossary" in the selected text popup -, you can from then on quickly lookup words by longpressing them in the e-book text.</p>
+                html = _([[<p class="top-block">If you have added texts to the Glossary of the current e-book - by selecting them and tapping on "+ Add to Glossary" in the selected text popup -, you can from then on quickly lookup words by longpressing them in the e-book text.</p><p class="next-block">Information for the Glossary will be saved as text, not as HTML.</p>
 <p class="heading">Requirements for texts to be added</p>
 <ul>
 <li>Each of the items therein must have its own separate line.</li>
