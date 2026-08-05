@@ -332,7 +332,7 @@ function XrayController:onShowSeriesManager()
 end
 
 function XrayController:onShowGlossary()
-    KOR.glossary:showGlossaryEditor()
+    KOR.glossary:showGlossaryViewer()
     return true
 end
 

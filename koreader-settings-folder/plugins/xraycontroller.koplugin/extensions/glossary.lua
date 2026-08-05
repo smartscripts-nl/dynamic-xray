@@ -17,8 +17,11 @@ local DX = DX
 local has_content = has_content
 local has_no_text = has_no_text
 local has_text = has_text
+local table_concat = table.concat
 local table_insert = table.insert
 local type = type
+
+local count
 
 --* class for maintaining a glossary pertaining to current ebook (e.g. list of characters, word explanations, etc.)
 --- @class Glossary
@@ -69,20 +72,17 @@ function Glossary:addInfo(info)
     self:save(previous_info .. info)
 end
 
-function Glossary:showGlossaryEditor(referenced_info, scroll_to_text)
-    --* in the case called from the description dialog:
-    if referenced_info then
-        UIManager:close(self.viewer)
-    else
-        referenced_info = self:get()
+function Glossary:showGlossaryEditor(glossary, scroll_to_text)
+    if not glossary then
+        glossary = self:get()
     end
-    local has_info = has_content(referenced_info)
-    if not referenced_info then
-        referenced_info = ""
+    local has_info = has_content(glossary)
+    if not glossary then
+        glossary = ""
     end
     --- @type InputDialog editor
     local editor
-    local action = has_info and _("View/edit") or _("Add to")
+    local action = has_info and _("Lookup/edit") or _("Add to")
     local title = action .. " " .. _("glossary")
     local buttons = {
         {
@@ -135,7 +135,7 @@ function Glossary:showGlossaryEditor(referenced_info, scroll_to_text)
 
     editor = InputDialog:new{
         title = title,
-        input = referenced_info,
+        input = glossary,
         input_hint = "",
         input_face = Font:getFontFamily("Red Hat Text", 18),
         para_direction_rtl = false,
@@ -186,8 +186,50 @@ function Glossary:showGlossaryEditor(referenced_info, scroll_to_text)
     end
 end
 
+--* only shown when Glossary was called through a gesture:
+function Glossary:showGlossaryViewer()
+    local glossary = self:get()
+    if not has_content(glossary) then
+        KOR.messages:notify(_("you haven't saved glossary-information as yet"))
+        DX.i:showReferenceInformation(1)
+        return
+    end
+
+    KOR.dialogs:htmlBox({
+        title = _("Glossary"),
+        html = self:getHtmlList(glossary),
+        top_buttons_left = {
+            {
+                icon = "info-slender",
+                callback = function()
+                    DX.i:showReferenceInformation(1)
+                end,
+            }
+        },
+        fullscreen = true,
+    })
+end
+
+--- @private
+function Glossary:getHtmlList(glossary)
+    local lines = KOR.strings:split(glossary, "\n")
+    count = #lines
+    local has_two_line_entries = not lines[1]:match(" ")
+    if has_two_line_entries then
+        for i = 1, count, 2 do
+            lines[i] = "<li class='glossary'><strong>" .. lines[i] .. "</strong><br />"
+            lines[i + 1] = lines[i + 1] .. "</li>"
+        end
+        return "<ul>" .. table_concat(lines, "\n") .. "</ul>"
+    end
+
+    for i = 1, count do
+        lines[i] = lines[i]:gsub("^([^ ]+)", "<li class='glossary'><strong>%1</strong>", 1) .. "</li>"
+    end
+    return "<ul>" .. table_concat(lines, "\n") .. "</ul>"
+end
+
 function Glossary:getGlossaryEntryAsDictionaryEntry(tapped_word)
-    KOR.debug:methodcall("Glossary#getGlossaryEntryAsDictionaryEntry")
 
     --* don't allow larger strings which contain a saved name to trigger matches:
     if tapped_word:match(" ") then
