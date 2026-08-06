@@ -670,6 +670,7 @@ end
 function ButtonInfoPopup:forXraySettings(props)
 	return KOR.buttonprops:set({
 		icon = "appbar.settings",
+		icon_size_ratio = 0.65,
 		info = _("cog icon | Open list of Dynamic Xray settings and modify them if needed."),
 		callback_label = _("settings"),
 		--! callback defined by calling module
@@ -750,7 +751,7 @@ end
 
 function ButtonInfoPopup:forXrayTogglePageOrParagraphInfo(props)
 	return KOR.buttonprops:set({
-		icon_size_ratio = 0.4,
+		icon_size_ratio = 0.6,
 		info = _("page or paragraph icon | Toggle between display of Xray information per page or paragraph."),
 		callback_label = _("toggle"),
 		--! callback defined by calling module

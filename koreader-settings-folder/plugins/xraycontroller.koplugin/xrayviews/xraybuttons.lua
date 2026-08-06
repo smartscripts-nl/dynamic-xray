@@ -586,7 +586,7 @@ end
 function XrayButtons:forUiInfoTopLeft(target, new_trigger, parent)
     local buttons = {
         KOR.buttoninfopopup:forXrayShowMatchReliabilityExplanation({
-            icon_size_ratio = 0.58,
+            icon_size_ratio = 0.6,
         }),
         KOR.buttoninfopopup:forXrayTogglePageOrParagraphInfo({
             icon = DX.s.UI_mode == "paragraph" and "paragraph" or "pages",

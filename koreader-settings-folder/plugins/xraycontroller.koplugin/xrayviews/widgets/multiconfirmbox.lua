@@ -47,7 +47,8 @@ local Input = require("modules/input")
 local Screen = require("device").screen
 
 local DX = DX
-local math = math
+local math_floor = math.floor
+local math_min = math.min
 
 --- @class MultiConfirmBox
 local MultiConfirmBox = InputContainer:extend{
@@ -130,13 +131,13 @@ function MultiConfirmBox:init()
         alignment = "left",
         justified = false,
         dialog = self,
-        width = math.floor(math.min(Screen:getWidth(), Screen:getHeight()) * width_factor),
-        height = math.floor(Screen:getHeight() * 0.8),
+        width = math_floor(math_min(Screen:getWidth(), Screen:getHeight()) * width_factor),
+        height = math_floor(Screen:getHeight() * 0.8),
     }
     or TextBoxWidget:new{
         text = self.text,
         face = self.face,
-        width = math.floor(math.min(Screen:getWidth(), Screen:getHeight()) * width_factor),
+        width = math_floor(math_min(Screen:getWidth(), Screen:getHeight()) * width_factor),
     }
 
     if self.show_icon then

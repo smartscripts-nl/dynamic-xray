@@ -82,7 +82,7 @@ function InformationCollector:confirmAddInformationAfterExpansion(parent, inform
 		},
 		{
 			text = _("expand"),
-			--* after information end has been selected, information will be stored via ((InformationCollector#setInformationBoundaries)) > ((InformationCollector#addReferenceInformation)) for Reference Information or ((Glossary#addInformation)) for Glossary:
+			--* after information end has been selected, information will be stored via ((InformationCollector#setInformationBoundaries)) > ((InformationCollector#addReferenceInformation)) for Reference Information, or ((Glossary#addInformation)) for Glossary:
 			callback = function()
 				local hotkey = name == _("Glossary") and "Shift+G" or "Shift+R"
 				self.information_boundaries = {

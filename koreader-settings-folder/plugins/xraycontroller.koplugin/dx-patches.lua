@@ -68,7 +68,7 @@ local cre --* Delayed loading
 local error = error
 local ffiUtil = require("ffi/util")
 local G_reader_settings = G_reader_settings
-local math = math
+local logger_dbg = logger.dbg
 local next = next
 local pcall = pcall
 local select = select
@@ -283,13 +283,13 @@ function CreDocument:getPageTextFromXPs(xp, next_page_xp, as_html)
         --* handle separators in the text:
         elseif not parts[i]:match("[A-Za-z0-9]") then
             separator_was_inserted = true
-            table.insert(formatted, self.empty_line)
+            table_insert(formatted, self.empty_line)
             if as_html then
                 table_insert(formatted, "<p style='text-align: center'>" .. parts[i] .. "</p>")
             else
                 table_insert(formatted, parts[i] .. lb)
             end
-            table.insert(formatted, self.empty_line)
+            table_insert(formatted, self.empty_line)
         else
             local prefix = not separator_was_inserted and self.text_indent or ""
             table_insert(formatted, prefix .. parts[i] .. lb)
@@ -668,10 +668,10 @@ function ReaderHighlight:onShowHighlightMenu(index)
         local button = fn_button(self, index)
         if not button.show_in_highlight_dialog_func or button.show_in_highlight_dialog_func() then
             if #highlight_buttons[#highlight_buttons] >= columns then
-                table.insert(highlight_buttons, {})
+                table_insert(highlight_buttons, {})
             end
-            table.insert(highlight_buttons[#highlight_buttons], button)
-            logger.dbg("ReaderHighlight", idx .. ": line " .. #highlight_buttons .. ", col " .. #highlight_buttons[#highlight_buttons])
+            table_insert(highlight_buttons[#highlight_buttons], button)
+            logger_dbg("ReaderHighlight", idx .. ": line " .. #highlight_buttons .. ", col " .. #highlight_buttons[#highlight_buttons])
         end
     end
 
@@ -1225,7 +1225,7 @@ function ReaderSearch:searchCallback(reverse, xray_item_or_highlight_text, case_
     self.whole_words_only = self.check_whole_words_only and self.check_whole_words_only.checked or false
     local regex_error = self.use_regex and KOR.document:checkRegex(search_text)
     if self.use_regex and regex_error ~= 0 then
-        logger.dbg("ReaderSearch: regex error", regex_error, SRELL_ERROR_CODES[regex_error])
+        logger_dbg("ReaderSearch: regex error", regex_error, SRELL_ERROR_CODES[regex_error])
         local error_message
         if SRELL_ERROR_CODES[regex_error] then
             error_message = T(_("Invalid regular expression:\n%1"), SRELL_ERROR_CODES[regex_error])
