@@ -164,6 +164,7 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 use can store information loaded from the e-book. This might e.g. be timeline-information for a book.
 * If the information is contained in a HMTL list or table, the information can optionally be saved as such, for nicer presentation and better readability.
 * The user can add texts from the e-book to the Reference Information by highlighting their start and end.
+* The viewer can be called from the e-book with the hotkey Shift+R.
 
 #### Glossary viewer
 
@@ -172,6 +173,7 @@ use can store information loaded from the e-book. This might e.g. be timeline-in
 * The Gossary text will be stored in plain-text format, to make it searchable.
 * When the user longpresses a word in the e-book text an it's in the Glossary, the Glossary Viewer will show that entry with its explanation.
 * The user can add texts from the e-book to the Glossary by highlighting their start and end.
+* The viewer can be called from the e-book with the hotkey Shift+G.
 
 ## DX in action
 
