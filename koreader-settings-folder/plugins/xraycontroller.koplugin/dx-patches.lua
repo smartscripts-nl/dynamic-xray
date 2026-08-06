@@ -29,6 +29,7 @@ local logger = require("logger")
 local BD = require("ui/bidi")
 local BookStatusWidget = require("ui/widget/bookstatuswidget")
 local Button = require("xrayviews/widgets/button")
+local ButtonDialog = require("xrayviews/widgets/buttondialog")
 local CanvasContext = require("document/canvascontext")
 local CheckButton = require("ui/widget/checkbutton")
 --- @class CreDocument
@@ -65,6 +66,7 @@ local T = require("ffi/util").template
 
 local cre --* Delayed loading
 local error = error
+local ffiUtil = require("ffi/util")
 local G_reader_settings = G_reader_settings
 local math = math
 local next = next
@@ -653,12 +655,55 @@ function ReaderHighlight:getSelectionText(xp0, xp1, return_raw)
     return return_raw and t or cleanupSelectedText(t)
 end
 
+--! alas, we have to completely overwrite the original method to be able to use our modified ButtonDialog widget:
+function ReaderHighlight:onShowHighlightMenu(index)
+    if not self.selected_text then
+        return
+    end
+
+    local highlight_buttons = { {} }
+
+    local columns = 2
+    for idx, fn_button in ffiUtil.orderedPairs(self._highlight_buttons) do
+        local button = fn_button(self, index)
+        if not button.show_in_highlight_dialog_func or button.show_in_highlight_dialog_func() then
+            if #highlight_buttons[#highlight_buttons] >= columns then
+                table.insert(highlight_buttons, {})
+            end
+            table.insert(highlight_buttons[#highlight_buttons], button)
+            logger.dbg("ReaderHighlight", idx .. ": line " .. #highlight_buttons .. ", col " .. #highlight_buttons[#highlight_buttons])
+        end
+    end
+
+    self.highlight_dialog = ButtonDialog:new{
+        buttons = highlight_buttons,
+        anchor = function()
+            return self:_getDialogAnchor(self.highlight_dialog, index)
+        end,
+        tap_close_callback = function()
+            if self.hold_pos then
+                self:clear()
+            end
+        end,
+    }
+    -- NOTE: Disable merging for this update,
+    --       or the buggy Sage kernel may alpha-blend it into the page (with a bogus alpha value, to boot)...
+    UIManager:show(self.highlight_dialog, "[ui]")
+end
+
 local orig_init = ReaderHighlight.init
 ReaderHighlight.init = function(self)
     orig_init(self)
+    --* you can change this ratio via the DX Settings Dialog:
+    local icon_size_ratio = DX.s.highlight_menu_icon_size
+    --! in order to show the icons at this size, DX.s.icons_dont_force_ratio must have been set to true:
     self:addToHighlightDialog("40_add_xray_item", function(this)
         return {
-            text = tr("+ Xray item"),
+            icon_text = {
+                icon = "add",
+                icon_size_ratio = icon_size_ratio,
+                text = " " .. tr("add Xray Item"),
+            },
             callback = function()
                 local text = util.cleanupSelectedText(this.selected_text.text)
                 text = KOR.strings:prepareForDisplay(text, "separate_paragraphs")
@@ -669,7 +714,11 @@ ReaderHighlight.init = function(self)
     end)
     self:addToHighlightDialog("41_add_xray_quote", function(this)
         return {
-            text = tr("+ Xray quote"),
+            icon_text = {
+                icon = "add",
+                icon_size_ratio = icon_size_ratio,
+                text = " " .. tr("add Xray Quote"),
+            },
             callback = function()
                 local pos0 = self.selected_text.pos0
                 local quote = util.cleanupSelectedText(this.selected_text.text)
@@ -686,7 +735,11 @@ ReaderHighlight.init = function(self)
     end)
     self:addToHighlightDialog("42_add_to_glossary", function(this)
         return {
-            text = tr("+ Add to Glossary"),
+            icon_text = {
+                icon = "add",
+                icon_size_ratio = icon_size_ratio,
+                text = " " .. tr("add to Glossary"),
+            },
             callback = function()
                 KOR.informationcollector:confirmAddInformationAfterExpansion(this, "glossary")
             end,
@@ -694,7 +747,11 @@ ReaderHighlight.init = function(self)
     end)
     self:addToHighlightDialog("43_add_to_reference_information", function(this)
         return {
-            text = tr("+ Add to Reference Info"),
+            icon_text = {
+                icon = "add",
+                icon_size_ratio = icon_size_ratio,
+                text = " " .. tr("add to Reference Info"),
+            },
             callback = function()
                 KOR.informationcollector:confirmAddInformationAfterExpansion(this, "reference_information")
             end,

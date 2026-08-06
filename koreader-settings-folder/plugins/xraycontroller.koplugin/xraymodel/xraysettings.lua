@@ -119,6 +119,11 @@ local XraySettings = WidgetContainer:new{
             explanation = _("To view the details of the current item in the Items List or in the Page Navigator.") .. hotkeys_warning,
             locked = 0,
         },
+        highlight_menu_icon_size = {
+            value = 0.4,
+            explanation = _("This determines the size of the plus-icons in the ReaderHighlight text selection popup menu."),
+            locked = 0,
+        },
         icons_dont_force_ratio = {
             value = true,
             explanation = _("Set this to true if your e-reader has problems displaying the DX icons. Hopefully this fixes that problem."),
