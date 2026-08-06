@@ -8,7 +8,8 @@ local _ = KOR:initCustomTranslations()
 local ffiUtil = require("ffi/util")
 local T = ffiUtil.template
 
---* this is de facto KOR.buttonprops, but here referenced as a local var, to speed up button generation; see ((XrayController#initKORandDynamicXray)) > ((XrayController#initButtonPropsExtension)):
+--* this is de facto KOR.buttonprops c.q. extension ButtonProps, but here referenced as a local var, to speed up button generation; see ((XrayController#initKORandDynamicXray)) > ((XrayController#initButtonPropsExtension)):
+--- @type ButtonProps ButtonProps
 local ButtonProps
 local DX = DX
 
