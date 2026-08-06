@@ -694,7 +694,7 @@ ReaderHighlight.init = function(self)
     end)
     self:addToHighlightDialog("43_add_to_reference_information", function(this)
         return {
-            text = tr("+ Add to Reference Information"),
+            text = tr("+ Add to Reference Info"),
             callback = function()
                 KOR.informationcollector:confirmAddInformationAfterExpansion(this, "reference_information")
             end,
