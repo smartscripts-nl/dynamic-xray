@@ -569,7 +569,6 @@ end
 
 --- @private
 function ReaderHighlight:convertHtml(html)
-    KOR.debug:methodcall("ReaderHighlight#convertHtml")
 
     if not html then
         return
