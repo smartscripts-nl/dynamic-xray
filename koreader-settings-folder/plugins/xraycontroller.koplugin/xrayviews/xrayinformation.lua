@@ -55,7 +55,7 @@ end
 
 function XrayInformation:showReferenceInformation(initial_tab)
     local screen_dims = Screen:getSize()
-    local target = initial_tab == 2 and _("Xray Reference Information") or _("Glossary")
+    local target = initial_tab == 2 and _("Reference Information") or _("Glossary")
     KOR.dialogs:htmlBoxTabbed(initial_tab or 1, {
         title = _("+Add to") .. " " .. target,
         parent = self,
@@ -76,6 +76,7 @@ function XrayInformation:showReferenceInformation(initial_tab)
         no_buttons_row = true,
         tabs = {
             {
+                --* event handler: ((show book Glossary event handler)):
                 tab = _("Glossary"),
                 html = _([[<p class="top-block">If you have added texts to the Glossary of the current e-book - by selecting them and tapping on "+ Add to Glossary" in the selected text popup -, you can from then on quickly lookup words by longpressing them in the e-book text.</p><p class="next-block">Information for the Glossary will be saved as text, not as HTML.</p>
 <p class="heading">Requirements for texts to be added</p>
@@ -86,7 +87,8 @@ function XrayInformation:showReferenceInformation(initial_tab)
 <p class="heading">Gesture</p><p class="noindent">You can define a gesture to quickly call the Glossary. To do so, choose the callback <em>Show Glossary</em> under the Dispatcher section <em>Reader</em>.</p>]]),
             },
             {
-                tab = _("Xray Reference Information"),
+                --* event handler: ((event handler for Reference Information)):
+                tab = _("Reference Information"),
                 html = _([[<p class="top-block">Via the index icon in the PageNavigator popup menu you can save Xray Reference Information.</p><p class="next-block">This can for example be very handy to save timeline information as given in an e-book.</p><p class="next-block">Because this information can optionally be saved as HTML, even saving and viewing HTML tables is possible...</p>
 <p class="heading">Gesture</p><p class="noindent">You can define a gesture to view the Xray Reference Information outside of Page Navigator. To do so, choose the callback <em>Xray Reference Information: show/add</em> under the Dispatcher section <em>Reader</em>.</p>]]),
             }
@@ -249,7 +251,7 @@ Longpress on the filtered item in the side panel.]])
             },
             {
                 tab = _("hotkeys"),
-                html = self:getPageNavigatorHotkeysInfo(),
+                html = self:getGlobalHotkeysInfo(),
             },
             {
                 tab = _("gestures"),
@@ -261,14 +263,14 @@ Longpress on the filtered item in the side panel.]])
 end
 
 --- @private
-function XrayInformation:getPageNavigatorHotkeysInfo()
+function XrayInformation:getGlobalHotkeysInfo()
     return self.hotkeys_information or _("For usage with physical (BT) keyboards:") .. [[<br>
                 <br>
 <strong>]] .. _("Global hotkeys (while reading)") .. [[</strong><br>
 <br>
 <table style='border-collapse: collapse'>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+G</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
-            .. _("show a glossary for the current ebook - or add it by marking its boundaries in the ebook")
+            .. _("show a Glossary for the current ebook - or add it by marking its boundaries in the ebook")
             .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+H</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
             .. _("show this Help information dialog")
@@ -279,8 +281,11 @@ function XrayInformation:getPageNavigatorHotkeysInfo()
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+M</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
             .. _("show current series books or Metadata of a non-series book")
             .. [[</td></tr>
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+R</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+            .. _("show the Reference Information for the current e-book")
+            .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+T</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
-            .. _("show the tag-group-selector")
+            .. _("show the Tag-group-selector")
             .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+X</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
             .. _("show Xray Page Navigator")

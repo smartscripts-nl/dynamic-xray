@@ -91,7 +91,7 @@ function ButtonProps:popupInfo(info_props)
 	local text = info_props.text
 	local icon = info_props.icon
 	local icon_size_ratio = info_props.icon_size_ratio
-	local info = info_props.info
+	local info = info_props.info_func and info_props.info_func() or info_props.info
 	local overruling_button_label = info_props.overruling_button_label
 	local callback = info_props.callback
 	if info_props.callback_label_update then
@@ -181,7 +181,7 @@ function ButtonProps:popupChoice(choice_props)
 	local text = choice_props.text
 	local icon = choice_props.icon
 	local icon_size_ratio = choice_props.icon_size_ratio
-	local info = choice_props.info
+	local info = choice_props.info_func and choice_props.info_func() or choice_props.info
 	local overruling_button_label = choice_props.overruling_button_label
 	local callback = choice_props.callback
 	local callback_label = choice_props.overrule_callback_label or choice_props.callback_label:lower()

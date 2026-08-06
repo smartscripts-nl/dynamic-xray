@@ -21,8 +21,15 @@ The views layer has three main streams:
 7) Through Page Navigator you can quickly reference a glossary for the current ebook through the hotkey Shift+G (or the gesture "Show/add glossary for current book"). If a glossary hasn't been defined yet, this same hotkey or gesture will lead the user to a dialog from which to start the import of the ebook glossary into Page Navigator by marking its boundaries in the ebook text.
 8) The Items List has a checkbox-button in the top left corner to select multiple items and to assign a tag to all those items in one fell swoop (or remove that tag for items which already had it). See ((XrayTags#toggleItemsForTagsSelection)) > ((XrayTags#initiateItemTagsSelection)) > ((XrayTags#addTagsToItems)) > ((XrayDataSaver#storeItemsTags)), and images 3b... and 3c... in the README. The tag-groups created in this way can be viewed in the 4th tab of the Xray Exporter.
     Tag-groups can be very handy to e.g. see all persons/terms belonging to one party in a conflict together, or to group logically linked concepts together.
-9) DX has a Xray Reference Information popup (callable with the index-button in de Page Navigator popup menu), where the use can e.g. store timeline-information for a book. See ((XrayController#onShowXrayReferenceInformation)) > ((XrayPageNavigator#showXrayReferenceInformation)). The user can assign a gesture for calling this popup outside of Page Navigator.
-10) DX also has a Glossary popup, to show a Glossary from the book stored there. The user can assign a gesture for calling this popup. See ((Glossary#showGlossaryEditor)). When the user longpresses a word in the ebook text and that word is an item in the Glossary, the explanation for that item will be shown in the Glossary popup.
+
+9) DX has a Reference Information popup. It can be called with the index-button in de Page Navigator popup menu, or with the global hotkey Shift+R, or from the popup menu after the user selected a text in the e-book). See ((XrayController#onShowReferenceInformation)) > ((ReferenceInformation#show)).
+ It can e.g. be used to store timeline-information for a book, even in the format of a HTML table.
+ For starting the proces of text addition, see ((InformationCollector#confirmAddInformationFromScratch)) - when called from the Page Navigator popup menu - or ((InformationCollector#confirmAddInformationAfterExpansion)), when called from the ReaderHighlight new text selection popup. In both these cases the information is saved via ((InformationCollector#setInformationBoundaries)) > ((InformationCollector#addReferenceInformation)).
+ The user can assign a gesture for calling this popup outside of Page Navigator.
+
+10) DX also has a Glossary popup, to show a Glossary from the book stored there. See ((Glossary#showViewer)).
+This Glossary can be used to quickly lookup a term in the e-book text. When the user longpresses a word in the ebook text and that word is an item in the Glossary, the explanation for that item will be shown in the Glossary popup; see ((Glossary#showEditor))
+ For starting the proces of text addition, see ((InformationCollector#confirmAddInformationAfterExpansion)), when called from the ReaderHighlight new text selection popup. The information will be saved to the Glossary via ((InformationCollector#setInformationBoundaries)) > ((Glossary#addInformation)).
 
 The user will have the most Kindle-like experience when he/she opens the Page Navigator - see ((XrayController#onShowPageNavigator)). In this navigator all Xray items in a page will be marked bold and they will be mentioned in a side panel. Tapping on items in the side panel will put an explanation of that item in the bottom panel. You can even filter the content of the Navigator for a specific Xray item, so it will only show pages which contain that item.
 
@@ -243,12 +250,14 @@ function XrayController:onDispatcherRegisterActions()
     Dispatcher:registerAction("show_series_manager", { category = "none", event = "ShowSeriesManager", title = _("Show Series Manager"), reader = true })
     Dispatcher:registerAction("show_series_manager_current_ebook", { category = "none", event = "ShowCurrentSeries", title = _("Show series and/or metadata for current e-book"), reader = true })
 
+    -- #((event handler for Reference Information))
     --* compare ((show book Glossary event handler)) and the help information under ((XrayInformation#showReferenceInformation)):
-    Dispatcher:registerAction("show_xray_information", { category = "none", event = "ShowXrayReferenceInformation", title = _("Xray Reference Information: show/add"), reader = true })
+    Dispatcher:registerAction("show_reference_information", { category = "none", event = "ShowReferenceInformation", title = _("Reference Information: show/add"), reader = true })
 
-    --* compare event handler for showing Xray Information: ((XrayController#onShowXrayReferenceInformation)) and the help information under ((XrayInformation#showReferenceInformation)):
+    --* compare event handler for showing Xray Information: ((XrayController#onShowReferenceInformation)) and the help information under ((XrayInformation#showReferenceInformation)):
     -- #((show book Glossary event handler))
     Dispatcher:registerAction("show_glossary", { category = "none", event = "ShowGlossary", title = _("Show Glossary"), reader = true })
+
 
     Dispatcher:registerAction("show_tag_group_selector", { category = "none", event = "ShowTagGroupSelector", title = _("Show the Xray tag-group selector"), reader = true })
 end
@@ -336,8 +345,8 @@ function XrayController:onShowGlossary()
     return true
 end
 
-function XrayController:onShowXrayReferenceInformation()
-    DX.pn:showShowXrayInformation()
+function XrayController:onShowReferenceInformation()
+    KOR.referenceinformation:show()
     return true
 end
 
@@ -359,7 +368,7 @@ function XrayController:onReaderReady()
         KOR.messages:notify("dynamic xray could not be initiated...")
         return
     end
-    DX.m:loadGlossary(self.document.file)
+    KOR.referenceinformation:load(self.document.file)
     self:addGlobalHotkeys()
     self:resetDynamicXray(false, "do_full_update")
     DX.pn:resetFilterDouble("on_reader_ready")

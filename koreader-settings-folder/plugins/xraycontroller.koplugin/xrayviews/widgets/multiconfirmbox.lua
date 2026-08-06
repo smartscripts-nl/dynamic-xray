@@ -73,7 +73,7 @@ local MultiConfirmBox = InputContainer:extend{
     show_icon = true,
     icon = "notice-question-rounded",
     icon_size = Screen:scaleBySize(27),
-    -- alternative for using cumbersome choice1_callback etc.:
+    --* alternative for using cumbersome choice1_callback etc.:
     buttons = nil,
     next_item_callback = nil,
     prev_item_callback = nil,

@@ -1,5 +1,5 @@
 
---* this widget is derived from ((WordInfoDialog)) for the VocabBuilder plugin
+--* this widget is derived from WordInfoDialog for the VocabBuilder plugin
 --* NiceAlert widget will be registered to KOR in ((Dialogs#init)) and used in ((Dialogs#niceAlert))
 
 local require = require
@@ -21,15 +21,16 @@ local ScrollTextWidget = require("xrayviews/widgets/scrolltextwidget")
 local Size = require("modules/size")
 local TextBoxWidget = require("xrayviews/widgets/textboxwidget")
 local TextWidget = require("xrayviews/widgets/textwidget")
+local TitleBar = require("xrayviews/widgets/titlebar")
 local UIManager = require("ui/uimanager")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local VerticalSpan = require("ui/widget/verticalspan")
 local Screen = Device.screen
 
 local DX = DX
-local has_content = has_content
+local has_no_content = has_no_content
 local math_floor = math.floor
-local table = table
+local table_insert = table.insert
 
 --- @class NiceAlert
 local NiceAlert = InputContainer:extend {
@@ -52,6 +53,7 @@ local NiceAlert = InputContainer:extend {
     title = nil,
     ui = nil,
     width = nil,
+    with_close_button = false,
 }
 
 function NiceAlert:init()
@@ -88,44 +90,46 @@ end
 
 --- @private
 function NiceAlert:generateTextboxWidget(info, width, height)
-    if has_content(info) then
+    if has_no_content(info) then
+        return
+    end
 
-        local face
-        if self.mono_face then
-            face = Font:getFace("mono")
-        -- #((NiceAlert fontsize for Bigme))
-        elseif DX.s.is_mobile_device then
-            face = self.info_text
-            and
-            Font:getFace("x_smallinfofont", 22)
-            or
-            Font:getFace("largeffont")
-        else
-            face = self.info_text
-            and
-            Font:getFace("x_smallinfofont", 19)
-            or
-            Font:getFace("smallffont")
-        end
+    local face
+    if self.mono_face then
+        face = Font:getFace("mono")
+    -- #((NiceAlert fontsize for Bigme))
+    elseif DX.s.is_mobile_device then
+        face = self.info_text
+        and
+        Font:getFace("x_smallinfofont", 22)
+        or
+        Font:getFace("largeffont")
+    else
+        face = self.info_text
+        and
+        Font:getFace("x_smallinfofont", 19)
+        or
+        Font:getFace("smallffont")
+    end
 
-        if not height then
-            self.info_textbox = TextBoxWidget:new{
-                text = info,
-                width = width,
-                face = face,
-                alignment = self.title_align or "left",
-            }
-            return
-        end
-        self.info_textbox = ScrollTextWidget:new{
+    if not height then
+        self.info_textbox = TextBoxWidget:new{
             text = info,
             width = width,
-            height = height,
-            dialog = self,
             face = face,
             alignment = self.title_align or "left",
         }
+        return
     end
+    self.info_textbox = ScrollTextWidget:new{
+        text = info,
+        width = width,
+        height = height,
+        dialog = self,
+        face = face,
+        has_no_tabs = true,
+        alignment = self.title_align or "left",
+    }
 end
 
 --- @private
@@ -138,32 +142,57 @@ function NiceAlert:generatePopupCallbackDialogWidget(info, width)
             h = Screen:scaleBySize(1),
         }
     }
-    local content = VerticalGroup:new{
-        align = "left",
-        HorizontalGroup:new{
-            TextWidget:new{
+    local title
+    if self.with_close_button then
+        local title_bar_config = {
+            width = self.width + 2 * self.padding,
+            align = self.title_align or "center",
+            with_bottom_line = false,
+            title = self.title,
+            title_face = Font:getFace("xx_smalltfont"),
+            title_multilines = true,
+            title_shrink_font_to_fit = true,
+            no_close_button_padding = true,
+            close_callback = function()
+                UIManager:close(self)
+                return true
+            end,
+            show_parent = self,
+        }
+        title = TitleBar:new(title_bar_config)
+    else
+        title = HorizontalGroup:new{
+            TextWidget:new {
                 text = self.title,
                 max_width = width - Size.padding.default,
                 face = self.info_popup_face,
                 bold = true,
                 alignment = self.title_align or "left",
-            }
-        },
+            },
+        }
+    end
+
+    local content = VerticalGroup:new{
+        align = "left",
+        title,
         separator,
         VerticalSpan:new{ width = Size.padding.default },
-        self.info_textbox or VerticalSpan:new{ width = Size.padding.default },
+        self.info_textbox or VerticalSpan:new { width = Size.padding.default },
         VerticalSpan:new{ width = Size.padding.default },
     }
     if self.info_buttons then
         local button_table = self:generateFooterButtons(width)
-        table.insert(content, separator)
-        table.insert(content, button_table)
+        table_insert(content, separator)
+        table_insert(content, button_table)
     end
-    local content_group = VerticalGroup:new{
+
+    local content_group = VerticalGroup:new {
         align = "center",
         FrameContainer:new{
-            padding = self.padding,
-            padding_top = Size.padding.buttontable,
+            padding_left = self.padding,
+            padding_right = self.padding,
+            padding_bottom = self.padding,
+            padding_top = self.with_close_button and 0 or Size.padding.buttontable,
             padding_bottom = Size.padding.buttontable,
             margin = self.margin,
             bordersize = 0,
@@ -177,7 +206,7 @@ function NiceAlert:generatePopupCallbackDialogWidget(info, width)
             bordersize = Size.border.window,
             radius = Size.radius.window,
             padding = 0
-        }
+        },
     }
     local widget = CenterContainer:new{
         dimen = Screen:getSize(),

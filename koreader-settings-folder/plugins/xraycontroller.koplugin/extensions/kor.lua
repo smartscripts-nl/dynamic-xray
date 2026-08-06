@@ -25,12 +25,14 @@ local pairs = pairs
 --- @field glossary Glossary
 --- @field html Html
 --- @field icons Icons
+--- @field informationcollector InformationCollector
 --- @field itemsmanager ItemsManager
 --- @field keyevents KeyEvents
 --- @field labels Labels
 --- @field list List
 --- @field messages Messages
 --- @field pagetexts PageTexts
+--- @field referenceinformation ReferenceInformation
 --- @field registry Registry
 --- @field screenhelpers ScreenHelpers
 --- @field seriesmanager SeriesManager
@@ -85,12 +87,14 @@ local KOR = WidgetContainer:new{
 	glossary = nil,
 	html = nil,
 	icons = nil,
+	informationcollector = nil,
 	itemsmanager = nil,
 	keyevents = nil,
 	labels = nil,
 	list = nil,
 	messages = nil,
 	pagetexts = nil,
+	referenceinformation = nil,
 	registry = nil,
 	screenhelpers = nil,
 	seriesmanager = nil,
@@ -128,11 +132,13 @@ local KOR = WidgetContainer:new{
 		"filedirnames",
 		"glossary",
 		"html",
+		"informationcollector",
 		"itemsmanager",
 		"labels",
 		"list",
 		"messages",
 		"pagetexts",
+		"referenceinformation",
 		"screenhelpers",
 		"seriesmanager",
 		"sidecar",

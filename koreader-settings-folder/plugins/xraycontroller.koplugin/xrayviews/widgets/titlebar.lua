@@ -820,11 +820,12 @@ function TitleBar:addCloseButton()
 end
 
 function TitleBar:addDialogQueueButton(buttons)
-    if buttons and buttons[#buttons].icon == "back-small" then
-        table_remove(buttons)
-    end
     if not buttons or not self.dialog_queue_id or not KOR.dialogsqueue:getParentId() or KOR.dialogsqueue:getQueueCount() < 2 then
         return
+    end
+
+    if buttons[#buttons].icon == "back-small" then
+        table_remove(buttons)
     end
 
     table_insert(buttons, KOR.buttonchoicepopup:forXrayReturnToCaller({

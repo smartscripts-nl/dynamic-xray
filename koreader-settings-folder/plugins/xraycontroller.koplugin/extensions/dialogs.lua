@@ -30,6 +30,8 @@ local count
 
 --- @class Dialogs
 local Dialogs = WidgetContainer:extend{
+    active_tab = 1,
+    active_tab_name = nil,
     overlay = nil,
     tabbed_htmlbox = nil,
     tabbed_textbox = nil,
@@ -171,9 +173,14 @@ end
 --* compare ((textBoxTabbed)):
 function Dialogs:htmlBoxTabbed(active_tab, args)
 
+    --* args.name is the name of the tabbed dialog:
     if not args.name or (self.tabbed_htmlbox and self.tabbed_htmlbox.name == args.name) then
         UIManager:close(self.tabbed_htmlbox)
     end
+    if not active_tab then
+        active_tab = 1
+    end
+    self:registerActiveTab(active_tab, args.tabs)
 
     --? strangely enough after tapping on a tab args is not the original args anymore, but extended with additional props, e.g. entry [1]; these args probably point to the widget instead; see e.g. call from ((calling parent method from tab)):
     KOR.tabfactory:setTabButtonAndContent(self, "htmlBoxTabbed", active_tab, args)
@@ -511,13 +518,24 @@ function Dialogs:textBox(args)
     return textviewer
 end
 
+--- @private
+function Dialogs:registerActiveTab(active_tab, tabs)
+    self.active_tab = active_tab
+    self.active_tab_name = tabs[active_tab].tab
+end
+
 --* see ((DIALOGS))
 --* compare ((htmlBoxTabbed)):
 function Dialogs:textBoxTabbed(active_tab, args)
 
+    --* args.name is the name of the tabbed dialog:
     if not args.name or (self.tabbed_textbox and self.tabbed_textbox.name == args.name) then
         UIManager:close(self.tabbed_textbox)
     end
+    if not active_tab then
+        active_tab = 1
+    end
+    self:registerActiveTab(active_tab, args.tabs)
 
     --? strangely enough after tapping on a tab args is not the original args anymore, but extended with additional props, e.g. entry [1]; these args probably point to the widget instead; see e.g. call from ((calling parent method from tab)):
     KOR.tabfactory:setTabButtonAndContent(self, "textBoxTabbed", active_tab, args)
@@ -695,6 +713,7 @@ function Dialogs:niceAlert(title, info, options)
         info_buttons = buttons,
         move_to_top = options.move_to_top,
         title = title,
+        with_close_button = title or options.with_close_button,
         called_externally = true,
         width = width,
         ui = KOR.ui,

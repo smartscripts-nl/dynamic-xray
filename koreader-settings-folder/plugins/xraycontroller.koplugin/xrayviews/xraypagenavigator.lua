@@ -16,8 +16,6 @@ local Size = require("modules/size")
 local T = require("ffi/util").template
 
 local DX = DX
-local has_no_items = has_no_items
-local has_no_text = has_no_text
 local pairs = pairs
 local table_insert = table.insert
 local unpack = unpack
@@ -57,7 +55,6 @@ local XrayPageNavigator = WidgetContainer:new{
     return_to_current_item = nil,
     return_to_item_no = nil,
     return_to_page = nil,
-    save_xray_information_dialog = nil,
     screen_width = nil,
     scroll_to_page = nil,
 }
@@ -70,130 +67,6 @@ end
 
 function XrayPageNavigator:restoreNavigator()
     self:showNavigator(self.initial_browsing_page)
-end
-
-function XrayPageNavigator:addXrayReferenceInformation(information_boundaries)
-
-    local information, css_files = KOR.document:getHTMLFromXPointers(information_boundaries[1], information_boundaries[2])
-    local information_text = KOR.document:getTextFromXPointers(information_boundaries[1], information_boundaries[2])
-    KOR.registry:unset("mark_xray_information_boundaries")
-    if has_no_text(information) then
-        return
-    end
-    local example = information_text:sub(1, 250) .. KOR.strings.ellipsis
-
-    self.save_xray_information_dialog = KOR.dialogs:niceAlert((_"Save Xray Reference Information"), _("You can save the information as HTML, or as text.\n\n* Advantage HTML: looks nicer.\n* Advantage text: searchable.") .. "\n\n" .. _("REFERENCE INFORMATION:") .. "\n" .. example, {
-        buttons = DX.b:forSaveXrayInformation(self, information, information_text, css_files)
-    })
-end
-
-function XrayPageNavigator:storeXrayReferenceInformation(information, content_type, css_files)
-    UIManager:close(self.save_xray_information_dialog)
-    if content_type == "html" then
-        information = self:prepareHtmlXrayInformation(information, css_files)
-    end
-    DX.ds.storeXrayReferenceInformation(information)
-    parent:setProp("current_ebook_reference_information", information)
-    self:showXrayReferenceInformation(information)
-end
-
---- @private
-function XrayPageNavigator:prepareHtmlXrayInformation(information, css_files)
-    local remove = { "DocFragment", "body", "section", "a", "inlineBox", "autoBoxing" }
-    for i = 1, #remove do
-        information = information
-            :gsub("</" .. remove[i] .. ">", "")
-            :gsub("<" .. remove[i] .. "[^>]*>", "")
-    end
-    information = "<html><body>" .. information .. "</body></html>"
-    if has_no_items(css_files) then
-        return information
-    end
-
-    local css = ""
-    for i = 1, #css_files do
-        css = css .. KOR.document:getDocumentFileContent(css_files[i]) .. "\n"
-    end
-    css = css:gsub("page%-break%-before: always[^;]*;", "")
-    css = css .. [[
-h1, h2, h3, h4, h5, h6 {
-    margin-top: 1.5em !important;
-}
-]]
-    return "<style>" .. css .. "</style>\n" .. information
-end
-
-function XrayPageNavigator:showAddXrayInformationNotification()
-    KOR.dialogs:confirm(_("Do you indeed want to save a text to the Xray Reference Information?"), function()
-        self:closePageNavigator()
-        KOR.registry:set("mark_xray_information_boundaries", {})
-        KOR.dialogs:niceAlert(_("Adding Xray Reference Information to Page Navigator"), "Browse now:\n\n1) to the start of the information in the ebook and mark the beginning thereof with a text selection;\n2) next repeat this for the end of the information.\n\nAfter this is done, the Reference Information will be saved to the database and shown in a popup.\n\nYou can from now on view this information anytime, when in the current ebook, with Shift+G on your physical (BT) keyboard.")
-    end)
-    return true
-end
-
---* items for this XrayInformation were added in ((XrayPageNavigator#addXrayReferenceInformation)):
---* compare ((Glossary#showGlossaryViewer)):
-function XrayPageNavigator:showXrayReferenceInformation(information)
-    local glossary = KOR.glossary:get()
-    if not information and not parent.current_ebook_reference_information then
-        if glossary then
-            --* show Glossary instead of missing Reference Information:
-            KOR.glossary:showGlossaryViewer()
-            return true
-        end
-        return self:showAddXrayInformationNotification()
-    end
-
-    if not information then
-        information = parent.current_ebook_reference_information
-    end
-
-    local css = information:match("<style>([^>]+)</style>")
-    if css then
-        information = information:gsub("^.+</style>", "", 1)
-    end
-
-    if glossary then
-        KOR.dialogs:htmlBoxTabbed(1, {
-            title = _("Xray Reference Information + Glossary"),
-            tabs = {
-                {
-                    tab = _("reference-information"),
-                    html = information,
-                    content_type = information:match("<") and "html" or "text",
-                },
-                {
-                    tab = _("glossary"),
-                    html = KOR.glossary:getHtmlList(glossary),
-                },
-            },
-            top_buttons_left = {
-                icon = "info-slender",
-                callback = function()
-                    DX.i:showReferenceInformation(2)
-                end,
-            },
-            fullscreen = true,
-        })
-        return true
-    end
-
-    KOR.dialogs:textOrHtmlBox({
-        title = _("Xray Reference Information"),
-        top_buttons_left = {
-            {
-                icon = "info-slender",
-                callback = function()
-                    DX.i:showReferenceInformation(2)
-                end,
-            }
-        },
-        fullscreen = true,
-        css = css,
-        content = information,
-    })
-    return true
 end
 
 function XrayPageNavigator:showNavigator(initial_browsing_page)

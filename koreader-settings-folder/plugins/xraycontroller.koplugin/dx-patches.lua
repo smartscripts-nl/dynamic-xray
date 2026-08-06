@@ -26,21 +26,6 @@ local require = require
 
 local logger = require("logger")
 
-local cre --* Delayed loading
-local error = error
-local G_reader_settings = G_reader_settings
-local math = math
-local next = next
-local pcall = pcall
-local select = select
-local table = table
-local table_concat = table.concat
-local table_insert = table.insert
-local tonumber = tonumber
-local tostring = tostring
-
-local count
-
 local BD = require("ui/bidi")
 local BookStatusWidget = require("ui/widget/bookstatuswidget")
 local Button = require("xrayviews/widgets/button")
@@ -77,6 +62,23 @@ local util = require("util")
 local Screen = Device.screen
 local Utf8Proc = require("ffi/utf8proc")
 local T = require("ffi/util").template
+
+local cre --* Delayed loading
+local error = error
+local G_reader_settings = G_reader_settings
+local math = math
+local next = next
+local pcall = pcall
+local select = select
+local table = table
+local table_concat = table.concat
+local table_insert = table.insert
+local tonumber = tonumber
+local tostring = tostring
+local type = type
+local util_gsplit = util.gsplit
+
+local count
 
 local DX = DX
 local has_no_items = has_no_items
@@ -130,6 +132,11 @@ function CreDocument:setDocument()
     if not ok then
         error(self._document)  --* will contain error message
     end
+end
+
+function CreDocument:getNotelessText(sel_start, sel_end)
+    local text = self:getTextFromXPointers(sel_start, sel_end)
+    return KOR.strings:removeNotes(text)
 end
 
 --* populates self.paragraphs, to be used in ((ReaderView#paintTo)) > ((XrayUI#ReaderViewGenerateXrayInformation)):
@@ -527,6 +534,126 @@ end
 --- PATCH READERHIGHLIGHT
 -- #((PATCH READERHIGHLIGHT))
 
+local function cleanupSelectedText(text)
+    text = KOR.strings:cleanupSelectedText(text)
+    return KOR.strings:removeNotes(text)
+end
+
+--- @private
+function ReaderHighlight:getSelectionHtml(document, selected_text)
+    return document:getHTMLFromXPointers(selected_text.pos0, selected_text.pos1, 0xE830, true)
+end
+
+local replace_in_html = function(html, pat, repl)
+    local new_html = ""
+    local is_match = false --* given the html we get and our patterns, we know the first part won't be a match
+    --* Our substitutions may mess with the offsets in css_selectors_offsets: we need to keep
+    --* track of shifts induced by these substitutions to correct the offsets
+    local offset_shifts = {}
+    local r, offset_shift
+    for part in util_gsplit(html, pat, true) do
+        if is_match then
+            r = type(repl) == "function" and repl(part) or repl
+            offset_shift = #r - #part
+            if offset_shift ~= 0 then
+                table_insert(offset_shifts, { #new_html + #part + 1, offset_shift })
+            end
+            new_html = new_html .. r
+        else
+            new_html = new_html .. part
+        end
+        is_match = not is_match
+    end
+    return new_html
+end
+
+--- @private
+function ReaderHighlight:convertHtml(html)
+    KOR.debug:methodcall("ReaderHighlight#convertHtml")
+
+    if not html then
+        return
+    end
+
+    --* Make some invisible chars visible
+    --! we don't want nbsp's to be made visible:
+    --replace_in_html("\xC2\xA0", "␣")  --* no break space: open box
+    html = replace_in_html(html, "\xC2\xA0", " ")
+    html = replace_in_html(html, "\xC2\xAD", "⋅") --* soft hyphen: dot operator (smaller than middle dot ·)
+    --* Prettify inlined CSS (from <HEAD>, put in an internal
+    --* <body><stylesheet> element by crengine (the opening tag may
+    --* include some href=, or end with " ~X>" with some html_flags)
+    --* (We do that in debug views only: as this may increase the
+    --* height of this section, we don't want to have to scroll many
+    --* pages to get to the HTML content on the initial view.)
+
+    local paragraph_ending = "\n"
+
+    if not html:match("<p") and html:match("<div") then
+        html = html:gsub("</div>", paragraph_ending)
+    end
+
+    return html
+        --* remove all line-endings, so line-endings will only be determined by </p>, </li> and <br />:
+        :gsub("\n", "")
+        :gsub("^.*<body>", "")
+        :gsub("</body>", "")
+        :gsub("</DocFragment>", "")
+        :gsub("@import.-%); *", "")
+        --* remove notes:
+        :gsub("<sup[^>]*>[^<]+</sup>", "")
+        :gsub("<span class=['\"][Ss]uper[^>]*>[^<]+</span>", "")
+        :gsub("</p>", paragraph_ending)
+        :gsub("<br ?/?>", KOR.html.placeholder_br)
+        :gsub("</li>", KOR.html.placeholder_br)
+        --* remove all remaining html:
+        :gsub("<.->", "")
+        --html = cleanupSelectedText(html:gsub("<.->", ""))
+        --* Trim spaces and new lines at start and end:
+        :gsub("^[\n%s]*", "")
+        :gsub("[\n%s]*$", "")
+        :gsub(KOR.html.placeholder_br, "\n")
+        :gsub("\n +", "\n")
+        :gsub("@import[^\n]+\n+", "")
+        :gsub("\n\n\n+", "\n\n")
+        :gsub("\t+", " ")
+        :gsub("  +", " ")
+end
+
+function ReaderHighlight:getSelectionText(xp0, xp1, return_raw)
+    local html
+    if xp0 and xp1 then
+        html = KOR.document:getHTMLFromXPointers(xp0, xp1, 0xE830, true)
+        if html then
+            html = self:convertHtml(html)
+            if html then
+                return html
+            end
+        end
+        local h = KOR.document:getNotelessText(xp0, xp1)
+        return return_raw and h or cleanupSelectedText(h)
+    end
+
+    --* prevent crash:
+    if not self.selected_text then
+        self:highlightFromHoldPos()
+        if not self.selected_text then
+            KOR.messages:notify(_("selection could not be determined"))
+            return ""
+        end
+    end
+
+    html = self:getSelectionHtml(self.ui.document, self.selected_text)
+    if html then
+        html = self:convertHtml(html)
+        if html then
+            return html
+        end
+    end
+    local t = self.selected_text.text
+    return return_raw and t or cleanupSelectedText(t)
+end
+
 local orig_init = ReaderHighlight.init
 ReaderHighlight.init = function(self)
     orig_init(self)
@@ -558,28 +685,19 @@ ReaderHighlight.init = function(self)
             end,
         }
     end)
-    self:addToHighlightDialog("42_add_glossary", function(this)
+    self:addToHighlightDialog("42_add_to_glossary", function(this)
         return {
             text = tr("+ Add to Glossary"),
             callback = function()
-                local info = util.cleanupSelectedText(this.selected_text.text)
-
-                KOR.registry:set("title", _("+Add to Glossary"))
-                KOR.registry:set("top_buttons_left", {
-                    {
-                        icon = "info-slender",
-                        callback = function()
-                            DX.i:showReferenceInformation()
-                        end,
-                    }
-                })
-                KOR.dialogs:confirm(_("Do you want to add the selected text to the Glossary for this book?"), function()
-                    KOR.glossary:addInfo(info)
-                    this:onClose()
-               end,
-                function()
-                    this:onClose()
-                end)
+                KOR.informationcollector:confirmAddInformationAfterExpansion(this, "glossary")
+            end,
+        }
+    end)
+    self:addToHighlightDialog("43_add_to_reference_information", function(this)
+        return {
+            text = tr("+ Add to Reference Information"),
+            callback = function()
+                KOR.informationcollector:confirmAddInformationAfterExpansion(this, "reference_information")
             end,
         }
     end)
@@ -587,17 +705,8 @@ end
 
 local orig_onShowHighlightMenu = ReaderHighlight.onShowHighlightMenu
 ReaderHighlight.onShowHighlightMenu = function(self, index)
-    local information_boundaries = KOR.registry:get("mark_xray_information_boundaries")
-    if information_boundaries then
-        if #information_boundaries == 0 then
-            table_insert(information_boundaries, self.selected_text.pos0)
-            self:onClose()
-            KOR.messages:notify(tr("start of information text has been registered; now mark the end of it"))
-            return
-        end
-        table_insert(information_boundaries, self.selected_text.pos1)
-        self:onClose()
-        DX.pn:addGlossary(information_boundaries)
+    local boundary_selection_mode_activated = KOR.informationcollector:setInformationBoundaries(self)
+    if boundary_selection_mode_activated then
         return
     end
     orig_onShowHighlightMenu(self, index)

@@ -110,7 +110,7 @@ Widget that displays an item for menu
 --- @class MenuItem
 local MenuItem = InputContainer:extend{
     font = "cfont",
-    multilines_forced = false, -- set to true to always use TextBoxWidget
+    multilines_forced = false, --* set to true to always use TextBoxWidget
     infont = "infont",
     text = nil,
     bidi_wrap_func = nil,

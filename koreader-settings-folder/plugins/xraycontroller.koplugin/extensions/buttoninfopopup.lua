@@ -81,7 +81,7 @@ end
 
 function ButtonInfoPopup:forGlossaryEditor(props)
 	return KOR.buttonprops:set({
-		icon = "edit",
+		icon = "edit-lighter",
 		info = _("edit icon | Edit the Glossary."),
 		callback_label = _("edit"),
 		--! callback defined by calling module
@@ -121,6 +121,15 @@ function ButtonInfoPopup:forGlossaryViewer(props)
 		icon = "list",
 		info = _("list icon | Go to the Glossary Viewer."),
 		callback_label = _("go"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forInformationEraser(props)
+	return KOR.buttonprops:set({
+		icon = "dustbin",
+		--! info defined by calling module
+		callback_label = _("erase"),
 		--! callback defined by calling module
 	}, props)
 end

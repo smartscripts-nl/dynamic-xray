@@ -99,9 +99,8 @@ function XrayCallbacks:execSettingsCallback(iparent)
     return true
 end
 
---- @param iparent XrayPageNavigator
-function XrayCallbacks:execShowXrayReferenceInformationCallback(iparent)
-    return iparent:showXrayReferenceInformation()
+function XrayCallbacks:execShowReferenceInformationCallback()
+    return KOR.referenceinformation:show()
 end
 
 function XrayCallbacks:execShowHelpInfoCallback()

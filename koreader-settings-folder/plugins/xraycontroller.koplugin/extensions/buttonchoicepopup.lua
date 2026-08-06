@@ -23,6 +23,17 @@ local ButtonChoicePopup = WidgetContainer:new{
 
 --* ":\n" and separator ":\n\n" in buttons in this class will be replaced by the label words, in ((ButtonProps#setOverruleProps)):
 
+function ButtonChoicePopup:forReferenceInformation(props)
+	return KOR.buttonprops:set({
+		icon = "index",
+		info = "signpost icon | :show Reference Information" .. self.separator .. "add information",
+		callback_label = _("show"),
+		--! callback defined by calling module
+		hold_callback_label = _("add"),
+		--! hold_callback defined by calling module
+	}, props)
+end
+
 --* compare ((ButtonInfoPopup#forSeriesAll)):
 function ButtonChoicePopup:forSeriesCurrentBook(props)
 	return KOR.buttonprops:set({
@@ -44,17 +55,6 @@ function ButtonChoicePopup:forTextViewerSearch(props)
 		callback_label = _("next"),
 		--! callback defined by calling module
 		hold_callback_label = _("search dialog"),
-		--! hold_callback defined by calling module
-	}, props)
-end
-
-function ButtonChoicePopup:forXrayReferenceInformation(props)
-	return KOR.buttonprops:set({
-		icon = "index",
-		info = "signpost icon | :show Xray Reference Information" .. self.separator .. "add information",
-		callback_label = _("show"),
-		--! callback defined by calling module
-		hold_callback_label = _("add"),
 		--! hold_callback defined by calling module
 	}, props)
 end

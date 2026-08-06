@@ -84,7 +84,7 @@ function KeyEvents:addHotkeysForReaderUI(parent)
     local readerui = KOR.ui
     readerui.key_events.ShowGlossaryUI = { { "Shift", { "G" } } }
     readerui.onShowGlossaryUI = function()
-        return DX.pn:showGlossary()
+        return KOR.glossary:showViewer()
     end
 
     readerui.key_events.ShowXrayHelpUI = { { "Shift", { "H" } } }
@@ -102,6 +102,11 @@ function KeyEvents:addHotkeysForReaderUI(parent)
     readerui.onShowCurrentSeriesUI = function()
         DX.c:onShowCurrentSeries()
         return true
+    end
+
+    readerui.key_events.ShowReferenceInformationUI = { { "Shift", { "R" } } }
+    readerui.onShowReferenceInformationUI = function()
+        return KOR.referenceinformation:show()
     end
 
     readerui.key_events.ShowTagGroupSelectorUI = { { "Shift", { "T" } } }
@@ -127,6 +132,7 @@ function KeyEvents:disableHotkeysForReaderUI()
 
     local readerui = KOR.ui
     readerui.key_events.ShowGlossaryUI = nil
+    readerui.key_events.ShowReferenceInfoUI = nil
     readerui.key_events.ShowXrayHelpUI = nil
     readerui.onShowXrayHelpUI = nil
 

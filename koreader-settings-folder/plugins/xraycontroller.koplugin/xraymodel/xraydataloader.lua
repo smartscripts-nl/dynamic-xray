@@ -393,9 +393,6 @@ local XrayDataLoader = WidgetContainer:new{
                       ON ib.name = i.name
             WHERE b.series = '%2' and ib.book_count = 1
             ORDER BY b.series_index, i.book_hits DESC, i.name;]],
-
-        get_xray_reference_information =
-            "SELECT xray_reference_info FROM bookinfo WHERE directory || filename = 'safe_path';",
     },
     queries_external = {
         --* used in ((XrayTranslations#loadAllTranslations)):
@@ -441,14 +438,6 @@ function XrayDataLoader:loadAllItems(mode, force_refresh)
     parent:updateLastNameCounts(items)
 
     views_data:setItems(items, "from_resultset", "XrayDataLoader:_loadAllData")
-end
-
-function XrayDataLoader:loadXrayReferenceInformation(full_path)
-    local sql = KOR.databases:injectSafePath(self.queries.get_xray_reference_information, full_path)
-    local conn = KOR.databases:getDBconn("XrayDataLoader:loadXrayReferenceInformation")
-    local information = conn:rowexec(sql)
-    conn = KOR.databases:closeConnections(conn)
-    return information
 end
 
 --- @private

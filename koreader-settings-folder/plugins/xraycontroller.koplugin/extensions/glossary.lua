@@ -1,6 +1,8 @@
 
 --* saved glossary info can be shown instead of DictQuickLookup widget if a term was found in the glossary; see ((ReaderDictionary#onLookupWord)) > ((show glossary popup instead of dictionary popup))
 
+--* compare ((ReferenceInformation)); reference_information there is stored in the database, but here the Glossary is stored in the ebook sidecar file
+
 --! the glossary must have entries on separate lines, with the item names at the start of lines !
 
 local require = require
@@ -25,11 +27,12 @@ local count
 
 --* class for maintaining a glossary pertaining to current ebook (e.g. list of characters, word explanations, etc.)
 --- @class Glossary
+--- @field editor InputDialog
 local Glossary = WidgetContainer:extend {
     editor = nil,
     last_edit_pos = nil,
     line_end = "\n",
-    viewer = nil,
+    --* viewer_instance will be registered to InformationCollector.viewer_instance ...
 }
 
 function Glossary:get(remove_whitespace_at_end)
@@ -52,19 +55,31 @@ function Glossary:get(remove_whitespace_at_end)
     return info
 end
 
+--* compare for erasing Reference Information ((ReferenceInformation#erase)):
+function Glossary:erase()
+    KOR.ui.doc_settings:delSetting("glossary")
+    KOR.ui.doc_settings:flush()
+    KOR.ui.doc_settings.glossary = nil
+
+    KOR.informationcollector:closeViewer()
+    KOR.messages:notify("woordenlijst verwijderd")
+end
+
 --- @private
 function Glossary:convertFromOldFormat(doc_settings)
     local old_info = doc_settings.reference_info or doc_settings:readSetting("reference_info") or false
-    if old_info then
-        doc_settings.glossary = old_info
-        doc_settings:saveSetting("glossary", old_info)
-        doc_settings.reference_info = nil
-        doc_settings:delSetting("reference_info")
-        doc_settings:flush()
+    if not old_info then
+        return
     end
+
+    doc_settings.glossary = old_info
+    doc_settings:saveSetting("glossary", old_info)
+    doc_settings.reference_info = nil
+    doc_settings:delSetting("reference_info")
+    doc_settings:flush()
 end
 
-function Glossary:addInfo(info)
+function Glossary:addInformation(info)
     local previous_info = self:get("remove_whitespace_at_end")
     if has_no_text(previous_info) then
         previous_info = ""
@@ -74,7 +89,7 @@ function Glossary:addInfo(info)
     self:save(previous_info .. info)
 end
 
-function Glossary:showGlossaryEditor(glossary, scroll_to_text)
+function Glossary:showEditor(glossary, scroll_to_text)
     if not glossary then
         glossary = self:get()
     end
@@ -82,23 +97,21 @@ function Glossary:showGlossaryEditor(glossary, scroll_to_text)
     if not glossary then
         glossary = ""
     end
-    --- @type InputDialog editor
-    local editor
-    local action = has_info and _("Lookup/edit") or _("Add to")
-    local title = action .. " " .. _("glossary")
+    local action = has_info and _("Lookup in/edit") or _("Add to")
+    local title = action .. " " .. _("Glossary")
     local buttons = {
         {
             KOR.buttoninfopopup:forGlossaryErase({
                 callback = function()
-                    KOR.dialogs:confirm(_("Are you sure you want to remove the entire glossary?"), function()
-                        UIManager:close(editor)
+                    KOR.dialogs:confirm(_("Are you sure you want to remove the entire Glossary?"), function()
+                        UIManager:close(self.editor)
                         self:save(nil)
                     end)
                 end,
             }),
             KOR.buttoninfopopup:forGlossaryCopy({
                 callback = function()
-                    local info = has_content(editor:getInputText()) or nil
+                    local info = has_content(self.editor:getInputText()) or nil
                     if info then
                         info = KOR.strings:trim(info)
                         Device.input.setClipboardText(info)
@@ -108,8 +121,8 @@ function Glossary:showGlossaryEditor(glossary, scroll_to_text)
             }),
             KOR.buttoninfopopup:forGlossarySave({
                 callback = function()
-                    local info = has_content(editor:getInputText()) or nil
-                    UIManager:close(editor)
+                    local info = has_content(self.editor:getInputText()) or nil
+                    UIManager:close(self.editor)
                     info = self:addWhiteSpaceAtEnd(info)
                     self:save(info)
                     KOR.messages:notify(_("information added to glossary"))
@@ -119,7 +132,7 @@ function Glossary:showGlossaryEditor(glossary, scroll_to_text)
                 icon = "back",
                 icon_size_ratio = 0.7,
                 callback = function()
-                    UIManager:close(editor)
+                    UIManager:close(self.editor)
                 end
             },
         },
@@ -128,7 +141,7 @@ function Glossary:showGlossaryEditor(glossary, scroll_to_text)
         title = title .. " - " .. scroll_to_text
         table_insert(buttons[1], 2, KOR.buttoninfopopup:forGlossarySwitchToDictionary({
             callback = function()
-                UIManager:close(editor)
+                UIManager:close(self.editor)
                 KOR.registry:set("skip_glossary", true)
                 KOR.dictionary:onLookupWord(scroll_to_text)
             end,
@@ -182,25 +195,28 @@ function Glossary:showGlossaryEditor(glossary, scroll_to_text)
 end
 
 --* only shown when Glossary was called through a gesture:
---* compare ((XrayPageNavigator#showXrayReferenceInformation))
-function Glossary:showGlossaryViewer()
+--* information for this Glossary was added via ((Glossary#addInformation)):
+--* compare ((ReferenceInformation#show))
+function Glossary:showViewer()
     local glossary = self:get()
     if not has_content(glossary) then
         KOR.messages:notify(_("you haven't saved glossary-information as yet"))
         --* show Reference Information instead of missing Glossary:
-        if DX.m.current_ebook_reference_information then
-            DX.pn:showXrayReferenceInformation(DX.m.current_ebook_reference_information)
+        if KOR.referenceinformation.current_ebook_reference_information then
+            KOR.referenceinformation:show()
         else
-        DX.i:showReferenceInformation(1)
+            DX.i:showReferenceInformation(1)
         end
-        return
+        return true
     end
 
-    local buttons = DX.b:forGlossaryViewerTopLeft(self)
+    local is_tabbed = KOR.referenceinformation.current_ebook_reference_information
+    local buttons = DX.b:forGlossaryViewerTopLeft(self, is_tabbed)
 
     --* if Reference Information available, show that in a second tab:
-    if DX.m.current_ebook_reference_information then
-        self.viewer = KOR.dialogs:htmlBoxTabbed(1, {
+    --* compare showing Reference Information first and Glossary in second tab in ((ReferenceInformation#show)):
+    if is_tabbed then
+        KOR.informationcollector.viewer_instance = KOR.dialogs:htmlBoxTabbed(1, {
             title = _("Glossary + Xray Reference Information"),
             tabs = {
                 {
@@ -209,22 +225,23 @@ function Glossary:showGlossaryViewer()
                 },
                 {
                     tab = _("reference information"),
-                    html = DX.m.current_ebook_reference_information,
-                    content_type = DX.m.current_ebook_reference_information:match("<") and "html" or "text",
+                    html = KOR.referenceinformation.current_ebook_reference_information,
+                    content_type = KOR.referenceinformation.current_ebook_reference_information:match("<") and "html" or "text",
                 },
             },
             top_buttons_left = buttons,
             fullscreen = true,
         })
-        return
+        return true
     end
 
-    self.viewer = KOR.dialogs:htmlBox({
+    KOR.informationcollector.viewer_instance = KOR.dialogs:htmlBox({
         title = _("Glossary"),
         html = self:getHtmlList(glossary),
         top_buttons_left = buttons,
         fullscreen = true,
     })
+    return true
 end
 
 function Glossary:getHtmlList(glossary)
@@ -273,10 +290,10 @@ function Glossary:getGlossaryEntryAsDictionaryEntry(tapped_word)
     local match_needle = "(^|\n)" .. tapped_word .. "%f[%A]"
     --* make search for needles more specific: only register hits when term is at the start or the start of a line of the glossary, and the end of the needle is at a word_boundary:
     if KOR.strings:group_match(glossary, match_needle) then
-        self:showGlossaryEditor(glossary, tapped_word)
+        self:showEditor(glossary, tapped_word)
         return true
     elseif match_needle_singular and KOR.strings:group_match(glossary, match_needle_singular) then
-        self:showGlossaryEditor(glossary, needle_singular)
+        self:showEditor(glossary, needle_singular)
         return true
     end
     return false

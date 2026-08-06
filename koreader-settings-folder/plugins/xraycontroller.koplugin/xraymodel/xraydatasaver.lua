@@ -125,8 +125,6 @@ local XrayDataSaver = WidgetContainer:new{
         store_book_chapters =
             "INSERT OR IGNORE INTO xray_books (ebook, chapters) VALUES (?, ?);",
 
-        store_xray_information = "UPDATE bookinfo SET xray_reference_info = ? WHERE directory || filename = 'safe_path';",
-
         update_chapter_hits_data = [[
             UPDATE xray_items
             SET
@@ -289,6 +287,10 @@ local XrayDataSaver = WidgetContainer:new{
         [[
             ALTER TABLE bookinfo RENAME COLUMN glossary TO xray_reference_info;]],
 
+        --* update 17:
+        [[
+            ALTER TABLE bookinfo RENAME COLUMN xray_reference_info TO reference_information;]],
+
         --! when adding scheme modifations above, also add a scheme_verification_query below with the correct index!!
     },
     scheme_verification_queries = {
@@ -330,6 +332,9 @@ local XrayDataSaver = WidgetContainer:new{
 
         --* check update 16:
         { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'xray_reference_info';", 16 },
+
+        --* check update 16:
+        { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'reference_information';", 17 },
     },
     scheme_version_name = "database_scheme_version",
 }
@@ -451,17 +456,6 @@ function XrayDataSaver:getChapterHitsDataForStorage(chapter_hits_data)
         return nil
     end
     return table_concat(chapter_hits_data, ",")
-end
-
-function XrayDataSaver.storeXrayReferenceInformation(information)
-    local self = DX.ds
-
-    local conn = KOR.databases:getDBconn("XrayDataSaver:storeXrayReferenceInformation")
-    local sql = KOR.databases:injectSafePath(self.queries.store_xray_information, parent.current_ebook_full_path)
-    local stmt = conn:prepare(sql)
-    stmt:reset():bind(information):step()
-    --* for items in books which are part of a series update the prop series_hits:
-    conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 end
 
 function XrayDataSaver.storeImportedItemsFromSeries(series, is_other_series)

@@ -148,7 +148,7 @@ function XrayButtons:addTappedWordCollectionButton(button_table, indicator_butto
     })
     --* indicator_button_table will be nil when called from ((XrayUI#showParagraphInformation)):
     if not indicator_button_table then
-        return
+        return false
     end
     if status_icons then
         table_insert(status_icons, status_indicators)
@@ -174,6 +174,7 @@ function XrayButtons:addTappedWordCollectionButton(button_table, indicator_butto
             })
         end,
     })
+    return false
 end
 
 --* context buttons with linked xray items for dialog for viewing an Xray item:
@@ -415,14 +416,15 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
                 return DX.cb:execShowPageBrowserCallback(parent)
             end,
         }),
-        KOR.buttonchoicepopup:forXrayReferenceInformation({
+        KOR.buttonchoicepopup:forReferenceInformation({
             callback = function()
                 parent:closePopupMenu()
-                return DX.cb:execShowXrayReferenceInformationCallback(parent)
+                return DX.cb:execShowReferenceInformationCallback()
             end,
             hold_callback = function()
                 parent:closePopupMenu()
-                return parent:showAddXrayInformationNotification()
+                parent:closePageNavigator()
+                return KOR.informationcollector:confirmAddInformationFromScratch("reference_information")
             end,
         }),
         series_manager_button,
@@ -789,25 +791,24 @@ function XrayButtons:forItemViewerTopRight(needle_item)
     }
 end
 
---- @param parent XrayPageNavigator
-function XrayButtons:forSaveXrayInformation(parent, glossary, glossary_text, css_files)
+function XrayButtons:forSaveReferenceInformation(reference_information, reference_information_text, css_files)
     return {{
          {
              icon = "back",
              callback = function()
-                 UIManager:close(parent.save_xray_information_dialog)
+                 KOR.informationcollector:closeContentTypeChoiceDialog()
              end,
          },
          {
              text = _("HTML"),
              callback = function()
-                 parent:storeXrayInformation(glossary, "html", css_files)
+                 KOR.referenceinformation:storeInformation(reference_information, "html", css_files)
              end,
          },
          {
              text = _("text"),
              callback = function()
-                 parent:storeXrayInformation(glossary_text, "text")
+                 KOR.referenceinformation:storeInformation(reference_information_text, "text")
              end,
          },
      }}
@@ -1921,14 +1922,13 @@ function XrayButtons:populateContextItemsRows(items, icount)
         icount = #items
     end
     local max_context_buttons_per_row = DX.s.max_context_items_per_row
-    local remainder = max_context_buttons_per_row
+    local remainder
     local context_buttons = { {} }
     local row = 1
     for i = 1, icount do
         table_insert(context_buttons[row], self:getItemButton(items[i]))
         remainder = i % max_context_buttons_per_row
         if remainder == 0 and i < icount then
-            remainder = max_context_buttons_per_row
             table_insert(context_buttons, {})
             row = row + 1
         end
@@ -1987,15 +1987,7 @@ end
 function XrayButtons:injectItemsCollectionButton(buttons, indicator_buttons, status_icons, copies, nr, add_more_button)
     local item = copies[nr]
 
-    local item_with_alias_found = false
-    local more_button_added, is_alias, is_non_bold_alias
-
-    is_alias = item.reliability_indicator and item.reliability_indicator == DX.i:getMatchReliabilityIndicator("alias")
-    is_non_bold_alias = is_alias and not item.is_bold
-    if is_non_bold_alias then
-        item_with_alias_found = true
-    end
-    more_button_added = self:addTappedWordCollectionButton(buttons, indicator_buttons, status_icons, item, {
+    local more_button_added = self:addTappedWordCollectionButton(buttons, indicator_buttons, status_icons, item, {
         add_more_button = add_more_button,
         max_total_buttons = self.hits_buttons_max,
         max_buttons_per_row = self.max_buttons_per_row,
@@ -2011,10 +2003,7 @@ function XrayButtons:injectItemsCollectionButton(buttons, indicator_buttons, sta
             DX.d:viewTappedWordItem(citem)
         end,
     })
-    if more_button_added then
-        return true
-    end
-    return false
+    return more_button_added
 end
 
 --* called from ((XrayTappedWords#getXrayItemAsDictionaryEntry)) > ((multiple related xray items found)):
@@ -2128,14 +2117,15 @@ function XrayButtons:forGlossaryEditorTopLeft(parent)
             callback = function()
                 UIManager:close(parent.editor)
                 parent.editor = nil
-                parent:showGlossaryViewer()
+                parent:showViewer()
             end,
         }),
     }
 end
 
+--* compare ((XrayButtons#forReferenceInfoTopLeft)):
 --- @param parent Glossary
-function XrayButtons:forGlossaryViewerTopLeft(parent)
+function XrayButtons:forGlossaryViewerTopLeft(parent, is_tabbed)
     return {
         {
             icon = "info-slender",
@@ -2143,11 +2133,74 @@ function XrayButtons:forGlossaryViewerTopLeft(parent)
                 DX.i:showReferenceInformation(1)
             end,
         },
+        KOR.buttoninfopopup:forInformationEraser({
+            info_func = function()
+                local target = self:getTargetNameToBeErased(is_tabbed, _("Glossary"))
+                return T(_("dustbin icon | Remove the %1.\n\nYou will first be asked to confirm this action."), target)
+            end,
+            callback = function()
+                local target = self:getTargetNameToBeErased(is_tabbed, _("Glossary"))
+                KOR.dialogs:confirm(T(_("Do you indeed want to remove the %1?"), target), function()
+                    UIManager:close(parent.viewer)
+                    parent.viewer = nil
+
+                    if not is_tabbed then
+                        KOR.glossary:erase()
+                        return
+                    end
+
+                    local active_tab_name = KOR.dialogs.active_tab_name
+                    if active_tab_name == "referentie-informatie" then
+                        KOR.referenceinformation:erase()
+                    else
+                        KOR.glossary:erase()
+                    end
+                end)
+            end,
+        }),
         KOR.buttoninfopopup:forGlossaryEditor({
             callback = function()
                 UIManager:close(parent.viewer)
                 parent.viewer = nil
-                parent:showGlossaryEditor()
+                parent:showEditor()
+            end,
+        }),
+    }
+end
+
+--* compare ((XrayButtons#forGlossaryViewerTopLeft)):
+--- @param parent ReferenceInformation
+function XrayButtons:forReferenceInfoTopLeft(parent, is_tabbed)
+    return {
+        {
+            icon = "info-slender",
+            callback = function()
+                DX.i:showReferenceInformation(2)
+            end,
+        },
+        KOR.buttoninfopopup:forInformationEraser({
+            info_func = function()
+                local target = self:getTargetNameToBeErased(is_tabbed, _("Reference Information"))
+                return T(_("dustbin icon | Remove the %1.\n\nYou will first be asked to confirm this action."), target)
+            end,
+            callback = function()
+                local target = self:getTargetNameToBeErased(is_tabbed, _("Reference Information"))
+                KOR.dialogs:confirm(T(_("Do you indeed want to remove the %1?"), target), function()
+                    UIManager:close(parent.viewer)
+                    parent.viewer = nil
+
+                    if not is_tabbed then
+                        KOR.referenceinformation:erase()
+                        return
+                    end
+
+                    local active_tab_name = KOR.dialogs.active_tab_name
+                    if active_tab_name == "referentie-informatie" then
+                        KOR.referenceinformation:erase()
+                    else
+                        KOR.glossary:erase()
+                    end
+                end)
             end,
         }),
     }
@@ -2258,6 +2311,11 @@ function XrayButtons:unfocusXrayButton()
         xray_type_button[1].background = xray_type_button[1].background:invert()
     end
     xray_type_button:refresh()
+end
+
+--- @private
+function XrayButtons:getTargetNameToBeErased(is_tabbed, default_target)
+    return not is_tabbed and default_target or KOR.dialogs.active_tab_name == _("glossary") and _("Glossary") or _("Reference Information")
 end
 
 return XrayButtons
