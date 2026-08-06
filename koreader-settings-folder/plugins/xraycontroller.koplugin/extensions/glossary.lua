@@ -1,5 +1,8 @@
 
---* saved glossary info can be shown instead of DictQuickLookup widget if a term was found in the glossary; see ((ReaderDictionary#onLookupWord)) > ((show glossary popup instead of dictionary popup))
+--* this is an extension for viewing Glossaries per e-book, with content saved from the glossary in an e-book. The Glossary will be stored in text format, to make it searchable.
+--* for filling the Glossary with content, ((InformationCollector)) wil be used.
+
+--* saved glossary info can be shown instead of DictQuickLookup widget if a term was found in the Glossary; see ((ReaderDictionary#onLookupWord)) > ((show glossary popup instead of dictionary popup))
 
 --* compare ((ReferenceInformation)); reference_information there is stored in the database, but here the Glossary is stored in the ebook sidecar file
 

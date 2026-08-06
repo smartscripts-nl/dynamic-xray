@@ -14,9 +14,8 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 * The Page Navigator module now offers an extra side tab to quickly inspect Xray items which are linked to the items named in the page. From there can then edit them, view more details about them or search all their locations in the current ebook. You can see this feature in action in the [videos section](#videos).
 * The Page Navigator has an occurrences-per-chapter-histogram at the bottom.
 * DX has a Series Manager for listing the books in a series. The items in this Manager have action buttons, for viewing large covers, descriptions, reading progress, annotations count, opening the e-book, etc. An example of this manager can be seen in the last image under [Images](#images).
-* DX has a Xray Reference Information popup (callable with the index-button in de Page Navigator popup menu), where the use can e.g. store timeline-information for a book. The user can assign a gesture for calling this popup outside of Page Navigator. 
-* DX also has a Glossary popup, to show a Glossary from the book stored there. The user can assign a gesture for calling
-  this popup. When the user longpresses a word in the ebook text and that word is an item in the Glossary, the explanation for that item will be shown in the Glossary popup.
+* DX has a [Reference Information viewer](#reference-information-viewer), in which a user can quickly inspect background information as provided in the e-book. But without having to visit the corresponding section in the e-book.
+* DX also has a [Glossary viewer](#glossary-viewer), copied from the Glossary in the e-book. When the user longpresses a word in the e-book text which is in the Glossary, its explanation will be shown.
 
 ## Table of contents in this readme
 - [DX under Android](#dx-under-android)
@@ -31,6 +30,9 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
   - [Browsing with the Page Navigator (most Kindle-like)](#adding-xray-items)
   - [Adding Xray items](#browsing-with-the-page-navigator-most-kindle-like)
   - [Displaying help information about the function of buttons](#displaying-help-information-about-the-function-of-buttons)
+- [Glossary and Reference Information viewers](#glossary-and-reference-information-viewers)
+  - [Reference Information viewer](#reference-information-viewer)
+  - [Glossary viewer](#glossary-viewer)
 - [DX in action](#dx-in-action)
     - [Videos](#videos)
     - [Images](#images)
@@ -145,7 +147,7 @@ If you want to undo the filter, longpress the filtered item in the side panel on
 * When you select a longer text in the ebook and tap on "+ Xray", DX will set this text as the description of the new Xray item. You then only have to type its name in the field below the description.
 * By clicking on lightning or star icons in the margins of ebook pages, you can call up an overview of Xray items in resp. the current page or the paragraph with the star icon.
 * You can assign a gesture to quickly call up the list of all Xray items in the book or series: cog icon in the main KOReader menu → Taps and gestures → Gesture manager → Multiswipes → select a gesture → Reader → Show xray-items in this book/series
-* In the same way, you can also attach a gesture to the action "Add an Xray item".
+* In the same way, you can also attach a gesture to the action "Add a Xray item".
 
 ### Displaying help information about the function of buttons
 DX uses mostly buttons with only icons, so without explanatory labels. However, if a button contains a point on the right side of the icon, or a downwards pointing arrow on the left side, this means that you can trigger a popup with help information about the function of that button by longpressing it.
@@ -153,6 +155,23 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 * A point signifies a one action button.
 * These actions can then be executed by tapping on the buttons at the bottom of the help dialog.
 * If you don't longpress the main button, which has the help information, but simply tap it, its main function will be immediately triggered.
+
+### Glossary and Reference Information viewers
+
+#### Reference Information viewer
+
+* DX has a Reference Information popup, where the
+use can store information loaded from the e-book. This might e.g. be timeline-information for a book.
+* If the information is contained in a HMTL list or table, the information can optionally be saved as such, for nicer presentation and better readability.
+* The user can add texts from the e-book to the Reference Information by highlighting their start and end.
+
+#### Glossary viewer
+
+* DX has a Glossary popup, where the
+  use can store a Glossary copied from the e-book.
+* The Gossary text will be stored in plain-text format, to make it searchable.
+* When the user longpresses a word in the e-book text an it's in the Glossary, the Glossary Viewer will show that entry with its explanation.
+* The user can add texts from the e-book to the Glossary by highlighting their start and end.
 
 ## DX in action
 

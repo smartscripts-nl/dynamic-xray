@@ -1,4 +1,7 @@
 
+--* this is an extension for viewing Reference Information per e-book, with content saved from the text of an e-book. For example a timeline, even in HTML-format, can be viewed.
+--* for filling the Reference Information with content, ((InformationCollector)) wil be used.
+
 --* compare ((Glossary)); glossary there is stored in the ebook sidecar file, but here reference information is stored in the database
 
 local require = require
