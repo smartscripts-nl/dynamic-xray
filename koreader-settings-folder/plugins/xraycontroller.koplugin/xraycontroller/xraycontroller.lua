@@ -204,6 +204,10 @@ DX = {
     --* shorthand notation for ViewsData; this module will be initialized in ((XrayModel#initDataHandlers)):
     vd = nil,
 }
+
+--* this global var will be initialized through ((XrayController#initKORandDynamicXray)) > ((XrayController#initButtonPropsExtension)), and then used locally in ((ButtonChoicePopup)) and ((ButtonInfoPopup)), for speeding up button generation:
+KorButtonProps = nil
+
 function DX.setProp(name, value)
     DX[name] = value
 end
@@ -221,6 +225,13 @@ local XrayController = WidgetContainer:new{
     return_to_viewer = false,
 }
 
+--- @private
+function XrayController:initButtonPropsExtension()
+    KorButtonProps = KOR.buttonprops
+    KOR.buttonchoicepopup:setKorButtonProps()
+    KOR.buttoninfopopup:setKorButtonProps()
+end
+
 --* called in a earlier phase then ((XrayController#init)), from ((patch: add Dynamic Xray to KOReader)) > current method:
 function XrayController:initKORandDynamicXray()
     --- @class ExtensionsInit
@@ -228,6 +239,9 @@ function XrayController:initKORandDynamicXray()
     --* XrayModel will also load its data handlers here:
     KOR:initDX()
     KOR:initExtensions()
+
+    self:initButtonPropsExtension()
+
     --* for now loads only extension XrayTranslations for repository version of DX:
     DX.d:initViewHelpers()
     --* see ((SYNTACTIC SUGAR)):

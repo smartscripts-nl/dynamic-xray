@@ -8,6 +8,8 @@ local _ = KOR:initCustomTranslations()
 local ffiUtil = require("ffi/util")
 local T = ffiUtil.template
 
+--* this is de facto KOR.buttonprops, but here referenced as a local var, to speed up button generation; see ((XrayController#initKORandDynamicXray)) > ((XrayController#initButtonPropsExtension)):
+local ButtonProps
 local DX = DX
 
 --* compare ((ButtonInfoPopup)) and ((ButtonProps))
@@ -19,12 +21,16 @@ local ButtonChoicePopup = WidgetContainer:new{
 	use_caching = true,
 }
 
+function ButtonChoicePopup:setKorButtonProps()
+	ButtonProps = KorButtonProps
+end
+
 --* these methods return ALL PROPS for a button as a button definition table, to be used as argument for creating a button table
 
 --* ":\n" and separator ":\n\n" in buttons in this class will be replaced by the label words, in ((ButtonProps#setOverruleProps)):
 
 function ButtonChoicePopup:forReferenceInformation(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "index",
 		info = "signpost icon | :show Reference Information" .. self.separator .. "add information",
 		callback_label = _("show"),
@@ -36,7 +42,7 @@ end
 
 --* compare ((ButtonInfoPopup#forSeriesAll)):
 function ButtonChoicePopup:forSeriesCurrentBook(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "seriesmanager",
 		info = T(_("series manager icon %1show all books of series to which the current e-book belongs%2show all series having more than one e-book on this device"), "| :", self.separator),
 		callback_label = _("current book"),
@@ -47,7 +53,7 @@ function ButtonChoicePopup:forSeriesCurrentBook(props)
 end
 
 function ButtonChoicePopup:forTextViewerSearch(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "appbar.search",
 		icon_size_ratio = 0.6,
 		id = "find",
@@ -60,7 +66,7 @@ function ButtonChoicePopup:forTextViewerSearch(props)
 end
 
 function ButtonChoicePopup:forXrayGoBackFromForm(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "back",
 		info = T(_("go back icon %1back to list (if that was opened)%2go back"), "| :", self.separator),
 		callback_label = _("back to list"),
@@ -71,7 +77,7 @@ function ButtonChoicePopup:forXrayGoBackFromForm(props)
 end
 
 function ButtonChoicePopup:forXrayItemsImport(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "fill",
 		icon_size_ratio = 0.53,
 		info = T(_("bucket icon %1if the current book is part of a series, import Xray items from other books in the series, if they are also mentioned in the current book. Hits/occurrences for all Xray items in the current book will be refreshed.%2import items from another series"), "| :", self.separator),
@@ -83,7 +89,7 @@ function ButtonChoicePopup:forXrayItemsImport(props)
 end
 
 function ButtonChoicePopup:forXrayItemDelete(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "dustbin",
 		icon_size_ratio = 0.5,
 		info = T(_("dustbin icon %1delete item and go back to list%2delete item for all book in the current series\n\nHotkeys %3 D for delete, Shift+D for delete for series"), "| :", self.separator, KOR.icons.arrow_bare),
@@ -96,7 +102,7 @@ end
 
 --* this method will be called from ((TitleBar#addDialogQueueButton)), if a dialog has been registered to ((DialogsQueue)) and one or more previous dialogs are registered in that queue:
 function ButtonChoicePopup:forXrayReturnToCaller(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "back-small",
 		--! info defined by calling module
 		callback_label = _("go back"),
@@ -107,7 +113,7 @@ function ButtonChoicePopup:forXrayReturnToCaller(props)
 end
 
 function ButtonChoicePopup:forXrayShowTagsDialogForList(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "tags",
 		info = _("tags icon | :show popup for tag filters") .. self.separator .. _("show the tag-group-selector, to choose a specific tag-group to display"),
 		callback_label = _("show"),
@@ -118,7 +124,7 @@ function ButtonChoicePopup:forXrayShowTagsDialogForList(props)
 end
 
 function ButtonChoicePopup:forTextViewerCopy(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "copy",
 		icon_size_ratio = 0.5,
 		info = _("copy icon | :copy the text to the clipboard.") .. self.separator .. _("idem & close dialog"),
@@ -132,7 +138,7 @@ end
 function ButtonChoicePopup:forXrayPageNavigatorShowTagsDialog(props)
 	--* the minus sign is a n_dash:
 	local state_marker = DX.pn.navigation_tag and "–" or "+"
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon_text = {
 			icon = "tags",
 			text = " " .. state_marker,
@@ -147,7 +153,7 @@ function ButtonChoicePopup:forXrayPageNavigatorShowTagsDialog(props)
 end
 
 function ButtonChoicePopup:forXrayPageNavigatorToCurrentPage(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "goto-location",
 		info = T(_("target icon %1in Page Navigator jump back to current page you are reading in your e-book%2in you e-book jump to the page you are currently viewing in Page Navigator"), "| :", self.separator),
 		callback_label = _("navigator"),

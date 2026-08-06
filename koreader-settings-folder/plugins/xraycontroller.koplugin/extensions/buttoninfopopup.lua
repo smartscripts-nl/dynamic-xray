@@ -10,6 +10,8 @@ local _ = KOR:initCustomTranslations()
 local ffiUtil = require("ffi/util")
 local T = ffiUtil.template
 
+--* this is de facto KOR.buttonprops, but here referenced as a local var, to speed up button generation; see ((XrayController#initKORandDynamicXray)) > ((XrayController#initButtonPropsExtension)):
+local ButtonProps
 local DX = DX
 
 --* compare ((ButtonChoicePopup)) and ((ButtonProps))
@@ -20,10 +22,14 @@ local ButtonInfoPopup = WidgetContainer:new{
 	use_caching = true,
 }
 
+function ButtonInfoPopup:setKorButtonProps()
+	ButtonProps = KorButtonProps
+end
+
 --* these methods return ALL PROPS for a button as a button definition table, to be used as argument for creating a button table
 
 function ButtonInfoPopup:forAllSeries(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon_size_ratio = 0.6,
 		icon = "seriesmanager",
 		info = _("series manager icon | Show all series found in the database."),
@@ -33,7 +39,7 @@ function ButtonInfoPopup:forAllSeries(props)
 end
 
 function ButtonInfoPopup:forBookCoverPreviewSmall(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "image",
 		info = _("image icon | Show cover of this book."),
 		callback_label = _("cover"),
@@ -42,7 +48,7 @@ function ButtonInfoPopup:forBookCoverPreviewSmall(props)
 end
 
 function ButtonInfoPopup:forBookDescription(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "description",
 		info = _("page icon | Show description of this book."),
 		callback_label = _("show description"),
@@ -51,7 +57,7 @@ function ButtonInfoPopup:forBookDescription(props)
 end
 
 function ButtonInfoPopup:forBookMetadataEdit(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "edit-lighter",
 		info = _("Edit the metadata and description of this book."),
 		callback_label = _("edit"),
@@ -60,7 +66,7 @@ function ButtonInfoPopup:forBookMetadataEdit(props)
 end
 
 function ButtonInfoPopup:forBookOpen(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "folder-open",
 		icon_size_ratio = 0.5,
 		info = "folder icon | Open this book.",
@@ -70,7 +76,7 @@ function ButtonInfoPopup:forBookOpen(props)
 end
 
 function ButtonInfoPopup:forGlossaryCopy(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "copy",
 		icon_size_ratio = 0.5,
 		info = _("copy icon | To copy the entire Glossary for the current e-book to the clipboard."),
@@ -80,7 +86,7 @@ function ButtonInfoPopup:forGlossaryCopy(props)
 end
 
 function ButtonInfoPopup:forGlossaryEditor(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "edit-lighter",
 		info = _("edit icon | Edit the Glossary."),
 		callback_label = _("edit"),
@@ -89,7 +95,7 @@ function ButtonInfoPopup:forGlossaryEditor(props)
 end
 
 function ButtonInfoPopup:forGlossaryErase(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "dustbin",
 		info = _("dustbin icon | Remove the entire Glossary for the current e-book."),
 		callback_label = _("remove"),
@@ -98,7 +104,7 @@ function ButtonInfoPopup:forGlossaryErase(props)
 end
 
 function ButtonInfoPopup:forGlossarySave(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "save",
 		info = _("floppy disk icon | Save text in this dialog to the glossary."),
 		callback_label = _("save"),
@@ -107,7 +113,7 @@ function ButtonInfoPopup:forGlossarySave(props)
 end
 
 function ButtonInfoPopup:forGlossarySwitchToDictionary(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "book",
 		icon_size_ratio = 0.6,
 		info = _("book icon | Search for the Glossary entry in the Dictionary."),
@@ -117,7 +123,7 @@ function ButtonInfoPopup:forGlossarySwitchToDictionary(props)
 end
 
 function ButtonInfoPopup:forGlossaryViewer(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "list",
 		info = _("list icon | Go to the Glossary Viewer."),
 		callback_label = _("go"),
@@ -126,7 +132,7 @@ function ButtonInfoPopup:forGlossaryViewer(props)
 end
 
 function ButtonInfoPopup:forInformationEraser(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "dustbin",
 		--! info defined by calling module
 		callback_label = _("erase"),
@@ -135,7 +141,7 @@ function ButtonInfoPopup:forInformationEraser(props)
 end
 
 function ButtonInfoPopup:forInputDialogSearchFirst(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		text = KOR.icons.first,
 		font_bold = true,
 		info = _("first-icon | Search first location with this search term."),
@@ -145,7 +151,7 @@ function ButtonInfoPopup:forInputDialogSearchFirst(props)
 end
 
 function ButtonInfoPopup:forInputDialogSearchNext(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		text = KOR.icons.next,
 		font_bold = true,
 		info = _("next-icon | Search next location with this search term."),
@@ -155,13 +161,13 @@ function ButtonInfoPopup:forInputDialogSearchNext(props)
 end
 
 function ButtonInfoPopup:forMenuFilterButton(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		--! all props defined by caller
 	}, props)
 end
 
 function ButtonInfoPopup:forMenuGotoRandomPage(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "dice",
 		icon_size_ratio = 0.54,
 		info = _("dice icon | Go to random (sub)page."),
@@ -171,7 +177,7 @@ function ButtonInfoPopup:forMenuGotoRandomPage(props)
 end
 
 function ButtonInfoPopup:forMenuSearchItem(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "appbar.search",
 		icon_size_ratio = 0.54,
 		info = _("loupe icon | Search a menu item."),
@@ -181,7 +187,7 @@ function ButtonInfoPopup:forMenuSearchItem(props)
 end
 
 function ButtonInfoPopup:forMenuToAuthorLetter(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		text = KOR.icons.arrow_bare .. " A-Z",
 		text_font_bold = false,
 		info = _("Search for first character of author surname. Character + Enter also works."),
@@ -191,7 +197,7 @@ function ButtonInfoPopup:forMenuToAuthorLetter(props)
 end
 
 function ButtonInfoPopup:forMenuToAuthorLetterOrSubpage(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "yes",
 		info = _("In case of character jump to first entry that starts with that. Or jump to specific subpage in case of numbers."),
 		callback_label = _("go"),
@@ -200,7 +206,7 @@ function ButtonInfoPopup:forMenuToAuthorLetterOrSubpage(props)
 end
 
 function ButtonInfoPopup:forMenuToLetter(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		text = KOR.icons.arrow_bare .. " A-Z",
 		text_font_bold = false,
 		info = _("Jump to first item starting with the character you entered."),
@@ -210,7 +216,7 @@ function ButtonInfoPopup:forMenuToLetter(props)
 end
 
 function ButtonInfoPopup:forResetField(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "reset",
 		info = _("reset icon | Reset above field, remove its contents."),
 		callback_label = _("reset"),
@@ -219,7 +225,7 @@ function ButtonInfoPopup:forResetField(props)
 end
 
 function ButtonInfoPopup:forSaveToXray(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		text = KOR.icons.xray_person_bare .. "/" .. KOR.icons.xray_term_bare,
 		font_bold = false,
 		--! info defined by calling module
@@ -229,7 +235,7 @@ function ButtonInfoPopup:forSaveToXray(props)
 end
 
 function ButtonInfoPopup:forSearchAllLocations(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "search-all",
 		icon_size_ratio = 0.55,
 		--! info defined by calling module
@@ -239,7 +245,7 @@ function ButtonInfoPopup:forSearchAllLocations(props)
 end
 
 function ButtonInfoPopup:forSearchAllLocationsGotoLocation(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "goto-location",
 		icon_size_ratio = 0.5,
 		info = _("target icon | Jump to context of this search hit in the book."),
@@ -249,7 +255,7 @@ function ButtonInfoPopup:forSearchAllLocationsGotoLocation(props)
 end
 
 function ButtonInfoPopup:forSearchAllLocationsGotoPageNavigator(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "navigator_wheel",
 		icon_size_ratio = 0.5,
 		info = _("navigator icon | Jump to context of this search hit in the Page Navigator."),
@@ -259,7 +265,7 @@ function ButtonInfoPopup:forSearchAllLocationsGotoPageNavigator(props)
 end
 
 function ButtonInfoPopup:forSearchNew(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		text = KOR.icons.search_bare,
 		info = _("loupe icon | Enter a new search term."),
 		callback_label = _("search"),
@@ -268,7 +274,7 @@ function ButtonInfoPopup:forSearchNew(props)
 end
 
 function ButtonInfoPopup:forSearchResetFilter(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "reset",
 		id = "reset",
 		icon_size_ratio = 0.5,
@@ -280,7 +286,7 @@ end
 
 --* compare ((ButtonChoicePopup#forSeriesCurrentBook)), used when the current e-book is part of a series; than choice between current series or all series:
 function ButtonInfoPopup:forSeriesAll(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "seriesmanager",
 		--* see ((KeyEvents#addSeriesManagerHotkey)) for the hotkey:
 		info = T(_("series manager icon | Show all series having more than one e-book on this device.\n\nHotkey %1 Shift+M"), KOR.icons.arrow_bare),
@@ -290,7 +296,7 @@ function ButtonInfoPopup:forSeriesAll(props)
 end
 
 function ButtonInfoPopup:forTextViewerOneScreenDown(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "down",
 		info = _("arrow-down icon | Go one screen down. In case of a two column text this move will be applied to both columns."),
 		callback_label = _("1 down"),
@@ -299,7 +305,7 @@ function ButtonInfoPopup:forTextViewerOneScreenDown(props)
 end
 
 function ButtonInfoPopup:forTextViewerOneScreenUp(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "up",
 		info = _("arrow-up icon | Go one screen up. In case of a two column text this move will be applied to both columns."),
 		callback_label = _("1 up"),
@@ -308,7 +314,7 @@ function ButtonInfoPopup:forTextViewerOneScreenUp(props)
 end
 
 function ButtonInfoPopup:forTextViewerToBottom(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		text = "⇲",
 		id = "bottom",
 		info = _("arrow icon | Jump to end of text. In case of a two column text this move will be applied to both columns."),
@@ -318,7 +324,7 @@ function ButtonInfoPopup:forTextViewerToBottom(props)
 end
 
 function ButtonInfoPopup:forTextViewerToTop(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		text = "⇱",
 		id = "top",
 		info = _("arrow icon | Jump to start of text. In case of a two column text this move will be applied to both columns."),
@@ -328,7 +334,7 @@ function ButtonInfoPopup:forTextViewerToTop(props)
 end
 
 function ButtonInfoPopup:forXrayButtonsPopup(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		text_icon = {
 			text = KOR.icons.arrow_up_bare,
 			fgcolor = KOR.colors.lighter_indicator_color,
@@ -341,7 +347,7 @@ function ButtonInfoPopup:forXrayButtonsPopup(props)
 end
 
 function ButtonInfoPopup:forXrayExport(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "export-xray",
 		info = T(_("export icon | Generate a copyable overview of all Xray items.\n\nYou could print this overview, to have it always ready next to your e-reader.\n\nHotkey %1 %2"), KOR.icons.arrow_bare, DX.s.hk_open_export_list),
 		callback_label = _("generate"),
@@ -350,7 +356,7 @@ function ButtonInfoPopup:forXrayExport(props)
 end
 
 function ButtonInfoPopup:forXrayFilterByImportantType(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		text = KOR.icons.xray_person_important_bare .. "/" .. KOR.icons.xray_term_important_bare,
 		fgcolor = KOR.colors.button_label,
 		font_bold = false,
@@ -361,7 +367,7 @@ function ButtonInfoPopup:forXrayFilterByImportantType(props)
 end
 
 function ButtonInfoPopup:forXrayFilterByText(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "filter",
 		info = _("filter icon | Filter the Xray items for text."),
 		callback_label = _("filter"),
@@ -370,7 +376,7 @@ function ButtonInfoPopup:forXrayFilterByText(props)
 end
 
 function ButtonInfoPopup:forXrayFromItemToChapter(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "chapter",
 		icon_size_ratio = 0.6,
 		info = T([[book icon | Jump to a specific chapter.
@@ -382,7 +388,7 @@ Hotkey %1 %2]], KOR.icons.arrow_bare, DX.s.hk_open_chapter_from_viewer),
 end
 
 function ButtonInfoPopup:forXrayFromItemToDictionary(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "book",
 		icon_size_ratio = 0.6,
 		info = _("book icon | Search for this word in the dictionary."),
@@ -392,7 +398,7 @@ function ButtonInfoPopup:forXrayFromItemToDictionary(props)
 end
 
 function ButtonInfoPopup:forXrayItemAdd(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		--icon = "add",
 		icon = "plus",
 		info = T([[plus icon | Add Xray item..
@@ -404,7 +410,7 @@ Hotkey %1 %2]], KOR.icons.arrow_bare, DX.s.hk_add_item),
 end
 
 function ButtonInfoPopup:forXrayItemEdit(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "edit-lighter",
 		icon_size_ratio = 0.6,
 		info = T([[edit icon | Edit description.
@@ -416,7 +422,7 @@ Hotkey %1 %2]], KOR.icons.arrow_bare, DX.s.hk_edit_item),
 end
 
 function ButtonInfoPopup:forXrayItemSave(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "save",
 		info = _("floppy disk icon | Save modified Xray item."),
 		callback_label = _("save"),
@@ -425,7 +431,7 @@ function ButtonInfoPopup:forXrayItemSave(props)
 end
 
 function ButtonInfoPopup:forXrayItemSaveAndShowModule(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon_icon = {
 			icon = "save",
 			middle_text = KOR.icons.arrow,
@@ -439,7 +445,7 @@ function ButtonInfoPopup:forXrayItemSaveAndShowModule(props)
 end
 
 function ButtonInfoPopup:forXrayItemsExportToFile(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "export",
 		icon_size_ratio = 0.53,
 		info = _("export icon | Export this list to xray-items.txt in the settings folder of KOReader (in most cases named \"koreader\")."),
@@ -449,7 +455,7 @@ function ButtonInfoPopup:forXrayItemsExportToFile(props)
 end
 
 function ButtonInfoPopup:forXrayItemsIndex(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "index",
 		icon_size_ratio = 0.53,
 		info = _("signpost icon | Show index of Xray items on this page or in this paragraph."),
@@ -459,7 +465,7 @@ function ButtonInfoPopup:forXrayItemsIndex(props)
 end
 
 function ButtonInfoPopup:forXrayItemsSelectForTagGroup(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		--! icon, active or not, defined by calling module
 		--! info and callback label defined by calling module
 		--! callback defined by calling module
@@ -467,14 +473,14 @@ function ButtonInfoPopup:forXrayItemsSelectForTagGroup(props)
 end
 
 function ButtonInfoPopup:forXrayItemViewer(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "view",
 		--! almost all props defined by calling module
 	}, props)
 end
 
 function ButtonInfoPopup:forXrayList(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "list",
 		info = T([[list icon | Show Items List.
 
@@ -487,7 +493,7 @@ Hotkey %1 %2]], KOR.icons.arrow_bare, DX.s.hk_show_list),
 end
 
 function ButtonInfoPopup:forXrayMultipleBookSeriesOverviews(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "collections",
 		info = _("collections icon | Show a menu with special overviews for series of which DX detected at least two members.\n\nAvailable overviews:\n\n1) Items only mentioned in current e-book\n2) Items mentioned in all books of current series\n3) Items only mentioned in the other e-books\n4) Most often mentioned items in current e-book"),
 		callback_label = _("show"),
@@ -496,7 +502,7 @@ function ButtonInfoPopup:forXrayMultipleBookSeriesOverviews(props)
 end
 
 function ButtonInfoPopup:forXrayNewItemHitExamples(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "target2",
 		info = _("target icon | Show some examples of hits for this item in the current e-book."),
 		callback_label = _("show"),
@@ -505,7 +511,7 @@ function ButtonInfoPopup:forXrayNewItemHitExamples(props)
 end
 
 function ButtonInfoPopup:forXrayNextItem(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "next",
 		info = T(_([[arrow icon | Go to next Xray item. You can also use the space bar on your physical (BT) keyboard for this.
 
@@ -516,7 +522,7 @@ Alternate hotkey %1 %2]]), KOR.icons.arrow_bare, DX.s.hk_goto_next_item),
 end
 
 function ButtonInfoPopup:forXrayPageNavigator(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "navigator_wheel",
 		icon_size_ratio = 0.53,
 		info = _("navigator icon | In a popup dialog navigate through the pages of the current ebook and see which Xray items they contain. For each Xray item you can request additional info about them."),
@@ -533,7 +539,7 @@ function ButtonInfoPopup:forXrayPageNavigatorContextButtons(props)
 	if props.text then
 		return props
 	end
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "link",
 		icon_size_ratio = 0.53,
 		info = _("link icon | Open the quick inspection panel with Xray items linked to the in-page-item currently shown in the bottom info panel."),
@@ -545,7 +551,7 @@ end
 function ButtonInfoPopup:forXrayPageNavigatorFilter(props)
 	local filter_info = _("filter icon | Filter pages for occurrences of the item currently displayed in the bottom info panel. So the Navigator only jump between pages which have this item.")
 	local reset_filter_info = _("reset filter icon | Reset the filter for Page Navigator.")
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = DX.pn.filter_item and "filter-reset" or "filter",
 		icon_size_ratio = 0.53,
 		info = DX.pn.filter_item and reset_filter_info or filter_info,
@@ -563,7 +569,7 @@ end
 function ButtonInfoPopup:forXrayPageNavigatorFilterDouble(props)
 	local filter_info = _("double filter icon | Only show pages in which two to be selected Xray items are both present.") .. self.PN_filter_nbs
 	local reset_filter_info = _("reset double filter icon | Reset double filter for Page Navigator.")
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = DX.pn.filter_item_double and "filter-double-reset" or "filter-double",
 		icon_size_ratio = 0.53,
 		info = DX.pn.filter_item_double and reset_filter_info or filter_info,
@@ -579,7 +585,7 @@ function ButtonInfoPopup:forXrayPageNavigatorFilterDouble(props)
 end
 
 function ButtonInfoPopup:forXrayPageNavigatorGotoPage(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		text_icon = {
 			text = KOR.icons.arrow_bare,
 			fgcolor = KOR.colors.lighter_indicator_color,
@@ -592,7 +598,7 @@ function ButtonInfoPopup:forXrayPageNavigatorGotoPage(props)
 end
 
 function ButtonInfoPopup:forXrayPageNavigatorMainButtons(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "page-light",
 		icon_size_ratio = 0.53,
 		info = _("page icon | Open the main side panel, showing Xray items found in the current page."),
@@ -602,7 +608,7 @@ function ButtonInfoPopup:forXrayPageNavigatorMainButtons(props)
 end
 
 function ButtonInfoPopup:forXrayPageNavigatorSearchItem(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "appbar.search",
 		info = "loupe icon | Search an item in Navigator, via the Items List as selector dialog. First PN will search in backward direction; if no item found there, it will then search in forward direction.",
 		callback_label = _("search"),
@@ -611,7 +617,7 @@ function ButtonInfoPopup:forXrayPageNavigatorSearchItem(props)
 end
 
 function ButtonInfoPopup:forXrayPageNavigatorShowPageBrowser(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "pages",
 		icon_size_ratio = 0.53,
 		info = T(_("pages icon | Show page currently shown in Page Navigator in a page browser popup.\n\n You can use this to quickly jump many page back or forth in Page Navigator, by tapping on a thumnail in the page browser.\n\nHotkey %1 %2"), KOR.icons.arrow_bare, DX.s.hk_show_pagebrowser_from_page_navigator),
@@ -621,7 +627,7 @@ function ButtonInfoPopup:forXrayPageNavigatorShowPageBrowser(props)
 end
 
 function ButtonInfoPopup:forXrayPreviousItem(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "previous",
 		info = T(_([[arrow icon | Go to previous Xray item. You can also use Shift+Space on your physical (BT) keyboard for this.
 
@@ -632,7 +638,7 @@ Alternate hotkey %1 %2]]), KOR.icons.arrow_bare, DX.s.hk_goto_previous_item),
 end
 
 function ButtonInfoPopup:forSeriesManagerDataImport(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "fill",
 		info = _("bucket icon | Import data (finished status, percentage read, stars rating) of all known books into Series Manager data."),
 		callback_label = _("import"),
@@ -641,7 +647,7 @@ function ButtonInfoPopup:forSeriesManagerDataImport(props)
 end
 
 function ButtonInfoPopup:forXrayQuotesManager(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "quote",
 		info = _("bubble icon | Manage quotes for this Xray item."),
 		callback_label = _("show manager"),
@@ -650,7 +656,7 @@ function ButtonInfoPopup:forXrayQuotesManager(props)
 end
 
 function ButtonInfoPopup:forXraySaveDoubleFilterItems(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "save",
 		info = _("floppy disk icon | Save the two selected items for the double filter.") .. self.PN_filter_nbs,
 		callback_label = _("filter"),
@@ -659,7 +665,7 @@ function ButtonInfoPopup:forXraySaveDoubleFilterItems(props)
 end
 
 function ButtonInfoPopup:forXraySaveTaggedItems(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "save",
 		info = _("floppy disk icon | Save selected items for the tag."),
 		callback_label = _("save"),
@@ -668,7 +674,7 @@ function ButtonInfoPopup:forXraySaveTaggedItems(props)
 end
 
 function ButtonInfoPopup:forXraySettings(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "appbar.settings",
 		icon_size_ratio = 0.65,
 		info = _("cog icon | Open list of Dynamic Xray settings and modify them if needed."),
@@ -678,7 +684,7 @@ function ButtonInfoPopup:forXraySettings(props)
 end
 
 function ButtonInfoPopup:forXraySettingsReturnToCaller(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "back-small",
 		info = _("back icon | Return to the dialog from which you opened these XraySettings."),
 		callback_label = _("return"),
@@ -687,7 +693,7 @@ function ButtonInfoPopup:forXraySettingsReturnToCaller(props)
 end
 
 function ButtonInfoPopup:forXrayShowMatchReliabilityExplanation(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "info-slender",
 		icon_size_ratio = 0.5,
 		info = T(_("information icon | Show explanation of reliability icons for hits found.\n\nHotkey %1 %2"), KOR.icons.arrow_bare, DX.s.hk_show_information),
@@ -699,7 +705,7 @@ function ButtonInfoPopup:forXrayShowMatchReliabilityExplanation(props)
 end
 
 function ButtonInfoPopup:forXrayTagGroupAdd(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "add",
 		info = _("plus icon | Add a new tag-group."),
 		callback_label = _("add"),
@@ -708,7 +714,7 @@ function ButtonInfoPopup:forXrayTagGroupAdd(props)
 end
 
 function ButtonInfoPopup:forXrayTagGroupNext(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "next",
 		info = _("arrow-right icon | Jump to next tag-group."),
 		callback_label = _("next"),
@@ -717,7 +723,7 @@ function ButtonInfoPopup:forXrayTagGroupNext(props)
 end
 
 function ButtonInfoPopup:forXrayTagGroupPrevious(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "previous",
 		info = _("arrow-left icon. Jump to previous tag-group."),
 		callback_label = _("previous"),
@@ -725,7 +731,7 @@ function ButtonInfoPopup:forXrayTagGroupPrevious(props)
 end
 
 function ButtonInfoPopup:forXrayTagGroupSelector(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "tags",
 		info = _("tags icon | Show the tag-group-selector, to choose a specific tag-group to display.\n\nIf in a certain context there is an active/selected Xray item which is a member of one tag-group only, then immediately show that group."),
 		callback_label = _("show selector"),
@@ -734,13 +740,13 @@ function ButtonInfoPopup:forXrayTagGroupSelector(props)
 end
 
 function ButtonInfoPopup:forXrayToggleFavoriteItem(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		--! icon, info, callback_label and callback defined by calling module
 	}, props)
 end
 
 function ButtonInfoPopup:forXrayToggleImportantItem(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		fgcolor = KOR.colors.button_label,
 		font_bold = false,
 		info = _("dark icons | Toggle to mark this xray-item as important or regular item."),
@@ -750,7 +756,7 @@ function ButtonInfoPopup:forXrayToggleImportantItem(props)
 end
 
 function ButtonInfoPopup:forXrayTogglePageOrParagraphInfo(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon_size_ratio = 0.6,
 		info = _("page or paragraph icon | Toggle between display of Xray information per page or paragraph."),
 		callback_label = _("toggle"),
@@ -759,7 +765,7 @@ function ButtonInfoPopup:forXrayTogglePageOrParagraphInfo(props)
 end
 
 function ButtonInfoPopup:forXrayTips(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "bulb",
 		info = _("Show general DX usage tips."),
 		callback_label = _("show")
@@ -768,7 +774,7 @@ function ButtonInfoPopup:forXrayTips(props)
 end
 
 function ButtonInfoPopup:forXrayToggleBookOrSeriesMode(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "book",
 		--* info and callback_label props will be defined by caller
 		--! callback defined by calling module
@@ -776,7 +782,7 @@ function ButtonInfoPopup:forXrayToggleBookOrSeriesMode(props)
 end
 
 function ButtonInfoPopup:forXrayTogglePersonOrTerm(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		fgcolor = KOR.colors.button_label,
 		font_bold = false,
 		info = _("user of bulb icon | Toggle to mark this xray-item as person or term."),
@@ -786,7 +792,7 @@ function ButtonInfoPopup:forXrayTogglePersonOrTerm(props)
 end
 
 function ButtonInfoPopup:forXrayToggleSortingMode(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "sort",
 		--* info and callback_label props will be defined by caller
 		--! callback defined by calling module
@@ -794,7 +800,7 @@ function ButtonInfoPopup:forXrayToggleSortingMode(props)
 end
 
 function ButtonInfoPopup:forTranslationEditorResetText(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "reset",
 		info = _("reset icon | Reset the text in the text editor to the untranslated, English text."),
 		callback_label = _("reset"),
@@ -803,7 +809,7 @@ function ButtonInfoPopup:forTranslationEditorResetText(props)
 end
 
 function ButtonInfoPopup:forTranslationsResetAll(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "reset",
 		info = _("reset icon | Reset ALL(!) translations to the untranslated, English texts."),
 		callback_label = _("reset"),
@@ -812,7 +818,7 @@ function ButtonInfoPopup:forTranslationsResetAll(props)
 end
 
 function ButtonInfoPopup:forXrayTranslations(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "translate",
 		info = "vertaal-ikoon | Vertaal teksten in de DX interface.",
 		callback_label = "vertaal",
@@ -829,7 +835,7 @@ function ButtonInfoPopup:forXrayTypeSet(props, add_horizontal_button_padding)
 	if add_horizontal_button_padding then
 		label = "  " .. label .. "  "
 	end
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		text = label,
 		fgcolor = KOR.colors.button_label,
 		font_bold = false,
@@ -840,7 +846,7 @@ function ButtonInfoPopup:forXrayTypeSet(props, add_horizontal_button_padding)
 end
 
 function ButtonInfoPopup:forXrayViewer(props)
-	return KOR.buttonprops:set({
+	return ButtonProps:set({
 		icon = "view",
 		info = _("eye icon | Open Xray Item Viewer for the item displayed in the bottom panel."),
 		callback_label = _("open"),
