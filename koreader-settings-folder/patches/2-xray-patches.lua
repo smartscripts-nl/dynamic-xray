@@ -78,4 +78,6 @@ end
 package.path = controller_path .. "/?.lua;" .. package.path
 
 require("xraycontroller/xraycontroller")
+
+--! load main body of patches from xraycontroller folder, so user after DX updates in most cases doesn't have to update the patches folder:
 require("dx-patches")
