@@ -1372,6 +1372,7 @@ function XrayViewsData:generateFirstLines(first_line, first_line_iconless, xray_
     --* here the info gets combined:
     -- #((xray items dialog add match reliability explanations))
     table_insert(first_line, xray_type_icon)
+    --* compare adding favorite markers in ((XrayViewsData#generateListItemText)):
     if DX.ta:itemHasTag(xray_item, _("Favorites")) then
         table_insert(first_line, KOR.icons.favorite_closed_bare .. " ")
     else
@@ -1400,7 +1401,7 @@ end
 --* generate list item texts for ((XrayDialogs#showList)):
 function XrayViewsData:generateListItemText(item, reliability_indicator)
 
-    local icon = self:getItemTypeIcon(item)
+    local icon = self:getItemTypeIcon(item, "bare")
 
     --* in series mode we want the list to show the total count of items for the whole series, instead of only for the current book:
     local hits = self.list_display_mode == "series" and item.series_hits or item.book_hits
@@ -1412,11 +1413,13 @@ function XrayViewsData:generateListItemText(item, reliability_indicator)
 
     --* we don't add sequence number here, because that will only be done after prioritizing and sorting items in the list, at end of ((XrayViewsData#getCurrentListTabItems)):
     local name = self:addNonBreakableIndicator(item.name, item)
-    local favorite_marker = DX.ta:itemHasTag(item, _("Favorites")) and KOR.icons.favorite_closed_bare .. " " or ""
+    --* compare adding favorite markers in ((XrayViewsData#generateFirstLines)):
+    local favorite_marker = DX.ta:itemHasTag(item, _("Favorites")) and KOR.icons.favorite_closed_bare or ""
     return table_concat({
         reliability_indicator,
         icon,
         favorite_marker,
+        " ",
         name,
         hits_info,
         ": ",
