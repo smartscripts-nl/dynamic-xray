@@ -1373,12 +1373,11 @@ function XrayViewsData:generateFirstLines(first_line, first_line_iconless, xray_
     -- #((xray items dialog add match reliability explanations))
     table_insert(first_line, xray_type_icon)
     --* compare adding favorite markers in ((XrayViewsData#generateListItemText)):
-    if DX.ta:itemHasTag(xray_item, _("Favorites")) then
-        table_insert(first_line, KOR.icons.favorite_closed_bare .. " ")
-    else
-        --* in ((XrayViewsData#generateXrayExportOrLinkedItemInfo)) we asked for bare icons through self:getItemTypeIcon(item, "bare"), so here we have to insert a space to separate the item type icon from the name of the item:
-        table_insert(first_line, " ")
+    local favorite_marker = self:getFavoriteMarker(xray_item, "return_boolean")
+    if favorite_marker then
+        table_insert(first_line, favorite_marker)
     end
+    table_insert(first_line, " ")
     table_insert(first_line, name)
     if ui_explanation then
         table_insert(first_line, ui_explanation)
@@ -1414,7 +1413,7 @@ function XrayViewsData:generateListItemText(item, reliability_indicator)
     --* we don't add sequence number here, because that will only be done after prioritizing and sorting items in the list, at end of ((XrayViewsData#getCurrentListTabItems)):
     local name = self:addNonBreakableIndicator(item.name, item)
     --* compare adding favorite markers in ((XrayViewsData#generateFirstLines)):
-    local favorite_marker = DX.ta:itemHasTag(item, _("Favorites")) and KOR.icons.favorite_closed_bare or ""
+    local favorite_marker = self:getFavoriteMarker(item)
     return table_concat({
         reliability_indicator,
         icon,
@@ -1740,6 +1739,14 @@ function XrayViewsData:getNeedleStringPlural(word, for_substitution)
         return self.word_start .. "(" .. plural_matcher .. ")" .. self.word_end, word
     end
     return self.word_start .. plural_matcher .. self.word_end
+end
+
+--- @private
+function XrayViewsData:getFavoriteMarker(item, return_boolean)
+    return DX.ta:itemHasTag(item, "Favorieten")
+        and KOR.icons.favorite_closed_bare
+        or not return_boolean and ""
+        or false
 end
 
 --- @private
