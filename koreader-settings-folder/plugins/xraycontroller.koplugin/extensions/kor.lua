@@ -16,7 +16,6 @@ local pairs = pairs
 --- @field colors Colors
 --- @field columntexts ColumnTexts
 --- @field databases Databases
---- @field debug Debug
 --- @field dialogs Dialogs
 --- @field dialogsqueue DialogsQueue
 --- @field document CreDocument
@@ -80,7 +79,6 @@ local KOR = WidgetContainer:new{
 	closingswipes = nil,
 	colors = nil,
 	columntexts = nil,
-	debug = nil,
 	dialogs = nil,
 	dialogsqueue = nil,
 	ebookmetadata = nil,
@@ -119,7 +117,6 @@ local KOR = WidgetContainer:new{
 		--! this first block contains extensions which are needed by other extensions and therefor must be initialized first:
 		"dialogs",
 		"dialogsqueue",
-		"debug",
 		"files",
 		"tables",
 		"keyevents",
