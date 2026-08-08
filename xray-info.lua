@@ -25,12 +25,12 @@ The views layer has three main streams:
 
 9) DX has a Reference Information popup. It can be called with the index-button in de Page Navigator popup menu, or with the global hotkey Shift+R, or from the popup menu after the user selected a text in the e-book). See ((XrayController#onShowReferenceInformation)) > ((ReferenceInformation#show)).
  It can e.g. be used to store timeline-information for a book, even in the format of a HTML table.
- For starting the proces of text addition, see ((InformationCollector#confirmAddInformationFromScratch)) - when called from the Page Navigator popup menu - or ((InformationCollector#confirmAddInformationAfterExpansion)), when called from the ReaderHighlight new text selection popup. In both these cases the information is saved via ((InformationCollector#setInformationBoundaries)) > ((InformationCollector#addReferenceInformation)).
+ For starting the proces of text addition, see ((InformationMediator#confirmAddInformationFromScratch)) - when called from the Page Navigator popup menu - or ((InformationMediator#confirmAddInformationAfterExpansion)), when called from the ReaderHighlight new text selection popup. In both these cases the information is saved via ((InformationMediator#setInformationBoundaries)) > ((InformationMediator#addReferenceInformation)).
  The user can assign a gesture for calling this popup outside of Page Navigator.
 
 10) DX also has a Glossary popup, to show a Glossary from the book stored there. See ((Glossary#showViewer)).
 This Glossary can be used to quickly lookup a term in the e-book text. When the user longpresses a word in the ebook text and that word is an item in the Glossary, the explanation for that item will be shown in the Glossary popup; see ((Glossary#showEditor))
- For starting the proces of text addition, see ((InformationCollector#confirmAddInformationAfterExpansion)), when called from the ReaderHighlight new text selection popup. The information will be saved to the Glossary via ((InformationCollector#setInformationBoundaries)) > ((Glossary#addInformation)).
+ For starting the proces of text addition, see ((InformationMediator#confirmAddInformationAfterExpansion)), when called from the ReaderHighlight new text selection popup. The information will be saved to the Glossary via ((InformationMediator#setInformationBoundaries)) > ((Glossary#addInformation)).
 
 The user will have the most Kindle-like experience when he/she opens the Page Navigator - see ((XrayController#onShowPageNavigator)). In this navigator all Xray items in a page will be marked bold and they will be mentioned in a side panel. Tapping on items in the side panel will put an explanation of that item in the bottom panel. You can even filter the content of the Navigator for a specific Xray item, so it will only show pages which contain that item.
 

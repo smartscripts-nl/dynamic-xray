@@ -424,7 +424,7 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
             hold_callback = function()
                 parent:closePopupMenu()
                 parent:closePageNavigator()
-                return KOR.informationcollector:confirmAddInformationFromScratch("reference_information")
+                return KOR.informationmediator:confirmAddInformationFromScratch("reference_information")
             end,
         }),
         series_manager_button,
@@ -796,7 +796,7 @@ function XrayButtons:forSaveReferenceInformation(reference_information, referenc
          {
              icon = "back",
              callback = function()
-                 KOR.informationcollector:closeContentTypeChoiceDialog()
+                 KOR.informationmediator:closeContentTypeChoiceDialog()
              end,
          },
          {
@@ -2140,28 +2140,12 @@ function XrayButtons:forGlossaryViewerTopLeft(parent, is_tabbed)
             end,
             callback = function()
                 local target = self:getTargetNameToBeErased(is_tabbed, _("Glossary"))
-                KOR.dialogs:confirm(T(_("Do you indeed want to remove the %1?"), target), function()
-                    UIManager:close(parent.viewer)
-                    parent.viewer = nil
-
-                    if not is_tabbed then
-                        KOR.glossary:erase()
-                        return
-                    end
-
-                    local active_tab_name = KOR.dialogs.active_tab_name
-                    if active_tab_name == "referentie-informatie" then
-                        KOR.referenceinformation:erase()
-                    else
-                        KOR.glossary:erase()
-                    end
-                end)
+                KOR.informationmediator:eraseInformation(is_tabbed, target)
             end,
         }),
         KOR.buttoninfopopup:forGlossaryEditor({
             callback = function()
-                UIManager:close(parent.viewer)
-                parent.viewer = nil
+                KOR.informationmediator:closeViewerInstance()
                 parent:showEditor()
             end,
         }),
@@ -2169,8 +2153,7 @@ function XrayButtons:forGlossaryViewerTopLeft(parent, is_tabbed)
 end
 
 --* compare ((XrayButtons#forGlossaryViewerTopLeft)):
---- @param parent ReferenceInformation
-function XrayButtons:forReferenceInfoTopLeft(parent, is_tabbed)
+function XrayButtons:forReferenceInfoTopLeft(is_tabbed)
     return {
         {
             icon = "info-slender",
@@ -2184,27 +2167,14 @@ function XrayButtons:forReferenceInfoTopLeft(parent, is_tabbed)
                 return T(_("dustbin icon | Remove the %1.\n\nYou will first be asked to confirm this action."), target)
             end,
             callback = function()
+
                 local target = self:getTargetNameToBeErased(is_tabbed, _("Reference Information"))
-                KOR.dialogs:confirm(T(_("Do you indeed want to remove the %1?"), target), function()
-                    UIManager:close(parent.viewer)
-                    parent.viewer = nil
-
-                    if not is_tabbed then
-                        KOR.referenceinformation:erase()
-                        return
-                    end
-
-                    local active_tab_name = KOR.dialogs.active_tab_name
-                    if active_tab_name == "referentie-informatie" then
-                        KOR.referenceinformation:erase()
-                    else
-                        KOR.glossary:erase()
-                    end
-                end)
+                KOR.informationmediator:eraseInformation(is_tabbed, target)
             end,
         }),
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
+                KOR.informationmediator:closeViewerInstance()
                 DX.s.showSettingsManager()
             end
         }),

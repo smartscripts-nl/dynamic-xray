@@ -1,6 +1,6 @@
 
 --* this is an extension for viewing Reference Information per e-book, with content saved from the text of an e-book. For example a timeline, even in HTML-format, can be viewed.
---* for filling the Reference Information with content, ((InformationCollector)) wil be used.
+--* for filling the Reference Information with content, ((InformationMediator)) wil be used.
 
 --* compare ((Glossary)); glossary there is stored in the ebook sidecar file, but here reference information is stored in the database
 
@@ -18,7 +18,7 @@ local ReferenceInformation = WidgetContainer:extend{
 	current_ebook_reference_information = nil,
 	db_path = nil,
 	db_field = "reference_information",
-	--* viewer_instance will be registered to InformationCollector.viewer_instance ...
+	--* viewer_instance will be registered to InformationMediator.viewer_instance ...
 }
 
 --* called from ((XrayController#onReaderReady)):
@@ -39,12 +39,12 @@ function ReferenceInformation:erase()
 	conn = KOR.databases:closeConnections(conn)
 	self.current_ebook_reference_information = nil
 
-	KOR.informationcollector:closeViewer()
-	KOR.messages:notify(_("reference information erased"))
+	KOR.informationmediator:closeViewerInstance()
+	KOR.messages:notify(_("reference information has been erased"))
 end
 
 function ReferenceInformation:storeInformation(information, content_type, css_files)
-	KOR.informationcollector:closeContentTypeChoiceDialog()
+	KOR.informationmediator:closeContentTypeChoiceDialog()
 	if content_type == "html" then
 		information = self:prepareHtml(information, css_files)
 	end
@@ -98,17 +98,12 @@ h1, h2, h3, h4, h5, h6 {
 	return "<style>" .. css .. "</style>\n" .. information
 end
 
---* items for this XrayInformation were added in ((InformationCollector#addReferenceInformation)):
+--* items for this XrayInformation were added in ((InformationMediator#addReferenceInformation)):
 --* compare ((Glossary#showViewer)):
 function ReferenceInformation:show()
 	local glossary = KOR.glossary:get()
-	if not self.current_ebook_reference_information then
-		if glossary then
-			--* show Glossary instead of missing Reference Information:
-			KOR.glossary:showViewer()
-			return true
-		end
-		return KOR.informationcollector:confirmAddInformationFromScratch("reference_information")
+	if KOR.informationmediator:showAlternativeViewer(_("reference-information"), self.current_ebook_reference_information, glossary) then
+		return true
 	end
 
 	KOR.dialogsqueue:register({
@@ -126,13 +121,14 @@ function ReferenceInformation:show()
 	end
 
 	local is_tabbed = glossary
-	local buttons = DX.b:forReferenceInfoTopLeft(self, is_tabbed)
+	local buttons = DX.b:forReferenceInfoTopLeft(is_tabbed)
 
 	--* compare showing Glossary first and Reference Information in second tab in ((Glossary#showViewer)):
 	if is_tabbed then
-		KOR.informationcollector.viewer_instance = KOR.dialogs:htmlBoxTabbed(1, {
+		KOR.informationmediator.viewer_instance = KOR.dialogs:htmlBoxTabbed(1, {
 			title = _("Reference Information + Glossary"),
 			tabs = {
+				-- #((reference info tab names))
 				{
 					tab = _("reference information"),
 					html = information,
@@ -149,7 +145,7 @@ function ReferenceInformation:show()
 		return true
 	end
 
-	KOR.informationcollector.viewer_instance = KOR.dialogs:textOrHtmlBox({
+	KOR.informationmediator.viewer_instance = KOR.dialogs:textOrHtmlBox({
 		title = _("Reference Information"),
 		top_buttons_left = buttons,
 		fullscreen = true,

@@ -1,6 +1,6 @@
 
 --* this is an extension for viewing Glossaries per e-book, with content saved from the glossary in an e-book. The Glossary will be stored in text format, to make it searchable.
---* for filling the Glossary with content, ((InformationCollector)) wil be used.
+--* for filling the Glossary with content, ((InformationMediator)) wil be used.
 
 --* saved glossary info can be shown instead of DictQuickLookup widget if a term was found in the Glossary; see ((ReaderDictionary#onLookupWord)) > ((show glossary popup instead of dictionary popup))
 
@@ -35,7 +35,7 @@ local Glossary = WidgetContainer:extend {
     editor = nil,
     last_edit_pos = nil,
     line_end = "\n",
-    --* viewer_instance will be registered to InformationCollector.viewer_instance ...
+    --* viewer_instance will be registered to InformationMediator.viewer_instance ...
 }
 
 function Glossary:get(remove_whitespace_at_end)
@@ -64,8 +64,8 @@ function Glossary:erase()
     KOR.ui.doc_settings:flush()
     KOR.ui.doc_settings.glossary = nil
 
-    KOR.informationcollector:closeViewer()
-    KOR.messages:notify("woordenlijst verwijderd")
+    KOR.informationmediator:closeViewerInstance()
+    KOR.messages:notify(_("glossary has been erased"))
 end
 
 --- @private
@@ -202,14 +202,7 @@ end
 --* compare ((ReferenceInformation#show))
 function Glossary:showViewer()
     local glossary = self:get()
-    if not has_content(glossary) then
-        KOR.messages:notify(_("you haven't saved glossary-information as yet"))
-        --* show Reference Information instead of missing Glossary:
-        if KOR.referenceinformation.current_ebook_reference_information then
-            KOR.referenceinformation:show()
-        else
-            DX.i:showReferenceInformation(1)
-        end
+    if KOR.informationmediator:showAlternativeViewer(_("glossary"), glossary) then
         return true
     end
 
@@ -219,7 +212,7 @@ function Glossary:showViewer()
     --* if Reference Information available, show that in a second tab:
     --* compare showing Reference Information first and Glossary in second tab in ((ReferenceInformation#show)):
     if is_tabbed then
-        KOR.informationcollector.viewer_instance = KOR.dialogs:htmlBoxTabbed(1, {
+        KOR.informationmediator.viewer_instance = KOR.dialogs:htmlBoxTabbed(1, {
             title = _("Glossary + Xray Reference Information"),
             tabs = {
                 {
@@ -238,7 +231,7 @@ function Glossary:showViewer()
         return true
     end
 
-    KOR.informationcollector.viewer_instance = KOR.dialogs:htmlBox({
+    KOR.informationmediator.viewer_instance = KOR.dialogs:htmlBox({
         title = _("Glossary"),
         html = self:getHtmlList(glossary),
         top_buttons_left = buttons,

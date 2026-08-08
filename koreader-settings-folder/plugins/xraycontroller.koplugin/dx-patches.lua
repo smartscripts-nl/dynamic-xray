@@ -742,7 +742,7 @@ ReaderHighlight.init = function(self)
                 text = " " .. tr("add to Glossary"),
             },
             callback = function()
-                KOR.informationcollector:confirmAddInformationAfterExpansion(this, "glossary")
+                KOR.informationmediator:confirmAddInformationAfterExpansion(this, "glossary")
             end,
         }
     end)
@@ -754,7 +754,7 @@ ReaderHighlight.init = function(self)
                 text = " " .. tr("add to Reference Info"),
             },
             callback = function()
-                KOR.informationcollector:confirmAddInformationAfterExpansion(this, "reference_information")
+                KOR.informationmediator:confirmAddInformationAfterExpansion(this, "reference_information")
             end,
         }
     end)
@@ -762,7 +762,7 @@ end
 
 local orig_onShowHighlightMenu = ReaderHighlight.onShowHighlightMenu
 ReaderHighlight.onShowHighlightMenu = function(self, index)
-    local boundary_selection_mode_activated = KOR.informationcollector:setInformationBoundaries(self)
+    local boundary_selection_mode_activated = KOR.informationmediator:setInformationBoundaries(self)
     if boundary_selection_mode_activated then
         return
     end

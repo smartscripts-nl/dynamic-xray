@@ -25,7 +25,7 @@ local pairs = pairs
 --- @field glossary Glossary
 --- @field html Html
 --- @field icons Icons
---- @field informationcollector InformationCollector
+--- @field informationmediator InformationMediator
 --- @field itemsmanager ItemsManager
 --- @field keyevents KeyEvents
 --- @field labels Labels
@@ -87,7 +87,7 @@ local KOR = WidgetContainer:new{
 	glossary = nil,
 	html = nil,
 	icons = nil,
-	informationcollector = nil,
+	informationmediator = nil,
 	itemsmanager = nil,
 	keyevents = nil,
 	labels = nil,
@@ -132,7 +132,7 @@ local KOR = WidgetContainer:new{
 		"filedirnames",
 		"glossary",
 		"html",
-		"informationcollector",
+		"informationmediator",
 		"itemsmanager",
 		"labels",
 		"list",

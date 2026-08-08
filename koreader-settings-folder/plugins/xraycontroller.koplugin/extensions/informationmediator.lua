@@ -10,11 +10,12 @@ local _ = KOR:initCustomTranslations()
 local T = require("ffi/util").template
 
 local DX = DX
+local has_content = has_content
 local has_no_text = has_no_text
 local table_insert = table.insert
 
---- @class InformationCollector
-local InformationCollector = WidgetContainer:extend{
+--- @class InformationMediator
+local InformationMediator = WidgetContainer:extend{
 	information_boundaries = nil,
 	information_names = {
 		glossary = _("Glossary"),
@@ -28,7 +29,7 @@ local InformationCollector = WidgetContainer:extend{
 	viewer_instance = nil,
 }
 
-function InformationCollector:confirmAddInformationFromScratch(information_type)
+function InformationMediator:confirmAddInformationFromScratch(information_type)
 	self.information_type = information_type
 	local name = self.information_names[information_type]
 	KOR.dialogs:confirm(_("Do you indeed want to save the text to be selected as the") .. "\n\n" .. name .. "\n\n" .. _("for the current e-book?"), function()
@@ -43,7 +44,7 @@ end
 
 --* this will be called from the ReaderHighlight popup for a new text selection:
 --- @param parent ReaderHighlight
-function InformationCollector:confirmAddInformationAfterExpansion(parent, information_type)
+function InformationMediator:confirmAddInformationAfterExpansion(parent, information_type)
 	self.information_type = information_type
 	local name = self.information_names[information_type]
 
@@ -66,7 +67,7 @@ function InformationCollector:confirmAddInformationAfterExpansion(parent, inform
 			text = _("save now"),
 			callback = function()
 				if information_type == "reference_information" then
-					--* Reference Info will be saved in ((InformationCollector#setInformationBoundaries)) and there will also be shown the Reference Info Viewer:
+					--* Reference Info will be saved in ((InformationMediator#setInformationBoundaries)) and there will also be shown the Reference Info Viewer:
 					self:addReferenceInformation({
 						parent.selected_text.pos0,
 						parent.selected_text.pos1,
@@ -82,7 +83,7 @@ function InformationCollector:confirmAddInformationAfterExpansion(parent, inform
 		},
 		{
 			text = _("expand"),
-			--* after information end has been selected, information will be stored via ((InformationCollector#setInformationBoundaries)) > ((InformationCollector#addReferenceInformation)) for Reference Information, or ((Glossary#addInformation)) for Glossary:
+			--* after information end has been selected, information will be stored via ((InformationMediator#setInformationBoundaries)) > ((InformationMediator#addReferenceInformation)) for Reference Information, or ((Glossary#addInformation)) for Glossary:
 			callback = function()
 				local hotkey = name == _("Glossary") and "Shift+G" or "Shift+R"
 				self.information_boundaries = {
@@ -98,7 +99,7 @@ function InformationCollector:confirmAddInformationAfterExpansion(parent, inform
 	return true
 end
 
-function InformationCollector:addReferenceInformation(information_boundaries)
+function InformationMediator:addReferenceInformation(information_boundaries)
 
 	local information, css_files = KOR.document:getHTMLFromXPointers(information_boundaries[1], information_boundaries[2])
 	local information_text = KOR.document:getTextFromXPointers(information_boundaries[1], information_boundaries[2])
@@ -115,19 +116,14 @@ function InformationCollector:addReferenceInformation(information_boundaries)
 	})
 end
 
-function InformationCollector:closeContentTypeChoiceDialog()
+function InformationMediator:closeContentTypeChoiceDialog()
 	UIManager:close(self.save_information_format_choice_dialog)
 	self.information_boundaries = nil
 end
 
-function InformationCollector:closeViewer()
-	UIManager:close(self.viewer_instance)
-	self.viewer_instance = nil
-end
-
 --- @param parent ReaderHighlight
 --- @return boolean To let ReaderHighlight know whether text boundaries selection mode is active or not
-function InformationCollector:setInformationBoundaries(parent)
+function InformationMediator:setInformationBoundaries(parent)
 	if not self.information_boundaries then
 		return false
 	end
@@ -153,4 +149,60 @@ function InformationCollector:setInformationBoundaries(parent)
 	return true
 end
 
-return InformationCollector
+function InformationMediator:showAlternativeViewer(information_type, information, glossary)
+	if has_content(information) then
+		return false
+	end
+
+	local glossary_called = information_type == _("glossary")
+
+	--* show Reference Information instead of missing Glossary:
+	if glossary_called and KOR.referenceinformation.current_ebook_reference_information then
+		KOR.messages:notify(T(_("no glossary available %1 show reference-info"), KOR.icons.arrow_bare), 4)
+		KOR.referenceinformation:show()
+
+	--* show Glossary instead of missing Reference Information:
+	elseif not glossary_called and not KOR.referenceinformation and has_content(glossary) then
+		KOR.messages:notify(T(_("no reference-info available %1 show glossary"), KOR.icons.arrow_bare), 4)
+		KOR.glossary:showViewer()
+
+	--* show reference types information:
+	else
+		local active_tab = glossary_called and 1 or 2
+		DX.i:showReferenceInformation(active_tab)
+	end
+
+	return true
+end
+
+function InformationMediator:closeViewerInstance()
+	UIManager:close(self.viewer_instance)
+	self.viewer_instance = nil
+end
+
+function InformationMediator:eraseInformation(is_tabbed, target)
+	KOR.dialogs:confirm(T(_("Do you indeed want to erase the %1?"), target), function()
+		self:closeViewerInstance()
+
+		local erase_glossary = target == _("Glossary")
+
+		if not is_tabbed and erase_glossary then
+			KOR.glossary:erase()
+			return
+		elseif not is_tabbed then
+			KOR.referenceinformation:erase()
+			return
+		end
+
+		--* there will still be one remaining information tab, so when erasing Glossary show Reference Information and vice versa:
+		if erase_glossary then
+			KOR.glossary:erase()
+			KOR.referenceinformation:show()
+		else
+			KOR.referenceinformation:erase()
+			KOR.glossary:showViewer()
+		end
+	end)
+end
+
+return InformationMediator
