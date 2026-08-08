@@ -132,6 +132,7 @@ end
 
 --* see ((DIALOGS))
 --* compare ((niceAlert)) for plain text message windows:
+--! font-size for information in htmlBoxes can be determined by XraySettings.((html_box_font_size)):
 function Dialogs:htmlBox(args)
 
     --* args/config.window_size can be: "fullscreen", "max", "large", "medium" or "small", or a table with props h and w:
@@ -171,6 +172,7 @@ end
 
 --* see ((DIALOGS))
 --* compare ((textBoxTabbed)):
+--! font-size for information in htmlBoxes can be determined by XraySettings.((html_box_font_size)):
 function Dialogs:htmlBoxTabbed(active_tab, args)
 
     --* args.name is the name of the tabbed dialog:

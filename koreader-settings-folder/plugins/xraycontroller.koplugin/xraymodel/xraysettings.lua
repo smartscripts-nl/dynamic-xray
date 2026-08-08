@@ -124,6 +124,12 @@ local XraySettings = WidgetContainer:new{
             explanation = _("This determines the size of the plus-icons in the ReaderHighlight text selection popup menu."),
             locked = 0,
         },
+        -- #((html_box_font_size))
+        html_box_font_size = {
+            value = "100%",
+            explanation = _("This determines the font-size of information in viewers which is presented in HTML-format. E.g. handy to set a lower font-size percentage when the information in a HTML table doesn't fit really well in the dialog."),
+            locked = 0,
+        },
         icons_dont_force_ratio = {
             value = true,
             explanation = _("Set this to true if your e-reader has problems displaying the DX icons. Hopefully this fixes that problem."),
@@ -379,6 +385,17 @@ local XraySettings = WidgetContainer:new{
         "2. " .. _("hotkeys"),
         "3. " .. _("system"),
     },
+    value_correctors = {
+        html_box_font_size = function(value)
+            value = value:gsub(" ", "")
+            if value:match("^%d+$") then
+                return value .. "%"
+            elseif not value:match("%d") then
+                return "100%"
+            end
+            return value
+        end,
+    },
     after_change_callbacks = {
         reload_page_navigator = function()
             DX.pn:reloadPageNavigator()
@@ -504,7 +521,8 @@ function XraySettings:saveSetting(key, value)
         KOR.dialogs:closeAllOverlays()
     end
     local self = DX.s
-    self.settings_manager:saveSetting(key, value)
+    --* return (corrected) value:
+    return self.settings_manager:saveSetting(key, value)
 end
 
 return XraySettings

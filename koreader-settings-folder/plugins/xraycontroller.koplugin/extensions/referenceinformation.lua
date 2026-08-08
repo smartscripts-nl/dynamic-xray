@@ -111,6 +111,13 @@ function ReferenceInformation:show()
 		return KOR.informationcollector:confirmAddInformationFromScratch("reference_information")
 	end
 
+	KOR.dialogsqueue:register({
+		id = "show_reference_information",
+		restore = function()
+			self:show()
+		end,
+	})
+
 	local information = self.current_ebook_reference_information
 
 	local css = information:match("<style>([^>]+)</style>")

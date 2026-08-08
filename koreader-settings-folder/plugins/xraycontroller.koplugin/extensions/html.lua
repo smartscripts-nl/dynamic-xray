@@ -5,6 +5,7 @@ local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local util = require("util")
 
+local DX = DX
 local G_reader_settings = G_reader_settings
 local has_no_text = has_no_text
 local table = table
@@ -207,6 +208,7 @@ function Html:getHtmlBoxCss(additional_css)
             margin: 0;
             line-height: 1.3;
             ]] .. css_justify .. [[
+            font-size: ]] .. DX.s.html_box_font_size .. [[ !important;
         }
 
         div.redhat, div.redhat * {

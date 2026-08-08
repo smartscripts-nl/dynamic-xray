@@ -2203,6 +2203,11 @@ function XrayButtons:forReferenceInfoTopLeft(parent, is_tabbed)
                 end)
             end,
         }),
+        KOR.buttoninfopopup:forXraySettings({
+            callback = function()
+                DX.s.showSettingsManager()
+            end
+        }),
     }
 end
 

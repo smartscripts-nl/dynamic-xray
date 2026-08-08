@@ -432,7 +432,8 @@ function SettingsManager:handleNewValue(new_value, key, current_nr, itype)
         KOR.messages:notify(_("you entered an invalid value..."), 4)
         return
     end
-    self:saveSetting(key, new_value)
+    --* new_value might have been adapted by a value_corrector:
+    new_value = self:saveSetting(key, new_value)
     self:changeMenuSetting(key, new_value, current_nr)
     KOR.messages:notify(key .. _(" modified to ") .. tostring(new_value), 4)
     self:handleAfterChangeCallback(key, new_value)
@@ -465,6 +466,9 @@ end
 
 --- @private
 function SettingsManager:saveSetting(key, value)
+    if self.parent.value_correctors and self.parent.value_correctors[key] then
+        value = self.parent.value_correctors[key](value)
+    end
     self.parent[key] = value
     self.settings[key].value = value
     self:saveSettings()
@@ -486,6 +490,9 @@ function SettingsManager:saveSetting(key, value)
     --* this method can be called externally, so we need to re-setup:
     self.settings_for_menu = {}
     self:setUp()
+
+    --* because value might have been corrected by a value_corrector:
+    return value
 end
 
 --- @private
