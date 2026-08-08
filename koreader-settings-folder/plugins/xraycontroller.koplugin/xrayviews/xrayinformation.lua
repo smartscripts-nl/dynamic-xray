@@ -84,13 +84,17 @@ function XrayInformation:showReferenceInformation(initial_tab)
 <li>Each of the items therein must have its own separate line.</li>
 <li>The item names must always be the first words on their respective lines.</li>
 </ul>
-<p class="heading">Gesture</p><p class="noindent">You can define a gesture to quickly call the Glossary. To do so, choose the callback <em>Show Glossary</em> under the Dispatcher section <em>Reader</em>.</p>]]),
+<p class="heading">Gesture</p><p class="noindent">You can define a gesture to quickly call the Glossary. To do so, choose the callback <em>Show Glossary</em> under the Dispatcher section <em>Reader</em>.</p>
+<p class="heading">Hotkey for the viewer</p>
+<p class="noindent">Shift+G</p>]]),
             },
             {
                 --* event handler: ((event handler for Reference Information)):
                 tab = _("Reference Information"),
                 html = _([[<p class="top-block">Via the index icon in the PageNavigator popup menu you can save Xray Reference Information.</p><p class="next-block">This can for example be very handy to save timeline information as given in an e-book.</p><p class="next-block">Because this information can optionally be saved as HTML, even saving and viewing HTML tables is possible...</p>
-<p class="heading">Gesture</p><p class="noindent">You can define a gesture to view the Xray Reference Information outside of Page Navigator. To do so, choose the callback <em>Xray Reference Information: show/add</em> under the Dispatcher section <em>Reader</em>.</p>]]),
+<p class="heading">Gesture</p><p class="noindent">You can define a gesture to view the Xray Reference Information outside of Page Navigator. To do so, choose the callback <em>Xray Reference Information: show/add</em> under the Dispatcher section <em>Reader</em>.</p>
+<p class="heading">Hotkey for the viewer</p>
+<p class="noindent">Shift+R</p>]]),
             }
         },
     })
