@@ -64,7 +64,6 @@ function Glossary:erase()
     KOR.ui.doc_settings:flush()
     KOR.ui.doc_settings.glossary = nil
 
-    KOR.informationmediator:closeViewerInstance()
     KOR.messages:notify(_("glossary has been erased"))
 end
 
@@ -202,7 +201,7 @@ end
 --* compare ((ReferenceInformation#show))
 function Glossary:showViewer()
     local glossary = self:get()
-    if KOR.informationmediator:showAlternativeViewer(_("glossary"), glossary) then
+    if KOR.informationmediator:showAlternativeViewer("TYPE_GLOSSARY", glossary) then
         return true
     end
 

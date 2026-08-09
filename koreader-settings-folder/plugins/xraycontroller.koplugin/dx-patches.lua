@@ -742,7 +742,7 @@ ReaderHighlight.init = function(self)
                 text = " " .. tr("add to Glossary"),
             },
             callback = function()
-                KOR.informationmediator:confirmAddInformationAfterExpansion(this, "glossary")
+                KOR.informationmediator:confirmAddInformationAfterExpansion(this, "TYPE_GLOSSARY")
             end,
         }
     end)
@@ -754,7 +754,7 @@ ReaderHighlight.init = function(self)
                 text = " " .. tr("add to Reference Info"),
             },
             callback = function()
-                KOR.informationmediator:confirmAddInformationAfterExpansion(this, "reference_information")
+                KOR.informationmediator:confirmAddInformationAfterExpansion(this, "TYPE_REFERENCE_INFORMATION")
             end,
         }
     end)

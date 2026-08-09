@@ -18,18 +18,24 @@ local table_insert = table.insert
 local InformationMediator = WidgetContainer:extend{
 	information_boundaries = nil,
 	information_names = {
-		glossary = _("Glossary"),
-		reference_information = _("Reference Information"),
+		_("Glossary"),
+		_("Reference Information"),
 	},
 	information_start = nil,
 	--* either "reference_information" or "glossary":
 	information_type = nil,
 	save_information_format_choice_dialog = nil,
+	TYPE_GLOSSARY = 1,
+	TYPE_REFERENCE_INFORMATION = 2,
 	--* will refer either to the Glossary Viewer or the Reference Information Viewer:
 	viewer_instance = nil,
 }
 
+--* called from the Page Navigator popup menu:
+--* compare ((InformationMediator#confirmAddInformationAfterExpansion))
+--- @param information_type string "TYPE_GLOSSARY" or "TYPE_REFERENCE_INFORMATION"
 function InformationMediator:confirmAddInformationFromScratch(information_type)
+	information_type = self:getNumericalTypeValue(information_type)
 	self.information_type = information_type
 	local name = self.information_names[information_type]
 	KOR.dialogs:confirm(_("Do you indeed want to save the text to be selected as the") .. "\n\n" .. name .. "\n\n" .. _("for the current e-book?"), function()
@@ -43,10 +49,14 @@ function InformationMediator:confirmAddInformationFromScratch(information_type)
 end
 
 --* this will be called from the ReaderHighlight popup for a new text selection:
+--* compare ((InformationMediator#confirmAddInformationFromScratch)):
 --- @param parent ReaderHighlight
+--- @param information_type string "TYPE_GLOSSARY" or "TYPE_REFERENCE_INFORMATION"
 function InformationMediator:confirmAddInformationAfterExpansion(parent, information_type)
-	self.information_type = information_type
-	local name = self.information_names[information_type]
+
+	self.information_type = self:getNumericalTypeValue(information_type)
+
+	local name = self.information_names[self.information_type]
 
 	UIManager:close(parent.highlight_dialog)
 	parent.highlight_dialog = nil
@@ -66,7 +76,8 @@ function InformationMediator:confirmAddInformationAfterExpansion(parent, informa
 		{
 			text = _("save now"),
 			callback = function()
-				if information_type == "reference_information" then
+				--* self.information_type was set at start of current method:
+				if self.information_type == self.TYPE_REFERENCE_INFORMATION then
 					--* Reference Info will be saved in ((InformationMediator#setInformationBoundaries)) and there will also be shown the Reference Info Viewer:
 					self:addReferenceInformation({
 						parent.selected_text.pos0,
@@ -105,13 +116,13 @@ function InformationMediator:addReferenceInformation(information_boundaries)
 	local information_text = KOR.document:getTextFromXPointers(information_boundaries[1], information_boundaries[2])
 	self.information_boundaries = {}
 	if has_no_text(information) then
-		KOR.messages:notify("er ging iets mis tijdens de tekstselectie")
+		KOR.messages:notify(_("something went wrong during text-selection"))
 		self.information_boundaries = nil
 		return
 	end
 
 	local sample = information_text:sub(1, 250) .. KOR.strings.ellipsis
-	self.save_information_format_choice_dialog = KOR.dialogs:niceAlert(_("Save Reference Information"), _("You can save the information either as HTML, or as text.\n\n* Advantage of HTML: looks nicer and is better readable.\n* Advantage of text: searchable.\n\nSTART OF SELECTED TEXT:") .. "\n\n" .. sample, {
+	self.save_information_format_choice_dialog = KOR.dialogs:niceAlert(_("Save Reference Information"), _("You can save the information either as HTML, or as text.\n\n* Advantage of HTML: may look nicer and be better readable.\n* Advantage of text: searchable.\n\nSTART OF SELECTED TEXT:") .. "\n\n" .. sample, {
 		buttons = DX.b:forSaveReferenceInformation(information, information_text, css_files)
 	})
 end
@@ -138,7 +149,9 @@ function InformationMediator:setInformationBoundaries(parent)
 
 	--* when the starting boundary has already been defined:
 	table_insert(self.information_boundaries, parent.selected_text.pos1)
-	if self.information_type == "reference_information" then
+
+	--* self.information_type was set at start of ((InformationMediator#confirmAddInformationAfterExpansion)):
+	if self.information_type == self.TYPE_REFERENCE_INFORMATION then
 		self:addReferenceInformation(self.information_boundaries)
 	else
 		KOR.glossary:addInformation(parent:getSelectionText(self.information_boundaries[1], self.information_boundaries[2]))
@@ -146,15 +159,19 @@ function InformationMediator:setInformationBoundaries(parent)
 	end
 	parent:clear()
 
+	--! reset the information_boundaries, so we won't add the same text over and over again:
+	self.information_boundaries = nil
+
 	return true
 end
 
+--- @param information_type string "TYPE_GLOSSARY" or "TYPE_REFERENCE_INFORMATION"
 function InformationMediator:showAlternativeViewer(information_type, information, glossary)
 	if has_content(information) then
 		return false
 	end
-
-	local glossary_called = information_type == _("glossary")
+	information_type = self:getNumericalTypeValue(information_type)
+	local glossary_called = information_type == self.TYPE_GLOSSARY
 
 	--* show Reference Information instead of missing Glossary:
 	if glossary_called and KOR.referenceinformation.current_ebook_reference_information then
@@ -162,7 +179,7 @@ function InformationMediator:showAlternativeViewer(information_type, information
 		KOR.referenceinformation:show()
 
 	--* show Glossary instead of missing Reference Information:
-	elseif not glossary_called and not KOR.referenceinformation and has_content(glossary) then
+	elseif information_type == self.TYPE_REFERENCE_INFORMATION and not KOR.referenceinformation and has_content(glossary) then
 		KOR.messages:notify(T(_("no reference-info available %1 show glossary"), KOR.icons.arrow_bare), 4)
 		KOR.glossary:showViewer()
 
@@ -181,11 +198,14 @@ function InformationMediator:closeViewerInstance()
 end
 
 function InformationMediator:eraseInformation(is_tabbed, target)
-	KOR.dialogs:confirm(T(_("Do you indeed want to erase the %1?"), target), function()
+
+	local name = self.information_names[target]
+	KOR.dialogs:confirm(T(_("Do you indeed want to erase the %1?"), name), function()
+
 		self:closeViewerInstance()
+		local erase_glossary = target == self.TYPE_GLOSSARY
 
-		local erase_glossary = target == _("Glossary")
-
+		--* if there was no second type with other reference information, erase the information and don't open dialog again:
 		if not is_tabbed and erase_glossary then
 			KOR.glossary:erase()
 			return
@@ -203,6 +223,23 @@ function InformationMediator:eraseInformation(is_tabbed, target)
 			KOR.glossary:showViewer()
 		end
 	end)
+end
+
+--- @private
+--- @param information_type string "TYPE_GLOSSARY" or "TYPE_REFERENCE_INFORMATION" =>  self.TYPE_GLOSSARY: 1, or self.TYPE_REFERENCE_INFORMATION: 2
+--- @return number
+function InformationMediator:getNumericalTypeValue(information_type)
+	return self[information_type]
+end
+
+--- @param default_target string "TYPE_GLOSSARY" or "TYPE_REFERENCE_INFORMATION"
+function InformationMediator:getViewerTargetTypeToBeErased(is_tabbed, default_target)
+	default_target = self:getNumericalTypeValue(default_target)
+	return not is_tabbed and default_target or KOR.dialogs.active_tab_name == _("glossary")
+		and
+		self.TYPE_GLOSSARY
+		or
+		self.TYPE_REFERENCE_INFORMATION
 end
 
 return InformationMediator

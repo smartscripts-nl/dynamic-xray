@@ -39,7 +39,6 @@ function ReferenceInformation:erase()
 	conn = KOR.databases:closeConnections(conn)
 	self.current_ebook_reference_information = nil
 
-	KOR.informationmediator:closeViewerInstance()
 	KOR.messages:notify(_("reference information has been erased"))
 end
 
@@ -102,7 +101,7 @@ end
 --* compare ((Glossary#showViewer)):
 function ReferenceInformation:show()
 	local glossary = KOR.glossary:get()
-	if KOR.informationmediator:showAlternativeViewer(_("reference-information"), self.current_ebook_reference_information, glossary) then
+	if KOR.informationmediator:showAlternativeViewer("TYPE_REFERENCE_INFORMATION", self.current_ebook_reference_information, glossary) then
 		return true
 	end
 

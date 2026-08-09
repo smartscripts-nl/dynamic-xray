@@ -424,7 +424,7 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
             hold_callback = function()
                 parent:closePopupMenu()
                 parent:closePageNavigator()
-                return KOR.informationmediator:confirmAddInformationFromScratch("reference_information")
+                return KOR.informationmediator:confirmAddInformationFromScratch("TYPE_REFERENCE_INFORMATION")
             end,
         }),
         series_manager_button,
@@ -2126,6 +2126,7 @@ end
 --* compare ((XrayButtons#forReferenceInfoTopLeft)):
 --- @param parent Glossary
 function XrayButtons:forGlossaryViewerTopLeft(parent, is_tabbed)
+    local target = KOR.informationmediator:getViewerTargetTypeToBeErased(is_tabbed, "TYPE_GLOSSARY")
     return {
         {
             icon = "info-slender",
@@ -2135,11 +2136,9 @@ function XrayButtons:forGlossaryViewerTopLeft(parent, is_tabbed)
         },
         KOR.buttoninfopopup:forInformationEraser({
             info_func = function()
-                local target = self:getTargetNameToBeErased(is_tabbed, _("Glossary"))
                 return T(_("dustbin icon | Remove the %1.\n\nYou will first be asked to confirm this action."), target)
             end,
             callback = function()
-                local target = self:getTargetNameToBeErased(is_tabbed, _("Glossary"))
                 KOR.informationmediator:eraseInformation(is_tabbed, target)
             end,
         }),
@@ -2154,6 +2153,7 @@ end
 
 --* compare ((XrayButtons#forGlossaryViewerTopLeft)):
 function XrayButtons:forReferenceInfoTopLeft(is_tabbed)
+    local target = KOR.informationmediator:getViewerTargetTypeToBeErased(is_tabbed, "TYPE_REFERENCE_INFORMATION")
     return {
         {
             icon = "info-slender",
@@ -2163,12 +2163,9 @@ function XrayButtons:forReferenceInfoTopLeft(is_tabbed)
         },
         KOR.buttoninfopopup:forInformationEraser({
             info_func = function()
-                local target = self:getTargetNameToBeErased(is_tabbed, _("Reference Information"))
                 return T(_("dustbin icon | Remove the %1.\n\nYou will first be asked to confirm this action."), target)
             end,
             callback = function()
-
-                local target = self:getTargetNameToBeErased(is_tabbed, _("Reference Information"))
                 KOR.informationmediator:eraseInformation(is_tabbed, target)
             end,
         }),
@@ -2286,11 +2283,6 @@ function XrayButtons:unfocusXrayButton()
         xray_type_button[1].background = xray_type_button[1].background:invert()
     end
     xray_type_button:refresh()
-end
-
---- @private
-function XrayButtons:getTargetNameToBeErased(is_tabbed, default_target)
-    return not is_tabbed and default_target or KOR.dialogs.active_tab_name == _("glossary") and _("Glossary") or _("Reference Information")
 end
 
 return XrayButtons
