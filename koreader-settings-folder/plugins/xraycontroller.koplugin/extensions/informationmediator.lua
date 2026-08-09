@@ -27,8 +27,6 @@ local InformationMediator = WidgetContainer:extend{
 	save_information_format_choice_dialog = nil,
 	TYPE_GLOSSARY = 1,
 	TYPE_REFERENCE_INFORMATION = 2,
-	--* will refer either to the Glossary Viewer or the Reference Information Viewer:
-	viewer_instance = nil,
 }
 
 --* called from the Page Navigator popup menu:
@@ -193,8 +191,8 @@ function InformationMediator:showAlternativeViewer(information_type, information
 end
 
 function InformationMediator:closeViewerInstance()
-	UIManager:close(self.viewer_instance)
-	self.viewer_instance = nil
+	UIManager:close(KOR.dialogs.last_dialog_instance)
+	KOR.dialogs.last_dialog_instance = nil
 end
 
 function InformationMediator:eraseInformation(is_tabbed, target)

@@ -211,7 +211,7 @@ function Glossary:showViewer()
     --* if Reference Information available, show that in a second tab:
     --* compare showing Reference Information first and Glossary in second tab in ((ReferenceInformation#show)):
     if is_tabbed then
-        KOR.informationmediator.viewer_instance = KOR.dialogs:htmlBoxTabbed(1, {
+        KOR.dialogs:htmlBoxTabbed(1, {
             title = _("Glossary + Xray Reference Information"),
             tabs = {
                 {
@@ -230,7 +230,7 @@ function Glossary:showViewer()
         return true
     end
 
-    KOR.informationmediator.viewer_instance = KOR.dialogs:htmlBox({
+    KOR.dialogs:htmlBox({
         title = _("Glossary"),
         html = self:getHtmlList(glossary),
         top_buttons_left = buttons,

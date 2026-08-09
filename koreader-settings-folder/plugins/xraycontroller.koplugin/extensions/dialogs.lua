@@ -32,6 +32,7 @@ local count
 local Dialogs = WidgetContainer:extend{
     active_tab = 1,
     active_tab_name = nil,
+    last_dialog_instance = nil,
     overlay = nil,
     tabbed_htmlbox = nil,
     tabbed_textbox = nil,
@@ -166,6 +167,8 @@ function Dialogs:htmlBox(args)
     if not args.tabs then
         self:registerWidget(box)
     end
+
+    self.last_dialog_instance = box
 
     return box
 end
@@ -514,6 +517,8 @@ function Dialogs:textBox(args)
     if external_search_string then
         textviewer:findCallback(nil, external_search_string)
     end
+
+    self.last_dialog_instance = textviewer
 
     --* return the instance, so we can close it
     --* from a custom button table:
