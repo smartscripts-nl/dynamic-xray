@@ -189,6 +189,7 @@ function Dialogs:htmlBoxTabbed(active_tab, args)
 
     --? strangely enough after tapping on a tab args is not the original args anymore, but extended with additional props, e.g. entry [1]; these args probably point to the widget instead; see e.g. call from ((calling parent method from tab)):
     KOR.tabfactory:setTabButtonAndContent(self, "htmlBoxTabbed", active_tab, args)
+    args.has_tabs = true
 
     --* in most cases make the tab fullscreen:
     if not args.no_fullscreen and not args.window_size == "max" then
@@ -546,6 +547,7 @@ function Dialogs:textBoxTabbed(active_tab, args)
 
     --? strangely enough after tapping on a tab args is not the original args anymore, but extended with additional props, e.g. entry [1]; these args probably point to the widget instead; see e.g. call from ((calling parent method from tab)):
     KOR.tabfactory:setTabButtonAndContent(self, "textBoxTabbed", active_tab, args)
+    args.has_tabs = true
 
     --! in case of "info" factory functions in args.tabs, here now a prop "info" (having generated content!) will have been added to args; also a title_tab_callbacks prop will be added, which is used to display the tab buttons in the TitleBar:
     self.tabbed_textbox = self:textBox(args)

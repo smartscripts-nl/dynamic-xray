@@ -145,6 +145,7 @@ local TitleBar = OverlapGroup:extend{
     has_top_buttons_right = false,
     has_only_close_button_on_right_side = false,
 
+    parent_has_tabs = false,
     tab_buttons_left_top_padding = nil,
 
     titlebar_inverted = false,
@@ -798,6 +799,9 @@ function TitleBar:addCloseButton()
             --* only a dialog registered in DialogsQueue may reset the dialogs queue:
             if self.dialog_queue_id then
                 KOR.dialogsqueue:reset()
+            end
+            if self.parent_has_tabs then
+                UIManager:close(KOR.dialogs.last_dialog_instance)
             end
             self.close_callback()
         end,

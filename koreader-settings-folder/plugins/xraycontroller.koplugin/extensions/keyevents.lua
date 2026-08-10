@@ -315,7 +315,7 @@ function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
             label = "delete_for_book",
             hotkey = { { "D" } },
             callback = function()
-                parent:showDeleteItemConfirmation(DX.vd.current_item, parent.item_viewer)
+                parent:showDeleteItemConfirmation(DX.vd.current_item, KOR.dialogs.last_dialog_instance)
                 return true
             end,
         },
@@ -323,7 +323,7 @@ function KeyEvents.addHotkeysForXrayItemViewer(key_events_module)
             label = "delete_for_series",
             hotkey = { { "Shift", { "D" } } },
             callback = function()
-                parent:showDeleteItemConfirmation(DX.vd.current_item, parent.item_viewer, "remove_all_instances_in_series")
+                parent:showDeleteItemConfirmation(DX.vd.current_item, KOR.dialogs.last_dialog_instance, "remove_all_instances_in_series")
                 return true
             end,
         },

@@ -59,7 +59,6 @@ local XrayDialogs = WidgetContainer:new{
     key_events = {},
     items_per_page = G_reader_settings:readSetting("items_per_page") or 14,
     item_requested = nil,
-    item_viewer = nil,
     list_args = nil,
     list_is_opened = false,
     needle_name_for_list_page = "",
@@ -300,9 +299,10 @@ function XrayDialogs:showMultipleBookSeriesActionResult(args)
     return true
 end
 
+--* for the Xray Item Viewer:
 function XrayDialogs:showDeleteItemConfirmation(delete_item, dialog, remove_all_instances_in_series)
     if not dialog then
-        dialog = self.item_viewer
+        dialog = KOR.dialogs.last_dialog_instance
     end
 
     local target = remove_all_instances_in_series and _("for the entire series?") or _("for the current book?")
@@ -1065,7 +1065,7 @@ function XrayDialogs:showItemViewer(needle_item, props)
 
     --* the Registry var will only be set when called from ((XrayController#showQuotesManager)) and we want to go immediately to the quotes tab:
     local active_tab = KOR.registry:getOnce("active_tab") or 1
-    self.item_viewer = KOR.dialogs:htmlBoxTabbed(active_tab, {
+    KOR.dialogs:htmlBoxTabbed(active_tab, {
         title = title,
         top_buttons_left = DX.b:forItemViewerTopLeft(self, needle_item),
         top_buttons_right = props.top_buttons_right,
@@ -1142,8 +1142,7 @@ function XrayDialogs:getItemProps(needle_item)
 end
 
 function XrayDialogs:closeItemViewer()
-    --? don't know why we need this to enforce closure, after browsing through Item Viewer tabs; UIManager:close(self.item_viewer) should work in that case, but doesn't:
-    KOR.dialogs:closeTopWidget()
+    UIManager:close(KOR.dialogs.last_dialog_instance)
 end
 
 function XrayDialogs:generateOccurrencesHistogram(item)

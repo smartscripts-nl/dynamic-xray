@@ -58,6 +58,7 @@ local HtmlBox = InputContainer:extend{
     frame_content_windowed = nil,
     fullscreen = false,
     has_items_editor = false,
+    has_tabs = false,
     height = nil,
     html = nil,
     --* for two column display of linked items in landscape display:
@@ -991,6 +992,7 @@ function HtmlBox:generateTitleBar()
         dialog_queue_id = self.dialog_queue_id,
         has_small_close_button_padding = true,
         align = self.title_alignment,
+        parent_has_tabs = self.has_tabs,
         show_parent = self,
         lang = self.lang_out,
         top_buttons_left = self.top_buttons_left,
