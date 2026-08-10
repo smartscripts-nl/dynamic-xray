@@ -16,6 +16,7 @@ local table_insert = table.insert
 
 --- @class InformationMediator
 local InformationMediator = WidgetContainer:extend{
+	css_files = nil,
 	information_boundaries = nil,
 	information_names = {
 		_("Glossary"),
@@ -110,7 +111,11 @@ end
 
 function InformationMediator:addReferenceInformation(information_boundaries)
 
-	local information, css_files = KOR.document:getHTMLFromXPointers(information_boundaries[1], information_boundaries[2])
+	--* html_flags 0xE830 and last argument true are needed to get ebook css_files:
+	local information
+	--* the css_files prop will be used when displaying the reference information, in ((ReferenceInformation#prepareHtmlAndCssForSaving)):
+	information, self.css_files = KOR.document:getHTMLFromXPointers(information_boundaries[1], information_boundaries[2], 0xE830, true)
+
 	local information_text = KOR.document:getTextFromXPointers(information_boundaries[1], information_boundaries[2])
 	self.information_boundaries = {}
 	if has_no_text(information) then
@@ -121,7 +126,7 @@ function InformationMediator:addReferenceInformation(information_boundaries)
 
 	local sample = information_text:sub(1, 250) .. KOR.strings.ellipsis
 	self.save_information_format_choice_dialog = KOR.dialogs:niceAlert(_("Save Reference Information"), _("You can save the information either as HTML, or as text.\n\n* Advantage of HTML: may look nicer and be better readable.\n* Advantage of text: searchable.\n\nSTART OF SELECTED TEXT:") .. "\n\n" .. sample, {
-		buttons = DX.b:forSaveReferenceInformation(information, information_text, css_files)
+		buttons = DX.b:forSaveReferenceInformation(information, information_text)
 	})
 end
 

@@ -791,7 +791,7 @@ function XrayButtons:forItemViewerTopRight(needle_item)
     }
 end
 
-function XrayButtons:forSaveReferenceInformation(reference_information, reference_information_text, css_files)
+function XrayButtons:forSaveReferenceInformation(reference_information, reference_information_text)
     return {{
          {
              icon = "back",
@@ -802,7 +802,7 @@ function XrayButtons:forSaveReferenceInformation(reference_information, referenc
          {
              text = _("HTML"),
              callback = function()
-                 KOR.referenceinformation:storeInformation(reference_information, "html", css_files)
+                 KOR.referenceinformation:storeInformation(reference_information, "html")
              end,
          },
          {

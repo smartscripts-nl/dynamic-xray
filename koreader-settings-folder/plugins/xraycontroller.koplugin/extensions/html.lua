@@ -193,7 +193,7 @@ function Html:formatHtmlLine(line, result)
     self.in_poetry = 0
 end
 
-function Html:getHtmlBoxCss(additional_css)
+function Html:getHtmlBoxCss(book_css)
     --* Using Noto Sans because Nimbus doesn't contain the IPA symbols.
     --* 'line-height: 1.3' to have it similar to textboxwidget,
     --* and follow user's choice on justification
@@ -205,10 +205,16 @@ function Html:getHtmlBoxCss(additional_css)
         }
 
         body {
-            margin: 0;
+            margin: 0 !important;
+            padding: 0 !important;
             line-height: 1.3;
             ]] .. css_justify .. [[
             font-size: ]] .. DX.s.html_box_font_size .. [[ !important;
+        }
+
+        body > :first-child, body > :first-child > :first-child {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
         }
 
         div.redhat, div.redhat * {
@@ -280,8 +286,8 @@ function Html:getHtmlBoxCss(additional_css)
     --* item numbers). Unfortunately, because we want this also for RTL, this space is
     --* wasted on the other side...
 
-    if additional_css then
-        return css .. additional_css
+    if book_css then
+        return css .. book_css
     end
     return css
 end

@@ -291,6 +291,10 @@ local XrayDataSaver = WidgetContainer:new{
         [[
             ALTER TABLE bookinfo RENAME COLUMN xray_reference_info TO reference_information;]],
 
+        --* update 18:
+        [[
+            ALTER TABLE bookinfo ADD COLUMN reference_information_css;]],
+
         --! when adding scheme modifations above, also add a scheme_verification_query below with the correct index!!
     },
     scheme_verification_queries = {
@@ -333,8 +337,11 @@ local XrayDataSaver = WidgetContainer:new{
         --* check update 16:
         { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'xray_reference_info';", 16 },
 
-        --* check update 16:
+        --* check update 17:
         { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'reference_information';", 17 },
+
+        --* check update 18:
+        { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'reference_information_css';", 18 },
     },
     scheme_version_name = "database_scheme_version",
 }
