@@ -137,20 +137,11 @@ function ReferenceInformation:show()
 	local is_tabbed = glossary
 	local buttons = DX.b:forReferenceInfoTopLeft(is_tabbed)
 
-	local css = self.current_ebook_reference_information_css
-	if css then
-		local ebook_stylesheet = KOR.ui.typeset.css
-		local book_css = KOR.files:fileGetContents(ebook_stylesheet)
-		if book_css then
-			css = css .. "\n" .. book_css
-		end
-	end
-
 	--* compare showing Glossary first and Reference Information in second tab in ((Glossary#showViewer)):
 	if is_tabbed then
 		KOR.dialogs:htmlBoxTabbed(1, {
 			title = _("Reference Information + Glossary"),
-			css = css,
+			is_reference_info = true,
 			tabs = {
 				-- #((reference info tab names))
 				{
@@ -173,7 +164,7 @@ function ReferenceInformation:show()
 		title = _("Reference Information"),
 		top_buttons_left = buttons,
 		fullscreen = true,
-		css = css,
+		is_reference_info = true,
 		content = self.current_ebook_reference_information,
 	})
 	return true

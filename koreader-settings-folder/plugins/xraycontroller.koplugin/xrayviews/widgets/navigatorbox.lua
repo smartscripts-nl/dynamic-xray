@@ -342,7 +342,7 @@ function NavigatorBox:generateScrollWidget()
     end
 
     if not self.expanded_css then
-        self.expanded_css = KOR.html:getHtmlBoxCss(self.css)
+        self.expanded_css = KOR.html:getHtmlWidgetCss()
     end
     self.html_widget = ScrollHtmlWidget:new{
         html_body = self.html,

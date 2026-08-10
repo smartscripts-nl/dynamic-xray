@@ -5,12 +5,12 @@ local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local util = require("util")
 
-local DX = DX
 local G_reader_settings = G_reader_settings
 local has_no_text = has_no_text
 local table = table
 local table_concat = table.concat
 local table_insert = table.insert
+local util_htmlToPlainTextIfHtml = util.htmlToPlainTextIfHtml
 
 local count
 local STATE_NORMAL = 0
@@ -35,7 +35,7 @@ local Html = WidgetContainer:extend{
 }
 
 function Html:htmlToPlainTextIfHtml(text)
-    return util.htmlToPlainTextIfHtml(text)
+    return util_htmlToPlainTextIfHtml(text)
 end
 
 function Html:plainTextListsPrettify(text)
@@ -193,7 +193,7 @@ function Html:formatHtmlLine(line, result)
     self.in_poetry = 0
 end
 
-function Html:getHtmlBoxCss(book_css)
+function Html:getHtmlWidgetCss(is_reference_info)
     --* Using Noto Sans because Nimbus doesn't contain the IPA symbols.
     --* 'line-height: 1.3' to have it similar to textboxwidget,
     --* and follow user's choice on justification
@@ -242,7 +242,7 @@ function Html:getHtmlBoxCss(book_css)
             text-align: center;
         }
 
-        h1 + p, h2 + p, h3 + p, h4 + p, p + p.chaptertitle, p.noindent, p.no-indent, p.whitespace + p, div.poezie p, div.noindent p, div.no-indent p, p + p.separator, p.heading, p.top-block, p.next-block {
+        h1 + p, h2 + p, h3 + p, h4 + p, p + p.chaptertitle, p.noindent, p.no-indent, p.whitespace + p, div.poezie p, div.noindent p, div.no-indent p, p + p.separator, p.heading, p.top-block, p.next-block, th p, td p {
             text-indent: 0 !important;
         }
 
@@ -286,8 +286,20 @@ function Html:getHtmlBoxCss(book_css)
     --* item numbers). Unfortunately, because we want this also for RTL, this space is
     --* wasted on the other side...
 
+    if not is_reference_info then
+        return css
+    end
+
+    --* if ((ReferenceInformation#show)) => HtmlBox.is_reference_info set to true > current arg is_reference_info is true:
+    local ebook_stylesheet = KOR.ui.typeset.css
+    local book_css = KOR.files:fileGetContents(ebook_stylesheet)
     if book_css then
-        return css .. book_css
+        --* for Reference Information force font-size to always 100%, so not dependent on DX.s.html_box_font_size:
+        return css .. "\n" .. book_css .. [[
+body {
+    font-size: 100% !important;
+}
+]]
     end
     return css
 end

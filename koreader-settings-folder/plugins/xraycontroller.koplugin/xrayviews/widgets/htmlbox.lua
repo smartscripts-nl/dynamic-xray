@@ -53,8 +53,6 @@ local HtmlBox = InputContainer:extend{
     content_padding = nil,
     --* this is the default, but some widgets can set the content_type to "text" for a specific tab; e.g. see ((XrayButtons#getItemViewerTabs)):
     content_type = "html",
-    --* see for HtmlBox CSS ((Html#getHtmlBoxCss)):
-    css = nil,
     dialog_queue_id = nil,
     frame_content_fullscreen = nil,
     frame_content_windowed = nil,
@@ -71,6 +69,7 @@ local HtmlBox = InputContainer:extend{
     html_widget2 = nil,
     html_widget3 = nil,
     is_duo_scroll_widget = false,
+    is_reference_info = false,
     is_three_scroll_widget = false,
     key_events_module = nil,
     left_side_buttons = nil,
@@ -266,7 +265,7 @@ function HtmlBox:generateHtmlScrollWidget()
 
     self.html_widget = ScrollHtmlWidget:new{
         html_body = self.html,
-        css = KOR.html:getHtmlBoxCss(self.css),
+        css = KOR.html:getHtmlWidgetCss(self.is_reference_info),
         default_font_size = Screen:scaleBySize(self.box_font_size),
         width = self.swidth,
         height = self.sheight,
