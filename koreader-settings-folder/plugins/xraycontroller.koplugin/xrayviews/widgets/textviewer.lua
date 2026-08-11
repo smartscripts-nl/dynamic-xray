@@ -90,7 +90,6 @@ local TextViewer = InputContainer:extend{
     auto_para_direction = true,
     back_button_inserted = false,
     block_height_adaptation = false,
-    box_font_size = 16,
     button_font_face = "cfont",
     button_font_size = 20,
     button_font_weight = "bold",
@@ -113,6 +112,7 @@ local TextViewer = InputContainer:extend{
     key_events_module = nil,
     extra_buttons = nil,
     extra_buttons_startpos = nil,
+    face = nil,
     fgcolor = KOR.colors.black,
     find_centered_lines_count = 5, --* line with find results to be not far from the center
     fixed_face = nil,
@@ -587,20 +587,21 @@ function TextViewer:applyOverflowCorrections()
     return false
 end
 
+--! this method will only be called when content_type is set to "html":
 --- @private
 function TextViewer:generateHtmlScrollWidget(height)
     --! if the viewer has tabs with html content, the first tab MUST have plain text content, so self.dialog_height can be set in ((set TextViewer dialog height)):
     height = self.dialog_height or height
-    self.scroll_text_w = ScrollHtmlWidget:new {
+    self.scroll_text_w = ScrollHtmlWidget:new{
         html_body = self.text,
-        css = KOR.html:getHtmlBoxCss(),
-        default_font_size = Screen:scaleBySize(self.box_font_size),
+        css = KOR.html:getHtmlWidgetCss(),
+        default_font_size = Screen:scaleBySize(DX.s.textviewer_font_size),
         width = self.computed_width,
         height = height,
         dialog = self,
     }
-    self.textw = CenterContainer:new {
-        dimen = Geom:new {
+    self.textw = CenterContainer:new{
+        dimen = Geom:new{
             w = self.computed_width,
             h = height,
         },
@@ -1397,8 +1398,8 @@ function TextViewer:setFaceWidthLineHeight()
 
         self.text_padding = Screen:scaleBySize(50)
 
-        --* for non scrollable text always use Red Hat Text:
-        face = self.fixed_face or Font:getFace("x_smallinfofont")
+        --* for non scrollable text always use:
+        face = self.fixed_face or Font:getFace(DX.s.textviewer_font, DX.s.textviewer_font_size)
 
         factor = 0.5
         width = not self.text_padding_left_right and self.width - factor * self.text_padding - factor * self.text_margin or self.width - factor * self.text_padding_left_right - factor * self.text_margin
@@ -1410,8 +1411,8 @@ function TextViewer:setFaceWidthLineHeight()
 
         self.text_padding = Screen:scaleBySize(50)
 
-        --* for non scrollable text always use Red Hat Text:
-        face = self.fixed_face or Font:getFace("x_smallinfofont")
+        --* for non scrollable text always use:
+        face = self.fixed_face or Font:getFace(DX.s.textviewer_font, DX.s.textviewer_font_size)
         line_height = KOR.registry.line_height_red_hat_text
 
         factor = 0.5

@@ -124,7 +124,8 @@ local XraySettings = WidgetContainer:new{
             explanation = _("This determines the size of the plus-icons in the ReaderHighlight text selection popup menu."),
             locked = 0,
         },
-        -- #((html_box_font_size))
+        --* compare ((textviewer_font_size_setting)):
+        -- #((html_box_font_size_setting))
         html_box_font_size = {
             value = "100%",
             explanation = _("This determines the font-size of information in viewers which is presented in HTML-format. E.g. handy to set a lower font-size percentage when the information in a HTML table doesn't fit really well in the dialog."),
@@ -161,12 +162,6 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
         },
         --* IV stands for the Item Viewer:
-        IV_font_size = {
-            value = 17,
-            explanation = _("This variable determines the font size of the information in the Item Viewer dialog."),
-            locked = 0,
-            type = "number",
-        },
         IV_occurrences_histogram_height = {
             value = 30,
             validator = {
@@ -320,6 +315,24 @@ local XraySettings = WidgetContainer:new{
             value = 3,
             options = { 1, 2, 3 },
             explanation = _("This variable determines in how many columns columned texts will be displayed. Een example of this can be seen in the linked-items-tab in the Item Viewer."),
+            locked = 0,
+        },
+        textviewer_font = {
+            value = "scfont",
+            options = {
+                "scfont",
+                "x_smallinfofont",
+                "infofont",
+            },
+            explanation = _("This determines which font face which will be used in TextViewer instances with plain-text content. scfont Is a nice looking mono font-face (all characters of equal size)."),
+            locked = 0,
+        },
+        --* compare ((html_box_font_size_setting)):
+        -- #((textviewer_font_size_setting))
+        textviewer_font_size = {
+            value = 16,
+            explanation = _("This number determines the font-size of information in TextViewer instances with plain-text content."),
+            type = "number",
             locked = 0,
         },
         top_book_items_limit = {

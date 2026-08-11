@@ -2148,6 +2148,12 @@ function XrayButtons:forGlossaryViewerTopLeft(parent, is_tabbed)
                 parent:showEditor()
             end,
         }),
+        KOR.buttoninfopopup:forXraySettings({
+            callback = function()
+                KOR.informationmediator:closeViewerInstance()
+                DX.s.showSettingsManager()
+            end
+        }),
     }
 end
 

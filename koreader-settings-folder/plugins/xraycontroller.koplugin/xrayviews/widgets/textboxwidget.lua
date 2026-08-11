@@ -150,7 +150,7 @@ local TextBoxWidget = InputContainer:extend{
 
 function TextBoxWidget:init()
     if not self.face then
-        self.face = Font:getFace("cfont")
+        self.face = Font:getFace(DX.s.textviewer_font, DX.s.textviewer_font_size)
         self.bold = false
     end
     if not self._face_adjusted then
@@ -160,12 +160,6 @@ function TextBoxWidget:init()
         -- real bold font, and/or with tweaks so fallback fonts are rendered bold
         -- too, without affecting the regular self.face
         self.face, self.bold = Font:getAdjustedFace(self.face, self.bold)
-    end
-
-    -- force adapted font size for comments panel in book status widget:
---- @class DeviceSpecificFontSize
-    if DX.s.is_ubuntu then
-        self.face = Font:getFace("scfont", 16)
     end
 
     self.line_height_px = Math.round( (1 + self.line_height) * self.face.size )

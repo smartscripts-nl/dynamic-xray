@@ -523,7 +523,7 @@ end
 
 function Font:getFontFamily(family, fontsize)
     --* alas, this font cannot be loaded under Ubuntu, freezes KOReader:
-    if family == "redhat" then
+    if family == "redhat" or family == "Red Hat Text" then
         family = "x_smallinfofont"
     end
     local fontfamily

@@ -154,7 +154,7 @@ function Glossary:showEditor(glossary, scroll_to_text)
         title = title,
         input = glossary,
         input_hint = "",
-        input_face = Font:getFontFamily("Red Hat Text", 18),
+        input_face = Font:getFontFamily("x_smallinfofont", 14),
         para_direction_rtl = false,
         lang = "en",
         fullscreen = true,
@@ -205,6 +205,13 @@ function Glossary:showViewer()
         return true
     end
 
+    KOR.dialogsqueue:register({
+        id = "glossary_viewer",
+        restore = function()
+            self:showViewer()
+        end,
+    })
+
     local is_tabbed = KOR.referenceinformation.current_ebook_reference_information
     local buttons = DX.b:forGlossaryViewerTopLeft(self, is_tabbed)
 
@@ -213,9 +220,12 @@ function Glossary:showViewer()
     if is_tabbed then
         KOR.dialogs:htmlBoxTabbed(1, {
             title = _("Glossary + Xray Reference Information"),
+            is_reference_information_or_glossary = true,
             tabs = {
                 {
                     tab = _("glossary"),
+                    --* Glossary is saved as plain-text, but shown as HTML:
+                    content_type = "html",
                     html = self:getHtmlList(glossary),
                 },
                 {
@@ -233,6 +243,7 @@ function Glossary:showViewer()
     KOR.dialogs:htmlBox({
         title = _("Glossary"),
         html = self:getHtmlList(glossary),
+        is_reference_information_or_glossary = true,
         top_buttons_left = buttons,
         fullscreen = true,
     })
@@ -248,7 +259,7 @@ function Glossary:getHtmlList(glossary)
             lines[i] = "<li class='glossary'><strong>" .. lines[i] .. "</strong><br />"
             lines[i + 1] = lines[i + 1] .. "</li>"
         end
-        return "<ul>" .. table_concat(lines, "\n") .. "</ul>"
+        return "<body><html><ul>" .. table_concat(lines, "\n") .. "</ul></body></html>"
     end
 
     local separator = lines[1]:match(":") or lines[1]:match(" %-") or lines[1]:match("—") or lines[1]:match("–")
@@ -258,7 +269,7 @@ function Glossary:getHtmlList(glossary)
     for i = 1, count do
         lines[i] = lines[i]:gsub("^([^%" .. separator .. "]+)", "<li class='glossary'><strong>%1</strong>", 1) .. "</li>"
     end
-    return "<ul>" .. table_concat(lines, "\n") .. "</ul>"
+    return "<body><html><ul>" .. table_concat(lines, "\n") .. "</ul></body></html>"
 end
 
 function Glossary:getGlossaryEntryAsDictionaryEntry(tapped_word)

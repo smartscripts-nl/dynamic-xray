@@ -1074,7 +1074,7 @@ function XrayDialogs:showItemViewer(needle_item, props)
         --* in external items viewer mode don't generate chapter histogram:
         bottom_widget = not props.has_only_external_items and DX.s.IV_show_occurrences_histogram and self:generateOccurrencesHistogram(needle_item),
         window_size = "max",
-        box_font_size = DX.s.IV_font_size,
+        box_font_size = DX.s.textviewer_font_size,
         button_font_weight = "normal",
         --* htmlBox will always have a close_callback and therefor a close button; so no need to define a close_callback here...
         no_filter_button = true,

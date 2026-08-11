@@ -5,6 +5,7 @@ local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local util = require("util")
 
+local DX = DX
 local G_reader_settings = G_reader_settings
 local has_no_text = has_no_text
 local table = table
@@ -193,7 +194,7 @@ function Html:formatHtmlLine(line, result)
     self.in_poetry = 0
 end
 
-function Html:getHtmlWidgetCss(is_reference_info)
+function Html:getHtmlWidgetCss(is_reference_information_or_glossary)
     --* Using Noto Sans because Nimbus doesn't contain the IPA symbols.
     --* 'line-height: 1.3' to have it similar to textboxwidget,
     --* and follow user's choice on justification
@@ -209,6 +210,7 @@ function Html:getHtmlWidgetCss(is_reference_info)
             padding: 0 !important;
             line-height: 1.3;
             ]] .. css_justify .. [[
+
             font-size: ]] .. DX.s.html_box_font_size .. [[ !important;
         }
 
@@ -218,7 +220,7 @@ function Html:getHtmlWidgetCss(is_reference_info)
         }
 
         div.redhat, div.redhat * {
-            font-family: 'Red Hat Text' !important;
+            font-family: 'Noto Sans' !important;
         }
 
         blockquote, dd {
@@ -262,6 +264,8 @@ function Html:getHtmlWidgetCss(is_reference_info)
 
         li.glossary {
             margin-bottom: .2em;
+            /* this is a hotfix, don't know why the face of list-items in the Glossary is bigger then that of the Reference Information text: */
+            font-size: 85%;
         }
     ]]
     --* For reference, MuPDF declarations with absolute units:
@@ -286,22 +290,33 @@ function Html:getHtmlWidgetCss(is_reference_info)
     --* item numbers). Unfortunately, because we want this also for RTL, this space is
     --* wasted on the other side...
 
-    if not is_reference_info then
+    if not is_reference_information_or_glossary then
         return css
     end
 
-    --* if ((ReferenceInformation#show)) => HtmlBox.is_reference_info set to true > current arg is_reference_info is true:
-    local ebook_stylesheet = KOR.ui.typeset.css
-    local book_css = KOR.files:fileGetContents(ebook_stylesheet)
+    local book_css = self:getBookCss()
     if book_css then
-        --* for Reference Information force font-size to always 100%, so not dependent on DX.s.html_box_font_size:
-        return css .. "\n" .. book_css .. [[
-body {
-    font-size: 100% !important;
-}
-]]
+        return css .. "\n" .. book_css
     end
     return css
+end
+
+--- @private
+function Html:getBookCss()
+    local ebook_stylesheet = KOR.ui.typeset.css
+    local book_css = KOR.files:fileGetContents(ebook_stylesheet)
+    if not book_css then
+        return ""
+    end
+
+    --! in the context of HtmlBox and TextViewer instances the CRE css hints in html5.css would only lead to errors:
+    return book_css
+        --* the CRE hints etc. e.g. in html5.css imported here would trigger errors:
+        :gsub("@import url[^;]-;", "")
+        :gsub(":where[^}]+}", "")
+        :gsub("-cr-only-if:[^;]+;", "")
+        --* e.g. replaces @media (-cr-max-cre-dom-version: 20180527) at end of epub.css:
+        :gsub("@media.+$", "")
 end
 
 return Html

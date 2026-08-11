@@ -110,7 +110,6 @@ function HtmlWidget:init()
         }
     end
 
-    -- code below adapted from ((DictQuickLookup#init))
     local font_size = G_reader_settings:readSetting("dict_font_size") or 20
     local content_face = Font:getFace("cfont", font_size)
     local width = Screen:getWidth()
@@ -311,7 +310,7 @@ function HtmlWidget:getContextCss()
         }
 
         .redhat {
-            font-family: 'Red Hat Text' !important;
+            font-family: 'Noto Sans' !important;
         }
 
         blockquote, dd {

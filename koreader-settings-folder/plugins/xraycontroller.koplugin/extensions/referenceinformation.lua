@@ -141,7 +141,7 @@ function ReferenceInformation:show()
 	if is_tabbed then
 		KOR.dialogs:htmlBoxTabbed(1, {
 			title = _("Reference Information + Glossary"),
-			is_reference_info = true,
+			is_reference_information_or_glossary = true,
 			tabs = {
 				-- #((reference info tab names))
 				{
@@ -151,6 +151,8 @@ function ReferenceInformation:show()
 				},
 				{
 					tab = _("glossary"),
+					--* Glossary is saved as plain-text, but shown as HTML:
+					content_type = "html",
 					html = KOR.glossary:getHtmlList(glossary),
 				},
 			},
@@ -164,7 +166,7 @@ function ReferenceInformation:show()
 		title = _("Reference Information"),
 		top_buttons_left = buttons,
 		fullscreen = true,
-		is_reference_info = true,
+		is_reference_information_or_glossary = true,
 		content = self.current_ebook_reference_information,
 	})
 	return true
