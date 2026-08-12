@@ -16,7 +16,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 * DX has a Series Manager for listing the books in a series. The items in this Manager have action buttons, for viewing large covers, descriptions, reading progress, annotations count, opening the e-book, etc. An example of this manager can be seen in the last image under [Images](#images).
 * DX has a [Reference Information viewer](#reference-information-viewer), in which a user can quickly inspect background information as provided in the e-book. But without having to visit the corresponding section in the e-book.
 * DX also has a [Glossary viewer](#glossary-viewer), copied from the Glossary in the e-book. When the user longpresses a word in the e-book text which is in the Glossary, its explanation will be shown.
-* The [Image Bookmarks](https://github.com/bozo22/imagebookmarks.koplugin)-plugin is an ideal companion to DX's Glossary and Reference Information viewers.
+* Tip: the [ImageBookmarks](https://github.com/bozo22/imagebookmarks.koplugin)-plugin is an ideal companion to DX's Glossary and Reference Information viewers.
 
 ## Table of contents in this readme
 - [DX under Android](#dx-under-android)
@@ -166,7 +166,7 @@ use can store information loaded from the e-book. This might e.g. be timeline-in
 * If the information is contained in a HMTL list or table, the information can optionally be saved as such, for nicer presentation and better readability.
 * The user can add texts from the e-book to the Reference Information by highlighting their start and end.
 * The viewer can be called from the e-book with the hotkey Shift+R.
-* **TIP**: The [Image Bookmarks](https://github.com/bozo22/imagebookmarks.koplugin)-plugin by bozo22 is an ideal companion to DX's Glossary and Reference Information viewers. With this plugin you can save multiple favorite images from any book and quickly inspect them later on with a gesture. E.g. very handy for images containing maps for the book you are reading...!
+* **TIP**: The [ImageBookmarks](https://github.com/bozo22/imagebookmarks.koplugin)-plugin by bozo22 is an ideal companion to DX's Glossary and Reference Information viewers. With this plugin you can save multiple favorite images from any book and quickly inspect them later on with a gesture. E.g. very handy for images containing maps for the book you are reading...!
 
 #### Glossary viewer
 

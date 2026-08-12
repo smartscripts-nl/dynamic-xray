@@ -184,12 +184,25 @@ function PageTexts:setParagraphStart()
 end
 
 function PageTexts:computeElementStart(pos0_or_pos1)
+    pos0_or_pos1 = self:removeInlineElementsFromPos(pos0_or_pos1)
     --* compare substitutions in ((PageTexts#getHtmlElementIndex)):
     return pos0_or_pos1
         :gsub("%[%d+%]%.%d+$", "[1].0")
         :gsub("text%(%)%.%d+$", "text().0")
-        --* remove sub, sup, span and a like in /body/DocFragment[13]/body/section/section[1]/p[18]/sup[5]/a/text().0:
+end
+
+--- @private
+function PageTexts:removeInlineElementsFromPos(pos)
+    return pos
+        --* remove inline elements like in /body/DocFragment[13]/body/section/section[1]/p[18]/sup[5]/a/text().0:
         :gsub("/a/", "/")
+        :gsub("/span/", "/")
+        :gsub("/em/", "/")
+        :gsub("/strong/", "/")
+        :gsub("/su[bp]/", "/")
+        :gsub("/a%[%d+%]/", "/")
+        :gsub("/em%[%d+%]/", "/")
+        :gsub("/strong%[%d+%]/", "/")
         :gsub("/su[bp]%[%d+%]/", "/")
         :gsub("/span%[%d+%]/", "/")
 end
@@ -213,11 +226,9 @@ function PageTexts:getHtmlElementIndex(position)
     /body/DocFragment[13]/body/section/section[1]/p[18]/sup[5]/a/text().0
     ]]
 
-    position = position
+        position = self:removeInlineElementsFromPos(position)
+        position = position
         :gsub("^/body.+/body/", "", 1)
-        :gsub("/su[bp]%[%d+%]/", "/")
-        :gsub("/span%[%d+%]/", "/")
-        :gsub("/span/", "/")
         :gsub("/text%(%)%[%d+%]", "", 1)
         :gsub("/text%(%)", "", 1)
     --* previous replacements reduce above markers to:
