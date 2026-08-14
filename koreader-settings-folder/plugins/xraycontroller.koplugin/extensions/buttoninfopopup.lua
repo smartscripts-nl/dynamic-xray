@@ -740,7 +740,7 @@ function ButtonInfoPopup:forXrayTagGroupSelector(props)
 	}, props)
 end
 
-function ButtonInfoPopup:forXrayToggleFavoriteItem(props)
+function ButtonInfoPopup:forXrayToggleTagItem(props)
 	return ButtonProps:set({
 		--! icon, info, callback_label and callback defined by calling module
 	}, props)

@@ -785,17 +785,30 @@ function XrayButtons:forItemViewer(needle_item, called_from_list, tapped_word, b
 end
 
 function XrayButtons:forItemViewerTopRight(needle_item)
+
     local favorites_name = _("Favorites")
     local is_favorite = DX.ta:itemHasTag(needle_item, favorites_name)
+
+    local locations_name = _("Locations")
+    local is_location = DX.ta:itemHasTag(needle_item, locations_name)
+
     return {
-        KOR.buttoninfopopup:forXrayToggleFavoriteItem({
+        KOR.buttoninfopopup:forXrayToggleTagItem({
+            icon = is_location and "location-active" or "location",
+            info = is_location and T(_("location icon | Remove this item from tag-group \"%1\"."), locations_name) or T(_("location icon | Add this item to tag-group \"%1\"."), locations_name),
+            callback_label = is_location and _("remove") or _("add"),
+            callback = function()
+                DX.c:itemToggleLocationsTag(needle_item, locations_name, is_location)
+            end,
+        }),
+        KOR.buttoninfopopup:forXrayToggleTagItem({
             icon = is_favorite and "heart-black" or "heart",
-            info = is_favorite and _("heart icon | Remove this item from tag-group \"") .. favorites_name .. "\"" or _("heart icon | Add this item to tag-group \"") .. favorites_name .. "\"",
+            info = is_favorite and T(_("heart icon | Remove this item from tag-group \"%1\"."), favorites_name) or T(_("heart icon | Add this item to tag-group \"%1\"."), favorites_name),
             callback_label = is_favorite and _("remove") or _("add"),
             callback = function()
                 DX.c:itemToggleFavoritesTag(needle_item, favorites_name, is_favorite)
             end,
-        })
+        }),
     }
 end
 

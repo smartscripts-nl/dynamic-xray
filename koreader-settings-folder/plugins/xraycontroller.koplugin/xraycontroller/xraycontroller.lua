@@ -213,6 +213,22 @@ function XrayController:itemToggleFavoritesTag(item, favorites_name, is_favorite
     KOR.dialogsqueue:reloadLastDialog()
 end
 
+function XrayController:itemToggleLocationsTag(item, locations_name, is_location)
+    if is_location then
+        DX.ta:itemRemoveTag(item, locations_name)
+        KOR.messages:notify(_("item removed from tag-group") .. " " .. locations_name)
+    else
+        DX.ta:itemAddTag(item, locations_name)
+        KOR.messages:notify(_("item added to tag-group") .. " " .. locations_name)
+    end
+    DX.ds.storeUpdatedItem(item)
+    DX.vd:registerUpdatedItem(item)
+    DX.d:closeItemViewer()
+    DX.ta:resetTagGroups()
+    DX.m:updateAllTags()
+    KOR.dialogsqueue:reloadLastDialog()
+end
+
 function XrayController:listHasReloadOrDontShowRequest(focus_item, dont_show)
     --* if no hits found with a filter, all lists and filters have been reset and we restart the list:
     --* self.list_title is set in ((XrayDialogs#initListDialog)):

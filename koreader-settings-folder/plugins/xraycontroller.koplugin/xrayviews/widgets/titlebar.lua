@@ -168,7 +168,7 @@ function TitleBar:init()
     self:injectTabButtonsRight()
 
     self:setWidthIfMissing()
-    --* here also ((addCloseButtonRightSpacer)) is called:
+    --* here also ((addCloseButtonSpacers)) is called:
     self:injectTopButtonsGroups()
     self:setTopButtonsSizeAndCallbacks()
     self:injectSubMenuButtons()
@@ -448,7 +448,7 @@ end
 --* compare final injection in ((TitleBar#injectTopButtonsGroups))
 --- @private
 function TitleBar:setTopButtonsSizeAndCallbacks()
-    self.has_only_close_button = not self.no_close_button and not self.top_buttons_left and self.top_buttons_right and not self.tab_buttons_right and true or false
+    self.has_only_close_button = not self.no_close_button and not self.top_buttons_left and self.top_buttons_right and not self.tab_buttons_right
     local bcount
     if self.top_buttons_left then
         bcount = #self.top_buttons_left
@@ -735,12 +735,17 @@ function TitleBar:injectTabButtonsLeft()
 end
 
 --- @private
+function TitleBar:getRightButtonsSeparator()
+    return self.is_landscape_screen and HorizontalSpan:new{ width = self.title_h_padding } or HorizontalSpan:new{ width = self.title_h_padding_portrait }
+end
+
+--- @private
 function TitleBar:injectTabButtonsRight()
 
     --* button props were set in ((Button#addTitleBarTabButtonProps)):
     if self.tab_buttons_right then
         local button
-        local separator = self.is_landscape_screen and HorizontalSpan:new{ width = self.title_h_padding } or HorizontalSpan:new{ width = self.title_h_padding_portrait }
+        local separator = self:getRightButtonsSeparator()
         count = #self.tab_buttons_right
         for i = count, 1, -1 do
             button = self:instantiateButton(self.tab_buttons_right[i])
@@ -764,7 +769,7 @@ function TitleBar:injectTabButtonsRight()
     end
 end
 
---* see also ((addCloseButtonRightSpacer)):
+--* see also ((addCloseButtonSpacers)):
 --- @private
 function TitleBar:addCloseButton()
     if self.no_close_button or not self.close_callback or self.close_button_inserted then
@@ -903,7 +908,7 @@ function TitleBar:injectTopButtonsGroups()
 
             table_insert(self.right_buttons_container, button)
         end
-        self:addCloseButtonRightSpacer()
+        self:addCloseButtonSpacers()
         self.top_right_buttons_height = self.right_buttons_container:getSize().h
     end
 end
@@ -911,7 +916,7 @@ end
 --* see ((addCloseButton)):
 --* to add right margin for close button:
 --- @private
-function TitleBar:addCloseButtonRightSpacer()
+function TitleBar:addCloseButtonSpacers()
     local right_border_spacer
     if self.for_filemanager or self.has_small_close_button_padding then
         right_border_spacer = HorizontalSpan:new{ width = Size.padding.titlebar }
@@ -927,6 +932,7 @@ function TitleBar:addCloseButtonRightSpacer()
         right_border_spacer = HorizontalSpan:new{ width = KOR.screenhelpers:getHorizontalSpacerWidth(self.fullscreen, "for_close_button") }
     end
 
+    table_insert(self.right_buttons_container, #self.right_buttons_container, right_border_spacer)
     table_insert(self.right_buttons_container, right_border_spacer)
 end
 

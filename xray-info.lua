@@ -41,7 +41,7 @@ This Glossary can be used to quickly lookup a term in the e-book text. When the 
 
 THE TWO MOST KINDLE-LIKE EXPERIENCES
 
-1) The user will have the most Kindle-like experience when XraySettings.UI_mode is set to "page" and XraySettings.UI_mark_xray_items is set to true. In this case tappable star icons will be shown to the right side of Xray items in the e-book text. By tapping on those star icons the information for that Xray item will be shown in the Item Viewer.
+1) The user will have the most Kindle-like experience when XraySettings.UI_mode is set to "page" and XraySettings.UI_mark_xray_items is set to true. In this case tappable star icons will be shown to the right side of Xray items in the e-book text. By tapping on those star icons, the information for that Xray item will be shown in the Item Viewer.
 
 2) Another way to have a Kindle-like experience is to open the Page Navigator - see ((XrayController#onShowPageNavigator)). In this navigator all Xray items in a page will be marked bold and they will be mentioned in a side panel. Tapping on items in the side panel will put an explanation of that item in the bottom panel. You can even filter the content of the Navigator for a specific Xray item, so it will only show pages which contain that item.
 --]]--
