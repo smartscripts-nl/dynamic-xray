@@ -397,7 +397,7 @@ function XrayUI:uiInfoGenerateInformation(ui, bb, x, y)
     self:uiInfoSetContextTable(marker, marker_width, marker_height, bb, x, y)
 
     -- #((set xray info for paragraphs))
-    if self:uiInfoInitParagraphsData() then
+    if self:uiInfoInitParagraphsData() and DX.vd:hasModelItems() then
         --! here callbacks are attached to the marker icon rects:
         self:uiInfoPopulateRects()
         if DX.s.UI_mode == "page" and DX.s.UI_mark_xray_items then

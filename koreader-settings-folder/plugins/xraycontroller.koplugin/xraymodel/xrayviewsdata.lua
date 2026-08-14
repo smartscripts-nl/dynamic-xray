@@ -170,7 +170,7 @@ function XrayViewsData:updateItemsTable(select_number, reset_item_table_for_filt
 
     elseif self.filtered_count > 0 and self.filter_string and self.filter_string:len() >= 3 then
         --* when no xray_items found with the current filter:
-        if #self.items == 0 then
+        if self:hasNoViewItems() then
             --select_number, title = self:noItemsFoundWithFilterHandler("niets gevonden met \"" .. self.filter_string .. "\"...")
             return nil, false
         else
@@ -179,7 +179,7 @@ function XrayViewsData:updateItemsTable(select_number, reset_item_table_for_filt
 
     elseif self.filtered_count > 0 and self.filter_tag then
         --* when no xray_items found with the current filter:
-        if #self.items == 0 then
+        if self:hasNoViewItems() then
             return nil, false
         else
             title = source .. " - " .. self.filter_tag
@@ -187,7 +187,7 @@ function XrayViewsData:updateItemsTable(select_number, reset_item_table_for_filt
     else
         title = source
     end
-    if #self.items == 0 then
+    if self:hasNoViewItems() then
         if not KOR.registry:get("import_items_notification shown") then
             KOR.dialogs:niceAlert(_("No items defined"), _("No items were defined as yet.\n\nShould other book from the same (or another) series have items which are relevant for the current ebook, you can import them with the import button in the bottom right part of this dialog."))
             KOR.registry:set("import_items_notification shown", true)
@@ -1766,6 +1766,24 @@ end
 --- @private
 function XrayViewsData:isSingularOrPluralMatch(needle, haystack_name)
     return needle == haystack_name or needle == haystack_name .. "s"
+end
+
+--* self.item_table[1] = ALL (unfiltered) model items; to check whether there are no (filtered) VIEW items use ((hasViewItems)):
+function XrayViewsData:hasModelItems()
+    return #self.item_table[1] > 0
+end
+
+function XrayViewsData:hasNoModelItems()
+    return #self.item_table[1] == 0
+end
+
+--* self.items is could be the result of applying a FILTER to ALL items; to check whether there are no (unfiltered) MODEL items use ((hasModelItems)):
+function XrayViewsData:hasViewItems()
+    return #self.items > 0
+end
+
+function XrayViewsData:hasNoViewItems()
+    return #self.items == 0
 end
 
 --- @private
