@@ -14,27 +14,27 @@ local Screen = Device.screen
 local T = require("ffi/util").template
 
 local DX = DX
+local has_no_items = has_no_items
 local has_no_text = has_no_text
-local math = math
 local math_floor = math.floor
-local table = table
+local table_concat = table.concat
 local table_insert = table.insert
 
 local count, count2
 
 local function inside_box(pos, box)
-    if pos then
-        local x, y = pos.x, pos.y
-        if box.x <= x and box.y <= y
-                and box.x + box.w >= x
-                and box.y + box.h >= y then
-            return true
-        end
+    if not pos then
+        return false
     end
+        local x, y = pos.x, pos.y
+    return box.x <= x and box.y <= y
+            and box.x + box.w >= x
+            and box.y + box.h >= y
 end
 
 --- @class XrayUI
 local XrayUI = WidgetContainer:new{
+    book_needles_string = nil,
     cached_dims = {},
     cached_markers = nil,
     forbidden_words = {
@@ -45,6 +45,7 @@ local XrayUI = WidgetContainer:new{
     hits = {},
     info_extra_button_rows = {},
     info_use_upper_case_names = false,
+    marker_padding = Screen:scaleBySize(10),
     page = nil,
     page_text = nil,
     paragraph_explanations = nil,
@@ -56,14 +57,27 @@ local XrayUI = WidgetContainer:new{
     return_to_caller_callback = nil,
     screen_width = nil,
     separator = " " .. KOR.icons.arrow_bare .. " ",
+    UI_modes = {
+        page = {
+            subject = " " .. _(" on this page"),
+            new_UI_mode = _("PARAGRAPHS"),
+            new_trigger = _("a paragraph marked with a star"),
+        },
+        paragraph = {
+            subject = " " .. _(" in this paragraph"),
+            new_UI_mode = _("the ENTIRE PAGE"),
+            new_trigger = _("the first line marked with a lightning icon"),
+        },
+    },
     xray_context_props = nil,
     xray_info_found = false,
+    xray_item_rects = {},
     xray_page_info_rects = nil,
 }
 
 --- @private
 function XrayUI:drawMarker(c, rect)
-    --* c was populated in ((XrayUI#ReaderViewSetXrayContextProps)):
+    --* c was populated in ((XrayUI#uiInfoSetContextTable)):
     local bb = c.bb
     local xi = c.x
     local yi = c.y
@@ -103,14 +117,32 @@ function XrayUI:drawMarker(c, rect)
         marker:paintTo(bb, note_mark_pos_x, y_pos)
         marker_rect = {
             --* we make the rects somewhat wider and higher than the icons, to make them easily tappable:
-            x = note_mark_pos_x - 5,
+            x = note_mark_pos_x - self.marker_padding,
             y = y_pos,
-            --* these c props were set via ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#getMarker)) > ((XrayUI#ReaderViewSetXrayContextProps)):
-            w = c.marker_width + 10,
-            h = c.marker_height + 10,
+            --* these c props were set via ((XrayUI#uiInfoGenerateInformation)) > ((XrayUI#getMarker)) > ((XrayUI#uiInfoSetContextTable)):
+            w = c.marker_width + 2 * self.marker_padding,
+            h = marker_height_corrected,
         }
     end
     return marker_rect
+end
+
+--- @private
+function XrayUI:drawXrayItemMarker(c, rect)
+    --* c was populated in ((XrayUI#registerAndMarkXrayItemRects)):
+    local bb = c.bb
+    local marker = c.marker
+    marker:paintTo(bb, rect.x, rect.y)
+
+    --* return adapted rect; the additions and subtractions make the markers easier to tap:
+    return {
+        --* we make the rects somewhat wider and higher than the icons, to make them easily tappable:
+        x = rect.x - self.marker_padding,
+        y = rect.y - self.marker_padding,
+        --* these c props were set via ((XrayUI#uiInfoGenerateInformation)) > ((XrayUI#getMarker)) > ((XrayUI#uiInfoSetContextTable)):
+        w = c.marker_width + 2 * self.marker_padding,
+        h = c.marker_height + 2 * self.marker_padding,
+    }
 end
 
 --- @private
@@ -137,7 +169,7 @@ function XrayUI:getMarkerIconXpos(c, rect)
     local xpos_increase = is_xray_page_mode and increase_amount or 0
 
     --* page 1 in one-page mode
-    --* self.ui was set in ((XrayUI#ReaderViewGenerateXrayInformation)):
+    --* self.ui was set in ((XrayUI#uiInfoGenerateInformation)):
     if self.ui.document:getVisiblePageCount() == 1 then
         return self.screen_width - right_xpos_reduction
 
@@ -187,6 +219,12 @@ function XrayUI:getMarker(bb)
                 fgcolor = color,
                 padding = 0,
             },
+            items = TextWidget:new{
+                text = KOR.icons.xray_item,
+                face = Font:getFace(face, 13),
+                fgcolor = color,
+                padding = 0,
+            },
         }
         -- #((set xray marker size))
         local icon_dims = self.cached_markers["paragraph"]:getSize()
@@ -197,6 +235,12 @@ function XrayUI:getMarker(bb)
 
         icon_dims = self.cached_markers["page"]:getSize()
         self.cached_dims["page"] = {
+            height = icon_dims.h,
+            width = icon_dims.w,
+        }
+
+        icon_dims = self.cached_markers["items"]:getSize()
+        self.cached_dims["items"] = {
             height = icon_dims.h,
             width = icon_dims.w,
         }
@@ -235,7 +279,7 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
     local paragraph_hits_info = {}
     local paragraph_hits_info2 = {}
     local paragraph_hits_info3 = {}
-    --* these items were generated via ((init xray sideline markers)) > ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#ReaderViewInitParaOrPageData)) > ((XrayUI#ReaderViewLoopThroughParagraphOrPage)) ((XrayUI#getXrayItemsFoundInText)):
+    --* these items were generated via ((init xray sideline markers)) > ((XrayUI#uiInfoGenerateInformation)) > ((XrayUI#uiInfoInitParagraphsData)) > ((XrayUI#uiInfoRegisterHits)) ((XrayUI#getXrayItemsFoundInText)):
     local items = xray_rects.hits[nr]
     --* for consumption in ((XrayDialogs#showUiPageInfo)):
     KOR.registry:set("xray_ui_items", items)
@@ -299,7 +343,7 @@ function XrayUI:showParagraphInformation(xray_rects, nr, mode)
     paragraph_hits_info = paragraph_hits_info:gsub("^ +", "")
 
     -- #((xray paragraph info callback))
-    --* callback defined in ((set xray info for paragraphs)) > ((XrayUI#ReaderViewPopulateInfoRects)) and calls ((XrayDialogs#showUiPageInfo)):
+    --* callback defined in ((set xray info for paragraphs)) > ((XrayUI#uiInfoPopulateRects)) and calls ((XrayDialogs#showUiPageInfo)):
     xray_rects.callback(paragraph_hits_names, paragraph_hits_names2, paragraph_hits_names3, paragraph_hits_info, paragraph_hits_info2, paragraph_hits_info3, paragraph_matches_count, paragraph_text)
 end
 
@@ -343,23 +387,28 @@ function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanation
 end
 
 --* called from ((ReaderView#paintTo)):
-function XrayUI:ReaderViewGenerateXrayInformation(ui, bb, x, y)
+function XrayUI:uiInfoGenerateInformation(ui, bb, x, y)
 
     self.ui = ui
     self.page = self:setParagraphsFromDocument()
     self.hits = {}
     local marker, marker_width, marker_height = self:getMarker(bb)
     self.xray_page_info_rects = nil
-    self:ReaderViewSetXrayContextProps(marker, marker_width, marker_height, bb, x, y)
+    self:uiInfoSetContextTable(marker, marker_width, marker_height, bb, x, y)
+
     -- #((set xray info for paragraphs))
-    if self:ReaderViewInitParaOrPageData() then
+    if self:uiInfoInitParagraphsData() then
         --! here callbacks are attached to the marker icon rects:
-        self:ReaderViewPopulateInfoRects()
+        self:uiInfoPopulateRects()
+        if DX.s.UI_mode == "page" and DX.s.UI_mark_xray_items then
+            self:registerAndMarkXrayItemRects(bb)
+        end
     end
 end
 
 --- @private
-function XrayUI:ReaderViewInitParaOrPageData()
+--- @return boolean
+function XrayUI:uiInfoInitParagraphsData()
 
     --* self.page_text is computed in ((XrayUI#setParagraphsFromDocument)) > ((XrayUI#getFullPageText)):
     if has_no_text(self.page_text) then
@@ -373,22 +422,68 @@ function XrayUI:ReaderViewInitParaOrPageData()
     self.rects_with_matches = {}
     self.xray_info_found = false
     self.screen_width = Screen:getWidth()
-    local para_count = #self.paragraphs
-    if self.paragraphs and para_count > 0 and DX.vd:getBaseItemsCount() > 0 then
 
-        --* when in page mode, this loop will be stopped (see break below) as soon as a line is found that is long enough to be suitable for adding the xray marker; in this we assume that page_text does indeed have the full page text, so no loop through all paragraphs necessary:
-        local marker_line_found
-        for p = 1, para_count do
-            marker_line_found = self:ReaderViewLoopThroughParagraphOrPage(p)
-            if DX.s.UI_mode == "page" and marker_line_found then
-                self:updateStatusInFooter()
-                --* boolean, true:
-                return self.xray_info_found
-            end
+    if has_no_items(self.paragraphs) or DX.vd:getBaseItemsCount() == 0 then
+        return false
+    end
+
+    local para_count = #self.paragraphs
+    --* when in page mode, this loop will be stopped as soon as a line is found that is long enough to be suitable for adding the xray marker; in this we assume that page_text does indeed have the full page text, so no loop through all paragraphs necessary:
+    local do_break
+    for p = 1, para_count do
+        do_break = self:handleParagraphRegistration(p)
+        if do_break then
+            self:updateStatusInFooter()
+            return self.xray_info_found
         end
     end
+
     self:updateStatusInFooter()
     return self.xray_info_found
+end
+
+--* if returns true, break loop in ((XrayUI#uiInfoInitParagraphsData)):
+--- @private
+--- @return boolean
+function XrayUI:handleParagraphRegistration(p)
+    if not self:uiInfoRegisterHits(p) then
+        return false
+    end
+
+    local hits_marked = self:registerAndMarkRects(p)
+    --! "break" in page mode:
+    if DX.s.UI_mode == "page" and hits_marked then
+        return true
+    end
+
+    return false
+end
+
+--- @private
+function XrayUI:setBookNeedles()
+    if self.book_needles_string then
+        return
+    end
+
+    local needles = {}
+    count = #DX.vd.items
+    local items_table = DX.vd.items
+    count = #items_table
+
+    local xray_item, needle
+    for i = 1, count do
+        -- #((get xray_item for XrayUI))
+        xray_item = items_table[i]
+        count2 = #xray_item.needles
+        for n = 1, count2 do
+            --* remove word start and end markers; e.g. needdle %f[%a]Mistwalkers%f[%A]
+            needle = xray_item.needles[n].needle
+              :gsub("%%f%[%%[aA]%]", "")
+            table_insert(needles, needle)
+        end
+    end
+
+    self.book_needles_string = " " .. table_concat(needles, " ") .. " "
 end
 
 --- @private
@@ -400,7 +495,7 @@ function XrayUI:updateStatusInFooter()
 end
 
 --- @private
-function XrayUI:ReaderViewSetXrayContextProps(marker, marker_width, marker_height, bb, x, y)
+function XrayUI:uiInfoSetContextTable(marker, marker_width, marker_height, bb, x, y)
     self.xray_context_props = {
         marker = marker,
         marker_height = marker_height,
@@ -418,28 +513,148 @@ end
 
 --* see ((XRAY_ITEMS)) for more info:
 --- @private
-function XrayUI:ReaderViewLoopThroughParagraphOrPage(p)
+function XrayUI:uiInfoRegisterHits(p)
     local ui_mode = DX.s.UI_mode
 
     --* self.page_text was set when storing self.paragraphs, in ((XrayUI#setParagraphsFromDocument)) > ((XrayUI#getFullPageText)):
     local haystack = ui_mode == "paragraph" and self.paragraphs[p].text or self.page_text
     local hits, explanations = self:getXrayItemsFoundInText(haystack)
-    if hits then
-        --* for debugging only:
-        table_insert(self.paragraphs_with_matches, self.paragraphs[p].text)
-        --* to be consumed in ((XrayUI#ReaderHighlightGenerateXrayInformation)):
-        table_insert(self.paragraph_hits, hits)
-        table_insert(self.paragraph_explanations, explanations)
-        self:registerHits(hits)
-        return self:registerAndMarkRects(p)
+    if not hits then
+        return false
     end
-    return false
+
+    --* for debugging only:
+    table_insert(self.paragraphs_with_matches, self.paragraphs[p].text)
+    --* to be consumed in ((XrayUI#uiInfoShow)):
+    table_insert(self.paragraph_hits, hits)
+    table_insert(self.paragraph_explanations, explanations)
+    self:registerHits(hits)
+
+    return true
 end
 
 --- @private
-function XrayUI:ReaderViewPopulateInfoRects()
+function XrayUI:registerAndMarkXrayItemRects(bb)
+
+    --* paragraphs[1] only starts with text on current page:
+    if not self.paragraphs[1] then
+        return
+    end
+
+    local c = {
+        bb = bb,
+        --* these cached marker_props are set in ((XrayUI#getMarker)):
+        marker = self.cached_markers["items"],
+        marker_width = self.cached_dims["items"].width,
+        marker_height = self.cached_dims["items"].height,
+    }
+
+    --* some of these props have to be reset for every new page, via ((XrayUI#reset)):
+    self:setBookNeedles()
+
+    --* page_words here already are filtered on having a hit:
+    local page_words_with_hits = self:getWordPositions(self.paragraphs[1].pos0)
+    if has_no_items(page_words_with_hits) then
+        return
+    end
+    count = #page_words_with_hits
+
+    --* page_word has props word and position:
+    local page_word, rect, posx, posy
+
+    for i = 1, count do
+        page_word = page_words_with_hits[i]
+        posy, posx = KOR.document:getScreenPositionFromXPointer(page_word.position)
+
+        c.y = posy - Screen:scaleBySize(8)
+        c.x = posx - Screen:scaleBySize(5)
+        rect = { x = c.x, y = c.y, w = c.marker_width, h = c.marker_height }
+        rect = self:drawXrayItemMarker(c, rect)
+        table_insert(self.xray_item_rects, {
+            rect = rect,
+            hit = page_word.word,
+        })
+
+        --* handling of taps on XrayItemMarkers in ((ReaderHighlight#onTapOnXrayItemMarker))...
+    end
+end
+
+--- @private
+function XrayUI:getWordPositions(pos0)
+
+    --? for some reason real current_page mostly not to be got in CreDocent for some reason, so we let ((XrayUI#registerAndMarkXrayItemRects)) deliver a pos0 derived from XrayUI.paragraphs[1].pos0 and compute the real current page from that:
+    local current_page = KOR.document:getPageFromXPointer(pos0)
+    local word_positions = {}
+    local pos1 = KOR.document:getNextVisibleWordStart(pos0)
+    if KOR.document:getPageFromXPointer(pos1) ~= current_page then
+        return
+    end
+
+    local pos0_next = pos1
+    pos1 = KOR.document:getPrevVisibleChar(pos1)
+    local word = KOR.document:getTextFromXPointers(pos0, pos1)
+    word = self:cleanupWordPositionWords(word)
+    if word and self.book_needles_string:match(" " .. word:gsub("%-", "%%-") .. " ") then
+        table_insert(word_positions, {
+            word = word,
+            position = pos1,
+        })
+    end
+
+    pos0 = pos0_next
+    pos1 = KOR.document:getNextVisibleWordStart(pos0_next)
+    while KOR.document:getPageFromXPointer(pos1) == current_page do
+        pos0_next = pos1
+        pos1 = KOR.document:getPrevVisibleChar(pos1)
+        word = KOR.document:getTextFromXPointers(pos0, pos1)
+        word = self:cleanupWordPositionWords(word)
+        if word and self.book_needles_string:match(" " .. word:gsub("%-", "%%-") .. " ") then
+            table_insert(word_positions, {
+                word = word,
+                position = pos1,
+            })
+        end
+        pos0 = pos0_next
+        pos1 = KOR.document:getNextVisibleWordStart(pos0_next)
+    end
+    if KOR.document:getPageFromXPointer(pos0) == current_page then
+        pos1 = KOR.document:getPrevVisibleChar(pos1)
+        word = KOR.document:getTextFromXPointers(pos0, pos1)
+        word = self:cleanupWordPositionWords(word)
+        if word and self.book_needles_string:match(" " .. word:gsub("%-", "%%-") .. " ") then
+            table_insert(word_positions, {
+                word = word,
+                position = pos0,
+            })
+        end
+    end
+
+    return word_positions
+end
+
+--- @private
+function XrayUI:cleanupWordPositionWords(word)
+
+    --* prevent hits by name parts like "of" or "for":
+    if not word:match("[A-Z]") and word:len() <= 3 then
+        return
+    end
+
+    return word
+        --* to make matching in ((XrayUI#registerAndMarkXrayItemRects)) find more hits:
+        :gsub("[,.:;?!+()%[%]%% ]", "")
+        :gsub("‘", "")
+        :gsub("“", "")
+        :gsub("’.-$", "")
+        :gsub("”.-$", "")
+        --* remove plurals:
+        :gsub("s$", "")
+end
+
+--- @private
+function XrayUI:uiInfoPopulateRects()
     -- #((set xray page info rects))
-    --* to be consumed in ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((XrayUI#showParagraphInformation)):
+    --* to be consumed in ((XrayUI#uiInfoShow)) > ((XrayUI#showParagraphInformation)):
     self.xray_page_info_rects = {
         paragraph_texts = self.paragraphs_with_matches,
         hits = self.paragraph_hits,
@@ -480,7 +695,7 @@ end
 
 --- @private
 function XrayUI:registerAndMarkRects(p)
-    --* this context table with props was set in ((set xray info for paragraphs)):
+    --* this context table with props was set in ((set xray info for paragraphs)) > ((XrayUI#uiInfoSetContextTable)):
     local c = self.xray_context_props
     if not c.bb then
         return false
@@ -550,7 +765,7 @@ function XrayUI:getFullPageText()
     return KOR.tables:concatField(self.paragraphs, "text", "\n")
 end
 
---* these hits are to be consumed in ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((XrayDialogs#showUiPageInfo))
+--* these hits are to be consumed in ((XrayUI#uiInfoShow)) > ((XrayDialogs#showUiPageInfo))
 --- @private
 function XrayUI:getXrayItemsFoundInText(page_or_paragraph_text, tagged_items)
 
@@ -597,22 +812,24 @@ function XrayUI:discoverXrayItems(page_or_paragraph_text, tagged_items)
     return items_found, explanations
 end
 
-function XrayUI:ReaderHighlightGenerateXrayInformation(pos, mode)
+function XrayUI:uiInfoShow(pos, mode)
 
-    --* this var, containing texts and hits info, was defined above in ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#getXrayItemsFoundInText)) > ((set xray info for paragraphs)):
+    if not self.xray_page_info_rects then
+        return
+    end
+
+    --* this var, containing texts and hits info, was defined above in ((XrayUI#uiInfoGenerateInformation)) > ((XrayUI#getXrayItemsFoundInText)) > ((set xray info for paragraphs)):
     local xray_rects = self.xray_page_info_rects
-    if xray_rects then
-        self.paragraph_texts = xray_rects.paragraph_texts
-        local rects = xray_rects.rects
-        self.info_extra_button_rows = {}
-        local rect
-        count = #rects
-        for nr = 1, count do
-            rect = rects[nr]
-            if inside_box(pos, rect) then
-                self:showParagraphInformation(xray_rects, nr, mode)
-                return true
-            end
+    self.paragraph_texts = xray_rects.paragraph_texts
+    local rects = xray_rects.rects
+    self.info_extra_button_rows = {}
+    local rect
+    count = #rects
+    for nr = 1, count do
+        rect = rects[nr]
+        if inside_box(pos, rect) then
+            self:showParagraphInformation(xray_rects, nr, mode)
+            return true
         end
     end
 end
@@ -630,8 +847,8 @@ function XrayUI:setParagraphsFromDocument()
 
     local check_page = self.ui:getCurrentPage()
 
-    --! always retrieve page_text, for usage with VocabBuilder:
-    --* self.page_text can be reset by ((XrayUI#resetPageText)):
+    --! always retrieve page_text, for usage with VocabBuilder !!!:
+    --* self.page_text can be reset by ((XrayUI#reset)):
     if ui_page ~= check_page or not self.page_text then -- DX.s.UI_mode == "pages" and
         self.page_text = KOR.document:getPageText(ui_page, "keep_hyphens")
     end
@@ -677,7 +894,6 @@ function XrayUI:getCurrentPage()
     end
 end
 
---* currently not called, maybe handy upon page updates:
 function XrayUI:reset()
     self.paragraphs = {}
     self.hits = {}
@@ -691,15 +907,17 @@ function XrayUI:reset()
     self.xray_items = nil
     self.xray_context_props = nil
     self.xray_info_found = false
+    self.xray_item_rects = {}
 end
 
-function XrayUI:resetPageText()
-    self.page_text = nil
+--* only called upon opening a new ebook:
+function XrayUI:resetBookNeedlesString()
+    self.book_needles_string = nil
 end
 
 --- @param parent XrayDialogs
-function XrayUI:toggleParagraphOrPageMode(parent, target, new_trigger)
-    local question = T(_([[Do you indeed want to toggle the Xray information display mode to %1?]]), target, new_trigger)
+function XrayUI:toggleUiMode(parent, new_mode, new_trigger)
+    local question = T(_([[Do you indeed want to toggle the Xray information display mode to %1?]]), new_mode, new_trigger)
     KOR.dialogs:confirm(question, function()
         DX.s:toggleSetting("UI_mode", { "page", "paragraph" })
         if parent then
@@ -707,6 +925,17 @@ function XrayUI:toggleParagraphOrPageMode(parent, target, new_trigger)
         end
         UIManager:setDirty(nil, "full")
     end)
+end
+
+--- @param parent XrayDialogs
+function XrayUI:toggleUiXrayItemMarkers(parent)
+    DX.s:toggleBoolSetting("UI_mark_xray_items")
+    local state = DX.s.UI_mark_xray_items and "ingeschakeld" or "uitgeschakeld"
+    KOR.messages:notify("xray item-markers " .. state)
+    if parent then
+        parent:closeUiInfoDialog()
+    end
+    UIManager:setDirty(nil, "full")
 end
 
 return XrayUI

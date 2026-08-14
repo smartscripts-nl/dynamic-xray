@@ -388,7 +388,7 @@ function TextViewer:findDialog()
     input_dialog:onShowKeyboard(true)
 end
 
---* when argument external_search_string not nil: called via ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((XrayUI#showParagraphInformation)) >
+--* when argument external_search_string not nil: called via ((XrayUI#uiInfoShow)) > ((XrayUI#showParagraphInformation)) >
 --* click on line with xray marker > ((XrayDialogs#showUiPageInfo)) - here reliability icons and xray type icons injected for buttons > ((Dialogs#textBox)) > ((send external searchstring for xray info))
 --- @private
 function TextViewer:findCallback(input_dialog, external_search_string, overrule_pos)

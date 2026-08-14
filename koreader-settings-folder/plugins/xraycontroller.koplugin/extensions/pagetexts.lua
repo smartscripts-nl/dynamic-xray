@@ -228,7 +228,7 @@ function PageTexts:getHtmlElementIndex(position)
 
         position = self:removeInlineElementsFromPos(position)
         position = position
-        :gsub("^/body.+/body/", "", 1)
+        :gsub("^.+/body/", "", 1)
         :gsub("/text%(%)%[%d+%]", "", 1)
         :gsub("/text%(%)", "", 1)
     --* previous replacements reduce above markers to:

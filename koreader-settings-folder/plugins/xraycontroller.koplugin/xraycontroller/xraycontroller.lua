@@ -602,6 +602,8 @@ function XrayController:resetDynamicXray(is_prepared, do_full_update)
     local full_path = KOR.document.file
     if do_full_update then
         DX.m:setTitleAndSeries(full_path)
+        DX.u:resetBookNeedlesString()
+        DX.u:reset()
         --! don't call DX.u:reset() here, because then Xray markers in page would disappear...
         KOR.document:resetParagraphsCache()
         DX.p:resetCache()
@@ -618,7 +620,7 @@ function XrayController:resetDynamicXray(is_prepared, do_full_update)
         NavigatorBox = require("xrayviews/widgets/navigatorbox")
     end
     NavigatorBox:reset()
-    DX.u:resetPageText()
+    DX.u:reset()
     KOR.columntexts:resetCache()
     --? I don't know why we need this:
     if not DX.ex then

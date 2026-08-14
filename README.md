@@ -28,8 +28,8 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
   - [Entering your own translations for the DX interface](#entering-your-own-translations-for-the-dx-interface)
 - [Usage tips](#usage-tips)
   - [Global hotkeys](#global-hotkeys)
-  - [Browsing with the Page Navigator (most Kindle-like)](#adding-xray-items)
-  - [Adding Xray items](#browsing-with-the-page-navigator-most-kindle-like)
+  - [How to get the most Kindle-like experience](#how-to-get-the-most-kindle-like-experience)
+  - [Adding Xray items](#adding-xray-items)
   - [Displaying help information about the function of buttons](#displaying-help-information-about-the-function-of-buttons)
 - [Glossary and Reference Information viewers](#glossary-and-reference-information-viewers)
   - [Reference Information viewer](#reference-information-viewer)
@@ -114,10 +114,18 @@ DX has global hotkeys for calling its main dialogs:
 * Shift + M: show Series Manager
 * Shift + X: show Xray Page Navigator
 
-### Browsing with the Page Navigator (most Kindle-like)
+### How to get the most Kindle-like experience
 
+1) The user will have the most Kindle-like experience when in the XraySettings UI_mode is set to "page" and
+   UI_mark_xray_items is set to true. In this case tappable star icons will be shown to the right side of
+   Xray items in the e-book text. By tapping on those star icons the information for that Xray item will be shown in the
+   Item Viewer.
+
+2) Another way to have a Kindle-like experience is to open the Page Navigator. In this navigator all Xray items in a page will be marked bold, and they will be
+   mentioned in a side panel. Tapping on items in the side panel will put an explanation of that item in the bottom
+   panel. You can even filter the content of the Navigator for a specific Xray item, so it will only show pages which
+   contain that item.
 With the Page Navigator, you can browse through pages and see all known Xray items marked bold there. In the side panel you can tap on items to show their explanation in the bottom panel. If you longpress the arrow buttons, PN will jump to the next/previous occurrence of the item in the e-book.
-
 You can show this navigator by:
 * pressing Shift+X on your (BT) keyboard; I'm not sure if this'll work on all KOReader installations
 * longpressing the lightning or star Xray markers in pages

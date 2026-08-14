@@ -444,10 +444,10 @@ function XrayDialogs:notifyFilterResult(filter_active, filtered_count)
     end
 end
 
---* information for this dialog was generated via ((ReaderView#paintTo)) > ((XrayUI#ReaderViewGenerateXrayInformation))
---* extra buttons (from xray items) were populated in ((XrayUI#ReaderHighlightGenerateXrayInformation))
+--* information for this dialog was generated via ((ReaderView#paintTo)) > ((XrayUI#uiInfoGenerateInformation))
+--* extra buttons (from xray items) were populated in ((XrayUI#uiInfoShow))
 --* current method called from callback in ((xray paragraph info callback)):
---* dialog item entries and icons were generated via ((XrayUI#getXrayItemsFoundInText)) > ((XrayUI#discoverXrayItems)) > upon tap on marker item: ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((XrayUI#showParagraphInformation)) > ((XrayUI#addParagraphInfoItems)) > ((XrayViewsData#generateXrayExportOrLinkedItemInfo)) > ((XrayViewsData#getItemTypeIcon)) > here we ask for bare type icons, so in ((XrayViewsData#generateFirstLines)) we add an extra space after the item type icon:
+--* dialog item entries and icons were generated via ((XrayUI#getXrayItemsFoundInText)) > ((XrayUI#discoverXrayItems)) > upon tap on marker item: ((XrayUI#uiInfoShow)) > ((XrayUI#showParagraphInformation)) > ((XrayUI#addParagraphInfoItems)) > ((XrayViewsData#generateXrayExportOrLinkedItemInfo)) > ((XrayViewsData#getItemTypeIcon)) > here we ask for bare type icons, so in ((XrayViewsData#generateFirstLines)) we add an extra space after the item type icon:
 function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_names3, hits_info, hits_info2, hits_info3, matches_count)
     if self.xray_ui_info_dialog or has_no_text(hits_info) then
         return
@@ -468,10 +468,10 @@ function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_names3, hits_i
     local context_buttons = DX.b:populateContextItemsRows(ui_items)
 
     local matches_count_info = matches_count == 1 and _("1 Xray item") or matches_count .. " " .. _("Xray items")
-    local subject = DX.s.UI_mode == "paragraph" and _(" in this paragraph") or _(" on this page")
-    local target = DX.s.UI_mode == "paragraph" and _("the ENTIRE PAGE") or _("PARAGRAPHS")
-    local new_trigger = DX.s.UI_mode == "paragraph" and _("the first line marked with a lightning icon") or _("a paragraph marked with a star")
-    --* the data below was populated in ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#addParagraphInfoItems)):
+    local subject = DX.u.UI_modes[DX.s.UI_mode].subject
+    local new_UI_mode = DX.u.UI_modes[DX.s.UI_mode].new_UI_mode
+    local new_trigger = DX.u.UI_modes[DX.s.UI_mode].new_trigger
+    --* the data below was populated in ((XrayUI#uiInfoGenerateInformation)) > ((XrayUI#addParagraphInfoItems)):
     local key_events_module = "XrayUIpageInfoViewer"
     local config = {
         title = matches_count_info .. subject,
@@ -495,7 +495,7 @@ function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_names3, hits_i
         fullscreen = true,
         covers_fullscreen = true,
         modal = false,
-        top_buttons_left = DX.b:forUiInfoTopLeft(target, new_trigger, self),
+        top_buttons_left = DX.b:forUiInfoTopLeft(new_UI_mode, new_trigger, self),
         fixed_face = Font:getFace("x_smallinfofont", 19),
         close_callback = function()
             self.xray_ui_info_dialog = nil

@@ -142,7 +142,7 @@ function CreDocument:getNotelessText(sel_start, sel_end)
     return KOR.strings:removeNotes(text)
 end
 
---* populates self.paragraphs, to be used in ((ReaderView#paintTo)) > ((XrayUI#ReaderViewGenerateXrayInformation)):
+--* populates self.paragraphs, to be used in ((ReaderView#paintTo)) > ((XrayUI#uiInfoGenerateInformation)):
 function CreDocument:storeCurrentPageParagraphs(page_xp, starting_page)
 
     self.start_page_no = starting_page or self:getPageFromXPointer(page_xp)
@@ -329,7 +329,7 @@ ReaderView.paintTo = function(self, bb, x, y)
 
     if not KOR.registry:get("ReaderSearch_active") then
         -- #((init xray sideline markers))
-        DX.u:ReaderViewGenerateXrayInformation(self.ui, bb, x, y)
+        DX.u:uiInfoGenerateInformation(self.ui, bb, x, y)
     end
 end
 
@@ -536,6 +536,16 @@ end
 
 --- PATCH READERHIGHLIGHT
 -- #((PATCH READERHIGHLIGHT))
+
+local function inside_box(pos, box)
+    if not pos then
+        return false
+    end
+    local x, y = pos.x, pos.y
+    return box.x <= x and box.y <= y
+            and box.x + box.w >= x
+            and box.y + box.h >= y
+end
 
 local function cleanupSelectedText(text)
     text = KOR.strings:cleanupSelectedText(text)
@@ -779,9 +789,14 @@ ReaderHighlight.onTap = function(self, _, ges)
         return false
     end
     local pos = self.view:screenToPageTransform(ges.pos)
-    if DX.u:ReaderHighlightGenerateXrayInformation(pos, "tap") then
+    if DX.u:uiInfoShow(pos, "tap") then
         return true
     end
+
+    if DX.s.UI_mode == "page" and self:onTapOnXrayItemMarker(pos) then
+        return true
+    end
+
     return orig_onTap(self, _, ges)
 end
 
@@ -801,7 +816,7 @@ ReaderHighlight.onHold = function(self, arg, ges)
         return false
     end
 
-    if DX.u:ReaderHighlightGenerateXrayInformation(self.hold_pos, "hold") then
+    if DX.u:uiInfoShow(self.hold_pos, "hold") then
         return true
     end
     return orig_onHold(self, arg, ges)
@@ -813,6 +828,36 @@ ReaderHighlight.saveHighlight = function(self, extend_to_sentence)
     orig_saveHighlight(self, extend_to_sentence)
     local acount = self.ui.annotation.annotations and #self.ui.annotation.annotations
     KOR.seriesmanager:setAnnotationsCount(DX.m.current_ebook_full_path, acount)
+end
+
+--* data for this provided by ((XrayUI#registerAndMarkXrayItemRects)):
+--- @private
+function ReaderHighlight:onTapOnXrayItemMarker(pos)
+    if has_no_items(DX.u.xray_item_rects) then
+        return false
+    end
+
+    local hit, needle_item, item_was_upgraded
+    count = #DX.u.xray_item_rects
+    for i = 1, count do
+        if inside_box(pos, DX.u.xray_item_rects[i].rect) then
+            hit = DX.u.xray_item_rects[i].hit
+            needle_item = {
+                name = hit,
+                alias = hit,
+                short_names = hit,
+            }
+            needle_item, item_was_upgraded = DX.vd:upgradeNeedleItem(needle_item)
+            if item_was_upgraded then
+                DX.d:viewItem(needle_item)
+            else
+                KOR.messages:notify("item werd niet gevonden")
+            end
+            return true
+        end
+    end
+
+    return false
 end
 
 

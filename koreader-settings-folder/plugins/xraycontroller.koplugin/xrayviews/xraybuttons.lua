@@ -583,15 +583,15 @@ function XrayButtons:forUiInfoAdditionalButtons(config, parent)
 end
 
 --- @param parent XrayDialogs
-function XrayButtons:forUiInfoTopLeft(target, new_trigger, parent)
+function XrayButtons:forUiInfoTopLeft(new_mode, new_trigger, parent)
     local buttons = {
         KOR.buttoninfopopup:forXrayShowMatchReliabilityExplanation({
-            icon_size_ratio = 0.6,
+            icon_size_ratio = 0.58,
         }),
-        KOR.buttoninfopopup:forXrayTogglePageOrParagraphInfo({
+        KOR.buttoninfopopup:forXrayToggleUIMode({
             icon = DX.s.UI_mode == "paragraph" and "paragraph" or "pages",
             callback = function()
-                DX.u:toggleParagraphOrPageMode(parent, target, new_trigger)
+                DX.u:toggleUiMode(parent, new_mode, new_trigger)
             end,
         }),
         KOR.buttoninfopopup:forXraySettings({
@@ -601,6 +601,14 @@ function XrayButtons:forUiInfoTopLeft(target, new_trigger, parent)
             end
         }),
     }
+    if DX.s.UI_mode == "page" then
+        table_insert(buttons, 3, KOR.buttoninfopopup:forXrayToggleXrayItemMarkers({
+            icon = DX.s.UI_mark_xray_items and "star.full" or "star.empty",
+            callback = function()
+                DX.u:toggleUiXrayItemMarkers(parent)
+            end,
+        }))
+    end
     self:insertGeneralDXTipsButton(buttons, parent)
 
     return buttons

@@ -1,4 +1,5 @@
 
+--- @class XrayInfo
 -- #((Dynamic Xray: module info))
 --[[
 ((XrayController)) is the controller for the Dynamic Xray plugin. DX has been structured in kind of a MVC structure:
@@ -6,12 +7,14 @@ M = ((XrayModel)) > data handlers: ((XrayDataLoader)), ((XrayDataSaver)), ((Xray
 V = ((XrayUI)), ((XrayPageNavigator)) and ((XrayCallbacks)) and ((XrayPages)) and ((XraySidePanels)) and ((XrayInfoPanel)) and ((XrayOccurrencesHistogram)), ((XrayTranslations)) and ((XrayTranslationsManager)), ((XrayDialogs)) and ((XrayButtons)) and ((XrayQuotes)) and ((XrayTags)), ((XrayCallbacks)), ((XrayInformation)), and ((ReferenceInformation)) and ((Glossary))
 C = ((XrayController))
 
+These modules are initialized in ((initialize Xray modules)) and ((XrayController#init)).
+
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database. XrayTappedWords handles data requests resulting from users longpressing (partial) names of Xray items in the e-book text.
 
 The views layer has three main streams:
 1) XrayUI, which is only responsible for displaying tappable xray markers (lightning or star icons) in the ebook text;
 2) XrayPageNavigator, XrayDialogs and XrayButtons, which are responsible for displaying dialogs and interaction with the user.
-3) Worthy to be specially mentioned is XrayPageNavigator, which offers the user the most Kindle-like experience: navigating through pages, with Xray items marked bold and button with which to show explanations of the items in the bottom panel. XrayPageNavigator does have some sub-modules, each responsible for one aspect of its views:
+3) Worthy to be specially mentioned is XrayPageNavigator, which offers the user one of ((the two most Kindle-like experiences)): navigating through pages, with Xray items marked bold and button with which to show explanations of the items in the bottom panel. XrayPageNavigator does have some sub-modules, each responsible for one aspect of its views:
     a) XraySidePanels (DX.sp): responsible for the sidepanel (tabs) of the PageNavigator
     b) XrayInfoPanel (DX.ip): responsible for the information panel at the bottom of the PageNavigator
     c) XrayPages (DX.p): responsible for the main content op the Navigator, its pages. Handles navigation through these and marking of Xray items in them.
@@ -31,11 +34,18 @@ The views layer has three main streams:
 10) DX also has a Glossary popup, to show a Glossary from the book stored there. See ((Glossary#showViewer)).
 This Glossary can be used to quickly lookup a term in the e-book text. When the user longpresses a word in the ebook text and that word is an item in the Glossary, the explanation for that item will be shown in the Glossary popup; see ((Glossary#showEditor))
  For starting the proces of text addition, see ((InformationMediator#confirmAddInformationAfterExpansion)), when called from the ReaderHighlight new text selection popup. The information will be saved to the Glossary via ((InformationMediator#setInformationBoundaries)) > ((Glossary#addInformation)).
-
-The user will have the most Kindle-like experience when he/she opens the Page Navigator - see ((XrayController#onShowPageNavigator)). In this navigator all Xray items in a page will be marked bold and they will be mentioned in a side panel. Tapping on items in the side panel will put an explanation of that item in the bottom panel. You can even filter the content of the Navigator for a specific Xray item, so it will only show pages which contain that item.
-
-These modules are initialized in ((initialize Xray modules)) and ((XrayController#init)).
 --]]--
+
+-- #((the two most Kindle-like experiences))
+--[[--
+
+THE TWO MOST KINDLE-LIKE EXPERIENCES
+
+1) The user will have the most Kindle-like experience when XraySettings.UI_mode is set to "page" and XraySettings.UI_mark_xray_items is set to true. In this case tappable star icons will be shown to the right side of Xray items in the e-book text. By tapping on those star icons the information for that Xray item will be shown in the Item Viewer.
+
+2) Another way to have a Kindle-like experience is to open the Page Navigator - see ((XrayController#onShowPageNavigator)). In this navigator all Xray items in a page will be marked bold and they will be mentioned in a side panel. Tapping on items in the side panel will put an explanation of that item in the bottom panel. You can even filter the content of the Navigator for a specific Xray item, so it will only show pages which contain that item.
+--]]--
+
 
 --! important info for programmers
 --[[
@@ -51,7 +61,7 @@ local var current_series will also be set for a book which is part of a series w
 
 The Dynamic Xray module/plugin has two streams:
 
-1: for displaying xray sideline markers in the book text, starting from ((ReaderView#paintTo)) > ((init xray sideline markers)) > ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#setParagraphsFromDocument)) etc.
+1: for displaying xray sideline markers in the book text, starting from ((ReaderView#paintTo)) > ((init xray sideline markers)) > ((XrayUI#uiInfoGenerateInformation)) > ((XrayUI#setParagraphsFromDocument)) etc.
 
 2: plugin/controller and modules for providing lists and dialogs and crud actions for managing xray items (they are listed at the top of this file).
 
@@ -186,20 +196,20 @@ function XrayCodeProcedures:XRAY_ITEMS()
 
     --* see ((Dynamic Xray: module info))
 
-    --! linchpin method: ((XrayUI#ReaderViewGenerateXrayInformation))
+    --! linchpin method: ((XrayUI#uiInfoGenerateInformation))
 
-    -- drawing rects for xray info: ((ReaderView#paintTo)) > ((XrayUI#setParagraphsFromDocument)) > ((XrayUI#ReaderViewGenerateXrayInformation)) > here callbacks are attached to the info rects > ((XrayUI#ReaderViewInitParaOrPageData)) > ((XrayUI#ReaderViewLoopThroughParagraphOrPage)) > ((xray page marker set target line for icon)) in page mode
+    -- drawing rects for xray info: ((ReaderView#paintTo)) > ((XrayUI#setParagraphsFromDocument)) > ((XrayUI#uiInfoGenerateInformation)) > here callbacks are attached to the info rects > ((XrayUI#uiInfoInitParagraphsData)) > ((XrayUI#uiInfoRegisterHits)) > ((xray page marker set target line for icon)) in page mode
 
     -- adding match reliability indicators for the Page/Paragraph Info Popup:
     -- using these indicators: ((XrayUI#showParagraphInformation)) > ((xray items dialog add match reliability explanations))
 
-    -- show paragraph matches: ((ReaderView#paintTo)) > ((XrayUI#ReaderViewGenerateXrayInformation)) > ((XrayUI#getMarker)) and ((CreDocument#storeCurrentPageParagraphs)) > ((XrayUI#getXrayItemsFoundInText)): here matches on page or paragraphs evaluated > ((XrayUI#drawMarker)) > ((set xray page info rects)) KOR.registry:set("xray_page_info_rects") > here the information in the popup gets combined: ((XrayUI#ReaderHighlightGenerateXrayInformation)) > ((XrayDialogs#showUiPageInfo))
+    -- show paragraph matches: ((ReaderView#paintTo)) > ((XrayUI#uiInfoGenerateInformation)) > ((XrayUI#getMarker)) and ((CreDocument#storeCurrentPageParagraphs)) > ((XrayUI#getXrayItemsFoundInText)): here matches on page or paragraphs evaluated > ((XrayUI#drawMarker)) > ((set xray page info rects)) KOR.registry:set("xray_page_info_rects") > here the information in the popup gets combined: ((XrayUI#uiInfoShow)) > ((XrayDialogs#showUiPageInfo))
 
     -- max line length in popup info for xray items on page: DX.s.max_info_line_length
 
     -- determining valid needles for matching on page: ((XrayModel#isValidNeedle)) > needle >= 4 characters, OR contains an uppercase character
 
-    -- positioning of page markers: ((XrayUI#ReaderViewLoopThroughParagraphOrPage)) > ((XrayUI#drawMarker)).
+    -- positioning of page markers: ((XrayUI#uiInfoRegisterHits)) > ((XrayUI#drawMarker)).
 
     --- PAGE NAVIGATOR
 

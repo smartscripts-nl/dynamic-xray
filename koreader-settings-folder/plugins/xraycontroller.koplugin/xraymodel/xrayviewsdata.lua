@@ -663,7 +663,9 @@ end
 --* upgrade a placeholder needle_item derived from tapped text (needle_item.name) in the ebook to a regular xray item, if the name or aliases of that xray item match the tapped text; but this method also called from xray item forms:
 --- @return table, boolean, boolean upgraded_item, item_was_upgraded, needle_matches_fullname
 function XrayViewsData:upgradeNeedleItem(needle_item, args)
-    if not args.is_exists_check and (not args.include_name_match or has_no_text(needle_item.name)) then
+    if not args then
+        args = {}
+    elseif not args.is_exists_check and (not args.include_name_match or has_no_text(needle_item.name)) then
         return needle_item, false, false
     end
 

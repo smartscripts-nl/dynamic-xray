@@ -362,10 +362,15 @@ local XraySettings = WidgetContainer:new{
             type = "string",
             locked = 0,
         },
+        UI_mark_xray_items = {
+            value = true,
+            explanation = _("If set to true, in case of XraySettings.UI_mode set to \"page\", Xray items found on the page will be marked with a star icon. By tapping on that icon you can view the information for that Xray item."),
+            locked = 0,
+        },
         UI_mode = {
             value = "page",
             options = { "page", "paragraph" },
-            explanation = _("This setting determines whether Xray items in a page are shown with one lightning marker for the entire page or star markers for each of the paragraphs with items."),
+            explanation = _("This setting determines whether Xray items in a page are shown with one lightning marker for the entire page, or star markers for each of the paragraphs with items, or a star marker at the end of each detected Xray item."),
             locked = 0,
         },
     },
@@ -523,10 +528,15 @@ function XraySettings:toggleSetting(key, alternatives)
         if self[key] == alternatives[i] then
             new_index = i == 1 and 2 or 1
             self[key] = alternatives[new_index]
-            self.settings_manager:saveSettings()
+            self.settings_manager:saveSetting(key, self[key])
             break
         end
     end
+end
+
+function XraySettings:toggleBoolSetting(key)
+    self[key] = not self[key]
+    self.settings_manager:saveSetting(key, self[key])
 end
 
 function XraySettings:saveSetting(key, value)

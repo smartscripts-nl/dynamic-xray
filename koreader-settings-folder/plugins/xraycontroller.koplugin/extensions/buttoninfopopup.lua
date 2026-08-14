@@ -756,10 +756,20 @@ function ButtonInfoPopup:forXrayToggleImportantItem(props)
 	}, props)
 end
 
-function ButtonInfoPopup:forXrayTogglePageOrParagraphInfo(props)
+function ButtonInfoPopup:forXrayToggleUIMode(props)
 	return ButtonProps:set({
+		--! icon defined by calling module
 		icon_size_ratio = 0.6,
 		info = _("page or paragraph icon | Toggle between display of Xray information per page or paragraph."),
+		callback_label = _("toggle"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forXrayToggleXrayItemMarkers(props)
+	return ButtonProps:set({
+		--! icon defined by calling module
+		info = _("star icon | Toggle between displaying of Xray item markers on the page or hiding them. A filled star means that this feature is enabled. Xray items on the page will then be marked with a star.\n\nBy tapping on a star, you can inspect the information for this item in the Item Viewer."),
 		callback_label = _("toggle"),
 		--! callback defined by calling module
 	}, props)
