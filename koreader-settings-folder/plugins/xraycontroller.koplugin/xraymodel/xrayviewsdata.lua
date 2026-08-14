@@ -1375,9 +1375,13 @@ function XrayViewsData:generateFirstLines(first_line, first_line_iconless, xray_
     -- #((xray items dialog add match reliability explanations))
     table_insert(first_line, xray_type_icon)
     --* compare adding favorite markers in ((XrayViewsData#generateListItemText)):
-    local favorite_marker = self:getFavoriteMarker(xray_item, "return_boolean")
+    local favorite_marker = self:getFavoriteMarker(xray_item)
     if favorite_marker then
         table_insert(first_line, favorite_marker)
+    end
+    local location_marker = self:getLocationMarker(xray_item)
+    if location_marker then
+        table_insert(first_line, location_marker)
     end
     table_insert(first_line, " ")
     table_insert(first_line, name)
@@ -1400,12 +1404,12 @@ function XrayViewsData:generateFirstLines(first_line, first_line_iconless, xray_
 end
 
 --* generate list item texts for ((XrayDialogs#showList)):
-function XrayViewsData:generateListItemText(item, reliability_indicator)
+function XrayViewsData:generateListItemText(xray_item, reliability_indicator)
 
-    local icon = self:getItemTypeIcon(item, "bare")
+    local icon = self:getItemTypeIcon(xray_item, "bare")
 
     --* in series mode we want the list to show the total count of items for the whole series, instead of only for the current book:
-    local hits = self.list_display_mode == "series" and item.series_hits or item.book_hits
+    local hits = self.list_display_mode == "series" and xray_item.series_hits or xray_item.book_hits
     local hits_info = has_items(hits) and " (" .. hits .. ")" or ""
 
     if not reliability_indicator then
@@ -1413,18 +1417,20 @@ function XrayViewsData:generateListItemText(item, reliability_indicator)
     end
 
     --* we don't add sequence number here, because that will only be done after prioritizing and sorting items in the list, at end of ((XrayViewsData#getCurrentListTabItems)):
-    local name = self:addNonBreakableIndicator(item.name, item)
+    local name = self:addNonBreakableIndicator(xray_item.name, xray_item)
     --* compare adding favorite markers in ((XrayViewsData#generateFirstLines)):
-    local favorite_marker = self:getFavoriteMarker(item)
+    local favorite_marker = self:getFavoriteMarker(xray_item)
+    local location_marker = self:getLocationMarker(xray_item)
     return table_concat({
         reliability_indicator,
         icon,
         favorite_marker,
+        location_marker,
         " ",
         name,
         hits_info,
         ": ",
-        KOR.strings:lcfirst(item.description),
+        KOR.strings:lcfirst(xray_item.description),
     }, "")
 end
 
@@ -1744,11 +1750,17 @@ function XrayViewsData:getNeedleStringPlural(word, for_substitution)
 end
 
 --- @private
-function XrayViewsData:getFavoriteMarker(item, return_boolean)
-    return DX.ta:itemHasTag(item, "Favorieten")
+function XrayViewsData:getFavoriteMarker(item)
+    return DX.ta:itemHasTag(item, _("Favorites"))
         and KOR.icons.favorite_closed_bare
-        or not return_boolean and ""
-        or false
+        or ""
+end
+
+--- @private
+function XrayViewsData:getLocationMarker(item)
+    return DX.ta:itemHasTag(item, _("Locations"))
+        and KOR.icons.location_marker
+        or ""
 end
 
 --- @private

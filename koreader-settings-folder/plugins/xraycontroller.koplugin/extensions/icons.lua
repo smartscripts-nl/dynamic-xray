@@ -87,6 +87,7 @@ return {
     lightning_bare = "\u{26A1}",
     list = "\u{E978}" .. spacer,
     list_bare = "\u{E978}",
+    location_marker = "\u{EA4D}",
     lock = "\u{F023}" .. spacer,
     lock_bare = "\u{F023}",
     mark_current = "\u{F140}" .. spacer,
