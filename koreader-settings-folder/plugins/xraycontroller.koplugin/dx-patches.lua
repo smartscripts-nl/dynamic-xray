@@ -323,9 +323,14 @@ local orig_paintTo = ReaderView.paintTo
 -- #((ReaderView#paintTo))
 ReaderView.paintTo = function(self, bb, x, y)
     --! this statement is crucial, to make sure icons are not shifted below their original y position upon redraws:
-    self:resetIconPositionsRegistry()
+    if not self.ui.document.info.has_pages then
+        self:resetIconPositionsRegistry()
+    end
 
     orig_paintTo(self, bb, x, y)
+    if self.ui.document.info.has_pages then
+        return
+    end
 
     if not KOR.registry:get("ReaderSearch_active") then
         -- #((init xray sideline markers))
@@ -335,13 +340,17 @@ end
 
 local orig_onReaderReady = ReaderView.onReaderReady
 ReaderView.onReaderReady = function(self)
-    self:resetIconPositionsRegistry()
+    if not self.ui.document.info.has_pages then
+        self:resetIconPositionsRegistry()
+    end
     orig_onReaderReady(self)
 end
 
 local orig_recalculate = ReaderView.recalculate
 ReaderView.recalculate = function(self)
-    self:resetIconPositionsRegistry()
+    if not self.ui.document.info.has_pages then
+        self:resetIconPositionsRegistry()
+    end
     orig_recalculate(self)
 end
 
@@ -705,6 +714,12 @@ end
 local orig_init = ReaderHighlight.init
 ReaderHighlight.init = function(self)
     orig_init(self)
+
+    --* don't add DX buttons in pdf's etc.:
+    if self.ui.document.info.has_pages then
+        return
+    end
+
     --* you can change this ratio via the DX Settings Dialog:
     local icon_size_ratio = DX.s.highlight_menu_icon_size
     --! in order to show the icons at this size, DX.s.icons_dont_force_ratio must have been set to true:
