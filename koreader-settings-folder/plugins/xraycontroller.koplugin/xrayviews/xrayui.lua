@@ -19,6 +19,7 @@ local has_no_text = has_no_text
 local math_floor = math.floor
 local table_concat = table.concat
 local table_insert = table.insert
+local tonumber = tonumber
 
 local count, count2
 
@@ -397,7 +398,7 @@ function XrayUI:uiInfoGenerateInformation(ui, bb, x, y)
     self:uiInfoSetContextTable(marker, marker_width, marker_height, bb, x, y)
 
     -- #((set xray info for paragraphs))
-    if self:uiInfoInitParagraphsData() and DX.vd:hasModelItems() then
+    if self:uiInfoInitParagraphsData() and DX.vd:hasUnfilteredItems() then
         --! here callbacks are attached to the marker icon rects:
         self:uiInfoPopulateRects()
         if DX.s.UI_mode == "page" and DX.s.UI_mark_xray_items then
@@ -477,9 +478,9 @@ function XrayUI:setBookNeedles()
         count2 = #xray_item.needles
         for n = 1, count2 do
             --* remove word start and end markers; e.g. needdle %f[%a]Mistwalkers%f[%A]
-            needle = xray_item.needles[n].needle
-              :gsub("%%f%[%%[aA]%]", "")
-            table_insert(needles, needle)
+            needle = "#" .. xray_item.needles[n].needle:gsub("%%f%[%%[aA]%]", "") .. "#"
+            --* these needles will be used for matching in ((XrayUI#getWordPositions)):
+            table_insert(needles, needle .. xray_item.id)
         end
     end
 
@@ -572,7 +573,7 @@ function XrayUI:registerAndMarkXrayItemRects(bb)
         rect = self:drawXrayItemMarker(c, rect)
         table_insert(self.xray_item_rects, {
             rect = rect,
-            hit = page_word.word,
+            id = page_word.id,
         })
 
         --* handling of taps on XrayItemMarkers in ((ReaderHighlight#onTapOnXrayItemMarker))...
@@ -580,55 +581,74 @@ function XrayUI:registerAndMarkXrayItemRects(bb)
 end
 
 --- @private
+function XrayUI:addWordPosition(word_positions, start_pos, end_pos)
+    local word = KOR.document:getTextFromXPointers(start_pos, end_pos)
+    word = self:cleanupWordPositionWords(word)
+    if not word then
+        return
+    end
+
+    --* self.book_needles_string was generated in ((XrayUI#setBookNeedles)):
+    --* the id's retrieved in current method will be used for showing the items in ((ReaderHighlight#onTapOnXrayItemMarker)):
+    local item_id = self.book_needles_string:match("#" .. word:gsub("-", "%%-") .. "#(%d+)")
+    if item_id then
+        table_insert(word_positions, {
+            id = tonumber(item_id),
+            position = end_pos,
+        })
+    end
+end
+
+--- @private
 function XrayUI:getWordPositions(pos0)
+
+    --* self.book_needles_string used for matching below was generated in ((XrayUI#setBookNeedles))
 
     --? for some reason real current_page mostly not to be got in CreDocent for some reason, so we let ((XrayUI#registerAndMarkXrayItemRects)) deliver a pos0 derived from XrayUI.paragraphs[1].pos0 and compute the real current page from that:
     local current_page = KOR.document:getPageFromXPointer(pos0)
     local word_positions = {}
     local pos1 = KOR.document:getNextVisibleWordStart(pos0)
+    local is_last_page = current_page == KOR.document:getPageCount()
+
     if KOR.document:getPageFromXPointer(pos1) ~= current_page then
         return
     end
 
     local pos0_next = pos1
     pos1 = KOR.document:getPrevVisibleChar(pos1)
-    local word = KOR.document:getTextFromXPointers(pos0, pos1)
-    word = self:cleanupWordPositionWords(word)
-    if word and self.book_needles_string:match(" " .. word:gsub("%-", "%%-") .. " ") then
-        table_insert(word_positions, {
-            word = word,
-            position = pos1,
-        })
-    end
+    self:addWordPosition(word_positions, pos0, pos1)
 
     pos0 = pos0_next
-    pos1 = KOR.document:getNextVisibleWordStart(pos0_next)
+    pos1 = KOR.document:getNextVisibleWordStart(pos0)
+
+    local max_tries = 800
+    local current_try = 0
     while KOR.document:getPageFromXPointer(pos1) == current_page do
         pos0_next = pos1
         pos1 = KOR.document:getPrevVisibleChar(pos1)
-        word = KOR.document:getTextFromXPointers(pos0, pos1)
-        word = self:cleanupWordPositionWords(word)
-        if word and self.book_needles_string:match(" " .. word:gsub("%-", "%%-") .. " ") then
-            table_insert(word_positions, {
-                word = word,
-                position = pos1,
-            })
-        end
+        self:addWordPosition(word_positions, pos0, pos1)
+
         pos0 = pos0_next
         pos1 = KOR.document:getNextVisibleWordStart(pos0_next)
-    end
-    if KOR.document:getPageFromXPointer(pos0) == current_page then
-        pos1 = KOR.document:getPrevVisibleChar(pos1)
-        word = KOR.document:getTextFromXPointers(pos0, pos1)
-        word = self:cleanupWordPositionWords(word)
-        if word and self.book_needles_string:match(" " .. word:gsub("%-", "%%-") .. " ") then
-            table_insert(word_positions, {
-                word = word,
-                position = pos0,
-            })
+
+        if is_last_page then
+            current_try = current_try + 1
+            if current_try == max_tries then
+                break
+            end
         end
     end
 
+    if is_last_page then
+        return word_positions
+    end
+
+    if KOR.document:getPageFromXPointer(pos0) == current_page then
+        pos1 = KOR.document:getPrevVisibleChar(pos1)
+        self:addWordPosition(word_positions, pos0, pos1)
+    end
+
+    --* these word_postions will now be used for generating rects in ((XrayUI#registerAndMarkXrayItemRects)):
     return word_positions
 end
 

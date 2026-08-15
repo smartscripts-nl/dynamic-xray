@@ -837,22 +837,12 @@ function ReaderHighlight:onTapOnXrayItemMarker(pos)
         return false
     end
 
-    local hit, needle_item, item_was_upgraded
+    local item
     count = #DX.u.xray_item_rects
     for i = 1, count do
         if inside_box(pos, DX.u.xray_item_rects[i].rect) then
-            hit = DX.u.xray_item_rects[i].hit
-            needle_item = {
-                name = hit,
-                alias = hit,
-                short_names = hit,
-            }
-            needle_item, item_was_upgraded = DX.vd:upgradeNeedleItem(needle_item)
-            if item_was_upgraded then
-                DX.d:viewItem(needle_item)
-            else
-                KOR.messages:notify("item werd niet gevonden")
-            end
+            item = DX.vd:getItemById(DX.u.xray_item_rects[i].id)
+            DX.d:viewItem(item)
             return true
         end
     end

@@ -233,7 +233,7 @@ function Strings:formatListItemNumber(nr, title, use_spacer)
 end
 
 function Strings:prepareNeedleForMatching(needle, with_word_boundaries)
-    needle = needle:gsub("%-", "%%-")
+    needle = needle:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1")
     if not with_word_boundaries then
         return needle
     end

@@ -1769,15 +1769,15 @@ function XrayViewsData:isSingularOrPluralMatch(needle, haystack_name)
 end
 
 --* self.item_table[1] = ALL (unfiltered) model items; to check whether there are no (filtered) VIEW items use ((hasViewItems)):
-function XrayViewsData:hasModelItems()
+function XrayViewsData:hasUnfilteredItems()
     return #self.item_table[1] > 0
 end
 
-function XrayViewsData:hasNoModelItems()
+function XrayViewsData:hasNoUnfilteredItems()
     return #self.item_table[1] == 0
 end
 
---* self.items is could be the result of applying a FILTER to ALL items; to check whether there are no (unfiltered) MODEL items use ((hasModelItems)):
+--* self.items is could be the result of applying a FILTER to ALL items; to check whether there are no (unfiltered) MODEL items use ((hasUnfilteredItems)):
 function XrayViewsData:hasViewItems()
     return #self.items > 0
 end
