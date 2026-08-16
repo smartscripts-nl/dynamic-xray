@@ -162,6 +162,16 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
         },
         --* IV stands for the Item Viewer:
+        IV_hide_favorites_tag_group_button = {
+            value = false,
+            explanation = _("If set to true, the button to add the item you're looking at to the tag-group \"Favorites\" will not be shown in the right upper corner of the Item Viewer."),
+            locked = 0,
+        },
+        IV_hide_locations_tag_group_button = {
+            value = false,
+            explanation = _("If set to true, the button to add the item you're looking at to the tag-group \"Locations\" will not be shown in the right upper corner of the Item Viewer."),
+            locked = 0,
+        },
         IV_occurrences_histogram_height = {
             value = 30,
             validator = {

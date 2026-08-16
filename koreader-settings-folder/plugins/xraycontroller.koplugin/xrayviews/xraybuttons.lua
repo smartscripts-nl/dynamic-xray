@@ -786,30 +786,38 @@ end
 
 function XrayButtons:forItemViewerTopRight(needle_item)
 
-    local favorites_name = _("Favorites")
-    local is_favorite = DX.ta:itemHasTag(needle_item, favorites_name)
+    if DX.s.IV_disable_add_to_favorites_tag_group and DX.s.IV_disable_add_to_locations_tag_group then
+        return
+    end
+    local buttons = {}
 
-    local locations_name = _("Locations")
-    local is_location = DX.ta:itemHasTag(needle_item, locations_name)
-
-    return {
-        KOR.buttoninfopopup:forXrayToggleTagItem({
+    if not DX.s.IV_hide_locations_tag_group_button then
+        local locations_name = _("Locations")
+        local is_location = DX.ta:itemHasTag(needle_item, locations_name)
+        table_insert(buttons, KOR.buttoninfopopup:forXrayToggleTagItem({
             icon = is_location and "location-active" or "location",
             info = is_location and T(_("location icon | Remove this item from tag-group \"%1\"."), locations_name) or T(_("location icon | Add this item to tag-group \"%1\"."), locations_name),
             callback_label = is_location and _("remove") or _("add"),
             callback = function()
                 DX.c:itemToggleLocationsTag(needle_item, locations_name, is_location)
             end,
-        }),
-        KOR.buttoninfopopup:forXrayToggleTagItem({
+        }))
+    end
+
+    if not DX.s.IV_hide_favorites_tag_group_button then
+        local favorites_name = _("Favorites")
+        local is_favorite = DX.ta:itemHasTag(needle_item, favorites_name)
+        table_insert(buttons, KOR.buttoninfopopup:forXrayToggleTagItem({
             icon = is_favorite and "heart-black" or "heart",
             info = is_favorite and T(_("heart icon | Remove this item from tag-group \"%1\"."), favorites_name) or T(_("heart icon | Add this item to tag-group \"%1\"."), favorites_name),
             callback_label = is_favorite and _("remove") or _("add"),
             callback = function()
                 DX.c:itemToggleFavoritesTag(needle_item, favorites_name, is_favorite)
             end,
-        }),
-    }
+        }))
+    end
+
+    return buttons
 end
 
 function XrayButtons:forSaveReferenceInformation(reference_information, reference_information_text)
