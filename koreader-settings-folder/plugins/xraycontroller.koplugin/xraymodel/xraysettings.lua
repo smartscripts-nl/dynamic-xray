@@ -262,6 +262,21 @@ local XraySettings = WidgetContainer:new{
             type = "number",
             after_change_callback = "reload_page_navigator",
         },
+        PN_main_panel_font_size = {
+            value = 18,
+            --* this validator references a function included in self.validators:
+            validator = {
+                name = "page_navigator_font_size",
+                min_value = 10,
+                max_value = 26,
+                default_value = 18,
+                value_step = 1,
+            },
+            explanation = _("Page Navigator: determine the font size of the main Page Navigator text panel."),
+            locked = 0,
+            type = "number",
+            after_change_callback = "reload_page_navigator",
+        },
         -- #((non_filtered_items_layout))
         --* consumed in ((XrayPages#activateNonFilteredItemsLayout)):
         PN_non_filtered_items_layout = {
@@ -460,6 +475,9 @@ local XraySettings = WidgetContainer:new{
         end,
         night_mode_color = function(value)
             return type(value) == "number" and value >= 0 and value <= 5 or _("a valid value should lie between 0 and 5") .. KOR.strings.ellipsis
+        end,
+        page_navigator_font_size = function(value)
+            return type(value) == "number" and value >= 10 and value <= 26 or _("a valid value should lie between 10 and 26") .. KOR.strings.ellipsis
         end,
     },
 }

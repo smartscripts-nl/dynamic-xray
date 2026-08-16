@@ -746,7 +746,7 @@ function NavigatorBox:setModuleProps()
         self.histogram_bottom_line_height = Size.line.thin
     end
 
-    self.box_font_size = DX.s.is_mobile_device and 26 or 18
+    self.box_font_size = DX.s.PN_main_panel_font_size
     self.content_face = Font:getFace("x_smallinfofont", self.box_font_size)
     self.is_fullscreen = self.window_size == "fullscreen"
 
