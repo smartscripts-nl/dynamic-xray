@@ -1049,17 +1049,20 @@ end
 
 --* this method was called from ((XrayDialogs#viewItem)) or ((XrayDialogs#viewTappedWordItem)):
 --- @private
-function XrayDialogs:showItemViewer(needle_item, props)
-    local name = DX.vd:addNonBreakableIndicator(props.name:gsub(KOR.icons.lock_bare, ""), needle_item)
-    local title = props.icon .. name .. " (" .. props.index .. "/" .. props.current_items_count .. ")"
+function XrayDialogs:showItemViewer(xray_item, props)
+
+    local prefix_icon = DX.vd:getSeriesModeBookOrSeriesIconPrefix(xray_item)
+
+    local name = DX.vd:addNonBreakableIndicator(props.name:gsub(KOR.icons.lock_bare, ""), xray_item)
+    local title = prefix_icon .. props.icon .. name .. " (" .. props.index .. "/" .. props.current_items_count .. ")"
     if props.is_non_tapped_word_collection then
         title = KOR.icons.xray_tapped_collection_bare .. " " .. title
     end
 
-    self.needle_name_for_list_page = needle_item.name
+    self.needle_name_for_list_page = xray_item.name
     local key_events_module = props.key_events_module
 
-    self.current_viewer_item = needle_item
+    self.current_viewer_item = xray_item
 
     local tabs = DX.b:getItemViewerTabs(props.main_info, props.hits_info, props.linked_items_info, props.linked_items_info2, props.linked_items_info3, props.tag_groups_info, props.tag_groups_info2, props.tag_groups_info3, props.quotes_info)
 
@@ -1067,12 +1070,12 @@ function XrayDialogs:showItemViewer(needle_item, props)
     local active_tab = KOR.registry:getOnce("active_tab") or 1
     KOR.dialogs:htmlBoxTabbed(active_tab, {
         title = title,
-        top_buttons_left = DX.b:forItemViewerTopLeft(self, needle_item),
+        top_buttons_left = DX.b:forItemViewerTopLeft(self, xray_item),
         top_buttons_right = props.top_buttons_right,
         tabs = tabs,
         dialog_queue_id = props.dialog_queue_id,
         --* in external items viewer mode don't generate chapter histogram:
-        bottom_widget = not props.has_only_external_items and DX.s.IV_show_occurrences_histogram and self:generateOccurrencesHistogram(needle_item),
+        bottom_widget = not props.has_only_external_items and DX.s.IV_show_occurrences_histogram and self:generateOccurrencesHistogram(xray_item),
         window_size = "max",
         box_font_size = DX.s.textviewer_font_size,
         button_font_weight = "normal",

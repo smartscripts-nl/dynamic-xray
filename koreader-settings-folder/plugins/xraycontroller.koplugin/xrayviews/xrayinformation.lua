@@ -439,11 +439,28 @@ Shift+S = Show all hits in book
 ]]), KOR.icons.series_mode_bare, KOR.icons.book_bare)
     DX.d:setHelpText("viewer", viewer_info)
 
+    local icons_info = T(_([[
+
+%1 = important person
+%2 = person
+%3 = important term
+%4 = term
+
+ONLY IN SERIES DISPLAY-MODE:
+
+%5 = item is mentioned in current e-book
+%6 = item is mentioned in series, but not in current e-book
+]]), KOR.icons.xray_person_important_bare, KOR.icons.xray_person_bare, KOR.icons.xray_term_important_bare, KOR.icons.xray_term_bare, KOR.icons.xray_book_mode_bare, KOR.icons.seriesmanager_bare)
+
     KOR.dialogs:textBoxTabbed(initial_tab, {
         title = _("(BT) Hotkeys and more"),
         is_standard_tabbed_dialog = true,
         no_overlay = true,
         tabs = {
+            {
+                tab = _("icons"),
+                info = icons_info,
+            },
             {
                 tab = _("in Items List"),
                 info = list_info,

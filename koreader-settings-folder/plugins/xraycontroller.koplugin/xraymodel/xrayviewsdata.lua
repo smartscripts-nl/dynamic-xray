@@ -1406,6 +1406,7 @@ end
 --* generate list item texts for ((XrayDialogs#showList)):
 function XrayViewsData:generateListItemText(xray_item, reliability_indicator)
 
+    local prefix_icon = self:getSeriesModeBookOrSeriesIconPrefix(xray_item)
     local icon = self:getItemTypeIcon(xray_item, "bare")
 
     --* in series mode we want the list to show the total count of items for the whole series, instead of only for the current book:
@@ -1423,6 +1424,7 @@ function XrayViewsData:generateListItemText(xray_item, reliability_indicator)
     local location_marker = self:getLocationMarker(xray_item)
     return table_concat({
         reliability_indicator,
+        prefix_icon,
         icon,
         favorite_marker,
         location_marker,
@@ -1432,6 +1434,13 @@ function XrayViewsData:generateListItemText(xray_item, reliability_indicator)
         ": ",
         KOR.strings:lcfirst(xray_item.description),
     }, "")
+end
+
+function XrayViewsData:getSeriesModeBookOrSeriesIconPrefix(xray_item)
+    if self.list_display_mode == "series" then
+        return has_items(xray_item.book_hits) and KOR.icons.xray_book_mode_bare .. " " or KOR.icons.seriesmanager_bare .. " "
+    end
+    return ""
 end
 
 --- @private
