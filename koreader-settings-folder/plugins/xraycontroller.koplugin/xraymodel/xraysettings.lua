@@ -229,7 +229,12 @@ local XraySettings = WidgetContainer:new{
         },
         PN_hide_filter_buttons = {
             value = false,
-            explanation = _("Page Navigator: if this settings is set to true, no filter buttons will be shown in the left half of the title bar. This can be handy when your screen width is too small to accomodate these icons, or can be usefull to unclutter PN when you don't intend to use these icons. Note that you can still activate an item filter by longpressing items in PN's sidepanel."),
+            explanation = _("Page Navigator: if this settings is set to true, no filter buttons will be shown in the left half of the title bar. This can be handy when your screen width is too small to accomodate these icons, or can be usefull to unclutter PN when you don't intend to use these icons. Note that you can still activate an item filter by longpressing items in PN's sidepanel.\n\nCompare setting PN_hide_filter_by_2_items_button for only hiding the button for filtering on 2 items being mentioned together on pages."),
+            locked = 0,
+        },
+        PN_hide_filter_by_2_items_button = {
+            value = false,
+            explanation = _("If set to true, the button to show only pages in Page Navigator which have two items (selected by the user) being mentioned together will be hidden.\n\nCompare setting PN_hide_filter_buttons, for hiding both filter buttons in the top right corner of Page Navigator."),
             locked = 0,
         },
         PN_infopanel_meta_indent = {

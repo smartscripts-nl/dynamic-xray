@@ -482,6 +482,13 @@ function XrayButtons:forPageNavigatorTopRight(parent)
             return parent:setFilter()
         end,
     })
+
+    if DX.s.PN_hide_filter_by_2_items_button then
+        return {
+            filter_button,
+        }
+    end
+
     local double_filter_button
     double_filter_button = KOR.buttoninfopopup:forXrayPageNavigatorFilterDouble({
         callback = function()
