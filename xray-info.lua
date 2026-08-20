@@ -12,7 +12,8 @@ These modules are initialized in ((initialize Xray modules)) and ((XrayControlle
 XrayDataLoader is mainly concerned with retrieving data FROM the database, while XrayDataSaver is mainly concerned with storing data TO the database. XrayTappedWords handles data requests resulting from users longpressing (partial) names of Xray items in the e-book text.
 
 The views layer has three main streams:
-1) XrayUI, which is only responsible for displaying tappable xray markers (lightning or star icons) in the ebook text;
+1) XrayUI, which is only responsible for displaying tappable xray markers (lightning or star icons) in the ebook text.
+    If the lightning icon is visible, by default Xray items mentioned in the text of the ebook will be marked with a star. The user can tap on those markers, to see information about that particular item in the Item Viewer.
 2) XrayPageNavigator, XrayDialogs and XrayButtons, which are responsible for displaying dialogs and interaction with the user.
 3) Worthy to be specially mentioned is XrayPageNavigator, which offers the user one of ((the two most Kindle-like experiences)): navigating through pages, with Xray items marked bold and button with which to show explanations of the items in the bottom panel. XrayPageNavigator does have some sub-modules, each responsible for one aspect of its views:
     a) XraySidePanels (DX.sp): responsible for the sidepanel (tabs) of the PageNavigator
