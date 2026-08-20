@@ -13,11 +13,11 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 local Screen = require("device").screen
 local Size = require("modules/size")
-local T = require("ffi/util").template
 
 local DX = DX
 local pairs = pairs
-local table_insert = table.insert
+local T = T
+local table_insert = table_insert
 local unpack = unpack
 
 local count

@@ -8,12 +8,12 @@ local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 local Size = require("modules/size")
-local T = require("ffi/util").template
 
 local DX = DX
 local has_no_text = has_no_text
 local has_text = has_text
-local table_insert = table.insert
+local T = T
+local table_insert = table_insert
 local tonumber = tonumber
 local tostring = tostring
 local type = type

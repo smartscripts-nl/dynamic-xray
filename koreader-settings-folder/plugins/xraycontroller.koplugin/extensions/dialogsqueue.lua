@@ -7,9 +7,9 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 
 local DX = DX
-local os_time = os.time
-local table_insert = table.insert
-local table_remove = table.remove
+local os_time = os_time
+local table_insert = table_insert
+local table_remove = table_remove
 
 local count
 

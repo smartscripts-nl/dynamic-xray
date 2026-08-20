@@ -13,8 +13,8 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local DX = DX
 local has_items = has_items
 local has_no_items = has_no_items
-local math_floor = math.floor
-local table_insert = table.insert
+local math_floor = math_floor
+local table_insert = table_insert
 
 local count
 

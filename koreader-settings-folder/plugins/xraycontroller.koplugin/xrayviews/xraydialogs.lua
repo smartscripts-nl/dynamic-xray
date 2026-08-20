@@ -24,16 +24,15 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local Screen = require("device").screen
 local _ = KOR:initCustomTranslations()
 local Size = require("ui/size")
-local T = require("ffi/util").template
 
 local DX = DX
 local has_items = has_items
 local has_no_items = has_no_items
 local has_no_text = has_no_text
 local has_text = has_text
-local math_floor = math.floor
-local table = table
-local table_insert = table.insert
+local math_floor = math_floor
+local T = T
+local table_insert = table_insert
 local tostring = tostring
 
 local count
@@ -382,16 +381,12 @@ function XrayDialogs:showFilterDialog()
     KOR.dialogs:showOverlay()
     self.filter_xray_items_input = InputDialog:new{
         title = _("Filter xray items"),
-        description = _("Text filters are case insensitive (except for items which contain uppercase characters):"),
+        description = _("Text filters are case insensitive (except when the checkbox has been checked):"),
         top_buttons_left = {
             Button:new({
                 icon = "info-slender",
                 callback = function()
-                    KOR.dialogs:niceAlert(_("Filter dialog"), _([[checkbox checked:
-search only for whole word hits in the name, aliases or short names or descriptions of items.
-
-checkbox not checked:
-search for hits in the name, aliases or short names and show linked items for those hits.]]))
+                    KOR.dialogs:niceAlert(_("Filter dialog"), _("checkbox checked::\nsearch case-insensitive, also in item descriptions; may be less exact\n\nnot checked:\nignore descriptions and search case sensitive; probably more exact"))
                 end
             })
         },
@@ -405,13 +400,14 @@ search for hits in the name, aliases or short names and show linked items for th
         cursor_at_end = true,
         buttons = DX.b:forFilterDialog(),
     }
+    --* see for the effect of this checkbox enabled or not: ((filter Items List by text)):
     self.check_button_descriptions = CheckButton:new{
-        text = _("Simple search: name and description"),
-        checked = DX.vd.search_simple,
+        text = _("search also in descriptions, case-insensitive"),
+        checked = DX.vd.search_also_in_descriptions,
         parent = self.filter_xray_items_input,
         max_width = self.filter_xray_items_input._input_widget.width,
         callback = function()
-            DX.vd:setProp("search_simple", self.check_button_descriptions.checked)
+            DX.vd:setProp("search_also_in_descriptions", self.check_button_descriptions.checked)
         end,
     }
     local checkbox_shift = math_floor((self.filter_xray_items_input.width - self.filter_xray_items_input._input_widget.width) / 2 + 0.5)
@@ -431,17 +427,20 @@ search for hits in the name, aliases or short names and show linked items for th
 end
 
 function XrayDialogs:notifyFilterResult(filter_active, filtered_count)
-    self.filter_state = filtered_count == 0 and "unfiltered" or "filtered"
-    if filter_active and filtered_count == 0 then
-        local message
-        if DX.vd.filter_tag then
-            message = T(_("no items found with tag \"%1\"..."), DX.vd.filter_tag)
-            self:setActionResultMessage(message)
-            return
-        end
-        message = has_text(DX.vd.filter_string) and T(_("no items found with filter \"%1\""), DX.vd.filter_string) .. KOR.strings.ellipsis or _("no items found with this filter") .. KOR.strings.ellipsis
-        self:setActionResultMessage(message)
+    if not filter_active or filtered_count > 0 then
+        return
     end
+
+    self.filter_state = filtered_count == 0 and "unfiltered" or "filtered"
+    local message
+    if DX.vd.filter_tag then
+        message = T(_("no items found with tag \"%1\"..."), DX.vd.filter_tag)
+        self:setActionResultMessage(message)
+        return
+    end
+
+    message = has_text(DX.vd.filter_string) and T(_("no items found with filter \"%1\""), DX.vd.filter_string) .. KOR.strings.ellipsis or _("no items found with this filter") .. KOR.strings.ellipsis
+    self:setActionResultMessage(message)
 end
 
 --* information for this dialog was generated via ((ReaderView#paintTo)) > ((XrayUI#uiInfoGenerateInformation))
@@ -1051,7 +1050,7 @@ end
 --- @private
 function XrayDialogs:showItemViewer(xray_item, props)
 
-    local prefix_icon = DX.vd:getSeriesModeBookOrSeriesIconPrefix(xray_item)
+    local prefix_icon = DX.vd:getSeriesModeBookOrSeriesIcon(xray_item)
 
     local name = DX.vd:addNonBreakableIndicator(props.name:gsub(KOR.icons.lock_bare, ""), xray_item)
     local title = prefix_icon .. props.icon .. name .. " (" .. props.index .. "/" .. props.current_items_count .. ")"

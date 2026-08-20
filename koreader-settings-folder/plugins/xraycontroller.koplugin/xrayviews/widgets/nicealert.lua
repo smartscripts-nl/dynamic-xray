@@ -29,8 +29,8 @@ local Screen = Device.screen
 
 local DX = DX
 local has_no_content = has_no_content
-local math_floor = math.floor
-local table_insert = table.insert
+local math_floor = math_floor
+local table_insert = table_insert
 
 --- @class NiceAlert
 local NiceAlert = InputContainer:extend {

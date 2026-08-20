@@ -7,13 +7,12 @@ local require = require
 local DataStorage = require("datastorage")
 local ImageWidgetInverted = require("xrayviews/widgets/imagewidgetinverted")
 local Screen = require("device").screen
-local lfs = require("libs/libkoreader-lfs")
 --local logger = require("logger")
 
 local DX = DX
 local G_defaults = G_defaults
-local lfs_attributes = lfs.attributes
-local table_insert = table.insert
+local lfs_attributes = lfs_attributes
+local table_insert = table_insert
 
 local DGENERIC_ICON_SIZE = G_defaults:readSetting("DGENERIC_ICON_SIZE")
 
@@ -77,7 +76,7 @@ function IconWidgetInverted:init()
             for e = 1, count2 do
                 ext = ICONS_EXTS[e]
                 path = dir .. "/" .. self.icon .. ext
-                if lfs.attributes(path, "mode") == "file" then
+                if lfs_attributes(path, "mode") == "file" then
                     self.file = path
                     break
                 end

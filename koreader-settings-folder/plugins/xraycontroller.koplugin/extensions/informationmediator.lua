@@ -12,7 +12,7 @@ local T = require("ffi/util").template
 local DX = DX
 local has_content = has_content
 local has_no_text = has_no_text
-local table_insert = table.insert
+local table_insert = table_insert
 
 --- @class InformationMediator
 local InformationMediator = WidgetContainer:extend{

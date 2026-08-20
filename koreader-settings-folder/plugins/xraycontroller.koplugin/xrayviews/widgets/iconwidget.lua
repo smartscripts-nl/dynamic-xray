@@ -7,13 +7,12 @@ local require = require
 local DataStorage = require("datastorage")
 local ImageWidget = require("ui/widget/imagewidget")
 local Screen = require("device").screen
-local lfs = require("libs/libkoreader-lfs")
 --local logger = require("logger")
 
 local DX = DX
 local G_defaults = G_defaults
-local lfs_attributes = lfs.attributes
-local table_insert = table.insert
+local lfs_attributes = lfs_attributes
+local table_insert = table_insert
 
 local DGENERIC_ICON_SIZE = G_defaults:readSetting("DGENERIC_ICON_SIZE")
 

@@ -5,7 +5,6 @@ local require = require
 
 local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
-local T = require("ffi/util").template
 local _ = KOR:initCustomTranslations()
 
 local DX = DX
@@ -14,9 +13,9 @@ local has_items = has_items
 local has_no_items = has_no_items
 local has_no_text = has_no_text
 local has_text = has_text
-local table = table
-local table_concat = table.concat
-local table_insert = table.insert
+local T = T
+local table_concat = table_concat
+local table_insert = table_insert
 local tonumber = tonumber
 local type = type
 
@@ -36,6 +35,8 @@ local XrayViewsData = WidgetContainer:new{
     chapters_start_pages_ordered = {},
     current_item = nil,
     current_tab_items = nil,
+    filter_by_current_book = false,
+    filter_by_other_books_in_series = false,
     filtered_count = 0,
     filter_string = "",
     filter_tag = nil,
@@ -53,7 +54,7 @@ local XrayViewsData = WidgetContainer:new{
     new_item_hits = nil,
     persons = {},
     --* this prop can be modified with the checkbox in ((XrayDialogs#showFilterDialog)):
-    search_simple = false,
+    search_also_in_descriptions = false,
     separator = " " .. KOR.icons.arrow_bare .. " ",
     terms = {},
     type_matched = false,
@@ -122,6 +123,8 @@ end
 
 function XrayViewsData:resetAllFilters()
     self.filter_xray_types = nil
+    self.filter_by_current_book = false
+    self.filter_by_other_books_in_series = false
     self.filter_string = ""
     self.filter_tag = nil
     self.filter_state = "unfiltered"
@@ -739,18 +742,19 @@ function XrayViewsData:applyTextFilters(item, linked_item_needles, hits_registry
         return false, nil, hits_registry
     end
 
+    -- #((filter Items List by text))
     if self.type_matched and has_text(self.filter_string) then
-        if self.search_simple then
-            score, reliability_indicator = tapped_words:doSimpleSearchScoreMatch(item)
+        if self.search_also_in_descriptions then
+            score, reliability_indicator = tapped_words:doScoreMatchAlsoForDescriptions(item)
         else
             score, reliability_indicator = tapped_words:doScoreMatch(item)
         end
         matched = has_items(score) and (is_first_loop or score > 20)
-        if is_loop_for_linked_items and matched and not self.search_simple then
+        if is_loop_for_linked_items and matched and not self.search_also_in_descriptions then
             reliability_indicator = DX.i:getMatchReliabilityIndicator("linked_item")
         end
 
-        --* here linked_item_needles is populated, IF not self.search_simple and we are in the first loop:
+        --* here linked_item_needles is populated, IF not self.search_also_in_descriptions and we are in the first loop:
         hits_registry = self:updateFilteredCountUponTextMatch(item, linked_item_needles, matched, score, is_first_loop, hits_registry)
     end
 
@@ -775,6 +779,18 @@ function XrayViewsData:applyTypeFilters(item)
     end
 end
 
+--- @private
+function XrayViewsData:seriesDisplayModePreFilterDidMatch(item)
+    if self.filter_by_current_book and has_items(item.book_hits) then
+        return true
+
+    elseif self.filter_by_other_books_in_series and has_items(item.series_hits) and has_no_items(item.book_hits) then
+        return true
+    end
+
+    return false
+end
+
 --* self.filtered_count can also be increased in ((XrayViewsData#applyTypeFilters)):
 --- @private
 --- @param item table
@@ -796,6 +812,20 @@ end
 --* returns matched, tag_matched, reliability_indicator, hits_registry (in that exact sequence):
 --- @private
 function XrayViewsData:evaluateFilters(item, linked_item_needles, hits_registry)
+
+    if self.list_display_mode == "series" and (self.filter_by_current_book or self.filter_by_other_books_in_series) then
+        if not self:seriesDisplayModePreFilterDidMatch(item) then
+            --! hits_registry MUST be returned here (i.e. may not become nil) for crash-free handling of results per item:
+            return false, false, nil, hits_registry
+
+        --* if no other filters than for series display mode are active, register a hit for those conditions:
+        elseif not self.filter_tag and not self.filter_xray_types and has_no_text(self.filter_string) then
+            self.filtered_count = self.filtered_count + 1
+            --! hits_registry MUST be returned here (i.e. may not become nil) for crash-free handling of results per item:
+            return true, false, nil, hits_registry
+        end
+    end
+
     local matched, reliability_indicator
     local tag_matched = false
     if self.filter_tag then
@@ -815,13 +845,14 @@ end
 function XrayViewsData:filterAndAddItemToItemTables(items, n, search_needles, linked_item_needles, hits_registry)
 
     local list_item, matched, tag_matched, reliability_indicator
-    local no_filters_active = not search_needles and not self.filter_tag and not self.filter_xray_types
+    local filters_active = search_needles or self.filter_tag or self.filter_xray_types or self.filter_by_current_book or self.filter_by_other_books_in_series
+    local no_filters_active = not filters_active
     if self.filter_tag then
         self.filter_string = nil
     end
     local item = items[n]
 
-    if not no_filters_active then
+    if filters_active then
         matched, tag_matched, reliability_indicator, hits_registry = self:evaluateFilters(item, linked_item_needles, hits_registry)
     end
 
@@ -1406,8 +1437,9 @@ end
 --* generate list item texts for ((XrayDialogs#showList)):
 function XrayViewsData:generateListItemText(xray_item, reliability_indicator)
 
-    local prefix_icon = self:getSeriesModeBookOrSeriesIconPrefix(xray_item)
-    local icon = self:getItemTypeIcon(xray_item, "bare")
+    --* in series-display-mode the user can filter for only current-book-items or only not-in-book-but-in-series items; see at end of ((XrayButtons#forFilterDialog)):
+    local book_or_series_icon = self:getSeriesModeBookOrSeriesIcon(xray_item)
+    local type_icon = self:getItemTypeIcon(xray_item, "bare")
 
     --* in series mode we want the list to show the total count of items for the whole series, instead of only for the current book:
     local hits = self.list_display_mode == "series" and xray_item.series_hits or xray_item.book_hits
@@ -1418,25 +1450,25 @@ function XrayViewsData:generateListItemText(xray_item, reliability_indicator)
     end
 
     --* we don't add sequence number here, because that will only be done after prioritizing and sorting items in the list, at end of ((XrayViewsData#getCurrentListTabItems)):
-    local name = self:addNonBreakableIndicator(xray_item.name, xray_item)
+    local item_name = self:addNonBreakableIndicator(xray_item.name, xray_item)
     --* compare adding favorite markers in ((XrayViewsData#generateFirstLines)):
     local favorite_marker = self:getFavoriteMarker(xray_item)
     local location_marker = self:getLocationMarker(xray_item)
     return table_concat({
         reliability_indicator,
-        prefix_icon,
-        icon,
+        book_or_series_icon,
+        type_icon,
         favorite_marker,
         location_marker,
         " ",
-        name,
+        item_name,
         hits_info,
         ": ",
         KOR.strings:lcfirst(xray_item.description),
     }, "")
 end
 
-function XrayViewsData:getSeriesModeBookOrSeriesIconPrefix(xray_item)
+function XrayViewsData:getSeriesModeBookOrSeriesIcon(xray_item)
     if self.list_display_mode == "series" then
         return has_items(xray_item.book_hits) and KOR.icons.xray_book_mode_bare .. " " or KOR.icons.seriesmanager_bare .. " "
     end
@@ -1473,14 +1505,14 @@ function XrayViewsData:filterAndPopulateItemTables(data_items)
     end
 
     --* loop for items which had full or partial matching AND had linkwords; now we search for those linkwords, to get all items linked to these main items:
-    if not self.search_simple and not self.filter_tag then
+    if not self.search_also_in_descriptions and not self.filter_tag then
         hits_registry = self:populateItemTableFromLinkWords(linked_item_needles, items, hits_registry) -- luacheck: ignore
     end
 
     DX.d:notifyFilterResult(filter_active, self.filtered_count)
     if filter_active and self.filtered_count == 0 then
-        self.filter_string = ""
-        self.filter_tag = nil
+        self:resetAllFilters()
+        return
     end
 
     --* prioritizing important items by placing them at the top and sorting the items will be done later via ((XrayViewsData#prepareData)) > ((XrayViewsData#indexItems))..

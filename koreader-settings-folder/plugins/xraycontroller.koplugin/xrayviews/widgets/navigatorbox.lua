@@ -29,12 +29,11 @@ local _ = KOR:initCustomTranslations()
 local DX = DX
 local has_items = has_items
 local has_text = has_text
-local math = math
-local math_floor = math.floor
-local math_max = math.max
+local math_floor = math_floor
+local math_max = math_max
 local pairs = pairs
-local table = table
-local table_insert = table.insert
+local table_insert = table_insert
+local table_remove = table_remove
 
 -- Inject scroll page method for ScrollHtmlWidget
 ScrollHtmlWidget.scrollToPage = function(self, page_num)
@@ -366,7 +365,7 @@ function NavigatorBox:onCloseWidget()
         local window = NavigatorBox.window_list[i]
         --* We should only find a single match, but, better safe than sorry...
         if window == self then
-            table.remove(NavigatorBox.window_list, i)
+            table_remove(NavigatorBox.window_list, i)
         end
     end
 

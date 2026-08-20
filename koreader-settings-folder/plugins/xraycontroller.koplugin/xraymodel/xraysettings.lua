@@ -307,13 +307,14 @@ local XraySettings = WidgetContainer:new{
             explanation = _("Page Navigator: if this setting is false, no popup will be shown when you activate tagged items navigation in Page Navigator."),
             locked = 0,
         },
-        SeriesManager_all_data_imported = {
+        --* SM stands for the Series Manager:
+        SM_all_data_imported = {
             value = false,
             explanation = _("Series Manager: this value will be set to true after you imported all ebooks data into the Series Manager (via the bucket icon in the top left of Series Manager dialogs). You can reset this to false if you wish to re-import the data."),
             locked = 0,
             after_change_callback = "series_manager_reload",
         },
-        SeriesManager_columns_count = {
+        SM_columns_count = {
             value = 2,
             options = { 1, 2, 3 },
             explanation = _("Series Manager: determines in how many columns the items will be shown. The larger counts on devices with less screen estate might result in overflowing columns."),
@@ -321,13 +322,13 @@ local XraySettings = WidgetContainer:new{
             type = "number",
             after_change_callback = "series_manager_reload",
         },
-        SeriesManager_mark_active_title_with_border = {
+        SM_mark_active_title_with_border = {
             value = true,
             explanation = _("Series Manager: if set to true, the current book will be highlighted with a border around it."),
             locked = 0,
             after_change_callback = "series_manager_reload",
         },
-        SeriesManager_max_title_length = {
+        SM_max_title_length = {
             value = 40,
             explanation = _("Series Manager: if a title is longer than this value, it will be truncated with an ellipsis to this max length."),
             locked = 0,
@@ -379,9 +380,9 @@ local XraySettings = WidgetContainer:new{
         },
         --* UI stands for the UI Page Information popup:
         UI_marker_callback = {
-            value = "page_information",
-            options = { "page_information_popup", "page_navigator" },
-            explanation = _("Only in case of full page UI mode: if set to \"page_navigator\", show Page Navigator instead of page information popup."),
+            value = "information_popup",
+            options = { "information_popup", "page_navigator" },
+            explanation = _("These settings determine the action coupled to the lightning-marker in pages:\n\n• information_popup: show UI page information popup\n\n• page_navigator: show Page Navigator"),
             type = "string",
             locked = 0,
         },

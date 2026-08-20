@@ -1,10 +1,51 @@
 
+local lfs = require("libs/libkoreader-lfs")
 local util = require("util")
 
 local G_reader_settings = G_reader_settings
 local tostring = tostring
 local type = type
 
+--* use global vars to quickly run built-in lua methods:
+io_open = io.open
+io_popen = io.popen
+lfs_attributes = lfs.attributes
+lfs_currentdir = lfs.currentdir
+lfs_dir = lfs.dir
+lfs_mkdir = lfs.mkdir
+lfs_rmdir = lfs.rmdir
+math_abs = math.abs
+math_ceil = math.ceil
+math_floor = math.floor
+math_huge = math.huge
+math_max = math.max
+math_min = math.min
+math_random = math.random
+os_date = os.date
+os_difftime = os.difftime
+os_execute = os.execute
+os_exit = os.exit
+os_remove = os.remove
+os_rename = os.rename
+os_time = os.time
+string_byte = string.byte
+string_char = string.char
+string_find = string.find
+string_format = string.format
+string_lower = string.lower
+string_rep = string.rep
+string_sub = string.sub
+--* make T globally available:
+T = require("ffi/util").template
+table_concat = table.concat
+table_insert = table.insert
+table_move = table.move
+table_pack = table.pack
+table_remove = table.remove
+table_sort = table.sort
+util_trim = util.trim
+
+--- @class HelperFunctions
 --* this global var will be used as container for values in registry.lua:
 AX_registry = {
     day_cache = {},

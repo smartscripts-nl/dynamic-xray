@@ -6,15 +6,15 @@ local require = require
 local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
-local T = require("ffi/util").template
+local T = T
 
 local DX = DX
 local has_no_text = has_no_text
 local has_text = has_text
 local pairs = pairs
-local table = table
-local table_insert = table.insert
-local table_remove = table.remove
+local table_insert = table_insert
+local table_remove = table_remove
+local table_sort = table_sort
 local tonumber = tonumber
 local unpack = unpack
 
@@ -550,13 +550,13 @@ function XrayTappedWords:itemsSort(top1_count, top2_count, bottom_count)
         sorter = sort_by_name
     end
     if top1_count > 1 then
-        table.sort(self.at_top1_name_matches, sorter)
+        table_sort(self.at_top1_name_matches, sorter)
     end
 
     local related_items_sorted = self.at_top1_name_matches
 
     if top2_count > 1 then
-        table.sort(self.at_top2_alias_matches, sorter)
+        table_sort(self.at_top2_alias_matches, sorter)
     end
     local item
     for i = 1, top2_count do
@@ -564,7 +564,7 @@ function XrayTappedWords:itemsSort(top1_count, top2_count, bottom_count)
         table_insert(related_items_sorted, item)
     end
     if bottom_count > 1 then
-        table.sort(self.bottom_linked_items, sorter)
+        table_sort(self.bottom_linked_items, sorter)
     end
     for i = 1, bottom_count do
         item = self.bottom_linked_items[i]
@@ -574,7 +574,7 @@ function XrayTappedWords:itemsSort(top1_count, top2_count, bottom_count)
     return related_items_sorted
 end
 
-function XrayTappedWords:doSimpleSearchScoreMatch(item)
+function XrayTappedWords:doScoreMatchAlsoForDescriptions(item)
     local name_lower = item.name:lower()
     local aliases_lower = item.aliases:lower()
     local short_names_lower = item.short_names:lower()

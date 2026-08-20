@@ -15,10 +15,10 @@ local Size = require("modules/size")
 local DX = DX
 local has_content = has_content
 local has_text = has_text
-local math_floor = math.floor
+local math_floor = math_floor
 local select = select
-local table_concat = table.concat
-local table_insert = table.insert
+local table_concat = table_concat
+local table_insert = table_insert
 local tonumber = tonumber
 
 --- @class XrayInfoPanel
@@ -68,7 +68,7 @@ function XrayInfoPanel:generateInfoPanel(data)
     self.info_panel_separator = self.info_panel_separator or self:generateInfoPanelSeparator()
     local info_panel_separator_height = self.cached_info_panel_separator_height or self.info_panel_separator:getSize().h
 
-    --* info_text was generated in ((XrayPageNavigator#showNavigator)) > ((XrayPages#markItemsFoundInPageHtml)) > ((XrayPages#markItem)) > ((XrayInfoPanel#getItemInfoText)):
+    --* info_text was generated in ((XrayPageNavigator#showNavigator)) > ((XrayPages#markItemsFoundInPageHtml)) > ((XrayPages#markedItemRegister)) > ((XrayInfoPanel#getItemInfoText)):
     local info_text = self.info_panel_text or " "
     local has_panel_content = has_text(info_text)
     local info_panel
@@ -147,7 +147,7 @@ end
 --- @private
 function XrayInfoPanel:generateInfoPanelContent(info_text)
 
-    --* info_text was generated in ((XrayPageNavigator#showNavigator)) > ((XrayPages#markItemsFoundInPageHtml)) > ((XrayPages#markItem)) > ((XrayInfoPanel#getItemInfoText)):
+    --* info_text was generated in ((XrayPageNavigator#showNavigator)) > ((XrayPages#markItemsFoundInPageHtml)) > ((XrayPages#markedItemRegister)) > ((XrayInfoPanel#getItemInfoText)):
     return ScrollTextWidget:new{
         text = info_text,
         face = Font:getFace("x_smallinfofont", DX.s.PN_panels_font_size or 14),

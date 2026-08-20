@@ -42,9 +42,8 @@ local logger = require("logger")
 local DX = DX
 local G_defaults = G_defaults
 local G_reader_settings = G_reader_settings
-local math_floor = math.floor
-local table = table
-local table_insert = table.insert
+local math_floor = math_floor
+local table_insert = table_insert
 local tostring = tostring
 local type = type
 

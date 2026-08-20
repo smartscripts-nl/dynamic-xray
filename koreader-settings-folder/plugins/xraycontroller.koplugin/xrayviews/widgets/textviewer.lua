@@ -50,11 +50,11 @@ local DX = DX
 local has_no_text = has_no_text
 local has_text = has_text
 local io = io
-local math = math
-local math_floor = math.floor
+local math_abs = math_abs
+local math_floor = math_floor
 local select = select
-local table_insert = table.insert
-local table_remove = table.remove
+local table_insert = table_insert
+local table_remove = table_remove
 local type = type
 
 local count
@@ -404,7 +404,7 @@ function TextViewer:findCallback(input_dialog, external_search_string, overrule_
     --? second condition to prevent a crash that sometimes happened when tapping on reader in right bottom corner; don't know why we need this:
     if self._find_next and self.scroll_text_w.getCharPos then
         local charpos, new_virtual_line_num = self.scroll_text_w:getCharPos()
-        if math.abs(new_virtual_line_num - self._old_virtual_line_num) > self.find_centered_lines_count then
+        if math_abs(new_virtual_line_num - self._old_virtual_line_num) > self.find_centered_lines_count then
             start_pos = self.scroll_text_w:getCharPosAtXY(0, 0) --* first char of the top line
         elseif external_search_string then
             start_pos = 1

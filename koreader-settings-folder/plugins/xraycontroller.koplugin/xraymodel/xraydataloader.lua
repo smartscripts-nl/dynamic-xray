@@ -6,11 +6,11 @@ local require = require
 local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local json = require("json")
-local T = require("ffi/util").template
 
 local DX = DX
 local has_text = has_text
-local table_insert = table.insert
+local T = T
+local table_insert = table_insert
 local tonumber = tonumber
 
 local count

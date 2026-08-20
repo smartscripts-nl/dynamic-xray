@@ -8,9 +8,8 @@ local util = require("util")
 local DX = DX
 local G_reader_settings = G_reader_settings
 local has_no_text = has_no_text
-local table = table
-local table_concat = table.concat
-local table_insert = table.insert
+local table_concat = table_concat
+local table_insert = table_insert
 local util_htmlToPlainTextIfHtml = util.htmlToPlainTextIfHtml
 
 local count

@@ -13,7 +13,6 @@ local KOR = require("extensions/kor")
 local RenderImage = require("ui/renderimage")
 local SQ3 = require("lua-ljsqlite3/init")
 local UIManager = require("ui/uimanager")
-local lfs = require("libs/libkoreader-lfs")
 local logger = require("logger")
 local util = require("util")
 local zstd = require("ffi/zstd")
@@ -25,14 +24,18 @@ local T = FFIUtil.template
 
 local G_reader_settings = G_reader_settings
 local has_content = has_content
-local math = math
+local lfs_attributes = lfs_attributes
+local lfs_dir = lfs_dir
+local math_floor = math_floor
 local next = next
-local os = os
+local os_remove = os_remove
 local pairs = pairs
 local pcall = pcall
 local string = string
-local table = table
-local table_insert = table.insert
+local table_concat = table_concat
+local table_insert = table_insert
+local table_remove = table_remove
+local table_sort = table_sort
 local tonumber = tonumber
 
 --* Database definition
@@ -125,10 +128,10 @@ end
 
 --* Build our most often used SQL queries according to columns
 local BOOKINFO_INSERT_SQL = "INSERT OR REPLACE INTO bookinfo " ..
-        "(" .. table.concat(BOOKINFO_COLS_SET, ",") .. ") " ..
-        "VALUES (" .. table.concat(bookinfo_values_sql, ",") .. ");"
+        "(" .. table_concat(BOOKINFO_COLS_SET, ",") .. ") " ..
+        "VALUES (" .. table_concat(bookinfo_values_sql, ",") .. ");"
 
-local BOOKINFO_SELECT_SQL = "SELECT " .. table.concat(BOOKINFO_COLS_SET, ",") .. " FROM bookinfo " ..
+local BOOKINFO_SELECT_SQL = "SELECT " .. table_concat(BOOKINFO_COLS_SET, ",") .. " FROM bookinfo " ..
         "WHERE directory=? AND filename=? AND in_progress=0;"
 
 local BOOKINFO_IN_PROGRESS_SQL = "SELECT in_progress, filename, unsupported FROM bookinfo WHERE directory=? AND filename=?;"
@@ -168,7 +171,7 @@ end
 
 --* DB management
 function BookInfoManager:getDbSize()
-    local file_size = lfs.attributes(self.db_location, "size") or 0
+    local file_size = lfs_attributes(self.db_location, "size") or 0
     return util.getFriendlySize(file_size)
 end
 
@@ -193,7 +196,7 @@ function BookInfoManager:createDB()
         self:loadSettings(db_conn)
 
         self:closeDbConnection()
-        os.remove(self.db_location)
+        os_remove(self.db_location)
 
         --* Re-create it
         db_conn = SQ3.open(self.db_location)
@@ -260,7 +263,7 @@ end
 
 function BookInfoManager:deleteDb()
     self:closeDbConnection()
-    os.remove(self.db_location)
+    os_remove(self.db_location)
     self.db_created = false
 end
 
@@ -287,7 +290,7 @@ end
 
 --* Settings management, stored in 'config' table
 function BookInfoManager:loadSettings(db_conn)
-    if lfs.attributes(self.db_location, "mode") ~= "file" then
+    if lfs_attributes(self.db_location, "mode") ~= "file" then
         --* no db, empty config
         self.settings = {}
         return
@@ -330,7 +333,7 @@ end
 
 function BookInfoManager:saveSetting(key, value, db_conn, skip_reload)
     if not has_content(value) then
-        if lfs.attributes(self.db_location, "mode") ~= "file" then
+        if lfs_attributes(self.db_location, "mode") ~= "file" then
             --* If no db created, no need to save (and create db) an empty value
             return
         end
@@ -376,14 +379,14 @@ function BookInfoManager:getBookInfo(full_path, get_cover)
     --* files with unknown book extension. If not a supported extension,
     --* returns a bookinfo like-object enough for a correct display and
     --* to not trigger extraction, so we don't clutter DB with such files.
-    local is_directory = lfs.attributes(full_path, "mode") == "directory"
+    local is_directory = lfs_attributes(full_path, "mode") == "directory"
     if is_directory or not DocumentRegistry:hasProvider(full_path) then
         return {
             directory = directory,
             filename = filename,
             --[[
-            filesize = lfs.attributes(filepath, "size"),
-            filemtime = lfs.attributes(filepath, "modification"),
+            filesize = lfs_attributes(filepath, "size"),
+            filemtime = lfs_attributes(filepath, "modification"),
             --]]
             in_progress = 0,
             cover_fetched = "Y",
@@ -516,7 +519,7 @@ function BookInfoManager:extractBookInfo(filepath, cover_specs)
     end
 
     --* Update this on each extraction attempt. Might be useful to reset the counter in case file gets updated.
-    local file_attr = lfs.attributes(filepath)
+    local file_attr = lfs_attributes(filepath)
     dbrow.filesize = file_attr.size
     dbrow.filemtime = file_attr.modification
 
@@ -642,10 +645,6 @@ function BookInfoManager:extractBookInfo(filepath, cover_specs)
     self.set_stmt:step()
     self.set_stmt:clearbind():reset() --* get ready for next query
 
-    if description_for_statistics and not KOR.description:hasDescription(nil, dbrow.filename) then
-        --* prevent overwriting of already updated descriptions in db upon extraction of mosaic sized thumbnails for RecentAdditions etc.:
-        KOR.statisticshelpers:addToDB(dbrow.directory .. dbrow.filename, description_for_statistics)
-    end
     return loaded
 end
 
@@ -697,7 +696,7 @@ function BookInfoManager:removeMissingFiles()
     local count = #full_paths
     for i = 1, count do
         full_path = full_paths[i]
-        if lfs.attributes(full_path, "mode") ~= "file" then
+        if lfs_attributes(full_path, "mode") ~= "file" then
             table_insert(bcids_to_remove, tonumber(bcids[i]))
         end
     end
@@ -726,7 +725,7 @@ function BookInfoManager:collectSubprocesses()
         for i = count, 1, -1 do
             pid = self.subprocesses_pids[i]
             if FFIUtil.isSubProcessDone(pid) then
-                table.remove(self.subprocesses_pids, i)
+                table_remove(self.subprocesses_pids, i)
                 --* Prevent has been issued for each bg task spawn, we must allow for each death too.
                 UIManager:allowStandby()
             end
@@ -861,9 +860,9 @@ local function findFilesInDir(path, recursive)
         --* handle each dir
         for _, d in pairs(dirs) do
             --* handle files in d
-            for f in lfs.dir(d) do
+            for f in lfs_dir(d) do
                 full_path = d .. "/" .. f
-                attributes = lfs.attributes(full_path)
+                attributes = lfs_attributes(full_path)
                 --* Don't traverse hidden folders if we're not showing them
                 if recursive and attributes.mode == "directory" and f ~= "." and f ~= ".." and (G_reader_settings:isTrue("show_hidden") or not util.stringStartsWith(f, ".")) then
                     table_insert(new_dirs, full_path)
@@ -958,7 +957,7 @@ Do you want to prune the cache of removed books?]]
         UIManager:forceRePaint()
         completed, files = Trapper:dismissableRunInSubprocess(function()
             local filepaths = findFilesInDir(path, recursive)
-            table.sort(filepaths)
+            table_sort(filepaths)
             return filepaths
         end, info)
         if not completed then
@@ -1050,7 +1049,7 @@ Do you want to prune the cache of removed books?]]
         info:free()
         info.text = T(_("Indexing %1 / %2…\n\n%3"), i, nb_files, BD.filename(filename))
         info:init()
-        local text_widget = table.remove(info.movable[1][1], 3)
+        local text_widget = table_remove(info.movable[1][1], 3)
         local text_widget_size = text_widget:getSize()
         if text_widget_size.h > info_max_seen_height then
             info_max_seen_height = text_widget_size.h
@@ -1095,12 +1094,12 @@ end
 
 function BookInfoManager.getCachedCoverSize(img_w, img_h, max_img_w, max_img_h)
     local scale_factor
-    local width = math.floor(max_img_h * img_w / img_h + 0.5)
+    local width = math_floor(max_img_h * img_w / img_h + 0.5)
     if max_img_w >= width then
         max_img_w = width
         scale_factor = max_img_w / img_w
     else
-        max_img_h = math.floor(max_img_w * img_h / img_w + 0.5)
+        max_img_h = math_floor(max_img_w * img_h / img_w + 0.5)
         scale_factor = max_img_h / img_h
     end
     return max_img_w, max_img_h, scale_factor

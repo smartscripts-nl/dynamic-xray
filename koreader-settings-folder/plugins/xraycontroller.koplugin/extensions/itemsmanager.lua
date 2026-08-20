@@ -11,7 +11,7 @@ local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local Screen = require("device").screen
 
-local table_insert = table.insert
+local table_insert = table_insert
 
 local count
 

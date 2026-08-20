@@ -13,14 +13,14 @@ local DX = DX
 local has_content = has_content
 local has_items = has_items
 local has_text = has_text
-local math_ceil = math.ceil
-local math_floor = math.floor
-local math_max = math.max
-local math_min = math.min
+local math_ceil = math_ceil
+local math_floor = math_floor
+local math_max = math_max
+local math_min = math_min
 local pairs = pairs
 local string = string
-local table_concat = table.concat
-local table_insert = table.insert
+local table_concat = table_concat
+local table_insert = table_insert
 local tonumber = tonumber
 
 local count
@@ -252,7 +252,7 @@ function SeriesManager:onShowSeriesList(full_path)
         menu_name = "all_series_menu",
         menu_manager = self,
     }
-    if not DX.s.SeriesManager_all_data_imported then
+    if not DX.s.SM_all_data_imported then
         args.top_buttons_left = {
             KOR.buttoninfopopup:forSeriesManagerDataImport({
                 callback = function()
@@ -346,7 +346,7 @@ function SeriesManager:importAllData(upon_ready_callback)
 
         self.import_annotations, self.import_stars = KOR.databases:closeStmts(self.import_annotations, self.import_stars)
         conn = KOR.databases:closeConnections(conn)
-        DX.s:saveSetting("SeriesManager_all_data_imported", true)
+        DX.s:saveSetting("SM_all_data_imported", true)
         self:resetData()
         upon_ready_callback()
     end)
@@ -478,7 +478,7 @@ function SeriesManager:showContextDialog(item, full_path, is_non_series_item)
             end
         }),
     }
-    if not DX.s.SeriesManager_all_data_imported then
+    if not DX.s.SM_all_data_imported then
         table_insert(top_buttons_left, 2, KOR.buttoninfopopup:forSeriesManagerDataImport({
             callback = function()
                 self:importAllData(function()
@@ -642,8 +642,8 @@ function SeriesManager:formatEbookTitle(title, series_number)
     if series_number then
         title = series_number .. " " .. title
     end
-    if title and title:len() > DX.s.SeriesManager_max_title_length then
-        return title:sub(1, DX.s.SeriesManager_max_title_length - 3) .. "…"
+    if title and title:len() > DX.s.SM_max_title_length then
+        return title:sub(1, DX.s.SM_max_title_length - 3) .. "…"
     end
     return title
 end

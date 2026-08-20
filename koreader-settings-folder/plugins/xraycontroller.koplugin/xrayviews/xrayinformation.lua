@@ -5,9 +5,9 @@ local KOR = require("extensions/kor")
 local Screen = require("device").screen
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
-local T = require("ffi/util").template
 
 local DX = DX
+local T = T
 local table_concat = table.concat
 
 --- @class XrayInformation
@@ -445,12 +445,13 @@ Shift+S = Show all hits in book
 %2 = person
 %3 = important term
 %4 = term
+%5 = non-breakable item (no first and last name)
 
-ONLY IN SERIES DISPLAY-MODE:
+Only shown in series-display-mode:
 
-%5 = item is mentioned in current e-book
-%6 = item is mentioned in series, but not in current e-book
-]]), KOR.icons.xray_person_important_bare, KOR.icons.xray_person_bare, KOR.icons.xray_term_important_bare, KOR.icons.xray_term_bare, KOR.icons.xray_book_mode_bare, KOR.icons.seriesmanager_bare)
+%6 = item is (also) mentioned in current e-book
+%7 = item is mentioned in series, but not in current e-book
+]]), KOR.icons.xray_person_important_bare, KOR.icons.xray_person_bare, KOR.icons.xray_term_important_bare, KOR.icons.xray_term_bare, KOR.icons.lock_bare, KOR.icons.xray_book_mode_bare, KOR.icons.seriesmanager_bare)
 
     KOR.dialogs:textBoxTabbed(initial_tab, {
         title = _("(BT) Hotkeys and more"),

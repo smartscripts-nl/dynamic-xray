@@ -7,8 +7,8 @@ local Size = require("modules/size")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 
 local DX = DX
-local math_floor = math.floor
-local table_insert = table.insert
+local math_floor = math_floor
+local table_insert = table_insert
 local type = type
 
 --* see ((TABS)) for more info:

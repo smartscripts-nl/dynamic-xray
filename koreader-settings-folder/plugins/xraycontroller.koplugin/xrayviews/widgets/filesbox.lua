@@ -28,19 +28,17 @@ local Screen = Device.screen
 
 local DX = DX
 local has_no_text = has_no_text
-local math = math
-local math_ceil = math.ceil
-local math_floor = math.floor
-local math_min = math.min
-local table = table
-local table_insert = table.insert
-local table_remove = table.remove
+local math_ceil = math_ceil
+local math_floor = math_floor
+local math_min = math_min
+local table_insert = table_insert
+local table_remove = table_remove
 
 local scale_by_size = Screen:scaleBySize(1000000) / 1000000
 local function _fontSize(dimen, nominal, max)
     --* The nominal font size is based on 64px ListMenuItem height.
     --* Keep ratio of font size to item height
-    local font_size = math.floor(nominal * dimen.h / 64 / scale_by_size)
+    local font_size = math_floor(nominal * dimen.h / 64 / scale_by_size)
     --* But limit it to the provided max, to avoid huge font size when
     --* only 4-6 items per page
     if max and font_size >= max then
@@ -57,7 +55,7 @@ local FilesBox = InputContainer:extend{
     avail_height = nil,
     avail_width = nil,
     boxes = {},
-    columns = DX.s.SeriesManager_columns_count,
+    columns = DX.s.SM_columns_count,
     column_width = nil,
     font_face = "x_smallinfofont",
     font_size = 14,
@@ -144,7 +142,7 @@ end
 function FilesBox:getBoxElements(params, bookinfo)
     local thumbnail = self:getBookCover(bookinfo, params.path, nil, self.thumbnail_width, false, 0)
 
-    local mark_by_text = params.is_current_ebook and not DX.s.SeriesManager_mark_active_title_with_border
+    local mark_by_text = params.is_current_ebook and not DX.s.SM_mark_active_title_with_border
     local font_size = mark_by_text and self.font_size + 1 or self.font_size
     local face = Font:getFace(self.font_face, font_size)
     local title_info = TextWidget:new{
@@ -215,7 +213,7 @@ function FilesBox:getBoxButtons(params)
     local generic_icon_size = 40
     local icon_size = math_floor(Screen:scaleBySize(generic_icon_size) * 0.9)
 
-    local mark_active = DX.s.SeriesManager_mark_active_title_with_border and params.is_current_ebook
+    local mark_active = DX.s.SM_mark_active_title_with_border and params.is_current_ebook
     return ButtonTable:new{
         no_separators = true,
         background = mark_active and self.active_item_background or KOR.colors.white,
@@ -252,7 +250,7 @@ function FilesBox:getBoxContainer(params, thumbnail, title_info, meta_info, prog
             },
         },
     }
-    if DX.s.SeriesManager_mark_active_title_with_border and params.is_current_ebook then
+    if DX.s.SM_mark_active_title_with_border and params.is_current_ebook then
         box = FrameContainer:new{
             radius = Size.radius.window,
             bordersize = Size.border.default,
@@ -508,16 +506,16 @@ end
 
 --- @private
 function FilesBox:setModuleProps()
-    self.columns = DX.s.SeriesManager_columns_count
+    self.columns = DX.s.SM_columns_count
     dimen = nil
     self.boxes = {}
     self.screen_height = Screen:getHeight()
     self.screen_width = Screen:getWidth()
-    local factor = DX.s.SeriesManager_mark_active_title_with_border and 7 or 4
-    if DX.s.SeriesManager_columns_count == 3 then
-        factor = DX.s.SeriesManager_mark_active_title_with_border and 5 or 2
+    local factor = DX.s.SM_mark_active_title_with_border and 7 or 4
+    if DX.s.SM_columns_count == 3 then
+        factor = DX.s.SM_mark_active_title_with_border and 5 or 2
     end
-    self.avail_width = DX.s.SeriesManager_columns_count == 2 and self.screen_width - factor * Size.padding.default or self.screen_width - factor * Size.padding.button
+    self.avail_width = DX.s.SM_columns_count == 2 and self.screen_width - factor * Size.padding.default or self.screen_width - factor * Size.padding.button
 end
 
 --- @private

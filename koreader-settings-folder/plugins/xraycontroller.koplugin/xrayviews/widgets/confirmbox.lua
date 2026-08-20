@@ -48,9 +48,9 @@ local Screen = Device.screen
 
 local DX = DX
 local ipairs = ipairs
-local math_floor = math.floor
-local math_min = math.min
-local table_insert = table.insert
+local math_floor = math_floor
+local math_min = math_min
+local table_insert = table_insert
 
 --- @class ConfirmBox
 local ConfirmBox = InputContainer:extend{

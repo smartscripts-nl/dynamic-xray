@@ -13,11 +13,11 @@ local Screen = require("device").screen
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
-local T = require("ffi/util").template
 
 local DX = DX
 local ipairs = ipairs
-local table_insert = table.insert
+local T = T
+local table_insert = table_insert
 
 --- @class XrayTranslationsManager
 local XrayTranslationsManager = WidgetContainer:new{

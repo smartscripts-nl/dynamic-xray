@@ -22,8 +22,8 @@ local Screen = require("device").screen
 
 local DX = DX
 local has_text = has_text
-local math_floor = math.floor
-local table_insert = table.insert
+local math_floor = math_floor
+local table_insert = table_insert
 local type = type
 
 local count

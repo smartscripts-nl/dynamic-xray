@@ -6,9 +6,9 @@ local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 
 local DX = DX
-local math = math
+local math_ceil = math_ceil
 local pairs = pairs
-local table_insert = table.insert
+local table_insert = table_insert
 local type = type
 
 local count
@@ -21,14 +21,14 @@ local ButtonTableFactory = WidgetContainer:extend{}
 function ButtonTableFactory:getHorizontallyArrangedButtonTable(subject, items_per_row, button_factory)
 	local buttons = {}
 	local buttons_count = #subject
-	local rows_needed = math.ceil(buttons_count / items_per_row)
+	local rows_needed = math_ceil(buttons_count / items_per_row)
 	for i = 1, rows_needed do
 		buttons[i] = {}
 	end
 	local button, row
 	for i = 1, buttons_count do
 		button = subject[i].icon and subject[i] or button_factory(i)
-		row = math.ceil(i / items_per_row)
+		row = math_ceil(i / items_per_row)
 		table_insert(buttons[row], button)
 	end
 
@@ -42,7 +42,7 @@ function ButtonTableFactory:getVerticallyArrangedButtonTable(source_items, butto
 	local display_buttons_count = source_items[buttons_count].icon and buttons_count - 1 or buttons_count
 	local max_buttons_per_row = buttons_count < 10 and 3 or 4
 
-	local rows_needed = math.ceil(buttons_count / max_buttons_per_row)
+	local rows_needed = math_ceil(buttons_count / max_buttons_per_row)
 	for i = 1, rows_needed do
 		button_table[i] = {}
 	end

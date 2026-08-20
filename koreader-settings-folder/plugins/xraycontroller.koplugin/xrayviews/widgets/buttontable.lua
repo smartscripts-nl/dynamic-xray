@@ -13,9 +13,9 @@ local VerticalSpan = require("ui/widget/verticalspan")
 local Geom = require("ui/geometry")
 local Screen = Device.screen
 
-local math = math
-local table = table
-local table_insert = table.insert
+local math_floor = math_floor
+local math_min = math_min
+local table_insert = table_insert
 
 --* compare ((ButtonTableFactory)) for easy construction of horizontally or vertically arranged button tables (to be called before generating the ButtonTable, so we can deliver an arranged button set):
 --- @class ButtonTable
@@ -58,7 +58,7 @@ function ButtonTable:init()
 
     self.sep_color = KOR.colors.tabs_table_separators
 
-    self.width = self.width or math.floor(math.min(Screen:getWidth(), Screen:getHeight()) * 0.9)
+    self.width = self.width or math_floor(math_min(Screen:getWidth(), Screen:getHeight()) * 0.9)
     self.buttons_layout = {}
     self.button_by_id = {}
     self.container = VerticalGroup:new{ width = self.width }
@@ -89,7 +89,7 @@ function ButtonTable:init()
                 unspecified_width_buttons = unspecified_width_buttons + 1
             end
         end
-        default_button_width = math.floor(available_width / unspecified_width_buttons)
+        default_button_width = math_floor(available_width / unspecified_width_buttons)
         min_needed_button_width = -1
         local max_button_height = 0
         for j = 1, column_cnt do

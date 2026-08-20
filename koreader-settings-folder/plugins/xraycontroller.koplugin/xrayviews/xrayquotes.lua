@@ -7,10 +7,10 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 
 local DX = DX
-local math = math
-local table_concat = table.concat
-local table_insert = table.insert
-local table_sort = table.sort
+local math_huge = math_huge
+local table_concat = table_concat
+local table_insert = table_insert
+local table_sort = table_sort
 local tonumber = tonumber
 
 local count
@@ -31,7 +31,7 @@ function XrayQuotes:generateQuotesList(item)
     for i = 1, count do
         parts = KOR.strings:split(items[i], "||", true)
         etitle = parts[3]
-        local sindex = tonumber(parts[2]) or math.huge
+        local sindex = tonumber(parts[2]) or math_huge
 
         --* create ebook entry if needed:
         local ebook = lookup[etitle]
@@ -64,7 +64,7 @@ function XrayQuotes:generateQuotesList(item)
     for b = 1, count do
         ebook = ebooks[b]
         if ebook.title ~= "???" then
-            local prefix = ebook.series_index ~= math.huge
+            local prefix = ebook.series_index ~= math_huge
                     and ebook.series_index .. ". "
                     or ""
             table_insert(html,

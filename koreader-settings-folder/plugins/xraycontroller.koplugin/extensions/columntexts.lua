@@ -12,10 +12,10 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local Screen = require("device").screen
 
 local DX = DX
-local math_ceil = math.ceil
-local math_floor = math.floor
-local table_concat = table.concat
-local table_insert = table.insert
+local math_ceil = math_ceil
+local math_floor = math_floor
+local table_concat = table_concat
+local table_insert = table_insert
 local type = type
 
 local count

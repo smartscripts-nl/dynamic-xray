@@ -36,22 +36,21 @@ local logger = require("logger")
 local util = require("util")
 local _ = require("gettext")
 local Screen = Device.screen
-local T = FFIUtil.template
 
 local DX = DX
 local G_reader_settings = G_reader_settings
 local has_text = has_text
-local math = math
-local math_ceil = math.ceil
-local math_floor = math.floor
-local math_max = math.max
-local math_min = math.min
-local math_random = math.random
+local math_ceil = math_ceil
+local math_floor = math_floor
+local math_max = math_max
+local math_min = math_min
+local math_random = math_random
 local next = next
-local table_insert = table.insert
-local table_remove = table.remove
+local T = T
+local table_insert = table_insert
+local table_remove = table_remove
 local tonumber = tonumber
-local string_format = string.format
+local string_format = string_format
 local type = type
 
 local count
@@ -2007,13 +2006,6 @@ function Menu:onLoadCollectionItem(no)
     local full_path = self.item_table[item_no].file
     UIManager:close(self)
     KOR.files:openFile(full_path)
-end
-
-function Menu:onShowCollectionItemInfo(no)
-    local item_no = (self.page - 1) * self.perpage + no
-
-    local full_path = self.item_table[item_no].file
-    KOR.descriptiondialog:show(false, full_path)
 end
 
 return Menu

@@ -11,14 +11,14 @@ local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 local Screen = Device.screen
-local T = require("ffi/util").template
 
 local DX = DX
 local has_no_items = has_no_items
 local has_no_text = has_no_text
-local math_floor = math.floor
-local table_concat = table.concat
-local table_insert = table.insert
+local math_floor = math_floor
+local T = T
+local table_concat = table_concat
+local table_insert = table_insert
 local tonumber = tonumber
 
 local count, count2
@@ -692,7 +692,7 @@ function XrayUI:uiInfoPopulateRects()
             DX.d:showUiPageInfo(paragraph_names, paragraph_names2, paragraph_names3, paragraph_hits_info, paragraph_hits_info2, paragraph_hits_info3, paragraph_text)
         end,
         hold_callback = function()
-            if DX.s.UI_mode == "page" and DX.s.UI_marker_callback == "page_information_popup" then
+            if DX.s.UI_mode == "page" and DX.s.UI_marker_callback == "information_popup" then
                 DX.c:showPageNavigator()
                 return
             end

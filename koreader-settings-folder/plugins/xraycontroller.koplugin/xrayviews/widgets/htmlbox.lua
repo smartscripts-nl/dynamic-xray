@@ -31,12 +31,12 @@ local Screen = Device.screen
 local _ = KOR:initCustomTranslations()
 
 local DX = DX
-local math = math
-local math_floor = math.floor
+local math_floor = math_floor
+local math_max = math_max
+local math_min = math_min
 local pairs = pairs
-local table = table
-local table_insert = table.insert
-local table_remove = table.remove
+local table_insert = table_insert
+local table_remove = table_remove
 local type = type
 
 local count
@@ -622,7 +622,7 @@ function HtmlBox:computeHeights()
     -- #((set HtmlBox dialog height))
     --* compare ((set HtmlBox dialog width))
     if type(self.window_size) == "table" then
-        self.height = math.min(self.avail_height, math_floor(self.window_size.h))
+        self.height = math_min(self.avail_height, math_floor(self.window_size.h))
         self.content_height = self.height - others_height
         local nb_lines = math_floor(self.content_height / self.content_line_height)
         self.content_height = nb_lines * self.content_line_height
@@ -674,7 +674,7 @@ function HtmlBox:computeLineHeight()
     --* Lookup word
     local word_font_face = "tfont"
     --* Ensure this word doesn't get smaller than its definition
-    local word_font_size = math.max(22, self.box_font_size)
+    local word_font_size = math_max(22, self.box_font_size)
     --* Get the line height of the normal font size, as a base for sizing this component
     if not self.word_line_height then
         local test_widget = TextWidget:new{
@@ -857,7 +857,7 @@ function HtmlBox:generateWidget()
     --? I don't know why I need this hack on my Bigme phone:
     if self.is_fullscreen and DX.s.is_mobile_device then
         local spacer = VerticalSpan:new{ width = Size.padding.large }
-        table.insert(elements, 2, spacer)
+        table_insert(elements, 2, spacer)
     end
 
     if not self.no_buttons_row then
@@ -871,7 +871,7 @@ function HtmlBox:generateWidget()
     end
 
     elements.align = "left"
-    table.insert(frame, elements)
+    table_insert(frame, elements)
     self.box_frame = FrameContainer:new(frame)
 end
 

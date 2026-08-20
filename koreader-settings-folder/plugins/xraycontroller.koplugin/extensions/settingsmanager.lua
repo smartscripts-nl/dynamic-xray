@@ -17,11 +17,11 @@ local T = require("ffi/util").template
 local DX = DX
 local G_reader_settings = G_reader_settings
 local has_text = has_text
-local math_floor = math.floor
+local math_floor = math_floor
 local pairs = pairs
 local table = table
-local table_insert = table.insert
-local table_sort = table.sort
+local table_insert = table_insert
+local table_sort = table_sort
 local tonumber = tonumber
 local tostring = tostring
 local type = type
@@ -204,10 +204,9 @@ function SettingsManager:showSettingsManagerInfo()
     if not self.list_title then
         self.list_title = "Dynamic Xray"
     end
-    KOR.dialogs:niceAlert(T(_("Settings management %1"), self.list_title), T("Acronyms in the names of settings:\n\nIV = Item Viewer    PN = Page Navigator\nTW = Tapped Words   UI = UI Page Information popup\n\nItems with an %1, under the third tab, are computed settings. These you can't modify manually.\n\nIf you longpress a setting, you'll see an explanation of that setting.\n\nWith the hotkeys 1 through 3 on your physical (BT) keyboard, you can select a tab in the Settings Manager.", KOR.icons.lock_bare), {
+    KOR.dialogs:niceAlert(T(_("Settings management %1"), self.list_title), T("Acronyms in the names of settings:\n\nIV = Item Viewer    PN = Page Navigator\nSM = Series Manager   TW = Tapped Words\nUI = UI Page Information popup\n\nItems with an %1, under the third tab, are computed settings. These you can't modify manually.\n\nIf you longpress a setting, you'll see an explanation of that setting.\n\nWith the hotkeys 1 through 3 on your physical (BT) keyboard, you can select a tab in the Settings Manager.", KOR.icons.lock_bare), {
         mono_face = true,
     })
-
     return true
 end
 
@@ -307,7 +306,8 @@ function SettingsManager:chooseSetting(key, current_nr, current_value, options, 
     })
     self.option_chooser = ButtonDialogTitle:new{
         title = key,
-        subtitle = explanation,
+        subtitle = "\n" .. explanation,
+        subtitle_align = "left",
         button_font_bold = false,
         buttons = buttons,
     }

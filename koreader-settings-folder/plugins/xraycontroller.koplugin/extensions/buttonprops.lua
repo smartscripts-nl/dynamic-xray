@@ -10,7 +10,7 @@ local _ = KOR:initCustomTranslations()
 
 local DX = DX
 local pairs = pairs
-local table_insert = table.insert
+local table_insert = table_insert
 local type = type
 
 local DGENERIC_ICON_SIZE = G_defaults:readSetting("DGENERIC_ICON_SIZE")

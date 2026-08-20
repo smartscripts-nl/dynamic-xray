@@ -10,7 +10,7 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 local Screen = Device.screen
 
-local table_insert = table.insert
+local table_insert = table_insert
 
 --- @class TabbedList
 local TabbedList = WidgetContainer:extend{

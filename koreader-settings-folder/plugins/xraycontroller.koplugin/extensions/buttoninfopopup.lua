@@ -367,6 +367,28 @@ function ButtonInfoPopup:forXrayFilterByImportantType(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forXrayFilterByInCurrentBook(props)
+	return ButtonProps:set({
+		text = KOR.icons.book_bare,
+		fgcolor = KOR.colors.button_label,
+		font_bold = false,
+		info = _("book icon | Filter by items which are (also) being mentioned in the current e-book."),
+		callback_label = _("filter"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forXrayFilterByInOtherSeriesBooks(props)
+	return ButtonProps:set({
+		text = KOR.icons.seriesmanager_bare,
+		fgcolor = KOR.colors.button_label,
+		font_bold = false,
+		info = _("series-manager icon | Filter by items which are only being mentioned in the other books of the current series."),
+		callback_label = _("filter"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forXrayFilterByText(props)
 	return ButtonProps:set({
 		icon = "filter",

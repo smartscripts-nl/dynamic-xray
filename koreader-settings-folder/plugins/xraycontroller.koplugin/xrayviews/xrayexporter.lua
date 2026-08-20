@@ -7,14 +7,14 @@ local DataStorage = require("datastorage")
 local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
-local T = require("ffi/util").template
 
 local DX = DX
 local has_no_items = has_no_items
-local math_ceil = math.ceil
-local os_date = os.date
-local table_concat = table.concat
-local table_insert = table.insert
+local math_ceil = math_ceil
+local os_date = os_date
+local T = T
+local table_concat = table_concat
+local table_insert = table_insert
 
 local count
 

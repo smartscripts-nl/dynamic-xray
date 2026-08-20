@@ -32,17 +32,16 @@ local VerticalGroup = require("ui/widget/verticalgroup")
 local VerticalSpan = require("ui/widget/verticalspan")
 local _ = KOR:initCustomTranslations()
 local Screen = Device.screen
-local T = require("ffi/util").template
 
 local DX = DX
 local G_reader_settings = G_reader_settings
-local math = math
-local math_floor = math.floor
-local math_max = math.max
-local math_min = math.min
+local math_floor = math_floor
+local math_max = math_max
+local math_min = math_min
 local pairs = pairs
-local table_insert = table.insert
-local table_remove = table.remove
+local T = T
+local table_insert = table_insert
+local table_remove = table_remove
 local type = type
 
 local count

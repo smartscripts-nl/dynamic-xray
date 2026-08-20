@@ -6,14 +6,13 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 
 local has_no_text = has_no_text
 local has_text = has_text
-local math_max = math.max
-local math_min = math.min
+local math_max = math_max
+local math_min = math_min
 local string = string
-local table = table
-local table_concat = table.concat
-local table_insert = table.insert
-local table_remove = table.remove
-local table_sort = table.sort
+local table_concat = table_concat
+local table_insert = table_insert
+local table_remove = table_remove
+local table_sort = table_sort
 local tonumber = tonumber
 
 local count

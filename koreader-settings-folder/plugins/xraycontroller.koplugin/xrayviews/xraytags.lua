@@ -10,19 +10,17 @@ local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 local Screen = Device.screen
-local T = require("ffi/util").template
 
 local DX = DX
 local has_no_items = has_no_items
 local has_no_text = has_no_text
 local has_text = has_text
-local math = math
-local math_floor = math.floor
-local math_min = math.min
-local table = table
-local table_concat = table.concat
-local table_insert = table.insert
-local table_sort = table.sort
+local math_floor = math_floor
+local math_min = math_min
+local T = T
+local table_concat = table_concat
+local table_insert = table_insert
+local table_sort = table_sort
 
 local count, count2
 local DGENERIC_ICON_SIZE = G_defaults:readSetting("DGENERIC_ICON_SIZE")

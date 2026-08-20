@@ -12,8 +12,8 @@ local _ = KOR:initCustomTranslations()
 
 local DX = DX
 local has_no_items = has_no_items
-local table_concat = table.concat
-local table_insert = table.insert
+local table_concat = table_concat
+local table_insert = table_insert
 
 local count
 

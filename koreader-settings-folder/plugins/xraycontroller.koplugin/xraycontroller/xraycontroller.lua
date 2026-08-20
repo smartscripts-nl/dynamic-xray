@@ -309,8 +309,8 @@ function XrayController:onScreenResize()
     self:resetDynamicXray()
 end
 
+--* this filter is used in ((XrayViewsData#updateItemsTable)) > ((XrayViewsData#applyFilters)) > ((XrayViewsData#filterAndPopulateItemTables)) > ((XrayViewsData#filterAndAddItemToItemTables)) > ((XrayViewsData#evaluateFilters)) > ((XrayViewsData#applyTextFilters)):
 function XrayController:filterItemsByImportantTypes()
-    DX.d:setProp("filter_state", "filtered")
     DX.d:setProp("filter_icon", KOR.icons.xray_person_important_bare .. "/" .. KOR.icons.xray_term_important_bare)
     DX.vd:setFilterTypes({ 2, 4 })
     --! this reset is essential to make filtering possible:
@@ -319,6 +319,29 @@ function XrayController:filterItemsByImportantTypes()
     DX.d:showListWithRestoredArguments()
 end
 
+--* this filter is used in ((XrayViewsData#updateItemsTable)) > ((XrayViewsData#applyFilters)) > ((XrayViewsData#filterAndPopulateItemTables)) > ((XrayViewsData#filterAndAddItemToItemTables)) > ((XrayViewsData#evaluateFilters)) > ((XrayViewsData#seriesDisplayModePreFilterDidMatch)):
+function XrayController:filterItemsByInCurrentBookItems(filter_string)
+    DX.vd:setProp("filter_string", filter_string)
+    DX.vd:setProp("filter_by_current_book", true)
+    DX.vd:setProp("filter_by_other_books_in_series", false)
+    --! this reset is essential to make filtering possible:
+    DX.vd:updateItemsTable(nil, "reset_item_table_for_filter")
+    DX.m:setTabDisplayCounts()
+    DX.d:showListWithRestoredArguments()
+end
+
+--* this filter is used in ((XrayViewsData#updateItemsTable)) > ((XrayViewsData#applyFilters)) > ((XrayViewsData#filterAndPopulateItemTables)) > ((XrayViewsData#filterAndAddItemToItemTables)) > ((XrayViewsData#evaluateFilters)) > ((XrayViewsData#seriesDisplayModePreFilterDidMatch)):
+function XrayController:filterItemsByInOtherSeriesBooksItems(filter_string)
+    DX.vd:setProp("filter_string", filter_string)
+    DX.vd:setProp("filter_by_other_books_in_series", true)
+    DX.vd:setProp("filter_by_current_book", false)
+    --! this reset is essential to make filtering possible:
+    DX.vd:updateItemsTable(nil, "reset_item_table_for_filter")
+    DX.m:setTabDisplayCounts()
+    DX.d:showListWithRestoredArguments()
+end
+
+--* this filter is used in ((XrayViewsData#updateItemsTable)) > ((XrayViewsData#applyFilters)) > ((XrayViewsData#filterAndPopulateItemTables)) > ((XrayViewsData#filterAndAddItemToItemTables)) > ((XrayViewsData#evaluateFilters)) > ((XrayViewsData#applyTagFilter)):
 function XrayController:filterItemsByTag(filter_tag)
     DX.vd:setProp("filter_tag", filter_tag)
     --! this reset is essential to make filtering possible:
@@ -338,6 +361,8 @@ function XrayController:resetFilteredItems(force_data_update)
 
     DX.vd:resetAllFilters()
     DX.d:setProp("filter_icon", nil)
+    DX.d:setProp("filter_by_current_book", false)
+    DX.d:setProp("filter_by_other_books_in_series", false)
     DX.d:setProp("filter_state", "unfiltered")
 
     if force_data_update then

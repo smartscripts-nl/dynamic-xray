@@ -41,6 +41,7 @@ local ButtonDialogTitle = InputContainer:extend{
     info_margin = Size.margin.default,
 
     subtitle = nil,
+    subtitle_align = "center",
     middle_padding = Size.padding.small,
     move_to_top = false,
     move_to_y_pos = nil,
@@ -140,7 +141,7 @@ function ButtonDialogTitle:init()
                 text = self.subtitle,
                 face = Font:getFace("x_smallinfofont", font_size),
                 width = math.floor(math.min(Screen:getWidth(), Screen:getHeight()) * 0.8),
-                alignment = self.title_align or "center",
+                alignment = self.subtitle_align or self.title_align or "center",
             }
         },
     }

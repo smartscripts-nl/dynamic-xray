@@ -26,8 +26,8 @@ local VerticalSpan = require("ui/widget/verticalspan")
 local Screen = Device.screen
 
 local DX = DX
-local math_floor = math.floor
-local table_insert = table.insert
+local math_floor = math_floor
+local table_insert = table_insert
 
 local count, count2
 local LEFT_SIDE = 1

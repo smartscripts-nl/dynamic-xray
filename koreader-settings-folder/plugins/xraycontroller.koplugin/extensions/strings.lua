@@ -10,12 +10,12 @@ local DX = DX
 local has_content = has_content
 local has_no_content = has_no_content
 local has_no_text = has_no_text
-local math_floor = math.floor
+local math_floor = math_floor
 local select = select
 local string = string
-local table = table
-local table_concat = table.concat
-local table_insert = table.insert
+local table_concat = table_concat
+local table_insert = table_insert
+local table_sort = table_sort
 local type = type
 
 local count
@@ -140,7 +140,7 @@ function Strings:sortKeywords(text)
     local splitter = uses_commas and ", *" or " +"
     local joiner = uses_commas and ", " or " "
     local parts = self:split(text, splitter)
-    table.sort(parts)
+    table_sort(parts)
     text = table_concat(parts, joiner)
     --* re-attach comma for a single entry comma delimited string; for example maintain alias "Sun Eater," don't let it get mangled to "Eater Sun" bij de sorting and re-joining process:
     if uses_commas and not text:match(",") then

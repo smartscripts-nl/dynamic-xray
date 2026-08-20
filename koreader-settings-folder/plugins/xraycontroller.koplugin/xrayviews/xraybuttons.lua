@@ -14,15 +14,14 @@ local _ = KOR:initCustomTranslations()
 --local logger = require("logger")
 local Screen = require("device").screen
 local Size = require("modules/size")
-local T = require("ffi/util").template
 
 local DX = DX
 local has_items = has_items
 local has_no_text = has_no_text
 local has_text = has_text
-local table = table
-local table_insert = table.insert
-local table_remove = table.remove
+local T = T
+local table_insert = table_insert
+local table_remove = table_remove
 local type = type
 
 local count
@@ -610,7 +609,7 @@ function XrayButtons:forUiInfoTopLeft(new_mode, new_trigger, parent)
     }
     if DX.s.UI_mode == "page" then
         table_insert(buttons, 3, KOR.buttoninfopopup:forXrayToggleXrayItemMarkers({
-            icon = DX.s.UI_mark_xray_items and "star.full" or "star.empty",
+            icon = DX.s.UI_mark_xray_items and "xray-item-markers-enabled" or "xray-item-markers-disabled",
             callback = function()
                 DX.u:toggleUiXrayItemMarkers(parent)
             end,
@@ -1850,7 +1849,8 @@ end
 
 function XrayButtons:forFilterDialog()
     local icon_size_ratio = 0.45
-    return {
+    local filter_string
+    local buttons = {
         {
             {
                 icon = "back",
@@ -1873,7 +1873,7 @@ function XrayButtons:forFilterDialog()
                 callback = function()
                     --* items de facto filtered by text in ((XrayViewsData#filterAndPopulateItemTables)):
                     local form = DX.d.filter_xray_items_input
-                    local filter_string = form:getInputText()
+                    filter_string = form:getInputText()
                     KOR.dialogs:closeOverlay()
                     UIManager:close(form)
                     if has_no_text(filter_string) then
@@ -1884,6 +1884,29 @@ function XrayButtons:forFilterDialog()
             }),
         }
     }
+
+    if DX.vd.list_display_mode == "series" then
+        table_insert(buttons[1], 3, KOR.buttoninfopopup:forXrayFilterByInOtherSeriesBooks({
+            callback = function()
+                local form = DX.d.filter_xray_items_input
+                filter_string = form:getInputText()
+                KOR.dialogs:closeOverlay()
+                UIManager:close(form)
+                DX.c:filterItemsByInOtherSeriesBooksItems(filter_string)
+            end,
+        }))
+        table_insert(buttons[1], 4, KOR.buttoninfopopup:forXrayFilterByInCurrentBook({
+            callback = function()
+                local form = DX.d.filter_xray_items_input
+                filter_string = form:getInputText()
+                KOR.dialogs:closeOverlay()
+                UIManager:close(form)
+                DX.c:filterItemsByInCurrentBookItems(filter_string)
+            end,
+        }))
+    end
+
+    return buttons
 end
 
 function XrayButtons:addLinkedItemsAsContextButtonsForViewer(buttons, needle_item, max_per_row, context_buttons_max_buttons, tapped_word)

@@ -9,7 +9,7 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local DX = DX
 local has_items = has_items
 local pairs = pairs
-local table_insert = table.insert
+local table_insert = table_insert
 local tostring = tostring
 local type = type
 

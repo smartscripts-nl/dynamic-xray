@@ -14,10 +14,9 @@ local DX = DX
 local has_no_text = has_no_text
 local has_text = has_text
 local pairs = pairs
-local table = table
-local table_concat = table.concat
-local table_insert = table.insert
-local table_sort = table.sort
+local table_concat = table_concat
+local table_insert = table_insert
+local table_sort = table_sort
 local type = type
 
 local count

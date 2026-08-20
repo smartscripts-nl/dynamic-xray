@@ -22,8 +22,9 @@ local pairs = pairs
 local pcall = pcall
 local setmetatable = setmetatable
 local string = string
-local table = table
-local table_insert = table.insert
+local table_insert = table_insert
+local table_remove = table_remove
+local table_sort = table_sort
 
 --* We're going to need a few <linux/input.h> constants...
 local ffi = require("ffi")
@@ -604,7 +605,7 @@ function Input:setTimeout(slot, ges, cb, origin, delay)
     table_insert(self.timer_callbacks, item)
 
     --* NOTE: While the timescale is monotonic, we may interleave timers based on different delays, so we still need to sort...
-    table.sort(self.timer_callbacks, function(v1, v2)
+    table_sort(self.timer_callbacks, function(v1, v2)
         return v1.deadline < v2.deadline
     end)
 end
@@ -618,7 +619,7 @@ function Input:clearTimeout(slot, ges)
             if item.timerfd then
                 self.input.clearTimer(item.timerfd)
             end
-            table.remove(self.timer_callbacks, i)
+            table_remove(self.timer_callbacks, i)
         end
     end
 end
@@ -1452,7 +1453,7 @@ function Input:waitEvent(now, deadline)
                         if timerfd then
                             self.input.clearTimer(timerfd)
                         end
-                        table.remove(self.timer_callbacks, timer_idx)
+                        table_remove(self.timer_callbacks, timer_idx)
 
                         if touch_ges then
                             self:gestureAdjustHook(touch_ges)
