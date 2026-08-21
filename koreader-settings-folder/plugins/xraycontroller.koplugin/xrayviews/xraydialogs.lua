@@ -846,16 +846,19 @@ function XrayDialogs:showMultipleBookSeriesActionsOverview()
     local actions = {
         {
             _("Items only mentioned in the current e-book"),
+            --* see ((XrayDataLoader#getCurrentBookItemsOnly)):
             "getCurrentBookItemsOnly",
             false,
         },
         {
             _("Items mentioned in all books of the current series"),
+            --* see ((XrayDataLoader#getInAllSeriesBooksItems)):
             "getInAllSeriesBooksItems",
             false,
         },
         {
             _("Items only mentioned in other books of current series"),
+            --* see ((XrayDataLoader#getNonCurrentBookItemsOnly)):
             "getNonCurrentBookItemsOnly",
             true,
             self.sectioned_series_headings,
@@ -863,11 +866,14 @@ function XrayDialogs:showMultipleBookSeriesActionsOverview()
         },
         {
             _("Items most often mentioned in the current ebook"),
+            --* see ((XrayDataLoader#getTopBookItems)):
+            "getTopBookItems",
             false,
-            _("With the setting \"top_book_items_limit\"  you can determine how many items will be listed here. Setting top_book_items_limit to zero means: show ALL items."),
+            "\n\n" .. _("With the setting \"top_book_items_limit\"  you can determine how many items will be listed here. Setting top_book_items_limit to zero means: show ALL items."),
         },
         {
             _("Unique items per e-book in the series"),
+            --* see ((XrayDataLoader#getUniqueItemsPerSeriesBook)):
             "getUniqueItemsPerSeriesBook",
             true,
             self.sectioned_series_headings,

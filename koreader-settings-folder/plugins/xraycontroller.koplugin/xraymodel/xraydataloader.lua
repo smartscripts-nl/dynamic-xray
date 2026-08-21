@@ -365,7 +365,7 @@ local XrayDataLoader = WidgetContainer:new{
         --* this query is used via ((XrayDialogs#showMultipleBookSeriesActionResult)) > ((XrayDataLoader#getUniqueItemsPerSeriesBook)):
         get_unique_items_per_series_book = [[
             WITH item_books AS (SELECT i.name,
-                 COUNT(DISTINCT b.filename) AS book_count
+                 COUNT(DISTINCT i.ebook) AS book_count
             FROM xray_items i
                  JOIN bookinfo b ON b.filename = i.ebook
                     WHERE b.series = '%1'
@@ -391,7 +391,7 @@ local XrayDataLoader = WidgetContainer:new{
                       ON b.filename = i.ebook
                  JOIN item_books ib
                       ON ib.name = i.name
-            WHERE b.series = '%2' and ib.book_count = 1
+            WHERE b.series = '%2' AND ib.book_count = 1
             ORDER BY b.series_index, i.book_hits DESC, i.name;]],
     },
     queries_external = {

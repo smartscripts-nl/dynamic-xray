@@ -13,7 +13,6 @@ local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 local json = require("json")
-local T = require("ffi/util").template
 
 local DX = DX
 local G_reader_settings = G_reader_settings
@@ -25,7 +24,8 @@ local math_max = math_max
 local math_min = math_min
 local pairs = pairs
 local pcall = pcall
-local string = string
+local string_format = string_format
+local T = T
 local table_concat = table_concat
 local table_insert = table_insert
 local type = type
@@ -761,7 +761,7 @@ function XrayDataSaver.createAndModifyTables()
         conn = KOR.databases:getDBconn("XrayDataSaver:createAndModifyTables 1")
         --* make it WAL, if possible
         local pragma = Device:canUseWAL() and "WAL" or "TRUNCATE"
-        conn:exec(string.format("PRAGMA journal_mode=%s;", pragma))
+        conn:exec(string_format("PRAGMA journal_mode=%s;", pragma))
         --* create tables:
         conn:exec(self.queries.create_items_table)
         conn:exec(self.queries.create_translations_table)
