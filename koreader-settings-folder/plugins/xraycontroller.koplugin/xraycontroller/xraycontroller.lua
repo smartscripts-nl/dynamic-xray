@@ -141,8 +141,8 @@ XrayController:initKORandDynamicXray()
 
 --* normal init in plugin mode:
 function XrayController:init()
-    self:onDispatcherRegisterActions()
     self.ui.menu:registerToMainMenu(self)
+    self:onDispatcherRegisterActions()
 end
 
 --- @private
@@ -163,8 +163,6 @@ function XrayController:onDispatcherRegisterActions()
 
 
     Dispatcher:registerAction("show_tag_group_selector", { category = "none", event = "ShowTagGroupSelector", title = _("Show the Xray tag-group selector"), reader = true })
-
-    self.ui.menu:registerToMainMenu(self)
 end
 
 function XrayController:doBatchImport(conn, stmt, count, callback)
@@ -587,6 +585,8 @@ function XrayController:addToMainMenu(menu_items)
     menu_items.series_manager = {
         text = icon .. " Series Manager",
         enabled = enabled,
+        separator = true,
+        sorting_hint = "navi",
         sub_item_table = {
             {
                 text = icon .. " " .. _("Show all series"),
@@ -605,6 +605,7 @@ function XrayController:addToMainMenu(menu_items)
     icon = KOR.icons.lightning_bare
     menu_items.dynamic_xray = {
         text = icon .. DX.d:getControllerEntryName(" Dynamic Xray"),
+        sorting_hint = "navi",
         enabled = enabled,
         sub_item_table = {
             {
