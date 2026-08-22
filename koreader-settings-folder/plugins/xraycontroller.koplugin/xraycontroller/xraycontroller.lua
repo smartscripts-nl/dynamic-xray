@@ -163,6 +163,8 @@ function XrayController:onDispatcherRegisterActions()
 
 
     Dispatcher:registerAction("show_tag_group_selector", { category = "none", event = "ShowTagGroupSelector", title = _("Show the Xray tag-group selector"), reader = true })
+
+    self.ui.menu:registerToMainMenu(self)
 end
 
 function XrayController:doBatchImport(conn, stmt, count, callback)
@@ -284,7 +286,8 @@ function XrayController:onReaderReady()
     KOR:registerUI(self.ui)
 
     --! in pdf's etc. DX is not available:
-    if self.ui.paging then
+    --? for some reason self.ui is not available here, so we use KOR.ui instead:
+    if KOR.ui and KOR.ui.paging then
         return
     end
     if not DX.m then
@@ -578,9 +581,12 @@ function XrayController:viewItemHits(item_name)
 end
 
 function XrayController:addToMainMenu(menu_items)
+    local enabled = KOR.ui and not KOR.ui.paging
+
     local icon = KOR.icons.seriesmanager_bare
     menu_items.series_manager = {
         text = icon .. " Series Manager",
+        enabled = enabled,
         sub_item_table = {
             {
                 text = icon .. " " .. _("Show all series"),
@@ -599,6 +605,7 @@ function XrayController:addToMainMenu(menu_items)
     icon = KOR.icons.lightning_bare
     menu_items.dynamic_xray = {
         text = icon .. DX.d:getControllerEntryName(" Dynamic Xray"),
+        enabled = enabled,
         sub_item_table = {
             {
                 text = icon .. DX.d:getControllerEntryName(" Show list"),
@@ -608,12 +615,6 @@ function XrayController:addToMainMenu(menu_items)
             },
             {
                 text = icon .. DX.d:getControllerEntryName(" Show Page Navigator"),
-                enabled_func = function()
-                    if self.ui.paging then
-                        return false
-                    end
-                    return true
-                end,
                 callback = function()
                     self:showPageNavigator()
                 end
@@ -644,7 +645,8 @@ end
 --* @param do_full_update string will be not nill when called from onReaderReady or when an item was added or when ((XrayController#saveUpdatedItem)) determined via ((XrayFormsData#needsFullUpdate)) that critical data were edited, which could impact the item marking in the html:
 function XrayController:resetDynamicXray(is_prepared, do_full_update)
     --! in pdf's etc. DX is not available:
-    if self.ui.paging then
+    --? for some reason self.ui is not available here, so we use KOR.ui instead:
+    if KOR.ui and KOR.ui.paging then
         return
     end
 
