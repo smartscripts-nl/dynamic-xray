@@ -12,22 +12,25 @@ local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
+local logger = require("logger")
 local json = require("json")
 
 local DX = DX
 local G_reader_settings = G_reader_settings
 local has_no_items = has_no_items
 local has_text = has_text
-local math_ceil = math_ceil
-local math_floor = math_floor
-local math_max = math_max
-local math_min = math_min
+local logger_info = logger.info
+local logger_warn = logger.warn
+local math_ceil = math.ceil
+local math_floor = math.floor
+local math_max = math.max
+local math_min = math.min
 local pairs = pairs
 local pcall = pcall
-local string_format = string_format
+local string_format = string.format
 local T = T
-local table_concat = table_concat
-local table_insert = table_insert
+local table_concat = table.concat
+local table_insert = table.insert
 local type = type
 local unpack = unpack
 
@@ -240,10 +243,6 @@ local XrayDataSaver = WidgetContainer:new{
 
         --* update 9:
         [[
-            ALTER TABLE xray_items ADD COLUMN tags;]],
-
-        --* update 10:
-        [[
             CREATE TABLE IF NOT EXISTS xray_quotes
             (
                 id INTEGER NOT NULL
@@ -259,37 +258,37 @@ local XrayDataSaver = WidgetContainer:new{
                 quote NOT NULL
             );]],
 
-        --* update 11:
+        --* update 10:
         [[
             ALTER TABLE bookinfo ADD COLUMN glossary;]],
 
-        --* update 12:
+        --* update 11:
         [[
             UPDATE xray_items SET chapter_hits = NULL, chapter_hits_data = NULL WHERE 1;]],
 
-        --* update 13:
+        --* update 12:
         --* a second reset was needed after some updates to the hits counting system:
         [[
             UPDATE xray_items SET chapter_hits = NULL, chapter_hits_data = NULL WHERE 1;]],
 
-        --* update 14:
+        --* update 13:
         [[
             ALTER TABLE xray_items ADD COLUMN non_breakable INTEGER NOT NULL DEFAULT 0;]],
 
-        --* update 15:
+        --* update 14:
         --* a third reset was needed after some updates to the hits counting system:
         [[
             UPDATE xray_items SET chapter_hits_data = NULL, chapter_hits = NULL WHERE 1;]],
 
-        --* update 16:
+        --* update 15:
         [[
             ALTER TABLE bookinfo RENAME COLUMN glossary TO xray_reference_info;]],
 
-        --* update 17:
+        --* update 16:
         [[
             ALTER TABLE bookinfo RENAME COLUMN xray_reference_info TO reference_information;]],
 
-        --* update 18:
+        --* update 17:
         [[
             ALTER TABLE bookinfo ADD COLUMN reference_information_css;]],
 
@@ -321,27 +320,25 @@ local XrayDataSaver = WidgetContainer:new{
         { "PRAGMA table_info('xray_books');", 8 },
 
         --* check update 9:
-        { "SELECT 1 FROM pragma_table_info('xray_items') WHERE name = 'tags';", 9 },
+        { "PRAGMA table_info('xray_quotes');", 9 },
 
         --* check update 10:
-        { "PRAGMA table_info('xray_quotes');", 10 },
+        { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'glossary';", 10 },
 
-        --* check update 11:
-        { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'glossary';", 11 },
+        --* check update 13:
+        { "SELECT 1 FROM pragma_table_info('xray_items') WHERE name = 'non_breakable';", 13 },
 
-        --* check update 14:
-        { "SELECT 1 FROM pragma_table_info('xray_items') WHERE name = 'non_breakable';", 14 },
+        --* check update 15:
+        { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'xray_reference_info';", 15 },
 
         --* check update 16:
-        { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'xray_reference_info';", 16 },
+        { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'reference_information';", 16 },
 
         --* check update 17:
-        { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'reference_information';", 17 },
-
-        --* check update 18:
-        { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'reference_information_css';", 18 },
+        { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'reference_information_css';", 17 },
     },
-    scheme_version_name = "database_scheme_version",
+    scheme_version_name = "DX_database_scheme_version",
+    tables_created_index = "DX_tables_created",
 }
 
 --- @param xray_model XrayModel
@@ -742,13 +739,28 @@ function XrayDataSaver:setSeriesHitsForImportedItems(conn, current_ebook_basenam
     end)
 end
 
+--- @private
+function XrayDataSaver:logSchemeModification(heading, message, message_type)
+    if not DX.s.log_database_scheme_modifications then
+        return
+    end
+
+    if message_type == "warn" then
+        logger_warn(heading, message)
+        return
+    end
+
+    logger_info(heading, message)
+end
+
 -- #((XrayDataSaver#createAndModifyTables))
 --- @private
 function XrayDataSaver.createAndModifyTables()
 
+    --! for manual override and recreation of db tables and fields, see ((XrayCodeProcedures#DATABASE)) in ((xray-info.lua))...
+
     local self = DX.ds
-    local tables_created_index = "tables_created"
-    local tables_were_created = DX.s[tables_created_index]
+    local tables_were_created = G_reader_settings:readSetting(self.tables_created_index)
 
     --* set this to true only for debugging purposes:
     local overrule_tables_creation = false
@@ -757,40 +769,62 @@ function XrayDataSaver.createAndModifyTables()
     end
     local conn
 
+    local do_flush_settings = false
+    local nothing_modified = true
     if not tables_were_created then
+
+        self:logSchemeModification("creating DX tables", "start", "info")
+
         conn = KOR.databases:getDBconn("XrayDataSaver:createAndModifyTables 1")
         --* make it WAL, if possible
         local pragma = Device:canUseWAL() and "WAL" or "TRUNCATE"
         conn:exec(string_format("PRAGMA journal_mode=%s;", pragma))
         --* create tables:
-        conn:exec(self.queries.create_items_table)
-        conn:exec(self.queries.create_translations_table)
+        pcall(function()
+            conn:exec(self.queries.create_items_table)
+            conn:exec(self.queries.create_translations_table)
+        end)
 
-        DX.s:saveSetting(tables_created_index, true)
+        G_reader_settings:saveSetting(self.tables_created_index, true)
+        do_flush_settings = true
+        nothing_modified = false
+
+        self:logSchemeModification("creating DX tables", "tables created", "info")
     end
 
     local update_tasks_count = #self.scheme_alter_queries
-    local version_index = G_reader_settings:readSetting("DX_" .. self.scheme_version_name)
+    local version_index = overrule_tables_creation and 0 or G_reader_settings:readSetting(self.scheme_version_name)
+
     local version_index_was_saved = true
-    if not version_index then
+    if not version_index or version_index == 0 then
         version_index_was_saved = false
-        version_index = DX.s[self.scheme_version_name] or 0
-    end
-    if version_index ~= update_tasks_count then
+        version_index = 0
+
+    --* if we removed a modification query, users could have a higher stored version_index, so it must be reset to the lower value
+    elseif version_index > update_tasks_count then
+        version_index_was_saved = false
+        version_index = update_tasks_count
+
+    elseif version_index ~= update_tasks_count then
         if not conn then
             conn = KOR.databases:getDBconn("XrayDataSaver:createAndModifyTables 2")
         end
         version_index = self.updateVersionIndex(conn, version_index)
     end
     if not version_index_was_saved then
-        G_reader_settings:saveSetting("DX_" .. self.scheme_version_name, version_index)
-        DX.s:saveSetting(self.scheme_version_name, version_index)
+        G_reader_settings:saveSetting(self.scheme_version_name, version_index)
+        do_flush_settings = true
+    end
+    if do_flush_settings then
+        G_reader_settings:flush()
     end
 
+    --* return if nothing has to be modified:
     if
         update_tasks_count == 0
-        or version_index >= update_tasks_count
+        or version_index == update_tasks_count
     then
+        self:logSchemeModification("NO DX DATABASE-SCHEME MODIFICATION NECESSARY", T("update_tasks_count %1, version_index %2", update_tasks_count, version_index), "info")
         if conn then
             conn = KOR.databases:closeConnections(conn)
         end
@@ -800,10 +834,13 @@ function XrayDataSaver.createAndModifyTables()
     if not conn then
         conn = KOR.databases:getDBconn("XrayDataSaver:createAndModifyTables 3")
     end
+
+    self:logSchemeModification("modifying DX tables", T("start queries %1 to %2", version_index, update_tasks_count), "info")
     self.modifyTables(conn, update_tasks_count, version_index)
+    self:logSchemeModification("modifying DX tables", "ready", "info")
     --* update database_scheme_version in XraySettings:
-    DX.s:saveSetting(self.scheme_version_name, update_tasks_count)
-    G_reader_settings:saveSetting("DX_" .. self.scheme_version_name, update_tasks_count)
+    G_reader_settings:saveSetting(self.scheme_version_name, update_tasks_count)
+    G_reader_settings:flush()
 
     conn = KOR.databases:closeConnections(conn)
 end
@@ -841,13 +878,21 @@ function XrayDataSaver.modifyTables(conn, update_tasks_count, version_index)
         return
     end
     local self = DX.ds
-    local sql
+    local sql, ok, err
+    local heading_pre = "\n\n_____________________\n\n"
+    local heading_end = ":\n_____________________\n\n"
+    local error_heading = "\n\nERROR AND TRACE\n\n"
     for i = version_index + 1, update_tasks_count do
         if self.scheme_alter_queries[i] then
             sql = self.scheme_alter_queries[i]
-            pcall(function()
+            ok, err = pcall(function()
                 conn:exec(sql)
             end)
+            if DX.s.log_database_scheme_modifications and not ok then
+                self:logSchemeModification(heading_pre .. "FAILED QUERY " .. i .. "\n(but will be ignored and disappear upon restart)" .. heading_end, sql .. error_heading .. err, "warn")
+            elseif DX.s.log_database_scheme_modifications then
+                self:logSchemeModification(heading_pre .. "QUERY OK " .. i .. heading_end, sql, "info")
+            end
         end
     end
 end
@@ -875,27 +920,25 @@ function XrayDataSaver.updateVersionIndex(conn, version_index)
     count = #self.scheme_verification_queries
 
     local last_update_query = self.scheme_verification_queries[count][1]
-    local last_update_index = self.scheme_verification_queries[count][2]
     if conn:exec(last_update_query) then
-        return last_update_index
+        --* this returns de facto last_update_index:
+        return self.scheme_verification_queries[count][2]
     end
 
     local update_query, update_index, result
-    for i = count - 1, 1, -1 do
+    for i = 1, count do
         update_query = self.scheme_verification_queries[i][1]
         update_index = self.scheme_verification_queries[i][2]
         result = conn:exec(update_query)
-        if result then
-            --* update database_scheme_version in XraySettings:
-            DX.s:saveSetting(self.scheme_version_name, update_index)
+        if not result and i == 1 then
+            return 0
+        elseif not result then
             return update_index
         end
     end
 
     --logger.warn("VERSIE OK", version_index)
 
-    --* update database_scheme_version in XraySettings:
-    DX.s:saveSetting(self.scheme_version_name, version_index)
     return version_index
 end
 

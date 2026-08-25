@@ -9,7 +9,8 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local T = require("ffi/util").template
 
 local pairs = pairs
-local table = table
+local table_insert = table.insert
+local table_sort = table.sort
 local tonumber = tonumber
 local type = type
 
@@ -119,10 +120,10 @@ function Databases:resultsetToItemset(resultset)
     local field_names = {}
     for field_name in pairs(resultset) do
         if type(field_name) ~= "number" then
-            table.insert(field_names, field_name)
+            table_insert(field_names, field_name)
         end
     end
-    table.sort(field_names)
+    table_sort(field_names)
     local row, field
     local itemset = {}
     local rows = #resultset[1]
@@ -133,7 +134,7 @@ function Databases:resultsetToItemset(resultset)
             field = field_names[f]
             row[field] = resultset[field][r]
         end
-        table.insert(itemset, row)
+        table_insert(itemset, row)
     end
     return itemset
 end

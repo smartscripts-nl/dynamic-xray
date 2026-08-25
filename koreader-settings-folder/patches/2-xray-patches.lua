@@ -10,7 +10,6 @@ local require = require
 --* ============ LOAD EXTENSIONS SYSTEM ===============
 
 local lfs = require("libs/libkoreader-lfs")
-
 local lfs_attributes = lfs.attributes
 
 local controller_path

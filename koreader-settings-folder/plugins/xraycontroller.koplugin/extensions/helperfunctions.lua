@@ -1,5 +1,8 @@
 
+local require = require
+
 local lfs = require("libs/libkoreader-lfs")
+local logger = require("logger")
 local util = require("util")
 
 local G_reader_settings = G_reader_settings
@@ -14,6 +17,9 @@ lfs_currentdir = lfs.currentdir
 lfs_dir = lfs.dir
 lfs_mkdir = lfs.mkdir
 lfs_rmdir = lfs.rmdir
+logger_err = logger.err
+logger_info = logger.info
+logger_warn = logger.warn
 math_abs = math.abs
 math_ceil = math.ceil
 math_floor = math.floor
@@ -43,6 +49,7 @@ table_move = table.move
 table_pack = table.pack
 table_remove = table.remove
 table_sort = table.sort
+util_gsplit = util.gsplit
 util_trim = util.trim
 
 --- @class HelperFunctions

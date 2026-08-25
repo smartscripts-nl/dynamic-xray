@@ -25,8 +25,6 @@ local require = require
 --! VERY IMPORTANT: extend package.path and load the KOR system first!:
 --* ============ LOAD EXTENSIONS SYSTEM ===============
 
-local logger = require("logger")
-
 local BD = require("ui/bidi")
 local BookStatusWidget = require("ui/widget/bookstatuswidget")
 local Button = require("xrayviews/widgets/button")
@@ -57,25 +55,32 @@ local ReaderView = require("apps/reader/modules/readerview")
 local TextBoxWidget = require("ui/widget/textboxwidget")
 local Trapper = require("ui/trapper")
 local UIManager = require("ui/uimanager")
+
 local _ = require("gettext")
 --! only use tr for DX related modules:
 local tr = KOR:initCustomTranslations()
+
+local ffiUtil = require("ffi/util")
+local logger = require("logger")
 local util = require("util")
 local Screen = Device.screen
 local Utf8Proc = require("ffi/utf8proc")
-local T = require("ffi/util").template
+
+--! DON'T USE GLOBAL FUNCTIONS DEFINED IN helperfunctions.lua HERE !
 
 local cre --* Delayed loading
 local error = error
-local ffiUtil = require("ffi/util")
+local ffiUtil_orderedPairs = ffiUtil.orderedPairs
 local G_reader_settings = G_reader_settings
 local logger_dbg = logger.dbg
 local next = next
 local pcall = pcall
 local select = select
+local T = T
 local table = table
 local table_concat = table.concat
 local table_insert = table.insert
+local table_remove = table.remove
 local tonumber = tonumber
 local tostring = tostring
 local type = type
@@ -445,7 +450,7 @@ function ReaderToc:getTocLastChapterInfo(pos0, chapters)
         chapters = self:getFullTocTitleByPage(pos0)
     end
     --* this should be the title of the last chapter:
-    return (table.remove(chapters) or "")
+    return (table_remove(chapters) or "")
 end
 
 --- @param pos0 string The pos0/page prop for the text for which we want to generate context_info
@@ -684,7 +689,7 @@ function ReaderHighlight:onShowHighlightMenu(index)
     local highlight_buttons = { {} }
 
     local columns = 2
-    for idx, fn_button in ffiUtil.orderedPairs(self._highlight_buttons) do
+    for idx, fn_button in ffiUtil_orderedPairs(self._highlight_buttons) do
         local button = fn_button(self, index)
         if not button.show_in_highlight_dialog_func or button.show_in_highlight_dialog_func() then
             if #highlight_buttons[#highlight_buttons] >= columns then

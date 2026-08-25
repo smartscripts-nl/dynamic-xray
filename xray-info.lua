@@ -134,6 +134,20 @@ function XrayCodeProcedures:BUTTONCHOICEPROPS_MORE_THAN_2()
     -- extra callbacks added in ((ButtonProps#injectAdditionalChoiceCallbacks))
 end
 
+function XrayCodeProcedures:DATABASE()
+
+    -- database tables created and updated via ((XrayDataSaver#createAndModifyTables))
+
+    --! if you want to recreate all tables:
+    -- 1 close KOReader
+    -- 2 remove all DX tables and fields manually
+    -- 3 set value-field of tables_created in settings/settings_manager.lua to true
+    -- 4 remove entries DX_database_scheme_version and DX_tables_created from settings.reader.lua
+    -- 5 start KOReader
+
+    --* if you set log_database_scheme_modifications in the DX settings to true, db scheme modifications (if applicable) and their result will be logged to the standard output. With this settings, if no modifications were necessary, a message about that fact will be logged.
+end
+
 function XrayCodeProcedures:DIALOGS()
 
     -- main dialogs:

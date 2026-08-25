@@ -190,6 +190,11 @@ local XraySettings = WidgetContainer:new{
             explanation = _("This variable determines whether a chapter-occurrences-histogram will be shown in the Item Viewer tabs (or not)."),
             locked = 0,
         },
+        log_database_scheme_modifications = {
+            value = false,
+            explanation = _("If set to true, DX wil log database scheme modifications (if applicable) to the standard output. See XrayCodeProcedures:DATABASE in xray-info.lua for more information."),
+            locked = 0,
+        },
         max_context_items_per_row = {
             value = 5,
             type = "number",
@@ -411,21 +416,10 @@ local XraySettings = WidgetContainer:new{
             explanation = _("Only change this setting if your database file not is called \"bookinfo_cache.sqlite3\". E.g. because it has a language code at the front, like \"PT_bookinfo_cache.sqlite3\"."),
             locked = 0,
         },
-        --* this setting controls database scheme modifications via ((XrayDataSaver#createAndModifyTables)) > ((XrayDataSaver#modifyTables)) > XrayDataSaver.scheme_alter_queries:
-        database_scheme_version = {
-            value = 0,
-            explanation = _("This setting detemines which tasks to update the database scheme should be executed. Most times it is best to leave this value untouched. But suppose for some reason you deleted a table, you can then set this to a lower value, to let XrayDataSaver re-create the table. USE WITH EXTREME CAUTION!"),
-            locked = 0,
-        },
         prune_orphan_translations_version = {
             value = 1,
             explanation = locked_xray_setting_message,
             locked = 1,
-        },
-        tables_created = {
-            value = false,
-            explanation = _("This settings should be set to true by DX after its tables have been created.\n\nYou can set it to false to try to recreate the DX tables (after you manually deleted them from the database), in case of problems."),
-            locked = 0,
         },
     },
     tabbed_interface = nil,
