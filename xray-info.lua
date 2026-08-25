@@ -136,7 +136,7 @@ end
 
 function XrayCodeProcedures:DATABASE()
 
-    -- database tables created and updated via ((XrayDataSaver#createAndModifyTables))
+    -- database tables created and their scheme modified via ((XrayDataSaver#createAndModifyTables))
 
     --! if you want to recreate all tables:
     -- 1 close KOReader

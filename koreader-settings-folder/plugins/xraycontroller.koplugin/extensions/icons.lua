@@ -109,6 +109,8 @@ return {
     tag_open_bare = "\u{F412}",
     today = "\u{E7EE}" .. spacer,
     today_bare = "\u{E7EE}",
+    wikipedia = "\u{F266}" .. spacer,
+    wikipedia_bare = "\u{F266}",
     xray_add_item_bare = "\u{E713}",
     xray_alias = "\u{EF23}" .. spacer,
     xray_alias_bare = "\u{EF23}",

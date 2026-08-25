@@ -292,7 +292,6 @@ function XrayController:onReaderReady()
         KOR.messages:notify("dynamic xray could not be initiated...")
         return
     end
-    KOR.referenceinformation:load(self.document.file)
     self:addGlobalHotkeys()
     self:resetDynamicXray(false, "do_full_update")
     DX.pn:resetFilterDouble("on_reader_ready")
@@ -658,6 +657,7 @@ function XrayController:resetDynamicXray(is_prepared, do_full_update)
         --! don't call DX.u:reset() here, because then Xray markers in page would disappear...
         KOR.document:resetParagraphsCache()
         DX.p:resetCache()
+        KOR.referenceinformation:load(full_path)
     end
     self:toggleNightModeColors()
     --* to force a refresh of the texts in the bottom info panel:

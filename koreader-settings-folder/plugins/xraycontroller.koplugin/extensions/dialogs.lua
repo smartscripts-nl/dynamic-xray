@@ -560,7 +560,6 @@ end
 --- @private
 function Dialogs:getTextBoxConfig(args)
     args.width_factor = args.width_factor or 1
-    --local use_scrolling_dialog = args.use_scrolling_dialog or 1
     if args.fixed_face and type(args.fixed_face) == "string" then
         args.fixed_face = Font:getFace(args.fixed_face)
     end

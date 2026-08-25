@@ -11,7 +11,8 @@
 -- ((PATCH READERVIEW))
 -- ((PATCH UIMANAGER))
 -- ((PATCH READERDICTIONARY))
---! I didn't patch DictQuickLookup, to add a add Xray item button to the dictionary dialog; dialog code for me too complicated to patch...
+-- ((PATCH READERWIKIPEDIA))
+-- ((PATCH DICTQUICKLOOKUP))
 -- ((PATCH READERFOOTER))
 -- ((PATCH READERTOC))
 -- ((PATCH READERHIGHLIGHT))
@@ -35,6 +36,8 @@ local CheckButton = require("ui/widget/checkbutton")
 local CreDocument = require("document/credocument")
 local Device = require("device")
 local DeviceListener = require("device/devicelistener")
+--- @class DictQuickLookup
+local DictQuickLookup = require("ui/widget/dictquicklookup")
 local Event = require("ui/event")
 local InfoMessage = require("ui/widget/infomessage")
 local InputDialog = require("ui/widget/inputdialog")
@@ -52,7 +55,8 @@ local ReaderSearch = require("apps/reader/modules/readersearch")
 local ReaderToc = require("apps/reader/modules/readertoc")
 --- @class ReaderView
 local ReaderView = require("apps/reader/modules/readerview")
-local TextBoxWidget = require("ui/widget/textboxwidget")
+--- @class ReaderWikipedia
+local ReaderWikipedia = require("apps/reader/modules/readerwikipedia")local TextBoxWidget = require("ui/widget/textboxwidget")
 local Trapper = require("ui/trapper")
 local UIManager = require("ui/uimanager")
 
@@ -402,6 +406,78 @@ ReaderDictionary.onLookupWord = function(self, word, is_sane, boxes, highlight, 
     return orig_onLookupWord(self, word, is_sane, boxes, highlight, link, dict_close_callback)
 end
 
+local wikipedia_results
+-- #((ReaderDictionary#showDict))
+local orig_showDict = ReaderDictionary.showDict
+ReaderDictionary.showDict = function(self, word, results, boxes, link, dict_close_callback, dialog_id)
+
+    if KOR.registry:getOnce("dont_show_dict") then
+        --* store results for a second call to the current method from the end of patched ((ReaderWikipedia#lookupWikipedia)) below:
+        wikipedia_results = results
+    else
+        orig_showDict(self, word, results, boxes, link, dict_close_callback, dialog_id)
+    end
+
+    --* dialog_id may be provided as argument by ((ReaderWikipedia#lookupWikipedia)) > ((show Wikipedia info)):
+    dialog_id = dialog_id and "reader_dictionary_results_" .. word .. dialog_id or "reader_dictionary_results_" .. word
+
+    if self.is_wiki then
+        KOR.registry.wiki_content = results[1].definition
+    else
+        KOR.registry.wiki_content = nil
+    end
+end
+
+
+--- PATCH READERWIKIPEDIA
+-- #((PATCH READERWIKIPEDIA))
+
+local orig_lookupWikipedia = ReaderWikipedia.lookupWikipedia
+-- #((ReaderWikipedia#lookupWikipedia))
+ReaderWikipedia.lookupWikipedia = function(self, word, is_sane, box, get_fullpage, forced_lang, dict_close_callback)
+
+    KOR.registry:set("dont_show_dict", true)
+    orig_lookupWikipedia(self, word, is_sane, box, get_fullpage, forced_lang, dict_close_callback)
+
+    -- #((show Wikipedia info))
+    local dialog_id = "wikipedia_" .. word
+    if get_fullpage then
+        dialog_id = dialog_id .. "_fullpage"
+    end
+
+    KOR.registry:set("force_day_display", true)
+    -- call ((ReaderDictionary#showDict)):
+    self:showDict(word, wikipedia_results, box, nil, dict_close_callback, dialog_id)
+end
+
+
+--- PATCH DICTQUICKLOOKUP
+-- #((PATCH DICTQUICKLOOKUP))
+
+local orig_DQL_buildButtonLayout = DictQuickLookup.buildButtonLayout
+DictQuickLookup.buildButtonLayout = function(self)
+
+    local buttons = orig_DQL_buildButtonLayout(self)
+    if wikipedia_results then
+        local button = {
+            text = _("add to Reference Info"),
+            callback = function()
+                KOR.referenceinformation:addWikiContent(function()
+                    self:onClose()
+                    wikipedia_results = nil
+                end)
+            end
+        }
+        if self.is_wiki_fullpage then
+            table_insert(buttons[1], 1, button)
+        else
+            --* for short wiki-results add button on a separate row:
+            table_insert(buttons, 1, { button })
+        end
+    end
+
+    return buttons
+end
 
 --- PATCH READERFOOTER
 -- #((PATCH READERFOOTER))

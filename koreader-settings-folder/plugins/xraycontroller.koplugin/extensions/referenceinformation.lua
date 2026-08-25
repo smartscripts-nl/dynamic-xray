@@ -52,26 +52,51 @@ function ReferenceInformation:erase()
 	KOR.messages:notify(_("reference information has been erased"))
 end
 
+function ReferenceInformation:addWikiContent(callback)
+	local example = KOR.registry.wiki_content:sub(1, 130):gsub(" [^ ]+$", "") .. KOR.strings.ellipsis
+	KOR.dialogs:confirm(_("Do you want to add the Wikipedia-information below to the Reference Information for the current e-book?") .. "\n\n________________________________\n\n" .. example, function()
+
+		self:storeInformation(KOR.registry.wiki_content)
+		KOR.registry.wiki_content = nil
+
+		KOR.messages:notify(_("wikipedia-information has been added"))
+		if callback then
+			callback()
+		end
+	end)
+end
+
 function ReferenceInformation:storeInformation(information, content_type)
 	KOR.informationmediator:closeContentTypeChoiceDialog()
 	local css
+	if not content_type then
+		content_type = information:match("<") and "html" or "text"
+	end
+	if information:match("<") then
+		content_type = "html"
+	end
 	if content_type == "html" then
 		information, css = self:prepareHtmlAndCssForSaving(information)
 	end
 	--* don't overwrite previously stored reference information in the same format (HTML or text):
 	if self.current_ebook_reference_information
-	and (
-		(content_type == "html" and self.current_ebook_reference_information:match("<"))
-		or
-		(content_type == "text" and not self.current_ebook_reference_information:match("<"))
+			and (
+			(content_type == "html" and self.current_ebook_reference_information:match("<"))
+			or
+			(content_type == "text" and not self.current_ebook_reference_information:match("<"))
 	)
 	then
 		local separator = content_type == "html" and "<br /> <br />\n" or "\n\n"
 		information = self.current_ebook_reference_information .. separator .. information
 	end
+	if css and self.current_ebook_reference_information_css then
+		css = self.current_ebook_reference_information_css .. "\n\n" .. css
+	end
 	self:store(information, css)
 	self.current_ebook_reference_information = information
-	self.current_ebook_reference_information_css = css
+	if css then
+		self.current_ebook_reference_information_css = css
+	end
 	self:show(information)
 end
 

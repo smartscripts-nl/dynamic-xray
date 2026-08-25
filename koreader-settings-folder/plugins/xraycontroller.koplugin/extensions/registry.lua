@@ -1,7 +1,6 @@
 
 local require = require
 
-local KOR = require("extensions/kor")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 
 local AX_registry = AX_registry
@@ -38,6 +37,7 @@ local Registry = WidgetContainer:new{
     },
     use_overlay_when_opening_files = true,
     use_scrolling_dialog = 2,
+    wiki_content = nil,
 }
 
 --* AX_registry defined in ((ExtensionsInit)) (as early as possible):
@@ -112,16 +112,6 @@ function Registry:unset(index, ...)
         prop = args[i]
         AX_registry[prop] = nil
     end
-end
-
-function Registry:toggleScrollingDialog()
-
-    --* we don't have to see an info alert to inform us about the change; we can see that the setting has changed because the height of the window changes and will be fixed if use_scrolling_dialog is 3:
-    self.use_scrolling_dialog = self.use_scrolling_dialog + 1
-    if self.use_scrolling_dialog > 3 then
-        self.use_scrolling_dialog = 1
-    end
-    KOR.messages:notify("scrolling ingesteld op " .. self.scroll_messages[self.use_scrolling_dialog])
 end
 
 --* AXR_registry (renewable upon file updates etc.) defined in ((ExtensionsInit)) (as early as possible):
