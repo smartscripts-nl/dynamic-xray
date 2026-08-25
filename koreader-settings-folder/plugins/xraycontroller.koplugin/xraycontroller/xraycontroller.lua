@@ -586,7 +586,6 @@ function XrayController:addToMainMenu(menu_items)
         text = icon .. " Series Manager",
         enabled = enabled,
         separator = true,
-        sorting_hint = "navi",
         sub_item_table = {
             {
                 text = icon .. " " .. _("Show all series"),
@@ -605,7 +604,6 @@ function XrayController:addToMainMenu(menu_items)
     icon = KOR.icons.lightning_bare
     menu_items.dynamic_xray = {
         text = icon .. DX.d:getControllerEntryName(" Dynamic Xray"),
-        sorting_hint = "navi",
         enabled = enabled,
         sub_item_table = {
             {
