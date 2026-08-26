@@ -22,6 +22,7 @@ local ReferenceInformation = WidgetContainer:extend{
 	current_ebook_reference_information = nil,
 	current_ebook_reference_information_css = nil,
 	db_path = nil,
+	information_for_matching = nil,
 	queries = {
 		erase = "UPDATE bookinfo SET reference_information = NULL, reference_information_css = NULL WHERE directory || filename = 'safe_path';",
 		load = "SELECT reference_information, reference_information_css FROM bookinfo WHERE directory || filename = 'safe_path';",
@@ -37,7 +38,13 @@ function ReferenceInformation:load(full_path)
 	local conn = KOR.databases:getDBconn("ReferenceInformation:load")
 	local information, css = conn:rowexec(sql)
 	conn = KOR.databases:closeConnections(conn)
-	self.current_ebook_reference_information = information
+
+	--* text for searching for headings:
+	self.information_for_matching = information
+
+	--* text for display in TextViewer, remove sun icons:
+	self.current_ebook_reference_information = information:gsub(KOR.registry.wiki_heading_needle, "")
+
 	self.current_ebook_reference_information_css = css
 end
 
@@ -48,6 +55,7 @@ function ReferenceInformation:erase()
 	conn:exec(sql)
 	conn = KOR.databases:closeConnections(conn)
 	self.current_ebook_reference_information = nil
+	self.information_for_matching = nil
 
 	KOR.messages:notify(_("reference information has been erased"))
 end
@@ -72,6 +80,7 @@ function ReferenceInformation:addWikiContent(display_word, callback)
 		KOR.registry.wiki_content = nil
 		KOR.messages:notify("wikipedia-informatie toegevoegd")
 		if callback then
+			--* the new content will be shown in ((ReferenceInformation#show)):
 			callback()
 		end
 	end)
@@ -222,6 +231,7 @@ function ReferenceInformation:show()
 		fullscreen = true,
 		is_reference_information_or_glossary = true,
 		content = self.current_ebook_reference_information,
+		content_for_matching = self.information_for_matching,
 	})
 	return true
 end

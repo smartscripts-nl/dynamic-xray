@@ -156,6 +156,7 @@ local TextViewer = InputContainer:extend{
     --* this table will be populated by ((TabFactory#setTabButtonAndContent)):
     tabs_table_buttons = nil,
     text = nil,
+    text_for_matching = nil,
     --* for two column display:
     text2 = nil,
     --* for three column display:
@@ -1154,7 +1155,7 @@ end
 --- @private
 function TextViewer:getDefaultButtons()
 
-    self.search_for_headings = self.is_single_scroll_widget and util.stringSearch(self.text, KOR.registry.wiki_heading_needle, true, 1) > 0
+    self.search_for_headings = self.is_single_scroll_widget and util.stringSearch(self.text_for_matching, KOR.registry.wiki_heading_needle, true, 1) > 0
 
     --* navigation buttons (go to top/bottom, or one screen down/up) are inserted in ((InputDialog#_addScrollButtons)):
     local default_buttons = {
@@ -1310,25 +1311,29 @@ function TextViewer:generateButtonsIndex()
 
     local dialog, is_sub_heading, heading_complete
     local width = Screen:scaleBySize(300)
-    local spacer = { {
-                         text = " ",
-                         bordersize = 0,
-                         width = width,
-                         align = "left",
-                         padding = 0,
-                         callback = function()
-                         end
-                     } }
+    local spacer = {{
+         text = " ",
+         bordersize = 0,
+         width = width,
+         align = "left",
+         padding = 0,
+         callback = function()
+         end
+     }}
     local row = 0
-    for icon_sun, icon_heading, heading in string_gmatch(self.text, "(☀)([^ ]+)([^\n]+)") do
+    for icon_heading, heading in string_gmatch(self.text_for_matching, "☀([^ ]+)([^\n]+)") do
+
+        local needle = icon_heading .. heading
+
         --* indent headings lower than h2:
         is_sub_heading = not icon_heading:match("█") and not icon_heading:match("▉")
         if is_sub_heading then
-            icon_sun = "         " .. icon_sun
+            icon_heading = "         " .. icon_heading
         elseif row ~= 0 then
             table_insert(buttons, spacer)
         end
-        heading_complete = icon_sun .. icon_heading .. heading
+
+        heading_complete = icon_heading .. heading
         row = row + 1
         table_insert(buttons, {{
             text = heading_complete,
@@ -1339,7 +1344,7 @@ function TextViewer:generateButtonsIndex()
             callback = function()
                 UIManager:close(dialog)
                 self.case_sensitive = true
-                self:findCallback(nil, icon_heading .. heading, 1)
+                self:findCallback(nil, needle, 1)
                 UIManager:forceRePaint()
             end
         }})
