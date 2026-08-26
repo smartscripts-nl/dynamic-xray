@@ -12,7 +12,7 @@ local has_no_content = has_no_content
 local has_no_text = has_no_text
 local math_floor = math_floor
 local select = select
-local string = string
+local string_lower = string_lower
 local table_concat = table_concat
 local table_insert = table_insert
 local table_sort = table_sort
@@ -33,6 +33,9 @@ local Strings = WidgetContainer:extend{
     curly_quote_r = "”",
     ellipsis = "…",
     indent = "     ",
+    indent_more = "      ",
+    indent_soft = "     ",
+    indent_soft_more = "      ",
     m_dash = "—",
     n_dash = "–",
     poem_max_line_length = 50,
@@ -182,7 +185,7 @@ function Strings:lcfirst(str, force_only_first)
         return ""
     end
     --* %u matches upper case characters:
-    return (force_only_first and Utf8Proc.lowercase(util.fixUtf8(str, "?")) or str:gsub("^%u", string.lower))
+    return (force_only_first and Utf8Proc.lowercase(util.fixUtf8(str, "?")) or str:gsub("^%u", string_lower))
 end
 
 function Strings:ucfirst(str, force_only_first)
@@ -218,6 +221,16 @@ end
 --* return utf8-safe uppercase string:
 function Strings:upper(text)
     return Utf8Proc.uppercase_dumb(util.fixUtf8(text, "?"))
+end
+
+function Strings:indentText(text)
+    local i = self.indent_soft_more
+    return text
+        :gsub("([a-zA-Z0-9.,:;?!\"'')])\n[\t ]?([A-Za-z(\"''])", "%1\n" .. i .. "%2")
+        :gsub("(”)\n[\t ]?([A-Za-z])", "%1\n" .. i .. "%2")
+        :gsub("(”)\n[\t ]?(“)", "%1\n" .. i .. "%2")
+        :gsub("(’)\n[\t ]?([A-Za-z])", "%1\n" .. i .. "%2")
+        :gsub("(’)\n[\t ]?(‘)", "%1\n" .. i .. "%2")
 end
 
 function Strings:formatListItemNumber(nr, title, use_spacer)
@@ -462,7 +475,7 @@ function Strings:splitLinesToMaxLengthIconLess(text, indent, first_word, dont_in
     return self:splitLinesToMaxLength(text, indent, first_word, dont_indent_first_line, after_first_line_indent, "is_iconless")
 end
 
---* remove trailing and leading whitespace from string.
+--* remove trailing and leading whitespace from string_
 --* @param s String
 function Strings:trim(s)
     --* from PiL2 20.4

@@ -52,14 +52,15 @@ function ReferenceInformation:erase()
 	KOR.messages:notify(_("reference information has been erased"))
 end
 
-function ReferenceInformation:addWikiContent(callback)
+function ReferenceInformation:addWikiContent(display_word, callback)
 	local example = KOR.registry.wiki_content:sub(1, 130):gsub(" [^ ]+$", "") .. KOR.strings.ellipsis
-	KOR.dialogs:confirm(_("Do you want to add the Wikipedia-information below to the Reference Information for the current e-book?") .. "\n\n________________________________\n\n" .. example, function()
+	KOR.dialogs:confirm("Wil je inderdaad onderstaande Wikipedia-informatie toevoegen aan de Referentie Informatie voor het huidige e-book?\n\n________________________________\n\n" .. example, function()
 
-		self:storeInformation(KOR.registry.wiki_content)
+		local content = display_word and "\u{2588} === " .. KOR.strings:upper(display_word) .. " === \u{2588}\n\n" .. KOR.registry.wiki_content or KOR.registry.wiki_content
+		self:storeInformation(content)
+
 		KOR.registry.wiki_content = nil
-
-		KOR.messages:notify(_("wikipedia-information has been added"))
+		KOR.messages:notify("wikipedia-informatie toegevoegd")
 		if callback then
 			callback()
 		end
@@ -67,26 +68,33 @@ function ReferenceInformation:addWikiContent(callback)
 end
 
 function ReferenceInformation:storeInformation(information, content_type)
+
 	KOR.informationmediator:closeContentTypeChoiceDialog()
 	local css
-	if not content_type then
-		content_type = information:match("<") and "html" or "text"
-	end
-	if information:match("<") then
-		content_type = "html"
-	end
+	content_type = self:getContentType(information, content_type)
 	if content_type == "html" then
 		information, css = self:prepareHtmlAndCssForSaving(information)
 	end
-	--* don't overwrite previously stored reference information in the same format (HTML or text):
-	if self.current_ebook_reference_information
-			and (
-			(content_type == "html" and self.current_ebook_reference_information:match("<"))
-			or
-			(content_type == "text" and not self.current_ebook_reference_information:match("<"))
-	)
-	then
-		local separator = content_type == "html" and "<br /> <br />\n" or "\n\n"
+	local current_content_type = self:getContentType(self.current_ebook_reference_information)
+	local separator = content_type == "html" and "<br /> <br />\n" or "\n\n"
+
+	--* if previous stored context was plain text, convert it to HTML if HTML content is added:
+	if current_content_type and content_type == "html" and content_type ~= current_content_type then
+
+		self.current_ebook_reference_information = KOR.html:textToHtml(self.current_ebook_reference_information)
+
+		--* if previous stored context was HTML, convert plain text information to be added to HTML:
+	elseif current_content_type and content_type == "text" and content_type ~= current_content_type then
+
+		information = KOR.strings:textToHtml(information)
+		separator = "<br /> <br />\n"
+	end
+
+	if content_type == "text" then
+		information = KOR.strings:indentText(information)
+	end
+
+	if current_content_type then
 		information = self.current_ebook_reference_information .. separator .. information
 	end
 	if css and self.current_ebook_reference_information_css then
@@ -98,6 +106,17 @@ function ReferenceInformation:storeInformation(information, content_type)
 		self.current_ebook_reference_information_css = css
 	end
 	self:show(information)
+end
+
+--- @private
+function ReferenceInformation:getContentType(information, content_type)
+	if not information then
+		return
+	end
+	if content_type then
+		return content_type
+	end
+	return information:match("<") and "html" or "text"
 end
 
 --- @private

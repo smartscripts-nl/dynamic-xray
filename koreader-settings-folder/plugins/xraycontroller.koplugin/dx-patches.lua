@@ -5,6 +5,7 @@
     Runtime KOReader patches executed ONLY on userpatch.before_exit
 --]]
 
+--- @class DXPatches
 --! patches in this file:
 -- ((PATCH CREDOCUMENT))
 -- ((PATCH DEVICELISTENER))
@@ -445,7 +446,6 @@ ReaderWikipedia.lookupWikipedia = function(self, word, is_sane, box, get_fullpag
         dialog_id = dialog_id .. "_fullpage"
     end
 
-    KOR.registry:set("force_day_display", true)
     -- call ((ReaderDictionary#showDict)):
     self:showDict(word, wikipedia_results, box, nil, dict_close_callback, dialog_id)
 end
@@ -462,7 +462,7 @@ DictQuickLookup.buildButtonLayout = function(self)
         local button = {
             text = _("add to Reference Info"),
             callback = function()
-                KOR.referenceinformation:addWikiContent(function()
+                KOR.referenceinformation:addWikiContent(self.lookupword, function()
                     self:onClose()
                     wikipedia_results = nil
                 end)
@@ -478,6 +478,7 @@ DictQuickLookup.buildButtonLayout = function(self)
 
     return buttons
 end
+
 
 --- PATCH READERFOOTER
 -- #((PATCH READERFOOTER))
