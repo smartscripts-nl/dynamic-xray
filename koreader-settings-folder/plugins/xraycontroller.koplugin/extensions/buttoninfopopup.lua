@@ -324,12 +324,40 @@ function ButtonInfoPopup:forTextViewerToBottom(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forTextViewerToSeparator(props)
+	local has_headings = props.search_for_headings
+	local config = {
+		info = has_headings and _("heading-arrow icon | Jump to first or next heading.") or _("arrow icon | Jump to first or next text separator."),
+		callback_label = _("jump"),
+		--! callback defined by calling module
+	}
+	if has_headings then
+		config.icon_icon = {
+			icon = "heading-svgrepo-com",
+			icon2 = "down",
+		}
+	else
+		config.icon = "find-separator"
+	end
+
+	return ButtonProps:set(config, props)
+end
+
 function ButtonInfoPopup:forTextViewerToTop(props)
 	return ButtonProps:set({
 		text = "⇱",
 		id = "top",
 		info = _("arrow icon | Jump to start of text. In case of a two column text this move will be applied to both columns."),
 		callback_label = _("to start"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forTextViewerWikiHeadingsIndex(props)
+	return ButtonProps:set({
+		icon = "index",
+		info = _("index icon | Show tappable index of Wikipedia-heading in this Reference Information."),
+		callback_label = _("show"),
 		--! callback defined by calling module
 	}, props)
 end

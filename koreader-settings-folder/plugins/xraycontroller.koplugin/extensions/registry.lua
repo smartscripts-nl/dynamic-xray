@@ -38,6 +38,7 @@ local Registry = WidgetContainer:new{
     use_overlay_when_opening_files = true,
     use_scrolling_dialog = 2,
     wiki_content = nil,
+    wiki_heading_needle = "☀",
 }
 
 --* AX_registry defined in ((ExtensionsInit)) (as early as possible):

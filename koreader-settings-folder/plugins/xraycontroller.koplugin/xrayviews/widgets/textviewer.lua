@@ -14,6 +14,7 @@ local require = require
 
 local BD = require("ui/bidi")
 local Button = require("xrayviews/widgets/button")
+local ButtonDialog = require("xrayviews/widgets/buttondialog")
 local ButtonTable = require("xrayviews/widgets/buttontable")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local CheckButton = require("ui/widget/checkbutton")
@@ -53,6 +54,7 @@ local io = io
 local math_abs = math_abs
 local math_floor = math_floor
 local select = select
+local string_gmatch = string_gmatch
 local table_insert = table_insert
 local table_remove = table_remove
 local type = type
@@ -121,6 +123,7 @@ local TextViewer = InputContainer:extend{
     has_tabs = false,
     height = nil,
     is_duo_scroll_widget = false,
+    is_single_scroll_widget = true,
     is_standard_tabbed_dialog = false,
     is_standard_tabbed_dialog_lower = false,
     is_three_scroll_widget = false,
@@ -148,6 +151,7 @@ local TextViewer = InputContainer:extend{
     scroll_text_w1 = nil,
     scroll_text_w2 = nil,
     scroll_text_w3 = nil,
+    search_for_headings = false,
     separator = nil,
     --* this table will be populated by ((TabFactory#setTabButtonAndContent)):
     tabs_table_buttons = nil,
@@ -386,6 +390,35 @@ function TextViewer:findDialog()
 
     UIManager:show(input_dialog)
     input_dialog:onShowKeyboard(true)
+end
+
+--- @private
+function TextViewer:separatorDialog()
+    local input_dialog
+
+    local needle = self.search_for_headings and KOR.registry.wiki_heading_needle or KOR.registry.text_block_separator
+
+    input_dialog = ButtonDialog:new{
+        buttons = {{
+            {
+                icon = "first",
+                callback = function()
+                    UIManager:close(input_dialog)
+                    self._find_next = false
+                    self:findCallback(nil, needle)
+                end
+            },
+            {
+                icon = "next",
+                callback = function()
+                    UIManager:close(input_dialog)
+                    self._find_next = true
+                    self:findCallback(nil, needle)
+                end
+            },
+        },
+    }}
+    UIManager:show(input_dialog)
 end
 
 --* when argument external_search_string not nil: called via ((XrayUI#uiInfoShow)) > ((XrayUI#showParagraphInformation)) >
@@ -631,6 +664,7 @@ function TextViewer:initTextWidget()
         --* three column display:
         if has_text(self.text3) then
             self.is_three_scroll_widget = true
+            self.is_single_scroll_widget = false
             self.scroll_text_w, self.scroll_text_w1, self.scroll_text_w2, self.scroll_text_w3 = KOR.columntexts:getThreeWidget({
                 parent = self,
                 column1_text = self.text,
@@ -644,6 +678,7 @@ function TextViewer:initTextWidget()
         --* two column display:
         elseif has_text(self.text2) then
             self.is_duo_scroll_widget = true
+            self.is_single_scroll_widget = false
             self.scroll_text_w, self.scroll_text_w1, self.scroll_text_w2 = KOR.columntexts:getDuoWidget({
                 parent = self,
                 column1_text = self.text,
@@ -1118,6 +1153,9 @@ end
 
 --- @private
 function TextViewer:getDefaultButtons()
+
+    self.search_for_headings = self.is_single_scroll_widget and util.stringSearch(self.text, KOR.registry.wiki_heading_needle, true, 1) > 0
+
     --* navigation buttons (go to top/bottom, or one screen down/up) are inserted in ((InputDialog#_addScrollButtons)):
     local default_buttons = {
         KOR.buttonchoicepopup:forTextViewerSearch({
@@ -1135,6 +1173,16 @@ function TextViewer:getDefaultButtons()
                     if self.default_hold_callback then
                         self.default_hold_callback()
                     end
+                end
+            end,
+        }),
+        KOR.buttoninfopopup:forTextViewerToSeparator({
+            search_for_headings = self.search_for_headings,
+            callback = function()
+                if self._find_next then
+                    self:findCallback()
+                else
+                    self:separatorDialog()
                 end
             end,
         }),
@@ -1203,6 +1251,10 @@ function TextViewer:getDefaultButtons()
             hold_callback = self.default_hold_callback,
         }),
     }
+    if self.is_single_scroll_widget and not self.search_for_headings then
+        table_remove(default_buttons, 2)
+    end
+
     if self.has_copy_button then
         table_insert(default_buttons, 2, KOR.buttonchoicepopup:forTextViewerCopy({
             callback = function()
@@ -1241,7 +1293,75 @@ function TextViewer:getDefaultButtons()
         table_remove(default_buttons, 1)
     end
 
+    if self.search_for_headings then
+        table_insert(default_buttons, 2, KOR.buttoninfopopup:forTextViewerWikiHeadingsIndex({
+            callback = function()
+                self:generateButtonsIndex()
+            end,
+        }))
+    end
+
     return default_buttons
+end
+
+--- @private
+function TextViewer:generateButtonsIndex()
+    local buttons = {}
+
+    local dialog, is_sub_heading, heading_complete
+    local width = Screen:scaleBySize(300)
+    local spacer = { {
+                         text = " ",
+                         bordersize = 0,
+                         width = width,
+                         align = "left",
+                         padding = 0,
+                         callback = function()
+                         end
+                     } }
+    local row = 0
+    for icon_sun, icon_heading, heading in string_gmatch(self.text, "(☀)([^ ]+)([^\n]+)") do
+        --* indent headings lower than h2:
+        is_sub_heading = not icon_heading:match("█") and not icon_heading:match("▉")
+        if is_sub_heading then
+            icon_sun = "         " .. icon_sun
+        elseif row ~= 0 then
+            table_insert(buttons, spacer)
+        end
+        heading_complete = icon_sun .. icon_heading .. heading
+        row = row + 1
+        table_insert(buttons, {{
+            text = heading_complete,
+            bordersize = 0,
+            width = width,
+            align = "left",
+            padding = 0,
+            callback = function()
+                UIManager:close(dialog)
+                self.case_sensitive = true
+                self:findCallback(nil, icon_heading .. heading, 1)
+                UIManager:forceRePaint()
+            end
+        }})
+    end
+
+    --* only show this message once during a session:
+    if not KOR.registry:get("textviewer_index_message_shown") then
+        KOR.messages:notify(_("tap on a heading to go to that text section"))
+        KOR.registry:set("textviewer_index_message_shown", true)
+    end
+    dialog = ButtonDialog:new {
+        button_width = 1,
+        forced_width = width,
+        font_weight = "normal",
+        padding = 0,
+        max_height = Screen:getHeight() - Screen:scaleBySize(70),
+        sep_width = 0,
+        no_bottom_spacer = true,
+        modal = true,
+        buttons = buttons,
+    }
+    UIManager:show(dialog)
 end
 
 --- @private

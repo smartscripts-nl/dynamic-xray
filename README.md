@@ -175,7 +175,9 @@ use can store information loaded from the e-book. This might e.g. be timeline-in
 * The user can add texts from the e-book to the Reference Information by highlighting their start and end.
 * The viewer can be called from the e-book with the hotkey Shift+R.
 * **TIP**: The [ImageBookmarks](https://github.com/bozo22/imagebookmarks.koplugin)-plugin by bozo22 is an ideal companion to DX's Glossary and Reference Information viewers. With this plugin you can save multiple favorite images from any book and quickly inspect them later on with a gesture. E.g. very handy for images containing maps for the book you are reading...!
-* **TIP 2**: from the Wikipedia results dialog the user can save the information therein to the Reference Information.
+* **TIP 2**: from the Wikipedia results dialog the user can save the information therein to the Reference Information. And then he/she can use the tappable reference index to quickly jump to text sections:
+  ![Reference Information with tappable index](images/reference-information-with-tappable-index.png)
+  Reference Information with tappable index
 
 #### Glossary viewer
 

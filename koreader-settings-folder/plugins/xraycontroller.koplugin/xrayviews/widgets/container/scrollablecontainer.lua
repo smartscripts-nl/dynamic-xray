@@ -21,17 +21,16 @@ local GestureRange = require("ui/gesturerange")
 local HorizontalScrollBar = require("ui/widget/horizontalscrollbar")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local KOR = require("extensions/kor")
-local Math = require("optmath")
 local UIManager = require("ui/uimanager")
 local VerticalScrollBar = require("xrayviews/widgets/verticalscrollbar")
 local Input = Device.input
 local Screen = Device.screen
 local logger = require("logger")
 
-local math = math
-local math_floor = math.floor
-local math_max = math.max
-local math_round = Math.round
+local math_floor = math_floor
+local math_max = math_max
+local math_round = math_round
+local math_sqrt = math_sqrt
 local pairs = pairs
 
 --- @class ScrollableContainer
@@ -550,7 +549,7 @@ function ScrollableContainer:onScrollableSwipe(_, ges)
         end
     else
         local distance = ges.distance
-        local sq_distance = math_floor(math.sqrt(distance*distance/2))
+        local sq_distance = math_floor(math_sqrt(distance*distance/2))
         if     direction == "north"     then self:_scrollBy(0, distance, true)
         elseif direction == "south"     then self:_scrollBy(0, -distance, true)
         elseif direction == "east"      then self:_scrollBy(-distance, 0, true)

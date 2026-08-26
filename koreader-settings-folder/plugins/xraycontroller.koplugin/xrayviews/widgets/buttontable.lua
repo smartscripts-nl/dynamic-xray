@@ -190,6 +190,10 @@ function ButtonTable:setupGridScrollBehaviour()
     --* Generate self.step_scroll_grid (so that what we add next is not part of it)
     self:getStepScrollGrid()
 
+    if self.no_bottom_spacer then
+        return
+    end
+
     --* Insert 2 lines off-dimensions in VerticalGroup (that will show only when overflowing)
     table_insert(self.container, 1, LineWidget:new{
         background = KOR.colors.black,

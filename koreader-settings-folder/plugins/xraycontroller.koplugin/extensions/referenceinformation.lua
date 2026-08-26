@@ -56,7 +56,17 @@ function ReferenceInformation:addWikiContent(display_word, callback)
 	local example = KOR.registry.wiki_content:sub(1, 130):gsub(" [^ ]+$", "") .. KOR.strings.ellipsis
 	KOR.dialogs:confirm("Wil je inderdaad onderstaande Wikipedia-informatie toevoegen aan de Referentie Informatie voor het huidige e-book?\n\n________________________________\n\n" .. example, function()
 
-		local content = display_word and "\u{2588} === " .. KOR.strings:upper(display_word) .. " === \u{2588}\n\n" .. KOR.registry.wiki_content or KOR.registry.wiki_content
+
+		local content = KOR.registry.wiki_content
+		   :gsub("(\u{2588})", "☀%1")
+		   :gsub("(\u{2589})", "☀%1")
+		   :gsub("(\u{25E4})", "☀%1")
+		   :gsub("(\u{25C6})", "☀%1")
+		   :gsub("(\u{273F})", "☀%1")
+		   :gsub("(\u{2756})", "☀%1")
+
+		content = display_word and "☀\u{2588} === " .. KOR.strings:upper(display_word) .. " === \u{2588}\n\n" .. content or content
+
 		self:storeInformation(content)
 
 		KOR.registry.wiki_content = nil

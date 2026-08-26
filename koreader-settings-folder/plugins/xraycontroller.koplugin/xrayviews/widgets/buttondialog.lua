@@ -89,7 +89,9 @@ local ButtonDialog = InputContainer:extend{
     do_only_tap_close_callback = false,
     readonly = false,
     button_lines = 2,
+    no_bottom_spacer = false,
 
+    max_height = nil,
     forced_width = nil,
     -- (with the first one we can use the standard dialog or otherwise my adapted version):
     width_is_dependent_on_button_count = false,
@@ -134,11 +136,13 @@ function ButtonDialog:init()
         shrink_unneeded_width = self.shrink_unneeded_width,
         shrink_min_width = self.shrink_min_width,
         show_parent = self,
+
+        no_bottom_spacer = self.no_bottom_spacer,
     }
     -- If the ButtonTable ends up being taller than the screen, wrap it inside a ScrollableContainer.
     -- Ensure some small top and bottom padding, so the scrollbar stand out, and some outer margin
     -- so the this dialog does not take the full height and stand as a popup.
-    local max_height = Screen:getHeight() - 2 * Size.padding.buttontable - 2 * Size.margin.default
+    local max_height = self.max_height or Screen:getHeight() - 2 * Size.padding.buttontable - 2 * Size.margin.default
     local height = self.buttontable:getSize().h
     local scontainer
     if height > max_height then
