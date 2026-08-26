@@ -96,7 +96,7 @@ function ReferenceInformation:storeInformation(information, content_type)
 		--* if previous stored context was HTML, convert plain text information to be added to HTML:
 	elseif current_content_type and content_type == "text" and content_type ~= current_content_type then
 
-		information = KOR.strings:textToHtml(information)
+		information = KOR.html:textToHtml(information)
 		separator = "<br /> <br />\n"
 	end
 
