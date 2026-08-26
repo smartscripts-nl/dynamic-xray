@@ -484,7 +484,7 @@ function Dialogs:textOrHtmlBox(args)
     end
 
     args.info = args.content
-    args.info_for_matching = args.content_for_matching
+    args.headings = args.headings
     return self:textBox(args)
 end
 
@@ -605,7 +605,7 @@ function Dialogs:setTextBoxTexts(args)
     info = KOR.html:htmlToPlainTextIfHtml(info)
     --* hotfix for initials in names:
     args.text = info:gsub("([A-Z]%.)\n([A-Z]%.)", "%1%2")
-    args.text_for_matching = args.info_for_matching
+    args.headings = args.headings
 
     --* for text in two columns:
     local info2 = args.info2 or ""

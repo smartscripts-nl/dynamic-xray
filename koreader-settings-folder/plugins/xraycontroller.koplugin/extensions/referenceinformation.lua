@@ -12,6 +12,8 @@ local _ = KOR:initCustomTranslations()
 
 local DX = DX
 local has_no_items = has_no_items
+local has_text = has_text
+local string_gmatch = string_gmatch
 local table_concat = table_concat
 local table_insert = table_insert
 
@@ -22,7 +24,7 @@ local ReferenceInformation = WidgetContainer:extend{
 	current_ebook_reference_information = nil,
 	current_ebook_reference_information_css = nil,
 	db_path = nil,
-	information_for_matching = nil,
+	headings = nil,
 	queries = {
 		erase = "UPDATE bookinfo SET reference_information = NULL, reference_information_css = NULL WHERE directory || filename = 'safe_path';",
 		load = "SELECT reference_information, reference_information_css FROM bookinfo WHERE directory || filename = 'safe_path';",
@@ -41,6 +43,19 @@ function ReferenceInformation:load(full_path)
 
 	--* text for searching for headings:
 	self.information_for_matching = information
+
+	if has_text(information) then
+		self.headings = {}
+		for icon_heading, heading in string_gmatch(information, "☀([^ ]+)([^\n]+)") do
+			table_insert(self.headings, {
+				heading = icon_heading .. heading,
+				is_sub_heading = not icon_heading:match("█") and not icon_heading:match("▉")
+			})
+		end
+		if #self.headings == 0 then
+			self.headings = nil
+		end
+	end
 
 	--* text for display in TextViewer, remove sun icons:
 	self.current_ebook_reference_information = information:gsub(KOR.registry.wiki_heading_needle, "")
@@ -231,7 +246,7 @@ function ReferenceInformation:show()
 		fullscreen = true,
 		is_reference_information_or_glossary = true,
 		content = self.current_ebook_reference_information,
-		content_for_matching = self.information_for_matching,
+		headings = self.headings,
 	})
 	return true
 end

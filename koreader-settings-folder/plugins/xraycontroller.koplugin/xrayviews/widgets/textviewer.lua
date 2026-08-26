@@ -48,13 +48,13 @@ local tr = KOR:initCustomTranslations()
 local Screen = Device.screen
 
 local DX = DX
+local has_items = has_items
 local has_no_text = has_no_text
 local has_text = has_text
 local io = io
 local math_abs = math_abs
 local math_floor = math_floor
 local select = select
-local string_gmatch = string_gmatch
 local table_insert = table_insert
 local table_remove = table_remove
 local type = type
@@ -121,6 +121,7 @@ local TextViewer = InputContainer:extend{
     fullscreen = false,
     has_copy_button = false,
     has_tabs = false,
+    headings = nil,
     height = nil,
     is_duo_scroll_widget = false,
     is_single_scroll_widget = true,
@@ -156,7 +157,6 @@ local TextViewer = InputContainer:extend{
     --* this table will be populated by ((TabFactory#setTabButtonAndContent)):
     tabs_table_buttons = nil,
     text = nil,
-    text_for_matching = nil,
     --* for two column display:
     text2 = nil,
     --* for three column display:
@@ -1155,7 +1155,7 @@ end
 --- @private
 function TextViewer:getDefaultButtons()
 
-    self.search_for_headings = self.is_single_scroll_widget and util.stringSearch(self.text_for_matching, KOR.registry.wiki_heading_needle, true, 1) > 0
+    self.search_for_headings = self.is_single_scroll_widget and has_items(self.headings)
 
     --* navigation buttons (go to top/bottom, or one screen down/up) are inserted in ((InputDialog#_addScrollButtons)):
     local default_buttons = {
@@ -1308,8 +1308,7 @@ end
 --- @private
 function TextViewer:generateButtonsIndex()
     local buttons = {}
-
-    local dialog, is_sub_heading, heading_complete
+    local dialog
     local width = Screen:scaleBySize(300)
     local spacer = {{
          text = " ",
@@ -1321,22 +1320,18 @@ function TextViewer:generateButtonsIndex()
          end
      }}
     local row = 0
-    for icon_heading, heading in string_gmatch(self.text_for_matching, "☀([^ ]+)([^\n]+)") do
-
-        local needle = icon_heading .. heading
-
-        --* indent headings lower than h2:
-        is_sub_heading = not icon_heading:match("█") and not icon_heading:match("▉")
-        if is_sub_heading then
-            icon_heading = "         " .. icon_heading
-        elseif row ~= 0 then
+    local headings_count = #self.headings
+    local heading
+    --* these headings were generated in ((ReferenceInformation#load)):
+    for i = 1, headings_count do
+        local d = self.headings[i]
+        heading = d.is_sub_heading and "      " .. d.heading or d.heading
+        if not d.is_sub_heading and row ~= 0 then
             table_insert(buttons, spacer)
         end
-
-        heading_complete = icon_heading .. heading
         row = row + 1
         table_insert(buttons, {{
-            text = heading_complete,
+            text = heading,
             bordersize = 0,
             width = width,
             align = "left",
@@ -1344,7 +1339,7 @@ function TextViewer:generateButtonsIndex()
             callback = function()
                 UIManager:close(dialog)
                 self.case_sensitive = true
-                self:findCallback(nil, needle, 1)
+                self:findCallback(nil, d.heading, 1)
                 UIManager:forceRePaint()
             end
         }})
