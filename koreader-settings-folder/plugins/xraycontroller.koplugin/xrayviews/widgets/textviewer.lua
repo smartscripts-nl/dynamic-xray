@@ -58,6 +58,7 @@ local select = select
 local table_insert = table_insert
 local table_remove = table_remove
 local type = type
+local util_stringSearch = util.stringSearch
 
 local count
 
@@ -448,10 +449,14 @@ function TextViewer:findCallback(input_dialog, external_search_string, overrule_
     elseif overrule_pos then
         start_pos = overrule_pos
     end
-    local char_pos = util.stringSearch(self.text, self.search_value, self.case_sensitive, start_pos)
+    local char_pos = util_stringSearch(self.text, self.search_value, self.case_sensitive, start_pos)
     local msg
     if char_pos > 0 then
-        self.scroll_text_w:moveCursorToCharPos(char_pos, self.find_centered_lines_count)
+        if self.search_for_headings or self.search_value:match("%-%-%-%-") then
+            self.scroll_text_w:moveCursorToTop(char_pos)
+        else
+            self.scroll_text_w:moveCursorToCharPos(char_pos, self.find_centered_lines_count)
+        end
         --msg = T(_("Found, screen line %1."), self.scroll_text_w:getCharPosLineNum())
         self._find_next = true
         self._old_virtual_line_num = select(2, self.scroll_text_w:getCharPos())

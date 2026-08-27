@@ -243,6 +243,11 @@ function ScrollTextWidget:moveCursorToCharPos(charpos, centered_lines_count)
     self:updateScrollBar()
 end
 
+function ScrollTextWidget:moveCursorToTop(charpos)
+    self.text_widget:moveCursorToCharPosKeepingViewAtTop(charpos)
+    self:updateScrollBar()
+end
+
 function ScrollTextWidget:moveCursorToXY(x, y, no_overflow)
     if BD.mirroredUILayout() then --* the scroll bar is on the left
         x = x - self.scroll_bar_width - self.text_scroll_span

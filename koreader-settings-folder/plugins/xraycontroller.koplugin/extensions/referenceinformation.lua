@@ -12,7 +12,7 @@ local _ = KOR:initCustomTranslations()
 
 local DX = DX
 local has_no_items = has_no_items
-local has_text = has_text
+local has_no_text = has_no_text
 local string_gmatch = string_gmatch
 local table_concat = table_concat
 local table_insert = table_insert
@@ -44,23 +44,34 @@ function ReferenceInformation:load(full_path)
 	--* text for searching for headings:
 	self.information_for_matching = information
 
-	if has_text(information) then
-		self.headings = {}
-		for icon_heading, heading in string_gmatch(information, "☀([^ ]+)([^\n]+)") do
-			table_insert(self.headings, {
-				heading = icon_heading .. heading,
-				is_sub_heading = not icon_heading:match("█") and not icon_heading:match("▉")
-			})
-		end
-		if #self.headings == 0 then
-			self.headings = nil
-		end
-
-		--* text for display in TextViewer, remove sun icons:
-		self.current_ebook_reference_information = information:gsub(KOR.registry.wiki_heading_needle, "")
+	if has_no_text(information) then
+		self.current_ebook_reference_information_css = nil
+		return
 	end
 
-	self.current_ebook_reference_information_css = css
+	self:prepareInformation(information, css)
+end
+
+--- @private
+function ReferenceInformation:prepareInformation(information, css)
+
+	self.headings = {}
+	for icon_heading, heading in string_gmatch(information, "☀([^ ]+)([^\n]+)") do
+		table_insert(self.headings, {
+			heading = icon_heading .. heading,
+			is_sub_heading = not icon_heading:match("█") and not icon_heading:match("▉")
+		})
+	end
+	if #self.headings == 0 then
+		self.headings = nil
+	end
+
+	--* text for display in TextViewer, remove sun icons:
+	self.current_ebook_reference_information = information:gsub(KOR.registry.wiki_heading_needle, "")
+
+	if css then
+		self.current_ebook_reference_information_css = css
+	end
 end
 
 --* compare for erasing Glossary ((Glossary#erase)):
@@ -135,11 +146,8 @@ function ReferenceInformation:storeInformation(information, content_type)
 		css = self.current_ebook_reference_information_css .. "\n\n" .. css
 	end
 	self:store(information, css)
-	self.current_ebook_reference_information = information
-	if css then
-		self.current_ebook_reference_information_css = css
-	end
-	self:show(information)
+	self:prepareInformation(information, css)
+	self:show()
 end
 
 --- @private

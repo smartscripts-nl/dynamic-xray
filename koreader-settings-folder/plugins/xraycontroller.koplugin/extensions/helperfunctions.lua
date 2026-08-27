@@ -1,6 +1,7 @@
 
 local require = require
 
+local Math = require("optmath")
 local lfs = require("libs/libkoreader-lfs")
 local logger = require("logger")
 local util = require("util")
@@ -27,6 +28,7 @@ math_huge = math.huge
 math_max = math.max
 math_min = math.min
 math_random = math.random
+math_round = Math.round
 os_date = os.date
 os_difftime = os.difftime
 os_execute = os.execute
