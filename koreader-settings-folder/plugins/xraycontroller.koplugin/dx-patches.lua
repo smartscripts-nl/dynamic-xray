@@ -60,6 +60,7 @@ local ReaderView = require("apps/reader/modules/readerview")
 local ReaderWikipedia = require("apps/reader/modules/readerwikipedia")local TextBoxWidget = require("ui/widget/textboxwidget")
 local Trapper = require("ui/trapper")
 local UIManager = require("ui/uimanager")
+local Version = require("version")
 
 local _ = require("gettext")
 --! only use tr for DX related modules:
@@ -92,6 +93,8 @@ local type = type
 local util_gsplit = util.gsplit
 
 local count
+--* to ensure that we don't try to patch methods with another signature than the patches assume; maybe earlier versions would also work, but I am not sure; I assume most user will update regularly to the most recent version of KOReader:
+local do_dictionaries_patches = Version:getShortVersion() >= "2026.07"
 
 local DX = DX
 local has_no_items = has_no_items
@@ -409,23 +412,27 @@ end
 
 local wikipedia_results
 -- #((ReaderDictionary#showDict))
-local orig_showDict = ReaderDictionary.showDict
-ReaderDictionary.showDict = function(self, word, results, boxes, link, dict_close_callback, dialog_id)
 
-    if KOR.registry:getOnce("dont_show_dict") then
-        --* store results for a second call to the current method from the end of patched ((ReaderWikipedia#lookupWikipedia)) below:
-        wikipedia_results = results
-    else
-        orig_showDict(self, word, results, boxes, link, dict_close_callback, dialog_id)
-    end
+if do_dictionaries_patches then
 
-    --* dialog_id may be provided as argument by ((ReaderWikipedia#lookupWikipedia)) > ((show Wikipedia info)):
-    dialog_id = dialog_id and "reader_dictionary_results_" .. word .. dialog_id or "reader_dictionary_results_" .. word
+    local orig_showDict = ReaderDictionary.showDict
+    ReaderDictionary.showDict = function(self, word, results, boxes, link, dict_close_callback, dialog_id)
 
-    if self.is_wiki then
-        KOR.registry.wiki_content = results[1].definition
-    else
-        KOR.registry.wiki_content = nil
+        if KOR.registry:getOnce("dont_show_dict") then
+            --* store results for a second call to the current method from the end of patched ((ReaderWikipedia#lookupWikipedia)) below:
+            wikipedia_results = results
+        else
+            orig_showDict(self, word, results, boxes, link, dict_close_callback, dialog_id)
+        end
+
+        --* dialog_id may be provided as argument by ((ReaderWikipedia#lookupWikipedia)) > ((show Wikipedia info)):
+        dialog_id = dialog_id and "reader_dictionary_results_" .. word .. dialog_id or "reader_dictionary_results_" .. word
+
+        if self.is_wiki then
+            KOR.registry.wiki_content = results[1].definition
+        else
+            KOR.registry.wiki_content = nil
+        end
     end
 end
 
@@ -433,118 +440,124 @@ end
 --- PATCH READERWIKIPEDIA
 -- #((PATCH READERWIKIPEDIA))
 
-ReaderWikipedia.wikipedia_prompt = nil
+if do_dictionaries_patches then
 
-local orig_WikipediaInit = ReaderWikipedia.init
-ReaderWikipedia.init = function(self)
-    orig_WikipediaInit(self)
-    KOR:registerPlugin("wikipedia", self)
-end
+    ReaderWikipedia.wikipedia_prompt = nil
 
-local orig_lookupWikipedia = ReaderWikipedia.lookupWikipedia
--- #((ReaderWikipedia#lookupWikipedia))
-ReaderWikipedia.lookupWikipedia = function(self, word, is_sane, box, get_fullpage, forced_lang, dict_close_callback)
-
-    KOR.registry:set("dont_show_dict", true)
-    orig_lookupWikipedia(self, word, is_sane, box, get_fullpage, forced_lang, dict_close_callback)
-
-    -- #((show Wikipedia info))
-    local dialog_id = "wikipedia_" .. word
-    if get_fullpage then
-        dialog_id = dialog_id .. "_fullpage"
+    local orig_WikipediaInit = ReaderWikipedia.init
+    ReaderWikipedia.init = function(self)
+        orig_WikipediaInit(self)
+        KOR:registerPlugin("wikipedia", self)
     end
 
-    -- call ((ReaderDictionary#showDict)):
-    self:showDict(word, wikipedia_results, box, nil, dict_close_callback, dialog_id)
-end
+    local orig_lookupWikipedia = ReaderWikipedia.lookupWikipedia
+    -- #((ReaderWikipedia#lookupWikipedia))
+    ReaderWikipedia.lookupWikipedia = function(self, word, is_sane, box, get_fullpage, forced_lang, dict_close_callback)
 
-function ReaderWikipedia:showWikipediaInputPrompt(callback)
-    local needle
-    self.wikipedia_prompt = KOR.dialogs:prompt({
-        title = _("Search on Wikipedia"),
-        description = _("Enter a search term:"),
-        no_overlay = true,
-        buttons = {{
-            {
-                icon = "back",
-                callback = function()
-                    UIManager:close(self.wikipedia_prompt)
-                end
-            },
-            {
-                text = _("English") .. " " .. KOR.icons.star_closed_bare,
-                is_enter_default = true,
-                callback = function()
-                    needle = self.wikipedia_prompt:getInputText()
-                    UIManager:close(self.wikipedia_prompt)
-                    self.wikipedia_prompt = nil
-                    if callback then
-                        callback()
-                    end
-                    self:setFirstLanguage("en")
-                    self:onLookupWikipedia(needle, "is_sane")
-                end,
-            },
-            {
-                text = DX.s.Wikipedia_additional_language_name,
-                callback = function()
-                    needle = self.wikipedia_prompt:getInputText()
-                    UIManager:close(self.wikipedia_prompt)
-                    self.wikipedia_prompt = nil
-                    if callback then
-                        callback()
-                    end
-                    self:setFirstLanguage(DX.s.Wikipedia_additional_language)
-                    self:onLookupWikipedia(needle, "is_sane")
-                end,
-            },
-        }},
-    })
-end
+        KOR.registry:set("dont_show_dict", true)
+        orig_lookupWikipedia(self, word, is_sane, box, get_fullpage, forced_lang, dict_close_callback)
 
---- @private
-function ReaderWikipedia:setFirstLanguage(language)
-    self.wiki_last_language = language
-
-    local sorted = { language }
-    if language ~= DX.s.Wikipedia_additional_language and DX.s.Wikipedia_additional_language ~= "en" then
-        table_insert(sorted, DX.s.Wikipedia_additional_language)
-    end
-    for i = 1, #self.wiki_languages do
-        if self.wiki_languages[i] ~= language and self.wiki_languages[i] ~= DX.s.Wikipedia_additional_language then
-            table_insert(sorted, self.wiki_languages[i])
+        -- #((show Wikipedia info))
+        local dialog_id = "wikipedia_" .. word
+        if get_fullpage then
+            dialog_id = dialog_id .. "_fullpage"
         end
+
+        -- call ((ReaderDictionary#showDict)):
+        self:showDict(word, wikipedia_results, box, nil, dict_close_callback, dialog_id)
     end
-    self.wiki_languages = sorted
+
+    function ReaderWikipedia:showWikipediaInputPrompt(callback)
+        local needle
+        self.wikipedia_prompt = KOR.dialogs:prompt({
+            title = _("Search on Wikipedia"),
+            description = _("Enter a search term:"),
+            no_overlay = true,
+            buttons = {{
+               {
+                   icon = "back",
+                   callback = function()
+                       UIManager:close(self.wikipedia_prompt)
+                   end
+               },
+               {
+                   text = _("English") .. " " .. KOR.icons.star_closed_bare,
+                   is_enter_default = true,
+                   callback = function()
+                       needle = self.wikipedia_prompt:getInputText()
+                       UIManager:close(self.wikipedia_prompt)
+                       self.wikipedia_prompt = nil
+                       if callback then
+                           callback()
+                       end
+                       self:setFirstLanguage("en")
+                       self:onLookupWikipedia(needle, "is_sane")
+                   end,
+               },
+               {
+                   text = DX.s.Wikipedia_additional_language_name,
+                   callback = function()
+                       needle = self.wikipedia_prompt:getInputText()
+                       UIManager:close(self.wikipedia_prompt)
+                       self.wikipedia_prompt = nil
+                       if callback then
+                           callback()
+                       end
+                       self:setFirstLanguage(DX.s.Wikipedia_additional_language)
+                       self:onLookupWikipedia(needle, "is_sane")
+                   end,
+               },
+           }},
+        })
+    end
+
+    --- @private
+    function ReaderWikipedia:setFirstLanguage(language)
+        self.wiki_last_language = language
+
+        local sorted = { language }
+        if language ~= DX.s.Wikipedia_additional_language and DX.s.Wikipedia_additional_language ~= "en" then
+            table_insert(sorted, DX.s.Wikipedia_additional_language)
+        end
+        for i = 1, #self.wiki_languages do
+            if self.wiki_languages[i] ~= language and self.wiki_languages[i] ~= DX.s.Wikipedia_additional_language then
+                table_insert(sorted, self.wiki_languages[i])
+            end
+        end
+        self.wiki_languages = sorted
+    end
 end
 
 
 --- PATCH DICTQUICKLOOKUP
 -- #((PATCH DICTQUICKLOOKUP))
 
-local orig_DQL_buildButtonLayout = DictQuickLookup.buildButtonLayout
-DictQuickLookup.buildButtonLayout = function(self)
+if do_dictionaries_patches then
+    local orig_DQL_buildButtonLayout = DictQuickLookup.buildButtonLayout
 
-    local buttons = orig_DQL_buildButtonLayout(self)
-    if wikipedia_results then
-        local button = {
-            text = _("add to Reference Info"),
-            callback = function()
-                KOR.referenceinformation:addWikiContent(self.lookupword, function()
-                    self:onClose()
-                    wikipedia_results = nil
-                end)
+    DictQuickLookup.buildButtonLayout = function(self)
+
+        local buttons = orig_DQL_buildButtonLayout(self)
+        if wikipedia_results then
+            local button = {
+                text = _("add to Reference Info"),
+                callback = function()
+                    KOR.referenceinformation:addWikiContent(self.lookupword, function()
+                        self:onClose()
+                        wikipedia_results = nil
+                    end)
+                end
+            }
+            if self.is_wiki_fullpage then
+                table_insert(buttons[1], 1, button)
+            else
+                --* for short wiki-results add button on a separate row:
+                table_insert(buttons, 1, { button })
             end
-        }
-        if self.is_wiki_fullpage then
-            table_insert(buttons[1], 1, button)
-        else
-            --* for short wiki-results add button on a separate row:
-            table_insert(buttons, 1, { button })
         end
-    end
 
-    return buttons
+        return buttons
+    end
 end
 
 

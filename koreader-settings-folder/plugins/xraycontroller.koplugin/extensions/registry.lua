@@ -19,7 +19,6 @@ local Registry = WidgetContainer:new{
     DX_icons_path_added = false,
     half_screen_width = nil,
     info_callbacks_show_indicators = true,
-    input_text_font_size = 20,
     --* this acts as cache for Button.left_indicator etc.:
     left_indicator = nil,
     left_indicator_width = nil,
@@ -30,12 +29,6 @@ local Registry = WidgetContainer:new{
     --* this acts as cache for Button.right_indicator etc.:
     right_indicator = nil,
     right_indicator_width = nil,
-    scroll_messages = {
-        "dynamische hoogte",
-        "vaste hoogte met scroll",
-        "vaste hoogte zonder scroll",
-    },
-    use_overlay_when_opening_files = true,
     use_scrolling_dialog = 2,
     wiki_content = nil,
     wiki_heading_needle = "☀",
