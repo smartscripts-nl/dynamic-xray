@@ -55,10 +55,10 @@ function ReferenceInformation:load(full_path)
 		if #self.headings == 0 then
 			self.headings = nil
 		end
-	end
 
-	--* text for display in TextViewer, remove sun icons:
-	self.current_ebook_reference_information = information:gsub(KOR.registry.wiki_heading_needle, "")
+		--* text for display in TextViewer, remove sun icons:
+		self.current_ebook_reference_information = information:gsub(KOR.registry.wiki_heading_needle, "")
+	end
 
 	self.current_ebook_reference_information_css = css
 end
