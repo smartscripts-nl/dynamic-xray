@@ -45,6 +45,7 @@ local pairs = pairs
 --- @field tabfactory TabFactory
 --- @field tabnavigator TabNavigator
 --- @field tables Tables
+--- @field wikipedia ReaderWikipedia
 local KOR = WidgetContainer:new{
 
 	--- NATIVE KOREADER UI MODULES
@@ -112,6 +113,7 @@ local KOR = WidgetContainer:new{
 
 	--! register extensions which are also loaded as plugin (in folder extensions/plugins) as such, so not as extension;
 	readersearch = nil,
+	wikipedia = nil,
 
 	extensions_list = {
 		--! this first block contains extensions which are needed by other extensions and therefor must be initialized first:

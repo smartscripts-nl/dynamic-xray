@@ -409,6 +409,16 @@ local XraySettings = WidgetContainer:new{
             explanation = _("This setting determines whether Xray items in a page are shown with one lightning marker for the entire page, or star markers for each of the paragraphs with items, or a star marker at the end of each detected Xray item."),
             locked = 0,
         },
+        Wikipedia_additional_language = {
+            value = "nl",
+            explanation = _("Here you can set your preferred language for searches on Wikipedia. In the DX prompt for searches on Wikipedia, English will be given as first option. The language set with Wikipedia_preferred_language will be given as the second option."),
+            locked = 0,
+        },
+        Wikipedia_additional_language_name = {
+            value = _("Nederlands"),
+            explanation = _("This setting is used for displaying the name of the language, set in XraySettings.Wikipedia_additional_language, on a button."),
+            locked = 0,
+        },
     },
     settings_template_for_public_DX = {
         database_filename = {

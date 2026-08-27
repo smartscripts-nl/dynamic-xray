@@ -859,6 +859,16 @@ function ButtonInfoPopup:forTranslationsResetAll(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forWikipediaSearch(props)
+	return ButtonProps:set({
+		text = KOR.icons.wikipedia_bare,
+		font_bold = false,
+		info = _("Wikipedia icon | Search on Wikipedia (to optionally add the results to the Reference Information for the current book)."),
+		callback_label = _("search"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forXrayTranslations(props)
 	return ButtonProps:set({
 		icon = "translate",

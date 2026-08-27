@@ -25,6 +25,7 @@ local ReferenceInformation = WidgetContainer:extend{
 	current_ebook_reference_information_css = nil,
 	db_path = nil,
 	headings = nil,
+	info_dialog = nil,
 	queries = {
 		erase = "UPDATE bookinfo SET reference_information = NULL, reference_information_css = NULL WHERE directory || filename = 'safe_path';",
 		load = "SELECT reference_information, reference_information_css FROM bookinfo WHERE directory || filename = 'safe_path';",
@@ -56,7 +57,9 @@ end
 function ReferenceInformation:prepareInformation(information, css)
 
 	self.headings = {}
-	for icon_heading, heading in string_gmatch(information, "☀([^ ]+)([^\n]+)") do
+	--* the sun symbols ☀ were injected in ((ReferenceInformation#addWikiContent)):
+	local matcher = KOR.registry.wiki_heading_needle .. "([^ ]+)([^\n]+)"
+	for icon_heading, heading in string_gmatch(information, matcher) do
 		table_insert(self.headings, {
 			heading = icon_heading .. heading,
 			is_sub_heading = not icon_heading:match("█") and not icon_heading:match("▉")
@@ -90,14 +93,14 @@ function ReferenceInformation:addWikiContent(display_word, callback)
 	local example = KOR.registry.wiki_content:sub(1, 130):gsub(" [^ ]+$", "") .. KOR.strings.ellipsis
 	KOR.dialogs:confirm("Wil je inderdaad onderstaande Wikipedia-informatie toevoegen aan de Referentie Informatie voor het huidige e-book?\n\n________________________________\n\n" .. example, function()
 
-
+		local replacement = KOR.registry.wiki_heading_needle .. "%1"
 		local content = KOR.registry.wiki_content
-		   :gsub("(\u{2588})", "☀%1")
-		   :gsub("(\u{2589})", "☀%1")
-		   :gsub("(\u{25E4})", "☀%1")
-		   :gsub("(\u{25C6})", "☀%1")
-		   :gsub("(\u{273F})", "☀%1")
-		   :gsub("(\u{2756})", "☀%1")
+		   :gsub("(\u{2588})", replacement)
+		   :gsub("(\u{2589})", replacement)
+		   :gsub("(\u{25E4})", replacement)
+		   :gsub("(\u{25C6})", replacement)
+		   :gsub("(\u{273F})", replacement)
+		   :gsub("(\u{2756})", replacement)
 
 		content = display_word and "☀\u{2588} === " .. KOR.strings:upper(display_word) .. " === \u{2588}\n\n" .. content or content
 
@@ -221,11 +224,12 @@ function ReferenceInformation:show()
 	})
 
 	local is_tabbed = glossary
-	local buttons = DX.b:forReferenceInfoTopLeft(is_tabbed)
+	local buttons = DX.b:forReferenceInformationTopLeft(is_tabbed)
+	local buttons_right = DX.b:forReferenceInfoformationTopRight(self)
 
 	--* compare showing Glossary first and Reference Information in second tab in ((Glossary#showViewer)):
 	if is_tabbed then
-		KOR.dialogs:htmlBoxTabbed(1, {
+		self.info_dialog = KOR.dialogs:htmlBoxTabbed(1, {
 			title = _("Reference Information + Glossary"),
 			is_reference_information_or_glossary = true,
 			tabs = {
@@ -243,14 +247,16 @@ function ReferenceInformation:show()
 				},
 			},
 			top_buttons_left = buttons,
+			top_buttons_right = buttons_right,
 			fullscreen = true,
 		})
 		return true
 	end
 
-	KOR.dialogs:textOrHtmlBox({
+	self.info_dialog = KOR.dialogs:textOrHtmlBox({
 		title = _("Reference Information"),
 		top_buttons_left = buttons,
+		top_buttons_right = buttons_right,
 		fullscreen = true,
 		is_reference_information_or_glossary = true,
 		content = self.current_ebook_reference_information,

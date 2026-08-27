@@ -105,6 +105,8 @@ return {
     spacer = "\u{2002}",
     star = " ☆",
     star_bare = "☆",
+    star_closed = " ★",
+    star_closed_bare = "★",
     tag_open = "\u{F412}" .. spacer,
     tag_open_bare = "\u{F412}",
     today = "\u{E7EE}" .. spacer,

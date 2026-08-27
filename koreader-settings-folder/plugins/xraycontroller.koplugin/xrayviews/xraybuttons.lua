@@ -2182,7 +2182,7 @@ function XrayButtons:forGlossaryEditorTopLeft(parent)
     }
 end
 
---* compare ((XrayButtons#forReferenceInfoTopLeft)):
+--* compare ((XrayButtons#forReferenceInformationTopLeft)):
 --- @param parent Glossary
 function XrayButtons:forGlossaryViewerTopLeft(parent, is_tabbed)
     local target = KOR.informationmediator:getViewerTargetTypeToBeErased(is_tabbed, "TYPE_GLOSSARY")
@@ -2216,8 +2216,24 @@ function XrayButtons:forGlossaryViewerTopLeft(parent, is_tabbed)
     }
 end
 
+--- @param parent XrayInformation
+function XrayButtons:forReferenceInformationInfoTopLeft(parent)
+    return {
+        KOR.buttoninfopopup:forWikipediaSearch({
+            callback = function()
+                KOR.wikipedia:showWikipediaInputPrompt(function()
+                    if KOR.referenceinformation.info_dialog then
+                        UIManager:close(KOR.referenceinformation.info_dialog)
+                    end
+                    UIManager:close(parent.reference_information_info)
+                end)
+            end,
+        }),
+    }
+end
+
 --* compare ((XrayButtons#forGlossaryViewerTopLeft)):
-function XrayButtons:forReferenceInfoTopLeft(is_tabbed)
+function XrayButtons:forReferenceInformationTopLeft(is_tabbed)
     local target = KOR.informationmediator:getViewerTargetTypeToBeErased(is_tabbed, "TYPE_REFERENCE_INFORMATION")
     return {
         {
@@ -2239,6 +2255,19 @@ function XrayButtons:forReferenceInfoTopLeft(is_tabbed)
                 KOR.informationmediator:closeViewerInstance()
                 DX.s.showSettingsManager()
             end
+        }),
+    }
+end
+
+--- @param parent ReferenceInformation
+function XrayButtons:forReferenceInfoformationTopRight(parent)
+    return {
+        KOR.buttoninfopopup:forWikipediaSearch({
+            callback = function()
+                KOR.wikipedia:showWikipediaInputPrompt(function()
+                    UIManager:close(parent.info_dialog)
+                end)
+            end,
         }),
     }
 end

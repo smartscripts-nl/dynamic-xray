@@ -25,6 +25,7 @@ local XrayInformation = WidgetContainer:extend {
         short_name = KOR.icons.xray_short_name_bare,
         tag = KOR.icons.tag_open_bare,
     },
+    reference_information_info = nil,
 }
 
 --* e.g. called from ((XrayTappedWords#getXrayItemAsDictionaryEntry)), for info icon:
@@ -56,12 +57,13 @@ end
 function XrayInformation:showReferenceInformation(initial_tab)
     local screen_dims = Screen:getSize()
     local target = initial_tab == 2 and _("Reference Information") or _("Glossary")
-    KOR.dialogs:htmlBoxTabbed(initial_tab or 1, {
+    self.reference_information_info = KOR.dialogs:htmlBoxTabbed(initial_tab or 1, {
         title = _("+Add to") .. " " .. target,
         parent = self,
         modal = true,
         name = "glossary_information",
         button_font_weight = "normal",
+        top_buttons_right = DX.b:forReferenceInformationInfoTopLeft(self),
         --* htmlBox will always have a close_callback and therefor a close button; so no need to define a close_callback here...
         no_filter_button = true,
         title_shrink_font_to_fit = true,

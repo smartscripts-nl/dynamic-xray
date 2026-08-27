@@ -433,6 +433,14 @@ end
 --- PATCH READERWIKIPEDIA
 -- #((PATCH READERWIKIPEDIA))
 
+ReaderWikipedia.wikipedia_prompt = nil
+
+local orig_WikipediaInit = ReaderWikipedia.init
+ReaderWikipedia.init = function(self)
+    orig_WikipediaInit(self)
+    KOR:registerPlugin("wikipedia", self)
+end
+
 local orig_lookupWikipedia = ReaderWikipedia.lookupWikipedia
 -- #((ReaderWikipedia#lookupWikipedia))
 ReaderWikipedia.lookupWikipedia = function(self, word, is_sane, box, get_fullpage, forced_lang, dict_close_callback)
@@ -448,6 +456,66 @@ ReaderWikipedia.lookupWikipedia = function(self, word, is_sane, box, get_fullpag
 
     -- call ((ReaderDictionary#showDict)):
     self:showDict(word, wikipedia_results, box, nil, dict_close_callback, dialog_id)
+end
+
+function ReaderWikipedia:showWikipediaInputPrompt(callback)
+    local needle
+    self.wikipedia_prompt = KOR.dialogs:prompt({
+        title = _("Search on Wikipedia"),
+        description = _("Enter a search term:"),
+        no_overlay = true,
+        buttons = {{
+            {
+                icon = "back",
+                callback = function()
+                    UIManager:close(self.wikipedia_prompt)
+                end
+            },
+            {
+                text = _("English") .. " " .. KOR.icons.star_closed_bare,
+                is_enter_default = true,
+                callback = function()
+                    needle = self.wikipedia_prompt:getInputText()
+                    UIManager:close(self.wikipedia_prompt)
+                    self.wikipedia_prompt = nil
+                    if callback then
+                        callback()
+                    end
+                    self:setFirstLanguage("en")
+                    self:onLookupWikipedia(needle, "is_sane")
+                end,
+            },
+            {
+                text = DX.s.Wikipedia_additional_language_name,
+                callback = function()
+                    needle = self.wikipedia_prompt:getInputText()
+                    UIManager:close(self.wikipedia_prompt)
+                    self.wikipedia_prompt = nil
+                    if callback then
+                        callback()
+                    end
+                    self:setFirstLanguage(DX.s.Wikipedia_additional_language)
+                    self:onLookupWikipedia(needle, "is_sane")
+                end,
+            },
+        }},
+    })
+end
+
+--- @private
+function ReaderWikipedia:setFirstLanguage(language)
+    self.wiki_last_language = language
+
+    local sorted = { language }
+    if language ~= DX.s.Wikipedia_additional_language and DX.s.Wikipedia_additional_language ~= "en" then
+        table_insert(sorted, DX.s.Wikipedia_additional_language)
+    end
+    for i = 1, #self.wiki_languages do
+        if self.wiki_languages[i] ~= language and self.wiki_languages[i] ~= DX.s.Wikipedia_additional_language then
+            table_insert(sorted, self.wiki_languages[i])
+        end
+    end
+    self.wiki_languages = sorted
 end
 
 
