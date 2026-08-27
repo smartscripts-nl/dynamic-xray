@@ -394,35 +394,6 @@ function TextViewer:findDialog()
     input_dialog:onShowKeyboard(true)
 end
 
---- @private
-function TextViewer:separatorDialog()
-    local input_dialog
-
-    local needle = self.search_for_headings and KOR.registry.wiki_heading_needle or KOR.registry.text_block_separator
-
-    input_dialog = ButtonDialog:new{
-        buttons = {{
-            {
-                icon = "first",
-                callback = function()
-                    UIManager:close(input_dialog)
-                    self._find_next = false
-                    self:findCallback(nil, needle)
-                end
-            },
-            {
-                icon = "next",
-                callback = function()
-                    UIManager:close(input_dialog)
-                    self._find_next = true
-                    self:findCallback(nil, needle)
-                end
-            },
-        },
-    }}
-    UIManager:show(input_dialog)
-end
-
 --* when argument external_search_string not nil: called via ((XrayUI#uiInfoShow)) > ((XrayUI#showParagraphInformation)) >
 --* click on line with xray marker > ((XrayDialogs#showUiPageInfo)) - here reliability icons and xray type icons injected for buttons > ((Dialogs#textBox)) > ((send external searchstring for xray info))
 --- @private
@@ -1182,16 +1153,6 @@ function TextViewer:getDefaultButtons()
                 end
             end,
         }),
-        KOR.buttoninfopopup:forTextViewerToSeparator({
-            search_for_headings = self.search_for_headings,
-            callback = function()
-                if self._find_next then
-                    self:findCallback()
-                else
-                    self:separatorDialog()
-                end
-            end,
-        }),
         KOR.buttoninfopopup:forTextViewerOneScreenUp({
             callback = function()
                 if self.is_three_scroll_widget then
@@ -1257,9 +1218,6 @@ function TextViewer:getDefaultButtons()
             hold_callback = self.default_hold_callback,
         }),
     }
-    if self.is_single_scroll_widget and not self.search_for_headings then
-        table_remove(default_buttons, 2)
-    end
 
     if self.has_copy_button then
         table_insert(default_buttons, 2, KOR.buttonchoicepopup:forTextViewerCopy({
