@@ -13,21 +13,26 @@ local KOR = require("extensions/kor")
 local Mupdf = require("ffi/mupdf")
 local Screen = Device.screen
 local UIManager = require("ui/uimanager")
-local logger = require("logger")
 local time = require("ui/time")
 local util = require("util")
 
 local error = error
 local G_reader_settings = G_reader_settings
 local ipairs = ipairs
-local math = math
+local logger_warn = logger_warn
+local math_ceil = math_ceil
 local pcall = pcall
 local select = select
-local string = string
-local table = table
+local string_format = string_format
+local table_concat = table_concat
+local table_insert = table_insert
+local table_remove = table_remove
+local time_now = time.now
 local type = type
 
--- -1: right to left, 0: mixed, +1: left to right
+local count, count2
+
+--* -1: right to left, 0: mixed, +1: left to right:
 local function getLineTextDirection(line)
     local word_count = #line
     if word_count <= 1 then
@@ -56,14 +61,14 @@ local function getWordIndices(lines, pos)
     local last_checked_line_index
     for line_index, line in ipairs(lines) do
         if pos.y >= line.y0 then
-            -- check if pos in on or below the line
+            --* check if pos in on or below the line:
             if pos.y < line.y1 then
-                -- check if pos is within the line vertically
+                --* check if pos is within the line vertically:
                 local rtl_line = getLineTextDirection(line) < 0
                 if pos.x >= line.x0 and pos.x < line.x1 then
-                    -- check if pos is within the line horizontally
+                    --* check if pos is within the line horizontally:
                     if #line >= 1 then
-                        -- if line is not empty then check for exact word hit
+                        --* if line is not empty then check for exact word hit:
                         local word_start_index = 1
                         local word_end_index = #line
                         local step = 1
@@ -79,25 +84,21 @@ local function getWordIndices(lines, pos)
                                 return line_index, word_index
                             end
 
-                            -- join the word rectangles horizontally to avoid hit gaps
+                            --* join the word rectangles horizontally to avoid hit gaps:
                             word_x0 = word.x1
                         end
                     end
                 elseif pos.x < line.x0 then
-                    -- check if pos is before the current line horizontally
+                    --* check if pos is before the current line horizontally:
                     if rtl_line then
                         return line_index, #line
                     else
                         return line_index, 1
                     end
                 elseif pos.x >= line.x1 then
-                    -- check if pos after the current line horizontally
+                    --* check if pos after the current line horizontally:
                     if rtl_line then
-                        -- To match TextBoxWidget's selection behavior this should be "line_index, 1"
-                        -- but then the selection will jump between the full row and the visually
-                        -- last word when hitting a vertical gap. If we extend the line vertically
-                        -- till the next one then selection will be weird around new paragraphs.
-                        -- The solution might require getPageText() to add empty lines.
+                        --* To match TextBoxWidget's selection behavior this should be "line_index, 1"; but then the selection will jump between the full row and the visually last word when hitting a vertical gap. If we extend the line vertically till the next one then selection will be weird around new paragraphs. The solution might require getPageText() to add empty lines.
                         return line_index, #line
                     else
                         return line_index, #line
@@ -141,9 +142,9 @@ local function getSelectedText(lines, start_pos, end_pos)
                     found_start = true
                 end
                 if found_start then
-                    table.insert(words, word.word)
+                    table_insert(words, word.word)
 
-                    -- do not try to join word rects in mixed direction lines
+                    --* do not try to join word rects in mixed direction lines:
                     if line_last_rect == nil or line_text_direction == 0 then
                         local rect = Geom:new {
                             x = word.x0,
@@ -151,14 +152,14 @@ local function getSelectedText(lines, start_pos, end_pos)
                             w = word.x1 - word.x0,
                             h = line.y1 - line.y0,
                         }
-                        table.insert(rects, rect)
+                        table_insert(rects, rect)
                         line_last_rect = rect
                     else
                         if line_text_direction > 0 then
-                            -- left to right
+                            --* left to right:
                             line_last_rect.w = word.x1 - line_last_rect.x
                         else
-                            -- right to left
+                            --* right to left:
                             line_last_rect.w = line_last_rect.w + (line_last_rect.x - word.x0)
                             line_last_rect.x = word.x0
                         end
@@ -173,7 +174,7 @@ local function getSelectedText(lines, start_pos, end_pos)
     end
 
     if found_start then
-        return table.concat(words, " "), rects
+        return table_concat(words, " "), rects
     else
         return nil, nil
     end
@@ -201,21 +202,25 @@ end
 --- @class HtmlBoxWidget
 local HtmlBoxWidget = InputContainer:extend{
     bb = nil,
-    dimen = nil,
     dialog = nil, -- parent dialog that will be set dirty
+    dimen = nil,
     document = nil,
-    page_count = 0,
-    page_number = 1,
-    page_boxes = nil,
-    hold_start_pos = nil,
+    extract_texts = false,
     hold_end_pos = nil,
-    hold_start_time = nil,
     html_link_tapped_callback = nil,
+    hold_start_pos = nil,
+    hold_start_time = nil,
 
-    highlight_text_selection = false, -- if true then the selected text will be highlighted
+    highlight_clear_and_redraw_action = nil,
     highlight_rects = nil,
     highlight_text = nil,
-    highlight_clear_and_redraw_action = nil,
+    highlight_text_selection = false, --* if true then the selected text will be highlighted
+
+    page_boxes = nil,
+    page_count = 0,
+    page_number = 1,
+    texts = nil,
+    texts_count = 0,
 }
 
 function HtmlBoxWidget:init()
@@ -235,11 +240,8 @@ function HtmlBoxWidget:init()
     self.highlight_lighten_factor = G_reader_settings:readSetting("highlight_lighten_factor", 0.2)
 end
 
--- These are generic "fixes" to MuPDF HTML stylesheet:
--- - MuPDF doesn't set some elements as being display:block, and would
---   consider them inline, and would badly handle <BR/> inside them.
---   Note: this is a generic issue with <BR/> inside inline elements, see:
---   https://github.com/koreader/koreader/issues/12258#issuecomment-2267629234
+--* These are generic "fixes" to MuPDF HTML stylesheet: MuPDF doesn't set some elements as being display:block, and would consider them inline, and would badly handle <BR/> inside them.
+--* Note: this is a generic issue with <BR/> inside inline elements, see: https://github.com/koreader/koreader/issues/12258#issuecomment-2267629234
 local mupdf_css_fixes = [[
 article, aside, button, canvas, datalist, details, dialog, dir, fieldset, figcaption,
 figure, footer, form, frame, frameset, header, hgroup, iframe, legend, listing,
@@ -250,37 +252,31 @@ plaintext, search, select, summary, template, textarea, video, xmp {
 ]]
 
 function HtmlBoxWidget:setContent(body, css, default_font_size, is_xhtml, no_css_fixes, html_resource_directory)
-    -- fz_set_user_css is tied to the context instead of the document so to easily support multiple
-    -- HTML dictionaries with different CSS, we embed the stylesheet into the HTML instead of using
-    -- that function.
+    --* fz_set_user_css is tied to the context instead of the document so to easily support multiple HTML dictionaries with different CSS, we embed the stylesheet into the HTML instead of using that function.
     local head = ""
     if css or not no_css_fixes then
-        head = string.format("<head><style>\n%s\n%s</style></head>", mupdf_css_fixes, css or "")
+        head = string_format("<head><style>\n%s\n%s</style></head>", mupdf_css_fixes, css or "")
     end
-    local html = string.format("<html>%s<body>%s</body></html>", head, body)
+    local html = string_format("<html>%s<body>%s</body></html>", head, body)
 
-    -- For some reason in MuPDF <br/> always creates both a line break and an empty line, so we have to
-    -- simulate the normal <br/> behavior.
-    -- https://bugs.ghostscript.com/show_bug.cgi?id=698351
+    --* For some reason in MuPDF <br/> always creates both a line break and an empty line, so we have to simulate the normal <br/> behavior. https://bugs.ghostscript.com/show_bug.cgi?id=698351
     html = html:gsub("%<br ?/?%>", "&nbsp;<div></div>")
 
-    -- We can provide some "magic"/"mimetype" to Mupdf.openDocumentFromText():
-    -- - "html" will get MuPDF to use its bundled gumbo-parser to parse HTML5 according to the specs.
-    -- - "xhtml" will get MuPDF to use its own XML parser, and if it fails, to switch to gumbo-parser.
-    -- When we know the body is balanced XHTML, it's safer to use "xhtml" to avoid the HTML5
-    -- rules to trigger (ie. <title><p>123</p></title>, which is valid in FB2 snippets, parsed
-    -- as title>p, while gumbo-parse would consider "<p>123</p>" as being plain text).
+    --* We can provide some "magic"/"mimetype" to Mupdf.openDocumentFromText():
+    --* - "html" will get MuPDF to use its bundled gumbo-parser to parse HTML5 according to the specs.
+    --* - "xhtml" will get MuPDF to use its own XML parser, and if it fails, to switch to gumbo-parser.
+    --* When we know the body is balanced XHTML, it's safer to use "xhtml" to avoid the HTML5 rules to trigger (ie. <title><p>123</p></title>, which is valid in FB2 snippets, parsed as title>p, while gumbo-parse would consider "<p>123</p>" as being plain text).
     local ok
     ok, self.document = pcall(Mupdf.openDocumentFromText, html, is_xhtml and "xhtml" or "html", html_resource_directory)
     if not ok then
-        -- self.document contains the error
-        logger.warn("HTML loading error:", self.document)
+        --* self.document contains the error:
+        logger_warn("HTML loading error:", self.document)
 
         body = util.htmlToPlainText(body)
         body = util.htmlEscape(body)
-        -- Normally \n would be replaced with <br/>. See the previous comment regarding the bug in MuPDF.
+        --* Normally \n would be replaced with <br/>. See the previous comment regarding the bug in MuPDF.
         body = body:gsub("\n", "&nbsp;<div></div>")
-        html = string.format("<html>%s<body>%s</body></html>", head, body)
+        html = string_format("<html>%s<body>%s</body></html>", head, body)
 
         ok, self.document = pcall(Mupdf.openDocumentFromText, html, "html", html_resource_directory)
         if not ok then
@@ -304,6 +300,13 @@ function HtmlBoxWidget:_render()
         return
     end
     local page = self.document:openPage(self.page_number)
+
+    --* this prop can be set to true in ((ReferenceInformation#show)) and propagated via ((Dialogs#textOrHtmlBox)):
+    if self.extract_texts then
+        --* these texts per "page" (screen) will be available in self.texts and the count of those pages will be stored in self.texts_count:
+        self:extractTexts(page)
+    end
+
     self.document:setColorRendering(Screen:isColorEnabled())
     local dc = DrawContext.new()
     self.bb = page:draw_new(dc, self.dimen.w, self.dimen.h, 0, 0)
@@ -325,7 +328,7 @@ function HtmlBoxWidget:getSinglePageHeight()
         local page = self.document:openPage(1)
         local y1 = select(4, page:getUsedBBox()) -- x0, y0, x1,
         page:close()
-        return math.ceil(y1) -- no content after y1
+        return math_ceil(y1) --* no content after y1
     end
 end
 
@@ -348,10 +351,7 @@ function HtmlBoxWidget:freeBb()
     self.bb = nil
 end
 
--- This will normally be called by our WidgetContainer:free()
--- But it SHOULD explicitly be called if we are getting replaced
--- (ie: in some other widget's update()), to not leak memory with
--- BlitBuffer zombies
+--* This will normally be called by our WidgetContainer:free() But it SHOULD explicitly be called if we are getting replaced (ie: in some other widget's update()), to not leak memory with BlitBuffer zombies
 function HtmlBoxWidget:free()
     --print("HtmlBoxWidget:free on", self)
     self:freeBb()
@@ -363,7 +363,7 @@ function HtmlBoxWidget:free()
 end
 
 function HtmlBoxWidget:onCloseWidget()
-    -- free when UIManager:close() was called
+    --* free when UIManager:close() was called:
     self:free()
 end
 
@@ -373,7 +373,7 @@ function HtmlBoxWidget:getPosFromAbsPos(abs_pos)
         y = abs_pos.y - self.dimen.y,
     }
 
-    -- check if the coordinates are actually inside our area
+    --* check if the coordinates are actually inside our area:
     if pos.x < 0 or pos.x >= self.dimen.w or pos.y < 0 or pos.y >= self.dimen.h then
         return nil
     end
@@ -389,7 +389,7 @@ function HtmlBoxWidget:onHoldStartText(_, ges)
     self.highlight_text = nil
 
     if not self.hold_start_pos then
-        return false -- let event be processed by other widgets
+        return false --* let event be processed by other widgets
     end
 
     self.hold_start_time = UIManager:getTime()
@@ -402,8 +402,7 @@ function HtmlBoxWidget:onHoldStartText(_, ges)
 end
 
 function HtmlBoxWidget:onHoldPanText(_, ges)
-    -- We don't highlight the currently selected text, but just let this
-    -- event pop up if we are not currently selecting text
+    --* We don't highlight the currently selected text, but just let this event pop up if we are not currently selecting text
     if not self.hold_start_pos then
         return false
     end
@@ -426,7 +425,7 @@ function HtmlBoxWidget:onHoldReleaseText(callback, ges)
         return false
     end
 
-    -- check we have seen a HoldStart event
+    --* check we have seen a HoldStart event:
     if not self.hold_start_pos then
         return false
     end
@@ -444,7 +443,7 @@ function HtmlBoxWidget:onHoldReleaseText(callback, ges)
         return false
     end
 
-    local hold_duration = time.now() - self.hold_start_time
+    local hold_duration = time_now() - self.hold_start_time
     callback(self.highlight_text, hold_duration)
 
     return true
@@ -495,23 +494,22 @@ function HtmlBoxWidget:setPageNumber(page_number)
     self:clearHighlight()
 end
 
--- Returns true if the highlight has changed.
+--* returns true if the highlight has changed:
 function HtmlBoxWidget:clearHighlight()
     self.hold_start_pos = nil
     self.hold_end_pos = nil
     return self:updateHighlight()
 end
 
--- Returns true if the highlight has changed.
+--* returns true if the highlight has changed:
 function HtmlBoxWidget:updateHighlight()
     if self.hold_start_pos and self.hold_end_pos then
-        -- getPageText is slow so we only call it when needed, and keep the result.
+        --* getPageText is slow so we only call it when needed, and keep the result:
         if self.page_boxes == nil then
             local page = self.document:openPage(self.page_number)
             self.page_boxes = page:getPageText()
 
-            -- In same cases MuPDF returns a visually single line of text as multiple lines.
-            -- Merge such lines to ensure that getSelectedText works properly.
+            --* In same cases MuPDF returns a visually single line of text as multiple lines. Merge such lines to ensure that getSelectedText works properly:
             local line_index = 2
             while line_index <= #self.page_boxes do
                 local prev_line = self.page_boxes[line_index - 1]
@@ -524,9 +522,9 @@ function HtmlBoxWidget:updateHighlight()
                         prev_line.x1 = line.x1
                     end
                     for _, word in ipairs(line) do
-                        table.insert(prev_line, word)
+                        table_insert(prev_line, word)
                     end
-                    table.remove(self.page_boxes, line_index)
+                    table_remove(self.page_boxes, line_index)
                 else
                     line_index = line_index + 1
                 end
@@ -590,7 +588,7 @@ function HtmlBoxWidget:initHotkeys()
         return
     end
 
-    local count = #actions
+    count = #actions
     local hotkey, label
     for i = 1, count do
         hotkey = actions[i].hotkey
@@ -601,6 +599,50 @@ function HtmlBoxWidget:initHotkeys()
         end
         self.key_events["ParentActionCallback" .. i] = hotkey
     end
+end
+
+function HtmlBoxWidget:getCurrentPageText()
+    return self.texts and self.texts[self.page_number]
+end
+
+function HtmlBoxWidget:getPageText(page_number)
+    if self.texts[page_number] then
+        return self.texts[page_number]
+    end
+
+    local page = self.document:openPage(page_number)
+    self.texts_count = page.doc.number_of_pages
+    --* page:getPageText() returns a numerical table with tables for each line, which per line contain a table of words (["word"] = "star"):
+    self.texts[page_number] = self:extractTextLines(page:getPageText())
+    return self.texts[page_number]
+end
+
+--- @private
+function HtmlBoxWidget:extractTexts(page)
+    self.texts = {}
+    self.texts_count = page.doc.number_of_pages
+    --* page:getPageText() returns a numerical table with tables for each line, which per line contain a table of words (["word"] = "star"):
+    self.texts[self.page_number] = self:extractTextLines(page:getPageText())
+end
+
+--- @private
+function HtmlBoxWidget:extractTextLines(lines)
+    count = #lines
+    local text = ""
+    for i = 1, count do
+        text = text .. self:extractTextWords(lines[i])
+    end
+    return text
+end
+
+--- @private
+function HtmlBoxWidget:extractTextWords(line)
+    count2 = #line
+    local text = ""
+    for i = 1, count2 do
+        text = text .. line[i].word .. " "
+    end
+    return text
 end
 
 return HtmlBoxWidget

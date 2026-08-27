@@ -98,15 +98,16 @@ local TextViewer = InputContainer:extend{
     button_font_weight = "bold",
     button_padding = Size.padding.default,
     buttons_table = nil,
+    case_sensitive = true,
     --* Optional callback called on CloseWidget, set by the widget which showed us (e.g., to request a full-screen refresh)
     close_callback = nil,
     --* this is the default, but some widgets can set the content_type to "html" for a specific tab; e.g. see ((XrayInformation#showReliabilityIndicatorsExplanation)):
     --! if the viewer has tabs with html content, the first tab MUST have plain text content, so self.dialog_height can be set in ((set TextViewer dialog height)), which prop will then be consumed in ((TextViewer#generateHtmlScrollWidget)):
     --! TextViewer instances with html tabs must not have a bottom button table, because of problems otherwise with scrolling and searching:
     content_type = "text",
-    convert_big_dialogs_to_fullscreen = true,
     context_buttons = nil,
     context_buttons_tab = nil,
+    convert_big_dialogs_to_fullscreen = true,
     covers_fullscreen = false,
     default_hold_callback = nil, --* on each default button
     dialog_height = nil,
@@ -790,6 +791,7 @@ function TextViewer:computeHeights()
     if self.text_padding then
         available_height = available_height - (2 * self.text_padding)
     end
+    local difference = self.screen_height - available_height
 
     --* compute auto height for textbox:
     local computed_height = self.height
@@ -831,76 +833,83 @@ function TextViewer:computeHeights()
         if has_scrollbar and computed_height > available_height then
             increase_height = false
         end
-        local height_basis, extra_height
-        local step = 20
-        for i = 1, 40 do
-            --* check whether increasing the height in steps solves the problem:
-            if increase_height then
-                computed_height = self.height + i * step
-                if computed_height > available_height then
-                    computed_height = self.height + ((i - 1) * step)
-                    break
+        if computed_height + difference > self.screen_height then
+            computed_height = self.screen_height - difference - Screen:scaleBySize(20)
+            self.top_spacer_height = 0
+            self.overflow_correction = 0
+
+        else
+            local height_basis, extra_height
+            local step = 20
+            for i = 1, 40 do
+                --* check whether increasing the height in steps solves the problem:
+                if increase_height then
+                    computed_height = self.height + i * step
+                    if computed_height > available_height then
+                        computed_height = self.height + ((i - 1) * step)
+                        break
+                    end
+                    --*decreasing height:
+                else
+                    computed_height = self.height - (i * step)
                 end
-                --*decreasing height:
-            else
-                computed_height = self.height - (i * step)
-            end
 
-            compare_widget = ScrollTextWidget:new{
-                text = self.text,
-                face = self.face,
-                width = self.computed_width,
-                height = computed_height,
-                dialog = self,
-                line_height = self.line_height,
-                alignment = self.alignment,
-                justified = self.justified,
-                lang = self.lang,
-                for_measurement_only = true,
-                para_direction_rtl = self.para_direction_rtl,
-                auto_para_direction = self.auto_para_direction,
-                alignment_strict = self.alignment_strict,
-            }
-            computed_height = compare_widget:getSize().h
-            compare_widget:free()
+                compare_widget = ScrollTextWidget:new{
+                    text = self.text,
+                    face = self.face,
+                    width = self.computed_width,
+                    height = computed_height,
+                    dialog = self,
+                    line_height = self.line_height,
+                    alignment = self.alignment,
+                    justified = self.justified,
+                    lang = self.lang,
+                    for_measurement_only = true,
+                    para_direction_rtl = self.para_direction_rtl,
+                    auto_para_direction = self.auto_para_direction,
+                    alignment_strict = self.alignment_strict,
+                }
+                computed_height = compare_widget:getSize().h
+                compare_widget:free()
 
-            has_scrollbar = KOR.registry:get("has_scrollbar")
-            if increase_height then
-                if computed_height > available_height then
-                    computed_height = computed_height - step
+                has_scrollbar = KOR.registry:get("has_scrollbar")
+                if increase_height then
+                    if computed_height > available_height then
+                        computed_height = computed_height - step
+                        if computed_height > available_height - 10 then
+                            computed_height = available_height - 10
+                        end
+                        break
+                    elseif not has_scrollbar then
+                        height_basis = computed_height
+                        for e = correction_start, correction_end do
+                            extra_height = height_basis + e * step
+                            if extra_height < available_height - 10 then
+                                computed_height = extra_height
+                            end
+                        end
+                        break
+                    end
+
+                --* when we reach situation WITH scrollbar after decreasing height:
+                elseif has_scrollbar then
+                    computed_height = computed_height + step
                     if computed_height > available_height - 10 then
                         computed_height = available_height - 10
-                    end
-                    break
-                elseif not has_scrollbar then
-                    height_basis = computed_height
-                    for e = correction_start, correction_end do
-                        extra_height = height_basis + e * step
-                        if extra_height < available_height - 10 then
-                            computed_height = extra_height
+                    else
+                        height_basis = computed_height
+                        for e = correction_start, correction_end do
+                            extra_height = height_basis + e * step
+                            if extra_height < available_height - 10 then
+                                computed_height = extra_height
+                            end
                         end
                     end
                     break
                 end
-
-            --* when we reach situation WITH scrollbar after decreasing height:
-            elseif has_scrollbar then
-                computed_height = computed_height + step
-                if computed_height > available_height - 10 then
-                    computed_height = available_height - 10
-                else
-                    height_basis = computed_height
-                    for e = correction_start, correction_end do
-                        extra_height = height_basis + e * step
-                        if extra_height < available_height - 10 then
-                            computed_height = extra_height
-                        end
-                    end
-                end
-                break
             end
+            compare_widget = nil
         end
-        compare_widget = nil
     end
 
     if self.use_computed_height then
@@ -1128,6 +1137,7 @@ function TextViewer:setConfigForContainersWithoutTitlebar(radius, padding)
     }
 end
 
+--* compare ((HtmlBox#generateButtons)):
 --- @private
 function TextViewer:getDefaultButtons()
 
@@ -1135,6 +1145,8 @@ function TextViewer:getDefaultButtons()
 
     --* navigation buttons (go to top/bottom, or one screen down/up) are inserted in ((InputDialog#_addScrollButtons)):
     local default_buttons = {
+        -- #((TextViewer search button))
+        --* compare ((HtmlBox search button)):
         KOR.buttonchoicepopup:forTextViewerSearch({
             callback = function()
                 if self._find_next then
@@ -1279,8 +1291,7 @@ function TextViewer:generateButtonsIndex()
          width = width,
          align = "left",
          padding = 0,
-         callback = function()
-         end
+         callback = function() end
      }}
     local row = 0
     local headings_count = #self.headings

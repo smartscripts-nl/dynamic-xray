@@ -5,15 +5,16 @@ local BD = require("ui/bidi")
 local Button = require("xrayviews/widgets/button")
 local ButtonTable = require("xrayviews/widgets/buttontable")
 local CenterContainer = require("ui/widget/container/centercontainer")
+local CheckButton = require("frontend/widgets/checkbutton")
 local Device = require("device")
 local Font = require("modules/font")
 local FrameContainer = require("xrayviews/widgets/container/framecontainer")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
 local InputContainer = require("ui/widget/container/inputcontainer")
+local InputDialog = require("frontend/widgets/inputdialog")
 local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")
-local Math = require("optmath")
 local MovableContainer = require("xrayviews/widgets/container/movablecontainer")
 local OverlapGroup = require("ui/widget/overlapgroup")
 local RightContainer = require("ui/widget/container/rightcontainer")
@@ -34,26 +35,34 @@ local DX = DX
 local math_floor = math_floor
 local math_max = math_max
 local math_min = math_min
+local math_round = math_round
 local pairs = pairs
 local table_insert = table_insert
 local table_remove = table_remove
 local type = type
+local ulower = ulower
 
 local count
 
 --- @class HtmlBox
+--- @field box_widget HtmlBoxWidget
 local HtmlBox = InputContainer:extend{
+    _find_next = nil,
     active_tab = nil,
     additional_key_events = nil,
     after_close_callback = nil,
     align = "center",
     bottom_widget = nil,
     box_font_size = DX.s.textviewer_font_size,
+    box_widget = nil,
     buttons_table = nil,
+    case_sensitive = true,
+    check_button_case = nil,
     content_padding = nil,
     --* this is the default, but some widgets can set the content_type to "text" for a specific tab; e.g. see ((XrayButtons#getItemViewerTabs)):
     content_type = "html",
     dialog_queue_id = nil,
+    extract_texts = false,
     frame_content_fullscreen = nil,
     frame_content_windowed = nil,
     fullscreen = false,
@@ -83,6 +92,7 @@ local HtmlBox = InputContainer:extend{
     paths = nil,
     prev_item_callback = nil,
     ratio_per_chapter = nil,
+    search_value = "",
     screen_height = nil,
     screen_width = nil,
     separator = nil,
@@ -112,7 +122,7 @@ function HtmlBox:init()
     self:generateTitleBar()
     self:setPaddingAndSpacing()
     self:computeLineHeight()
-    self:generateButtonTables()
+    self:generateButtons()
     self:setMargins()
     self:computeAvailableHeight()
     self:generateTabsTable()
@@ -228,7 +238,7 @@ function HtmlBox:initTouch()
     }
 end
 
---* Used in init & update to instantiate the Scroll*Widget that self.html_widget points to
+--* Used in init & update to instantiate the Scroll*Widget that self.html_widget points to ((ScrollHtmlWidget)):
 --- @private
 function HtmlBox:generateScrollWidget()
 
@@ -266,6 +276,7 @@ function HtmlBox:generateHtmlScrollWidget()
 
     self.html_widget = ScrollHtmlWidget:new{
         html_body = self.html,
+        extract_texts = self.extract_texts,
         css = KOR.html:getHtmlWidgetCss(self.is_reference_information_or_glossary),
         default_font_size = Screen:scaleBySize(self.box_font_size),
         width = self.swidth,
@@ -310,7 +321,7 @@ end
 function HtmlBox:generateTextScrollWidget()
     self.is_duo_scroll_widget = false
     self.is_three_scroll_widget = false
-    --* two column display:
+    --* three column display:
     if self.html3 then
         self.is_three_scroll_widget = true
         self.html_widget, self.html_widget1, self.html_widget2, self.html_widget3 = KOR.columntexts:getThreeWidget({
@@ -324,6 +335,7 @@ function HtmlBox:generateTextScrollWidget()
             height = self.sheight,
         })
 
+    --* two column display:
     elseif self.html2 then
         self.is_duo_scroll_widget = true
         self.html_widget, self.html_widget1, self.html_widget2 = KOR.columntexts:getDuoWidget({
@@ -543,7 +555,8 @@ function HtmlBox:onReadPrevItem()
 end
 
 function HtmlBox:onReadPrevItemWithShiftSpace()
-    return self:onReadPrevItem()
+    self:onReadPrevItem()
+    return true
 end
 
 --! this method and the next one are needed to jump to a next or previous page when pressing Space and Shift+Space on a physical (BT) keyboard:
@@ -635,7 +648,7 @@ function HtmlBox:computeHeights()
         self.content_height = math_floor(self.avail_height * 0.7)
         --* But we want it to fit to the lines that will show, to avoid
         --* any extra padding
-        local nb_lines = Math.round(self.content_height / self.content_line_height)
+        local nb_lines = math_round(self.content_height / self.content_line_height)
         self.content_height = nb_lines * self.content_line_height
         self.height = self.content_height + others_height
 
@@ -658,7 +671,7 @@ function HtmlBox:computeHeights()
         self.content_height = math_floor(self.avail_height * 0.5 * 0.7)
         --* But we want it to fit to the lines that will show, to avoid
         --* any extra padding
-        local nb_lines = Math.round(self.content_height / self.content_line_height)
+        local nb_lines = math_round(self.content_height / self.content_line_height)
         self.content_height = nb_lines * self.content_line_height
         self.height = self.content_height + others_height
     end
@@ -686,15 +699,16 @@ function HtmlBox:computeLineHeight()
     end
 end
 
+--* compare ((TextViewer#getDefaultButtons)):
 --- @private
-function HtmlBox:generateButtonTables()
+function HtmlBox:generateButtons()
 
     if self.no_buttons_row then
         return
     end
 
     --* Different sets of buttons whether fullpage or not
-    local buttons = self.buttons_table or {
+    local buttons = {
         {
             {
                 text = "⇱",
@@ -755,6 +769,31 @@ function HtmlBox:generateButtonTables()
         end
         table_remove(buttons[1])
     end
+
+    if self.extract_texts then
+        -- #((HtmlBox search button))
+        --* compare ((TextViewer search button)):
+        table_insert(buttons[1], 1, KOR.buttonchoicepopup:forHtmlBoxSearch({
+            id = "find",
+            callback = function()
+                if self._find_next then
+                    self:findCallback()
+                else
+                    self:findDialog()
+                end
+            end,
+            hold_callback = function()
+                if self._find_next then
+                    self:findDialog()
+                else
+                    if self.default_hold_callback then
+                        self.default_hold_callback()
+                    end
+                end
+            end,
+        }))
+    end
+
     --* Bottom buttons get a bit less padding so their line separators
     --* reach out from the content to the borders a bit more
     local buttons_padding = Size.padding.default
@@ -769,6 +808,101 @@ function HtmlBox:generateButtonTables()
         config[key] = value
     end
     self.button_table = ButtonTable:new(config)
+end
+
+--- @private
+function HtmlBox:findDialog()
+    local input_dialog
+    input_dialog = InputDialog:new{
+        title = "Vul een zoekterm in",
+        input = self.search_value,
+        buttons = {
+            {
+                {
+                    icon = "back",
+                    callback = function()
+                        UIManager:close(input_dialog)
+                    end,
+                },
+                {
+                    icon = "first",
+                    callback = function()
+                        self._find_next = false
+                        self:findCallback(input_dialog, "search_from_start")
+                    end,
+                },
+                {
+                    icon = "next",
+                    is_enter_default = true,
+                    callback = function()
+                        self._find_next = true
+                        self:findCallback(input_dialog)
+                    end,
+                },
+            },
+        },
+    }
+    self.check_button_case = CheckButton:new{
+        text = _("case-sensitive"),
+        checked = self.case_sensitive,
+        parent = input_dialog,
+        callback = function()
+            self.case_sensitive = self.check_button_case.checked
+        end,
+    }
+    input_dialog:addWidget(self.check_button_case)
+
+    UIManager:show(input_dialog)
+    input_dialog:onShowKeyboard(true)
+end
+
+--- @private
+function HtmlBox:findCallback(input_dialog, search_from_start)
+    if input_dialog then
+        self.search_value = input_dialog:getInputText()
+        if self.search_value == "" then
+            return
+        end
+        UIManager:close(input_dialog)
+    end
+
+    --* this html_box_widget has props page_count, page_number (i.e. current "page"/screen):
+    self.box_widget = self.html_widget.htmlbox_widget
+    local start_page = self.box_widget.page_number
+    local current_page = start_page
+    local page_count = self.box_widget.page_count
+
+    local msg
+    self:prepareNeedleForMatching()
+    local text = self:getPageTextForMatching(start_page)
+    if page_count == 1 then
+        msg = text:match(self.search_value) and "zoekterm gevonden in dit scherm" or "zoekterm niet gevonden in dit scherm"
+        KOR.messages:notify(msg)
+        return
+    end
+
+    current_page = search_from_start and 1 or self:getNextPage(current_page, page_count)
+    local ignore_first_page
+    if search_from_start then
+        start_page = 1
+        ignore_first_page = true
+    end
+    text = self:getPageTextForMatching(current_page)
+    local found = false
+    while not found and (ignore_first_page or current_page ~= start_page) do
+        found = text:match(self.search_value)
+        ignore_first_page = false
+        if not found then
+            text = self:getPageTextForMatching(current_page)
+            current_page = self:getNextPage(current_page, page_count)
+        end
+    end
+    if found then
+        self.html_widget:scrollToPage(current_page)
+        KOR.messages:notify("zoekterm gevonden in dit scherm")
+        return
+    end
+    KOR.messages:notify("zoekterm niet gevonden")
 end
 
 --- @private
@@ -920,6 +1054,10 @@ function HtmlBox:setModuleProps()
     end
     KOR.tabnavigator:broadcastActivatedTab()
 
+    if self.hml1 then
+        self.extract_texts = false
+    end
+
     if DX.s.PN_show_chapter_hits_histogram then
         self.histogram_height = Screen:scaleBySize(25)
         self.histogram_bottom_line_height = Size.line.thin
@@ -1034,6 +1172,32 @@ end
 
 function HtmlBox:onToPreviousTabWithShiftSpace()
     return self:onToPreviousTab()
+end
+
+--- @private
+function HtmlBox:getPageTextForMatching(current_page)
+    local text = self.box_widget:getPageText(current_page)
+    if not self.case_sensitive then
+        return ulower(text)
+    end
+    return text
+end
+
+--- @private
+function HtmlBox:prepareNeedleForMatching()
+    if not self.case_sensitive then
+        self.search_value = ulower(self.search_value)
+    end
+    self.search_value = KOR.strings:prepareNeedleForMatching(self.search_value)
+end
+
+--- @private
+function HtmlBox:getNextPage(current_page, page_count)
+    current_page = current_page + 1
+    if current_page > page_count then
+        return 1
+    end
+    return current_page
 end
 
 return HtmlBox

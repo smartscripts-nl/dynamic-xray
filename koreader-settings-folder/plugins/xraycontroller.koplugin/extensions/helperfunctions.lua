@@ -2,6 +2,7 @@
 local require = require
 
 local Math = require("optmath")
+local Utf8Proc = require("ffi/utf8proc")
 local lfs = require("libs/libkoreader-lfs")
 local logger = require("logger")
 local util = require("util")
@@ -52,6 +53,9 @@ table_move = table.move
 table_pack = table.pack
 table_remove = table.remove
 table_sort = table.sort
+ulower = function(text)
+    return Utf8Proc.lowercase(util.fixUtf8(text, "?"))
+end
 util_gsplit = util.gsplit
 util_trim = util.trim
 

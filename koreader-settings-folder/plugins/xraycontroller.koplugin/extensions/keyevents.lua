@@ -853,7 +853,6 @@ function KeyEvents:addAdditionalHotkeys(parent, key_events_module, for_textviewe
     for label, hk_data in pairs(parent.additional_key_events) do
     --? for TextViewer call UIManager:close() in the opposite way of ((KeyEvents#addAdditionalHotkeys)); is that correct?
     close_box = hk_data[3] and true or false
-    --* see ((BookCountsDialog#_showDialog)) where hk_data[3] element is set:
     keep_textviewer_open = close_box
     if for_textviewer and keep_textviewer_open then
             UIManager:close(parent)

@@ -13,29 +13,35 @@ local GestureRange = require("ui/gesturerange")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local HorizontalSpan = require("ui/widget/horizontalspan")
 local InputContainer = require("ui/widget/container/inputcontainer")
---local KOR = require("extensions/kor")
+local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
 local VerticalScrollBar = require("xrayviews/widgets/verticalscrollbar")
-local Input = require("modules/input")
 local Screen = Device.screen
 
-local math = math
-local table = table
+local math_floor = math_floor
+local math_max = math_max
+local math_min = math_min
+local table_insert = table_insert
 
 --- @class ScrollHtmlWidget
 local ScrollHtmlWidget = InputContainer:extend{
-    html_body = nil,
     css = nil,
     default_font_size = Screen:scaleBySize(24), --* same as infofont
-    htmlbox_widget = nil,
-    v_scroll_bar = nil,
     dialog = nil,
-    html_link_tapped_callback = nil,
     dimen = nil,
-    width = 0,
+    extract_texts = false,
     height = 0,
+    html_body = nil,
+    htmlbox_widget = nil,
+    highlight_text_selection = false,
+    htmlbox_widget = nil,
+    html_link_tapped_callback = nil,
+    is_xhtml = false,
+    modal = true,
     scroll_bar_width = Screen:scaleBySize(6),
     text_scroll_span = Screen:scaleBySize(12),
+    v_scroll_bar = nil,
+    width = 0,
 }
 
 function ScrollHtmlWidget:init()
@@ -44,6 +50,9 @@ function ScrollHtmlWidget:init()
             w = self.width - self.scroll_bar_width - self.text_scroll_span,
             h = self.height,
         },
+        extract_texts = self.extract_texts,
+        dialog = self.dialog,
+        highlight_text_selection = self.highlight_text_selection,
         html_link_tapped_callback = self.html_link_tapped_callback,
     }
 
@@ -64,9 +73,9 @@ function ScrollHtmlWidget:init()
     self:_updateScrollBar()
 
     local horizontal_group = HorizontalGroup:new{}
-    table.insert(horizontal_group, self.htmlbox_widget)
-    table.insert(horizontal_group, HorizontalSpan:new{width=self.text_scroll_span})
-    table.insert(horizontal_group, self.v_scroll_bar)
+    table_insert(horizontal_group, self.htmlbox_widget)
+    table_insert(horizontal_group, HorizontalSpan:new{width=self.text_scroll_span})
+    table_insert(horizontal_group, self.v_scroll_bar)
     self[1] = horizontal_group
 
     self.dimen = Geom:new(self[1]:getSize())
@@ -88,13 +97,7 @@ function ScrollHtmlWidget:init()
         }
     end
 
-    if Device:hasKeys() then
-        self.key_events = {
-            ScrollDown = { { Input.group.PgFwd } },
-            ScrollUp = { { Input.group.PgBack } },
-            ScrollUpWithShiftSpace = Input.group.ShiftSpace,
-        }
-    end
+    KOR.keyevents:addHotkeysForScrollHtmlWidget(self)
 end
 
 function ScrollHtmlWidget:updateWidget(update_html)
@@ -122,15 +125,15 @@ function ScrollHtmlWidget:resetScroll()
 end
 
 function ScrollHtmlWidget:scrollToRatio(ratio)
-    ratio = math.max(0, math.min(1, ratio)) --* ensure ratio is between 0 and 1 (100%)
-    local page_num = 1 + math.floor((self.htmlbox_widget.page_count) * ratio)
+    ratio = math_max(0, math_min(1, ratio)) --* ensure ratio is between 0 and 1 (100%)
+    local page_num = 1 + math_floor((self.htmlbox_widget.page_count) * ratio)
     if page_num > self.htmlbox_widget.page_count then
         page_num = self.htmlbox_widget.page_count
     end
     if page_num == self.htmlbox_widget.page_number then
         return
     end
-    self.htmlbox_widget.page_number = page_num
+    self.htmlbox_widget:setPageNumber(page_num)
     self:_updateScrollBar()
 
     self.htmlbox_widget:freeBb()
@@ -161,7 +164,7 @@ function ScrollHtmlWidget:scrollText(direction)
             return
         end
 
-        self.htmlbox_widget.page_number = self.htmlbox_widget.page_number + 1
+        self.htmlbox_widget:setPageNumber(self.htmlbox_widget.page_number + 1)
     elseif direction < 0 then
         if self.htmlbox_widget.page_number <= 1 then
             --* at the top of a scrolling html widget, upon Shift+Space once again move to previous item, if possible; see ((TABS)) for more info:
@@ -173,7 +176,7 @@ function ScrollHtmlWidget:scrollText(direction)
             return
         end
 
-        self.htmlbox_widget.page_number = self.htmlbox_widget.page_number - 1
+        self.htmlbox_widget:setPageNumber(self.htmlbox_widget.page_number - 1)
     end
     self:_updateScrollBar()
 
@@ -218,7 +221,6 @@ end
 function ScrollHtmlWidget:onScrollUp()
     if self.htmlbox_widget.page_number > 1 then
         self:scrollText(-1)
-
         return true
     end
     --* if we couldn't scroll (because we're already at top or bottom),

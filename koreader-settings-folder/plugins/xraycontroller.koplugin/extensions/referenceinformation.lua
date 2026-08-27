@@ -13,6 +13,7 @@ local _ = KOR:initCustomTranslations()
 local DX = DX
 local has_no_items = has_no_items
 local has_no_text = has_no_text
+local has_text = has_text
 local string_gmatch = string_gmatch
 local table_concat = table_concat
 local table_insert = table_insert
@@ -32,6 +33,10 @@ local ReferenceInformation = WidgetContainer:extend{
 		update = "UPDATE bookinfo SET reference_information = ?, reference_information_css = ? WHERE filename = ?;",
 	},
 }
+
+function ReferenceInformation:hasInfo()
+	return has_text(self.current_ebook_reference_information, "return_boolean")
+end
 
 --* called from ((XrayController#onReaderReady)):
 --* information was stored in ((ReferenceInformation#storeInformation)):
@@ -109,7 +114,7 @@ function ReferenceInformation:addWikiContent(display_word, callback)
 		KOR.registry.wiki_content = nil
 		KOR.messages:notify("wikipedia-informatie toegevoegd")
 		if callback then
-			--* the new content will be shown in ((ReferenceInformation#show)):
+			--* the new content will be shown in ((ReferenceInformation#show)) and self.information_for_matching will be used in ((TextViewer#generateButtonsIndex)):
 			callback()
 		end
 	end)
@@ -191,6 +196,7 @@ function ReferenceInformation:prepareHtmlAndCssForSaving(information)
 		return information
 	end
 
+	--* this CSS will be used for Reference Information in HTML-format; see ((ReferenceInformation#show)):
 	local css = {}
 	count = #css_files
 	for i = 1, count do
@@ -225,7 +231,7 @@ function ReferenceInformation:show()
 
 	local is_tabbed = glossary
 	local buttons = DX.b:forReferenceInformationTopLeft(is_tabbed)
-	local buttons_right = DX.b:forReferenceInfoformationTopRight(self)
+	local buttons_right = DX.b:forReferenceInformationTopRight(self)
 
 	--* compare showing Glossary first and Reference Information in second tab in ((Glossary#showViewer)):
 	if is_tabbed then
@@ -258,6 +264,7 @@ function ReferenceInformation:show()
 		top_buttons_left = buttons,
 		top_buttons_right = buttons_right,
 		fullscreen = true,
+		extract_texts = true,
 		is_reference_information_or_glossary = true,
 		content = self.current_ebook_reference_information,
 		headings = self.headings,

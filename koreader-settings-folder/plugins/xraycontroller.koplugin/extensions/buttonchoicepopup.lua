@@ -30,6 +30,18 @@ end
 
 --* ":\n" and separator ":\n\n" in buttons in this class will be replaced by the label words, in ((ButtonProps#setOverruleProps)):
 
+function ButtonChoicePopup:forHtmlBoxSearch(props)
+	return ButtonProps:set({
+		icon = "appbar.search",
+		icon_size_ratio = 0.6,
+		info = T(_("search icon | :search next of show search dialog%1show search dialog"), self.separator),
+		callback_label = _("next"),
+		--! callback defined by calling module
+		hold_callback_label = _("search dialog"),
+		--! hold_callback defined by calling module
+	}, props)
+end
+
 function ButtonChoicePopup:forReferenceInformation(props)
 	return ButtonProps:set({
 		icon = "index",

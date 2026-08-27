@@ -125,7 +125,7 @@ function InformationMediator:addReferenceInformation(information_boundaries)
 	end
 
 	local sample = information_text:sub(1, 250) .. KOR.strings.ellipsis
-	self.save_information_format_choice_dialog = KOR.dialogs:niceAlert(_("Save Reference Information"), _("You can save the information either as HTML, or as text.\n\n* Advantage of HTML: may look nicer and be better readable.\n* Advantage of text: searchable.\n\nSTART OF SELECTED TEXT:") .. "\n\n" .. sample, {
+	self.save_information_format_choice_dialog = KOR.dialogs:niceAlert(_("Save Reference Information"), _("You can save the information in these formats:\n\n* HTML: may look nicer and be better readable (e.g. with tables and headings).\n* Text: upon searching, it is easier to see where in the dialog the search term was exactly found.\n\nSTART OF SELECTED TEXT:") .. "\n\n" .. sample, {
 		buttons = DX.b:forSaveReferenceInformation(information, information_text)
 	})
 end

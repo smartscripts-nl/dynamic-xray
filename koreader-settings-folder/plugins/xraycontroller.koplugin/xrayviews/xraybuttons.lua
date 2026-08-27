@@ -36,7 +36,7 @@ local XrayButtons = WidgetContainer:new{
         toggle_main_xray_item = _("Toggle to mark this Xray item as important."),
     },
     context_buttons_max_buttons = 16,
-    --* used for HtmlBox tab buttons in ((ButtonTableFactory#getTabsTable)) and HtmlBox footer buttons in ((HtmlBox#generateButtonTables)):
+    --* used for HtmlBox tab buttons in ((ButtonTableFactory#getTabsTable)) and HtmlBox footer buttons in ((HtmlBox#generateButtons)):
     default_tabs_button_table_props = {
         button_font_face = "x_smallinfofont",
         button_font_size = DX.s.tab_buttons_font_size,
@@ -2260,7 +2260,7 @@ function XrayButtons:forReferenceInformationTopLeft(is_tabbed)
 end
 
 --- @param parent ReferenceInformation
-function XrayButtons:forReferenceInfoformationTopRight(parent)
+function XrayButtons:forReferenceInformationTopRight(parent)
     return {
         KOR.buttoninfopopup:forWikipediaSearch({
             callback = function()
