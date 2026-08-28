@@ -363,21 +363,18 @@ function TextViewer:findDialog()
                         UIManager:close(input_dialog)
                     end,
                 },
-                {
-                    icon = "first",
+                KOR.buttoninfopopup:forFindFromStart({
                     callback = function()
                         self._find_next = false
-                        self:findCallback(input_dialog)
-                    end,
-                },
-                {
-                    icon = "next",
-                    is_enter_default = true,
+                        self:findCallback(input_dialog, "search_from_start")
+                    end
+                }),
+                KOR.buttoninfopopup:forFindNext({
                     callback = function()
                         self._find_next = true
                         self:findCallback(input_dialog)
-                    end,
-                },
+                    end
+                }),
             },
         },
     }

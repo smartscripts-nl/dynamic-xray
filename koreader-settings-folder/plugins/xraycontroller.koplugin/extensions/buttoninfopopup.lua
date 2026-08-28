@@ -76,6 +76,25 @@ function ButtonInfoPopup:forBookOpen(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forFindFromStart(props)
+	return ButtonProps:set({
+		icon = "first",
+		info = _("to-start icon | Search from the beginning of the text."),
+		callback_label = _("search"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forFindNext(props)
+	return ButtonProps:set({
+		icon = "next",
+		info = _("next-icon | Search next occurrence."),
+		is_enter_default = true,
+		callback_label = _("search"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forGlossaryCopy(props)
 	return ButtonProps:set({
 		icon = "copy",
@@ -888,6 +907,15 @@ function ButtonInfoPopup:forWikipediaSearch(props)
 		text = KOR.icons.wikipedia_bare,
 		font_bold = false,
 		info = _("Wikipedia icon | Search on Wikipedia (to optionally add the results to the Reference Information for the current book)."),
+		callback_label = _("search"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forWikipediaSearchWithAdditionalLanguage(props)
+	return ButtonProps:set({
+		text = DX.s.Wikipedia_additional_language_name,
+		info = _("Language-name | Search with this language.\n\nYou can modify the language shown here with\nWikipedia_additional_language (e.g. \"nl\")\nand\nWikipedia_additional_language_name\nin the DX settings."),
 		callback_label = _("search"),
 		--! callback defined by calling module
 	}, props)

@@ -494,8 +494,7 @@ if do_dictionaries_patches then
                        self:onLookupWikipedia(needle, "is_sane")
                    end,
                },
-               {
-                   text = DX.s.Wikipedia_additional_language_name,
+               KOR.buttoninfopopup:forWikipediaSearchWithAdditionalLanguage({
                    callback = function()
                        needle = self.wikipedia_prompt:getInputText()
                        UIManager:close(self.wikipedia_prompt)
@@ -506,7 +505,7 @@ if do_dictionaries_patches then
                        self:setFirstLanguage(DX.s.Wikipedia_additional_language)
                        self:onLookupWikipedia(needle, "is_sane")
                    end,
-               },
+               }),
            }},
         })
     end
