@@ -47,7 +47,7 @@ local count
 --- @class HtmlBox
 --- @field box_widget HtmlBoxWidget
 local HtmlBox = InputContainer:extend{
-    _find_next = nil,
+    _find_next = false,
     active_tab = nil,
     additional_key_events = nil,
     after_close_callback = nil,
@@ -773,22 +773,20 @@ function HtmlBox:generateButtons()
     if self.extract_texts then
         -- #((HtmlBox search button))
         --* compare ((TextViewer search button)):
-        table_insert(buttons[1], 1, KOR.buttonchoicepopup:forHtmlBoxSearch({
-            id = "find",
+        table_insert(buttons[1], 1, KOR.buttoninfopopup:forHtmlBoxSearch({
+            callback = function()
+                self:findDialog()
+            end,
+        }))
+        table_insert(buttons[1], 2, KOR.buttoninfopopup:forHtmlBoxSearchNext({
+            enabled_func = function()
+                return self._find_next
+            end,
             callback = function()
                 if self._find_next then
                     self:findCallback()
                 else
                     self:findDialog()
-                end
-            end,
-            hold_callback = function()
-                if self._find_next then
-                    self:findDialog()
-                else
-                    if self.default_hold_callback then
-                        self.default_hold_callback()
-                    end
                 end
             end,
         }))
@@ -827,7 +825,7 @@ function HtmlBox:findDialog()
                 {
                     icon = "first",
                     callback = function()
-                        self._find_next = false
+                        self._find_next = true
                         self:findCallback(input_dialog, "search_from_start")
                     end,
                 },
@@ -876,7 +874,7 @@ function HtmlBox:findCallback(input_dialog, search_from_start)
     self:prepareNeedleForMatching()
     local text = self:getPageTextForMatching(start_page)
     if page_count == 1 then
-        msg = text:match(self.search_value) and "zoekterm gevonden in dit scherm" or "zoekterm niet gevonden in dit scherm"
+        msg = text:match(self.search_value) and _("search term found in this screen") or _("search term not found in this screen")
         KOR.messages:notify(msg)
         return
     end
@@ -897,12 +895,16 @@ function HtmlBox:findCallback(input_dialog, search_from_start)
             current_page = self:getNextPage(current_page, page_count)
         end
     end
+    self._find_next = found
     if found then
         self.html_widget:scrollToPage(current_page)
-        KOR.messages:notify("zoekterm gevonden in dit scherm")
+        KOR.messages:notify(_("search term found in this screen"))
         return
     end
-    KOR.messages:notify("zoekterm niet gevonden")
+
+    KOR.messages:notify(_("search term not found anymore"))
+    self._find_next = false
+    self:findDialog()
 end
 
 --- @private

@@ -132,6 +132,30 @@ function ButtonInfoPopup:forGlossaryViewer(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forHtmlBoxSearch(props)
+	return ButtonProps:set({
+		icon = "appbar.search",
+		icon_size_ratio = 0.6,
+		info = _("search icon | Show search dialog."),
+		callback_label = _("show"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forHtmlBoxSearchNext(props)
+	return ButtonProps:set({
+		icon_text = {
+			icon = "appbar.search",
+			text = KOR.icons.arrow_bare,
+			icon_size_ratio = 0.6,
+		},
+		icon = "appbar.search",
+		info = _("search + arrow icon | Search next occurrence. If not found, the search dialog will be shown instead."),
+		callback_label = _("search next"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forInformationEraser(props)
 	return ButtonProps:set({
 		icon = "dustbin",
