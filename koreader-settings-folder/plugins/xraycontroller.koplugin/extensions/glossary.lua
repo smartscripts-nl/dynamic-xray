@@ -214,6 +214,7 @@ function Glossary:showViewer()
 
     local is_tabbed = KOR.referenceinformation.current_ebook_reference_information
     local buttons = DX.b:forGlossaryViewerTopLeft(self, is_tabbed)
+    local buttons_right = DX.b:forReferenceInformationTopRight(self)
 
     --* if Reference Information available, show that in a second tab:
     --* compare showing Reference Information first and Glossary in second tab in ((ReferenceInformation#show)):
@@ -240,6 +241,7 @@ function Glossary:showViewer()
                 },
             },
             top_buttons_left = buttons,
+            top_buttons_right = buttons_right,
             fullscreen = true,
         })
         return true
@@ -250,6 +252,7 @@ function Glossary:showViewer()
         html = self:getHtmlList(glossary),
         is_reference_information_or_glossary = true,
         top_buttons_left = buttons,
+        top_buttons_right = buttons_right,
         fullscreen = true,
     })
     return true
