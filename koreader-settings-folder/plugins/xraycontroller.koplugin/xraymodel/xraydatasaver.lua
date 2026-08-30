@@ -808,6 +808,7 @@ function XrayDataSaver.createAndModifyTables()
     end
 
     local version_index_was_saved = true
+    local must_update = false
     if not version_index or version_index == 0 then
         version_index_was_saved = false
         version_index = 0
@@ -815,20 +816,14 @@ function XrayDataSaver.createAndModifyTables()
             logger_info("db_update", "version_index reset to 0")
         end
 
-    --* if we removed a modification query, users could have a higher stored version_index, so it must be reset to the lower value
-    elseif version_index > update_tasks_count then
-        version_index_was_saved = false
-        version_index = update_tasks_count
-        if do_debug then
-            logger_info("db_update", "version_index corrected to lower value")
-        end
-
+    --* regular update, or edge case: if we removed a modification query, users could have a higher stored version_index, so it must be reset to the lower value
     elseif version_index ~= update_tasks_count then
         if not conn then
             conn = KOR.databases:getDBconn("XrayDataSaver:createAndModifyTables 2")
         end
-        version_index = self.updateVersionIndex(conn, version_index, do_debug)
-        version_index_was_saved = false
+        local corrected_version_index
+        corrected_version_index, must_update = self.getCorrectedVersionIndex(conn, version_index, do_debug)
+        version_index_was_saved = corrected_version_index == version_index
         if do_debug then
             logger_info("db_update", "update done; new value: " .. version_index)
         end
@@ -843,8 +838,9 @@ function XrayDataSaver.createAndModifyTables()
 
     --* return if nothing has to be modified:
     if
-        update_tasks_count == 0
-        or version_index == update_tasks_count
+        not must_update and
+        (update_tasks_count == 0
+        or version_index == update_tasks_count)
     then
         self:logSchemeModification("NO DX DATABASE-SCHEME MODIFICATION NECESSARY", T("update_tasks_count %1, version_index %2", update_tasks_count, version_index), "info")
         if conn then
@@ -936,7 +932,7 @@ function XrayDataSaver.quoteUpdate(id, value)
 end
 
 --* check whether previous DX installations already created some tables or fields and update version_index accordingly:
-function XrayDataSaver.updateVersionIndex(conn, version_index, do_debug)
+function XrayDataSaver.getCorrectedVersionIndex(conn, version_index, do_debug)
 
     local self = DX.ds
     count = #self.scheme_verification_queries
@@ -947,7 +943,7 @@ function XrayDataSaver.updateVersionIndex(conn, version_index, do_debug)
             logger_warn("XrayDataSaver.updateVersionIndex", "no update necessary")
         end
         --* this returns de facto last_update_index:
-        return self.scheme_verification_queries[count][2]
+        return self.scheme_verification_queries[count][2], false
     end
 
     local update_query, update_index, result
@@ -957,10 +953,10 @@ function XrayDataSaver.updateVersionIndex(conn, version_index, do_debug)
         result = conn:exec(update_query)
         if not result and i == 1 then
             logger_warn("XrayDataSaver.updateVersionIndex", "all queries need to be done")
-            return 0
+            return 0, true
         elseif not result then
             logger_info("XrayDataSaver.updateVersionIndex", "queries need to be run from index " .. update_index - 1)
-            return update_index - 1
+            return update_index - 1, true
         end
     end
 
