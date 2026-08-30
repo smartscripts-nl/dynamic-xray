@@ -14,7 +14,6 @@ local require = require
 
 local BD = require("ui/bidi")
 local Button = require("xrayviews/widgets/button")
-local ButtonDialog = require("xrayviews/widgets/buttondialog")
 local ButtonTable = require("xrayviews/widgets/buttontable")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local CheckButton = require("ui/widget/checkbutton")
@@ -395,7 +394,7 @@ end
 --* when argument external_search_string not nil: called via ((XrayUI#uiInfoShow)) > ((XrayUI#showParagraphInformation)) >
 --* click on line with xray marker > ((XrayDialogs#showUiPageInfo)) - here reliability icons and xray type icons injected for buttons > ((Dialogs#textBox)) > ((send external searchstring for xray info))
 --- @private
-function TextViewer:findCallback(input_dialog, external_search_string, overrule_pos)
+function TextViewer:findCallback(input_dialog, external_search_string, overrule_pos, target)
     if input_dialog then
         self.search_value = input_dialog:getInputText()
         if self.search_value == "" then return end
@@ -430,7 +429,8 @@ function TextViewer:findCallback(input_dialog, external_search_string, overrule_
         self._find_next = true
         self._old_virtual_line_num = select(2, self.scroll_text_w:getCharPos())
     else
-        msg = "zoekterm niet meer gevonden"
+        target = target or _("search term")
+        msg = target .. " " .. _("not found (anymore)")
         self._find_next = false
         self._old_virtual_line_num = 1
     end
@@ -1138,6 +1138,7 @@ end
 --- @private
 function TextViewer:getDefaultButtons()
 
+    --* self.headings might have been stored in ((ReferenceInformation#prepareHtmlAndCssForSaving)) or ((ReferenceInformation#addWikiHeadings)), and loaded in ((ReferenceInformation#load)):
     self.search_for_headings = self.is_single_scroll_widget and has_items(self.headings)
 
     --* navigation buttons (go to top/bottom, or one screen down/up) are inserted in ((InputDialog#_addScrollButtons)):
@@ -1227,7 +1228,6 @@ function TextViewer:getDefaultButtons()
             hold_callback = self.default_hold_callback,
         }),
     }
-
     if self.has_copy_button then
         table_insert(default_buttons, 2, KOR.buttonchoicepopup:forTextViewerCopy({
             callback = function()
@@ -1269,70 +1269,15 @@ function TextViewer:getDefaultButtons()
     if self.search_for_headings then
         table_insert(default_buttons, 2, KOR.buttoninfopopup:forTextViewerWikiHeadingsIndex({
             callback = function()
-                self:generateButtonsIndex()
+                KOR.referenceinformation:generateButtonsIndex(self, function(heading)
+                    self.case_sensitive = true
+                    self:findCallback(nil, heading, 1, _("heading"))
+                end)
             end,
         }))
     end
 
     return default_buttons
-end
-
---- @private
-function TextViewer:generateButtonsIndex()
-    local buttons = {}
-    local dialog
-    local width = Screen:scaleBySize(300)
-    local spacer = {{
-         text = " ",
-         bordersize = 0,
-         width = width,
-         align = "left",
-         padding = 0,
-         callback = function() end
-     }}
-    local row = 0
-    local headings_count = #self.headings
-    local heading
-    --* these headings were generated in ((ReferenceInformation#load)):
-    for i = 1, headings_count do
-        local d = self.headings[i]
-        heading = d.is_sub_heading and "      " .. d.heading or d.heading
-        if not d.is_sub_heading and row ~= 0 then
-            table_insert(buttons, spacer)
-        end
-        row = row + 1
-        table_insert(buttons, {{
-            text = heading,
-            bordersize = 0,
-            width = width,
-            align = "left",
-            padding = 0,
-            callback = function()
-                UIManager:close(dialog)
-                self.case_sensitive = true
-                self:findCallback(nil, d.heading, 1)
-                UIManager:forceRePaint()
-            end
-        }})
-    end
-
-    --* only show this message once during a session:
-    if not KOR.registry:get("textviewer_index_message_shown") then
-        KOR.messages:notify(_("tap on a heading to go to that text section"))
-        KOR.registry:set("textviewer_index_message_shown", true)
-    end
-    dialog = ButtonDialog:new {
-        button_width = 1,
-        forced_width = width,
-        font_weight = "normal",
-        padding = 0,
-        max_height = Screen:getHeight() - Screen:scaleBySize(70),
-        sep_width = 0,
-        no_bottom_spacer = true,
-        modal = true,
-        buttons = buttons,
-    }
-    UIManager:show(dialog)
 end
 
 --- @private

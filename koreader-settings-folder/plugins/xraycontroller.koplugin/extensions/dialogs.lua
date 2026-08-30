@@ -495,7 +495,7 @@ if path:match("Romans %- EN") then
 	lang = "en"
 end
 local viewer
-viewer = KOR.dialogs:textBox({ title = "Circa " .. count .. " ebooks toegevoegd", info = files_list })
+viewer = KOR.dialogs:textBox({ title = "Files", info = files_list })
 
 ]]
 --* see ((DIALOGS))

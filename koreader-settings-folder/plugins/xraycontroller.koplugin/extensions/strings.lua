@@ -223,14 +223,13 @@ function Strings:upper(text)
     return Utf8Proc.uppercase_dumb(util.fixUtf8(text, "?"))
 end
 
-function Strings:indentText(text)
-    local i = self.indent_soft_more
+function Strings:cleanupPlainText(text)
     return text
-        :gsub("([a-zA-Z0-9.,:;?!\"'')])\n[\t ]?([A-Za-z(\"''])", "%1\n" .. i .. "%2")
-        :gsub("(”)\n[\t ]?([A-Za-z])", "%1\n" .. i .. "%2")
-        :gsub("(”)\n[\t ]?(“)", "%1\n" .. i .. "%2")
-        :gsub("(’)\n[\t ]?([A-Za-z])", "%1\n" .. i .. "%2")
-        :gsub("(’)\n[\t ]?(‘)", "%1\n" .. i .. "%2")
+        :gsub("([a-zA-Z0-9.,:;?!\"'')])\n[\t ]?([A-Za-z(\"''])", "%1\n%2")
+        :gsub("(”)\n[\t ]?([A-Za-z])", "%1\n%2")
+        :gsub("(”)\n[\t ]?(“)", "%1\n%2")
+        :gsub("(’)\n[\t ]?([A-Za-z])", "%1\n%2")
+        :gsub("(’)\n[\t ]?(‘)", "%1\n%2")
 end
 
 function Strings:formatListItemNumber(nr, title, use_spacer)
@@ -252,6 +251,29 @@ function Strings:prepareNeedleForMatching(needle, with_word_boundaries)
     end
 
     return self.whole_word_start .. needle .. self.whole_word_end
+end
+
+function Strings:parasIndent(text)
+    local paras = self:split(text, "\n")
+    local skip_next_para = false
+    local para
+    count = #paras
+    for nr = 1, count do
+        para = paras[nr]
+        if nr > 1 and para:match("[A-Za-z]") then
+            if not skip_next_para and not para:match("^[–]") and #para > 70 then
+                paras[nr] = self.indent_soft_more .. para:gsub("^ +", "")
+            elseif not skip_next_para and nr > 1 and para:match("^[–]") then
+                para = "\n" .. para
+            else
+                skip_next_para = false
+            end
+        elseif nr > 1 then
+            skip_next_para = true
+        end
+    end
+    return table_concat(paras, "\n")
+        :gsub("\n\n\n+", "\n\n")
 end
 
 --- @class DescriptionDialogTextFormat

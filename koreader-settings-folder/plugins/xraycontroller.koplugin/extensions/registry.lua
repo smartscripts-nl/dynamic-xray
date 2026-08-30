@@ -31,7 +31,6 @@ local Registry = WidgetContainer:new{
     right_indicator_width = nil,
     use_scrolling_dialog = 2,
     wiki_content = nil,
-    wiki_heading_needle = "☀",
 }
 
 --* AX_registry defined in ((ExtensionsInit)) (as early as possible):

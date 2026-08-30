@@ -8,6 +8,7 @@ local util = require("util")
 local DX = DX
 local G_reader_settings = G_reader_settings
 local has_no_text = has_no_text
+local T = T
 local table_concat = table_concat
 local table_insert = table_insert
 local util_htmlToPlainTextIfHtml = util.htmlToPlainTextIfHtml
@@ -113,17 +114,36 @@ function Html:textToHtml(text)
         table_insert(lines, s)
     end
 
+    local has_wiki_headings = text:match("☀")
     self.in_poetry = 0
     local result = {}
     count = #lines
     for i = 1, count do
-        self:formatHtmlLine(lines[i], result)
+        self:formatHtmlLine(lines, i, result, has_wiki_headings)
     end
     local html = table_concat(result, "\n")
-    if self.in_poetry >= self.poetry_limit_lines then
-        html = html .. "</div>"
-    end
 
+    if has_wiki_headings then
+        local wkh = KOR.referenceinformation.wiki_heading_markers
+        local sun = KOR.referenceinformation.wiki_heading_needle
+        for i = 1, 6 do
+            --* in case of wkh[3] we have  ☀◤:
+            if i == 3 then
+                html = html
+                    :gsub("<p> " .. sun .. "(◤ [^>]+)</p>", "<h3 class='wiki-heading'>%1</h3>")
+            else
+                html = html
+                    :gsub("<p>" .. sun .. "(" .. wkh[i] .. " [^>]+)</p>", "<h" .. i .. " class='wiki-heading'>%1</h" .. i .. ">")
+            end
+    end
+    end
+    html = html
+        :gsub("<p class='whitespace'>&#160;</p>\n(<h%d)", "\n%1")
+        :gsub("(</h%d>)\n<p class='whitespace'>&#160;</p>", "%1\n")
+
+    if not has_wiki_headings and self.in_poetry >= self.poetry_limit_lines then
+        return html .. "</div>"
+    end
     return html
 end
 
@@ -142,17 +162,18 @@ function Html:closePoetry(result, p)
     table_insert(result, "</div>" .. p)
 end
 
-function Html:formatHtmlLine(line, result)
+function Html:formatHtmlLine(lines, i, result, has_wiki_headings)
+    local line = lines[i]
 
     local is_short = #line < self.poetry_limit_length
     local is_page = line:match("pagina %d+")
     local is_blank = has_no_text(line)
 
-    local state = (self.in_poetry > 0) and STATE_POETRY or STATE_NORMAL
+    local state = (not has_wiki_headings and self.in_poetry > 0) and STATE_POETRY or STATE_NORMAL
 
     --- PAGE NUMBER (always terminates poetry)
     if is_page then
-        if state == STATE_POETRY and self.in_poetry <= self.poetry_limit_lines then
+        if not has_wiki_headings and state == STATE_POETRY and self.in_poetry <= self.poetry_limit_lines then
             self:openPoetry(result, i - self.in_poetry)
             table_insert(result, "</div><p class=\"export-page-number\">" .. line .. "</p>")
         else
@@ -164,7 +185,7 @@ function Html:formatHtmlLine(line, result)
 
     --- POETRY STATE
 
-    if state == STATE_POETRY then
+    if not has_wiki_headings and state == STATE_POETRY then
         if is_short then
             table_insert(result, self:paragraph(line, is_blank))
             self.in_poetry = self.in_poetry + 1
@@ -183,7 +204,7 @@ function Html:formatHtmlLine(line, result)
 
     --- NORMAL STATE
 
-    if is_short then
+    if not has_wiki_headings and is_short then
         table_insert(result, self:paragraph(line, is_blank))
         self.in_poetry = 1
         return
@@ -193,15 +214,15 @@ function Html:formatHtmlLine(line, result)
     self.in_poetry = 0
 end
 
-function Html:getHtmlWidgetCss(is_reference_information_or_glossary)
+function Html:getHtmlWidgetCss(is_reference_information_or_glossary, book_css)
     --* Using Noto Sans because Nimbus doesn't contain the IPA symbols.
     --* 'line-height: 1.3' to have it similar to textboxwidget,
     --* and follow user's choice on justification
-    local css_justify = G_reader_settings:nilOrTrue("dict_justify") and "text-align: justify;" or ""
+    local css_justify = G_reader_settings:isTrue("dict_justify") and "text-align: justify;" or "text-align: left !important;"
     local css = [[
         @page {
             margin: 0;
-            font-family: 'Noto Sans';
+            font-family: 'Red Hat Text', 'Noto Sans', sans-serif !important;
         }
 
         body {
@@ -209,8 +230,11 @@ function Html:getHtmlWidgetCss(is_reference_information_or_glossary)
             padding: 0 !important;
             line-height: 1.3;
             ]] .. css_justify .. [[
-
             font-size: ]] .. DX.s.html_box_font_size .. [[ !important;
+        }
+
+        * {
+            ]] .. css_justify .. [[
         }
 
         body > :first-child, body > :first-child > :first-child {
@@ -219,7 +243,31 @@ function Html:getHtmlWidgetCss(is_reference_information_or_glossary)
         }
 
         div.redhat, div.redhat * {
-            font-family: 'Noto Sans' !important;
+            font-family: 'Red Hat Text' !important;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            page-break-inside: avoid !important;
+            page-break-before: avoid !important;
+            page-break-after: avoid !important;
+            margin-top: 1.1em !important;
+            margin-bottom: .5em !important;
+            padding: 0 !important;
+        }
+
+        h1 {
+            text-align: center !important;
+        }
+
+        h3 {
+            font-style: italic !important;
+            font-size: 120% !important;
+        }
+
+        h1.wiki-heading, h2.wiki-heading, h3.wiki-heading, h4.wiki-heading, h5.wiki-heading, h6.wiki-heading {
+            margin-top: 1.1em !important;
+            margin-bottom: .5em !important;
+            padding: 0 !important;
         }
 
         blockquote, dd {
@@ -243,7 +291,7 @@ function Html:getHtmlWidgetCss(is_reference_information_or_glossary)
             text-align: center;
         }
 
-        h1 + p, h2 + p, h3 + p, h4 + p, p + p.chaptertitle, p.noindent, p.no-indent, p.whitespace + p, div.poezie p, div.noindent p, div.no-indent p, p + p.separator, p.heading, p.top-block, p.next-block, th p, td p {
+        h1 + p, h2 + p, h3 + p, h4 + p, p + p.chaptertitle, p.noindent, p.no-indent, p.whitespace + p, div.poezie p, div.noindent p, div.no-indent p, p + p.separator, p.heading, p.top-block, p.next-block, table + p, th p, td p {
             text-indent: 0 !important;
         }
 
@@ -259,6 +307,10 @@ function Html:getHtmlWidgetCss(is_reference_information_or_glossary)
 
         p.next-block {
             margin-top: 1em;
+        }
+
+        th p, td p {
+            margin-top: 0 !important;
         }
 
         li.glossary {
@@ -289,15 +341,31 @@ function Html:getHtmlWidgetCss(is_reference_information_or_glossary)
     --* item numbers). Unfortunately, because we want this also for RTL, this space is
     --* wasted on the other side...
 
+    local force_font_sizes = [[
+
+    p, span, bold, strong, table, tr, th, td {
+        font-size: 100% !important;
+    }
+
+    /* in HtmlBoxes by default a serif font is used for texts in this format, so here we force it to the body font-face: */
+    em, i, span.ITAL, span.ital, span.italic, span.cursive {
+        font-family: 'Red Hat Text', 'Noto Sans', sans-serif !important;
+    }
+]]
+
     if not is_reference_information_or_glossary then
-        return css
+        return css .. force_font_sizes
     end
 
-    local book_css = self:getBookCss()
-    if book_css then
-        return css .. "\n" .. book_css
+    local koreader_css = self:getBookCss()
+    if koreader_css then
+        css = css .. "\n" .. koreader_css .. force_font_sizes
     end
-    return css
+    --* book_css here might have been set from the book css via ((ReferenceInformation#prepareHtmlAndCssForSaving)):
+    if book_css then
+        return css .. "\n" .. book_css .. force_font_sizes
+    end
+    return css .. force_font_sizes
 end
 
 --- @private
@@ -316,6 +384,24 @@ function Html:getBookCss()
         :gsub("-cr-only-if:[^;]+;", "")
         --* e.g. replaces @media (-cr-max-cre-dom-version: 20180527) at end of epub.css:
         :gsub("@media.+$", "")
+end
+
+function Html:removeUnwantedElements(html)
+    local elements = { "DocFragment", "body", "html", "inlineBox", "autoBoxing", "section", "a" }
+    count = #elements
+    for i = 1, count do
+        html = html:gsub(T("</?%1[^>]*>", elements[i]), "")
+    end
+    return html
+end
+
+function Html:makeFirstParaNonIndented(html)
+    if html:match("<p[^>]+class=[\"'][^\"']+") then
+
+        return html:gsub("<p[^>]+class=([\"'])([^\"']+)", "<p class=%1%2 no-indent", 1)
+    end
+
+    return html:gsub("<p[^>]+>", "<p class='no-indent'>", 1)
 end
 
 return Html

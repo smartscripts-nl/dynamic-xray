@@ -17,6 +17,7 @@ local table_insert = table_insert
 --- @class InformationMediator
 local InformationMediator = WidgetContainer:extend{
 	css_files = nil,
+	expansion_explanation_shown = false,
 	information_boundaries = nil,
 	information_names = {
 		_("Glossary"),
@@ -125,9 +126,14 @@ function InformationMediator:addReferenceInformation(information_boundaries)
 	end
 
 	local sample = information_text:sub(1, 250) .. KOR.strings.ellipsis
-	self.save_information_format_choice_dialog = KOR.dialogs:niceAlert(_("Save Reference Information"), _("You can save the information in these formats:\n\n* HTML: may look nicer and be better readable (e.g. with tables and headings).\n* Text: upon searching, it is easier to see where in the dialog the search term was exactly found.\n\nSTART OF SELECTED TEXT:") .. "\n\n" .. sample, {
-		buttons = DX.b:forSaveReferenceInformation(information, information_text)
-	})
+	if not self.expansion_explanation_shown then
+		self.save_information_format_choice_dialog = KOR.dialogs:niceAlert(_("Save Reference Information"), _("You can save the information in these formats:\n\n* HTML: may look nicer and be better readable (e.g. with tables and headings).\n* Text: upon searching, it is easier to see where in the dialog the search term was exactly found.\n\nSTART OF SELECTED TEXT:") .. "\n\n" .. sample, {
+			buttons = DX.b:forSaveReferenceInformation(information, information_text)
+		})
+		self.expansion_explanation_shown = true
+	else
+		KOR.messages:notify(_("now mark the end of the information-text"))
+	end
 end
 
 function InformationMediator:closeContentTypeChoiceDialog()

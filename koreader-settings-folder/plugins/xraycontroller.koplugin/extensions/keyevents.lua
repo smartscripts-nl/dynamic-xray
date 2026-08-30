@@ -104,6 +104,7 @@ function KeyEvents:addHotkeysForReaderUI(parent)
         return true
     end
 
+    -- #((hotkey for Reference Information Viewer))
     readerui.key_events.ShowReferenceInformationUI = { { "Shift", { "R" } } }
     readerui.onShowReferenceInformationUI = function()
         return KOR.referenceinformation:show()

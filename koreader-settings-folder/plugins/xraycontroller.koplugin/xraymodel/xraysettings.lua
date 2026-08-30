@@ -128,7 +128,7 @@ local XraySettings = WidgetContainer:new{
         -- #((html_box_font_size_setting))
         html_box_font_size = {
             value = "100%",
-            explanation = _("This determines the font-size of information in viewers which is presented in HTML-format. E.g. handy to set a lower font-size percentage when the information in a HTML table doesn't fit really well in the dialog."),
+            explanation = _("This determines the font-size of HTML-formatted information in viewers. E.g. handy to make information in a HTML table shrink when it doesn't fit really well in the dialog.\n\nValues entered here should be valid CSS-expressions, like 90%, 1.3em, 2em, 1rem, 1.3rem, etc.:"),
             locked = 0,
         },
         icons_dont_force_ratio = {

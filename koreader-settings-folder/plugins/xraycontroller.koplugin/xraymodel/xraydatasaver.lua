@@ -292,6 +292,10 @@ local XrayDataSaver = WidgetContainer:new{
         [[
             ALTER TABLE bookinfo ADD COLUMN reference_information_css;]],
 
+        --* update 18:
+        [[
+            ALTER TABLE bookinfo ADD COLUMN reference_information_headings;]],
+
         --! when adding scheme modifations above, also add a scheme_verification_query below with the correct index!!
     },
     scheme_verification_queries = {
@@ -336,6 +340,9 @@ local XrayDataSaver = WidgetContainer:new{
 
         --* check update 17:
         { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'reference_information_css';", 17 },
+
+        --* check update 18:
+        { "SELECT 1 FROM pragma_table_info('bookinfo') WHERE name = 'reference_information_headings';", 18 },
     },
     scheme_version_name = "DX_database_scheme_version",
     tables_created_index = "DX_tables_created",
@@ -795,21 +802,36 @@ function XrayDataSaver.createAndModifyTables()
     local update_tasks_count = #self.scheme_alter_queries
     local version_index = overrule_tables_creation and 0 or G_reader_settings:readSetting(self.scheme_version_name)
 
+    local do_debug = false
+    if do_debug then
+        logger_info("db_update version_index > update_tasks_count", version_index .. " > " .. update_tasks_count)
+    end
+
     local version_index_was_saved = true
     if not version_index or version_index == 0 then
         version_index_was_saved = false
         version_index = 0
+        if do_debug then
+            logger_info("db_update", "version_index reset to 0")
+        end
 
     --* if we removed a modification query, users could have a higher stored version_index, so it must be reset to the lower value
     elseif version_index > update_tasks_count then
         version_index_was_saved = false
         version_index = update_tasks_count
+        if do_debug then
+            logger_info("db_update", "version_index corrected to lower value")
+        end
 
     elseif version_index ~= update_tasks_count then
         if not conn then
             conn = KOR.databases:getDBconn("XrayDataSaver:createAndModifyTables 2")
         end
-        version_index = self.updateVersionIndex(conn, version_index)
+        version_index = self.updateVersionIndex(conn, version_index, do_debug)
+        version_index_was_saved = false
+        if do_debug then
+            logger_info("db_update", "update done; new value: " .. version_index)
+        end
     end
     if not version_index_was_saved then
         G_reader_settings:saveSetting(self.scheme_version_name, version_index)
@@ -914,13 +936,16 @@ function XrayDataSaver.quoteUpdate(id, value)
 end
 
 --* check whether previous DX installations already created some tables or fields and update version_index accordingly:
-function XrayDataSaver.updateVersionIndex(conn, version_index)
+function XrayDataSaver.updateVersionIndex(conn, version_index, do_debug)
 
     local self = DX.ds
     count = #self.scheme_verification_queries
 
     local last_update_query = self.scheme_verification_queries[count][1]
     if conn:exec(last_update_query) then
+        if do_debug then
+            logger_warn("XrayDataSaver.updateVersionIndex", "no update necessary")
+        end
         --* this returns de facto last_update_index:
         return self.scheme_verification_queries[count][2]
     end
@@ -931,13 +956,17 @@ function XrayDataSaver.updateVersionIndex(conn, version_index)
         update_index = self.scheme_verification_queries[i][2]
         result = conn:exec(update_query)
         if not result and i == 1 then
+            logger_warn("XrayDataSaver.updateVersionIndex", "all queries need to be done")
             return 0
         elseif not result then
-            return update_index
+            logger_info("XrayDataSaver.updateVersionIndex", "queries need to be run from index " .. update_index - 1)
+            return update_index - 1
         end
     end
 
-    --logger.warn("VERSIE OK", version_index)
+    if do_debug then
+        logger_info("VERSIE OK", version_index)
+    end
 
     return version_index
 end

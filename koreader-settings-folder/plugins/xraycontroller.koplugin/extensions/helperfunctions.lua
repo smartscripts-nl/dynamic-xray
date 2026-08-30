@@ -53,8 +53,11 @@ table_move = table.move
 table_pack = table.pack
 table_remove = table.remove
 table_sort = table.sort
-ulower = function(text)
+utf8lower = function(text)
     return Utf8Proc.lowercase(util.fixUtf8(text, "?"))
+end
+utf8upper = function(text)
+    return Utf8Proc.uppercase_dumb(util.fixUtf8(text, "?"))
 end
 util_gsplit = util.gsplit
 util_trim = util.trim

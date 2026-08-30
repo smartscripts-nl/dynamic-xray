@@ -5,14 +5,14 @@ local BD = require("ui/bidi")
 local Button = require("xrayviews/widgets/button")
 local ButtonTable = require("xrayviews/widgets/buttontable")
 local CenterContainer = require("ui/widget/container/centercontainer")
-local CheckButton = require("frontend/widgets/checkbutton")
+local CheckButton = require("xrayviews/widgets/checkbutton")
 local Device = require("device")
 local Font = require("modules/font")
 local FrameContainer = require("xrayviews/widgets/container/framecontainer")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
 local InputContainer = require("ui/widget/container/inputcontainer")
-local InputDialog = require("frontend/widgets/inputdialog")
+local InputDialog = require("xrayviews/widgets/inputdialog")
 local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")
 local MovableContainer = require("xrayviews/widgets/container/movablecontainer")
@@ -32,6 +32,7 @@ local Screen = Device.screen
 local _ = KOR:initCustomTranslations()
 
 local DX = DX
+local has_items = has_items
 local math_floor = math_floor
 local math_max = math_max
 local math_min = math_min
@@ -40,7 +41,7 @@ local pairs = pairs
 local table_insert = table_insert
 local table_remove = table_remove
 local type = type
-local ulower = ulower
+local utf8lower = utf8lower
 
 local count
 
@@ -52,7 +53,9 @@ local HtmlBox = InputContainer:extend{
     additional_key_events = nil,
     after_close_callback = nil,
     align = "center",
+    auto_height = false,
     bottom_widget = nil,
+    --! we use text_viewer_font_size instead of html_box_font_size here, because the latter is a value in percentages:
     box_font_size = DX.s.textviewer_font_size,
     box_widget = nil,
     buttons_table = nil,
@@ -61,6 +64,7 @@ local HtmlBox = InputContainer:extend{
     content_padding = nil,
     --* this is the default, but some widgets can set the content_type to "text" for a specific tab; e.g. see ((XrayButtons#getItemViewerTabs)):
     content_type = "html",
+    css = nil,
     dialog_queue_id = nil,
     extract_texts = false,
     frame_content_fullscreen = nil,
@@ -68,6 +72,7 @@ local HtmlBox = InputContainer:extend{
     fullscreen = false,
     has_items_editor = false,
     has_tabs = false,
+    headings = nil,
     height = nil,
     html = nil,
     --* for two column display of linked items in landscape display:
@@ -80,6 +85,7 @@ local HtmlBox = InputContainer:extend{
     html_widget3 = nil,
     is_duo_scroll_widget = false,
     is_reference_information_or_glossary = false,
+    is_single_scroll_widget = true,
     is_three_scroll_widget = false,
     key_events_module = nil,
     left_side_buttons = nil,
@@ -92,6 +98,7 @@ local HtmlBox = InputContainer:extend{
     paths = nil,
     prev_item_callback = nil,
     ratio_per_chapter = nil,
+    search_for_headings = false,
     search_value = "",
     screen_height = nil,
     screen_width = nil,
@@ -277,7 +284,8 @@ function HtmlBox:generateHtmlScrollWidget()
     self.html_widget = ScrollHtmlWidget:new{
         html_body = self.html,
         extract_texts = self.extract_texts,
-        css = KOR.html:getHtmlWidgetCss(self.is_reference_information_or_glossary),
+        --* self.css here might have been set from the book css via ((ReferenceInformation#prepareHtmlAndCssForSaving)):
+        css = KOR.html:getHtmlWidgetCss(self.is_reference_information_or_glossary, self.css),
         default_font_size = Screen:scaleBySize(self.box_font_size),
         width = self.swidth,
         height = self.sheight,
@@ -324,6 +332,7 @@ function HtmlBox:generateTextScrollWidget()
     --* three column display:
     if self.html3 then
         self.is_three_scroll_widget = true
+        self.is_single_scroll_widget = false
         self.html_widget, self.html_widget1, self.html_widget2, self.html_widget3 = KOR.columntexts:getThreeWidget({
             parent = self,
             column1_text = self.html,
@@ -338,6 +347,7 @@ function HtmlBox:generateTextScrollWidget()
     --* two column display:
     elseif self.html2 then
         self.is_duo_scroll_widget = true
+        self.is_single_scroll_widget = false
         self.html_widget, self.html_widget1, self.html_widget2 = KOR.columntexts:getDuoWidget({
             parent = self,
             column1_text = self.html,
@@ -640,7 +650,9 @@ function HtmlBox:computeHeights()
         local nb_lines = math_floor(self.content_height / self.content_line_height)
         self.content_height = nb_lines * self.content_line_height
 
-    elseif self.is_fullscreen or self.window_size == "max" then
+    elseif self.is_fullscreen or self.window_size == "max"
+            --* with prop auto_height we can maximize the height of the HtmlBox:
+            or self.auto_height then
         self.height = self.avail_height
         self.content_height = self.height - others_height
 
@@ -706,6 +718,9 @@ function HtmlBox:generateButtons()
     if self.no_buttons_row then
         return
     end
+
+    --* self.headings might have been stored in ((ReferenceInformation#prepareHtmlAndCssForSaving)) or ((ReferenceInformation#addWikiHeadings)), and loaded in ((ReferenceInformation#load)):
+    self.search_for_headings = self.is_single_scroll_widget and has_items(self.headings)
 
     --* Different sets of buttons whether fullpage or not
     local buttons = {
@@ -792,6 +807,19 @@ function HtmlBox:generateButtons()
         }))
     end
 
+    if self.search_for_headings then
+        table_insert(buttons[1], 3, KOR.buttoninfopopup:forTextViewerWikiHeadingsIndex({
+            callback = function()
+                KOR.referenceinformation:generateButtonsIndex(self, function(heading)
+                    self.search_value = heading
+                    self._find_next = false
+                    self.case_sensitive = true
+                    self:findCallback(nil, "search_from_start", _("heading"))
+                end)
+            end,
+        }))
+    end
+
     --* Bottom buttons get a bit less padding so their line separators
     --* reach out from the content to the borders a bit more
     local buttons_padding = Size.padding.default
@@ -852,7 +880,7 @@ function HtmlBox:findDialog()
 end
 
 --- @private
-function HtmlBox:findCallback(input_dialog, search_from_start)
+function HtmlBox:findCallback(input_dialog, search_from_start, target)
     if input_dialog then
         self.search_value = input_dialog:getInputText()
         if self.search_value == "" then
@@ -860,6 +888,7 @@ function HtmlBox:findCallback(input_dialog, search_from_start)
         end
         UIManager:close(input_dialog)
     end
+    target = target or _("search term")
 
     --* this html_box_widget has props page_count, page_number (i.e. current "page"/screen):
     self.box_widget = self.html_widget.htmlbox_widget
@@ -871,35 +900,34 @@ function HtmlBox:findCallback(input_dialog, search_from_start)
     self:prepareNeedleForMatching()
     local text = self:getPageTextForMatching(start_page)
     if page_count == 1 then
-        msg = text:match(self.search_value) and _("search term found in this screen") or _("search term not found in this screen")
+        msg = text:match(self.search_value) and target .. " " .. _("found in this screen") or target .. " " .. _("not found in this screen")
         KOR.messages:notify(msg)
         return
     end
 
     current_page = search_from_start and 1 or self:getNextPage(current_page, page_count)
-    local ignore_first_page
+    local search_on_start_page = false
     if search_from_start then
         start_page = 1
-        ignore_first_page = true
+        search_on_start_page = true
     end
-    text = self:getPageTextForMatching(current_page)
     local found = false
-    while not found and (ignore_first_page or current_page ~= start_page) do
+    while not found and (search_on_start_page or current_page ~= start_page) do
+        text = self:getPageTextForMatching(current_page)
         found = text:match(self.search_value)
-        ignore_first_page = false
+        search_on_start_page = false
         if not found then
-            text = self:getPageTextForMatching(current_page)
             current_page = self:getNextPage(current_page, page_count)
         end
     end
     self._find_next = found
     if found then
         self.html_widget:scrollToPage(current_page)
-        KOR.messages:notify(_("search term found in this screen"))
+        KOR.messages:notify(target .. " " .. _("found in this screen"))
         return
     end
 
-    KOR.messages:notify(_("search term not found anymore"))
+    KOR.messages:notify(target .. " " .. _("not found (anymore)"))
     self._find_next = false
     self:findDialog()
 end
@@ -1067,10 +1095,6 @@ function HtmlBox:setModuleProps()
     end
     self.content_face = Font:getFace("x_smallinfofont", self.box_font_size)
     --self.content_face = Font:getFace("infofont", self.box_font_size)
-    local font_size_alt = self.box_font_size - 4
-    if font_size_alt < 8 then
-        font_size_alt = 8
-    end
     self.is_fullscreen = self.window_size == "fullscreen"
 
     --* Scrollable offsets of the various showResults* menus and submenus,
@@ -1177,7 +1201,7 @@ end
 function HtmlBox:getPageTextForMatching(current_page)
     local text = self.box_widget:getPageText(current_page)
     if not self.case_sensitive then
-        return ulower(text)
+        return utf8lower(text)
     end
     return text
 end
@@ -1185,7 +1209,7 @@ end
 --- @private
 function HtmlBox:prepareNeedleForMatching()
     if not self.case_sensitive then
-        self.search_value = ulower(self.search_value)
+        self.search_value = utf8lower(self.search_value)
     end
     self.search_value = KOR.strings:prepareNeedleForMatching(self.search_value)
 end
