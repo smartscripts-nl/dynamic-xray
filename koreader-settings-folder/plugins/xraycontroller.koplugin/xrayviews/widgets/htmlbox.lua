@@ -809,6 +809,10 @@ function HtmlBox:generateButtons()
 
     if self.search_for_headings then
         table_insert(buttons[1], 3, KOR.buttoninfopopup:forTextViewerWikiHeadingsIndex({
+            enabled_func = function()
+                --* this prop is set in ((Dialogs#registerActiveTab)):
+                return not self.tabs or KOR.dialogs.active_tab_index_enabled
+            end,
             callback = function()
                 KOR.referenceinformation:generateButtonsIndex(self, function(heading)
                     self.search_value = heading

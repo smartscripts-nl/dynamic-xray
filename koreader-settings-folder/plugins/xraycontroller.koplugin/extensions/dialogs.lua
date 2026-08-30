@@ -31,6 +31,7 @@ local count
 --- @class Dialogs
 local Dialogs = WidgetContainer:extend{
     active_tab = 1,
+    active_tab_index_enabled = false,
     active_tab_name = nil,
     last_dialog_instance = nil,
     overlay = nil,
@@ -531,6 +532,7 @@ end
 function Dialogs:registerActiveTab(active_tab, tabs)
     self.active_tab = active_tab
     self.active_tab_name = tabs[active_tab].tab
+    self.active_tab_index_enabled = tabs[active_tab].index_enabled
 end
 
 --* see ((DIALOGS))

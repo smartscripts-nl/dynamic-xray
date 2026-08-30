@@ -353,20 +353,24 @@ function ReferenceInformation:show()
 	if is_tabbed then
 		self.info_dialog = KOR.dialogs:htmlBoxTabbed(1, {
 			title = _("Reference Information + Glossary"),
+			extract_texts = true,
 			is_reference_information_or_glossary = true,
 			css = self.current_ebook_reference_information_css,
+			headings = self.headings,
 			tabs = {
 				-- #((reference info tab names))
 				{
 					tab = _("reference information"),
 					html = self.current_ebook_reference_information,
 					content_type = self.current_ebook_reference_information:match("<") and "html" or "text",
+					index_enabled = true,
 				},
 				{
 					tab = _("glossary"),
 					--* Glossary is saved as plain-text, but shown as HTML:
 					content_type = "html",
 					html = KOR.glossary:getHtmlList(glossary),
+					index_enabled = false,
 				},
 			},
 			top_buttons_left = buttons,

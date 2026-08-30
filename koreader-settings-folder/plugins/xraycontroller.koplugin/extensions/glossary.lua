@@ -221,17 +221,22 @@ function Glossary:showViewer()
         KOR.dialogs:htmlBoxTabbed(1, {
             title = _("Glossary + Xray Reference Information"),
             is_reference_information_or_glossary = true,
+            extract_texts = true,
+            css = KOR.referenceinformation.current_ebook_reference_information_css,
+            headings = KOR.referenceinformation.headings,
             tabs = {
                 {
                     tab = _("glossary"),
                     --* Glossary is saved as plain-text, but shown as HTML:
                     content_type = "html",
                     html = self:getHtmlList(glossary),
+                    index_enabled = false,
                 },
                 {
                     tab = _("reference information"),
                     html = KOR.referenceinformation.current_ebook_reference_information,
                     content_type = KOR.referenceinformation.current_ebook_reference_information:match("<") and "html" or "text",
+                    index_enabled = true,
                 },
             },
             top_buttons_left = buttons,
