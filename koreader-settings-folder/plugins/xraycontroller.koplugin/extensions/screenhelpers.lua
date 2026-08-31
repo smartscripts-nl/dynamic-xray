@@ -3,10 +3,10 @@ local require = require
 
 local Device = require("device")
 local Geom = require("ui/geometry")
-local Size = require("ui/size")
+local Size = require("frontend/modules/size")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
-local Screen = require("device").screen
+local Screen = Device.screen
 
 local DX = DX
 
