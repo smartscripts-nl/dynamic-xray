@@ -93,7 +93,7 @@ function XrayInformation:showReferenceInformation(initial_tab)
             {
                 --* event handler: ((event handler for Reference Information)):
                 tab = _("Reference Information"),
-                html = _([[<p class="top-block">Via the index icon in the PageNavigator popup menu you can save Xray Reference Information.</p><p class="next-block">This can for example be very handy to save timeline information as given in an e-book.</p><p class="next-block">Because this information can optionally be saved as HTML, even saving and viewing HTML tables is possible...</p>
+                html = _([[<p class="top-block">Via the roadsign icon in the PageNavigator popup menu you can save Xray Reference Information.</p><p class="next-block">This can for example be very handy to save timeline information as given in an e-book.</p><p class="next-block">Because this information can optionally be saved as HTML, even saving and viewing HTML tables is possible...</p>
                 <p class="heading">Font-size of Reference Information in HTML-format</p><p class="noindent">With the DX setting <em>html_box_font_size</em> you can determine the font-size of information in HTML format.</p><p><strong>NB</strong>: this setting will change the font-size of all DX-dialogs which present information in HTML-format!</p>
 <p class="heading">Gesture</p><p class="noindent">You can define a gesture to view the Xray Reference Information outside of Page Navigator. To do so, choose the callback <em>Xray Reference Information: show/add</em> under the Dispatcher section <em>Reader</em>.</p>
 <p class="heading">Hotkey for the viewer</p>

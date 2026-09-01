@@ -465,7 +465,9 @@ end
 --- @param parent XrayPageNavigator
 function XrayButtons:forPageNavigatorTopRight(parent)
     if DX.s.PN_hide_filter_buttons then
-        return
+        return self:injectReferenceButtons(function()
+            parent:closePageNavigator()
+        end)
     end
     local filter_button
     filter_button = KOR.buttoninfopopup:forXrayPageNavigatorFilter({
@@ -483,9 +485,13 @@ function XrayButtons:forPageNavigatorTopRight(parent)
     })
 
     if DX.s.PN_hide_filter_by_2_items_button then
-        return {
-            filter_button,
-        }
+        return self:injectReferenceButtons(
+            function()
+                parent:closePageNavigator()
+            end,
+            {
+                filter_button,
+        })
     end
 
     local double_filter_button
@@ -500,10 +506,14 @@ function XrayButtons:forPageNavigatorTopRight(parent)
         end,
     })
 
-    return {
-        filter_button,
-        double_filter_button,
-    }
+    return self:injectReferenceButtons(
+        function()
+            parent:closePageNavigator()
+        end,
+        {
+            filter_button,
+            double_filter_button,
+    })
 end
 
 function XrayButtons:closeDialog(dialog)
@@ -793,7 +803,9 @@ end
 function XrayButtons:forItemViewerTopRight(needle_item)
 
     if DX.s.IV_disable_add_to_favorites_tag_group and DX.s.IV_disable_add_to_locations_tag_group then
-        return
+        return self:injectReferenceButtons(function()
+            DX.d:closeItemViewer()
+        end)
     end
     local buttons = {}
 
@@ -823,7 +835,12 @@ function XrayButtons:forItemViewerTopRight(needle_item)
         }))
     end
 
-    return buttons
+    return self:injectReferenceButtons(
+        function()
+            DX.d:closeItemViewer()
+        end,
+        buttons
+    )
 end
 
 function XrayButtons:forSaveReferenceInformation(reference_information, reference_information_text)
@@ -2214,6 +2231,38 @@ function XrayButtons:forGlossaryViewerTopLeft(parent, is_tabbed)
             end
         }),
     }
+end
+
+function XrayButtons:injectReferenceButtons(callback, buttons)
+    local top_buttons_right = buttons or {}
+
+    table_insert(top_buttons_right, 1, KOR.buttoninfopopup:forWikipediaSearch({
+        callback = function()
+            KOR.wikipedia:showWikipediaInputPrompt(function()
+                if callback then
+                    callback()
+                end
+            end)
+        end,
+    }))
+    local start_pos = 2
+    local glossary = KOR.glossary:get()
+    if has_text(glossary) then
+        table_insert(top_buttons_right, start_pos, KOR.buttoninfopopup:forGlossaryViewer({
+            callback = function()
+                KOR.glossary:showViewer(glossary)
+            end
+        }))
+        start_pos = start_pos + 1
+    end
+    if KOR.referenceinformation:hasInfo() then
+        table_insert(top_buttons_right, start_pos, KOR.buttoninfopopup:forReferenceInformation({
+            callback = function()
+                KOR.referenceinformation:show()
+            end
+        }))
+    end
+    return top_buttons_right
 end
 
 --- @param parent XrayInformation

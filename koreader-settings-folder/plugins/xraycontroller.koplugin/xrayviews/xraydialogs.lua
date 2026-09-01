@@ -495,6 +495,9 @@ function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_names3, hits_i
         covers_fullscreen = true,
         modal = false,
         top_buttons_left = DX.b:forUiInfoTopLeft(new_UI_mode, new_trigger, self),
+        top_buttons_right = DX.b:injectReferenceButtons(function()
+            UIManager:close(self.xray_ui_info_dialog)
+        end),
         fixed_face = Font:getFace("x_smallinfofont", 19),
         close_callback = function()
             self.xray_ui_info_dialog = nil
@@ -645,6 +648,9 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
         end,
         is_borderless = true,
         top_buttons_left = not self.select_mode and DX.b:forListTopLeft(self),
+        top_buttons_right = DX.b:injectReferenceButtons(function()
+            UIManager:close(self.xray_items_list)
+        end),
         -- #((filter table example))
         filter = self:getListFilter(),
         title_submenu_buttontable = DX.b:forListSubmenu(),

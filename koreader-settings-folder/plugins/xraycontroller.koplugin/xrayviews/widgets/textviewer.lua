@@ -139,6 +139,7 @@ local TextViewer = InputContainer:extend{
     next_item_callback = nil,
     no_back_button = false,
     no_buttons_row = false,
+    no_close_button_padding = false,
     no_fullscreen = false,
     no_overlay = false,
     overflow_correction = nil,
@@ -1652,7 +1653,8 @@ function TextViewer:initTitleBar()
         title_multilines = self.title_multilines,
         title_shrink_font_to_fit = self.title_shrink_font_to_fit,
         fullscreen = self.fullscreen,
-        no_close_button_padding = true,
+        --? in some TextViewer dialogs for some reason padding to the right of the close button would be too big:
+        no_close_button_padding = self.no_close_button_padding,
         close_callback = function()
             self:onClose()
         end,

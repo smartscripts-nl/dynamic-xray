@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+
+<svg
+   width="800px"
+   height="800px"
+   viewBox="0 0 32 32"
+   version="1.1"
+   id="svg59"
+   sodipodi:docname="glossary.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview61"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="0.295"
+     inkscape:cx="305.08475"
+     inkscape:cy="400"
+     inkscape:window-width="1440"
+     inkscape:window-height="831"
+     inkscape:window-x="0"
+     inkscape:window-y="32"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="all" />
+  <defs
+     id="defs5">
+    <clipPath
+       id="clip-glossary">
+      <rect
+         width="32"
+         height="32"
+         id="rect2" />
+    </clipPath>
+  </defs>
+  <g
+     id="glossary"
+     clip-path="url(#clip-glossary)"
+     style="stroke-width:0.4;stroke-dasharray:none">
+    <g
+       id="all"
+       data-name="Group 3020"
+       transform="translate(-312 -156)"
+       style="stroke-width:0.4;stroke-dasharray:none">
+      <path
+         id="Path_3962"
+         data-name="Path 3962"
+         d="m 336.292,186.917 c -5.52767,0 -11.05533,0 -16.583,0 -2.79297,0.1001 -4.14593,-2.67472 -3.917,-5.07356 0,-6.94781 0,-13.89563 0,-20.84344 -0.1001,-2.79297 2.67472,-4.14593 5.07356,-3.917 5.14215,0 10.28429,0 15.42644,0 2.79239,-0.0994 4.14595,2.6748 3.917,5.07356 0,6.94781 0,13.89563 0,20.84344 0.0483,2.09707 -1.81993,3.96528 -3.917,3.917 z m -16.583,-27.834 c -1.77828,-0.021 -2.01287,1.81569 -1.917,3.15066 0,6.92212 0,13.84423 0,20.76634 -0.021,1.77828 1.81569,2.01287 3.15066,1.917 5.11645,0 10.23289,0 15.34934,0 1.77828,0.021 2.01287,-1.81569 1.917,-3.15066 0,-6.92212 0,-13.84423 0,-20.76634 0.021,-1.77828 -1.81569,-2.01287 -3.15066,-1.917 -5.11645,0 -10.23289,0 -15.34934,0 z"
+         fill="#344952"
+         style="fill:#444444;fill-opacity:1;stroke-width:0.12;stroke-dasharray:none"
+         inkscape:label="pageborders" />
+      <path
+         id="Path_3963"
+         data-name="Path 3963"
+         d="m 321.774,162.4 c 0.524,0 1.048,0 1.572,0 0.765,2.16267 1.53,4.32533 2.295,6.488 -0.48033,0 -0.96067,0 -1.441,0 -0.14633,-0.44 -0.29267,-0.88 -0.439,-1.32 -0.82033,0 -1.64067,0 -2.461,0 -0.18454,0.41643 -0.22865,1.0256 -0.5021,1.32 -0.39106,-0.0534 -1.08031,0.10385 -1.29715,-0.0727 0.75775,-2.13844 1.5155,-4.27688 2.27325,-6.41532 z m -0.094,4.052 c 0.57333,0 1.14667,0 1.72,0 -0.287,-0.86967 -0.574,-1.73933 -0.861,-2.609 -0.28633,0.86967 -0.57267,1.73933 -0.859,2.609 z"
+         fill="#344952"
+         style="stroke-width:0.4;stroke-dasharray:none"
+         inkscape:label="character" />
+      <g
+         id="Group_3018"
+         data-name="Group 3018"
+         style="stroke-width:0.4;stroke-dasharray:none"
+         inkscape:label="lines">
+        <path
+           id="Path_3964"
+           style="fill:#444444;fill-opacity:1;stroke-width:0.357771;stroke-dasharray:none"
+           d="m 335.479,173.326 c -5.07627,-0.007 -10.15322,0.0161 -15.22906,-0.0125 -0.93033,-0.13371 -0.82616,-1.17823 -0.13425,-1.5065 0.75053,-0.2899 1.60849,0.005 2.40878,-0.0794 4.39479,0.003 8.78969,-0.0195 13.18437,0.0139 1.01195,0.10813 0.96055,1.47861 -0.0263,1.58166 -0.004,0.063 -0.20392,-0.052 -0.20356,0.002 z"
+           inkscape:label="top_line" />
+        <path
+           id="Path_3965"
+           data-name="Path 3965"
+           d="m 335.479,177.284 c -5,0 -10,0 -15,0 -2.05416,-0.41964 -0.40525,-1.92698 0.94825,-1.6 4.68392,0 9.36783,0 14.05175,0 1.30141,-0.0273 1.30141,1.62727 0,1.6 z"
+           fill="#344952"
+           style="fill:#444444;fill-opacity:1;stroke-width:0.357771;stroke-dasharray:none"
+           inkscape:label="middle_line" />
+        <path
+           id="Path_3966"
+           data-name="Path 3966"
+           d="m 335.521,181.2 c -5,0 -10,0 -15,0 -1.67504,-0.0469 -0.81759,-1.93793 0.38552,-1.6 4.87149,0 9.74299,0 14.61448,0 1.27419,-0.1241 1.27419,1.7241 0,1.6 z"
+           fill="#344952"
+           inkscape:label="bottom_line"
+           style="fill:#444444;fill-opacity:1;stroke-width:0.357771;stroke-dasharray:none" />
+      </g>
+    </g>
+  </g>
+</svg>

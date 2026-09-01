@@ -149,7 +149,7 @@ function NiceAlert:generatePopupCallbackDialogWidget(info, width)
             align = self.title_align or "center",
             with_bottom_line = false,
             title = self.title,
-            title_face = Font:getFace("xx_smalltfont"),
+            title_face = Font:getFace("x_smalltfont"),
             title_multilines = true,
             title_shrink_font_to_fit = true,
             no_close_button_padding = true,

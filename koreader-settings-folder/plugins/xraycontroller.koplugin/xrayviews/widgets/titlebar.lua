@@ -136,6 +136,7 @@ local TitleBar = OverlapGroup:extend{
     inverted_background_color = KOR.colors.background_inverted,
     --* dynamically set in ((TitleBar#setWidgetProps)):
     is_landscape_screen = true,
+    no_close_button_padding = false,
     parent_has_tabs = false,
     --* submenu BELOW the title bar:
     submenu_buttontable = nil,
@@ -913,27 +914,27 @@ end
 --- @private
 function TitleBar:injectLeftButtonGroupButton(nr)
     local button = self:instantiateButton(self.top_buttons_left[nr])
-            if nr == 1 then
+    if nr == 1 then
         if self.popout_dialog_button_spacer then
             --* defined in ((TitleBar#initPopoutDialogButtonPadding)); will also be injected at end of ((TitleBar#injectRightButtonGroupButton)):
             table_insert(self.left_buttons_container, self.popout_dialog_button_spacer)
         end
         table_insert(self.left_buttons_container, self.top_button_group_spacer)
-                if self.is_popout_dialog then
-                    table_insert(self.left_buttons_container, HorizontalSpan:new{ width = Size.padding.large })
-                end
-            end
-            button = self:getAdaptedTopButton(button)
-            if nr == 1 then
-                self.left_button = button
-            end
-            table_insert(self.left_buttons_container, button)
+        if self.is_popout_dialog then
+            table_insert(self.left_buttons_container, HorizontalSpan:new{ width = Size.padding.large })
+        end
+    end
+    button = self:getAdaptedTopButton(button)
+    if nr == 1 then
+        self.left_button = button
+    end
+    table_insert(self.left_buttons_container, button)
     --* count has been set by caller:
     if nr < count then
         table_insert(self.left_buttons_container, self.top_button_group_spacer)
-        end
-    return button
     end
+    return button
+end
 
 --- @private
 function TitleBar:injectRightButtonGroupButton(nr)
@@ -946,10 +947,10 @@ function TitleBar:injectRightButtonGroupButton(nr)
             table_insert(self.right_buttons_container, button)
 
     --* count has been set by caller:
-    if nr < count and not self.has_only_close_button then
+    if (nr < count or not self.no_close_button_padding) and not self.has_only_close_button then
         table_insert(self.right_buttons_container, self.top_button_group_spacer)
     end
-        end
+end
 
 --- @private
 function TitleBar:initTopButtonGroupsSpacer()

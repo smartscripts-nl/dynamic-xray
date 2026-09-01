@@ -144,8 +144,8 @@ end
 
 function ButtonInfoPopup:forGlossaryViewer(props)
 	return ButtonProps:set({
-		icon = "list",
-		info = _("list icon | Go to the Glossary Viewer."),
+		icon = "glossary-svgrepo-com",
+		info = _("glossary icon | Go to the Glossary Viewer."),
 		callback_label = _("go"),
 		--! callback defined by calling module
 	}, props)
@@ -255,6 +255,15 @@ function ButtonInfoPopup:forMenuToLetter(props)
 		text_font_bold = false,
 		info = _("Jump to first item starting with the character you entered."),
 		callback_label = _("go"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forReferenceInformation(props)
+	return ButtonProps:set({
+		icon = "index",
+		info = ("signpost icon | Show Reference Information"),
+		callback_label = _("show"),
 		--! callback defined by calling module
 	}, props)
 end
@@ -380,7 +389,7 @@ end
 function ButtonInfoPopup:forTextViewerWikiHeadingsIndex(props)
 	return ButtonProps:set({
 		icon = "index",
-		info = _("index icon | Show tappable index of Wikipedia-heading in this Reference Information."),
+		info = _("signpost icon | Show tappable index of Wikipedia-heading in this Reference Information."),
 		callback_label = _("show"),
 		--! callback defined by calling module
 	}, props)
