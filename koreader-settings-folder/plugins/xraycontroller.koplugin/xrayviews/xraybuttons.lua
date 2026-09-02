@@ -544,6 +544,7 @@ function XrayButtons:forQuizletQuestions(parent, item, questions_count)
          {
              icon = "view",
              icon_size_ratio = 0.9,
+             enabled = not parent.quizlet_show_answers_also,
              callback = function()
                  UIManager:close(parent.quizlet_dialog)
                  local dialog_queue_id = "quizlet_answer"
