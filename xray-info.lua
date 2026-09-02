@@ -35,6 +35,8 @@ The views layer has three main streams:
 10) DX also has a Glossary popup, to show a Glossary from the book stored there. See ((Glossary#showViewer)).
 This Glossary can be used to quickly lookup a term in the e-book text. When the user longpresses a word in the ebook text and that word is an item in the Glossary, the explanation for that item will be shown in the Glossary popup; see ((Glossary#showEditor))
  For starting the proces of text addition, see ((InformationMediator#confirmAddInformationAfterExpansion)), when called from the ReaderHighlight new text selection popup. The information will be saved to the Glossary via ((InformationMediator#setInformationBoundaries)) > ((Glossary#addInformation)).
+
+ 11) The last addition is a Quizlet button, available in several dialogs. By tapping on this button a Quizlet dialog is opened - via ((XrayDialogs#initQuizletQuestions)) > ((XrayDialogs#showQuizletQuestion)) - in which the user can test his/her knowledge of randomly displayed Xray items. This module might be handy for study purposes.
 --]]--
 
 -- #((the two most Kindle-like experiences))

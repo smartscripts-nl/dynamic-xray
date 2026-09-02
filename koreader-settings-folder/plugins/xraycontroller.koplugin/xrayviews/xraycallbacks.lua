@@ -93,7 +93,7 @@ function XrayCallbacks:execPageNavigatorSearchItemCallback()
 end
 
 function XrayCallbacks:execQuizletModeCallback()
-    DX.d:showQuizletQuestions()
+    DX.d:initQuizletQuestions()
     return true
 end
 

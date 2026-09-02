@@ -1321,7 +1321,7 @@ function XrayDialogs:showTagSelector(mode)
     UIManager:show(tags_dialog)
 end
 
-function XrayDialogs:showQuizletQuestions()
+function XrayDialogs:initQuizletQuestions()
 
     self.quizlet_items = KOR.tables:randomize(DX.vd.items)
     self.quizlet_current_question = 1
