@@ -666,7 +666,7 @@ function XrayButtons:forUiInfoAdditionalButtons(config, parent)
         }))
     end
 
-    if DX.s.Quizlet_button_enabled then
+    if DX.s.Quizlet_button_enabled and has_items(parent.items) then
         table_insert(config.extra_buttons, 4, KOR.buttoninfopopup:forQuizletMode({
             callback = function()
                 parent:closeUiInfoDialog()
@@ -1542,7 +1542,7 @@ Current sorting mode: %1.]]), current_sorting_mode:upper()),
         })),
         --* optionally Quizlet-button will be inserted in this position...
     }
-    if DX.s.Quizlet_button_enabled then
+    if DX.s.Quizlet_button_enabled and has_items(DX.vd.items) then
         table_insert(buttons, KOR.buttoninfopopup:forQuizletMode({
             callback = function()
                 DX.d:closeListDialog()

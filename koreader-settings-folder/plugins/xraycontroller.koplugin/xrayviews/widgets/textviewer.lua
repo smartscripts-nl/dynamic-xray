@@ -48,6 +48,7 @@ local Screen = Device.screen
 
 local DX = DX
 local has_items = has_items
+local has_no_items = has_no_items
 local has_no_text = has_no_text
 local has_text = has_text
 local io = io
@@ -112,14 +113,15 @@ local TextViewer = InputContainer:extend{
     dialog_height = nil,
     dialog_queue_id = nil,
     event_after_close = nil,
-    key_events_module = nil,
     extra_buttons = nil,
     extra_buttons_startpos = nil,
     face = nil,
     fgcolor = KOR.colors.black,
     find_centered_lines_count = 5, --* line with find results to be not far from the center
     fixed_face = nil,
+    full_height = false,
     fullscreen = false,
+    fullscreen_padding = Screen:scaleBySize(30),
     has_copy_button = false,
     has_tabs = false,
     headings = nil,
@@ -130,8 +132,7 @@ local TextViewer = InputContainer:extend{
     is_standard_tabbed_dialog_lower = false,
     is_three_scroll_widget = false,
     justified = false,
-    full_height = false,
-    fullscreen_padding = Screen:scaleBySize(30),
+    key_events_module = nil,
     lang = "en",
     less_top_padding = false,
     --* make sure a textviewer window is displayed above all other widgets, even with visible keyboard in other, underlying dialogs:
@@ -1388,14 +1389,23 @@ end
 
 --- @private
 function TextViewer:insertExtraButtons(buttons)
-    if not self.extra_buttons then
+    if has_no_items(self.extra_buttons) then
         self:insertBackButton(buttons)
         return
     end
 
+    local bcount = #buttons[1]
+    local ecount = #self.extra_buttons
     local start_pos = self.extra_buttons_startpos or 1
-    for i = start_pos, #self.extra_buttons do
-        table_insert(buttons[1], i, self.extra_buttons[i])
+    if start_pos > bcount then
+        for i = 1, ecount do
+            table_insert(buttons[1], self.extra_buttons[i])
+        end
+        self:insertBackButton(buttons)
+        return
+    end
+    for i = 1, ecount do
+        table_insert(buttons[1], start_pos + i - 1, self.extra_buttons[i])
     end
     self:insertBackButton(buttons)
 end

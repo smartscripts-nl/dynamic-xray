@@ -33,6 +33,7 @@ local _ = KOR:initCustomTranslations()
 
 local DX = DX
 local has_items = has_items
+local has_no_items = has_no_items
 local math_floor = math_floor
 local math_max = math_max
 local math_min = math_min
@@ -54,6 +55,7 @@ local HtmlBox = InputContainer:extend{
     after_close_callback = nil,
     align = "center",
     auto_height = false,
+    back_button_inserted = false,
     bottom_widget = nil,
     --! we use text_viewer_font_size instead of html_box_font_size here, because the latter is a value in percentages:
     box_font_size = DX.s.textviewer_font_size,
@@ -66,6 +68,8 @@ local HtmlBox = InputContainer:extend{
     content_type = "html",
     css = nil,
     dialog_queue_id = nil,
+    extra_buttons = nil,
+    extra_buttons_startpos = nil,
     extract_texts = false,
     frame_content_fullscreen = nil,
     frame_content_windowed = nil,
@@ -91,6 +95,7 @@ local HtmlBox = InputContainer:extend{
     left_side_buttons = nil,
     modal = true,
     next_item_callback = nil,
+    no_back_button = false,
     no_buttons_row = false,
     --* to inform the parent about a newly activated tab, via ((TabNavigator#broadcastActivatedTab)):
     parent = nil,
@@ -711,6 +716,45 @@ function HtmlBox:computeLineHeight()
     end
 end
 
+--- @private
+function HtmlBox:insertBackButton(buttons)
+    if self.no_back_button or self.back_button_inserted then
+        return
+    end
+    table_insert(buttons[1], 1, {
+        icon = "back",
+        icon_size_ratio = 0.8,
+        callback = function()
+            self:onClose()
+        end,
+        hold_callback = self.default_hold_callback,
+    })
+    self.back_button_inserted = true
+end
+
+--- @private
+function HtmlBox:insertExtraButtons(buttons)
+    if has_no_items(self.extra_buttons) then
+        self:insertBackButton(buttons)
+        return
+    end
+
+    local bcount = #buttons[1]
+    local ecount = #self.extra_buttons
+    local start_pos = self.extra_buttons_startpos or 1
+    if start_pos > bcount then
+        for i = 1, ecount do
+            table_insert(buttons[1], self.extra_buttons[i])
+        end
+        self:insertBackButton(buttons)
+        return
+    end
+    for i = 1, ecount do
+        table_insert(buttons[1], start_pos + i - 1, self.extra_buttons[i])
+    end
+    self:insertBackButton(buttons)
+end
+
 --* compare ((TextViewer#getDefaultButtons)):
 --- @private
 function HtmlBox:generateButtons()
@@ -774,6 +818,7 @@ function HtmlBox:generateButtons()
             },
         },
     }
+    self:insertExtraButtons(buttons)
     if self.tweak_buttons_func then
         self:tweak_buttons_func(buttons)
     end
