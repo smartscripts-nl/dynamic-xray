@@ -35,8 +35,7 @@ local ReferenceInformation = WidgetContainer:extend{
 	db_path = nil,
 	--* a table:
 	headings = nil,
-	--* a string:
-	headings_db = nil,
+	headings_db = "",
 	info_dialog = nil,
 	loaded_for_book = nil,
 	queries = {
@@ -122,7 +121,7 @@ function ReferenceInformation:erase()
 	local conn = KOR.databases:getDBconn("ReferenceInformation:erase")
 	conn:exec(sql)
 	conn = KOR.databases:closeConnections(conn)
-	self.current_ebook_reference_information = nil
+	self:resetProps()
 
 	KOR.messages:notify(_("reference information has been erased"))
 end
@@ -322,6 +321,15 @@ function ReferenceInformation:prepareWikiContentForSaving(information)
 		:gsub("\n\n\n+", "\n\n")
 
 	return information
+end
+
+--- @private
+function ReferenceInformation:resetProps()
+	self.loaded_for_book = nil
+	self.current_ebook_reference_information = nil
+	self.current_ebook_reference_information_css = nil
+	self.headings = nil
+	self.headings_db = ""
 end
 
 --* items for this XrayInformation were added in ((InformationMediator#addReferenceInformation)):
