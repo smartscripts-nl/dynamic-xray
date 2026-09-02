@@ -1333,7 +1333,7 @@ end
 function XrayDialogs:showQuizletQuestion()
 
     local item = self.quizlet_items[self.quizlet_current_question]
-    local dialog_queue_id = "quizlet_question_" .. item.name
+    local dialog_queue_id = "quizlet_question"
 
     KOR.dialogsqueue:register({
         id = dialog_queue_id,
