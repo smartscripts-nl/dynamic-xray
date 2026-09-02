@@ -2233,15 +2233,14 @@ function XrayButtons:forGlossaryViewerTopLeft(parent, is_tabbed)
     }
 end
 
-function XrayButtons:injectReferenceButtons(callback, buttons)
+--- @param caller_close_callback function To close the calling dialog; with the left upper back button (DialogsQueue) in the reference dialog the user can then restart the calling dialog
+function XrayButtons:injectReferenceButtons(caller_close_callback, buttons)
     local top_buttons_right = buttons or {}
 
     table_insert(top_buttons_right, 1, KOR.buttoninfopopup:forWikipediaSearch({
         callback = function()
             KOR.wikipedia:showWikipediaInputPrompt(function()
-                if callback then
-                    callback()
-                end
+                caller_close_callback()
             end)
         end,
     }))
@@ -2250,6 +2249,7 @@ function XrayButtons:injectReferenceButtons(callback, buttons)
     if has_text(glossary) then
         table_insert(top_buttons_right, start_pos, KOR.buttoninfopopup:forGlossaryViewer({
             callback = function()
+                caller_close_callback()
                 KOR.glossary:showViewer(glossary)
             end
         }))
@@ -2258,6 +2258,7 @@ function XrayButtons:injectReferenceButtons(callback, buttons)
     if KOR.referenceinformation:hasInfo() then
         table_insert(top_buttons_right, start_pos, KOR.buttoninfopopup:forReferenceInformation({
             callback = function()
+                caller_close_callback()
                 KOR.referenceinformation:show()
             end
         }))
