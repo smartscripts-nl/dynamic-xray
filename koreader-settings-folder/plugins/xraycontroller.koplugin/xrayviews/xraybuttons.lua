@@ -666,7 +666,7 @@ function XrayButtons:forUiInfoAdditionalButtons(config, parent)
         }))
     end
 
-    if DX.s.Quizlet_button_enabled and has_items(parent.items) then
+    if DX.s.Quizlet_button_enabled and has_items(DX.vd.items) then
         table_insert(config.extra_buttons, 4, KOR.buttoninfopopup:forQuizletMode({
             callback = function()
                 parent:closeUiInfoDialog()
