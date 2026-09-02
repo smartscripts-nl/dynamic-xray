@@ -1322,11 +1322,9 @@ function XrayDialogs:showTagSelector(mode)
 end
 
 function XrayDialogs:initQuizletQuestions()
-
     self.quizlet_items = KOR.tables:randomize(DX.vd.items)
     self.quizlet_current_question = 1
     KOR.registry:unset("maintain_overlay")
-    self:showQuizletQuestion()
 end
 
 --- @private

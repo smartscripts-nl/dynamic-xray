@@ -94,6 +94,7 @@ end
 
 function XrayCallbacks:execQuizletModeCallback()
     DX.d:initQuizletQuestions()
+    DX.d:showQuizletQuestion()
     return true
 end
 
