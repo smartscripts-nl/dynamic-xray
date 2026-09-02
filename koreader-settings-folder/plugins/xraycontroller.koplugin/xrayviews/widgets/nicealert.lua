@@ -53,6 +53,7 @@ local NiceAlert = InputContainer:extend {
     screen_width = nil,
     show_parent = nil,
     tap_close_callback = nil,
+    top_buttons_left = nil,
     title = nil,
     ui = nil,
     width = nil,
@@ -157,6 +158,7 @@ function NiceAlert:generatePopupCallbackDialogWidget(info, width)
             title_shrink_font_to_fit = true,
             no_close_button_padding = true,
             dialog_queue_id = self.dialog_queue_id,
+            top_buttons_left = self.top_buttons_left,
             close_callback = self.close_callback or function()
                 UIManager:close(self)
                 return true

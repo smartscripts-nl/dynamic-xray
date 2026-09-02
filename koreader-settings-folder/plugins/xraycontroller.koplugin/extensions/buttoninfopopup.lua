@@ -268,6 +268,15 @@ function ButtonInfoPopup:forQuizletMode(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forQuizletToggleAnswersVisibility(props)
+	return ButtonProps:set({
+		--! icon_func defined by calling module
+		info = _("toggle icon | Toggle between displaying or hiding answers below the item names."),
+		callback_label = _("toggle"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forReferenceInformation(props)
 	return ButtonProps:set({
 		icon = "index",

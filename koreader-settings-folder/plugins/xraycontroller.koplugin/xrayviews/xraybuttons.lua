@@ -584,6 +584,20 @@ function XrayButtons:forQuizletQuestions(parent, item, questions_count)
      }}
 end
 
+--- @param parent XrayDialogs
+function XrayButtons:forQuizletQuestionsTopLeft(parent)
+    return {
+        KOR.buttoninfopopup:forQuizletToggleAnswersVisibility({
+            icon = parent.quizlet_show_answers_also and "toggle-on" or "toggle-off",
+            callback = function()
+                parent.quizlet_show_answers_also = not parent.quizlet_show_answers_also
+                UIManager:close(parent.quizlet_dialog)
+                parent:showQuizletQuestion()
+            end
+        }),
+    }
+end
+
 function XrayButtons:closeDialog(dialog)
     if not dialog then
         return

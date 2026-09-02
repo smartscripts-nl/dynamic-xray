@@ -66,6 +66,7 @@ local XrayDialogs = WidgetContainer:new{
     quizlet_current_question = 1,
     quizlet_dialog = nil,
     quizlet_items = nil,
+    quizlet_show_answers_also = false,
     --* the retrieved data will be formatted for display in ((XrayTappedWords#prepareNonTappedItemsTable)):
     sectioned_series_headings = "\n\n" .. _("By tapping on the bold book titles, you can open that book."),
     sectioned_series_item_template = {
@@ -1340,14 +1341,17 @@ function XrayDialogs:showQuizletQuestion()
         end
     })
 
+    local info = self.quizlet_show_answers_also and item.name .. "\n_______________________________\n\n" .. item.description .. "\n" or item.name .. "  =  ?"
+
     local questions_count = #self.quizlet_items
     KOR.dialogs:showOverlay()
     KOR.registry:set("maintain_overlay", true)
-    self.quizlet_dialog = KOR.dialogs:niceAlert(_("Quizlet-question"), item.name .. "  =  ?", {
+    self.quizlet_dialog = KOR.dialogs:niceAlert(_("Quizlet-question"), info, {
         modal = true,
         dialog_queue_id = dialog_queue_id,
         dismissable = true,
         with_close_button = true,
+        top_buttons_left = DX.b:forQuizletQuestionsTopLeft(self),
         close_callback = function()
             KOR.registry:unset("maintain_overlay")
             KOR.dialogs:closeOverlay()
