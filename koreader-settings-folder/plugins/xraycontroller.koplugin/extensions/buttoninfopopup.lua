@@ -259,6 +259,15 @@ function ButtonInfoPopup:forMenuToLetter(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forQuizletMode(props)
+	return ButtonProps:set({
+		icon = "quizlet-svgrepo-com",
+		info = _("Quizlet icon | Open a Quizlet dialog, to test your knowledge of Xray-items. This might be handy for studying purposes."),
+		callback_label = _("start"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forReferenceInformation(props)
 	return ButtonProps:set({
 		icon = "index",

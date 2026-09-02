@@ -245,7 +245,7 @@ function ButtonDialog:onCloseWidget()
         self:after_close_callback()
     end
     if not KOR.registry:get("infilemanager") then
-        KOR.dialogs:closeAllOverlays()
+        KOR.dialogs:closeOverlay()
     end
     UIManager:setDirty(nil, function()
         return "flashui", self.movable.dimen
@@ -261,7 +261,7 @@ function ButtonDialog:onTapClose()
         end
     end
 
-    KOR.dialogs:closeAllOverlays()
+    KOR.dialogs:closeOverlay()
     UIManager:close(self)
     --! don't use KOR.dialogs:closeAllWidgets() here, because otherwise parent dialogs might also be closed...
     return true

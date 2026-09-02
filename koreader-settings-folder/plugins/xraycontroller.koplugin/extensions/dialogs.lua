@@ -48,6 +48,10 @@ end
 --* dialogs closed here were registered with ((Dialogs#registerWidget)):
 --* alas, we can't use UIManager:broadcastEvent(Event:new("Close")) here, because that also closes KOReader:
 function Dialogs:closeAllWidgets()
+    if KOR.registry:get("maintain_overlay") then
+        return
+    end
+
     local widget
     count = #self.widgets
     for i = count, 1, -1 do
@@ -432,20 +436,19 @@ end
 
 function Dialogs:closeOverlay()
     UIManager:close(self.overlay)
+    self.overlay = nil
 end
 
 function Dialogs:closeAllDialogs()
-    self:closeAllOverlays()
+    self:closeOverlay()
     self:closeAllWidgets()
     UIManager:closeAllWidgetsExceptMainScreen()
 end
 
-function Dialogs:closeAllOverlays()
-    UIManager:close(self.overlay)
-    self.overlay = nil
-end
-
 function Dialogs:showOverlay(modal)
+    if KOR.registry:get("maintain_overlay") then
+        return
+    end
     if self.overlay then
         UIManager:close(self.overlay)
     end
@@ -469,7 +472,7 @@ end
 
 function Dialogs:showOverlayReloaded(caller_hint, modal)
     --* especially handy to force an overlay behind an InputDialog:
-    self:closeAllOverlays()
+    self:closeOverlay()
     return self:showOverlay(caller_hint, modal)
 end
 
@@ -721,23 +724,27 @@ function Dialogs:niceAlert(title, info, options)
     self.nice_alert = KOR.nicealert:new{
         info_text = prefix .. info .. "\n",
         mono_face = options.mono_face,
+        dialog_queue_id = options.dialog_queue_id,
         top_buttons_left = options.top_buttons_left,
         info_buttons = buttons,
         move_to_top = options.move_to_top,
         title = title,
         with_close_button = title or options.with_close_button,
+        close_callback = options.close_callback,
         called_externally = true,
         width = width,
         ui = KOR.ui,
         show_parent = KOR.ui,
     }
     UIManager:show(self.nice_alert)
-    if delay then
-        UIManager:scheduleIn(delay + 1, function()
-            UIManager:close(self.nice_alert)
-            UIManager:forceRePaint()
-        end)
+    if not delay then
+        return self.nice_alert
     end
+
+    UIManager:scheduleIn(delay + 1, function()
+        UIManager:close(self.nice_alert)
+        UIManager:forceRePaint()
+    end)
     return self.nice_alert
 end
 

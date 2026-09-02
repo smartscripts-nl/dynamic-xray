@@ -212,7 +212,7 @@ function ButtonDialogTitle:onCloseWidget()
 end
 
 function ButtonDialogTitle:onTapClose()
-    KOR.dialogs:closeAllOverlays()
+    KOR.dialogs:closeOverlay()
     UIManager:close(self)
     --! don't use KOR.dialogs:closeAllWidgets() here, because otherwise parent dialog of context dialogs will also be closed...
     if self.tap_close_callback then

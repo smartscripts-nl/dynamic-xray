@@ -462,7 +462,7 @@ function HtmlBox:onClose()
     self.menu_opened = {}
     KOR.dialogs:unregisterWidget(self)
     UIManager:close(self)
-    KOR.dialogs:closeAllOverlays()
+    KOR.dialogs:closeOverlay()
 
     return true
 end

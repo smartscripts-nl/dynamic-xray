@@ -516,6 +516,74 @@ function XrayButtons:forPageNavigatorTopRight(parent)
     })
 end
 
+--- @param parent XrayDialogs
+function XrayButtons:forQuizletQuestions(parent, item, questions_count)
+    return {{
+         {
+             icon = "previous",
+             callback = function()
+                 UIManager:close(parent.quizlet_dialog)
+                 parent.quizlet_current_question = parent.quizlet_current_question - 1
+                 if parent.quizlet_current_question < 1 then
+                     parent.quizlet_current_question = questions_count
+                 end
+                 parent:showQuizletQuestion()
+             end,
+         },
+         {
+             icon = "next",
+             callback = function()
+                 UIManager:close(parent.quizlet_dialog)
+                 parent.quizlet_current_question = parent.quizlet_current_question + 1
+                 if parent.quizlet_current_question > questions_count then
+                     parent.quizlet_current_question = 1
+                 end
+                 parent:showQuizletQuestion()
+             end,
+         },
+         {
+             icon = "view",
+             icon_size_ratio = 0.9,
+             callback = function()
+                 UIManager:close(parent.quizlet_dialog)
+                 local dialog_queue_id = "quizlet_answer"
+                 KOR.dialogsqueue:register({
+                     id = dialog_queue_id,
+                     restore = function()
+                         self:showQuizletQuestion()
+                     end
+                 })
+                 parent.quizlet_answer = KOR.dialogs:niceAlert(item.name, item.description, {
+                     modal = true,
+                     top_buttons_left = {},
+                     dialog_queue_id = dialog_queue_id,
+                     with_close_button = true,
+                     close_callback = function()
+                         KOR.registry:unset("maintain_overlay")
+                         KOR.dialogs:closeOverlay()
+                         UIManager:close(parent.quizlet_answer)
+                         UIManager:close(parent.quizlet_answer)
+                         return true
+                     end,
+                     tap_close_callback = function()
+                         KOR.registry:unset("maintain_overlay")
+                         KOR.dialogs:closeOverlay()
+                     end,
+                 })
+             end,
+         },
+         {
+             icon = "back",
+             callback = function()
+                 KOR.registry:unset("maintain_overlay")
+                 KOR.dialogs:closeOverlay()
+                 UIManager:close(parent.quizlet_dialog)
+                 parent.quizlet_dialog = nil
+             end,
+         },
+     }}
+end
+
 function XrayButtons:closeDialog(dialog)
     if not dialog then
         return
@@ -578,6 +646,7 @@ function XrayButtons:forUiInfoAdditionalButtons(config, parent)
                 DX.ta:showTagGroupSelector()
             end
         }),
+        --* optionally Quizlet-button will be inserted in this position...
         KOR.buttoninfopopup:forXrayExport({
             callback = function()
                 parent:closeUiInfoDialog()
@@ -594,6 +663,15 @@ function XrayButtons:forUiInfoAdditionalButtons(config, parent)
                 parent:closeUiInfoDialog()
                 parent:showMultipleBookSeriesActionsOverview()
             end,
+        }))
+    end
+
+    if DX.s.Quizlet_button_enabled then
+        table_insert(config.extra_buttons, 4, KOR.buttoninfopopup:forQuizletMode({
+            callback = function()
+                parent:closeUiInfoDialog()
+                return DX.cb:execQuizletModeCallback()
+            end
         }))
     end
 end
@@ -1462,7 +1540,17 @@ Current sorting mode: %1.]]), current_sorting_mode:upper()),
                 DX.ta:showTagGroupSelector()
             end,
         })),
+        --* optionally Quizlet-button will be inserted in this position...
     }
+    if DX.s.Quizlet_button_enabled then
+        table_insert(buttons, KOR.buttoninfopopup:forQuizletMode({
+            callback = function()
+                DX.d:closeListDialog()
+                return DX.cb:execQuizletModeCallback()
+            end
+        }))
+    end
+
     if DX.m.current_series then
         table_insert(buttons, 2, Button:new(KOR.buttoninfopopup:forXrayToggleBookOrSeriesMode({
             icon_size_ratio = base_icon_size + 0.1,
@@ -2244,19 +2332,19 @@ function XrayButtons:injectReferenceButtons(caller_close_callback, buttons)
             end)
         end,
     }))
-    local start_pos = 2
+    local button_pos = 2
     local glossary = KOR.glossary:get()
     if has_text(glossary) then
-        table_insert(top_buttons_right, start_pos, KOR.buttoninfopopup:forGlossaryViewer({
+        table_insert(top_buttons_right, button_pos, KOR.buttoninfopopup:forGlossaryViewer({
             callback = function()
                 caller_close_callback()
                 KOR.glossary:showViewer(glossary)
             end
         }))
-        start_pos = start_pos + 1
+        button_pos = button_pos + 1
     end
     if KOR.referenceinformation:hasInfo() then
-        table_insert(top_buttons_right, start_pos, KOR.buttoninfopopup:forReferenceInformation({
+        table_insert(top_buttons_right, button_pos, KOR.buttoninfopopup:forReferenceInformation({
             callback = function()
                 caller_close_callback()
                 KOR.referenceinformation:show()
@@ -2392,7 +2480,7 @@ Continue?]])
             KOR.buttoninfopopup:forXrayItemSave({
                 callback = function()
                     local return_to_list = KOR.registry:getOnce("force_xray_list_reload") or DX.d.list_is_opened
-                    KOR.dialogs:closeAllOverlays()
+                    KOR.dialogs:closeOverlay()
                     if mode == "add" then
                         DX.c:saveNewItem(return_to_list)
                         return

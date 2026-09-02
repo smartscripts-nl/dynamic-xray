@@ -1373,7 +1373,7 @@ function Menu:onScreenResize()
     end
 
     --* for non fullscreen Menus:
-    KOR.dialogs:closeAllOverlays()
+    KOR.dialogs:closeOverlay()
     self:init("restore_dialog")
     return false
 end

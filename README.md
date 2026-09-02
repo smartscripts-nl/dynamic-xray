@@ -34,6 +34,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 - [Glossary and Reference Information viewers](#glossary-and-reference-information-viewers)
   - [Reference Information viewer](#reference-information-viewer)
   - [Glossary viewer](#glossary-viewer)
+- [Quizlet-mode for studying purposes](#quizlet-mode-for-studying-purposes)
 - [DX in action](#dx-in-action)
     - [Videos](#videos)
     - [Images](#images)
@@ -187,6 +188,12 @@ use can store information loaded from the e-book. This might e.g. be timeline-in
 * When the user longpresses a word in the e-book text an it's in the Glossary, the Glossary Viewer will show that entry with its explanation.
 * The user can add texts from the e-book to the Glossary by highlighting their start and end.
 * The viewer can be called from the e-book with the hotkey Shift+G.
+
+### Quizlet-mode for studying purposes
+
+DX supports a Quizlet-studying mode. By tapping on the Quizlet-button in the Xray Items or the Page Information dialog, you will be presented random names of Xray items. You can then think if you know who/what this is, and optionally view the answer if you don't know.
+![Quizlet-question-exmaple](images/quizlet-question-example.png)
+An example of a Quizlet-question
 
 ## DX in action
 

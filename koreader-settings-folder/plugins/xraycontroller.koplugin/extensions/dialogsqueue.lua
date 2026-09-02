@@ -39,7 +39,7 @@ function DialogsQueue:getLastId()
 end
 
 function DialogsQueue:getParentId()
-    return #self.queue > 1 and self.queue[#self.queue - 1]
+    return #self.queue > 1 and self.queue[#self.queue - 1].id
 end
 
 function DialogsQueue:getQueueCount()

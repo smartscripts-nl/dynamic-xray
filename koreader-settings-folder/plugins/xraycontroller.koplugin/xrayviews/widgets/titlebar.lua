@@ -46,7 +46,6 @@ local _ = KOR:initCustomTranslations()
 local Screen = Device.screen
 
 local G_reader_settings = G_reader_settings
-local has_no_items = has_no_items
 local math_ceil = math_ceil
 local math_floor = math_floor
 local math_max = math_max
@@ -850,7 +849,9 @@ end
 function TitleBar:addDialogQueueButton()
     local buttons = self.tab_buttons_left or self.top_buttons_left
 
-    if has_no_items(buttons) or not self.dialog_queue_id or not KOR.dialogsqueue:getParentId() or KOR.dialogsqueue:getQueueCount() < 2 then
+    --! dialog_queue_id must have been provided by the owner dialog of the title bar:
+    --! don't use has_no_items(buttons) here; otherwise top_left_buttons with only DialogsQueue-back-button would not be possible:
+    if not buttons or not self.dialog_queue_id or not KOR.dialogsqueue:getParentId() or KOR.dialogsqueue:getQueueCount() < 2 then
         return
     end
 

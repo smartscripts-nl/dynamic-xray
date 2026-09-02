@@ -8,8 +8,9 @@ local md5 = require("ffi/sha2").md5
 local has_no_items = has_no_items
 local math_ceil = math_ceil
 local math_max = math_max
+local math_random = math_random
 local pairs = pairs
-local table = table
+local table_concat = table_concat
 local table_insert = table_insert
 local table_remove = table_remove
 local table_sort = table_sort
@@ -114,7 +115,20 @@ function Tables:concatField(itable, prop, separator)
     if not separator then
         separator = " "
     end
-    return table.concat(texts, separator)
+    return table_concat(texts, separator)
+end
+
+function Tables:randomize(items)
+    local random_items = self:shallowCopy(items)
+
+    count = #random_items
+    local j
+    for i = count, 2, -1 do
+        j = math_random(i)
+        random_items[i], random_items[j] = random_items[j], random_items[i]
+    end
+
+    return random_items
 end
 
 function Tables:shallowCopy(orig)

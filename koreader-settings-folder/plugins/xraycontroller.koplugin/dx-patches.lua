@@ -1254,7 +1254,7 @@ end
 
 function ReaderSearch:showHitWithContext(item, not_cached)
     self:closeHitviewer()
-    KOR.dialogs:closeAllOverlays()
+    KOR.dialogs:closeOverlay()
 
     local context_string = item.full_text
     --* [[[ and ]]] - injected in ((ReaderSearch#onShowFindAllResults)) - will be replaced by <b> and </b> in ((Dialogs#htmlBox))
@@ -1307,7 +1307,7 @@ function ReaderSearch:showHitWithContext(item, not_cached)
                 KOR.buttoninfopopup:forSearchAllLocationsGotoLocation({
                     callback = function()
                         self:closeHitviewer("close_item_viewer")
-                        KOR.dialogs:closeAllOverlays()
+                        KOR.dialogs:closeOverlay()
                         DX.pn:closePageNavigator()
                         if self.ui.rolling then
                             KOR.link:addCurrentLocationToStack()
@@ -1328,7 +1328,7 @@ function ReaderSearch:showHitWithContext(item, not_cached)
                 KOR.buttoninfopopup:forSearchAllLocationsGotoPageNavigator({
                     callback = function()
                         self:closeHitviewer("close_item_viewer")
-                        KOR.dialogs:closeAllOverlays()
+                        KOR.dialogs:closeOverlay()
                         local page = KOR.document:getPageFromXPointer(item.start)
                         -- #((jump from ReaderSearch to Xray Page Navigator))
                         DX.sp:resetActiveSideButtons("ReaderSearch:showHitWithContext")
@@ -1361,7 +1361,7 @@ end
 
 function ReaderSearch:closeHitviewer(close_item_viewer)
     if self.hit_viewer then
-        KOR.dialogs:closeAllOverlays()
+        KOR.dialogs:closeOverlay()
         UIManager:close(self.hit_viewer)
         self.hit_viewer = nil
     end

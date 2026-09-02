@@ -92,6 +92,11 @@ function XrayCallbacks:execPageNavigatorSearchItemCallback()
     return true
 end
 
+function XrayCallbacks:execQuizletModeCallback()
+    DX.d:showQuizletQuestions()
+    return true
+end
+
 --- @param iparent XrayPageNavigator
 function XrayCallbacks:execSettingsCallback(iparent)
     iparent:closePageNavigator()

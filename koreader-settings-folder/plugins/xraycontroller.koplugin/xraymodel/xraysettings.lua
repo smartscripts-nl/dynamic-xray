@@ -312,6 +312,11 @@ local XraySettings = WidgetContainer:new{
             explanation = _("Page Navigator: if this setting is false, no popup will be shown when you activate tagged items navigation in Page Navigator."),
             locked = 0,
         },
+        Quizlet_button_enabled = {
+            value = true,
+            explanation = _("If true, a Quizlet-button will be added to the Page Information and the Items List dialogs. If you tap on that button, you can test your knowledge of Xray items for a book. This might be handy for studying purposes."),
+            locked = 0,
+        },
         --* SM stands for the Series Manager:
         SM_all_data_imported = {
             value = false,
@@ -456,7 +461,7 @@ local XraySettings = WidgetContainer:new{
         reset_page_navigator_cache = function()
             DX.c:resetDynamicXray()
             DX.pn:closePageNavigator()
-            KOR.dialogs:closeAllOverlays()
+            KOR.dialogs:closeOverlay()
         end,
         series_manager_reload = function()
             KOR.seriesmanager:reloadContextDialog()
@@ -579,7 +584,7 @@ end
 
 function XraySettings:saveSetting(key, value)
     if KOR.dialogs then
-        KOR.dialogs:closeAllOverlays()
+        KOR.dialogs:closeOverlay()
     end
     local self = DX.s
     --* return (corrected) value:

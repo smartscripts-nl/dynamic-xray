@@ -61,6 +61,11 @@ local XrayDialogs = WidgetContainer:new{
     list_args = nil,
     list_is_opened = false,
     needle_name_for_list_page = "",
+    --* set from ((XrayButtons#forQuizletQuestions)):
+    quizlet_answer = nil,
+    quizlet_current_question = 1,
+    quizlet_dialog = nil,
+    quizlet_items = nil,
     --* the retrieved data will be formatted for display in ((XrayTappedWords#prepareNonTappedItemsTable)):
     sectioned_series_headings = "\n\n" .. _("By tapping on the bold book titles, you can open that book."),
     sectioned_series_item_template = {
@@ -95,7 +100,7 @@ end
 
 --- @return boolean signalling whether the user was redirected to the viewer (true), or not (false)
 function XrayDialogs:closeForm(mode)
-    KOR.dialogs:closeAllOverlays()
+    KOR.dialogs:closeOverlay()
     KOR.registry:unset("xray_item_type_chosen", "chapter_hits_texts")
     if mode == "add" then
         UIManager:close(self.add_item_input)
@@ -779,7 +784,7 @@ function XrayDialogs:showList(focus_item, dont_show, select_mode)
     self.item_requested = focus_item
     self.called_from_list = false
     self:closeListDialog()
-    --* don't add Items List to ((DialogsQueue)) if it is only being used as items selector:
+    --* don't add Items List to ((DialogsQueue)) if it is only being used as item-selector:
     if #items_for_select == 0 and not DX.ta.select_for_tags_tag and not DX.pn.do_double_filter_select then
         KOR.dialogsqueue:register({
             id = "xray_items_list",
@@ -1314,6 +1319,50 @@ function XrayDialogs:showTagSelector(mode)
         buttons = buttons,
     }
     UIManager:show(tags_dialog)
+end
+
+function XrayDialogs:showQuizletQuestions()
+
+    self.quizlet_items = KOR.tables:randomize(DX.vd.items)
+    self.quizlet_current_question = 1
+    KOR.registry:unset("maintain_overlay")
+    self:showQuizletQuestion()
+end
+
+--- @private
+function XrayDialogs:showQuizletQuestion()
+
+    local item = self.quizlet_items[self.quizlet_current_question]
+    local dialog_queue_id = "quizlet_question_" .. item.name
+
+    KOR.dialogsqueue:register({
+        id = dialog_queue_id,
+        restore = function()
+            self:showQuizletQuestion()
+        end
+    })
+
+    local questions_count = #self.quizlet_items
+    KOR.dialogs:showOverlay()
+    KOR.registry:set("maintain_overlay", true)
+    self.quizlet_dialog = KOR.dialogs:niceAlert(_("Quizlet-question"), item.name .. "  =  ?", {
+        modal = true,
+        dialog_queue_id = dialog_queue_id,
+        dismissable = true,
+        with_close_button = true,
+        close_callback = function()
+            KOR.registry:unset("maintain_overlay")
+            KOR.dialogs:closeOverlay()
+            UIManager:close(self.quizlet_dialog)
+            return true
+        end,
+        tap_close_callback = function()
+            KOR.registry:unset("maintain_overlay")
+            KOR.dialogs:closeOverlay()
+            UIManager:close(self.quizlet_dialog)
+        end,
+        buttons = DX.b:forQuizletQuestions(self, item, questions_count)
+    })
 end
 
 --* compare ((XrayButtons#handleMoreButtonClick)), for the popup after the user tapped on the "More..." button:

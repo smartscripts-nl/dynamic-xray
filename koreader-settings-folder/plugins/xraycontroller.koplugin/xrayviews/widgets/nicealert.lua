@@ -34,6 +34,9 @@ local table_insert = table_insert
 
 --- @class NiceAlert
 local NiceAlert = InputContainer:extend {
+    after_close_callback = nil,
+    close_callback = nil,
+    dialog_queue_id = nil,
     dismissable = true, --* set to false if any button callback is required
     info_buttons = nil,
     info_popup_face = Font:getFace("x_smallinfofont"),
@@ -153,7 +156,8 @@ function NiceAlert:generatePopupCallbackDialogWidget(info, width)
             title_multilines = true,
             title_shrink_font_to_fit = true,
             no_close_button_padding = true,
-            close_callback = function()
+            dialog_queue_id = self.dialog_queue_id,
+            close_callback = self.close_callback or function()
                 UIManager:close(self)
                 return true
             end,
@@ -282,6 +286,12 @@ end
 
 function NiceAlert:onClose()
     UIManager:close(self)
+    if self.after_close_callback then
+        self.after_close_callback()
+    end
+    if self.close_callback then
+        self.close_callback()
+    end
     if self.tap_close_callback then
         self.tap_close_callback()
     end
