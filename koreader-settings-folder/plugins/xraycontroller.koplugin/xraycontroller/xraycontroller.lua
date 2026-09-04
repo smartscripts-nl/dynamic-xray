@@ -135,6 +135,11 @@ function XrayController:initKORandDynamicXray()
     DX.d:initViewHelpers()
     --* see ((SYNTACTIC SUGAR)):
     DX:registerController(self)
+
+    if DX.s.is_mobile_device then
+        --* can be used in ((Menu page-information)):
+        KOR.registry.footer_page_info = "%1/%2"
+    end
 end
 --! init KOR and DX:
 XrayController:initKORandDynamicXray()

@@ -17,6 +17,8 @@ local Registry = WidgetContainer:new{
     --* will be populated by ((Font#getDefaultDialogFontFace)):
     default_dialog_font = nil,
     DX_icons_path_added = false,
+    --* this value can be overwritten for Bigme by ((XrayController#initKORandDynamicXray)):
+    footer_page_info = "p.%1 of %2",
     half_screen_width = nil,
     info_callbacks_show_indicators = true,
     --* this acts as cache for Button.left_indicator etc.:

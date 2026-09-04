@@ -1165,7 +1165,9 @@ function Menu:updatePageInfo(select_number)
             self:moveFocusTo(1, select_number)
         end
         --* update page information
-        self.page_info_text:setText(T(_("%1 of %2"), self.page, self.page_num))
+        -- #((Menu page-information))
+        local page_info = DX.s.is_mobile_device and "%1/%2" or KOR.registry.footer_page_info
+        self.page_info_text:setText(T(_(page_info), self.page, self.page_num))
         if self.page_num > 1 then
             self.page_info_text:enable()
         else
