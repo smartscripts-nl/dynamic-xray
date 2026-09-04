@@ -174,6 +174,9 @@ end
 
 --- @private
 function HtmlBox:initHotkeys()
+    if not Device:hasKeys() then
+        return
+    end
     KOR.keyevents:addHotkeysForHtmlBox(self, self.key_events_module)
 
     --! we need this call to restore hotkeys for the dialog every time a new tab gets activated (and therefore the dialog reloaded):

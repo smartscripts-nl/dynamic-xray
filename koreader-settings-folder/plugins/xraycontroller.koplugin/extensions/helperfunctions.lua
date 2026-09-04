@@ -42,6 +42,7 @@ string_char = string.char
 string_find = string.find
 string_format = string.format
 string_gmatch = string.gmatch
+string_len = string.len
 string_lower = string.lower
 string_rep = string.rep
 string_sub = string.sub

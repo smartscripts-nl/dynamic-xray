@@ -267,11 +267,13 @@ end
 
 --- @private
 function NiceAlert:registerKeyEvents()
-    if Device:hasKeys() then
-        self.key_events = {
-            Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } },
-        }
+    if not Device:hasKeys() then
+        return
     end
+
+    self.key_events = {
+        Close = DX.s.is_ubuntu and { { Input.group.Back } } or { { Input.group.CloseDialog } },
+    }
 end
 
 function NiceAlert:onShow()

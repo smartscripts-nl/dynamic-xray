@@ -5,7 +5,6 @@ Text widget with vertical scroll bar.
 local require = require
 
 local BD = require("ui/bidi")
-local Blitbuffer = require("ffi/blitbuffer")
 local Device = require("device")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
@@ -19,7 +18,9 @@ local VerticalScrollBar = require("xrayviews/widgets/verticalscrollbar")
 local UIManager = require("ui/uimanager")
 local Screen = Device.screen
 
-local table = table
+local table_insert = table_insert
+
+local count
 
 --- @class ScrollTextWidget
 local ScrollTextWidget = InputContainer:extend{
@@ -31,7 +32,7 @@ local ScrollTextWidget = InputContainer:extend{
     scroll_callback = nil, --* called with (low, high) when view is scrolled
     scroll_by_pan = false, --* allow scrolling by lines with Pan
     face = nil,
-    fgcolor = Blitbuffer.COLOR_BLACK,
+    fgcolor = KOR.colors.black,
     width = Screen:scaleBySize(400),
     height = Screen:scaleBySize(20),
     scroll_bar_width = Screen:scaleBySize(6),
@@ -53,6 +54,9 @@ local ScrollTextWidget = InputContainer:extend{
     for_measurement_only = nil, --* When the widget is a one-off used to compute text height
 
     fullscreen = false,
+    --* set this to true for windows which have no tabs, so crash because of trying to scroll to next/previous tab prevented in ((ScrollTextWidget#onScrollDown)) and ((ScrollTextWidget#onScrollUp)):
+    has_no_scrollbar = false,
+    has_no_tabs = false,
     key_events_module = nil,
 }
 
@@ -86,7 +90,16 @@ function ScrollTextWidget:init()
     local total_line_count = self.text_widget:getAllLineCount()
     local has_scrollbar = visible_line_count < total_line_count
 
+    --* this var will be read in ((TextViewer#applyOverflowCorrections)) and ((TextViewer#computeHeights)):
     KOR.registry:set("has_scrollbar", has_scrollbar)
+    --* to prevent crashes in ((ScrollTextWidget#onScrollDown)) and ((ScrollTextWidget#onScrollUp)):
+    self.has_no_scrollbar = not has_scrollbar
+
+    local horizontal_group = HorizontalGroup:new{
+        align = "top",
+        self.text_widget,
+    }
+    --! don't make next code block - setting scrollbar and calling self:updateScrollBar() - dependent on if has_scrollbar, because otherwise crash in edit fields:
     local scrollbar_config = {
         enable = has_scrollbar,
         low = 0,
@@ -99,57 +112,56 @@ function ScrollTextWidget:init()
     }
     self.v_scroll_bar = VerticalScrollBar:new(scrollbar_config)
     self:updateScrollBar()
-    local horizontal_group = HorizontalGroup:new{ align = "top" }
-    table.insert(horizontal_group, self.text_widget)
-    table.insert(horizontal_group, HorizontalSpan:new{width=self.text_scroll_span})
-    table.insert(horizontal_group, self.v_scroll_bar)
+    table_insert(horizontal_group, HorizontalSpan:new{ width = self.text_scroll_span })
+    table_insert(horizontal_group, self.v_scroll_bar)
     self[1] = horizontal_group
-    if not self.for_measurement_only then
-        self.dimen = Geom:new(self[1]:getSize())
-        if Device:isTouchDevice() then
-            self.ges_events = {
-                ScrollText = {
-                    GestureRange:new{
-                        ges = "swipe",
-                        range = function() return self.dimen end,
-                    },
+    if self.for_measurement_only then
+        return
+    end
+
+    self.dimen = Geom:new(self[1]:getSize())
+    if Device:isTouchDevice() then
+        self.ges_events = {
+            ScrollText = {
+                GestureRange:new{
+                    ges = "swipe",
+                    range = function() return self.dimen end,
                 },
-                TapScrollText = { --* allow scrolling with tap
-                    GestureRange:new{
-                        ges = "tap",
-                        range = function() return self.dimen end,
-                    },
+            },
+            TapScrollText = { --* allow scrolling with tap
+                GestureRange:new{
+                    ges = "tap",
+                    range = function() return self.dimen end,
+                },
+            },
+        }
+        if self.scroll_by_pan then
+            self.ges_events.PanText = {
+                GestureRange:new{
+                    ges = "pan",
+                    range = function() return self.dimen end,
                 },
             }
-            if self.scroll_by_pan then
-                self.ges_events.PanText = {
-                    GestureRange:new{
-                        ges = "pan",
-                        range = function() return self.dimen end,
-                    },
-                }
-                self.ges_events.PanReleaseText = {
-                    GestureRange:new{
-                        ges = "pan_release",
-                        range = function() return self.dimen end,
-                    },
-                }
-            end
+            self.ges_events.PanReleaseText = {
+                GestureRange:new{
+                    ges = "pan_release",
+                    range = function() return self.dimen end,
+                },
+            }
         end
-        self:initHotkeys()
     end
+    self:initHotkeys()
 end
 
 function ScrollTextWidget:initHotkeys()
     KOR.keyevents:addHotkeysForScrollTextWidget(self, self.key_events_module)
-
     --* this actions were set in ((KeyEvents#addHotkeysForXrayUIpageInfoViewer)) and other Xray modules:
     local actions = KOR.registry:get("add_parent_hotkeys")
     if not actions then
         return
     end
 
-    local count = #actions
+    count = #actions
     local hotkey, label
     for i = 1, count do
         hotkey = actions[i].hotkey
@@ -241,11 +253,13 @@ function ScrollTextWidget:moveCursorToCharPos(charpos, centered_lines_count)
         self.text_widget:moveCursorToCharPos(charpos)
     end
     self:updateScrollBar()
+    return true
 end
 
 function ScrollTextWidget:moveCursorToTop(charpos)
     self.text_widget:moveCursorToCharPosKeepingViewAtTop(charpos)
     self:updateScrollBar()
+    return true
 end
 
 function ScrollTextWidget:moveCursorToXY(x, y, no_overflow)
@@ -254,11 +268,13 @@ function ScrollTextWidget:moveCursorToXY(x, y, no_overflow)
     end
     self.text_widget:moveCursorToXY(x, y, no_overflow)
     self:updateScrollBar()
+    return true
 end
 
 function ScrollTextWidget:moveCursorLeft()
     self.text_widget:moveCursorLeft()
     self:updateScrollBar()
+    return true
 end
 
 function ScrollTextWidget:moveCursorRight()
@@ -269,51 +285,70 @@ end
 function ScrollTextWidget:moveCursorUp()
     self.text_widget:moveCursorUp()
     self:updateScrollBar()
+    return true
 end
 
 function ScrollTextWidget:moveCursorDown()
     self.text_widget:moveCursorDown()
     self:updateScrollBar()
+    return true
 end
 
 function ScrollTextWidget:moveCursorHome()
     self.text_widget:moveCursorHome()
     self:updateScrollBar()
+    return true
 end
 
 function ScrollTextWidget:moveCursorEnd()
     self.text_widget:moveCursorEnd()
     self:updateScrollBar()
+    return true
 end
 
 function ScrollTextWidget:scrollDown()
-    self.text_widget:scrollDown()
+    local has_scrolled = self.text_widget:scrollDown()
+    if not has_scrolled then
+        return false
+    end
     self:updateScrollBar(true)
+    return true
 end
 
 function ScrollTextWidget:scrollUp()
-    self.text_widget:scrollUp()
+    local has_scrolled = self.text_widget:scrollUp()
+    if not has_scrolled then
+        return false
+    end
     self:updateScrollBar(true)
+    return true
 end
 
 function ScrollTextWidget:scrollToTop()
     self.text_widget:scrollToTop()
     self:updateScrollBar(true)
+    return true
 end
 
 function ScrollTextWidget:scrollToBottom()
     self.text_widget:scrollToBottom()
     self:updateScrollBar(true)
+    return true
 end
 
 function ScrollTextWidget:scrollText(direction)
     if direction == 0 then return end
+    local did_have_effect
     if direction > 0 then
-        self.text_widget:scrollDown()
+        did_have_effect = self.text_widget:scrollDown()
     else
-        self.text_widget:scrollUp()
+        did_have_effect = self.text_widget:scrollUp()
     end
+    if did_have_effect then
     self:updateScrollBar(true)
+        return true
+    end
+    return false
 end
 
 function ScrollTextWidget:scrollToRatio(ratio, force_to_page)
@@ -325,16 +360,18 @@ function ScrollTextWidget:scrollToRatio(ratio, force_to_page)
     end
     self.text_widget:scrollToRatio(ratio, force_to_page)
     self:updateScrollBar(true)
+    return true
 end
 
 function ScrollTextWidget:onScrollText(arg, ges)
+    local did_have_effect
     if ges.direction == "north" then
-        self:scrollText(1)
-        return true
+        did_have_effect = self:scrollText(1)
+        return did_have_effect
     elseif ges.direction == "south" then
-        self:scrollText(-1)
+        did_have_effect = self:scrollText(-1)
         self.garbage = arg
-        return true
+        return did_have_effect
     end
     --* if swipe west/east, let it propagate up (e.g. for quickdictlookup to
     --* go to next/prev result)
@@ -355,6 +392,9 @@ function ScrollTextWidget:onTapScrollText(arg, ges)
 end
 
 function ScrollTextWidget:onScrollUp()
+    if self.has_no_tabs and (self.has_no_scrollbar or self.text_widget.top_reached) then
+        return false
+    end
     if self.text_widget.virtual_line_num > 1 then
         self:scrollText(-1)
         return true
@@ -364,6 +404,9 @@ function ScrollTextWidget:onScrollUp()
 end
 
 function ScrollTextWidget:onScrollDown()
+    if self.has_no_tabs and (self.has_no_scrollbar or self.text_widget.bottom_reached) then
+        return false
+    end
     if self.text_widget.virtual_line_num + self.text_widget:getVisLineCount() <= #self.text_widget.vertical_string_list then
         self:scrollText(1)
         return true

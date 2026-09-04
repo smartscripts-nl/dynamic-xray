@@ -698,50 +698,44 @@ function Dialogs:showBookCover(full_path)
 end
 
 --* see ((DIALOGS))
---- this alert looks very pretty, has a titlebar and optionally buttons at the bottom
+--* this alert looks very pretty, has a titlebar and optionally buttons at the bottom
 --* compare ((Dialogs#htmlBox)) for html message windows:
 --! buttons use UIManager:close(dialog) for closing niceAlert instance, so dialog must always be set here, returned and handled in calling context!
-function Dialogs:niceAlert(title, info, options)
-    if not options then
-        options = {}
-    end
-    local buttons = options.buttons
-    local width = options.width
-    local delay = options.delay
-    local no_white_space_prefix = options.no_white_space_prefix
-    --[[
+--[[
     --* example call:
     local dialog
     --* define buttons, which also call UIManager:close(dialog)
     dialog = KOR.dialogs:niceAlert(title, info, {
         buttons = buttons,
     })
-    ]]
-    if not title then
-        title = _("Information")
+]]
+function Dialogs:niceAlert(title, info, options)
+    if not options then
+        options = {
+            modal = true,
+        }
     end
-    local prefix = no_white_space_prefix and "" or "\n"
-    self.nice_alert = KOR.nicealert:new{
-        info_text = prefix .. info .. "\n",
-        mono_face = options.mono_face,
-        dialog_queue_id = options.dialog_queue_id,
-        top_buttons_left = options.top_buttons_left,
-        info_buttons = buttons,
-        move_to_top = options.move_to_top,
-        title = title,
-        with_close_button = title or options.with_close_button,
-        close_callback = options.close_callback,
-        called_externally = true,
-        width = width,
-        ui = KOR.ui,
-        show_parent = KOR.ui,
-    }
+    KOR.registry:set("restore_title", title)
+    if not title then
+        title = "Ter informatie"
+    end
+    local prefix = options.no_white_space_prefix and "" or "\n"
+
+    local config = options
+    config.title = title
+    config.info_text = prefix .. info .. "\n"
+    config.info_buttons = options.buttons
+    config.with_close_button = title or options.with_close_button
+    config.ui = KOR.ui
+    config.show_parent = KOR.ui
+
+    self.nice_alert = KOR.nicealert:new(config)
     UIManager:show(self.nice_alert)
-    if not delay then
+    if not options.delay then
         return self.nice_alert
     end
 
-    UIManager:scheduleIn(delay + 1, function()
+    UIManager:scheduleIn(options.delay + 1, function()
         UIManager:close(self.nice_alert)
         UIManager:forceRePaint()
     end)

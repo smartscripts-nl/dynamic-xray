@@ -259,6 +259,20 @@ function ButtonInfoPopup:forMenuToLetter(props)
 	}, props)
 end
 
+--- @param parent Quizlet
+function ButtonInfoPopup:forQuizletAnswerView(parent, item)
+	return ButtonProps:set({
+		icon = "view",
+		icon_size_ratio = 0.9,
+		enabled = not parent.quizlet_show_answers_also,
+		info = _("eye icon | Show the answer to this question. With the back-button above that answer you can return to the current question.\n\nNB: The eye-button will be disabled when you have enabled display of the answers below the questions, with the toggle-button in the upper left corner of the current dialog."),
+		callback_label = _("show"),
+		callback = function()
+			parent:viewAnswer(item)
+		end,
+	}, {})
+end
+
 function ButtonInfoPopup:forQuizletMode(props)
 	return ButtonProps:set({
 		icon = "quizlet-svgrepo-com",
@@ -266,6 +280,30 @@ function ButtonInfoPopup:forQuizletMode(props)
 		callback_label = _("start"),
 		--! callback defined by calling module
 	}, props)
+end
+
+--- @param parent Quizlet
+function ButtonInfoPopup:forQuizletNext(parent)
+	return ButtonProps:set({
+		icon = "next",
+		info = _("next icon | Show next Quizlet question.\n\nOn your keyboard (if available) you can also open this with Space..."),
+		callback_label = _("next"),
+		callback = function()
+			parent:onViewPreviousQuizlet()
+		end,
+	}, {})
+end
+
+--- @param parent Quizlet
+function ButtonInfoPopup:forQuizletPrevious(parent)
+	return ButtonProps:set({
+		icon = "previous",
+		info = _("previous icon | Show previous Quizlet question.\n\nOn your keyboard (if available) you can also open this with Shift+Space..."),
+		callback_label = _("previous"),
+		callback = function()
+			parent:onViewPreviousQuizlet()
+		end,
+	}, {})
 end
 
 function ButtonInfoPopup:forQuizletToggleAnswersVisibility(props)

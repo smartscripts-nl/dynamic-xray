@@ -21,6 +21,7 @@ local FrameContainer = require("xrayviews/widgets/container/framecontainer")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
 local InputContainer = require("ui/widget/container/inputcontainer")
+local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")
 local RenderText = require("ui/rendertext")
 local RightContainer = require("ui/widget/container/rightcontainer")
@@ -42,6 +43,8 @@ local math_floor = math_floor
 local math_max = math_max
 local math_min = math_min
 local math_round = math_round
+local pairs = pairs
+local string_len = string_len
 local table_concat = table_concat
 local table_insert = table_insert
 local table_remove = table_remove
@@ -61,8 +64,8 @@ local TextBoxWidget = InputContainer:extend{
                   -- or bold=Font.FORCE_SYNTHETIZED_BOLD to force using synthesized bold,
                   -- which, with XText, makes a bold string the same width as it non-bolded.
     line_height = 0.3, -- in em
-    fgcolor = Blitbuffer.COLOR_BLACK,
-    bgcolor = Blitbuffer.COLOR_WHITE,
+    fgcolor = KOR.colors.black,
+    bgcolor = KOR.colors.background,
     width = Screen:scaleBySize(400), -- in pixels
     height = nil, -- nil value indicates unscrollable text widget
     height_adjust = false, -- if true, reduce height to a multiple of line_height (for nicer centering)
@@ -150,7 +153,7 @@ local TextBoxWidget = InputContainer:extend{
         -- Some other possible formatting we could implement is different alignment (center,
         -- right) of some lines in the provided text.
 
-    --* for use with ScrollTextWidgets:
+    key_events = {},
     padding_right = 0,
     vertical_string_list_count = 0,
 }
@@ -252,9 +255,28 @@ function TextBoxWidget:init()
             },
         }
     end
+
+    self:initHotkeys()
 end
 
--- this concerns dialogs etc., not the main ebook text itself:
+function TextBoxWidget:initHotkeys()
+    if not Device:hasKeys() then
+        return
+    end
+
+    local parent_hotkeys = KOR.registry:get("add_parent_hotkeys")
+    if not parent_hotkeys then
+        return
+    end
+    for label, hk_data in pairs(parent_hotkeys) do
+        self["on" .. label] = function()
+            return hk_data[2]()
+        end
+        self.key_events[label] = hk_data[1]
+    end
+end
+
+--* this concerns dialogs etc., not the main ebook text itself:
 function TextBoxWidget:_computeTextDimensions()
     if self.use_xtext then
         --* this seems to be the default for Android:
@@ -600,6 +622,12 @@ end
 
 -- XText: shape a line into positioned glyphs
 function TextBoxWidget:_shapeLine(line)
+
+    --! hotfix for crash:
+    if not line then
+        return
+    end
+
     -- line is an item from self.vertical_string_list
     if line._shaped then
         return -- already done
@@ -913,7 +941,7 @@ function TextBoxWidget:_renderText(start_row_idx, end_row_idx)
                         glyph = RenderText:getGlyphByIndex(face, xglyph.glyph, self.bold, bolder)
                         color = self.fgcolor
                         if self._alt_color_for_rtl then
-                            color = xglyph.is_rtl and Blitbuffer.COLOR_DARK_GRAY or Blitbuffer.COLOR_BLACK
+                            color = xglyph.is_rtl and KOR.colors.label_disabled or KOR.colors.black
                         end
                         self._bb:colorblitFrom(glyph.bb,
                             xglyph.x0 + glyph.l + xglyph.x_offset,
@@ -958,7 +986,7 @@ function TextBoxWidget:_renderText(start_row_idx, end_row_idx)
                 -- truncate there and add the ellipsis, but well...
                 line_text = RenderText:truncateTextByWidth(line_text, self.face, self.width, true, self.bold)
             else
-                line_text = line_text .. "…"
+                line_text = line_text .. KOR.strings.ellipsis
             end
         end
         RenderText:renderUtf8Text(self._bb, pen_x, y, self.face, line_text, true, self.bold, self.fgcolor, nil, self:_getLinePads(line))
@@ -1060,12 +1088,12 @@ function TextBoxWidget:_renderImage(start_row_idx)
         local status_widget = TextWidget:new{
             text = status_text,
             face = Font:getFace("cfont", 20),
-            fgcolor = Blitbuffer.COLOR_DARK_GRAY,
+            fgcolor = KOR.colors.label_disabled,
             bold = true,
         }
         status_height = status_widget:getSize().h
         status_widget = FrameContainer:new{
-            background = Blitbuffer.COLOR_WHITE,
+            background = KOR.colors.background,
             bordersize = 0,
             margin = 0,
             padding = 0,
@@ -1357,6 +1385,10 @@ function TextBoxWidget:onTapImage(arg, ges)
 end
 
 function TextBoxWidget:scrollDown()
+    if self.bottom_reached or self.virtual_line_num + self.lines_per_page > self.vertical_string_list_count then
+        self:setLimitStatus("bottom", true)
+        return false
+    end
     self.image_show_alt_text = nil -- reset image bb/alt state
     if self.virtual_line_num + self.lines_per_page <= self.vertical_string_list_count then
         self:free(false)
@@ -1379,9 +1411,16 @@ function TextBoxWidget:scrollDown()
         local ln = self.height == nil and 1 or self.virtual_line_num
         self:moveCursorToCharPos(self.vertical_string_list[ln] and self.vertical_string_list[ln].offset or 1)
     end
+
+    self:setLimitStatus("bottom", self.virtual_line_num + self.lines_per_page > self.vertical_string_list_count)
+    return true
 end
 
 function TextBoxWidget:scrollUp()
+    if self.top_reached or self.virtual_line_num == 1 then
+        self:setLimitStatus("top", true)
+        return false
+    end
     self.image_show_alt_text = nil
     if self.virtual_line_num > 1 then
         self:free(false)
@@ -1397,6 +1436,9 @@ function TextBoxWidget:scrollUp()
         local ln = self.height == nil and 1 or self.virtual_line_num
         self:moveCursorToCharPos(self.vertical_string_list[ln] and self.vertical_string_list[ln].offset or 1)
     end
+
+    self:setLimitStatus("top", self.virtual_line_num == 1)
+    return true
 end
 
 function TextBoxWidget:scrollLines(nb_lines)
@@ -1418,12 +1460,33 @@ function TextBoxWidget:scrollLines(nb_lines)
     if self.editable then
         local x, y = self:_getXYForCharPos()
         if y < 0 or y >= self.text_height then
-            -- move cursor to first line of visible area
+            --* move cursor to first line of visible area
             local ln = self.height == nil and 1 or self.virtual_line_num
             self.garbage = x
             self:moveCursorToCharPos(self.vertical_string_list[ln] and self.vertical_string_list[ln].offset or 1)
         end
     end
+
+    if nb_lines < 0 then
+        self:setLimitStatus("top", self.virtual_line_num == 1)
+    elseif nb_lines > 0 then
+        self:setLimitStatus("bottom", self.virtual_line_num + self.lines_per_page > self.vertical_string_list_count)
+    end
+end
+
+--- @private
+function TextBoxWidget:setLimitStatus(modus, reached)
+    if modus == "top" and reached then
+        self.bottom_reached = false
+        self.top_reached = true
+        return
+    elseif modus == "bottom" and reached then
+        self.bottom_reached = true
+        self.top_reached = false
+        return
+    end
+    self.bottom_reached = false
+    self.top_reached = false
 end
 
 function TextBoxWidget:scrollToTop()
@@ -1437,6 +1500,7 @@ function TextBoxWidget:scrollToTop()
         -- move cursor to first char
         self:moveCursorToCharPos(1)
     end
+    self:setLimitStatus("top", true)
 end
 
 function TextBoxWidget:scrollToBottom()
@@ -1455,6 +1519,7 @@ function TextBoxWidget:scrollToBottom()
         -- move cursor to last char
         self:moveCursorToCharPos(#self.charlist + 1)
     end
+    self:setLimitStatus("bottom", true)
 end
 
 
@@ -1487,6 +1552,8 @@ function TextBoxWidget:scrollToRatio(ratio, force_to_page)
         local ln = self.height == nil and 1 or self.virtual_line_num
         self:moveCursorToCharPos(self.vertical_string_list[ln].offset)
     end
+
+    self:setLimitStatus("bottom", self.virtual_line_num + self.lines_per_page > self.vertical_string_list_count)
 end
 
 
@@ -1499,7 +1566,7 @@ function TextBoxWidget:_getXYForCharPos(charpos)
     if not charpos then
         charpos = self.charpos
     end
-    if self.text == nil or string.len(self.text) == 0 then
+    if self.text == nil or string_len(self.text) == 0 then
         return 0, 0, 1
     end
     -- Find the line number: scan up/down from current virtual_line_num
@@ -1847,6 +1914,29 @@ end
 
 -- Update view to show the line with charpos not far than <centered_lines_count> lines away
 -- from the center of the screen, and draw the cursor.
+function TextBoxWidget:moveCursorToCharPosKeepingViewAtTop(charpos)
+    local old_virtual_line_num = self.virtual_line_num
+    self.for_measurement_only = true
+    self:moveCursorToCharPos(charpos)
+    self.for_measurement_only = false
+    local new_virtual_line_num = self.virtual_line_num + self.lines_per_page - 2
+    local max_virtual_line_num = self.vertical_string_list_count - self.lines_per_page + 1
+    if new_virtual_line_num < 1 then
+        new_virtual_line_num = 1
+    elseif new_virtual_line_num > max_virtual_line_num then
+        new_virtual_line_num = max_virtual_line_num
+    end
+    if math_abs(new_virtual_line_num - old_virtual_line_num) > 1 then
+        self.virtual_line_num = new_virtual_line_num
+    else
+        self.virtual_line_num = old_virtual_line_num
+    end
+    self:_updateLayout()
+    self:moveCursorToCharPos(charpos)
+end
+
+-- Update view to show the line with charpos not far than <centered_lines_count> lines away
+-- from the center of the screen, and draw the cursor.
 function TextBoxWidget:moveCursorToCharPosKeepingViewCentered(charpos, centered_lines_count)
     local old_virtual_line_num = self.virtual_line_num
     self.for_measurement_only = true
@@ -1861,29 +1951,6 @@ function TextBoxWidget:moveCursorToCharPosKeepingViewCentered(charpos, centered_
         new_virtual_line_num = max_virtual_line_num
     end
     if math_abs(new_virtual_line_num - old_virtual_line_num) > centered_lines_count then
-        self.virtual_line_num = new_virtual_line_num
-    else
-        self.virtual_line_num = old_virtual_line_num
-    end
-    self:_updateLayout()
-    self:moveCursorToCharPos(charpos)
-end
-
--- Update view to show the line with charpos not far than <centered_lines_count> lines away
--- from the center of the screen, and draw the cursor.
-function TextBoxWidget:moveCursorToCharPosKeepingViewAtTop(charpos)
-    local old_virtual_line_num = self.virtual_line_num
-    self.for_measurement_only = true
-    self:moveCursorToCharPos(charpos)
-    self.for_measurement_only = false
-    local new_virtual_line_num = self.virtual_line_num + self.lines_per_page - 2
-    local max_virtual_line_num = self.vertical_string_list_count - self.lines_per_page + 1
-    if new_virtual_line_num < 1 then
-        new_virtual_line_num = 1
-    elseif new_virtual_line_num > max_virtual_line_num then
-        new_virtual_line_num = max_virtual_line_num
-    end
-    if math_abs(new_virtual_line_num - old_virtual_line_num) > 1 then
         self.virtual_line_num = new_virtual_line_num
     else
         self.virtual_line_num = old_virtual_line_num

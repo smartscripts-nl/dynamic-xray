@@ -61,12 +61,6 @@ local XrayDialogs = WidgetContainer:new{
     list_args = nil,
     list_is_opened = false,
     needle_name_for_list_page = "",
-    --* set from ((XrayButtons#forQuizletQuestions)):
-    quizlet_answer = nil,
-    quizlet_current_question = 1,
-    quizlet_dialog = nil,
-    quizlet_items = nil,
-    quizlet_show_answers_also = false,
     --* the retrieved data will be formatted for display in ((XrayTappedWords#prepareNonTappedItemsTable)):
     sectioned_series_headings = "\n\n" .. _("By tapping on the bold book titles, you can open that book."),
     sectioned_series_item_template = {
@@ -1320,53 +1314,6 @@ function XrayDialogs:showTagSelector(mode)
         buttons = buttons,
     }
     UIManager:show(tags_dialog)
-end
-
-function XrayDialogs:initQuizletQuestions()
-    self.quizlet_items = KOR.tables:randomize(DX.vd.items)
-    self.quizlet_current_question = 1
-    KOR.registry:unset("maintain_overlay")
-end
-
---- @private
-function XrayDialogs:closeQuizletQuestion()
-    KOR.registry:unset("maintain_overlay")
-    KOR.dialogs:closeOverlay()
-    UIManager:close(self.quizlet_dialog)
-end
-
---- @private
-function XrayDialogs:showQuizletQuestion()
-
-    local item = self.quizlet_items[self.quizlet_current_question]
-    local dialog_queue_id = "quizlet_question"
-    KOR.dialogsqueue:register({
-        id = dialog_queue_id,
-        restore = function()
-            self:showQuizletQuestion()
-        end
-    })
-
-    local info = self.quizlet_show_answers_also and item.name .. "\n_______________________________\n\n" .. item.description .. "\n" or item.name .. "  =  ?"
-
-    local questions_count = #self.quizlet_items
-    KOR.dialogs:showOverlay()
-    KOR.registry:set("maintain_overlay", true)
-    self.quizlet_dialog = KOR.dialogs:niceAlert(_("Quizlet-question"), info, {
-        modal = true,
-        dialog_queue_id = dialog_queue_id,
-        dismissable = true,
-        with_close_button = true,
-        top_buttons_left = DX.b:forQuizletQuestionsTopLeft(self),
-        close_callback = function()
-            self:closeQuizletQuestion()
-            return true
-        end,
-        tap_close_callback = function()
-            self:closeQuizletQuestion()
-        end,
-        buttons = DX.b:forQuizletQuestions(self, item, questions_count)
-    })
 end
 
 --* compare ((XrayButtons#handleMoreButtonClick)), for the popup after the user tapped on the "More..." button:

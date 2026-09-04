@@ -11,7 +11,6 @@ local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
---local logger = require("logger")
 local Screen = require("device").screen
 local Size = require("modules/size")
 
@@ -516,70 +515,16 @@ function XrayButtons:forPageNavigatorTopRight(parent)
     })
 end
 
---- @param parent XrayDialogs
-function XrayButtons:forQuizletQuestions(parent, item, questions_count)
+--- @param parent Quizlet
+function XrayButtons:forQuizletQuestions(parent, item)
     return {{
-         {
-             icon = "previous",
-             callback = function()
-                 UIManager:close(parent.quizlet_dialog)
-                 parent.quizlet_current_question = parent.quizlet_current_question - 1
-                 if parent.quizlet_current_question < 1 then
-                     parent.quizlet_current_question = questions_count
-                 end
-                 parent:showQuizletQuestion()
-             end,
-         },
-         {
-             icon = "next",
-             callback = function()
-                 UIManager:close(parent.quizlet_dialog)
-                 parent.quizlet_current_question = parent.quizlet_current_question + 1
-                 if parent.quizlet_current_question > questions_count then
-                     parent.quizlet_current_question = 1
-                 end
-                 parent:showQuizletQuestion()
-             end,
-         },
-         {
-             icon = "view",
-             icon_size_ratio = 0.9,
-             enabled = not parent.quizlet_show_answers_also,
-             callback = function()
-                 UIManager:close(parent.quizlet_dialog)
-                 local dialog_queue_id = "quizlet_answer"
-                 KOR.dialogsqueue:register({
-                     id = dialog_queue_id,
-                     restore = function()
-                         self:showQuizletQuestion()
-                     end
-                 })
-                 parent.quizlet_answer = KOR.dialogs:niceAlert(item.name, item.description, {
-                     modal = true,
-                     top_buttons_left = {},
-                     dialog_queue_id = dialog_queue_id,
-                     with_close_button = true,
-                     close_callback = function()
-                         KOR.registry:unset("maintain_overlay")
-                         KOR.dialogs:closeOverlay()
-                         UIManager:close(parent.quizlet_answer)
-                         UIManager:close(parent.quizlet_answer)
-                         return true
-                     end,
-                     tap_close_callback = function()
-                         KOR.registry:unset("maintain_overlay")
-                         KOR.dialogs:closeOverlay()
-                     end,
-                 })
-             end,
-         },
+        KOR.buttoninfopopup:forQuizletPrevious(parent),
+        KOR.buttoninfopopup:forQuizletNext(parent),
+        KOR.buttoninfopopup:forQuizletAnswerView(parent, item),
          {
              icon = "back",
              callback = function()
-                 KOR.registry:unset("maintain_overlay")
-                 KOR.dialogs:closeOverlay()
-                 UIManager:close(parent.quizlet_dialog)
-                 parent.quizlet_dialog = nil
+                 parent:closeQuizletQuestion("reset_all_rprops")
              end,
          },
      }}

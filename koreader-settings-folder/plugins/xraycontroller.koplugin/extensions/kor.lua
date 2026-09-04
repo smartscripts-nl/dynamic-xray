@@ -32,6 +32,7 @@ local pairs = pairs
 --- @field list List
 --- @field messages Messages
 --- @field pagetexts PageTexts
+--- @field quizlet Quizlet
 --- @field referenceinformation ReferenceInformation
 --- @field registry Registry
 --- @field screenhelpers ScreenHelpers
@@ -95,6 +96,7 @@ local KOR = WidgetContainer:new{
 	list = nil,
 	messages = nil,
 	pagetexts = nil,
+	quizlet = nil,
 	referenceinformation = nil,
 	registry = nil,
 	screenhelpers = nil,
@@ -140,6 +142,7 @@ local KOR = WidgetContainer:new{
 		"list",
 		"messages",
 		"pagetexts",
+		"quizlet",
 		"referenceinformation",
 		"screenhelpers",
 		"seriesmanager",
