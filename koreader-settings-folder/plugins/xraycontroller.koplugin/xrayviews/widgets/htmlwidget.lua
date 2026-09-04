@@ -28,8 +28,9 @@ local Screen = Device.screen
 
 local DX = DX
 local G_reader_settings = G_reader_settings
-local math = math
-local table = table
+local math_floor = math_floor
+local table_insert = table_insert
+local table_remove = table_remove
 local tonumber = tonumber
 
 -- this widget only loaded in ((Dialogs#htmlBox))
@@ -208,7 +209,7 @@ function HtmlWidget:init()
         test_widget:free(true)
     end
 
-    local nb_lines = math.floor(html_window_height / self.definition_line_height)
+    local nb_lines = math_floor(html_window_height / self.definition_line_height)
     html_window_height = nb_lines * self.definition_line_height
 
     self:adaptHtml()
@@ -284,7 +285,7 @@ function HtmlWidget:init()
     }
 
     -- We're a new window
-    table.insert(HtmlWidget.window_list, self)
+    table_insert(HtmlWidget.window_list, self)
 
     UIManager:setDirty(self, function()
         return "partial", self.list_frame.dimen
@@ -366,7 +367,7 @@ function HtmlWidget:onCloseWidget()
         local window = HtmlWidget.window_list[i]
         -- We should only find a single match, but, better safe than sorry...
         if window == self then
-            table.remove(HtmlWidget.window_list, i)
+            table_remove(HtmlWidget.window_list, i)
         end
     end
 

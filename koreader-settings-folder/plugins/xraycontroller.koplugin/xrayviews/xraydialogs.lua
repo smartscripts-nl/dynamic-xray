@@ -1090,6 +1090,7 @@ function XrayDialogs:showItemViewer(xray_item, props)
         window_size = "max",
         box_font_size = DX.s.textviewer_font_size,
         button_font_weight = "normal",
+        no_back_button = true,
         --* htmlBox will always have a close_callback and therefor a close button; so no need to define a close_callback here...
         no_filter_button = true,
         title_shrink_font_to_fit = true,
