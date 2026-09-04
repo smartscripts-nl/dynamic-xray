@@ -83,7 +83,7 @@ end
 
 function ScreenHelpers:getHorizontalSpacerWidth(fullscreen, for_close_button)
     if DX.s.is_mobile_device then
-        return Size.padding.default
+        return Size.padding.buttonvertical
     end
     if for_close_button and fullscreen then
         return Size.padding.buttonvertical

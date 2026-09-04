@@ -43,6 +43,7 @@ local NiceAlert = InputContainer:extend {
     info_text = nil,
     info_textbox = nil,
     info_window_was_resized = false,
+    inner_width = nil,
     margin = Size.margin.title,
     --* make sure the dialog is always at the top, even above an active keyboard:
     modal = true,
@@ -71,8 +72,8 @@ end
 --- @private
 function NiceAlert:generateWidget()
     self.info_window_was_resized = false
-    self:generateTextboxWidget(self.info_text, self.width)
-    self[1] = self:generatePopupCallbackDialogWidget(self.info_text, self.width)
+    self:generateTextboxWidget(self.info_text)
+    self[1] = self:generatePopupCallbackDialogWidget(self.info_text)
 end
 
 --- @private
@@ -85,15 +86,23 @@ end
 --- @private
 function NiceAlert:setDialogWidth()
     if self.width then
+        self:computeInnerWidth()
         return
     end
 
     local width_factor = KOR.screenhelpers:getDialogWidthFactor()
     self.width = math_floor(self.screen_width * width_factor)
+    self:computeInnerWidth()
+end
+
+--* needed for width corrections for mobile devices, were computed/given width might be too big for the screen:
+--- @private
+function NiceAlert:computeInnerWidth()
+    self.inner_width = self.width - 2 * self.margin - 2 * self.padding - 2 * Size.border.window
 end
 
 --- @private
-function NiceAlert:generateTextboxWidget(info, width, height)
+function NiceAlert:generateTextboxWidget(info, height)
     if has_no_content(info) then
         return
     end
@@ -119,7 +128,7 @@ function NiceAlert:generateTextboxWidget(info, width, height)
     if not height then
         self.info_textbox = TextBoxWidget:new{
             text = info,
-            width = width,
+            width = self.inner_width,
             face = face,
             alignment = self.title_align or "left",
         }
@@ -127,7 +136,7 @@ function NiceAlert:generateTextboxWidget(info, width, height)
     end
     self.info_textbox = ScrollTextWidget:new{
         text = info,
-        width = width,
+        width = self.inner_width,
         height = height,
         dialog = self,
         face = face,
@@ -137,19 +146,21 @@ function NiceAlert:generateTextboxWidget(info, width, height)
 end
 
 --- @private
-function NiceAlert:generatePopupCallbackDialogWidget(info, width)
+function NiceAlert:generatePopupCallbackDialogWidget(info)
+
+    local inner_elements_width = self.inner_width + 2 * self.padding
 
     local separator = LineWidget:new{
         background = KOR.colors.tabs_table_separators,
         dimen = Geom:new{
-            w = width + self.padding + self.margin,
+            w = inner_elements_width,
             h = Screen:scaleBySize(1),
         }
     }
     local title
     if self.with_close_button then
         local title_bar_config = {
-            width = self.width + 2 * self.padding,
+            width = inner_elements_width,
             align = self.title_align or "center",
             with_bottom_line = false,
             title = self.title,
@@ -170,7 +181,7 @@ function NiceAlert:generatePopupCallbackDialogWidget(info, width)
         title = HorizontalGroup:new{
             TextWidget:new {
                 text = self.title,
-                max_width = width - Size.padding.default,
+                max_width = self.inner_width,
                 face = self.info_popup_face,
                 bold = true,
                 alignment = self.title_align or "left",
@@ -187,7 +198,7 @@ function NiceAlert:generatePopupCallbackDialogWidget(info, width)
         VerticalSpan:new{ width = Size.padding.default },
     }
     if self.info_buttons then
-        local button_table = self:generateFooterButtons(width)
+        local button_table = self:generateFooterButtons()
         table_insert(content, separator)
         table_insert(content, button_table)
     end
@@ -232,15 +243,15 @@ function NiceAlert:generatePopupCallbackDialogWidget(info, width)
 
     local height_factor = KOR.screenhelpers:getDialogHeightFactor()
     local box_height = math_floor(self.screen_height * height_factor)
-    self:generateTextboxWidget(info, width, box_height)
+    self:generateTextboxWidget(info, box_height)
 
-    return self:generatePopupCallbackDialogWidget(info, width)
+    return self:generatePopupCallbackDialogWidget(info)
 end
 
 --- @private
-function NiceAlert:generateFooterButtons(width)
+function NiceAlert:generateFooterButtons()
     return ButtonTable:new{
-        width = width,
+        width = self.inner_width,
         buttons = self.info_buttons,
         show_parent = self,
     }
