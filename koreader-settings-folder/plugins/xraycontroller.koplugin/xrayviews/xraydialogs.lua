@@ -1329,11 +1329,17 @@ function XrayDialogs:initQuizletQuestions()
 end
 
 --- @private
+function XrayDialogs:closeQuizletQuestion()
+    KOR.registry:unset("maintain_overlay")
+    KOR.dialogs:closeOverlay()
+    UIManager:close(self.quizlet_dialog)
+end
+
+--- @private
 function XrayDialogs:showQuizletQuestion()
 
     local item = self.quizlet_items[self.quizlet_current_question]
     local dialog_queue_id = "quizlet_question"
-
     KOR.dialogsqueue:register({
         id = dialog_queue_id,
         restore = function()
@@ -1353,15 +1359,11 @@ function XrayDialogs:showQuizletQuestion()
         with_close_button = true,
         top_buttons_left = DX.b:forQuizletQuestionsTopLeft(self),
         close_callback = function()
-            KOR.registry:unset("maintain_overlay")
-            KOR.dialogs:closeOverlay()
-            UIManager:close(self.quizlet_dialog)
+            self:closeQuizletQuestion()
             return true
         end,
         tap_close_callback = function()
-            KOR.registry:unset("maintain_overlay")
-            KOR.dialogs:closeOverlay()
-            UIManager:close(self.quizlet_dialog)
+            self:closeQuizletQuestion()
         end,
         buttons = DX.b:forQuizletQuestions(self, item, questions_count)
     })

@@ -35,6 +35,7 @@ local XrayPageNavigator = WidgetContainer:new{
     current_item = nil,
     do_double_filter_select = false,
     double_filter_items = {},
+    epages = nil,
     filter_item = nil,
     filter_item_double = nil,
     --* this prop will be set from ((NavigatorBox#generateInfoButtons)):
@@ -83,10 +84,11 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
     if not self.page_no or (initial_browsing_page and self.initial_browsing_page ~= initial_browsing_page) then
         self.page_no = DX.u:getCurrentPage()
         if not self.page_no then
-            KOR.messages:notify("pagina kon niet worden bepaald")
+            KOR.messages:notify(_("page couldn't be determined"))
             return
         end
     end
+    self.epages = KOR.document:getPageCount() - 1
     self.initial_browsing_page = initial_browsing_page or DX.u:getCurrentPage()
     local html = self:loadDataForPage()
     local item = DX.sp:getCurrentTabItem()
@@ -131,11 +133,14 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
         hotkeys_configurator = function()
             KOR.keyevents.addHotkeysForXrayPageNavigator(self, key_events_module)
         end,
+        --! for now automatic navigating to next/previous page disabled BY HOTKEYS DISABLED in ((KeyEvents#addHotkeysForNavigatorBox)) > ((KeyEvents#addDialogHotkeys)), because it would cause unexpected crashes:
         next_item_callback = function()
             DX.p:toNextNavigatorPage()
+            return true
         end,
         prev_item_callback = function()
             DX.p:toPrevNavigatorPage()
+            return true
         end,
     })
 

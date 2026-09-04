@@ -1,7 +1,8 @@
+
 local require = require
 
 local Device = require("device")
-local Input = Device.input
+local Input = require("modules/input")
 local KOR = require("extensions/kor")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
@@ -59,16 +60,20 @@ function KeyEvents:addHotkeysForNavigatorBox(parent, key_events_module)
     end
 
     parent.key_events = {}
-    self:addDialogHotkeys(parent, "non_tabbed")
+    --! for now automatic navigating to next/previous page disabled, because of unexpected crashes; use PageNavigator icon buttons instead:
+    self:addDialogHotkeys(parent, "non_tabbed", "skip_next_prev_item")
     self:addCloseHotkey(parent)
     self:addAdditionalHotkeys(parent, key_events_module)
 end
 
 --- @private
-function KeyEvents:addDialogHotkeys(parent, mode)
+function KeyEvents:addDialogHotkeys(parent, mode, skip_next_prev_item)
     local source = mode == "tabbed" and self.tabbed_dialogs_hotkeys or self.non_tabbed_dialogs_hotkeys
     for callback, hotkeys in pairs(source) do
-        parent.key_events[callback] = hotkeys
+        --! for NavigatorBox we disable ReadPrevItem, ReadPrevItemWithShiftSpace and ReadNextItem, because of crashes:
+        if not skip_next_prev_item or not callback:match("Read") then
+            parent.key_events[callback] = hotkeys
+        end
     end
 end
 
@@ -251,7 +256,7 @@ function KeyEvents:addHotkeysForTextViewer(parent, key_events_module)
             end)
         end
 
-        --* TextViewer instance without tabs:
+    --* TextViewer instance without tabs:
     else
         self:addDialogHotkeys(parent, "non_tabbed")
     end

@@ -13,8 +13,8 @@ local T = require("ffi/util").template
 local DX = DX
 local has_items = has_items
 local has_no_items = has_no_items
-local math_abs = math.abs
-local math_ceil = math.ceil
+local math_abs = math_abs
+local math_ceil = math_ceil
 local tonumber = tonumber
 
 local count
@@ -33,6 +33,7 @@ local XrayPages = WidgetContainer:new{
         ["La"] = true,
         ["Le"] = true,
     },
+    goto_item = nil,
     is_filter_item = false,
     non_active_layout = nil,
     non_filtered_items_marker_em = "<em>%1</em>",
@@ -57,7 +58,7 @@ function XrayPages:showNextOrPreviousItemMessage(direction, needle)
 end
 
 function XrayPages:jumpToPage()
-    local max_page = KOR.document:getPageCount()
+    local max_page = DX.pn.epages
     local dialog
     dialog = KOR.dialogs:prompt({
         title = _("Jump to page"),
@@ -68,15 +69,15 @@ function XrayPages:jumpToPage()
         cursor_at_end = true,
         width = math_ceil(DX.pn.screen_width / 2.5),
         no_overlay = true,
-        callback = function(value)
+        callback = function(page_no)
             UIManager:close(dialog)
-            value = tonumber(value)
-            if value == 0 or value > max_page then
+            page_no = tonumber(page_no)
+            if page_no == 0 or page_no > max_page then
                 KOR.messages:notify(_("the page number entered was invalid"))
                 return
             end
             DX.sp:resetActiveSideButtons("XrayPages:jumpToPage")
-            DX.pn.page_no = value
+            DX.pn.page_no = page_no
             DX.pn:restoreNavigator()
         end,
     })
@@ -149,12 +150,12 @@ function XrayPages:toNextNavigatorPage(goto_next_item)
 
     --* regular navigation:
     DX.pn.page_no = DX.pn.page_no + 1
-    local epages = KOR.document:getPageCount()
-    if DX.pn.page_no >= epages then
-        DX.pn:setProp("page_no", epages)
-        self:showNoNextPreviousOccurrenceMessage(direction)
+    if DX.pn.page_no > DX.pn.epages then
+        DX.pn.page_no = DX.pn.epages
+        KOR.messages:notify(_("last page"))
         return
     end
+    --* because of no argument here, we jump to DX.pn.page_no:
     DX.pn:restoreNavigator()
 end
 
@@ -178,10 +179,11 @@ function XrayPages:toPrevNavigatorPage(goto_prev_item, stay_at_top_of_page)
     --* regular navigation:
     DX.pn.page_no = DX.pn.page_no - 1
     if DX.pn.page_no < 1 then
-        DX.pn:setProp("page_no", 1)
-        self:showNoNextPreviousOccurrenceMessage(direction)
+        DX.pn.page_no = 1
+        KOR.message:notify(_("first page"))
         return
     end
+    --* because of no argument here, we jump to DX.pn.page_no:
     DX.pn:restoreNavigator()
     --* this is truthy when navigating backwards with left arrow button in Page Navigator:
     if stay_at_top_of_page then
@@ -203,6 +205,7 @@ end
 
 --- @private
 function XrayPages:gotoPageHitForItem(goto_item, direction)
+    self.goto_item = goto_item
     --* this temporarily sets DX.pn.filter_item:
     if goto_item then
         self:setTemporaryFilterItem(goto_item)
@@ -234,7 +237,7 @@ function XrayPages:gotoPageHitForItem(goto_item, direction)
     while not found and other_page do
         other_page = self:modifyCheckPage(direction, other_page, max_page)
         if other_page then
-            found, hit = self:pageHasItem(other_page, item) --, page_text
+            found, hit = self:pageHasItem(other_page, item)
             if not self:pageHasItemName(other_page, DX.pn.active_filter_name) then
                 found = false
             end
