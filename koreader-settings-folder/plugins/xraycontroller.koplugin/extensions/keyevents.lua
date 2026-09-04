@@ -109,6 +109,11 @@ function KeyEvents:addHotkeysForReaderUI(parent)
         return true
     end
 
+    readerui.key_events.ShowQuizletQuestionUI = { { "Shift", { "Q" } } }
+    readerui.onShowQuizletQuestionUI = function()
+        return DX.cb:execQuizletModeCallback()
+    end
+
     -- #((hotkey for Reference Information Viewer))
     readerui.key_events.ShowReferenceInformationUI = { { "Shift", { "R" } } }
     readerui.onShowReferenceInformationUI = function()

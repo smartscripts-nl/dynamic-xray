@@ -276,7 +276,7 @@ end
 function ButtonInfoPopup:forQuizletMode(props)
 	return ButtonProps:set({
 		icon = "quizlet-svgrepo-com",
-		info = _("Quizlet icon | Open a Quizlet dialog, to test your knowledge of Xray-items. This might be handy for studying purposes."),
+		info = _("Quizlet icon | Open a Quizlet dialog, to test your knowledge of Xray-items. This might be handy for studying purposes.\n\nYou can also open the Quizlet dialog with Shift-Q on your (BT) keyboard."),
 		callback_label = _("start"),
 		--! callback defined by calling module
 	}, props)

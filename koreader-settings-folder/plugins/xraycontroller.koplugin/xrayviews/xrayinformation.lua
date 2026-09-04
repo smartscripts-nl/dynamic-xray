@@ -271,6 +271,7 @@ end
 
 --- @private
 function XrayInformation:getGlobalHotkeysInfo()
+    --* global hotkeys are defined in ((KeyEvents#addHotkeysForReaderUI)):
     return self.hotkeys_information or _("For usage with physical (BT) keyboards:") .. [[<br>
                 <br>
 <strong>]] .. _("Global hotkeys (while reading)") .. [[</strong><br>
@@ -287,6 +288,9 @@ function XrayInformation:getGlobalHotkeysInfo()
             .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+M</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
             .. _("show current series books or Metadata of a non-series book")
+            .. [[</td></tr>
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+Q</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+            .. _("open the Quizlet-questions dialog")
             .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+R</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
             .. _("show the Reference Information for the current e-book")
