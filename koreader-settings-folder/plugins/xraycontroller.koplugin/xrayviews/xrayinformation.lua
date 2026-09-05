@@ -8,7 +8,7 @@ local _ = KOR:initCustomTranslations()
 
 local DX = DX
 local T = T
-local table_concat = table.concat
+local table_concat = table_concat
 
 --- @class XrayInformation
 local XrayInformation = WidgetContainer:extend {
@@ -53,7 +53,9 @@ local XrayInformation = WidgetContainer:extend {
         short_name = KOR.icons.xray_short_name_bare,
         tag = KOR.icons.tag_open_bare,
     },
+    mobile_width_factor = 0.97,
     reference_information_info = nil,
+    width_factor = 0.85,
 }
 
 --* e.g. called from ((XrayTappedWords#getXrayItemAsDictionaryEntry)), for info icon:
@@ -85,6 +87,7 @@ end
 function XrayInformation:showReferenceInformation(initial_tab)
     local screen_dims = Screen:getSize()
     local target = initial_tab == 2 and _("Reference Information") or _("Glossary")
+    local width_factor = DX.s.is_mobile_device and self.mobile_width_factor or self.width_factor
     self.reference_information_info = KOR.dialogs:htmlBoxTabbed(initial_tab or 1, {
         title = _("+Add to") .. " " .. target,
         parent = self,
@@ -98,7 +101,7 @@ function XrayInformation:showReferenceInformation(initial_tab)
         text_padding_top_bottom = Screen:scaleBySize(10),
         window_size = {
             h = screen_dims.h * 0.9,
-            w = screen_dims.w * 0.8,
+            w = screen_dims.w * width_factor,
         },
         after_close_callback = function()
             KOR.registry:unset("add_parent_hotkeys")
@@ -136,6 +139,7 @@ function XrayInformation:showGeneralDXTips(parent, initial_tab)
 
     local indent = "\n   "
     local indent_simple = "   "
+    local width_factor = DX.s.is_mobile_device and self.mobile_width_factor or self.width_factor
     KOR.dialogs:htmlBoxTabbed(initial_tab or 1, {
         parent = parent or DX.pn,
         title = _("General DX help/tips"),
@@ -148,7 +152,7 @@ function XrayInformation:showGeneralDXTips(parent, initial_tab)
         text_padding_top_bottom = Screen:scaleBySize(10),
         window_size = {
             h = screen_dims.h * 0.9,
-            w = screen_dims.w * 0.8,
+            w = screen_dims.w * width_factor,
         },
         after_close_callback = function()
             KOR.registry:unset("add_parent_hotkeys")
@@ -244,6 +248,7 @@ end
 function XrayInformation:showPageNavigatorHelp(parent, active_tab)
     local screen_dims = Screen:getSize()
 
+    local width_factor = DX.s.is_mobile_device and self.mobile_width_factor or self.width_factor
     KOR.dialogs:htmlBoxTabbed(active_tab or 1, {
         parent = parent or DX.pn,
         title = _("Page Navigator help"),
@@ -255,7 +260,7 @@ function XrayInformation:showPageNavigatorHelp(parent, active_tab)
         text_padding_top_bottom = Screen:scaleBySize(10),
         window_size = {
             h = screen_dims.h * 0.8,
-            w = screen_dims.w * 0.7,
+            w = screen_dims.w * width_factor,
         },
         after_close_callback = function()
             KOR.registry:unset("add_parent_hotkeys")
