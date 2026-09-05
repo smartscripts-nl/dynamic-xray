@@ -19,7 +19,6 @@ local G_reader_settings = G_reader_settings
 local has_text = has_text
 local math_floor = math_floor
 local pairs = pairs
-local table = table
 local table_insert = table_insert
 local table_sort = table_sort
 local tonumber = tonumber
@@ -292,6 +291,7 @@ function SettingsManager:chooseSetting(key, current_nr, current_value, options, 
                 UIManager:close(self.option_chooser)
                 self:saveSetting(key, options[current])
                 self:changeMenuSetting(key, options[current], current_nr)
+                KOR.dialogs:forceOverlayClose()
                 KOR.messages:notify(key .. _(" modified to ") .. tostring(options[current]), 4)
                 self:handleAfterChangeCallback(key, options[current])
             end
@@ -311,7 +311,8 @@ function SettingsManager:chooseSetting(key, current_nr, current_value, options, 
         button_font_bold = false,
         buttons = buttons,
     }
-    KOR.dialogs:showDialogOnTopOfOverlay(function()
+    KOR.dialogs:forceOverlay()
+    UIManager:nextTick(function()
         UIManager:show(self.option_chooser)
     end)
 end
@@ -342,14 +343,19 @@ function SettingsManager:setNumber(key, current_nr, current_value, validator_pro
             local value = is_decimal and spin.value/100 or spin.value
             self:saveSetting(key, value)
             self:changeMenuSetting(key, value, current_nr)
+            KOR.dialogs:forceOverlayClose()
             KOR.messages:notify(key .. _(" modified to ") .. tostring(value), 4)
             self:handleAfterChangeCallback(key, value)
         end,
         close_callback = function()
+            KOR.dialogs:forceOverlayClose()
             self:showParentDialog()
         end
     }
-    UIManager:show(number_value_adaptor)
+    KOR.dialogs:forceOverlay()
+    UIManager:nextTick(function()
+        UIManager:show(number_value_adaptor)
+    end)
 end
 
 --- @private
@@ -362,35 +368,41 @@ function SettingsManager:editSetting(settings, current_nr)
     if itype == "number" then
         value = tonumber(settings.value)
     end
-    KOR.dialogs:showOverlay()
-    if options or itype == "boolean" then
-        self:chooseSetting(key, current_nr, value, options, explanation, itype)
-        return
-    elseif itype == "number" and settings.validator then
-        self:setNumber(key, current_nr, value, settings.validator, explanation)
-        return
-    end
+    KOR.dialogs:forceOverlay()
+    UIManager:nextTick(function()
+        if options or itype == "boolean" then
+            self:chooseSetting(key, current_nr, value, options, explanation, itype)
+            return
+        elseif itype == "number" and settings.validator then
+            self:setNumber(key, current_nr, value, settings.validator, explanation)
+            return
+        end
 
-    self:showPromptForNewSettingsValue(key, value, current_nr, itype, explanation)
+        self:showPromptForNewSettingsValue(key, value, current_nr, itype, explanation)
+    end)
 end
 
 --- @private
 function SettingsManager:showPromptForNewSettingsValue(key, value, current_nr, itype, explanation)
-    KOR.dialogs:prompt({
-        title = self:removeHotkeyPrefix(key),
-        allow_newline = false,
-        input_type = itype == "number" and "number" or "text",
-        description = explanation:gsub("%.$", ":"),
-        input = tostring(value),
-        callback = function(new_value)
-            KOR.dialogs:closeAllWidgets()
-            self:handleNewValue(new_value, key, current_nr, itype)
-        end,
-        cancel_callback = function()
-            KOR.dialogs:closeAllWidgets()
-            self:showParentDialog()
-        end,
-    })
+    KOR.dialogs:forceOverlay()
+    UIManager:nextTick(function()
+        KOR.dialogs:prompt({
+            title = self:removeHotkeyPrefix(key),
+            allow_newline = false,
+            input_type = itype == "number" and "number" or "text",
+            description = explanation:gsub("%.$", ":"),
+            input = tostring(value),
+            no_overlay = true,
+            callback = function(new_value)
+                KOR.dialogs:forceOverlayClose()
+                self:handleNewValue(new_value, key, current_nr, itype)
+            end,
+            cancel_callback = function()
+                KOR.dialogs:forceOverlayClose()
+                self:showParentDialog()
+            end,
+        })
+    end)
 end
 
 --- @private

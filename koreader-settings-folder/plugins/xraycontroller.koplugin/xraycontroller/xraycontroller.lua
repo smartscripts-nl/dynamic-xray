@@ -93,6 +93,9 @@ DX = {
     --* shorthand notation for ViewsData; this module will be initialized in ((XrayModel#initDataHandlers)):
     vd = nil,
 }
+DX.load = function(name, file)
+    DX[name] = require(file)
+end
 
 --* this global var will be initialized through ((XrayController#initKORandDynamicXray)) > ((XrayController#initButtonPropsExtension)), and then used locally in ((ButtonChoicePopup)) and ((ButtonInfoPopup)), for speeding up button generation:
 KorButtonProps = nil

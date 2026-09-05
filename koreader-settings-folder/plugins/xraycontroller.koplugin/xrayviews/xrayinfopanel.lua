@@ -10,6 +10,7 @@ local LineWidget = require("ui/widget/linewidget")
 local ScrollTextWidget = require("xrayviews/widgets/scrolltextwidget")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
+local Screen = require("device").screen
 local Size = require("modules/size")
 
 local DX = DX
@@ -40,6 +41,7 @@ function XrayInfoPanel:resetProps()
     self.cached_info_panel_height = nil
     self.cached_info_panel_separator_height = nil
     self.cached_sheight = nil
+    self.info_panel_separator = nil
 end
 
 --- @private
@@ -59,7 +61,7 @@ function XrayInfoPanel:generateInfoPanel(data)
     local screen_height = data.screen_height
     --* set the info panel height as a fraction of the screen height:
     self.info_panel_height = math_floor(screen_height * DX.s.PN_info_panel_height)
-    self.info_panel_width = data.info_panel_width
+    self.info_panel_width = self.parent.screen_width - Screen:scaleBySize(DX.s.PN_sidepanel_width) - 2 * self.parent.content_padding_h
     local content_height = data.content_height
     local info_panel_nav_buttons_height = data.info_panel_nav_buttons_height
     local histogram_height = data.histogram_height

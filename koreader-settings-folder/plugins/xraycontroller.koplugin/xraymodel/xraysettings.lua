@@ -10,6 +10,7 @@ local _ = KOR:initCustomTranslations()
 
 local DX = DX
 local pairs = pairs
+local T = T
 local type = type
 
 --* DX.m and therefore DX.m:isPrivateDXversion not yet available here:
@@ -263,11 +264,11 @@ local XraySettings = WidgetContainer:new{
             validator = {
                 name = "info_panel_height",
                 min_value = 0.1,
-                max_value = 0.5,
+                max_value = 0.3,
                 default_value = 0.22,
                 value_step = 0.01,
             },
-            explanation = _("Page Navigator: this setting, a fraction between 0.1 and 0.8, determines the height of the bottom info panel relative to the screen height."),
+            explanation = _("Page Navigator: this setting, a fraction between 0.1 and 0.3, determines the height of the bottom info panel relative to the screen height."),
             locked = 0,
             type = "number",
             after_change_callback = "reload_page_navigator",
@@ -278,11 +279,11 @@ local XraySettings = WidgetContainer:new{
             validator = {
                 name = "page_navigator_font_size",
                 min_value = 10,
-                max_value = 26,
+                max_value = 32,
                 default_value = 18,
                 value_step = 1,
             },
-            explanation = _("Page Navigator: determine the font size of the main Page Navigator text panel."),
+            explanation = _("Page Navigator: determine the font size of the main Page Navigator text panel. Valid values lie between 18 and 32."),
             locked = 0,
             type = "number",
             after_change_callback = "reload_page_navigator",
@@ -310,6 +311,21 @@ local XraySettings = WidgetContainer:new{
         PN_show_tagged_items_navigation_alert = {
             value = true,
             explanation = _("Page Navigator: if this setting is false, no popup will be shown when you activate tagged items navigation in Page Navigator."),
+            locked = 0,
+        },
+        PN_sidepanel_width = {
+            value = 135,
+            --* this validator references a function included in self.validators:
+            validator = {
+                name = "page_navigator_sidepanel_width",
+                min_value = 120,
+                max_value = 200,
+                default_value = 135,
+                value_step = 1,
+            },
+            explanation = _("Page Navigator: determine width of side panel. Valid values lie between 120 and 200."),
+            type = "number",
+            after_change_callback = "reload_page_navigator",
             locked = 0,
         },
         Quizlet_button_enabled = {
@@ -478,21 +494,24 @@ local XraySettings = WidgetContainer:new{
     },
     validators = {
         info_panel_height = function(value)
-            return type(value) == "number" and value >= 0.1 and value <= 0.5 or _("a valid value should lie between 0.1 and 0.5") .. KOR.strings.ellipsis
+            return type(value) == "number" and value >= 0.1 and value <= 0.3 or T(_("a valid value should lie between %1 and %2%3"), 0.1, 0.3, KOR.strings.ellipsis)
         end,
         item_viewer_histogram_height = function(value)
-            return type(value) == "number" and value >= 20 and value <= 45 or _("a valid value should lie between 20 and 45") .. KOR.strings.ellipsis
+            return type(value) == "number" and value >= 20 and value <= 45 or T(_("a valid value should lie between %1 and %2%3"), 20, 45, KOR.strings.ellipsis)
         end,
         item_info_indent = function(value)
             --* so we immediately will see the new indentation:
             DX.pn:resetCache("do_limited_refresh")
-            return type(value) == "number" and value >= 4 and value <= 14 or _("a valid value should lie between 4 and 14") .. KOR.strings.ellipsis
+            return type(value) == "number" and value >= 4 and value <= 14 or T(_("a valid value should lie between %1 and %2%3"), 4, 14, KOR.strings.ellipsis)
         end,
         night_mode_color = function(value)
-            return type(value) == "number" and value >= 0 and value <= 5 or _("a valid value should lie between 0 and 5") .. KOR.strings.ellipsis
+            return type(value) == "number" and value >= 0 and value <= 5 or T(_("a valid value should lie between %1 and %2%3"), 0, 5, KOR.strings.ellipsis)
         end,
         page_navigator_font_size = function(value)
-            return type(value) == "number" and value >= 10 and value <= 26 or _("a valid value should lie between 10 and 26") .. KOR.strings.ellipsis
+            return type(value) == "number" and value >= 10 and value <= 26 or T(_("a valid value should lie between %1 and %2%3"), 10, 26, KOR.strings.ellipsis)
+        end,
+        page_navigator_sidepanel_width = function(value)
+            return type(value) == "number" and value >= 120 and value <= 200 or T(_("a valid value should lie between %1 and %2%3"), 120, 200, KOR.strings.ellipsis)
         end,
     },
 }

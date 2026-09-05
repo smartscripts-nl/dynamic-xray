@@ -47,7 +47,6 @@ local XrayPageNavigator = WidgetContainer:new{
     navigation_tag = nil,
     navigator_page_html = nil,
     navigator_side_buttons = nil,
-    filter_item = nil,
     --* we need this item for computing linked item buttons in side panel no 2:
     parent_item = nil,
     popup_buttons = nil,
@@ -125,7 +124,6 @@ function XrayPageNavigator:showNavigator(initial_browsing_page)
         title = parent.current_title .. " - p." .. self.page_no,
         top_buttons_left = DX.b:forPageNavigatorTopLeft(self),
         top_buttons_right = DX.b:forPageNavigatorTopRight(self),
-        window_size = "fullscreen",
         after_close_callback = function()
             KOR.registry:unset("add_parent_hotkeys")
             KOR.keyevents:unregisterSharedHotkeys(key_events_module)
@@ -307,7 +305,7 @@ function XrayPageNavigator:initiateDoubleItemFilter()
 
     --- @type XrayPageNavigator manager
     local manager = self
-    DX.d.xray_items_inner_menu.onMenuSelect = function(iparent, item)
+    DX.d:setMenuSelectCallback(function(iparent, item)
         if item.dim then
             --* argument parent here not used, but added to silence code sniffing:
             manager:resetItemForDoubleFilterSelection(item, "for_one_item", iparent)
@@ -318,7 +316,7 @@ function XrayPageNavigator:initiateDoubleItemFilter()
         item.text = item.text:gsub("(%d+%.)", "%1 " .. KOR.icons.checkboxes, 1)
         manager.double_filter_items[item.id] = true
         DX.d.xray_items_inner_menu:updateItems()
-    end
+    end)
 end
 
 --* the setting of the doublefilter was initiated in ((XrayPageNavigator#setFilterDouble)):
@@ -385,6 +383,13 @@ function XrayPageNavigator:reloadPageNavigator()
     if not self.page_navigator then
         return
     end
+    self.info_panel_width = self.screen_width - Screen:scaleBySize(DX.s.PN_sidepanel_width) - 2 * self.page_navigator.content_padding_h
+    self:resetCache()
+    DX.ip:resetProps()
+    self.page_navigator:reset()
+    --* to make ((Dialogs#navigatorBox)) create a new instance:
+    self.page_navigator = nil
+    self.popup_menu_coords = nil
     self:restoreNavigator()
     self:restoreActiveScrollPage()
 end

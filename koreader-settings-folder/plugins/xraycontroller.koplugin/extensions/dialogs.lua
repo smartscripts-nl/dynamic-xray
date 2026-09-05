@@ -412,7 +412,7 @@ function Dialogs:prompt(args)
     local widget = args.fields and MultiInputDialog or InputDialog
 
     prompt_dialog = widget:new(config)
-    if not args.no_overlay then
+    if not args.no_overlay and not KOR.registry:get("maintain_overlay") then
         self:showDialogOnTopOfOverlay(function()
             UIManager:show(prompt_dialog)
             prompt_dialog:onShowKeyboard()
@@ -443,6 +443,17 @@ function Dialogs:closeAllDialogs()
     self:closeOverlay()
     self:closeAllWidgets()
     UIManager:closeAllWidgetsExceptMainScreen()
+end
+
+function Dialogs:forceOverlay()
+    KOR.registry:unset("maintain_overlay")
+    self:showOverlay()
+    KOR.registry:set("maintain_overlay", true)
+end
+
+function Dialogs:forceOverlayClose()
+    KOR.registry:unset("maintain_overlay")
+    self:closeOverlay()
 end
 
 function Dialogs:showOverlay(modal)

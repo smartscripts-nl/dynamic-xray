@@ -21,7 +21,6 @@ local VerticalGroup = require("ui/widget/verticalgroup")
 local VerticalScrollBar = require("ui/widget/verticalscrollbar")
 local VerticalSpan = require("ui/widget/verticalspan")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
---local logger = require("logger")
 local Screen = Device.screen
 local Size = require("modules/size")
 local _ = KOR:initCustomTranslations()
@@ -99,7 +98,8 @@ local NavigatorBox = InputContainer:extend{
     screen_height = nil,
     screen_width = nil,
     side_buttons = nil,
-    side_buttons_width = Screen:scaleBySize(135),
+    --* will be set in ((NavigatorBox#setWidth)) and is determined by XraySettings.PN_sidepanel_width:
+    side_buttons_width = nil,
     title = nil,
     title_alignment = "left",
     titlebar = nil,
@@ -109,7 +109,6 @@ local NavigatorBox = InputContainer:extend{
     width = nil,
     --* Static class member, holds a ref to the currently opened widgets (in instantiation order).
     window_list = {},
-    window_size = "fullscreen",
 }
 
 function NavigatorBox:init()
@@ -123,8 +122,6 @@ function NavigatorBox:init()
     self:setPaddingAndSpacing()
     self:computeLineHeight()
     self:generateSidePanelButtons()
-    self:setMargins()
-    self:computeAvailableHeight()
     self:setSeparator()
     self:computeHeights()
     self:generateInfoButtons()
@@ -272,9 +269,6 @@ function NavigatorBox:generateInfoPanel()
     if self.running_instance or self.dimensions_computed then
         return
     end
-
-    --* for consumption in ((NavigatorBox#generateScrollWidget)):
-    self.swidth = self.info_panel_width
 end
 
 --- @private
@@ -294,14 +288,14 @@ end
 
 --- @private
 function NavigatorBox:generateInfoButtons()
-    --? for some reason self.side_buttons_table not available when we click on the Item Viewer button; because then self.side_buttons not set at the start of ((XraySidePanels#generateSidePanelButtons)) and the script returns, without generating the side buttons:
-    self.info_panel_width = self.side_buttons_table and self.content_width - self.side_buttons_table:getSize().w or self.content_width
+    self.info_panel_width = self.screen_width - Screen:scaleBySize(DX.s.PN_sidepanel_width) - 2 * self.content_padding_h
+    self.content_width = self.info_panel_width - 2 * self.content_padding_h
 
     self.page_navigator.info_panel_width = self.info_panel_width
 
-    local buttons = ButtonTable:new{
+    local buttons = ButtonTable:new {
         width = self.info_panel_width,
-        --* these buttons were generated in ((XrayButtons#forPageNavigator)):
+        --* these buttons were set in ((XrayButtons#forPageNavigator)):
         buttons = self.info_panel_buttons,
         show_parent = self,
         button_font_weight = "normal",
@@ -320,6 +314,9 @@ end
 --* Used in init & update to instantiate the Scroll*Widget that self.html_widget points to
 --- @private
 function NavigatorBox:generateScrollWidget()
+
+    self.content_width = self.info_panel_width - 2 * self.content_padding_h
+
     --* this is the default, but some widgets can set the content_type to "text" for a specific tab; e.g. see ((XrayButtons#getItemViewerTabs)):
     if self.content_type == "text" then
         self.html_widget = ScrollTextWidget:new{
@@ -329,7 +326,8 @@ function NavigatorBox:generateScrollWidget()
             alignment = "left",
             justified = false,
             dialog = self,
-            width = self.swidth,
+            --* self.info_panel_width was computed in ((NavigatorBox#generateInfoPanel)):
+            width = self.info_panel_width,
             height = self.sheight,
         }
         return
@@ -347,7 +345,8 @@ function NavigatorBox:generateScrollWidget()
         html_body = self.html,
         css = self.expanded_css,
         default_font_size = Screen:scaleBySize(self.box_font_size),
-        width = self.swidth,
+        --* self.info_panel_width was computed in ((NavigatorBox#generateInfoButtons)):
+        width = self.info_panel_width,
         height = self.sheight,
         dialog = self,
     }
@@ -442,6 +441,15 @@ function NavigatorBox:computeHeights()
     if self.dimensions_computed then
         return
     end
+
+    self.avail_height = self.screen_height
+    --* Region in which the window will be aligned center/top/bottom:
+    self.region = Geom:new{
+        x = 0,
+        y = 0,
+        w = self.screen_width,
+        h = self.avail_height,
+    }
 
     local buttons_height = self.button_table and self.button_table:getSize().h or 0
     local others_height =
@@ -662,7 +670,7 @@ function NavigatorBox:generateWidget()
     }
 
     --? I don't know why I need this hack on my Bigme phone:
-    if self.is_fullscreen and DX.s.is_mobile_device then
+    if DX.s.is_mobile_device then
         local spacer = VerticalSpan:new{ width = Size.padding.large }
         table_insert(elements, 2, spacer)
     end
@@ -697,44 +705,9 @@ function NavigatorBox:registerPopupMenuCoords()
 end
 
 --- @private
-function NavigatorBox:computeAvailableHeight()
-    if self.dimensions_computed then
-        return
-    end
-    self.avail_height = self.screen_height - self.margin_top - self.margin_bottom
-
-    --* Region in which the window will be aligned center/top/bottom:
-    self.region = Geom:new{
-        x = 0,
-        y = self.is_fullscreen and 0 or self.margin_top,
-        w = self.screen_width,
-        h = self.avail_height,
-    }
-end
-
---- @private
-function NavigatorBox:setMargins()
-    if self.dimensions_computed then
-        return
-    end
-    --* Margin from screen edges
-    self.margin_top = not self.is_fullscreen and Size.margin.default or 0
-    self.margin_bottom = not self.is_fullscreen and Size.margin.default or 0
-    if KOR.ui and KOR.ui.view and KOR.ui.view.footer_visible then
-        --* We want to let the footer visible (as it can show time, battery level
-        --* and wifi state, which might be useful when spending time reading
-        --* definitions or wikipedia articles)
-        if not self.is_fullscreen then
-            self.margin_bottom = self.margin_bottom + KOR.ui.view.footer:getHeight()
-        end
-    end
-end
-
---- @private
 function NavigatorBox:setModuleProps()
     self.screen_height = Screen:getHeight()
     self.screen_width = Screen:getWidth()
-    self.window_size = "fullscreen"
     if self.tabs_table_buttons then
         self.title_alignment = "center"
     end
@@ -747,7 +720,6 @@ function NavigatorBox:setModuleProps()
 
     self.box_font_size = DX.s.PN_main_panel_font_size
     self.content_face = Font:getFace("x_smallinfofont", self.box_font_size)
-    self.is_fullscreen = self.window_size == "fullscreen"
 
     --* Scrollable offsets of the various showResults* menus and submenus,
     --* so we can reopen them in the same state they were when closed.
@@ -823,6 +795,8 @@ function NavigatorBox:setWidth()
     -- #((set NavigatorBox dialog width))
     --* compare ((set NavigatorBox dialog height))
     self.width = self.screen_width
+
+    self.side_buttons_width = Screen:scaleBySize(DX.s.PN_sidepanel_width)
 end
 
 return NavigatorBox

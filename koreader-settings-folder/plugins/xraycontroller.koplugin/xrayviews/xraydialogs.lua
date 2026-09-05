@@ -598,7 +598,7 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
 
     --? don't know why we need this:
     if not DX.ta then
-        DX.ta = require("xrayviews/xraytags")
+        DX.load("ta", "xrayviews/xraytags")
     end
 
     --* optionally items are filtered here also:
@@ -1469,6 +1469,10 @@ function XrayDialogs:execShowListCallback(parent)
     parent:closeUiInfoDialog()
     parent:showList()
     return true
+end
+
+function XrayDialogs:setMenuSelectCallback(callback)
+    self.xray_items_inner_menu.onMenuSelect = callback
 end
 
 
