@@ -257,7 +257,6 @@ function NavigatorBox:generateInfoPanel()
         DX.ip:generateInfoPanel({
           parent = self,
           info_panel_text = self.info_panel_text,
-          info_panel_width = self.info_panel_width,
           screen_height = self.screen_height,
           content_height = self.content_height,
           info_panel_nav_buttons_height = self.info_panel_nav_buttons_height,

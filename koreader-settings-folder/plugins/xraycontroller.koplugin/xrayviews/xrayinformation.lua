@@ -12,6 +12,34 @@ local table_concat = table.concat
 
 --- @class XrayInformation
 local XrayInformation = WidgetContainer:extend {
+    global_hotkeys_info = [[
+<table style='border-collapse: collapse'>
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+G</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+            .. _("show a Glossary for the current ebook - or add it by marking its boundaries in the ebook")
+            .. [[</td></tr>
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+H</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+            .. _("show this Help information dialog")
+            .. [[</td></tr>
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+L</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+            .. _("show Xray List")
+            .. [[</td></tr>
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+M</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+            .. _("show current series books or Metadata of a non-series book")
+            .. [[</td></tr>
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+Q</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+            .. _("open the Quizlet-questions dialog")
+            .. [[</td></tr>
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+R</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+            .. _("show the Reference Information for the current e-book")
+            .. [[</td></tr>
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+T</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+            .. _("show the Tag-group-selector")
+            .. [[</td></tr>
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+X</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+            .. _("show Xray Page Navigator")
+            .. [[</td></tr>
+</table>
+]],
     match_reliability_explanations = nil,
     -- #((xray match reliability indicators))
     --* these match reliability indicators will be injected in the dialog with page or paragraphs information in ((XrayUI#showParagraphInformation)) > ((xray items dialog add match reliability explanations)):
@@ -181,6 +209,11 @@ function XrayInformation:showGeneralDXTips(parent, initial_tab)
     <li>Do you want to <em>explore all items in the current series or book</em>, then call the Items List. With a gesture defined by you, or with Shift+L on your physical (BT) keyboard. If you tap on a iten in the list, you can then explore relations between item via the context buttons in the footer of the Item Viewer.<br /> </li>
     </ol>
     </li>
+<li><strong>general DX hotkeys while reading in KOReader</strong><br>
+<br>
+]]
+                .. self.global_hotkeys_info ..
+[[
     <li><strong>returning to previous dialogs</strong><br />In many DX dialogs you can return to the previous dialog by tapping on the back-button in the left half of the title bar.<br /> </li>
     <li><strong>using the bars in the Occurrences-per-Chapter-Histogram</strong><br />In this Histogram in the Page Navigator you can <em>quickly inspect the locations in the chapter where the active item in the info panel is being mentioned</em>, by tapping on the bar belonging to that chapter. So you don't have to jump to the chapter in the ebook first, to do this.</li>
 <ul>]])
@@ -276,32 +309,9 @@ function XrayInformation:getGlobalHotkeysInfo()
                 <br>
 <strong>]] .. _("Global hotkeys (while reading)") .. [[</strong><br>
 <br>
-<table style='border-collapse: collapse'>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+G</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
-            .. _("show a Glossary for the current ebook - or add it by marking its boundaries in the ebook")
-            .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+H</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
-            .. _("show this Help information dialog")
-            .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+L</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
-            .. _("show Xray List")
-            .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+M</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
-            .. _("show current series books or Metadata of a non-series book")
-            .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+Q</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
-            .. _("open the Quizlet-questions dialog")
-            .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+R</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
-            .. _("show the Reference Information for the current e-book")
-            .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+T</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
-            .. _("show the Tag-group-selector")
-            .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+X</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
-            .. _("show Xray Page Navigator")
-            .. [[</td></tr>
-</table>
+]]
+    .. self.global_hotkeys_info ..
+[[
                 <br>
 <strong>In Page Navigator</strong><br>
 <br>
