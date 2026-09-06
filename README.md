@@ -16,7 +16,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 * DX has a Series Manager for listing the books in a series. The items in this Manager have action buttons, for viewing large covers, descriptions, reading progress, annotations count, opening the e-book, etc. An example of this manager can be seen in the last image under [Images](#images).
 * DX has a [Reference Information viewer](#reference-information-viewer), in which a user can quickly inspect background information as provided in the e-book. But without having to visit the corresponding section in the e-book.
 * DX also has a [Glossary viewer](#glossary-viewer), copied from the Glossary in the e-book. When the user longpresses a word in the e-book text which is in the Glossary, its explanation will be shown.
-* Tip: the [ImageBookmarks](https://github.com/bozo22/imagebookmarks.koplugin)-plugin is an ideal companion to DX's Glossary and Reference Information viewers. If you have installed it, and you saved some favorite images (ImageBookmarks) for a book, a button to view these images will be available in these viewers and in some other DX dialogs.
+* Tip: the [ImageBookmarks](https://github.com/bozo22/imagebookmarks.koplugin)-plugin is an ideal companion to DX's Glossary and Reference Information viewers. If it is installed, and you have saved some favorite images (ImageBookmarks) for a book, a button to view these images will be available in these viewers and in some other DX dialogs.
 
 ## Table of contents in this readme
 - [DX under Android](#dx-under-android)
