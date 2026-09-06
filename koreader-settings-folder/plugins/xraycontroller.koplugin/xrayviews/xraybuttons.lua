@@ -16,6 +16,7 @@ local Size = require("modules/size")
 
 local DX = DX
 local has_items = has_items
+local has_no_items = has_no_items
 local has_no_text = has_no_text
 local has_text = has_text
 local T = T
@@ -41,6 +42,7 @@ local XrayButtons = WidgetContainer:new{
         button_font_size = DX.s.tab_buttons_font_size,
         button_font_weight = "normal",
     },
+    favorite_images_button = nil,
     hits_buttons_max = 30,
     info_max_total_buttons = 16,
     max_buttons_per_row = 4,
@@ -1653,6 +1655,30 @@ function XrayButtons:forListTopLeft(parent)
     return buttons
 end
 
+--* this button will only be inserted when the user has installed the plugin ImageBookmarks and can be used to show the favorite images (ImageBookmarks) added to a book; see https://github.com/bozo22/imagebookmarks.koplugin:
+--- @private
+function XrayButtons:insertFavoriteImagesButton(buttons, caller_close_callback)
+    local plugin = "imagebookmarks"
+    local instance = KOR.ui[plugin]
+    if not instance then
+        return
+    end
+    local favorites = instance.settings:getBookmarks(instance.doc_path)
+    if has_no_items(favorites) then
+        return
+    end
+    if not self.favorite_images_button then
+        self.favorite_images_button = KOR.buttoninfopopup:forFavoriteImages({
+            callback = function()
+                caller_close_callback()
+                --* call ImageBookmarks#onOpenImageBookmarkViewer:
+                KOR.ui:handleEvent(Event:new("OpenImageBookmarkViewer"))
+            end
+        })
+    end
+    table_insert(buttons, self.favorite_images_button)
+end
+
 --main: insertGlobalDXHelpButton
 function XrayButtons:insertGlobalDXHelpButton(buttons, parent, initial_tab)
     if DX.s.enable_global_DX_tips then
@@ -2307,6 +2333,20 @@ function XrayButtons:injectReferenceButtons(caller_close_callback, buttons)
         end,
     }))
     local button_pos = 2
+    local instance = KOR.ui["imagebookmarks"]
+    if instance then
+        local favorites = instance.settings:getBookmarks(instance.doc_path)
+        if has_items(favorites) then
+            table_insert(top_buttons_right, button_pos, KOR.buttoninfopopup:forFavoriteImages({
+                callback = function()
+                    caller_close_callback()
+                    --* call ImageBookmarks#onOpenImageBookmarkViewer:
+                    KOR.ui:handleEvent(Event:new("OpenImageBookmarkViewer"))
+                end
+            }))
+            button_pos = button_pos + 1
+        end
+    end
     local glossary = KOR.glossary:get()
     if has_text(glossary) then
         table_insert(top_buttons_right, button_pos, KOR.buttoninfopopup:forGlossaryViewer({
@@ -2384,7 +2424,7 @@ end
 
 --- @param parent ReferenceInformation
 function XrayButtons:forReferenceInformationTopRight(parent)
-    return {
+    local buttons = {
         KOR.buttoninfopopup:forWikipediaSearch({
             callback = function()
                 KOR.wikipedia:showWikipediaInputPrompt(function()
@@ -2393,6 +2433,10 @@ function XrayButtons:forReferenceInformationTopRight(parent)
             end,
         }),
     }
+    self:insertFavoriteImagesButton(buttons, function()
+        KOR.informationmediator:closeViewerInstance()
+    end)
+    return buttons
 end
 
 --- @param mode string either "add" or "edit"

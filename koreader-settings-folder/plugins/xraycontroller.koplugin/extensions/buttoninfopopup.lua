@@ -76,6 +76,16 @@ function ButtonInfoPopup:forBookOpen(props)
 	}, props)
 end
 
+--* this button will only be shown if the ImageBookmarks plugin has been installed; see If ImageBookmarks-plugin is installed; can be downloaded at https://github.com/bozo22/imagebookmarks.koplugin:
+function ButtonInfoPopup:forFavoriteImages(props)
+	return ButtonProps:set({
+		icon = "image",
+		info = _("image icon | Show favorite-images-viewer (ImageBookmarks-plugin)."),
+		callback_label = _("show"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forFindFromStart(props)
 	return ButtonProps:set({
 		icon = "first",
