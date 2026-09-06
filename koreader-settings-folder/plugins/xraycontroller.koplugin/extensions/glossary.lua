@@ -200,6 +200,7 @@ end
 --* only shown when Glossary was called through a gesture:
 --* information for this Glossary was added via ((Glossary#addInformation)):
 --* compare ((ReferenceInformation#show))
+--- @class GlossaryShow
 function Glossary:showViewer()
     local glossary = self:get()
     if KOR.informationmediator:showAlternativeViewer("TYPE_GLOSSARY", glossary) then

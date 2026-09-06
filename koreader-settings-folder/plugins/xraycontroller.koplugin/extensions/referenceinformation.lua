@@ -333,8 +333,10 @@ function ReferenceInformation:resetProps()
 	self.headings_db = ""
 end
 
+--main: showReferenceInformation
 --* items for this XrayInformation were added in ((InformationMediator#addReferenceInformation)):
 --* compare ((Glossary#showViewer)):
+--- @class ReferenceInformationShow
 function ReferenceInformation:show()
 
 	if not self.loaded_for_book or self.loaded_for_book ~= KOR.document.file then
@@ -355,7 +357,7 @@ function ReferenceInformation:show()
 	})
 
 	local is_tabbed = glossary
-	local buttons = DX.b:forReferenceInformationTopLeft(is_tabbed)
+	local buttons = DX.b:forReferenceInformationTopLeft(self, is_tabbed)
 	local buttons_right = DX.b:forReferenceInformationTopRight(self)
 	local extra_buttons = DX.s.Quizlet_button_enabled and has_items(DX.vd.items) and {
 		KOR.buttoninfopopup:forQuizletMode({

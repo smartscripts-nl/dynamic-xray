@@ -94,7 +94,8 @@ function XrayInformation:showReferenceInformation(initial_tab)
         modal = true,
         name = "glossary_information",
         button_font_weight = "normal",
-        top_buttons_right = DX.b:forReferenceInformationInfoTopLeft(self),
+        top_buttons_left = DX.b:forReferenceInformationInfoTopLeft(self),
+        top_buttons_right = DX.b:forReferenceInformationInfoTopRight(self),
         --* htmlBox will always have a close_callback and therefor a close button; so no need to define a close_callback here...
         no_filter_button = true,
         title_shrink_font_to_fit = true,
@@ -258,6 +259,7 @@ function XrayInformation:showPageNavigatorHelp(parent, active_tab)
         no_filter_button = true,
         title_shrink_font_to_fit = true,
         text_padding_top_bottom = Screen:scaleBySize(10),
+        top_buttons_left = DX.b:forPageNavigatorHelpTopLeft(self),
         window_size = {
             h = screen_dims.h * 0.8,
             w = screen_dims.w * width_factor,

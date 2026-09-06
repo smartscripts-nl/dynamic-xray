@@ -354,6 +354,13 @@ function XrayButtons:forPageNavigator(parent)
      }}
 end
 
+--- @param parent XrayInformation
+function XrayButtons:forPageNavigatorHelpTopLeft(parent)
+    local buttons = {}
+    self:insertGlobalDXHelpButton(buttons, parent)
+    return buttons
+end
+
 --- @param parent XrayPageNavigator
 function XrayButtons:forPageNavigatorPopupButtons(parent)
     local dialog_close_callback = function()
@@ -456,7 +463,7 @@ function XrayButtons:forPageNavigatorTopLeft(parent)
             end
         }),
     }
-    self:insertGeneralDXTipsButton(buttons, parent)
+    self:insertGlobalDXHelpButton(buttons, parent)
 
     return buttons
 end
@@ -532,7 +539,7 @@ end
 
 --- @param parent XrayDialogs
 function XrayButtons:forQuizletQuestionsTopLeft(parent)
-    return {
+    local buttons = {
         KOR.buttoninfopopup:forQuizletToggleAnswersVisibility({
             icon = parent.quizlet_show_answers_also and "toggle-on" or "toggle-off",
             callback = function()
@@ -542,6 +549,9 @@ function XrayButtons:forQuizletQuestionsTopLeft(parent)
             end
         }),
     }
+    self:insertGlobalDXHelpButton(buttons, parent)
+
+    return buttons
 end
 
 function XrayButtons:closeDialog(dialog)
@@ -663,7 +673,7 @@ function XrayButtons:forUiInfoTopLeft(new_mode, new_trigger, parent)
             end,
         }))
     end
-    self:insertGeneralDXTipsButton(buttons, parent)
+    self:insertGlobalDXHelpButton(buttons, parent)
 
     return buttons
 end
@@ -973,7 +983,7 @@ function XrayButtons:forTagGroupSelectorTopLeft(parent)
             end
         }))
     end
-    self:insertGeneralDXTipsButton(buttons, parent, 2)
+    self:insertGlobalDXHelpButton(buttons, parent, 2)
 
     return buttons
 end
@@ -998,7 +1008,7 @@ The maximum number of context buttons per row with names of Xray items at the bo
             end
         }),
     }
-    self:insertGeneralDXTipsButton(buttons, parent, 2)
+    self:insertGlobalDXHelpButton(buttons, parent, 2)
 
     return buttons
 end
@@ -1366,7 +1376,7 @@ function XrayButtons:forItemViewerTopLeft(parent)
             end
         }),
     }
-    self:insertGeneralDXTipsButton(buttons, parent)
+    self:insertGlobalDXHelpButton(buttons, parent)
 
     return buttons
 end
@@ -1638,12 +1648,13 @@ function XrayButtons:forListTopLeft(parent)
             end
         }),
     }
-    self:insertGeneralDXTipsButton(buttons, parent)
+    self:insertGlobalDXHelpButton(buttons, parent)
 
     return buttons
 end
 
-function XrayButtons:insertGeneralDXTipsButton(buttons, parent, initial_tab)
+--main: insertGlobalDXHelpButton
+function XrayButtons:insertGlobalDXHelpButton(buttons, parent, initial_tab)
     if DX.s.enable_global_DX_tips then
         table_insert(buttons, 1, KOR.buttoninfopopup:forXrayTips({
             callback = function()
@@ -1908,7 +1919,7 @@ function XrayButtons:forExportItemsTopLeft(parent)
             end
         }),
     }
-    DX.b:insertGeneralDXTipsButton(buttons, parent)
+    DX.b:insertGlobalDXHelpButton(buttons, parent)
     return buttons
 end
 
@@ -2251,7 +2262,7 @@ end
 --- @param parent Glossary
 function XrayButtons:forGlossaryViewerTopLeft(parent, is_tabbed)
     local target = KOR.informationmediator:getViewerTargetTypeToBeErased(is_tabbed, "TYPE_GLOSSARY")
-    return {
+    local buttons = {
         {
             icon = "info-slender",
             callback = function()
@@ -2279,6 +2290,9 @@ function XrayButtons:forGlossaryViewerTopLeft(parent, is_tabbed)
             end
         }),
     }
+    self:insertGlobalDXHelpButton(buttons, parent)
+
+    return buttons
 end
 
 --- @param caller_close_callback function To close the calling dialog; with the left upper back button (DialogsQueue) in the reference dialog the user can then restart the calling dialog
@@ -2316,6 +2330,13 @@ end
 
 --- @param parent XrayInformation
 function XrayButtons:forReferenceInformationInfoTopLeft(parent)
+    local buttons = {}
+    self:insertGlobalDXHelpButton(buttons, parent)
+    return buttons
+end
+
+--- @param parent XrayInformation
+function XrayButtons:forReferenceInformationInfoTopRight(parent)
     return {
         KOR.buttoninfopopup:forWikipediaSearch({
             callback = function()
@@ -2331,9 +2352,10 @@ function XrayButtons:forReferenceInformationInfoTopLeft(parent)
 end
 
 --* compare ((XrayButtons#forGlossaryViewerTopLeft)):
-function XrayButtons:forReferenceInformationTopLeft(is_tabbed)
+--- @param parent ReferenceInformation
+function XrayButtons:forReferenceInformationTopLeft(parent, is_tabbed)
     local target = KOR.informationmediator:getViewerTargetTypeToBeErased(is_tabbed, "TYPE_REFERENCE_INFORMATION")
-    return {
+    local buttons = {
         {
             icon = "info-slender",
             callback = function()
@@ -2355,6 +2377,9 @@ function XrayButtons:forReferenceInformationTopLeft(is_tabbed)
             end
         }),
     }
+    self:insertGlobalDXHelpButton(buttons, parent)
+
+    return buttons
 end
 
 --- @param parent ReferenceInformation
