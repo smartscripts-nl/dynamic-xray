@@ -371,6 +371,7 @@ function ReferenceInformation:show()
 
 	--* compare showing Glossary first and Reference Information in second tab in ((Glossary#showViewer)):
 	if is_tabbed then
+		--* this dialog can be closed with KOR.informationmediator:closeViewerInstance():
 		self.info_dialog = KOR.dialogs:htmlBoxTabbed(1, {
 			title = _("Reference Information + Glossary"),
 			extract_texts = true,
@@ -403,6 +404,7 @@ function ReferenceInformation:show()
 		return true
 	end
 
+	--* this dialog can be closed with KOR.informationmediator:closeViewerInstance():
 	self.info_dialog = KOR.dialogs:textOrHtmlBox({
 		title = _("Reference Information"),
 		top_buttons_left = buttons,

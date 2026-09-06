@@ -2377,7 +2377,7 @@ end
 
 --- @param parent XrayInformation
 function XrayButtons:forReferenceInformationInfoTopRight(parent)
-    return {
+    local buttons = {
         KOR.buttoninfopopup:forWikipediaSearch({
             callback = function()
                 KOR.wikipedia:showWikipediaInputPrompt(function()
@@ -2389,6 +2389,11 @@ function XrayButtons:forReferenceInformationInfoTopRight(parent)
             end,
         }),
     }
+    self:insertFavoriteImagesButton(buttons, function()
+        KOR.informationmediator:closeViewerInstance()
+    end)
+
+    return buttons
 end
 
 --* compare ((XrayButtons#forGlossaryViewerTopLeft)):
