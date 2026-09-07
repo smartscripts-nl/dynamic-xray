@@ -20,6 +20,9 @@ local XrayInformation = WidgetContainer:extend {
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+H</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
             .. _("show this Help information dialog")
             .. [[</td></tr>
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+I</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+            .. _("show favorite images for current e-book in ImageBookmarks Viewer. Only shown when the ImageBookmarks plugin has been installed AND favorite images were saved for the current ebook.<br /><br/>Plugin available at https://github.com/bozo22/imagebookmarks.koplugin")
+            .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+L</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
             .. _("show Xray List")
             .. [[</td></tr>
@@ -84,6 +87,8 @@ function XrayInformation:getMatchReliabilityIndicator(name)
     return self.match_reliability_indicators[name]
 end
 
+--main: showReferenceInformation
+--* compare ((Glossary#showViewer)):
 function XrayInformation:showReferenceInformation(initial_tab)
     local screen_dims = Screen:getSize()
     local target = initial_tab == 2 and _("Reference Information") or _("Glossary")

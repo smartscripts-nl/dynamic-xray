@@ -1657,7 +1657,7 @@ end
 
 --* this button will only be inserted when the user has installed the plugin ImageBookmarks and can be used to show the favorite images (ImageBookmarks) added to a book; see https://github.com/bozo22/imagebookmarks.koplugin:
 --- @private
-function XrayButtons:insertFavoriteImagesButton(buttons, caller_close_callback)
+function XrayButtons:insertFavoriteImagesButton(buttons)
     local plugin = "imagebookmarks"
     local instance = KOR.ui[plugin]
     if not instance then
@@ -1667,15 +1667,11 @@ function XrayButtons:insertFavoriteImagesButton(buttons, caller_close_callback)
     if has_no_items(favorites) then
         return
     end
-    if not self.favorite_images_button then
-        self.favorite_images_button = KOR.buttoninfopopup:forFavoriteImages({
-            callback = function()
-                caller_close_callback()
-                --* call ImageBookmarks#onOpenImageBookmarkViewer:
-                KOR.ui:handleEvent(Event:new("OpenImageBookmarkViewer"))
-            end
-        })
-    end
+    self.favorite_images_button = KOR.buttoninfopopup:forFavoriteImages({
+        callback = function()
+            return DX.c:onShowImageBookmarkViewer(instance, favorites)
+        end
+    })
     table_insert(buttons, self.favorite_images_button)
 end
 
@@ -2339,9 +2335,7 @@ function XrayButtons:injectReferenceButtons(caller_close_callback, buttons)
         if has_items(favorites) then
             table_insert(top_buttons_right, button_pos, KOR.buttoninfopopup:forFavoriteImages({
                 callback = function()
-                    caller_close_callback()
-                    --* call ImageBookmarks#onOpenImageBookmarkViewer:
-                    KOR.ui:handleEvent(Event:new("OpenImageBookmarkViewer"))
+                    return DX.c:onShowImageBookmarkViewer(instance, favorites)
                 end
             }))
             button_pos = button_pos + 1
@@ -2389,9 +2383,7 @@ function XrayButtons:forReferenceInformationInfoTopRight(parent)
             end,
         }),
     }
-    self:insertFavoriteImagesButton(buttons, function()
-        KOR.informationmediator:closeViewerInstance()
-    end)
+    self:insertFavoriteImagesButton(buttons)
 
     return buttons
 end
@@ -2438,9 +2430,7 @@ function XrayButtons:forReferenceInformationTopRight(parent)
             end,
         }),
     }
-    self:insertFavoriteImagesButton(buttons, function()
-        KOR.informationmediator:closeViewerInstance()
-    end)
+    self:insertFavoriteImagesButton(buttons)
     return buttons
 end
 

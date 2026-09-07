@@ -4,7 +4,6 @@ local require = require
 local Device = require("device")
 local Input = require("modules/input")
 local KOR = require("extensions/kor")
-local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 
 local DX = DX
@@ -77,6 +76,7 @@ function KeyEvents:addDialogHotkeys(parent, mode, skip_next_prev_item)
     end
 end
 
+--main: hotkeysForReaderUI
 --* here we add global hotkeys for ReaderUI:
 --- @param parent XrayController
 function KeyEvents:addHotkeysForReaderUI(parent)
@@ -95,6 +95,11 @@ function KeyEvents:addHotkeysForReaderUI(parent)
     readerui.key_events.ShowXrayHelpUI = { { "Shift", { "H" } } }
     readerui.onShowXrayHelpUI = function()
         return DX.i:showPageNavigatorHelp(parent, 3)
+    end
+
+    readerui.key_events.ShowImageBookmarksUI = { { "Shift", { "I" } } }
+    readerui.onShowImageBookmarksUI = function()
+        return DX.c:onShowImageBookmarkViewer()
     end
 
     readerui.key_events.ShowXrayListUI = { { "Shift", { "L" } } }

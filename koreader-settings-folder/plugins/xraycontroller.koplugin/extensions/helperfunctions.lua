@@ -46,8 +46,7 @@ string_len = string.len
 string_lower = string.lower
 string_rep = string.rep
 string_sub = string.sub
---* make T globally available:
-T = require("ffi/util").template
+--* T has already been made globally available in ((XrayPatches1))
 table_concat = table.concat
 table_insert = table.insert
 table_move = table.move

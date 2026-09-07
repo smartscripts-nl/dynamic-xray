@@ -5,6 +5,8 @@ local require = require
 
 local Blitbuffer = require("ffi/blitbuffer")
 local Dispatcher = require("dispatcher")
+--* will be loaded lazily in ((XrayController#onShowImageBookmarkViewer)):
+local ImageBookmarkViewer
 local KOR = require("extensions/kor")
 --* to be instantiated in ((XrayController#resetDynamicXray)):
 local NavigatorBox
@@ -14,8 +16,10 @@ require("extensions/helperfunctions")
 local _ = KOR:initCustomTranslations()
 
 local G_reader_settings = G_reader_settings
+local has_no_items = has_no_items
 local has_no_text = has_no_text
 local pairs = pairs
+local pcall = pcall
 
 KOR:initBaseExtensions()
 
@@ -279,6 +283,47 @@ end
 
 function XrayController:onShowCurrentSeries()
     KOR.seriesmanager:showContextDialogForCurrentEbook()
+    return true
+end
+
+--main: showImageBookmarkViewer
+--* arguments given when called from ((XrayButtons#insertFavoriteImagesButton)) or ((XrayButtons#injectReferenceButtons)), AND favorite images for the current book were detected; when called with hotkey Shift+I, the checks MUST be done:
+function XrayController:onShowImageBookmarkViewer(instance, favorites)
+    if not instance then
+        instance = KOR.ui["imagebookmarks"]
+        if not instance then
+            KOR.messages:notify(_("imagebookmarks-plugin hasn't been installed"))
+            return true
+        end
+
+        favorites = instance.settings:getBookmarks(instance.doc_path)
+        if has_no_items(favorites) then
+            KOR.messages:notify(_("no favorite images saved for current book"))
+            return true
+        end
+    end
+    if not ImageBookmarkViewer then
+        --* path to ImageBookmarks plugin was added to package.path in ((patch: add Dynamic Xray to KOReader)):
+        local ok = pcall(function()
+            --! imagebookmarks.koplugin folder must be present in the same folder where xraycontroller.koplugin resides:
+            ImageBookmarkViewer = require("imagebookmarkviewer")
+        end)
+        if not ok then
+            KOR.messages:notify(_("something went wrong when trying to load imagebookmarkviewer.lua"))
+            return true
+        end
+    end
+    local imagebookmarksviewer = ImageBookmarkViewer:new{
+        image_bookmarks = instance,
+        doc_path = instance.doc_path,
+        settings = instance.settings,
+        image_disposable = false,
+        --* we want the images to be in view on top of other dialogs:
+        modal = true,
+        with_title_bar = false,
+        fullscreen = true,
+    }
+    UIManager:show(imagebookmarksviewer)
     return true
 end
 

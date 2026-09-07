@@ -11,8 +11,10 @@ local require = require
 
 local lfs = require("libs/libkoreader-lfs")
 local lfs_attributes = lfs.attributes
+--* make T globally available:
+T = require("ffi/util").template
 
-local controller_path
+local controllers_paths
 local function locatePatcher()
     local table_insert = table.insert
     local type = type
@@ -49,7 +51,7 @@ local function locatePatcher()
             local plugin_root = lookup_path .. "/" .. entry
             local mode = lfs_attributes(plugin_root, "mode")
             if mode == "directory" and entry == "xraycontroller.koplugin" then
-                controller_path = plugin_root
+                controllers_paths = plugin_root
                 break
             end
         end
@@ -60,21 +62,21 @@ end
 
 local data_dir = require("datastorage"):getDataDir()
 if data_dir ~= "." then
-    local user_extra_path = data_dir .. "/plugins/"
+    local user_extra_path = data_dir .. "/plugins"
     if lfs_attributes(user_extra_path .. "/xraycontroller.koplugin", "mode") == "directory" then
-        controller_path = user_extra_path .. "/xraycontroller.koplugin"
+        controllers_paths = T("%1/xraycontroller.koplugin/?.lua;%2/imagebookmarks.koplugin/?.lua;", user_extra_path, user_extra_path)
     end
 end
 
-if not controller_path then
+if not controllers_paths then
     locatePatcher()
 end
-if not controller_path then
+if not controllers_paths then
     return
 end
 
 -- #((patch: add Dynamic Xray to KOReader))
-package.path = controller_path .. "/?.lua;" .. package.path
+package.path = controllers_paths .. package.path
 
 require("xraycontroller/xraycontroller")
 

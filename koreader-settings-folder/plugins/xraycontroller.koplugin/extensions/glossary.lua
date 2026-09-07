@@ -197,9 +197,10 @@ function Glossary:showEditor(glossary, scroll_to_text)
     end
 end
 
+--main: showGlossaryViewer
 --* only shown when Glossary was called through a gesture:
 --* information for this Glossary was added via ((Glossary#addInformation)):
---* compare ((ReferenceInformation#show))
+--* compare ((ReferenceInformation#show)):
 --- @class GlossaryShow
 function Glossary:showViewer()
     local glossary = self:get()
