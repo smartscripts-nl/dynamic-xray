@@ -66,8 +66,8 @@ local _ = require("gettext")
 --! only use tr for DX related modules:
 local tr = KOR:initCustomTranslations()
 
-local ffiUtil = require("ffi/util")
 local logger = require("logger")
+local userpatch = require("userpatch")
 local util = require("util")
 local Screen = Device.screen
 local Utf8Proc = require("ffi/utf8proc")
@@ -76,7 +76,6 @@ local Utf8Proc = require("ffi/utf8proc")
 
 local cre --* Delayed loading
 local error = error
-local ffiUtil_orderedPairs = ffiUtil.orderedPairs
 local G_reader_settings = G_reader_settings
 local logger_dbg = logger.dbg
 local next = next
@@ -837,41 +836,13 @@ function ReaderHighlight:getSelectionText(xp0, xp1, return_raw)
     return return_raw and t or cleanupSelectedText(t)
 end
 
---! alas, we have to completely overwrite the original method to be able to use our modified ButtonDialog widget:
-function ReaderHighlight:onShowHighlightMenu(index)
-    if not self.selected_text then
-        return
-    end
-
-    local highlight_buttons = { {} }
-
-    local columns = 2
-    for idx, fn_button in ffiUtil_orderedPairs(self._highlight_buttons) do
-        local button = fn_button(self, index)
-        if not button.show_in_highlight_dialog_func or button.show_in_highlight_dialog_func() then
-            if #highlight_buttons[#highlight_buttons] >= columns then
-                table_insert(highlight_buttons, {})
-            end
-            table_insert(highlight_buttons[#highlight_buttons], button)
-            logger_dbg("ReaderHighlight", idx .. ": line " .. #highlight_buttons .. ", col " .. #highlight_buttons[#highlight_buttons])
-        end
-    end
-
-    self.highlight_dialog = ButtonDialog:new{
-        buttons = highlight_buttons,
-        anchor = function()
-            return self:_getDialogAnchor(self.highlight_dialog, index)
-        end,
-        tap_close_callback = function()
-            if self.hold_pos then
-                self:clear()
-            end
-        end,
-    }
-    -- NOTE: Disable merging for this update,
-    --       or the buggy Sage kernel may alpha-blend it into the page (with a bogus alpha value, to boot)...
-    UIManager:show(self.highlight_dialog, "[ui]")
-end
+--* replace ReaderHighlight's standard ButtonDialog by DX's adapted version:
+local ButtonDialog_idx = select(2, userpatch.getUpValue(ReaderHighlight.onShowHighlightMenu, "ButtonDialog"))
+userpatch.replaceUpValue(
+        ReaderHighlight.onShowHighlightMenu,
+        ButtonDialog_idx,
+        ButtonDialog
+)
 
 local orig_init = ReaderHighlight.init
 ReaderHighlight.init = function(self)

@@ -287,7 +287,7 @@ function XrayController:onShowCurrentSeries()
 end
 
 --main: showImageBookmarkViewer
---* arguments given when called from ((XrayButtons#insertFavoriteImagesButton)) or ((XrayButtons#injectReferenceButtons)), AND favorite images for the current book were detected; when called with hotkey Shift+I, the checks MUST be done:
+--* arguments given when called from ((XrayButtons#insertFavoriteImagesButton)) or ((XrayButtons#injectReferenceButtons)), AND favorite images for the current book were detected; when called with hotkey Shift+I, the checks below MUST be done:
 function XrayController:onShowImageBookmarkViewer(instance, favorites)
     if not instance then
         instance = KOR.ui["imagebookmarks"]
