@@ -79,17 +79,16 @@ The user can use DX for study: to keep track of entities, concepts, definitions,
 4. In that target folder, create a folder patches if it doesn't exist yet and copy koreader-settings-folder/patches/2-xray-patches.lua to that target patches folder.
 5. Copy koreader-settings-folder/settings/settings_manager.lua to the settings subfolder of the koreader settings folder of your current installation (this folder should already be present and should contain many files, e.g. sqlite3-files for KOReader's databases).
 6. **⚠️ Check whether the database filename in your KOReader settings folder is "bookinfo_cache.sqlite3".** If not, go through the additional steps listed in [User has a database filename other than "bookinfo_cache.sqlite3"](#user-uses-a-database-file-other-than-bookinfo_cachesqlite3)
-7. If you want to let KOReader's footer display Xray items counts (see image 1b... under [Images](#images)), you'll have to manually edit readerfooter.lua (because it's not patchable). An example of this is provided in manual-file-edit-examples/readerfooter.lua. See the comments at the start of that file.
-8. It is possible to add a button to the dictionary lookup results dialog, with which to add the looked-up word to the Xray items. This cannot be done via a patch, but requires a manual edit of dictquicklookup.lua. See
+7. It is possible to add a button to the dictionary lookup results dialog, with which to add the looked-up word to the Xray items. This cannot be done via a patch, but requires a manual edit of dictquicklookup.lua. See
    manual-file-edit-examples/dictquicklookup.lua for an example.
-9. It is **⚠️highly recommended to let KOReader display its keyboard in compact mode**, so you have enough space
+8. It is **⚠️highly recommended to let KOReader display its keyboard in compact mode**, so you have enough space
    available for the multiple-field DX forms. You can enable this compact display mode from the main KOReader menu: Cog icon > Device > Keyboard > Keyboard appearance settings > enable checkbox "compact".
 
 NB: icons specific for DX will be loaded from the xraycontroller.koplugin/xrayviews/icons folder.
 
 ### Updating to new versions
 
-Make sure the file 2-xray-patches.lua is present in your patches folder. It will probably almost never have to be updated, because the patching of your KOReader will de facto be done by
+Make sure the file 2-xray-patches.lua is present in your patches-folder. It will probably almost never have to be updated, because the patching of your KOReader will de facto be done by
 plugins/xraycontroller.koplugin/dx-patches.lua (which will be called by 2-xray-patches.lua).
 
 ### Entering your own translations for the DX interface

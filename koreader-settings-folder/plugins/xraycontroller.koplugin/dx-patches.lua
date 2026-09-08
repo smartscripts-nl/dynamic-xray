@@ -58,6 +58,7 @@ local ReaderToc = require("apps/reader/modules/readertoc")
 local ReaderView = require("apps/reader/modules/readerview")
 --- @class ReaderWikipedia
 local ReaderWikipedia = require("apps/reader/modules/readerwikipedia")local TextBoxWidget = require("ui/widget/textboxwidget")
+local TouchMenu = require("ui/widget/touchmenu")
 local Trapper = require("ui/trapper")
 local UIManager = require("ui/uimanager")
 local Version = require("version")
@@ -79,6 +80,7 @@ local error = error
 local G_reader_settings = G_reader_settings
 local logger_dbg = logger.dbg
 local next = next
+local pairs = pairs
 local pcall = pcall
 local select = select
 local T = T
@@ -562,9 +564,145 @@ end
 --- PATCH READERFOOTER
 -- #((PATCH READERFOOTER))
 
+ReaderFooter.default_settings.xray_items = false
+
+--* replace ReaderHighlight's standard ButtonDialog by DX's adapted version:
+local MODE, MODE_idx = userpatch.getUpValue(ReaderFooter.init, "MODE")
+local xray_items_index = KOR.tables:getTableLength(MODE) + 1
+MODE.xray_items = xray_items_index
+userpatch.replaceUpValue(
+    ReaderFooter.init,
+    MODE_idx,
+    MODE
+)
+MODE_idx = select(2, userpatch.getUpValue(ReaderFooter.addToMainMenu, "MODE"))
+userpatch.replaceUpValue(
+    ReaderFooter.addToMainMenu,
+    MODE_idx,
+    MODE
+)
+
+local footerTextGeneratorMap, footerTextGeneratorMap_idx = userpatch.getUpValue(ReaderFooter.applyFooterMode, "footerTextGeneratorMap")
+footerTextGeneratorMap.xray_items = function()
+    if has_no_items(DX.vd.item_table[1]) then
+        return ""
+    end
+    local current_page_count = KOR.registry:get("xray_items_on_page_count") or 0
+    return "\u{26A1}" .. current_page_count .. "/" .. #DX.vd.item_table[1]
+end
+userpatch.replaceUpValue(
+    ReaderFooter.applyFooterMode,
+    footerTextGeneratorMap_idx,
+    footerTextGeneratorMap
+)
+
+local orig_textOptionTitles = ReaderFooter.textOptionTitles
+ReaderFooter.textOptionTitles = function(self, option)
+    if option == "xray_items" then
+        return T(_("Xray items (%1)"), "\u{26A1}")
+    end
+    return orig_textOptionTitles(self, option)
+end
+
+
+--! we can't patch ReaderFooter.addToMainMenu here, because we are too late for that at the stage of this patch; but we can patch the subitem menu which will be shown when the user taps on "Status bar items" in the main KOReader settings menu:additional_methods:
+local TouchMenuItem = userpatch.getUpValue(TouchMenu.updateItems, "TouchMenuItem")
+local orig_onTapSelect = TouchMenuItem.onTapSelect
+TouchMenuItem.onTapSelect = function(self, arg, ges)
+    if not self.item.text or self.item.text ~= _("Status bar items") then
+        return orig_onTapSelect(self, arg, ges)
+    end
+    --* inject our subitem above the "Custom text"-item:
+    local target_pos = 16
+    --* if the xray_items-item was already added to the subitems, don't add it again:
+    if self.item.sub_item_table[target_pos].id == "xray_items" then
+        return orig_onTapSelect(self, arg, ges)
+    end
+
+    local footer_settings = G_reader_settings:readSetting("footer")
+    table_insert(self.item.sub_item_table, target_pos, {
+        id = "xray_items",
+        text_func = function()
+            return KOR.footer:textOptionTitles("xray_items")
+        end,
+        checked_func = function()
+            return footer_settings["xray_items"] == true
+        end,
+        callback = function()
+            footer_settings["xray_items"] = not footer_settings["xray_items"]
+            -- We only need to send a SetPageBottomMargin event when we truly affect the margin
+            local should_signal = false
+            -- only case that we don't need a UI update is enable/disable
+            -- non-current mode when all_at_once is disabled.
+            local should_update = false
+            local first_enabled_mode_num
+            local prev_has_no_mode = KOR.footer.has_no_mode
+            local prev_reclaim_height = KOR.footer.reclaim_height
+            KOR.footer.has_no_mode = true
+            for mode_num, m in pairs(KOR.footer.mode_index) do
+                if footer_settings[m] then
+                    first_enabled_mode_num = mode_num
+                    KOR.footer.has_no_mode = false
+                    break
+                end
+            end
+            KOR.footer.reclaim_height = footer_settings.reclaim_height
+            -- refresh margins position
+            if KOR.footer.has_no_mode then
+                KOR.footer.footer_text.height = 0
+                should_signal = true
+                KOR.footer.genFooterText = footerTextGeneratorMap.empty
+                KOR.footer.mode = KOR.footer.mode_list.off
+            elseif prev_has_no_mode then
+                if footer_settings.all_at_once then
+                    KOR.footer.mode = KOR.footer.mode_list.page_progress
+                    KOR.footer:applyFooterMode()
+                    G_reader_settings:saveSetting("reader_footer_mode", KOR.footer.mode)
+                else
+                    G_reader_settings:saveSetting("reader_footer_mode", first_enabled_mode_num)
+                end
+                should_signal = true
+            elseif KOR.footer.reclaim_height ~= prev_reclaim_height then
+                should_signal = true
+                should_update = true
+            end
+            --* the xray_items submenu item doesn't have a callback, so disabled here:
+            --[[if callback then
+                should_update = callback(KOR.footer)]]
+            if footer_settings.all_at_once then
+                should_update = KOR.footer:updateFooterTextGenerator()
+            elseif (KOR.footer.mode_list["xray_items"] == KOR.footer.mode and footer_settings["xray_items"] == false)
+                    or (prev_has_no_mode ~= KOR.footer.has_no_mode) then
+                -- current mode got disabled, redraw footer with other
+                -- enabled modes. if all modes are disabled, then only show
+                -- progress bar
+                if not KOR.footer.has_no_mode then
+                    KOR.footer.mode = first_enabled_mode_num
+                else
+                    -- If we've just disabled our last mode, first_enabled_mode_num is nil
+                    -- If the progress bar is enabled,
+                    -- fake an innocuous mode so that we switch to showing the progress bar alone, instead of nothing,
+                    -- This is exactly what the "Show progress bar" toggle does.
+                    KOR.footer.mode = footer_settings.disable_progress_bar and KOR.footer.mode_list.off or KOR.footer.mode_list.page_progress
+                end
+                should_update = true
+                KOR.footer:applyFooterMode()
+                G_reader_settings:saveSetting("reader_footer_mode", KOR.footer.mode)
+            end
+            if should_update or should_signal then
+                KOR.footer:refreshFooter(should_update, should_signal)
+            end
+            -- The absence or presence of some items may change whether auto-refresh should be ensured
+            KOR.footer:rescheduleFooterAutoRefreshIfNeeded()
+        end,
+    })
+    return orig_onTapSelect(self, arg, ges)
+end
+
 local orig_ReaderFooter_init = ReaderFooter.init
 ReaderFooter.init = function(self)
     orig_ReaderFooter_init(self)
+    logger_dbg("footermode", self.mode_index)
     KOR:registerModule("footer", self)
 end
 

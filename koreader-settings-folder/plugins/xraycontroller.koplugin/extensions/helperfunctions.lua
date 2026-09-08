@@ -11,7 +11,7 @@ local G_reader_settings = G_reader_settings
 local tostring = tostring
 local type = type
 
---* use global vars to quickly run built-in lua methods:
+--* use global vars to quickly run built-in lua methods locally in modules:
 io_open = io.open
 io_popen = io.popen
 lfs_attributes = lfs.attributes
