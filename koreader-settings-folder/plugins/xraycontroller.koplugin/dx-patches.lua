@@ -52,6 +52,7 @@ local ReaderFooter = require("apps/reader/modules/readerfooter")
 local ReaderHighlight = require("apps/reader/modules/readerhighlight")
 --- @class ReaderSearch
 local ReaderSearch = require("apps/reader/modules/readersearch")
+local ReaderStatus = require("apps/reader/modules/readerstatus")
 --- @class ReaderToc
 local ReaderToc = require("apps/reader/modules/readertoc")
 --- @class ReaderView
@@ -1709,6 +1710,19 @@ BookStatusWidget.setStar = function(self, num)
 end
 
 if DX.s.bookstatus_widget_add_DX_buttons then
+
+    --* register the BookStatusWidget to the DialogsQueue:
+    local orig_OnShowBookStatus = ReaderStatus.onShowBookStatus
+    ReaderStatus.onShowBookStatus = function(self, close_callback)
+        KOR.dialogsqueue:register({
+            id = "book_status_widget",
+            restore = function()
+                self:onShowBookStatus(close_callback)
+            end
+        })
+        return orig_OnShowBookStatus(self, close_callback)
+    end
+
     local TitleBar_idx = select(2, userpatch.getUpValue(BookStatusWidget.getStatusContent, "TitleBar"))
     userpatch.replaceUpValue(
         BookStatusWidget.getStatusContent,
