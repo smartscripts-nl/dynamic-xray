@@ -34,6 +34,11 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
             type = "number",
         },
+        bookstatus_widget_add_DX_buttons = {
+            value = true,
+            explanation = _("If you don't want to let DX inject DX-buttons into KOReaders' Book Status Widget, set this value to false. The change will be visible after you restarted KOReader."),
+            locked = 0,
+        },
         enable_global_DX_tips = {
             value = true,
             explanation = _("If true, in the top left of several DX dialogs a lightbulb icon will be shown, with which the user can call general usage tips for DX."),

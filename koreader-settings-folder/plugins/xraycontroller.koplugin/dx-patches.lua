@@ -1708,37 +1708,39 @@ BookStatusWidget.setStar = function(self, num)
     KOR.seriesmanager:setStars(DX.m.current_ebook_full_path, num)
 end
 
-local TitleBar_idx = select(2, userpatch.getUpValue(BookStatusWidget.getStatusContent, "TitleBar"))
-userpatch.replaceUpValue(
-    BookStatusWidget.getStatusContent,
-    TitleBar_idx,
-    TitleBar
-)
-local orig_getStatusContent = BookStatusWidget.getStatusContent
-BookStatusWidget.getStatusContent = function(self, width)
-    if self.readonly then
-        return orig_getStatusContent(self, width)
+if DX.s.bookstatus_widget_add_DX_buttons then
+    local TitleBar_idx = select(2, userpatch.getUpValue(BookStatusWidget.getStatusContent, "TitleBar"))
+    userpatch.replaceUpValue(
+        BookStatusWidget.getStatusContent,
+        TitleBar_idx,
+        TitleBar
+    )
+    local orig_getStatusContent = BookStatusWidget.getStatusContent
+    BookStatusWidget.getStatusContent = function(self, width)
+        if self.readonly then
+            return orig_getStatusContent(self, width)
+        end
+
+        --* content is a VerticalGroup with as first item the TitleBar, which we will replace now:
+        local content = orig_getStatusContent(self, width)
+        table_remove(content, 1)
+        table_insert(content, 1, TitleBar:new{
+            width = width,
+            --* the original BookStatusWidget doesn't have(!) a title in its title bar:
+            title = DX.m.current_title,
+            title_shrink_font_to_fit = true,
+            bottom_v_padding = 0,
+            --* by injecting top_buttons_left, we fix the - missing - spacing of the buttons in top_buttons_right:
+            top_buttons_left = DX.b:forBookStatusWidgetTopLeft(self),
+            top_buttons_right = DX.b:forBookStatusWidgetTopRight(),
+            close_callback = function()
+                self:onClose()
+            end,
+            show_parent = self,
+        })
+        --* make BookStatusWidget closeable with ((Dialogs#closeTopWidget)); e.g. used in ((XrayButtons#forBookStatusWidgetTopRight)):
+        KOR.dialogs:registerWidget(self)
+
+        return content
     end
-
-    --* content is a VerticalGroup with as first item the TitleBar, which we will replace now:
-    local content = orig_getStatusContent(self, width)
-    table_remove(content, 1)
-    table_insert(content, 1, TitleBar:new{
-        width = width,
-        --* the original BookStatusWidget doesn't have(!) a title in its title bar:
-        title = DX.m.current_title,
-        title_shrink_font_to_fit = true,
-        bottom_v_padding = 0,
-        --* by injecting top_buttons_left, we fix the - missing - spacing of the buttons in top_buttons_right:
-        top_buttons_left = DX.b:forBookStatusWidgetTopLeft(self),
-        top_buttons_right = DX.b:forBookStatusWidgetTopRight(),
-        close_callback = function()
-            self:onClose()
-        end,
-        show_parent = self,
-    })
-    --* make BookStatusWidget closeable with ((Dialogs#closeTopWidget)); e.g. used in ((XrayButtons#forBookStatusWidgetTopRight)):
-    KOR.dialogs:registerWidget(self)
-
-    return content
 end

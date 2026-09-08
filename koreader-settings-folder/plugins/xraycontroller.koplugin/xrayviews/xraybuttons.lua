@@ -1708,7 +1708,14 @@ function XrayButtons:getListSubmenuButton(tab_no)
 end
 
 function XrayButtons:forBookStatusWidgetTopLeft(parent)
-    local buttons = {}
+    local buttons = {
+        KOR.buttoninfopopup:forXraySettings({
+            callback = function()
+                parent:onClose()
+                DX.s.showSettingsManager()
+            end
+        }),
+    }
     self:insertGlobalDXHelpButton(buttons, parent)
     return buttons
 end
