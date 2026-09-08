@@ -1725,8 +1725,13 @@ BookStatusWidget.getStatusContent = function(self, width)
     table_remove(content, 1)
     table_insert(content, 1, TitleBar:new{
         width = width,
+        --* the original BookStatusWidget doesn't have(!) a title in its title bar:
+        title = DX.m.current_title,
+        title_shrink_font_to_fit = true,
         bottom_v_padding = 0,
-        top_buttons_right = DX.b:forBookStatusWidgetTopRight(self),
+        --* by injecting top_buttons_left, we fix the - missing - spacing of the buttons in top_buttons_right:
+        top_buttons_left = DX.b:forBookStatusWidgetTopLeft(self),
+        top_buttons_right = DX.b:forBookStatusWidgetTopRight(),
         close_callback = function()
             self:onClose()
         end,

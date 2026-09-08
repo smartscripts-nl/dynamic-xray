@@ -1707,6 +1707,12 @@ function XrayButtons:getListSubmenuButton(tab_no)
     }
 end
 
+function XrayButtons:forBookStatusWidgetTopLeft(parent)
+    local buttons = {}
+    self:insertGlobalDXHelpButton(buttons, parent)
+    return buttons
+end
+
 function XrayButtons:forBookStatusWidgetTopRight()
     return self:injectReferenceButtons(
     function()
