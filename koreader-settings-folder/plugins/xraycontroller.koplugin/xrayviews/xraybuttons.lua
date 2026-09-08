@@ -1707,6 +1707,15 @@ function XrayButtons:getListSubmenuButton(tab_no)
     }
 end
 
+function XrayButtons:forBookStatusWidgetTopRight()
+    return self:injectReferenceButtons(
+    function()
+        --* i.e.: close BookStatusWidget:
+        KOR.dialogs:closeTopWidget()
+    end,
+    {})
+end
+
 function XrayButtons:forChapterInformationPopup(parent, page, for_page_navigator, current_chapter, last_chapter)
     local max_loops = 150
     local lcount

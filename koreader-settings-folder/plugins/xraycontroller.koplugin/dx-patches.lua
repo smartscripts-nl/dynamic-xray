@@ -58,6 +58,7 @@ local ReaderToc = require("apps/reader/modules/readertoc")
 local ReaderView = require("apps/reader/modules/readerview")
 --- @class ReaderWikipedia
 local ReaderWikipedia = require("apps/reader/modules/readerwikipedia")local TextBoxWidget = require("ui/widget/textboxwidget")
+local TitleBar = require("xrayviews/widgets/titlebar")
 local TouchMenu = require("ui/widget/touchmenu")
 local Trapper = require("ui/trapper")
 local UIManager = require("ui/uimanager")
@@ -610,7 +611,7 @@ ReaderFooter.init = function(self)
     KOR:registerModule("footer", self)
 end
 
---! we can't patch ReaderFooter.addToMainMenu here, because we are too late for that at the stage of this patch; but we can patch the subitem menu which will be shown when the user taps on "Status bar items" in the main KOReader settings menu:additional_methods:
+--! we can't patch ReaderFooter.addToMainMenu here, because we are too late for that at the stage of this patch; but we can patch the subitem menu which will be shown when the user taps on "Status bar items" in the main KOReader settings menu:
 local TouchMenuItem = userpatch.getUpValue(TouchMenu.updateItems, "TouchMenuItem")
 local orig_onTapSelect = TouchMenuItem.onTapSelect
 TouchMenuItem.onTapSelect = function(self, arg, ges)
@@ -1700,8 +1701,39 @@ BookStatusWidget.onChangeBookStatus = function(self, option_name, option_value)
     end
     orig_onChangeBookStatus(self, option_name, option_value)
 end
+
 local orig_setStar = BookStatusWidget.setStar
 BookStatusWidget.setStar = function(self, num)
     orig_setStar(self, num)
     KOR.seriesmanager:setStars(DX.m.current_ebook_full_path, num)
+end
+
+local TitleBar_idx = select(2, userpatch.getUpValue(BookStatusWidget.getStatusContent, "TitleBar"))
+userpatch.replaceUpValue(
+    BookStatusWidget.getStatusContent,
+    TitleBar_idx,
+    TitleBar
+)
+local orig_getStatusContent = BookStatusWidget.getStatusContent
+BookStatusWidget.getStatusContent = function(self, width)
+    if self.readonly then
+        return orig_getStatusContent(self, width)
+    end
+
+    --* content is a VerticalGroup with as first item the TitleBar, which we will replace now:
+    local content = orig_getStatusContent(self, width)
+    table_remove(content, 1)
+    table_insert(content, 1, TitleBar:new{
+        width = width,
+        bottom_v_padding = 0,
+        top_buttons_right = DX.b:forBookStatusWidgetTopRight(self),
+        close_callback = function()
+            self:onClose()
+        end,
+        show_parent = self,
+    })
+    --* make BookStatusWidget closeable with ((Dialogs#closeTopWidget)); e.g. used in ((XrayButtons#forBookStatusWidgetTopRight)):
+    KOR.dialogs:registerWidget(self)
+
+    return content
 end
