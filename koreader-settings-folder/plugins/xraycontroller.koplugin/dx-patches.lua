@@ -604,6 +604,11 @@ ReaderFooter.textOptionTitles = function(self, option)
     return orig_textOptionTitles(self, option)
 end
 
+local orig_ReaderFooter_init = ReaderFooter.init
+ReaderFooter.init = function(self)
+    orig_ReaderFooter_init(self)
+    KOR:registerModule("footer", self)
+end
 
 --! we can't patch ReaderFooter.addToMainMenu here, because we are too late for that at the stage of this patch; but we can patch the subitem menu which will be shown when the user taps on "Status bar items" in the main KOReader settings menu:additional_methods:
 local TouchMenuItem = userpatch.getUpValue(TouchMenu.updateItems, "TouchMenuItem")
@@ -697,13 +702,6 @@ TouchMenuItem.onTapSelect = function(self, arg, ges)
         end,
     })
     return orig_onTapSelect(self, arg, ges)
-end
-
-local orig_ReaderFooter_init = ReaderFooter.init
-ReaderFooter.init = function(self)
-    orig_ReaderFooter_init(self)
-    logger_dbg("footermode", self.mode_index)
-    KOR:registerModule("footer", self)
 end
 
 
