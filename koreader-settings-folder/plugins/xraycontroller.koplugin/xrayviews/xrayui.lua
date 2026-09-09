@@ -834,10 +834,16 @@ function XrayUI:discoverXrayItems(page_or_paragraph_text, tagged_items)
     return items_found, explanations
 end
 
-function XrayUI:uiInfoShow(pos, mode)
+function XrayUI:uiInfoShow(pos, mode, called_from_gesture)
 
+    --* these rects should have been populated in ((XrayUI#uiInfoPopulateRects)):
     if not self.xray_page_info_rects then
-        return
+        if called_from_gesture then
+            KOR.messages:notify(_("no xray-items found on this page"))
+            return true
+        end
+        --* in case of tapping or holding XrayUI page marker icon - see ((onTap XrayUI page marker)) and ((onHold XrayUI page marker)) - let ReaderHighlight know that there are no Xray items present in the current page:
+        return false
     end
 
     --* this var, containing texts and hits info, was defined above in ((XrayUI#uiInfoGenerateInformation)) > ((XrayUI#getXrayItemsFoundInText)) > ((set xray info for paragraphs)):
@@ -845,6 +851,12 @@ function XrayUI:uiInfoShow(pos, mode)
     self.paragraph_texts = xray_rects.paragraph_texts
     local rects = xray_rects.rects
     self.info_extra_button_rows = {}
+
+    if called_from_gesture then
+        self:showParagraphInformation(xray_rects, 1, "tap")
+        return true
+    end
+
     local rect
     count = #rects
     for nr = 1, count do

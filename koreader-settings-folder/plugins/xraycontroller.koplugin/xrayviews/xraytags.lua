@@ -530,6 +530,7 @@ function XrayTags:isSameTagGroup(tag, other_tag)
     return false
 end
 
+--main: showTagGroupSelector
 --* to select a tag-group to explore:
 --* compare for filtered-by-tag navigation in Page Navigator ((XrayTags#showTagFilterSelector)):
 function XrayTags:showTagGroupSelector(xray_item)

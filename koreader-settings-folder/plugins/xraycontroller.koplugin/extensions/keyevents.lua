@@ -131,6 +131,12 @@ function KeyEvents:addHotkeysForReaderUI(parent)
         return true
     end
 
+    readerui.key_events.ShowUiPageInformationUI = { { "Shift", { "U" } } }
+    readerui.onShowUiPageInformationUI = function()
+        DX.u:uiInfoShow(nil, nil, "called_from_gesture")
+        return true
+    end
+
     readerui.key_events.ShowPageNavigatorUI = { { "Shift", { "X" } } }
     readerui.onShowPageNavigatorUI = function()
         DX.c:onShowPageNavigator()

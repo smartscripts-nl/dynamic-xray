@@ -38,6 +38,9 @@ local XrayInformation = WidgetContainer:extend {
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+T</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
             .. _("show the Tag-group-selector")
             .. [[</td></tr>
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+U</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+            .. _("show UI Page Information Popup")
+            .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+X</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
             .. _("show Xray Page Navigator")
             .. [[</td></tr>

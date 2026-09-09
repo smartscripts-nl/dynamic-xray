@@ -61,7 +61,7 @@ ScrollHtmlWidget.scrollToPage = function(self, page_num)
     end)
 end
 
---main: XrayPageNavigatorBox
+--main: NavigatorBox
 --- @class NavigatorBox
 --- @field page_navigator XrayPageNavigator
 local NavigatorBox = InputContainer:extend{
@@ -566,7 +566,7 @@ end
 
 --- @private
 function NavigatorBox:generateSidePanelBottomPadding(has_side_buttons, side_panel_tab_activators)
-    --* self.avail_height was computed in ((NavigatorBox#computeAvailableHeight)):
+    --* self.avail_height is equal to self.screen_height and was set in ((NavigatorBox#computeHeights)):
     self.spacer_width = self.avail_height
         --* for top and bottom margin:
         - 2 * self.content_top_margin:getSize().h
@@ -586,7 +586,7 @@ end
 
 --- @private
 function NavigatorBox:finalizeWidget()
-    --* self.region was set in ((NavigatorBox#computeAvailableHeight)):
+    --* self.region was set in ((NavigatorBox#computeHeights)):
     self[1] = WidgetContainer:new{
         align = "top",
         dimen = self.region,

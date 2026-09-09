@@ -1075,6 +1075,7 @@ ReaderHighlight.onTap = function(self, _, ges)
         return false
     end
     local pos = self.view:screenToPageTransform(ges.pos)
+    -- #((onTap XrayUI page marker))
     if DX.u:uiInfoShow(pos, "tap") then
         return true
     end
@@ -1102,6 +1103,7 @@ ReaderHighlight.onHold = function(self, arg, ges)
         return false
     end
 
+    -- #((onHold XrayUI page marker))
     if DX.u:uiInfoShow(self.hold_pos, "hold") then
         return true
     end
