@@ -92,6 +92,7 @@ local TitleBar = OverlapGroup:extend{
 
     lang = nil, --* use this language (string) instead of the UI language
 
+    title_padding_for_computations = 0,
     title_h_padding = Size.padding.titlebarbutton, --* horizontal padding (this replaces button_padding on the inner/title side)
     title_h_padding_portrait = Size.padding.buttontable,
     title_subtitle_v_padding = Screen:scaleBySize(3),
@@ -147,7 +148,6 @@ local TitleBar = OverlapGroup:extend{
     tab_buttons_left_inserted = false,
     tab_buttons_left_top_padding = nil,
     tab_buttons_right = nil,
-    tab_buttons_right_inserted = false,
     --* for referencing buttons, to be able to modify them:
     --? used by methods in ((TabFactory#setTabButtonAndContent)) ??:
     tabs = {},
@@ -741,7 +741,7 @@ function TitleBar:injectTabButtonsLeft()
 
     local separator = HorizontalSpan:new{ width = self.title_padding_for_computations }
     --* horizontal padding from the left:
-    table_insert(self.left_buttons_container, HorizontalSpan:new{ width = self.title_padding_for_computations })
+    table_insert(self.left_buttons_container, separator)
     local button
     count = #self.tab_buttons_left
     for i = 1, count do
@@ -769,25 +769,17 @@ function TitleBar:injectTabButtonsRight()
         count = #self.tab_buttons_right
         for i = count, 1, -1 do
             button = self:instantiateButton(self.tab_buttons_right[i])
+
             --? used by methods in ((TabFactory#setTabButtonAndContent)) ??:
             table_insert(self.tabs, button)
+
             table_insert(self.right_buttons_container, 1, button)
             table_insert(self.right_buttons_container, 2, separator)
         end
 
-        self.tab_buttons_right_inserted = true
-
     --* add empty spacer:
     elseif not self.top_buttons_right and not self.has_only_close_button_on_right_side then
         table_insert(self.right_buttons_container, HorizontalSpan:new{ width = self.top_right_buttons_reserved_width })
-
-        self.tab_buttons_right_inserted = true
-    end
-
-    if self.tab_buttons_right_inserted then
-        local dims = self.right_buttons_container:getSize()
-        self.top_right_buttons_height = dims.h
-        self.top_buttons_right_reserved_width = dims.w
     end
 end
 
