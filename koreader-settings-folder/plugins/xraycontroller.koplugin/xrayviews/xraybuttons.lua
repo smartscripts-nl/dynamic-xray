@@ -2339,6 +2339,7 @@ function XrayButtons:forGlossaryViewerTopLeft(parent, is_tabbed)
     return buttons
 end
 
+--main: injectReferenceButtons
 --- @param caller_close_callback function To close the calling dialog; with the left upper back button (DialogsQueue) in the reference dialog the user can then restart the calling dialog
 function XrayButtons:injectReferenceButtons(caller_close_callback, buttons)
     local top_buttons_right = buttons or {}

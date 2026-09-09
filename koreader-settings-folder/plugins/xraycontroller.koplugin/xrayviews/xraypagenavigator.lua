@@ -69,6 +69,7 @@ function XrayPageNavigator:restoreNavigator()
     self:showNavigator(self.initial_browsing_page)
 end
 
+--main: showXrayPageNavigator
 function XrayPageNavigator:showNavigator(initial_browsing_page)
 
     if KOR.ui and KOR.ui.paging then

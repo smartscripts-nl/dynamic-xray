@@ -32,6 +32,7 @@ function Quizlet:initQuizletQuestions()
     KOR.registry:unset("maintain_overlay")
 end
 
+--main: showQuizletQuestion
 --- @private
 function Quizlet:showQuizletQuestion()
 

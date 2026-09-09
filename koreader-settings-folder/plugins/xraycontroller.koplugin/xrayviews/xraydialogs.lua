@@ -447,6 +447,7 @@ end
 --* extra buttons (from xray items) were populated in ((XrayUI#uiInfoShow))
 --* current method called from callback in ((xray paragraph info callback)):
 --* dialog item entries and icons were generated via ((XrayUI#getXrayItemsFoundInText)) > ((XrayUI#discoverXrayItems)) > upon tap on marker item: ((XrayUI#uiInfoShow)) > ((XrayUI#showParagraphInformation)) > ((XrayUI#addParagraphInfoItems)) > ((XrayViewsData#generateXrayExportOrLinkedItemInfo)) > ((XrayViewsData#getItemTypeIcon)) > here we ask for bare type icons, so in ((XrayViewsData#generateFirstLines)) we add an extra space after the item type icon:
+--main: showUiPageInfo
 function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_names3, hits_info, hits_info2, hits_info3, matches_count)
     if self.xray_ui_info_dialog or has_no_text(hits_info) then
         return
@@ -591,6 +592,7 @@ function XrayDialogs:_prepareItemsForList(current_tab_items, items_for_select)
     return select_mode_message
 end
 
+--main: initXrayItemsList
 --- @private
 function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, items_for_select, key_events_module)
 
@@ -1058,6 +1060,7 @@ function XrayDialogs:viewItem(needle_item, called_from_list, tapped_word, skip_i
     self:showActionResultMessage()
 end
 
+--main: showXrayItemViewer
 --* this method was called from ((XrayDialogs#viewItem)) or ((XrayDialogs#viewTappedWordItem)):
 --- @private
 function XrayDialogs:showItemViewer(xray_item, props)
@@ -1318,6 +1321,7 @@ function XrayDialogs:showTagSelector(mode)
 end
 
 --* compare ((XrayButtons#handleMoreButtonClick)), for the popup after the user tapped on the "More..." button:
+--main: showTappedWordCollectionPopup
 function XrayDialogs:showTappedWordCollectionPopup(buttons, buttons_count, tapped_word)
 
     --* so we can return to the TW popup from XraySettings:

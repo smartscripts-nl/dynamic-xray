@@ -61,6 +61,7 @@ ScrollHtmlWidget.scrollToPage = function(self, page_num)
     end)
 end
 
+--main: XrayPageNavigatorBox
 --- @class NavigatorBox
 --- @field page_navigator XrayPageNavigator
 local NavigatorBox = InputContainer:extend{
