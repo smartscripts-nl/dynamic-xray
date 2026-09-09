@@ -2459,15 +2459,7 @@ end
 
 --- @param mode string either "add" or "edit"
 function XrayButtons:forItemEditor(mode, active_form_tab, reload_manager)
-    local edit_or_type_change_button = active_form_tab == 1 and
-        self:forItemEditorEditButton()
-        or
-        {
-            icon = "info-slender",
-            callback = function()
-                KOR.dialogs:niceAlert(_("Tips"), _("Tips about how to get best results with Xray items will soon follow..."))
-            end
-        }
+
     local dialog_will_be_closed_message = _([[This will close the form.
 
 Continue?]])
@@ -2478,6 +2470,7 @@ Continue?]])
 
     local buttons = {
         {
+            --* button 1:
             KOR.buttonchoicepopup:forXrayGoBackFromForm({
                 callback = function()
                     -- #((cancel item form))
@@ -2491,6 +2484,7 @@ Continue?]])
                     DX.d:closeForm(mode)
                 end,
             }),
+            --* button 2:
             KOR.buttoninfopopup:forXrayList({
                 callback = function()
                     KOR.dialogs:confirm(dialog_will_be_closed_message, function()
@@ -2501,6 +2495,7 @@ Continue?]])
                 end,
                 info = _("Close form and go to Items List."),
             }),
+            --* button 3:
             KOR.buttoninfopopup:forXrayPageNavigator({
                 callback = function()
                     KOR.dialogs:confirm(dialog_will_be_closed_message, function()
@@ -2511,8 +2506,9 @@ Continue?]])
                 end,
                 info = _("Close form and show Page Navigator."),
             }),
-            edit_or_type_change_button,
+            --* optionally for tab 1 here will be inserted a button to edit the item...
             --* button to save and then force redirection to either the Items List (opened if it wasn't open already) or the Page Navigator:
+            --* button 4:
             KOR.buttoninfopopup:forXrayItemSaveAndShowModule({
                 icon = return_icon,
                 icon2_name = icon2_name,
@@ -2524,6 +2520,7 @@ Continue?]])
                     DX.c:saveUpdatedItem(return_modus, reload_manager)
                 end,
             }),
+            --* button 5:
             KOR.buttoninfopopup:forXrayItemSave({
                 callback = function()
                     local return_to_list = KOR.registry:getOnce("force_xray_list_reload") or DX.d.list_is_opened
@@ -2539,8 +2536,12 @@ Continue?]])
     }
     --* remove save and return to list button in case of tapped words viewer:
     if DX.m.use_tapped_word_data then
-        table_remove(buttons[1], 5)
+        table_remove(buttons[1], 4)
     end
+    if active_form_tab == 1 then
+        table_insert(buttons, 4, self:forItemEditorEditButton())
+    end
+
     return buttons
 end
 

@@ -834,6 +834,7 @@ function XrayUI:discoverXrayItems(page_or_paragraph_text, tagged_items)
     return items_found, explanations
 end
 
+--- @return boolean
 function XrayUI:uiInfoShow(pos, mode, called_from_gesture)
 
     --* these rects should have been populated in ((XrayUI#uiInfoPopulateRects)):
@@ -866,6 +867,7 @@ function XrayUI:uiInfoShow(pos, mode, called_from_gesture)
             return true
         end
     end
+    return false
 end
 
 --- @private
