@@ -198,6 +198,7 @@ function XrayFormsData:initEditFormProps(item, reload_manager, active_form_tab)
     return item, item_copy
 end
 
+--main: XrayFormsData#saveUpdatedItem
 --* compare ((XrayFormsData#saveNewItem)):
 function XrayFormsData:saveUpdatedItem(field_values)
     if not self.edit_item_index then
@@ -400,6 +401,7 @@ function XrayFormsData:getNeedleName(item)
     return parent:switchFirstAndSurName(needle_name)
 end
 
+--main: XrayFormsData#saveNewItem
 --* called from add dialog and ReaderDictionary and other plugins:
 --* compare ((XrayFormsData#saveUpdatedItem)):
 -- #((XrayFormsData#saveNewItem))

@@ -1,4 +1,5 @@
 
+--main: XrayInfo
 --- @class XrayInfo
 -- #((Dynamic Xray: module info))
 --[[

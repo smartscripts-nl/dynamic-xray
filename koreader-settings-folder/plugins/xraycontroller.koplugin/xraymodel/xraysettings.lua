@@ -18,6 +18,7 @@ local locked_xray_setting_message = IS_AUTHORS_DX_INSTALLATION and "Deze instell
 
 local hotkeys_warning = "\n\n" .. _("NB: updated hotkeys are effective immediately - except possibly when they conflict with other hotkeys in KOReader.")
 
+--main: XraySettings
 --- @class XraySettings
 --- @field settings_manager SettingsManager
 local XraySettings = WidgetContainer:new{

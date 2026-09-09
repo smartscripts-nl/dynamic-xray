@@ -458,6 +458,7 @@ function XrayDataLoader:_getAllDataSql(mode)
     return T(self.queries.get_all_book_items, current_ebook_basename, sort)
 end
 
+--main: XrayDataLoader#_loadAllData
 --- @private
 function XrayDataLoader:_loadAllData(mode)
     local conn = KOR.databases:getDBconn("XrayDataLoader:_loadAllData")

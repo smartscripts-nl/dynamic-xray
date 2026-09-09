@@ -301,6 +301,7 @@ function XrayViewsData:repopulateItemsPersonsTerms(item, skip_item_table)
     end
 end
 
+--main: XrayViewsData#updateAndSortAllItemTables
 --* only called from ((XrayController#saveUpdatedItem)), but not for newly added items; for those we call ((XrayViewsData#registerNewItem)):
 function XrayViewsData:updateAndSortAllItemTables(item)
 

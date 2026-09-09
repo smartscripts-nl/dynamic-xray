@@ -217,6 +217,7 @@ function SeriesManager:getCacheIndex(full_path)
     return md5(full_path)
 end
 
+--main: onShowSeriesList
 --* show list of all e-books on the device:
 --* arg full_path will most times be nil here:
 function SeriesManager:onShowSeriesList(full_path)
@@ -711,6 +712,7 @@ function SeriesManager:isValidEntry(entry)
     return has_content(entry) and entry ~= "-"
 end
 
+--main: showSeriesForEbookPath
 function SeriesManager:showSeriesForEbookPath(full_path)
     if not full_path then
         full_path = DX.m.current_ebook_full_path

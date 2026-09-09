@@ -387,6 +387,7 @@ function XrayUI:addParagraphInfoItems(items, i, injected_names, xray_explanation
     return injected_nr, more_button_added
 end
 
+--main: uiInfoGenerateInformation
 --* called from ((ReaderView#paintTo)):
 function XrayUI:uiInfoGenerateInformation(ui, bb, x, y)
 
@@ -512,6 +513,7 @@ function XrayUI:setMarkerXPosition()
     KOR.registry.half_screen_width = math_floor(self.screen_width / 2)
 end
 
+--main: uiInfoRegisterHits
 --* see ((XRAY_ITEMS)) for more info:
 --- @private
 function XrayUI:uiInfoRegisterHits(p)

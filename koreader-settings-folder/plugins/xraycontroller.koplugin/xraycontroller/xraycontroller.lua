@@ -693,6 +693,7 @@ function XrayController:addToMainMenu(menu_items)
     }
 end
 
+--main: resetDynamicXray
 --* @param do_full_update string will be not nill when called from onReaderReady or when an item was added or when ((XrayController#saveUpdatedItem)) determined via ((XrayFormsData#needsFullUpdate)) that critical data were edited, which could impact the item marking in the html:
 function XrayController:resetDynamicXray(is_prepared, do_full_update)
     --! in pdf's etc. DX is not available:

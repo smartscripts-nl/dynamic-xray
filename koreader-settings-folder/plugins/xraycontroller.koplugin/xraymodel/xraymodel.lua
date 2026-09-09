@@ -421,6 +421,7 @@ function XrayModel.activateListTabCallback(tab_no)
     return true
 end
 
+--main: XrayModel#setTitleAndSeries
 --* first try to read current series from the doc_props, then from EbookProps, or otherwise try to get if using the full_path of the current ebook:
 --- @private
 function XrayModel:setTitleAndSeries(full_path)
