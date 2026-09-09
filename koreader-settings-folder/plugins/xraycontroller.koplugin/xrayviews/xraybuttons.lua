@@ -2539,7 +2539,7 @@ Continue?]])
         table_remove(buttons[1], 4)
     end
     if active_form_tab == 1 then
-        table_insert(buttons, 4, self:forItemEditorEditButton())
+        table_insert(buttons[1], 4, self:forItemEditorEditButton())
     end
 
     return buttons

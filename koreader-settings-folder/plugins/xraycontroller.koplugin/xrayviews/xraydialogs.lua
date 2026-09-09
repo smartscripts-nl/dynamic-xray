@@ -1110,6 +1110,7 @@ function XrayDialogs:showItemViewer(xray_item, props)
         end,
         next_item_callback = props.next_item_callback,
         prev_item_callback = props.prev_item_callback,
+        --* these buttons were generated in ((XrayButtons#forItemViewer)) or ((XrayButtons#forTappedWordItemViewer)):
         buttons_table = props.button_table,
     })
 end

@@ -735,6 +735,7 @@ function HtmlBox:insertBackButton(buttons)
     self.back_button_inserted = true
 end
 
+--* these buttons show the related Xray items:
 --- @private
 function HtmlBox:insertExtraButtons(buttons)
     if has_no_items(self.extra_buttons) then
@@ -769,8 +770,8 @@ function HtmlBox:generateButtons()
     --* self.headings might have been stored in ((ReferenceInformation#prepareHtmlAndCssForSaving)) or ((ReferenceInformation#addWikiHeadings)), and loaded in ((ReferenceInformation#load)):
     self.search_for_headings = self.is_single_scroll_widget and has_items(self.headings)
 
-    --* Different sets of buttons whether fullpage or not
-    local buttons = {
+    --* Different sets of buttons whether fullpage or not:
+    local buttons = self.buttons_table or {
         {
             {
                 text = "⇱",
@@ -833,15 +834,17 @@ function HtmlBox:generateButtons()
         table_remove(buttons[1])
     end
 
+    --* we want to inject the special buttons below into the last row, because for Xray Item Viewer the first rows might be populated with buttons for related items:
+    local last_row = #buttons
     if self.extract_texts then
         -- #((HtmlBox search button))
         --* compare ((TextViewer search button)):
-        table_insert(buttons[1], 1, KOR.buttoninfopopup:forHtmlBoxSearch({
+        table_insert(buttons[last_row], 1, KOR.buttoninfopopup:forHtmlBoxSearch({
             callback = function()
                 self:findDialog()
             end,
         }))
-        table_insert(buttons[1], 2, KOR.buttoninfopopup:forHtmlBoxSearchNext({
+        table_insert(buttons[last_row], 2, KOR.buttoninfopopup:forHtmlBoxSearchNext({
             enabled_func = function()
                 return self._find_next
             end,
@@ -856,7 +859,7 @@ function HtmlBox:generateButtons()
     end
 
     if self.search_for_headings then
-        table_insert(buttons[1], 3, KOR.buttoninfopopup:forTextViewerWikiHeadingsIndex({
+        table_insert(buttons[last_row], 3, KOR.buttoninfopopup:forTextViewerWikiHeadingsIndex({
             enabled_func = function()
                 --* this prop is set in ((Dialogs#registerActiveTab)):
                 return not self.tabs or KOR.dialogs.active_tab_index_enabled
