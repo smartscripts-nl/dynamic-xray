@@ -38,6 +38,9 @@ return {
     next_bare = "▷",
     previous_bare = "◁",
 
+    down_closed_bare = "▼",
+    up_closed_bare = "▲",
+
     active_tab = "\u{E98C}" .. spacer, -- massive right arrow
     active_tab_bare = "\u{E98C}",
     active_tab_minimal = "•\u{2002}",

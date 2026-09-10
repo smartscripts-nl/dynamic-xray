@@ -114,9 +114,10 @@ function KeyEvents:addHotkeysForReaderUI(parent)
         return true
     end
 
-    readerui.key_events.ShowQuizletQuestionUI = { { "Shift", { "Q" } } }
-    readerui.onShowQuizletQuestionUI = function()
-        return DX.cb:execQuizletModeCallback()
+    readerui.key_events.ShowQuickItemSearchUI = { { "Shift", { "Q" } } }
+    readerui.onShowQuickItemSearchUI = function()
+        DX.d:quickItemSearch()
+        return true
     end
 
     -- #((hotkey for Reference Information Viewer))

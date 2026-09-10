@@ -38,6 +38,8 @@ local Strings = WidgetContainer:extend{
     indent_soft_more = "      ",
     m_dash = "—",
     n_dash = "–",
+    --* i.e. narrow-nbsp:
+    n_nbsp = "\xE2\x80\xAF",
     poem_max_line_length = 50,
     white_line = "\n\n",
     whole_word_end = "%f[^%w_]",

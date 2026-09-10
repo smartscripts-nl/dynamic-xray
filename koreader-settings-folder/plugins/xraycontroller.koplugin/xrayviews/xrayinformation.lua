@@ -30,7 +30,7 @@ local XrayInformation = WidgetContainer:extend {
             .. _("show current series books or Metadata of a non-series book")
             .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+Q</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
-            .. _("open the Quizlet-questions dialog")
+            .. _("show the Quick-search dialog for Xray items")
             .. [[</td></tr>
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+R</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
             .. _("show the Reference Information for the current e-book")

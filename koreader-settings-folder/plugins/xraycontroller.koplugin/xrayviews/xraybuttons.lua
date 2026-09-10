@@ -459,6 +459,11 @@ function XrayButtons:forPageNavigatorTopLeft(parent)
                 return DX.i:showPageNavigatorHelp(parent)
             end,
         },
+        KOR.buttoninfopopup:forXrayItemQuickSearch({
+            close_callback = function()
+                parent:closePageNavigator()
+            end,
+        }),
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
                 DX.cb:execSettingsCallback(parent)
@@ -653,6 +658,11 @@ function XrayButtons:forUiInfoTopLeft(new_mode, new_trigger, parent)
     local buttons = {
         KOR.buttoninfopopup:forXrayShowMatchReliabilityExplanation({
             icon_size_ratio = 0.58,
+        }),
+        KOR.buttoninfopopup:forXrayItemQuickSearch({
+            close_callback = function()
+                parent:closeUiInfoDialog()
+            end,
         }),
         KOR.buttoninfopopup:forXrayToggleUIMode({
             icon = DX.s.UI_mode == "paragraph" and "paragraph" or "pages",
@@ -1371,6 +1381,11 @@ function XrayButtons:forItemViewerTopLeft(parent)
                 return DX.i:showListAndViewerHelp(2)
             end
         },
+        KOR.buttoninfopopup:forXrayItemQuickSearch({
+            close_callback = function()
+                DX.d:closeItemViewer()
+            end,
+        }),
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
                 parent:closeItemViewer()
@@ -1635,6 +1650,11 @@ function XrayButtons:forListTopLeft(parent)
                 return DX.i:showListAndViewerHelp(1)
             end
         },
+        KOR.buttoninfopopup:forXrayItemQuickSearch({
+            close_callback = function()
+                parent:closeListDialog()
+            end,
+        }),
         KOR.buttoninfopopup:forXrayItemsSelectForTagGroup({
             icon = "checkbox",
             info = _("checkbox icon | Select items to which you want assign a tag; they will then become members of a tag-group."),

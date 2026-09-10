@@ -21,8 +21,10 @@ local _ = KOR:initCustomTranslations()
 local Screen = require("device").screen
 
 local DX = DX
+local has_no_items = has_no_items
 local has_text = has_text
 local math_floor = math_floor
+local T = T
 local table_insert = table_insert
 local type = type
 
@@ -33,6 +35,7 @@ local Dialogs = WidgetContainer:extend{
     active_tab = 1,
     active_tab_index_enabled = false,
     active_tab_name = nil,
+    dropdown_steps_info = _("1) optionally type - cast-insensitive - part of a name\n2) if you typed something, hit Enter, or tap on the dropdown button or the bottom-right button\n3) if the name you typed was only found in the name of one Xray item, the dialog will immediately send this item to the action\n4) if not, you can select an item in the dropdown field\n5) on that item the action will be performed\n\nAction: %1"),
     last_dialog_instance = nil,
     overlay = nil,
     tabbed_htmlbox = nil,
@@ -422,6 +425,77 @@ function Dialogs:prompt(args)
     UIManager:show(prompt_dialog)
     prompt_dialog:onShowKeyboard()
     return prompt_dialog
+end
+
+function Dialogs:promptDropdown(title, hint, dropdown_items, action, callback)
+    if has_no_items(dropdown_items) then
+        KOR.messages:notify(_("no input received from the dropdown-field"))
+        return
+    end
+    local source_type = type(dropdown_items[1])
+    --- @type InputDialog dialog
+    local dialog
+    dialog = InputDialog:new{
+        input = "",
+        dropdown_items = dropdown_items,
+        condensed = true,
+        allow_newline = false,
+        cursor_at_end = true,
+        title = title,
+        type = "text",
+        hint = hint,
+        top_buttons_left = {
+            {
+                icon = "info-slender",
+                callback = function()
+                    self:niceAlert(_("Select an item"), T(self.dropdown_steps_info, action))
+                end,
+            },
+        },
+        buttons = {
+            {
+                {
+                    icon = "back",
+                    id = "close",
+                    callback = function()
+                        UIManager:close(dialog)
+                    end
+                },
+                {
+                    icon = "yes",
+                    is_enter_default = true,
+                    callback = function()
+
+                        if not dialog.dropdown_button_was_used then
+                            dialog:findDropdownItemViaEnter()
+                            return
+                        end
+
+                        local selected_label = dialog:getInputText()
+                        UIManager:close(dialog)
+                        --* return string for dropdown items in text format:
+                        if source_type == "string" then
+                            callback(selected_label)
+                            return
+                        end
+                        --* return item-table for dropdown items in table format (existence of prop "name" assumed):
+                        count = #dropdown_items
+                        for i = 1, count do
+                            if dropdown_items[i].name == selected_label then
+                                --* e.g. callback as defined in ((XrayDialogs#quickItemSearch)):
+                                callback(dropdown_items[i])
+                                return
+                            end
+                        end
+                        --* will only be reached if the user didn't use the dropdown and typed something him/herself instead and then committed the form:
+                        KOR.messages:notify(_("there is no item with this name"))
+                    end
+                },
+            },
+        },
+    }
+    UIManager:show(dialog)
+    dialog:onShowKeyboard()
 end
 
 function Dialogs:showDialogOnTopOfOverlay(show_dialog_callback)

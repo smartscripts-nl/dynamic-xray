@@ -99,6 +99,7 @@ local require = require
 
 local Blitbuffer = require("ffi/blitbuffer")
 local Button = require("xrayviews/widgets/button")
+local ButtonDialog = require("xrayviews/widgets/buttondialog")
 local ButtonTable = require("xrayviews/widgets/buttontable")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local CheckButton = require("ui/widget/checkbutton")
@@ -108,6 +109,8 @@ local Font = require("modules/font")
 local FrameContainer = require("xrayviews/widgets/container/framecontainer")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
+local HorizontalGroup = require("ui/widget/horizontalgroup")
+local HorizontalSpan = require("ui/widget/horizontalspan")
 local InfoMessage = require("ui/widget/infomessage")
 local InputText = require("xrayviews/widgets/inputtext")
 local KOR = require("extensions/kor")
@@ -126,9 +129,14 @@ local _ = require("gettext")
 local DX = DX
 local has_no_text = has_no_text
 local has_text = has_text
-local math = math
-local table = table
+local math_ceil = math_ceil
+local math_floor = math_floor
+local math_min = math_min
+local table_insert = table_insert
+local table_remove = table_remove
 local tonumber = tonumber
+local type = type
+local utf8lower = utf8lower
 
 local count
 
@@ -216,6 +224,11 @@ local InputDialog = FocusManager:extend {
     tabs_count = nil,
     activate_tab_callback = nil,
 
+    dropdown_button = nil,
+    dropdown_button_was_used = false,
+    dropdown_items = nil,
+    reset_button = nil,
+
     modal = true,
     titlebar_alignment = "center",
     force_save_enabled = false,
@@ -224,6 +237,7 @@ local InputDialog = FocusManager:extend {
     title_shrink_font_to_fit = true,
     title_multilines = false,
     title_tab_buttons_left = nil,
+    top_buttons_left = nil,
     top_buttons_right = nil,
     _input_widget = nil,
 
@@ -247,12 +261,12 @@ function InputDialog:init()
         self.width = self.screen_width - 2 * self.border_size
         self.covers_fullscreen = true
     else
-        self.width = self.width or math.floor(math.min(self.screen_width, self.screen_height) * 0.8)
+        self.width = self.width or math_floor(math_min(self.screen_width, self.screen_height) * 0.8)
     end
     if self.condensed then
         self.text_width = self.width - 2 * (self.border_size + self.input_padding + self.input_margin)
     else
-        self.text_width = self.text_width or math.floor(self.width * 0.9)
+        self.text_width = self.text_width or math_floor(self.width * 0.9)
     end
     if self.readonly then
         --* hide keyboard if we can't edit
@@ -284,7 +298,7 @@ function InputDialog:init()
                 end,
             }
             Button:addTitleBarTabButtonProps(button_props, i == self.active_tab)
-            table.insert(tab_buttons_left, Button:new(button_props))
+            table_insert(tab_buttons_left, Button:new(button_props))
         end
     elseif self.submenu_buttontable then
         submenu_buttontable = {}
@@ -301,7 +315,7 @@ function InputDialog:init()
                 end,
             }
             Button:addTitleBarTabButtonProps(button_props, i == self.active_tab)
-            table.insert(submenu_buttontable, Button:new(button_props))
+            table_insert(submenu_buttontable, Button:new(button_props))
         end
     else
         top_buttons_left = self.top_buttons_left
@@ -417,9 +431,9 @@ function InputDialog:init()
         if self.fullscreen or self.use_available_height or text_height > available_height then
             --* Don't leave unusable space in the text widget, as the user could think
             --* it's an empty line: move that space in pads after and below (for centering)
-            self.text_height = math.floor(available_height / line_height) * line_height
+            self.text_height = math_floor(available_height / line_height) * line_height
             local pad_height = available_height - self.text_height
-            local pad_before = math.ceil(pad_height / 2)
+            local pad_before = math_ceil(pad_height / 2)
             local pad_after = pad_height - pad_before
             vspan_before_input_text.width = vspan_before_input_text.width + pad_before
             vspan_after_input_text.width = vspan_after_input_text.width + pad_after
@@ -435,6 +449,9 @@ function InputDialog:init()
         --* Get initial cursor and top line num from callback
         --* (will work in case of re-init as these are saved by onClose()
         self._top_line_num, self._charpos = self.view_pos_callback()
+    end
+    if self.dropdown_items then
+        self.text_width = math_floor(self.screen_width * 0.35)
     end
     self._input_widget = self.inputtext_class:new{
         text = self.input,
@@ -460,7 +477,12 @@ function InputDialog:init()
                 for b = 1, #btn_row do
                     btn = btn_row[b]
                     if btn.is_enter_default then
-                        btn.callback()
+                        if not self.dropdown_items or self.dropdown_button_was_used then
+                            btn.callback()
+                            return
+                        end
+
+                        self:findDropdownItemViaEnter()
                         return
                     end
                 end
@@ -478,7 +500,21 @@ function InputDialog:init()
         top_line_num = self._top_line_num,
         charpos = self._charpos,
     }
-    table.insert(self.layout[1], self._input_widget)
+    local insert = self._input_widget
+
+    if self.dropdown_items then
+        self.dropdown_button, self.reset_button = self:getDropdownButtons(self, self._input_widget)
+        local button_spacer = HorizontalSpan:new{
+            width = Screen:scaleBySize(8),
+        }
+        insert = HorizontalGroup:new{
+            self._input_widget,
+            self.dropdown_button,
+            button_spacer,
+            self.reset_button,
+        }
+    end
+
     if self.allow_newline then
         --* remove any enter_callback
         self._input_widget.enter_callback = nil
@@ -506,7 +542,7 @@ function InputDialog:init()
                     w = self.width,
                     h = self._input_widget:getSize().h,
                 },
-                self._input_widget,
+                insert,
             },
             --* added widgets may be inserted here
             vspan_after_input_text,
@@ -521,7 +557,7 @@ function InputDialog:init()
                     w = self.width,
                     h = self._input_widget:getSize().h,
                 },
-                self._input_widget,
+                insert,
             },
             --* added widgets may be inserted here
             vspan_after_input_text,
@@ -575,7 +611,7 @@ function InputDialog:init()
 end
 
 function InputDialog:addWidget(widget, re_init)
-    table.insert(self.layout, #self.layout, { widget })
+    table_insert(self.layout, #self.layout, { widget })
     if not re_init then
         --* backup widget for re-init
         widget = CenterContainer:new{
@@ -588,10 +624,129 @@ function InputDialog:addWidget(widget, re_init)
         if not self._added_widgets then
             self._added_widgets = {}
         end
-        table.insert(self._added_widgets, widget)
+        table_insert(self._added_widgets, widget)
     end
     --* insert widget before the bottom buttons and their previous vspan
-    table.insert(self.vgroup, #self.vgroup - 1, widget)
+    table_insert(self.vgroup, #self.vgroup - 1, widget)
+end
+
+--! field_config MUST have a prop "dropdown_items":
+--* compare ((MultiInputDialog#getDescription)) for a comparable way of attaching callbacks to fields:
+--* see also ((XrayDialogs#quickItemSearch)):
+--- @protected
+function InputDialog:getDropdownButtons(form, field, field_config)
+    local dropdown_items =
+
+        --* if called from MultiInputDialog:
+        field_config and field_config.dropdown_items
+
+        --* if called from ((Dialogs#promptDropdown)):
+        or self.dropdown_items
+
+    local button = Button:new{
+        text = KOR.strings.n_nbsp .. KOR.icons.down_closed_bare,
+        padding = 0,
+        margin = 0,
+        text_font_face = "x_smallinfofont",
+        text_font_size = 16,
+        text_font_bold = false,
+        align = "left",
+        bordersize = 0,
+        callback = function()
+            --* onSwitchFocus only available for MultiInputDialog instance:
+            if self.onSwitchFocus then
+                -- #((focus dropdown field upon click on info label))
+                self:onSwitchFocus(field)
+            end
+            self:showDropdown(field, dropdown_items, field:getText(), function(selected_item)
+                if type(selected_item) == "string" then
+                    field:setText(selected_item)
+                else
+                    field:setText(selected_item.name)
+                end
+                self:commitForm(form)
+            end)
+        end,
+    }
+    local reset_button = Button:new{
+        icon = "reset",
+        padding = 0,
+        margin = 0,
+        bordersize = 0,
+        callback = function()
+            if self.onSwitchFocus then
+                self:onSwitchFocus(field)
+            end
+            field:setText("")
+        end,
+    }
+
+    return button, reset_button, button:getSize().w, reset_button:getSize().w
+end
+
+function InputDialog:commitForm(form)
+    --* if there is a last is_enter_default-button in the first row of buttons, trigger its action:
+    local last_button = form.buttons[1][#form.buttons[1]]
+    if last_button.is_enter_default then
+        last_button.callback()
+    end
+end
+
+--* compare ((ReferenceInformation#generateButtonsIndex)):
+--- @private
+function InputDialog:showDropdown(field, dropdown_items, filter_text, callback)
+    local buttons = {}
+    local dialog
+    local width = Screen:scaleBySize(300)
+    local items_count = #dropdown_items
+    if filter_text then
+        filter_text = utf8lower(filter_text)
+    end
+    local item_type
+    for i = 1, items_count do
+        local label = dropdown_items[i]
+        item_type = type(label)
+        local current = i
+        if not filter_text or (item_type == "string" and utf8lower(label):match(filter_text)) or (item_type == "table" and utf8lower(label.name):match(filter_text)) then
+            table_insert(buttons, {{
+                text = item_type == "string" and label or label.name,
+                bordersize = 0,
+                width = width,
+                align = "left",
+                padding = 0,
+                callback = function()
+                    UIManager:close(dialog)
+                    local item = dropdown_items[current]
+                    callback(item)
+                    UIManager:forceRePaint()
+                end
+            }})
+        end
+    end
+
+    --* if there was only one matching item, set that value immediately and skip showing the dropdown:
+    if #buttons == 1 then
+        field:setText(buttons[1][1].text)
+        self.dropdown_button_was_used = true
+        self:commitForm(self)
+        buttons = nil
+        return
+    end
+
+    dialog = ButtonDialog:new{
+        button_width = 1,
+        forced_width = width,
+        font_weight = "normal",
+        padding = 0,
+        max_height = Screen:getHeight() - Screen:scaleBySize(70),
+        sep_width = 0,
+        no_bottom_spacer = true,
+        modal = true,
+        buttons = buttons,
+    }
+    UIManager:show(dialog)
+
+    return dialog
 end
 
 function InputDialog:getAddedWidgetAvailableWidth()
@@ -684,7 +839,7 @@ function InputDialog:onKeyboardHeightChanged()
     if self._added_widgets then
         --* prevent these externally added widgets from being freed as :init() will re-add them
         for i = 1, #self._added_widgets do
-            table.remove(self.vgroup, #self.vgroup - 2)
+            table_remove(self.vgroup, #self.vgroup - 2)
             self.garbage = i
         end
     end
@@ -792,7 +947,7 @@ function InputDialog:_addSaveCloseButtons()
         end
     end
     if self.copy_callback then
-        table.insert(row, {
+        table_insert(row, {
             icon = "copy",
             id = "copy",
             icon_size_ratio = 0.57,
@@ -804,7 +959,7 @@ function InputDialog:_addSaveCloseButtons()
     if self.reset_callback then
         --* if reset_callback provided, add button to restore
         --* test to some previous state
-        table.insert(row, {
+        table_insert(row, {
             text = KOR.icons.reset_bare,
             id = "reset",
             enabled = self._text_modified,
@@ -830,7 +985,7 @@ function InputDialog:_addSaveCloseButtons()
             end,
         })
     end
-    table.insert(row, {
+    table_insert(row, {
         icon = "save",
         id = "save",
         enabled = self._text_modified or self.force_save_enabled,
@@ -917,7 +1072,7 @@ function InputDialog:_addSaveCloseButtons()
         cancel_button.icon = "back"
         cancel_button.icon_size_ratio = 0.7
     end
-    table.insert(row, cancel_button)
+    table_insert(row, cancel_button)
 end
 
 function InputDialog:_addScrollButtons(nav_bar)
@@ -928,7 +1083,7 @@ function InputDialog:_addScrollButtons(nav_bar)
             self.buttons = {}
         end
         row = {} --* Empty additional buttons row
-        table.insert(self.buttons, row)
+        table_insert(self.buttons, row)
     else
         --* Add the Up / Down buttons to the first row
         if not self.buttons then
@@ -940,7 +1095,7 @@ function InputDialog:_addScrollButtons(nav_bar)
         --* Add the Home & End buttons
         --* Also add Keyboard hide/show button if we can
         if self.fullscreen and not self.readonly then
-            table.insert(row, {
+            table_insert(row, {
                 text = self.keyboard_hidden and "↑⌨" or "↓⌨",
                 id = "keyboard",
                 callback = function()
@@ -950,7 +1105,7 @@ function InputDialog:_addScrollButtons(nav_bar)
         end
         if self.fullscreen then
             --* add a button to search for a string in the edited text
-            table.insert(row, {
+            table_insert(row, {
                 icon = "appbar.search",
                 icon_size_ratio = 0.6,
                 callback = function()
@@ -1003,7 +1158,7 @@ function InputDialog:_addScrollButtons(nav_bar)
                     input_dialog:onShowKeyboard()
                 end,
             })
-            table.insert(row, KOR.buttoninfopopup:forInputDialogSearchFirst({
+            table_insert(row, KOR.buttoninfopopup:forInputDialogSearchFirst({
                 id = "search_next",
                 callback = function()
                     if has_text(self.search_value) then
@@ -1013,7 +1168,7 @@ function InputDialog:_addScrollButtons(nav_bar)
                     end
                 end,
             }))
-            table.insert(row, KOR.buttoninfopopup:forInputDialogSearchNext({
+            table_insert(row, KOR.buttoninfopopup:forInputDialogSearchNext({
                 id = "search_next",
                 callback = function()
                     if has_text(self.search_value) then
@@ -1024,7 +1179,7 @@ function InputDialog:_addScrollButtons(nav_bar)
                 end,
             }))
             --* Add a button to go to the line by its number in the file
-            table.insert(row, {
+            table_insert(row, {
                 icon = "goto-line",
                 icon_size_ratio = 0.7,
                 callback = function()
@@ -1069,7 +1224,7 @@ function InputDialog:_addScrollButtons(nav_bar)
                 end,
             })
         end
-        table.insert(row, {
+        table_insert(row, {
             text = "⇱",
             id = "top",
             vsync = true,
@@ -1077,7 +1232,7 @@ function InputDialog:_addScrollButtons(nav_bar)
                 self._input_widget:scrollToTop()
             end,
         })
-        table.insert(row, {
+        table_insert(row, {
             text = "⇲",
             id = "bottom",
             vsync = true,
@@ -1088,14 +1243,14 @@ function InputDialog:_addScrollButtons(nav_bar)
     end
 
     --* Add the Up & Down buttons
-    table.insert(row, {
+    table_insert(row, {
         text = "△",
         id = "up",
         callback = function()
             self._input_widget:scrollUp()
         end,
     })
-    table.insert(row, {
+    table_insert(row, {
         text = "▽",
         id = "down",
         callback = function()
@@ -1302,6 +1457,17 @@ function InputDialog:onActivateNextTab()
     end
     self.activate_tab_callback(self.active_tab)
     return true
+end
+
+function InputDialog:findDropdownItemViaEnter()
+    self:showDropdown(self._input_widget, self.dropdown_items, self._input_widget:getText(), function(selected_item)
+        if type(selected_item) == "string" then
+            self._input_widget:setText(selected_item)
+        else
+            self._input_widget:setText(selected_item.name)
+        end
+        self:commitForm(self)
+    end)
 end
 
 function InputDialog:scrollToBottom()
