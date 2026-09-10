@@ -37,7 +37,9 @@ The views layer has three main streams:
 This Glossary can be used to quickly lookup a term in the e-book text. When the user longpresses a word in the ebook text and that word is an item in the Glossary, the explanation for that item will be shown in the Glossary popup; see ((Glossary#showEditor))
  For starting the proces of text addition, see ((InformationMediator#confirmAddInformationAfterExpansion)), when called from the ReaderHighlight new text selection popup. The information will be saved to the Glossary via ((InformationMediator#setInformationBoundaries)) > ((Glossary#addInformation)).
 
-11) The last addition is a Quizlet button, available in several dialogs. By tapping on this button a Quizlet dialog is opened - via ((XrayCallbacks#execQuizletModeCallback)) > ((Quizlet#initQuizletQuestions)) and ((Quizlet#showQuizletQuestion)) - in which the user can test his/her knowledge of randomly displayed Xray items. This module might be handy for study purposes.
+11) Another addition is a Quizlet button, available in several dialogs. By tapping on this button a Quizlet dialog is opened - via ((XrayCallbacks#execQuizletModeCallback)) > ((Quizlet#initQuizletQuestions)) and ((Quizlet#showQuizletQuestion)) - in which the user can test his/her knowledge of randomly displayed Xray items. This module might be handy for study purposes.
+
+12) The most recent addition is the Quick-search dialog for Xray items (callable from several DX dialogs and with hotkey Shift+Q while reading). With this dialog and its dropdown field, the user can quickly find and view Xray items by typing part of their name and then committing the form.
 --]]--
 
 -- #((the two most Kindle-like experiences))
