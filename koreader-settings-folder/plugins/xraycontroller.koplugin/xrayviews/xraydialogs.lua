@@ -849,7 +849,9 @@ end
 
 --* compare filtering for global bookmark tags: ((MultiInputDialog#insertSingleFieldRow)) > ((InputDialog#getDropdownButtons)) > ((InputDialog#showDropdown)):
 function XrayDialogs:quickItemSearch()
-    KOR.dialogs:promptDropdown(_("Select a Xray-item"), _("select an item via ▼ - optionally first type partial name:"), DX.vd.items, _("show in Item Viewer"), function(selected_item)
+    local pool = KOR.tables:shallowCopy(DX.vd.items)
+    KOR.tables:sortByPropAscending(pool, "name")
+    KOR.dialogs:promptDropdown("Selecteer een Xray-item", "selecteer een item via ▼ - type evt. eerst een deel van de naam:", pool, "toon in de Item Viewer", function(selected_item)
         DX.d:viewItem(selected_item)
     end)
 end
