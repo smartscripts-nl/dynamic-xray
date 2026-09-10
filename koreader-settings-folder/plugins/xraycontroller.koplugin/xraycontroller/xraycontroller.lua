@@ -159,10 +159,11 @@ end
 
 --- @private
 function XrayController:onDispatcherRegisterActions()
-    Dispatcher:registerAction("show_items", { category = "none", event = "ShowList", title = DX.d:getControllerEntryName("Show xray-items in this book/series"), reader = true })
+    Dispatcher:registerAction("show_items", { category = "none", event = "ShowList", title = DX.d:getControllerEntryName("Show xray-items in this book/series"), rolling = true })
     Dispatcher:registerAction("show_xray_page_navigator", { category = "none", event = "ShowPageNavigator", title = DX.d:getControllerEntryName("Show Xray Page Navigator"), rolling = true })
-    Dispatcher:registerAction("add_xray_item", { category = "none", event = "AddNewXrayItem", title = DX.d:getControllerEntryName("Add an Xray item"), reader = true })
+    Dispatcher:registerAction("add_xray_item", { category = "none", event = "AddNewXrayItem", title = DX.d:getControllerEntryName("Add an Xray item"), rolling = true })
     Dispatcher:registerAction("show_series_manager", { category = "none", event = "ShowSeriesManager", title = _("Show Series Manager"), reader = true })
+    Dispatcher:registerAction("show_xray_item_quick_search", { category = "none", event = "ShowQuickSearchXrayItem", title = _("Show quick-search-dialog for Xray items"), rolling = true })
     Dispatcher:registerAction("show_series_manager_current_ebook", { category = "none", event = "ShowCurrentSeries", title = _("Show series and/or metadata for current e-book"), reader = true })
 
     -- #((event handler for Reference Information))
@@ -174,7 +175,7 @@ function XrayController:onDispatcherRegisterActions()
     Dispatcher:registerAction("show_glossary", { category = "none", event = "ShowGlossary", title = _("Show Glossary"), reader = true })
 
 
-    Dispatcher:registerAction("show_tag_group_selector", { category = "none", event = "ShowTagGroupSelector", title = _("Show the Xray tag-group selector"), reader = true })
+    Dispatcher:registerAction("show_tag_group_selector", { category = "none", event = "ShowTagGroupSelector", title = _("Show the Xray tag-group selector"), rolling = true })
 end
 
 function XrayController:doBatchImport(conn, stmt, count, callback)
@@ -283,6 +284,11 @@ end
 
 function XrayController:onShowCurrentSeries()
     KOR.seriesmanager:showContextDialogForCurrentEbook()
+    return true
+end
+
+function XrayController:onShowQuickSearchXrayItem()
+    DX.d:quickItemSearch()
     return true
 end
 
