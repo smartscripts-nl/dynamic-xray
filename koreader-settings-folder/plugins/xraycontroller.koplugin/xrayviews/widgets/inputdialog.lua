@@ -451,7 +451,7 @@ function InputDialog:init()
         self._top_line_num, self._charpos = self.view_pos_callback()
     end
     if self.dropdown_items then
-        self.text_width = math_floor(self.screen_width * 0.35)
+        self.text_width = math_floor(self.width * 0.85)
     end
     self._input_widget = self.inputtext_class:new{
         text = self.input,

@@ -24,6 +24,7 @@ local DX = DX
 local has_no_items = has_no_items
 local has_text = has_text
 local math_floor = math_floor
+local math_min = math_min
 local T = T
 local table_insert = table_insert
 local type = type
@@ -427,7 +428,7 @@ function Dialogs:prompt(args)
     return prompt_dialog
 end
 
-function Dialogs:promptDropdown(title, hint, dropdown_items, action, callback)
+function Dialogs:promptDropdown(title, description, dropdown_items, action, callback)
     if has_no_items(dropdown_items) then
         KOR.messages:notify(_("no input received from the dropdown-field"))
         return
@@ -443,7 +444,8 @@ function Dialogs:promptDropdown(title, hint, dropdown_items, action, callback)
         cursor_at_end = true,
         title = title,
         type = "text",
-        hint = hint,
+        description = description,
+        width = math_floor(math_min(Screen:getWidth(), Screen:getHeight()) * 0.9),
         top_buttons_left = {
             {
                 icon = "info-slender",
