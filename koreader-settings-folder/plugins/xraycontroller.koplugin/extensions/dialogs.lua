@@ -469,7 +469,7 @@ function Dialogs:promptDropdown(title, description, dropdown_items, action, call
                     callback = function()
 
                         if not dialog.dropdown_button_was_used then
-                            dialog:findDropdownItemViaEnter()
+                            dialog:commitDropdownItemViaEnter()
                             return
                         end
 

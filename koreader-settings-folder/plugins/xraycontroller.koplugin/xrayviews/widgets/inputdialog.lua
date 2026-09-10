@@ -482,7 +482,7 @@ function InputDialog:init()
                             return
                         end
 
-                        self:findDropdownItemViaEnter()
+                        self:commitDropdownItemViaEnter()
                         return
                     end
                 end
@@ -503,7 +503,7 @@ function InputDialog:init()
     local insert = self._input_widget
 
     if self.dropdown_items then
-        self.dropdown_button, self.reset_button = self:getDropdownButtons(self, self._input_widget)
+        self.dropdown_button, self.reset_button = self:getDropdownButtons()
         local button_spacer = HorizontalSpan:new{
             width = Screen:scaleBySize(8),
         }
@@ -634,7 +634,7 @@ end
 --* compare ((MultiInputDialog#getDescription)) for a comparable way of attaching callbacks to fields:
 --* see also ((XrayDialogs#quickItemSearch)):
 --- @protected
-function InputDialog:getDropdownButtons(form, field, field_config)
+function InputDialog:getDropdownButtons(field, field_config)
     local dropdown_items =
 
         --* if called from MultiInputDialog:
@@ -642,6 +642,8 @@ function InputDialog:getDropdownButtons(form, field, field_config)
 
         --* if called from ((Dialogs#promptDropdown)):
         or self.dropdown_items
+
+    field = field or self._input_widget
 
     local button = Button:new{
         text = KOR.strings.n_nbsp .. KOR.icons.down_closed_bare,
@@ -658,14 +660,7 @@ function InputDialog:getDropdownButtons(form, field, field_config)
                 -- #((focus dropdown field upon click on info label))
                 self:onSwitchFocus(field)
             end
-            self:showDropdown(field, dropdown_items, field:getText(), function(selected_item)
-                if type(selected_item) == "string" then
-                    field:setText(selected_item)
-                else
-                    field:setText(selected_item.name)
-                end
-                self:commitForm(form)
-            end)
+            self:commitDropdownItemViaEnter(field, dropdown_items)
         end,
     }
     local reset_button = Button:new{
@@ -678,6 +673,7 @@ function InputDialog:getDropdownButtons(form, field, field_config)
                 self:onSwitchFocus(field)
             end
             field:setText("")
+            self.dropdown_button_was_used = false
         end,
     }
 
@@ -724,8 +720,14 @@ function InputDialog:showDropdown(field, dropdown_items, filter_text, callback)
         end
     end
 
+    --* if there WASN'T ANY ITEM which matched the filter string, do nothing:
+    if #buttons == 0 then
+        self.dropdown_button_was_used = false
+        KOR.messages:notify(_("no item found with this filter term"))
+        return
+
     --* if there was only one matching item, set that value immediately and skip showing the dropdown:
-    if #buttons == 1 then
+    elseif #buttons == 1 then
         field:setText(buttons[1][1].text)
         self.dropdown_button_was_used = true
         self:commitForm(self)
@@ -733,6 +735,7 @@ function InputDialog:showDropdown(field, dropdown_items, filter_text, callback)
         return
     end
 
+    --* if there are more than one matching (or unfiltered) items, show the dropdown:
     dialog = ButtonDialog:new{
         button_width = 1,
         forced_width = width,
@@ -1462,12 +1465,17 @@ function InputDialog:onActivateNextTab()
     return true
 end
 
-function InputDialog:findDropdownItemViaEnter()
-    self:showDropdown(self._input_widget, self.dropdown_items, self._input_widget:getText(), function(selected_item)
+function InputDialog:commitDropdownItemViaEnter(field, dropdown_items)
+
+    field = field or self._input_widget
+    dropdown_items = dropdown_items or self.dropdown_items
+
+    --* the callback here, as last argument, will be called from a matching button in ((InputDialog#showDropdown)):
+    self:showDropdown(field, dropdown_items, field:getText(), function(selected_item)
         if type(selected_item) == "string" then
-            self._input_widget:setText(selected_item)
+            field:setText(selected_item)
         else
-            self._input_widget:setText(selected_item.name)
+            field:setText(selected_item.name)
         end
         self:commitForm(self)
     end)
