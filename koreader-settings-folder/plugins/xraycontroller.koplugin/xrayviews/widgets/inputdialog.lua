@@ -741,6 +741,9 @@ function InputDialog:showDropdown(field, dropdown_items, filter_text, callback)
         max_height = Screen:getHeight() - Screen:scaleBySize(70),
         sep_width = 0,
         no_bottom_spacer = true,
+        tap_close_callback = function()
+            self.dropdown_button_was_used = false
+        end,
         modal = true,
         buttons = buttons,
     }
