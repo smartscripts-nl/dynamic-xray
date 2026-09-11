@@ -239,7 +239,6 @@ function XrayPageNavigator:setFilter(item)
     DX.sp:resetActiveSideButtons("XrayPageNavigator:setFilter", "dont_reset_active_side_buttons")
     DX.p:resetPageForFilteredBrowsing()
 
-    self:reloadPageNavigator()
     KOR.messages:notify(T(_("filter set to %1"), item.name))
     return true
 end
