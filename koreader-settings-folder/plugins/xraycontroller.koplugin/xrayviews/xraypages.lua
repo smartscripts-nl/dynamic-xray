@@ -8,13 +8,13 @@ local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 local md5 = require("ffi/sha2").md5
-local T = require("ffi/util").template
 
 local DX = DX
 local has_items = has_items
 local has_no_items = has_no_items
 local math_abs = math_abs
 local math_ceil = math_ceil
+local T = T
 local tonumber = tonumber
 
 local count
@@ -161,7 +161,7 @@ end
 
 function XrayPages:toPrevNavigatorPage(goto_prev_item, stay_at_top_of_page)
     DX.sp:resetActiveSideButtons("XrayPages:toPrevNavigatorPage")
-    local direction = -1
+    local direction = 0
     --* navigation to previous tagged item hit:
     if DX.pn.navigation_tag then
         self:gotoPageHitForTaggedItem(direction)
@@ -180,7 +180,7 @@ function XrayPages:toPrevNavigatorPage(goto_prev_item, stay_at_top_of_page)
     DX.pn.page_no = DX.pn.page_no - 1
     if DX.pn.page_no < 1 then
         DX.pn.page_no = 1
-        KOR.message:notify(_("first page"))
+        KOR.messages:notify(_("first page"))
         return
     end
     --* because of no argument here, we jump to DX.pn.page_no:
@@ -192,9 +192,10 @@ function XrayPages:toPrevNavigatorPage(goto_prev_item, stay_at_top_of_page)
     DX.pn:scrollToBottom()
 end
 
+--* called as callback for select item from list to set as filter:
 function XrayPages:toPrevOrNextNavigatorPage(goto_item)
     DX.sp:resetActiveSideButtons("XrayPages:toPrevOrNextNavigatorPage")
-    local direction = -1
+    local direction = 0
     self.search_also_in_opposite_direction = true
     self:gotoPageHitForItem(goto_item, direction)
 end
@@ -206,9 +207,11 @@ end
 --- @private
 function XrayPages:gotoPageHitForItem(goto_item, direction)
     self.goto_item = goto_item
-    --* this temporarily sets DX.pn.filter_item:
     if goto_item then
-        self:setTemporaryFilterItem(goto_item)
+        --* store previous filter, to optionally reset to that if no items were found with the new filter:
+        self.previous_filter_item = KOR.tables:shallowCopy(DX.pn.filter_item)
+        self.previous_filter_name = DX.pn.active_filter_name
+        DX.pn:setFilter(goto_item)
     end
     local item = DX.pn.filter_item
     self:showNextOrPreviousItemMessage(direction, item.name)
@@ -224,35 +227,52 @@ function XrayPages:gotoPageHitForItem(goto_item, direction)
     if other_page then
         found, hit = self:pageHasItem(other_page, item)
         --* pageHasItemName example: if we made "Coram van Texel" the filter item, the script would search for occurrences of "Coram" and - but for this extra condition - yield back a false hit for "Farder Coram":
-        if not self:pageHasItemName(other_page, DX.pn.active_filter_name) then
+        if found and not self:pageHasItemName(other_page, DX.pn.active_filter_name) then
             found = false
+        elseif found then
+            self.browsing_page_new = other_page
         end
-    end
-
-    if self:invalidItemPageHitHandled(found, direction, goto_item, other_page) then
-        self.browsing_page_new = prev_page
-        return false
     end
 
     while not found and other_page do
         other_page = self:modifyCheckPage(direction, other_page, max_page)
         if other_page then
             found, hit = self:pageHasItem(other_page, item)
-            if not self:pageHasItemName(other_page, DX.pn.active_filter_name) then
+            if found and not self:pageHasItemName(other_page, DX.pn.active_filter_name) then
                 found = false
+            elseif found then
+                self.browsing_page_new = other_page
+                break
             end
         end
     end
 
-    if self:invalidItemPageHitHandled(found, direction, goto_item, other_page) then
+    --* also search in opposite direction, if not items were found in the first direction:
+    if not found then
+        --* direction is either 1 (next) or 0 (previous):
+        direction = math_abs(direction - 1)
+        other_page = self.browsing_page_current
+        while not found and other_page do
+            other_page = self:modifyCheckPage(direction, other_page, max_page)
+            if other_page then
+                found, hit = self:pageHasItem(other_page, item)
+                if found and not self:pageHasItemName(other_page, DX.pn.active_filter_name) then
+                found = false
+                elseif found then
+                    self.browsing_page_new = other_page
+                    break
+                end
+            end
+        end
+    end
+
+    if self:invalidItemPageHitHandled(found, direction, goto_item) then
         self.browsing_page_new = prev_page
         return false
     end
 
     --* we don't use second arg html here, because html generated and items marked in (()):
     self:handleItemHitFound(self.browsing_page_new)
-    --! this statement MUST be executed AFTER the previous one, because undoTemporaryFilterItem reset DX.pn.active_filter_name:
-    self:undoTemporaryFilterItem(goto_item)
 
     return true
 end
@@ -287,7 +307,7 @@ function XrayPages:gotoPageHitForDuoItem(direction)
         end
     end
 
-    if self:invalidItemPageHitHandled(found, direction, nil, other_page) then
+    if self:invalidItemPageHitHandled(found, direction) then
         self.browsing_page_new = prev_page
         return false
     end
@@ -302,7 +322,7 @@ function XrayPages:gotoPageHitForDuoItem(direction)
         end
     end
 
-    if self:invalidItemPageHitHandled(found, direction, nil, other_page) then
+    if self:invalidItemPageHitHandled(found, direction) then
         self.browsing_page_new = prev_page
         return false
     end
@@ -346,7 +366,7 @@ end
 function XrayPages:gotoPageHitForTaggedItem(direction)
     local page_no = DX.pn.page_no
     local page_count = KOR.document:getPageCount()
-    if page_no == 1 and direction == -1 then
+    if page_no == 1 and direction == 0 then
         self:notifyNoPreviousOccurrences()
         return
     elseif page_no == page_count and direction == 1 then
@@ -368,7 +388,7 @@ function XrayPages:gotoPageHitForTaggedItem(direction)
         elseif page_no == page_count and direction == 1 then
             self:notifyNoNextOccurrences()
             return
-        elseif page_no == 1 and direction == -1 then
+        elseif page_no == 1 and direction == 0 then
             self:notifyNoPreviousOccurrences()
             return
         end
@@ -376,26 +396,16 @@ function XrayPages:gotoPageHitForTaggedItem(direction)
 end
 
 --- @private
-function XrayPages:invalidItemPageHitHandled(found, direction, goto_item, other_page)
+function XrayPages:invalidItemPageHitHandled(found, direction, goto_item)
     if found then
         return false
     end
-    --* first two props should be set by ((XrayPages#modifyCheckPage)):
-    if
-        not other_page
-        or not self.browsing_page_new
-        or self.browsing_page_new == DX.pn.page_no
-        or direction == 1 and self.browsing_page_new < DX.pn.page_no
-        or direction == -1 and self.browsing_page_new > DX.pn.page_no
-    then
-        if goto_item then
-            self:undoTemporaryFilterItem(goto_item)
-        end
-        self:showNoNextPreviousOccurrenceMessage(direction)
-        return true
-    end
 
-    return false
+    if goto_item then
+        self:resetPageNavigatorFilterItem()
+    end
+    self:showNoNextOrPreviousOccurrenceMessage(direction)
+    return true
 end
 
 --* this method updates the view in Page Navigator, with Xray items marked, via ((XrayPageNavigator#restoreNavigator)); see for further steps ((XRAY_ITEMS_DATA_FLOW)):
@@ -500,25 +510,13 @@ function XrayPages:checkTextMatch(text, needle, is_term, is_lowercase)
 end
 
 --- @private
-function XrayPages:setTemporaryFilterItem(goto_item)
-    self.previous_filter_item = KOR.tables:shallowCopy(DX.pn.filter_item)
-    self.previous_filter_name = DX.pn.active_filter_name
-
-    DX.pn:setProp("filter_item", KOR.tables:shallowCopy(goto_item))
-    DX.pn:setProp("active_filter_name", goto_item.name)
-end
-
---- @private
-function XrayPages:undoTemporaryFilterItem(goto_item)
-    if not goto_item then
-        return
-    end
+function XrayPages:resetPageNavigatorFilterItem()
     DX.pn:setProp("filter_item", self.previous_filter_item)
     DX.pn:setProp("active_filter_name", self.previous_filter_name)
 end
 
 --- @private
-function XrayPages:showNoNextPreviousOccurrenceMessage(direction)
+function XrayPages:showNoNextOrPreviousOccurrenceMessage(direction)
     local adjective = direction == 1 and _("next") or _("previous")
 
     local is_double_filter = DX.pn.filter_item_double
@@ -560,6 +558,7 @@ function XrayPages:showNoNextPreviousOccurrenceMessage(direction)
                 },
                 callback = function()
                     UIManager:close(dialog)
+                    --* direction is either 1 (next) or 0 (previous):
                     direction = math_abs(direction - 1)
                     if is_double_filter then
                         self:gotoPageHitForDuoItem(direction)

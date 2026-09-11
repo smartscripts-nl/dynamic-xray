@@ -1194,12 +1194,20 @@ function ReaderSearch:findAllText(search_text)
     end
 end
 
+--! alas, for now we completely overwrite the standard KOReader method:
 function ReaderSearch:onShowFindAllResults(not_cached)
     if not self.last_search_hash or (not not_cached and self.findall_results == nil) then
         --* no cached results, show input dialog
         self:onShowFulltextSearchInput()
         return
     end
+
+    KOR.dialogsqueue:register({
+        id = "show_find_all_text_hits",
+        restore = function()
+            self:onShowFindAllResults(not_cached)
+        end
+    })
 
     --* for consumption in ((XrayDialogs#onMenuHold)):
     KOR.registry:set("reader_search_active", true)

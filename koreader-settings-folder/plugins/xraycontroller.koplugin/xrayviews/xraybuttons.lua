@@ -366,7 +366,7 @@ end
 --- @param parent XrayPageNavigator
 function XrayButtons:forPageNavigatorPopupButtons(parent)
     local dialog_close_callback = function()
-        parent:closePopupMenu()
+        --* closePopupMenu will be called in this method:
         parent:closePageNavigator()
     end
     local upon_ready_callback = function()
@@ -374,7 +374,7 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
         self:showImportReadyNotification()
     end
     local series_manager_button = self:getSeriesManagerButton(function()
-        parent:closePopupMenu()
+        parent:closePageNavigator()
     end)
     local buttons = {{
         {
@@ -385,19 +385,19 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
         },
         KOR.buttoninfopopup:forXrayPageNavigatorSearchItem({
             callback = function()
+                parent:closePopupMenu()
                 return DX.cb:execPageNavigatorSearchItemCallback()
             end,
         }),
         KOR.buttoninfopopup:forXrayList({
             callback = function()
-                parent:closePopupMenu()
                 parent:closePageNavigator()
                 return DX.cb:execShowListCallback()
             end
         }),
         KOR.buttoninfopopup:forXrayExport({
             callback = function()
-                parent:closePopupMenu()
+                parent:closePageNavigator()
                 return DX.cb:execExportXrayItemsCallback()
             end
         }),
@@ -412,7 +412,7 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
         KOR.buttoninfopopup:forSearchAllLocations({
             info = _("search-list-icon | Show all occurrences in the book of the item currently displayed below."),
             callback = function()
-                parent:closePopupMenu()
+                parent:closePageNavigator()
                 return DX.cb:execShowItemOccurrencesCallback()
             end
         }),
@@ -425,11 +425,10 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
         }),
         KOR.buttonchoicepopup:forReferenceInformation({
             callback = function()
-                parent:closePopupMenu()
+                parent:closePageNavigator()
                 return DX.cb:execShowReferenceInformationCallback()
             end,
             hold_callback = function()
-                parent:closePopupMenu()
                 parent:closePageNavigator()
                 return KOR.informationmediator:confirmAddInformationFromScratch("TYPE_REFERENCE_INFORMATION")
             end,
@@ -440,7 +439,6 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
     if DX.m.has_multiple_series_items then
         table_insert(buttons[1], 7, KOR.buttoninfopopup:forXrayMultipleBookSeriesOverviews({
             callback = function()
-                parent:closePopupMenu()
                 parent:closePageNavigator()
                 DX.d:showMultipleBookSeriesActionsOverview()
             end,

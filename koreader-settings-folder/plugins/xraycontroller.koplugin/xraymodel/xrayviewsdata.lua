@@ -1681,7 +1681,6 @@ function XrayViewsData:registerUpdatedItem(updated_item)
 end
 
 --* upon load items are set here as direct copies from database resultsets, from ((XrayDataLoader#loadAllItems)) load from cache or from resulset > ((XrayDataLoader#_loadAllData)):
---- @private
 function XrayViewsData:setItems(items, from_result_set)
     if not from_result_set then
         self.items = items

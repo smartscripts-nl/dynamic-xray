@@ -231,10 +231,10 @@ function XrayPageNavigator:setFilter(item)
         item = self.current_item
     end
     self:setActiveScrollPage()
-    self.active_filter_name = item.name
 
     --! set the filter item:
     self.filter_item = item
+    self.active_filter_name = item.name
 
     DX.sp:resetActiveSideButtons("XrayPageNavigator:setFilter", "dont_reset_active_side_buttons")
     DX.p:resetPageForFilteredBrowsing()
