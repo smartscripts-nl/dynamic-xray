@@ -16,7 +16,6 @@ local Screen = require("device").screen
 local _ = KOR:initCustomTranslations()
 
 local DX = DX
-local has_items = has_items
 local has_no_items = has_no_items
 local has_no_text = has_no_text
 local has_text = has_text
@@ -359,7 +358,7 @@ function ReferenceInformation:show()
 	local is_tabbed = glossary
 	local buttons = DX.b:forReferenceInformationTopLeft(self, is_tabbed)
 	local buttons_right = DX.b:forReferenceInformationTopRight(self)
-	local extra_buttons = DX.s.Quizlet_button_enabled and has_items(DX.vd.items) and {
+	local extra_buttons = DX.m.has_items and DX.s.Quizlet_button_enabled and {
 		KOR.buttoninfopopup:forQuizletMode({
 			callback = function()
 				UIManager:close(self.info_dialog)

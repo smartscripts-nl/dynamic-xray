@@ -386,6 +386,9 @@ function ButtonProps:setOverruleProps(params, overrule_props)
 		params["enabled"] = false
 		params.disabled_message = "... button uitgeschakeld ...\n\n"
 	end
+	if overrule_props.enabled_func then
+		params["enabled"] = overrule_props.enabled_func()
+	end
 	if params["enabled"] == false then
 		if params["icon_text"] then
 			params["icon_text"].fgcolor = KOR.colors.button_disabled
@@ -400,6 +403,11 @@ end
 function ButtonProps:set(params, overrule_props, debug)
 	local mode = (params.hold_callback or (overrule_props and overrule_props.hold_callback)) and "choice_props" or "info_text"
 	self:setOverruleProps(params, overrule_props, debug)
+
+	if params.enabled_func then
+		params.enabled = params.enabled_func()
+	end
+
 	local button_props
 	if mode == "info_text" then
 		button_props = {
@@ -444,7 +452,7 @@ function ButtonProps:execOrShowButtonDisabledMessage(callback, button_props)
 	KOR.registry:unset(self.registry_index)
 	UIManager:close(self.alert_dialog)
 	if button_props.disabled_message then
-		KOR.messages:notify("button was uitgeschakeld...")
+		KOR.messages:notify(_("button was disabled"))
 		return
 	end
 	callback()

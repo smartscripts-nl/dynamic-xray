@@ -396,7 +396,7 @@ ReaderDictionary.onLookupWord = function(self, word, is_sane, boxes, highlight, 
     local skip_glossary = KOR.registry:getOnce("skip_glossary")
 
     --* if an Xray item was recognized, show its info instead of the Dictionary dialog:
-    if DX.tw:getXrayItemAsDictionaryEntry(word) then
+    if DX.m.has_items and DX.tw:getXrayItemAsDictionaryEntry(word) then
         if highlight then
             highlight:clear()
         end

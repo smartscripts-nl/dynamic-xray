@@ -20,7 +20,6 @@ local _ = KOR:initCustomTranslations()
 
 local DX = DX
 local has_content = has_content
-local has_items = has_items
 local has_no_text = has_no_text
 local has_text = has_text
 local table_concat = table_concat
@@ -218,7 +217,7 @@ function Glossary:showViewer()
     local is_tabbed = KOR.referenceinformation.current_ebook_reference_information
     local buttons = DX.b:forGlossaryViewerTopLeft(self, is_tabbed)
     local buttons_right = DX.b:forReferenceInformationTopRight(self)
-    local extra_buttons = DX.s.Quizlet_button_enabled and has_items(DX.vd.items) and {
+    local extra_buttons = DX.m.has_items and DX.s.Quizlet_button_enabled and {
         KOR.buttoninfopopup:forQuizletMode({
             callback = function()
                 UIManager:close(self.info_dialog)

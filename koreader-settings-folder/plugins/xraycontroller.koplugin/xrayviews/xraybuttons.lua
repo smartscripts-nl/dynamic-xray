@@ -288,6 +288,7 @@ function XrayButtons:forPageNavigator(parent)
         }),
         KOR.buttonchoicepopup:forXrayPageNavigatorShowTagsDialog({
             generate_active_icon = DX.pn.navigation_tag,
+            enabled = DX.m.has_items,
             callback = function()
                 if DX.pn.navigation_tag then
                     DX.pn:betweenTagsNavigationDisable()
@@ -300,10 +301,10 @@ function XrayButtons:forPageNavigator(parent)
             end,
         }),
         KOR.buttoninfopopup:forXrayViewer({
-             enabled_function = function()
-                 return parent.current_item and true or false
-             end,
-             callback = function()
+            enabled_func = function()
+                return DX.m.has_items and parent.current_item and true or false
+            end,
+            callback = function()
                 return DX.cb:execViewItemCallback()
              end,
          }),
@@ -314,10 +315,10 @@ function XrayButtons:forPageNavigator(parent)
             end,
         }),
         KOR.buttoninfopopup:forXrayItemEdit({
-             enabled_function = function()
-                 return parent.current_item and true or false
-             end,
-             info = "edit-ikoon | Bewerk het item dat in het infopaneel hieronder wordt weergegeven.",
+            enabled_func = function()
+                return DX.m.has_items and parent.current_item and true or false
+            end,
+            info = "edit-ikoon | Bewerk het item dat in het infopaneel hieronder wordt weergegeven.",
              callback = function()
                 return DX.cb:execEditCallback(parent)
              end,
@@ -384,18 +385,21 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
             end
         },
         KOR.buttoninfopopup:forXrayPageNavigatorSearchItem({
+            enabled = DX.m.has_items,
             callback = function()
                 parent:closePopupMenu()
                 return DX.cb:execPageNavigatorSearchItemCallback()
             end,
         }),
         KOR.buttoninfopopup:forXrayList({
+            enabled = DX.m.has_items,
             callback = function()
                 parent:closePageNavigator()
                 return DX.cb:execShowListCallback()
             end
         }),
         KOR.buttoninfopopup:forXrayExport({
+            enabled = DX.m.has_items,
             callback = function()
                 parent:closePageNavigator()
                 return DX.cb:execExportXrayItemsCallback()
@@ -411,6 +415,7 @@ function XrayButtons:forPageNavigatorPopupButtons(parent)
         }),
         KOR.buttoninfopopup:forSearchAllLocations({
             info = _("search-list-icon | Show all occurrences in the book of the item currently displayed below."),
+            enabled = DX.m.has_items,
             callback = function()
                 parent:closePageNavigator()
                 return DX.cb:execShowItemOccurrencesCallback()
@@ -457,17 +462,20 @@ function XrayButtons:forPageNavigatorTopLeft(parent)
                 return DX.i:showPageNavigatorHelp(parent)
             end,
         },
-        KOR.buttoninfopopup:forXrayItemQuickSearch({
-            close_callback = function()
-                parent:closePageNavigator()
-            end,
-        }),
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
                 DX.cb:execSettingsCallback(parent)
             end
         }),
     }
+    if DX.m.has_items then
+        --? for some reason I can't get setting disabled to false to work for this button, so only inject it if there are Xray items:
+        table_insert(buttons, 2, KOR.buttoninfopopup:forXrayItemQuickSearch({
+            close_callback = function()
+                parent:closePageNavigator()
+            end,
+        }))
+    end
     self:insertGlobalDXHelpButton(buttons, parent)
 
     return buttons
@@ -475,7 +483,7 @@ end
 
 --- @param parent XrayPageNavigator
 function XrayButtons:forPageNavigatorTopRight(parent)
-    if DX.s.PN_hide_filter_buttons then
+    if DX.s.PN_hide_filter_buttons or DX.m.has_no_items then
         return self:injectReferenceButtons(function()
             parent:closePageNavigator()
         end)
@@ -603,6 +611,7 @@ function XrayButtons:forUiInfoAdditionalButtons(config, parent)
     local series_manager_button = self:getSeriesManagerButton(parent.xray_ui_info_dialog)
     config.extra_buttons = {
         KOR.buttoninfopopup:forXrayList({
+            enabled = DX.m.has_items,
             fgcolor = KOR.colors.button_label,
             callback = function()
                 parent:closeUiInfoDialog()
@@ -610,12 +619,14 @@ function XrayButtons:forUiInfoAdditionalButtons(config, parent)
             end
         }),
         KOR.buttoninfopopup:forXrayPageNavigator({
+            enabled = DX.m.has_items,
             callback = function()
                 parent:closeUiInfoDialog()
                 DX.pn:showNavigator()
             end,
         }),
         KOR.buttoninfopopup:forXrayTagGroupSelector({
+            enabled = DX.m.has_items,
             callback = function()
                 parent:closeUiInfoDialog()
                 DX.ta:showTagGroupSelector()
@@ -623,6 +634,7 @@ function XrayButtons:forUiInfoAdditionalButtons(config, parent)
         }),
         --* optionally Quizlet-button will be inserted in this position...
         KOR.buttoninfopopup:forXrayExport({
+            enabled = DX.m.has_items,
             callback = function()
                 parent:closeUiInfoDialog()
                 return DX.cb:execExportXrayItemsCallback()
@@ -641,7 +653,7 @@ function XrayButtons:forUiInfoAdditionalButtons(config, parent)
         }))
     end
 
-    if DX.s.Quizlet_button_enabled and has_items(DX.vd.items) then
+    if DX.m.has_items and DX.s.Quizlet_button_enabled then
         table_insert(config.extra_buttons, 4, KOR.buttoninfopopup:forQuizletMode({
             callback = function()
                 parent:closeUiInfoDialog()
@@ -657,13 +669,9 @@ function XrayButtons:forUiInfoTopLeft(new_mode, new_trigger, parent)
         KOR.buttoninfopopup:forXrayShowMatchReliabilityExplanation({
             icon_size_ratio = 0.58,
         }),
-        KOR.buttoninfopopup:forXrayItemQuickSearch({
-            close_callback = function()
-                parent:closeUiInfoDialog()
-            end,
-        }),
         KOR.buttoninfopopup:forXrayToggleUIMode({
             icon = DX.s.UI_mode == "paragraph" and "paragraph" or "pages",
+            enabled = DX.m.has_items,
             callback = function()
                 DX.u:toggleUiMode(parent, new_mode, new_trigger)
             end,
@@ -675,9 +683,18 @@ function XrayButtons:forUiInfoTopLeft(new_mode, new_trigger, parent)
             end
         }),
     }
+    if DX.m.has_items then
+        --? for some reason I can't get setting disabled to false to work for this button, so only inject it if there are Xray items:
+        table_insert(buttons, 2, KOR.buttoninfopopup:forXrayItemQuickSearch({
+            close_callback = function()
+                parent:closeUiInfoDialog()
+            end,
+        }))
+    end
     if DX.s.UI_mode == "page" then
         table_insert(buttons, 3, KOR.buttoninfopopup:forXrayToggleXrayItemMarkers({
             icon = DX.s.UI_mark_xray_items and "xray-item-markers-enabled" or "xray-item-markers-disabled",
+            enabled = DX.m.has_items,
             callback = function()
                 DX.u:toggleUiXrayItemMarkers(parent)
             end,
@@ -1379,11 +1396,6 @@ function XrayButtons:forItemViewerTopLeft(parent)
                 return DX.i:showListAndViewerHelp(2)
             end
         },
-        KOR.buttoninfopopup:forXrayItemQuickSearch({
-            close_callback = function()
-                DX.d:closeItemViewer()
-            end,
-        }),
         KOR.buttoninfopopup:forXraySettings({
             callback = function()
                 parent:closeItemViewer()
@@ -1391,6 +1403,14 @@ function XrayButtons:forItemViewerTopLeft(parent)
             end
         }),
     }
+    if DX.m.has_items then
+        --? for some reason I can't get setting disabled to false to work for this button, so only inject it if there are Xray items:
+        table_insert(buttons, 2, KOR.buttoninfopopup:forXrayItemQuickSearch({
+            close_callback = function()
+                DX.d:closeItemViewer()
+            end,
+        }))
+    end
     self:insertGlobalDXHelpButton(buttons, parent)
 
     return buttons
@@ -1506,6 +1526,7 @@ function XrayButtons:forListFooterLeft(focus_item, dont_show, base_icon_size)
     local buttons = {
         Button:new(KOR.buttoninfopopup:forXrayToggleSortingMode({
             icon_size_ratio = base_icon_size + 0.1,
+            enabled = DX.m.has_items,
             info = T(_([[sorting-icon | sort Xray items by name or occurrences count in book.
 
 Current sorting mode: %1.]]), current_sorting_mode:upper()),
@@ -1518,6 +1539,7 @@ Current sorting mode: %1.]]), current_sorting_mode:upper()),
         --* for series button for toggling to book mode will be injected here...
         --* for series top book items button will be injected here...
         Button:new(KOR.buttonchoicepopup:forXrayShowTagsDialogForList({
+            enabled = DX.m.has_items,
             callback = function()
                 DX.ta:showTagFilterSelector("list")
             end,
@@ -1527,7 +1549,7 @@ Current sorting mode: %1.]]), current_sorting_mode:upper()),
         })),
         --* optionally Quizlet-button will be inserted in this position...
     }
-    if DX.s.Quizlet_button_enabled and has_items(DX.vd.items) then
+    if DX.m.has_items and DX.s.Quizlet_button_enabled then
         table_insert(buttons, KOR.buttoninfopopup:forQuizletMode({
             callback = function()
                 DX.d:closeListDialog()
@@ -1577,7 +1599,9 @@ function XrayButtons:forListFooterRight(parent)
     local series_manager_button = self:getSeriesManagerButton(parent.xray_items_list)
     return {
         series_manager_button,
-        KOR.buttoninfopopup:forXrayPageNavigator(),
+        KOR.buttoninfopopup:forXrayPageNavigator({
+            enabled = DX.m.has_items,
+        }),
         KOR.buttoninfopopup:forXrayExport({
             callback = function()
                 DX.pn:closePopupMenu()
@@ -1648,11 +1672,6 @@ function XrayButtons:forListTopLeft(parent)
                 return DX.i:showListAndViewerHelp(1)
             end
         },
-        KOR.buttoninfopopup:forXrayItemQuickSearch({
-            close_callback = function()
-                parent:closeListDialog()
-            end,
-        }),
         KOR.buttoninfopopup:forXrayItemsSelectForTagGroup({
             icon = "checkbox",
             info = _("checkbox icon | Select items to which you want assign a tag; they will then become members of a tag-group."),
@@ -1668,6 +1687,14 @@ function XrayButtons:forListTopLeft(parent)
             end
         }),
     }
+    if DX.m.has_items then
+        --? for some reason I can't get setting disabled to false to work for this button, so only inject it if there are Xray items:
+        table_insert(buttons, 2, KOR.buttoninfopopup:forXrayItemQuickSearch({
+            close_callback = function()
+                parent:closeListDialog()
+            end,
+        }))
+    end
     self:insertGlobalDXHelpButton(buttons, parent)
 
     return buttons

@@ -104,6 +104,7 @@ function KeyEvents:addHotkeysForReaderUI(parent)
 
     readerui.key_events.ShowXrayListUI = { { "Shift", { "L" } } }
     readerui.onShowXrayListUI = function()
+        --* because the Items List has an "add"-button, we show it, even if currently no Xray items are defined:
         DX.c:onShowList()
         return true
     end
@@ -128,24 +129,34 @@ function KeyEvents:addHotkeysForReaderUI(parent)
 
     readerui.key_events.ShowTagGroupSelectorUI = { { "Shift", { "T" } } }
     readerui.onShowTagGroupSelectorUI = function()
+        if self:noXrayItemsMessageIsShown() then
+            return true
+        end
         DX.ta:showTagGroupSelector()
         return true
     end
 
     readerui.key_events.ShowUiPageInformationUI = { { "Shift", { "U" } } }
     readerui.onShowUiPageInformationUI = function()
+        if self:noXrayItemsMessageIsShown() then
+            return true
+        end
         DX.u:uiInfoShow(nil, nil, "called_from_gesture")
         return true
     end
 
     readerui.key_events.ShowPageNavigatorUI = { { "Shift", { "X" } } }
     readerui.onShowPageNavigatorUI = function()
+        --* because the Items List has an "add"-button, we show it, even if currently no Xray items are defined:
         DX.c:onShowPageNavigator()
         return true
     end
 
     readerui.key_events.ShowQuizletQuestionsUI = { { "Shift", { "Z" } } }
     readerui.onShowQuizletQuestionsUI = function()
+        if self:noXrayItemsMessageIsShown() then
+            return true
+        end
         return DX.cb:execQuizletModeCallback()
     end
 end
@@ -1005,6 +1016,15 @@ function KeyEvents:unregisterSharedHotkeys(key_events_module)
             self.shared_hotkeys[key][i] = nil
         end
     end
+end
+
+--- @private
+function KeyEvents:noXrayItemsMessageIsShown()
+    if DX.m.has_no_items then
+        KOR.messages:notify("er zijn nog een xray items gedefinieerd")
+        return true
+    end
+    return false
 end
 
 return KeyEvents

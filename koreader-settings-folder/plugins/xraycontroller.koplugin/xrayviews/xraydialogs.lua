@@ -656,7 +656,8 @@ function XrayDialogs:initListDialog(focus_item, dont_show, current_tab_items, it
             UIManager:close(self.xray_items_list)
         end),
         -- #((filter table example))
-        filter = self:getListFilter(),
+        --* first condition: don't inject filter button if no Xray items have been defined yet:
+        filter = DX.m.has_items and self:getListFilter(),
         title_submenu_buttontable = DX.b:forListSubmenu(),
         titlebar_inverted = self.select_mode or DX.ta.select_for_tags or DX.pn.do_double_filter_select,
         footer_buttons_left = not self.select_mode and DX.b:forListFooterLeft(focus_item, dont_show, base_icon_size),
