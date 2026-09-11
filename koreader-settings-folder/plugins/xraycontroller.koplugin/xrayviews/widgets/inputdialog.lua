@@ -720,14 +720,15 @@ function InputDialog:showDropdown(field, dropdown_items, filter_text, callback)
         end
     end
 
+    local bcount = #buttons
     --* if there WASN'T ANY ITEM which matched the filter string, do nothing:
-    if #buttons == 0 then
+    if bcount == 0 then
         self.dropdown_button_was_used = false
         KOR.messages:notify(_("no item found with this filter term"))
         return
 
     --* if there was only one matching item, set that value immediately and skip showing the dropdown:
-    elseif #buttons == 1 then
+    elseif bcount == 1 then
         field:setText(buttons[1][1].text)
         self.dropdown_button_was_used = true
         self:commitForm(self)
@@ -751,8 +752,6 @@ function InputDialog:showDropdown(field, dropdown_items, filter_text, callback)
         buttons = buttons,
     }
     UIManager:show(dialog)
-
-    return dialog
 end
 
 function InputDialog:getAddedWidgetAvailableWidth()
