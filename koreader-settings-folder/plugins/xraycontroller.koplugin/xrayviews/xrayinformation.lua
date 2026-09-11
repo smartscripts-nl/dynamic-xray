@@ -14,41 +14,42 @@ local table_concat = table_concat
 local XrayInformation = WidgetContainer:extend {
     global_hotkeys_info = [[
 <table style='border-collapse: collapse'>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+G</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+    <tr><td>Shift+G</td><td>]]
             .. _("show a Glossary for the current ebook - or add it by marking its boundaries in the ebook")
             .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+H</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+    <tr><td>Shift+H</td><td>]]
             .. _("show this Help information dialog")
             .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+I</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+    <tr><td>Shift+I</td><td>]]
             .. _("show favorite images for current e-book in ImageBookmarks Viewer. Only shown when the ImageBookmarks plugin has been installed AND favorite images were saved for the current ebook.<br /><br/>Plugin available at https://github.com/bozo22/imagebookmarks.koplugin")
             .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+L</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+    <tr><td>Shift+L</td><td>]]
             .. _("show Xray List")
             .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+M</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+    <tr><td>Shift+M</td><td>]]
             .. _("show current series books or Metadata of a non-series book")
             .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+Q</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+    <tr><td>Shift+Q</td><td>]]
             .. _("show the Quick-search dialog for Xray items")
             .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+R</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+    <tr><td>Shift+R</td><td>]]
             .. _("show the Reference Information for the current e-book")
             .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+T</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+    <tr><td>Shift+T</td><td>]]
             .. _("show the Tag-group-selector")
             .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+U</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+    <tr><td>Shift+U</td><td>]]
             .. _("show UI Page Information Popup")
             .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+X</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+    <tr><td>Shift+X</td><td>]]
             .. _("show Xray Page Navigator")
             .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+Z</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+    <tr><td>Shift+Z</td><td>]]
             .. _("show Quizlet-questions")
             .. [[</td></tr>
 </table>
 ]],
+    global_hotkeys_info_formatted = false,
     match_reliability_explanations = nil,
     -- #((xray match reliability indicators))
     --* these match reliability indicators will be injected in the dialog with page or paragraphs information in ((XrayUI#showParagraphInformation)) > ((xray items dialog add match reliability explanations)):
@@ -149,6 +150,7 @@ end
 function XrayInformation:showGeneralDXTips(parent, initial_tab)
     local screen_dims = Screen:getSize()
 
+    self:formatGlobalHotkeysInformation()
     local indent = "\n   "
     local indent_simple = "   "
     local width_factor = DX.s.is_mobile_device and self.mobile_width_factor or self.width_factor
@@ -230,6 +232,7 @@ function XrayInformation:showGeneralDXTips(parent, initial_tab)
 ]]
                 .. self.global_hotkeys_info ..
 [[
+    <br /> </li>
     <li><strong>returning to previous dialogs</strong><br />In many DX dialogs you can return to the previous dialog by tapping on the back-button in the left half of the title bar.<br /> </li>
     <li><strong>using the bars in the Occurrences-per-Chapter-Histogram</strong><br />In this Histogram in the Page Navigator you can <em>quickly inspect the locations in the chapter where the active item in the info panel is being mentioned</em>, by tapping on the bar belonging to that chapter. So you don't have to jump to the chapter in the ebook first, to do this.</li>
 <ul>]])
@@ -322,6 +325,7 @@ end
 
 --- @private
 function XrayInformation:getGlobalHotkeysInfo()
+    self:formatGlobalHotkeysInformation()
     --* global hotkeys are defined in ((KeyEvents#addHotkeysForReaderUI)):
     return self.hotkeys_information or _("For usage with physical (BT) keyboards:") .. [[<br>
                 <br>
@@ -512,6 +516,17 @@ Only shown in series-display-mode:
         }
     })
     return true
+end
+
+--- @private
+function XrayInformation:formatGlobalHotkeysInformation()
+    if not self.global_hotkeys_info_formatted then
+        self.global_hotkeys_info = self.global_hotkeys_info
+            :gsub("<tr><td>", "<tr><td style='padding: 8px 24px; border: 1px solid #444444'>")
+            :gsub("</td><td>", "</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>")
+            :gsub("t%+", "t" .. KOR.strings.n_nbsp .. "+" .. KOR.strings.n_nbsp)
+        self.global_hotkeys_info_formatted = true
+    end
 end
 
 return XrayInformation
