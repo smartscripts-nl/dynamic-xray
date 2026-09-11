@@ -784,7 +784,7 @@ function XrayDialogs:showList(focus_item, dont_show, select_mode)
     self.called_from_list = false
     self:closeListDialog()
     --* don't add Items List to ((DialogsQueue)) if it is only being used as item-selector:
-    if #items_for_select == 0 and not DX.ta.select_for_tags_tag and not DX.pn.do_double_filter_select then
+    if #items_for_select == 0 and not DX.ta.select_for_tags_tag and not DX.pn.do_double_filter_select and not self.select_mode then
         KOR.dialogsqueue:register({
             id = "xray_items_list",
             restore = function()
