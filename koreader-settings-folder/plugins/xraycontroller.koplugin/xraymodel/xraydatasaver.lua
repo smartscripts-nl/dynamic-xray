@@ -31,6 +31,7 @@ local string_format = string.format
 local T = T
 local table_concat = table.concat
 local table_insert = table.insert
+local tonumber = tonumber
 local type = type
 local unpack = unpack
 
@@ -395,6 +396,11 @@ function XrayDataSaver:runExternalStmt(context, stmt_index, params)
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 end
 
+--main: XrayDataSaver.storeDeletedItem: info how all items will be updated after modifying Xray data
+-- #((refresh Xray data upon deleting an item))
+--* via ((XrayDialogs#showDeleteItemConfirmation)) > ((XrayDialogs#refreshItemsList)) > ((XrayViewsData#initData)) with argument "force_refresh" > ((XrayModel#resetData)) > ((XrayViewsData#resetData)) and ((XrayTappedWords#resetData)), and then ((XrayDataLoader#loadAllItems)) with argument "force_refresh", all data will be reset;
+--* after this has been done, the refreshed data will be sent to XrayViewsData via ((XrayViewsData#setItems)); XrayModel.has_no_items will be set to true there when there were no items left:
+--* the routines for importing and adding items in the current module will follow similar paths, in which always ((XrayViewsData#initData)) with argument "force_refresh" and ((XrayViewsData#setItems)) will be called at the end:
 -- #((XrayDataSaver#storeDeletedItem))
 function XrayDataSaver.storeDeletedItem(current_series, delete_item)
 
@@ -415,6 +421,7 @@ function XrayDataSaver.storeDeletedItem(current_series, delete_item)
     end
     conn, stmt = KOR.databases:closeConnAndStmt(conn, stmt)
 
+    --* second argument: force this item to nil:
     parent:updateStaticReferenceCollections(id, nil)
 end
 

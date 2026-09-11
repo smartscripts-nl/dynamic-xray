@@ -465,9 +465,16 @@ function XrayDataLoader:_loadAllData(mode)
     local sql = self:_getAllDataSql(mode)
     local result = conn:exec(sql, nil, "XrayDataLoader:_loadAllData")
     conn = KOR.databases:closeConnections(conn)
+
+    --* when data dynamically updated, parent.has_no_items and parent.has_items will be set in ((XrayViewsData#setItems)):
     if not result then
+        parent.has_no_items = true
+        parent.has_items = false
         return
     end
+    parent.has_no_items = false
+    parent.has_items = true
+
     --* might be set to true in ((XrayDataLoader#_loadDataForSeries)):
     parent.has_multiple_series_items = false
 

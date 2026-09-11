@@ -186,6 +186,7 @@ function XrayDialogs:showImportFromOtherSeriesDialog(dialog_close_callback, upon
     })
 end
 
+--main: showNewItemForm
 --* compare ((XrayDialogs#showEditItemForm)):
 --* props for current form were initialised in ((XrayFormsData#initNewItemFormProps)) > ((XrayController#onShowNewItemForm)):
 function XrayDialogs:showNewItemForm(args)
@@ -328,6 +329,7 @@ function XrayDialogs:showDeleteItemConfirmation(delete_item, dialog, remove_all_
     end)
 end
 
+--main: showEditItemForm
 --*compare ((XrayDialogs#showNewItemForm)):
 function XrayDialogs:showEditItemForm(args)
     local active_form_tab = args.active_form_tab or self.active_form_tab
@@ -847,8 +849,15 @@ function XrayDialogs:closeListDialog()
     end
 end
 
+--main: quickItemSearch
 --* compare filtering for global bookmark tags: ((MultiInputDialog#insertSingleFieldRow)) > ((InputDialog#getDropdownButtons)) > ((InputDialog#showDropdown)):
 function XrayDialogs:quickItemSearch()
+
+    if DX.m.has_no_items then
+        KOR.messages:notify(_("no xray items defined for current book or series"))
+        return
+    end
+
     --! use DX.vd.item_table[1] here instead of DX.vd.items, because the latter items collection might have been filtered:
     local pool = KOR.tables:shallowCopy(DX.vd.item_table[1])
     KOR.tables:sortByPropAscending(pool, "name")

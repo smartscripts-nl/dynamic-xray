@@ -425,7 +425,7 @@ function XrayUI:uiInfoInitParagraphsData()
     self.xray_info_found = false
     self.screen_width = Screen:getWidth()
 
-    if has_no_items(self.paragraphs) or DX.vd:getBaseItemsCount() == 0 then
+    if has_no_items(self.paragraphs) or DX.m.has_no_items then
         return false
     end
 

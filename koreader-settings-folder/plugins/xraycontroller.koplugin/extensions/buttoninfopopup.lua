@@ -574,6 +574,7 @@ end
 function ButtonInfoPopup:forXrayItemQuickSearch(props)
 	return ButtonProps:set({
 		icon = "quick-search",
+		enabled = DX.m.has_items,
 		info = _("target-with-arrow icon | Quickly search for a Xray-item and show it in the Item Viewer. For example handy when you want to see the details of a item which isn't mentioned in the current page. Steps:") .. "\n\n" .. KOR.dialogs.dropdown_steps_info:gsub("\n\nAction:.+$", ""),
 		callback_label = _("search"),
 		callback = function()

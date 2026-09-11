@@ -924,10 +924,6 @@ function XrayViewsData:getItemsCount()
     return #self.items
 end
 
-function XrayViewsData:getBaseItemsCount()
-    return #self.item_table[1]
-end
-
 --* ((XrayViewsData#upgradeNeedleItem)) has to be called in the caller context, before calling getLinkedItems:
 function XrayViewsData:getLinkedItems(needle_item)
 
@@ -936,9 +932,9 @@ function XrayViewsData:getLinkedItems(needle_item)
     local needle_item_has_linkwords = has_text(needle_item.linkwords)
 
     local haystack_item
-    count = #self.items
+    count = #self.item_table[1]
     for i = 1, count do
-        haystack_item = self.items[i]
+        haystack_item = self.item_table[1][i]
         --* add items which are linked by the keywords in needle_item:
         if needle_item_has_linkwords then
             self:addLinkedItem(needle_item, haystack_item, linked_names_index, linked_items)
@@ -1587,6 +1583,7 @@ function XrayViewsData:indexItems(new_item)
     return new_item
 end
 
+--main: XrayViewsData.initData (can be force-refreshed upon changed Xray data)
 -- #((XrayViewsData#initData))
 --- @private
 function XrayViewsData.initData(force_refresh, override_mode, full_path)
@@ -1693,6 +1690,8 @@ function XrayViewsData:setItems(items, from_result_set)
 
     --* when we are here, we were called from ((XrayDataLoader#_loadAllData))...
 
+    parent.has_no_items = #items == 0
+    parent.has_items = not parent.has_no_items
     self.item_table[1] = items
     self.item_table[1] = parent:placeImportantItemsAtTop(self.item_table[1], -1)
     self.items = KOR.tables:shallowCopy(self.item_table[1])

@@ -46,8 +46,12 @@ local XrayModel = WidgetContainer:new{
     full_name_needle_upper = nil,
     full_name_plural = nil,
     full_name_plural_upper = nil,
+    has_items = true,
     --* this value will be set by ((XrayDataLoader#_loadAllData)) and optionally ((XrayDataLoader#_loadDataForSeries)):
     has_multiple_series_items = false,
+    --* will be set to false by ((XrayDataLoader#_loadAllData)), if Xray items for the current book or series were found, or by ((XrayViewsData#setItems)), if Xray data were modified (added, deleted, imported):
+    --* see ((XrayDataSaver#storeDeletedItem)) > ((refresh Xray data upon deleting an item)), for an example how this update works upon deleting an item:
+    has_no_items = true,
     --! these 3 collections are reference collections that never will be fully reset after item updates or additions; e.g. used for Page Navigator side buttons:
     --* updates to these collections will be done through ((XrayModel#updateStaticReferenceCollections)):
     items_by_id = {},
