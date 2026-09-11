@@ -143,6 +143,11 @@ function KeyEvents:addHotkeysForReaderUI(parent)
         DX.c:onShowPageNavigator()
         return true
     end
+
+    readerui.key_events.ShowQuizletQuestionsUI = { { "Shift", { DX.s.hk_quizlet_questions } } }
+    readerui.onShowQuizletQuestionsUI = function()
+        return DX.cb:execQuizletModeCallback()
+    end
 end
 
 --* disable ReaderUI hotkeys:

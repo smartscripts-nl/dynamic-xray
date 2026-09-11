@@ -46,6 +46,7 @@ local XraySettings = WidgetContainer:new{
             locked = 0,
         },
         --* hk stands for "hotkey":
+        --* compare the global hotkeys in ((KeyEvents#addHotkeysForReaderUI)): G Glossary, H Help information, I favorite Images, L items List, M series Manager, Q Quick search, R Reference information, T Tag-group selector, U UI page information popup, X Xray Page Navigator:
         hk_add_item = {
             value = "A",
             explanation = _("To add a new Xray item, in the Item Viewer, the Items List or the Page Navigator.") .. hotkeys_warning,
@@ -78,7 +79,7 @@ local XraySettings = WidgetContainer:new{
         },
         hk_open_export_list = {
             value = "X",
-            explanation = _("Opens a popup with all Xray items as sorted in the Items List and with info per item as shown in Page Information Popup. For copying and then printing, if you like.") .. hotkeys_warning,
+            explanation = _("For Page Navigator: opens a popup with all Xray items as sorted in the Items List and with info per item as shown in Page Information Popup. For copying and then printing, if you like.") .. hotkeys_warning,
             locked = 0,
         },
         hk_open_xray_settings_from_page_navigator = {
@@ -88,17 +89,22 @@ local XraySettings = WidgetContainer:new{
         },
         hk_page_navigator_jump_to_page_no = {
             value = "U",
-            explanation = _("Open the dialog for jUmping to a specific page nUmber.") .. hotkeys_warning,
+            explanation = _("For Page Navigator: open the dialog for jUmping to a specific page nUmber.") .. hotkeys_warning,
             locked = 0,
         },
         hk_page_navigator_popup_menu = {
             value = "M",
-            explanation = _("Toggle the Page Navigator popup menu with additional actions.") .. hotkeys_warning,
+            explanation = _("For Page Navigator: toggle the Page Navigator popup menu with additional actions.") .. hotkeys_warning,
             locked = 0,
         },
         hk_show_pagebrowser_from_page_navigator = {
             value = "B",
             explanation = _("To open the pagebrowser popup in the Page Navigator.") .. hotkeys_warning,
+            locked = 0,
+        },
+        hk_quizlet_questions = {
+            value = "Z",
+            explanation = _("This is a global hotkey: show Quizlet-questions, to practice you knowledge of the Xray items for the current book. Don't set reserved global hotkeys - GHILMQRTUX - here! The resulting key will be Shift+[your_key].") .. hotkeys_warning,
             locked = 0,
         },
         hk_goto_previous_item = {
