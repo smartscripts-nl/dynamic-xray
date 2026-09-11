@@ -852,7 +852,7 @@ function XrayDialogs:quickItemSearch()
     --! use DX.vd.item_table[1] here instead of DX.vd.items, because the latter items collection might have been filtered:
     local pool = KOR.tables:shallowCopy(DX.vd.item_table[1])
     KOR.tables:sortByPropAscending(pool, "name")
-    KOR.dialogs:promptDropdown("Selecteer een Xray-item", "selecteer een item via ▼ - type evt. eerst een deel van de naam:", pool, "toon in de Item Viewer", function(selected_item)
+    KOR.dialogs:promptDropdown(_("Select a Xray-item"), _("select an item via ▼ - optionally first type part of the name:"), pool, _("show in Item Viewer"), function(selected_item)
         DX.d:viewItem(selected_item)
     end)
 end
