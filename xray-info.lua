@@ -75,10 +75,17 @@ The Dynamic Xray module/plugin has two streams:
 
 Some important DX modules can be called while reading, by global hotkeys:
 
+Shift + G: show Glossary, saved by the user
 Shift + H: show Xray Help information
+Shift + I: show favorite Images for current book (if ImageBookmarks plugin has been installed and user saved favorite images for the current ebook)
 Shift + L: show Xray List
 Shift + M: show Series Manager
+Shift + Q: show the Quick-search dialog for Xray items
+Shift + R: show Reference information, saved by the user
+Shift + T: show the Tag-group selector
+Shift + U: show the UI Page Information popup
 Shift + X: show Xray Page Navigator
+Shift + Z: show quiZlet-questions
 
 --* SYNTACTIC SUGAR
 -- #((SYNTACTIC SUGAR))

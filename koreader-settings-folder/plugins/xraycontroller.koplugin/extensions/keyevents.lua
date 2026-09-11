@@ -144,7 +144,7 @@ function KeyEvents:addHotkeysForReaderUI(parent)
         return true
     end
 
-    readerui.key_events.ShowQuizletQuestionsUI = { { "Shift", { DX.s.hk_quizlet_questions } } }
+    readerui.key_events.ShowQuizletQuestionsUI = { { "Shift", { "Z" } } }
     readerui.onShowQuizletQuestionsUI = function()
         return DX.cb:execQuizletModeCallback()
     end

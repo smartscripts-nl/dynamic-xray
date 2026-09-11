@@ -102,11 +102,6 @@ local XraySettings = WidgetContainer:new{
             explanation = _("To open the pagebrowser popup in the Page Navigator.") .. hotkeys_warning,
             locked = 0,
         },
-        hk_quizlet_questions = {
-            value = "Z",
-            explanation = _("This is a global hotkey: show Quizlet-questions, to practice you knowledge of the Xray items for the current book. Don't set reserved global hotkeys - GHILMQRTUX - here! The resulting key will be Shift+[your_key].") .. hotkeys_warning,
-            locked = 0,
-        },
         hk_goto_previous_item = {
             value = "P",
             explanation = _("To go to the previous item in a DX dialog where the triangle pointing to the left is visible.") .. hotkeys_warning,

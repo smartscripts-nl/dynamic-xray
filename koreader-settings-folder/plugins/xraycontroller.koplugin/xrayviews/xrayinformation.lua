@@ -44,6 +44,9 @@ local XrayInformation = WidgetContainer:extend {
     <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+X</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
             .. _("show Xray Page Navigator")
             .. [[</td></tr>
+    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+Z</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+            .. _("show Quizlet-questions")
+            .. [[</td></tr>
 </table>
 ]],
     match_reliability_explanations = nil,

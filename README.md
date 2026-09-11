@@ -119,6 +119,7 @@ DX has global hotkeys for calling its main dialogs:
 * Shift + T: show the Tag-group selector
 * Shift + U: show the UI Page Information popup
 * Shift + X: show Xray Page Navigator
+* Shift + Z: show quiZlet-questions
 
 ### How to get the most Kindle-like experience
 
