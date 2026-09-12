@@ -600,8 +600,9 @@ function XrayButtons:getMainModuleButtons(parent)
             DX.c:onShowNewItemForm()
         end
     }})
-    if KOR.imagebookmarks then
-        local favorites = KOR.imagebookmarks.settings:getBookmarks(KOR.imagebookmarks.doc_path)
+    if KOR.ui["imagebookmarks"] then
+        local instance = KOR.ui["imagebookmarks"]
+        local favorites = instance.settings:getBookmarks(instance.doc_path)
         enabled, color = KOR.buttonprops:getButtonState(has_items(favorites))
         table_insert(buttons, {{
             text = T(_("Favorite Images %1 Shift+I"), kb),
@@ -610,7 +611,7 @@ function XrayButtons:getMainModuleButtons(parent)
             align = "left",
             callback = function()
                 UIManager:close(parent.main_modules_dialog)
-                KOR.imagebookmarks:onOpenImageBookmarksViewer()
+                instance:onOpenImageBookmarksViewer()
             end
         }})
     end
