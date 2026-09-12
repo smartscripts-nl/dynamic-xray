@@ -20,6 +20,7 @@ local KOR = require("extensions/kor")
 local LeftContainer = require("ui/widget/container/leftcontainer")
 local Size = require("modules/size")
 local TextBoxWidget = require("xrayviews/widgets/textboxwidget")
+--* TitleBar is initialized and inherited from base class InputDialog
 local UIManager = require("ui/uimanager")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local VerticalSpan = require("ui/widget/verticalspan")
