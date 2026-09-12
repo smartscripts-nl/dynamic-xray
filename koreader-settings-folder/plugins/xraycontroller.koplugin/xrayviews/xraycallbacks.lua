@@ -21,7 +21,6 @@ local XrayCallbacks = WidgetContainer:new{}
 function XrayCallbacks:execAddCallback(iparent)
     iparent.return_to_page = iparent.page_no
     iparent:closePageNavigator()
-    DX.c:resetFilteredItems()
     DX.c:onShowNewItemForm()
 end
 

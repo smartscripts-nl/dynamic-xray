@@ -55,8 +55,10 @@ local ButtonDialogTitle = InputContainer:extend{
     modal = true,
 
     buttons = nil,
+    close_callback = nil,
     tap_close_callback = nil,
     dismissable = true, --* set to false if any button callback is required
+    no_bottom_spacer = false,
 
     font_weight = "bold",
     button_width = 0.25,
@@ -122,6 +124,7 @@ function ButtonDialogTitle:init()
         button_padding = Screen:scaleBySize(5),
         title_face = face,
         show_parent = self,
+        close_callback = self.close_callback,
         top_buttons_left = self.top_buttons_left,
         top_buttons_right = self.top_buttons_right,
     }
@@ -167,6 +170,8 @@ function ButtonDialogTitle:init()
             buttons = self.buttons,
             zero_sep = true,
             show_parent = self,
+
+            no_bottom_spacer = self.no_bottom_spacer,
         },
     }
     self.movable = MovableContainer:new{

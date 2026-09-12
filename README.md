@@ -109,6 +109,7 @@ This tab also has a Quotes Manager, to be called with the floating speech bubble
 
 DX has global hotkeys for calling its main dialogs:
 
+* Shift + A: Add a new Xray item
 * Shift + G: show Glossary, saved by the user
 * Shift + H: show Xray Help information
 * Shift + I: show favorite Images for current book (if ImageBookmarks plugin has been installed and user saved favorite images for the current ebook)
@@ -185,6 +186,10 @@ use can store information loaded from the e-book. This might e.g. be timeline-in
 * **TIP 2**: from the Wikipedia results dialog the user can save the information therein to the Reference Information. And then he/she can use the tappable reference index to quickly jump to text sections:
   ![Reference Information with tappable index](images/reference-information-with-tappable-index.png)
   Reference Information with tappable index
+* **TIP 3**: the user can assign a gesture ("Show tappable index of main DX-modules" under section "Reflowable
+  documents") to show a tappable overview of the main DX modules:
+  ![Tappable overview of main DX modules](images/main-dx-modules-overview.png)
+  Tappable overview of the main DX modules
 
 #### Glossary viewer
 

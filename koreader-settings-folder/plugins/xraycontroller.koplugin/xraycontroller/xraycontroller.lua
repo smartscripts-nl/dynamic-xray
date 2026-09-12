@@ -160,6 +160,7 @@ end
 --- @private
 function XrayController:onDispatcherRegisterActions()
     Dispatcher:registerAction("add_xray_item", { category = "none", event = "ShowNewItemForm", title = "Show form for new Xray item", rolling = true })
+    Dispatcher:registerAction("show_main_xray_modules", { category = "none", event = "ShowMainModules", title = "Show tappable index of main DX-modules", rolling = true })
     Dispatcher:registerAction("show_items", { category = "none", event = "ShowList", title = DX.d:getControllerEntryName("Show xray-items in this book/series"), rolling = true })
     Dispatcher:registerAction("show_xray_page_navigator", { category = "none", event = "ShowPageNavigator", title = DX.d:getControllerEntryName("Show Xray Page Navigator"), rolling = true })
     Dispatcher:registerAction("add_xray_item", { category = "none", event = "AddNewXrayItem", title = DX.d:getControllerEntryName("Add an Xray item"), rolling = true })
@@ -506,11 +507,15 @@ function XrayController:saveUpdatedItem(return_modus, reload_manager)
     end
 end
 
+function XrayController:onShowMainModules()
+    DX.d:showMainModulesIndex()
+end
+
 --* compare form for editing Xray items: ((XrayController#onShowEditItemForm)):
 --* see also method ((XrayController#guardIsExistingItem)), through which current method is called and which ensures no duplicated items are created:
 function XrayController:onShowNewItemForm(name_from_selected_text, active_form_tab, item)
 
-    DX.vd:resetAllFilters()
+    self:resetFilteredItems()
 
     local title, item_copy, prefilled_field = DX.fd:initNewItemFormProps(name_from_selected_text, active_form_tab, item)
     DX.d:showNewItemForm({

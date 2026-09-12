@@ -31,6 +31,7 @@ local has_no_items = has_no_items
 local has_no_text = has_no_text
 local has_text = has_text
 local math_floor = math_floor
+local math_min = math_min
 local T = T
 local table_insert = table_insert
 local tostring = tostring
@@ -60,6 +61,7 @@ local XrayDialogs = WidgetContainer:new{
     item_requested = nil,
     list_args = nil,
     list_is_opened = false,
+    main_modules_dialog = nil,
     needle_name_for_list_page = "",
     --* the retrieved data will be formatted for display in ((XrayTappedWords#prepareNonTappedItemsTable)):
     sectioned_series_headings = "\n\n" .. _("By tapping on the bold book titles, you can open that book."),
@@ -243,6 +245,29 @@ function XrayDialogs:showNewItemForm(args)
 
     UIManager:show(self.add_item_input)
     self.add_item_input:onShowKeyboard()
+end
+
+--main:showMainModulesIndex
+function XrayDialogs:showMainModulesIndex()
+    local width_facor = DX.s.is_mobile_device and 0.9 or 0.5
+    self.main_modules_dialog = ButtonDialogTitle:new{
+        title = _("Main DX modules"),
+        top_buttons_left = DX.b:forMainModuleButtonsTopLeft(self),
+        button_width = 1,
+        width = math_floor(math_min(Screen:getHeight(), Screen:getWidth()) * width_facor),
+        font_weight = "normal",
+        padding = 0,
+        --max_height = Screen:getHeight() - Screen:scaleBySize(70),
+        sep_width = 0,
+        close_callback = function()
+            UIManager:close(self.main_modules_dialog)
+            KOR.screenhelpers:refreshScreen()
+        end,
+        no_bottom_spacer = true,
+        modal = true,
+        buttons = DX.b:getMainModuleButtons(self),
+    }
+    UIManager:show(self.main_modules_dialog)
 end
 
 --* called from ((XrayDialogs#showMultipleBookSeriesActionsOverview)):

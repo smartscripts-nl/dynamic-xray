@@ -86,6 +86,8 @@ return {
     highlight_bare = "\u{2592}",
     hold_callback_indicator = "\u{E340}" .. spacer, --  E340
     hold_callback_indicator_bare = "\u{E340}",
+    keyboard = "\u{F11C}" .. spacer,
+    keyboard_bare = "\u{F11C}",
     lightning = "\u{26A1}" .. spacer,
     lightning_bare = "\u{26A1}",
     list = "\u{E978}" .. spacer,

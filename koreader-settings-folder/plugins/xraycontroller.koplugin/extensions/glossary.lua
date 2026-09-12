@@ -38,7 +38,7 @@ local Glossary = WidgetContainer:extend {
     --* viewer_instance will be registered to InformationMediator.viewer_instance ...
 }
 
-function Glossary:get(remove_whitespace_at_end)
+function Glossary:get(remove_whitespace_at_end, return_boolean)
     --* this info could have been saved from the Glossary-button in ReaderHighlight:
     local doc_settings = KOR.ui.doc_settings
     self:convertFromOldFormat(doc_settings)
@@ -54,6 +54,9 @@ function Glossary:get(remove_whitespace_at_end)
             info = expanded_info
             self:save(info)
         end
+    end
+    if return_boolean then
+        return true
     end
     return info
 end
