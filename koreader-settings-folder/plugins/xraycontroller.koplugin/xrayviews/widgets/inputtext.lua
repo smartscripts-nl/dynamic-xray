@@ -1069,13 +1069,4 @@ function InputText:getCharPos()
     return self.charpos
 end
 
---* so we can minimize the on screen keyboard in this case:
-InputText.onPhysicalKeyboardConnected = function()
-    KOR.registry:set("physical_keyboard_connected", true)
-end
-
-InputText.onPhysicalKeyboardDisconnected = function()
-    KOR.registry:unset("physical_keyboard_connected")
-end
-
 return InputText

@@ -87,6 +87,12 @@ function KeyEvents:addHotkeysForReaderUI(parent)
     end
 
     local readerui = KOR.ui
+    readerui.key_events.AddXrayItemUI = { { "Shift", { "A" } } }
+    readerui.onAddXrayItemUI = function()
+        DX.c:onShowNewItemForm()
+        return true
+    end
+
     readerui.key_events.ShowGlossaryUI = { { "Shift", { "G" } } }
     readerui.onShowGlossaryUI = function()
         return KOR.glossary:showViewer()
@@ -94,7 +100,7 @@ function KeyEvents:addHotkeysForReaderUI(parent)
 
     readerui.key_events.ShowXrayHelpUI = { { "Shift", { "H" } } }
     readerui.onShowXrayHelpUI = function()
-        return DX.i:showPageNavigatorHelp(parent, 3)
+        return DX.i:showGlobalDXHelp(parent)
     end
 
     readerui.key_events.ShowImageBookmarksUI = { { "Shift", { "I" } } }

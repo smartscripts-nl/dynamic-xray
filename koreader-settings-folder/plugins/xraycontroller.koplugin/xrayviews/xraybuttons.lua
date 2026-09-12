@@ -1725,7 +1725,7 @@ function XrayButtons:insertGlobalDXHelpButton(buttons, parent, initial_tab)
     if DX.s.enable_global_DX_tips then
         table_insert(buttons, 1, KOR.buttoninfopopup:forXrayTips({
             callback = function()
-                return DX.i:showGeneralDXTips(parent, initial_tab)
+                return DX.i:showGlobalDXHelp(parent, initial_tab)
             end,
         }))
     end

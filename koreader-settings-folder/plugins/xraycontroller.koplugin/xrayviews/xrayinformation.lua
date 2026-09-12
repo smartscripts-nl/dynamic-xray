@@ -13,43 +13,109 @@ local table_concat = table_concat
 --- @class XrayInformation
 local XrayInformation = WidgetContainer:extend {
     global_hotkeys_info = [[
-<table style='border-collapse: collapse'>
-    <tr><td>Shift+G</td><td>]]
-            .. _("show a Glossary for the current ebook - or add it by marking its boundaries in the ebook")
-            .. [[</td></tr>
-    <tr><td>Shift+H</td><td>]]
-            .. _("show this Help information dialog")
-            .. [[</td></tr>
-    <tr><td>Shift+I</td><td>]]
-            .. _("show favorite images for current e-book in ImageBookmarks Viewer. Only shown when the ImageBookmarks plugin has been installed AND favorite images were saved for the current ebook.<br /><br/>Plugin available at https://github.com/bozo22/imagebookmarks.koplugin")
-            .. [[</td></tr>
-    <tr><td>Shift+L</td><td>]]
-            .. _("show Xray List")
-            .. [[</td></tr>
-    <tr><td>Shift+M</td><td>]]
-            .. _("show current series books or Metadata of a non-series book")
-            .. [[</td></tr>
-    <tr><td>Shift+Q</td><td>]]
-            .. _("show the Quick-search dialog for Xray items")
-            .. [[</td></tr>
-    <tr><td>Shift+R</td><td>]]
-            .. _("show the Reference Information for the current e-book")
-            .. [[</td></tr>
-    <tr><td>Shift+T</td><td>]]
-            .. _("show the Tag-group-selector")
-            .. [[</td></tr>
-    <tr><td>Shift+U</td><td>]]
-            .. _("show UI Page Information Popup")
-            .. [[</td></tr>
-    <tr><td>Shift+X</td><td>]]
-            .. _("show Xray Page Navigator")
-            .. [[</td></tr>
-    <tr><td>Shift+Z</td><td>]]
-            .. _("show Quizlet-questions")
-            .. [[</td></tr>
-</table>
-]],
-    global_hotkeys_info_formatted = false,
+    <strong>]] .. _("Global hotkeys (while reading)") .. [[</strong>
+        <br><br>
+        <table style='border-collapse: collapse'>
+        <tr><td>Shift+A</td><td>]]
+                .. _("Add a new Xray-item")
+                .. [[</td></tr>
+        <tr><td>Shift+G</td><td>]]
+                .. _("show a Glossary for the current ebook - or add it by marking its boundaries in the ebook")
+                .. [[</td></tr>
+        <tr><td>Shift+H</td><td>]]
+                .. _("show this Help information dialog")
+                .. [[</td></tr>
+        <tr><td>Shift+I</td><td>]]
+                .. _("show favorite images for current e-book in ImageBookmarks Viewer. Only shown when the ImageBookmarks plugin has been installed AND favorite images were saved for the current ebook.<br /><br/>Plugin available at https://github.com/bozo22/imagebookmarks.koplugin")
+                .. [[</td></tr>
+        <tr><td>Shift+L</td><td>]]
+                .. _("show Xray List")
+                .. [[</td></tr>
+        <tr><td>Shift+M</td><td>]]
+                .. _("show current series books or Metadata of a non-series book")
+                .. [[</td></tr>
+        <tr><td>Shift+Q</td><td>]]
+                .. _("show the Quick-search dialog for Xray items")
+                .. [[</td></tr>
+        <tr><td>Shift+R</td><td>]]
+                .. _("show the Reference Information for the current e-book")
+                .. [[</td></tr>
+        <tr><td>Shift+T</td><td>]]
+                .. _("show the Tag-group-selector")
+                .. [[</td></tr>
+        <tr><td>Shift+U</td><td>]]
+                .. _("show UI Page Information Popup")
+                .. [[</td></tr>
+        <tr><td>Shift+X</td><td>]]
+                .. _("show Xray Page Navigator")
+                .. [[</td></tr>
+        <tr><td>Shift+Z</td><td>]]
+                .. _("show Quizlet-questions")
+                .. [[</td></tr>
+    </table>
+    <br>
+    <strong>]] .. _("In dialogs with tabs") .. [[</strong><br>
+    <br>
+    <table>
+        <tr><td style='white-space: pre; padding: 8px 22px; border: 1px solid #444444'>1, 2, 3 etc.</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
+                .. _("Jump to the corresponding tab in the dialog")
+                .. [[</td></tr>
+    </table>
+    <br>
+    <strong>]] .. _("In Page Navigator") .. [[</strong><br>
+    <br>
+    <table style='border-collapse: collapse'>
+        <tr><td style='padding: 8px 12px; border: 1px solid #444444'>U</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+                .. _("open dialog for jumping to a specific page number")
+                .. [[</td></tr>
+        <tr><td style='padding: 8px 12px; border: 1px solid #444444'>E</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
+                .. _("Edit Xray item shown in bottom info panel")
+                .. [[</td></tr>
+        <tr><td style='padding: 8px 12px; border: 1px solid #444444'>I</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
+                .. _("show this Information dialog")
+                .. [[</td></tr>
+        <tr><td style='padding: 8px 12px; border: 1px solid #444444'>J</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
+                .. _("Page Navigator: Jump to page currently displayed in e-book")
+                .. [[</td></tr>
+        <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+J</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
+                .. _("e-book: Jump to page currently displayed in Page Navigator")
+                .. [[</td></tr>
+        <tr><td style='padding: 8px 12px; border: 1px solid #444444'>L</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
+                .. _("show Items List")
+                .. [[</td></tr>
+        <tr><td style='padding: 8px 12px; border: 1px solid #444444'>M</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+                .. _("toggle the Page Navigator popup Menu with additional actions")
+                .. [[</td></tr>
+        <tr><td style='padding: 8px 12px; border: 1px solid #444444'>N</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
+                .. _("jump to Next page in Page Navigator")
+                .. [[</td></tr>
+        <tr><td style='padding: 8px 12px; border: 1px solid #444444'>P</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
+                .. _("jump to Previous page in Page Navigator")
+                .. [[</td></tr>
+        <tr><td style='padding: 8px 12px; border: 1px solid #444444'>S</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
+                .. _("open Dynamic Xray Settings")
+                .. [[</td></tr>
+        <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+S</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
+                .. _("Search for an Xray item in the Page Navigator")
+                .. [[</td></tr>
+        <tr><td style='padding: 8px 12px; border: 1px solid #444444'>V</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
+                .. _("View details of item currently displayed in bottom info panel")
+                .. [[</td></tr>
+        <tr><td style='padding: 8px 12px; border: 1px solid #444444'>]] .. _("1 - 9") .. [[</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
+                .. _("Show information of corresponding Xray item in side panel in bottom information panel")
+                .. [[</td></tr>
+        <tr><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]] .. _("space") .. [[</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
+                .. _("browse to next page in Page Navigator")
+                .. [[</td></tr>
+        <tr><td style='white-space: pre; text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
+                .. _("Shift+space")
+                .. [[</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
+                .. _("browse to previous page in Page Navigator")
+                .. [[</td></tr>
+    </table>
+    <br /> 
+    ]],
+    global_hotkeys_info_formatted = nil,
     match_reliability_explanations = nil,
     -- #((xray match reliability indicators))
     --* these match reliability indicators will be injected in the dialog with page or paragraphs information in ((XrayUI#showParagraphInformation)) > ((xray items dialog add match reliability explanations)):
@@ -147,13 +213,15 @@ function XrayInformation:showReferenceInformation(initial_tab)
     })
 end
 
-function XrayInformation:showGeneralDXTips(parent, initial_tab)
+function XrayInformation:showGlobalDXHelp(parent, initial_tab)
     local screen_dims = Screen:getSize()
 
-    self:formatGlobalHotkeysInformation()
     local indent = "\n   "
     local indent_simple = "   "
     local width_factor = DX.s.is_mobile_device and self.mobile_width_factor or self.width_factor
+    self:formatGlobalHotkeysInformation()
+    local hotkeys_info = "<li>" .. self.global_hotkeys_info_formatted .. "</li>"
+
     KOR.dialogs:htmlBoxTabbed(initial_tab or 1, {
         parent = parent or DX.pn,
         title = _("General DX help/tips"),
@@ -220,22 +288,19 @@ function XrayInformation:showGeneralDXTips(parent, initial_tab)
             {
                 tab = _("navigating"),
                 html = _([[<ul>
-<li><strong>the best way to navigate?</strong>
-    <ol>
-    <li>If you want to quickly see which Xray items are mentioned in the current page, then tap on the <em>in-page lightning icon</em>. The overview this provides is the best readable of all DX dialogs.</li>
-    <li>Do you want to see which items are in the current page and <em>you want at the same time to explore relations</em>, then the Page Navigator is you best option. There you can explore relations via the buttons in the side bar. The Page Navigator can be called by <em>longpressing the in-page lightning icon</em>, or with Shift+X on your physical (BT) keyboard.</li>
-    <li>Do you want to <em>explore all items in the current series or book</em>, then call the Items List. With a gesture defined by you, or with Shift+L on your physical (BT) keyboard. If you tap on a iten in the list, you can then explore relations between item via the context buttons in the footer of the Item Viewer.<br /> </li>
-    </ol>
-    </li>
-<li><strong>general DX hotkeys while reading in KOReader</strong><br>
-<br>
-]]
-                .. self.global_hotkeys_info ..
-[[
-    <br /> </li>
-    <li><strong>returning to previous dialogs</strong><br />In many DX dialogs you can return to the previous dialog by tapping on the back-button in the left half of the title bar.<br /> </li>
-    <li><strong>using the bars in the Occurrences-per-Chapter-Histogram</strong><br />In this Histogram in the Page Navigator you can <em>quickly inspect the locations in the chapter where the active item in the info panel is being mentioned</em>, by tapping on the bar belonging to that chapter. So you don't have to jump to the chapter in the ebook first, to do this.</li>
-<ul>]])
+        <li><strong>the best way to navigate?</strong>
+            <ol>
+            <li>If you want to quickly see which Xray items are mentioned in the current page, then tap on the <em>in-page lightning icon</em>. The overview this provides is the best readable of all DX dialogs.</li>
+            <li>Do you want to see which items are in the current page and <em>you want at the same time to explore relations</em>, then the Page Navigator is you best option. There you can explore relations via the buttons in the side bar. The Page Navigator can be called by <em>longpressing the in-page lightning icon</em>.</li>
+            <li>Do you want to <em>explore all items in the current series or book</em>, then call the Items List. With a gesture defined by you. If you tap on a iten in the list, you can then explore relations between item via the context buttons in the footer of the Item Viewer.<br /> </li>
+            </ol>
+        </li>
+        ]]
+        .. hotkeys_info ..
+        [[
+        <li><strong>returning to previous dialogs</strong><br />In many DX dialogs you can return to the previous dialog by tapping on the back-button in the left half of the title bar.<br /> </li>
+        <li><strong>using the bars in the Occurrences-per-Chapter-Histogram</strong><br />In this Histogram in the Page Navigator you can <em>quickly inspect the locations in the chapter where the active item in the info panel is being mentioned</em>, by tapping on the bar belonging to that chapter. So you don't have to jump to the chapter in the ebook first, to do this.</li>
+    <ul>]])
             },
             {
                 tab = _("importing"),
@@ -326,74 +391,7 @@ end
 --- @private
 function XrayInformation:getGlobalHotkeysInfo()
     self:formatGlobalHotkeysInformation()
-    --* global hotkeys are defined in ((KeyEvents#addHotkeysForReaderUI)):
-    return self.hotkeys_information or _("For usage with physical (BT) keyboards:") .. [[<br>
-                <br>
-<strong>]] .. _("Global hotkeys (while reading)") .. [[</strong><br>
-<br>
-]]
-    .. self.global_hotkeys_info ..
-[[
-                <br>
-<strong>In Page Navigator</strong><br>
-<br>
-<table style='border-collapse: collapse'>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>U</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
-            .. _("open dialog for jumping to a specific page number")
-            .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>E</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
-            .. _("Edit Xray item shown in bottom info panel")
-            .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>I</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
-            .. _("show this Information dialog")
-            .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>J</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
-            .. _("Page Navigator: Jump to page currently displayed in e-book")
-            .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+J</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
-            .. _("e-book: Jump to page currently displayed in Page Navigator")
-            .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>L</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
-            .. _("show Items List")
-            .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>M</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
-            .. _("toggle the Page Navigator popup Menu with additional actions")
-            .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>N</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
-            .. _("jump to Next page in Page Navigator")
-            .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>P</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
-            .. _("jump to Previous page in Page Navigator")
-            .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>S</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
-            .. _("open Dynamic Xray Settings")
-            .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>Shift+S</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>]]
-            .. _("Search for an Xray item in the Page Navigator")
-            .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>V</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
-            .. _("View details of item currently displayed in bottom info panel")
-            .. [[</td></tr>
-    <tr><td style='padding: 8px 12px; border: 1px solid #444444'>]] .. _("1 - 9") .. [[</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
-            .. _("Show information of corresponding Xray item in side panel in bottom information panel")
-            .. [[</td></tr>
-    <tr><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]] .. _("space") .. [[</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
-            .. _("browse to next page in Page Navigator")
-            .. [[</td></tr>
-    <tr><td style='white-space: pre; text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
-            .. _("Shift+space")
-            .. [[</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
-            .. _("browse to previous page in Page Navigator")
-            .. [[</td></tr>
-</table>
-<br>
-<strong>In this help dialog</strong><br>
-<br>
-<table>
-    <tr><td style='white-space: pre; padding: 8px 22px; border: 1px solid #444444'>1, 2, 3</td><td style='text-align: left; padding: 8px 12px; border: 1px solid #444444'>]]
-            .. _("Jump to the corresponding tab in the dialog")
-            .. [[</td></tr>
-</table>]]
+    return self.global_hotkeys_info_formatted
 end
 
 function XrayInformation:showReliabilityIndicatorsExplanation()
@@ -521,11 +519,10 @@ end
 --- @private
 function XrayInformation:formatGlobalHotkeysInformation()
     if not self.global_hotkeys_info_formatted then
-        self.global_hotkeys_info = self.global_hotkeys_info
-            :gsub("<tr><td>", "<tr><td style='padding: 8px 24px; border: 1px solid #444444'>")
-            :gsub("</td><td>", "</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>")
-            :gsub("t%+", "t" .. KOR.strings.n_nbsp .. "+" .. KOR.strings.n_nbsp)
-        self.global_hotkeys_info_formatted = true
+        self.global_hotkeys_info_formatted = self.global_hotkeys_info
+         :gsub("<tr><td>", "<tr><td style='white-space: pre; padding: 8px 24px; border: 1px solid #444444'>")
+         :gsub("</td><td>", "</td><td style='padding: 8px 12px; border: 1px solid #444444; text-align: left'>")
+         :gsub("t%+", "t" .. KOR.strings.n_nbsp .. "+" .. KOR.strings.n_nbsp)
     end
 end
 
