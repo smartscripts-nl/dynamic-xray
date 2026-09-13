@@ -672,36 +672,42 @@ function XrayController:addToMainMenu(menu_items)
     }
     icon = KOR.icons.lightning_bare
     menu_items.dynamic_xray = {
-        text = icon .. DX.d:getControllerEntryName(" Dynamic Xray"),
+        text = icon .. " " .. _(" Dynamic Xray"),
         enabled = enabled,
         sub_item_table = {
             {
-                text = icon .. DX.d:getControllerEntryName(" Show list"),
+                text = icon .. " " .. _("Show Xray Center"),
+                callback = function()
+                    DX.d:showXrayCenter()
+                end
+            },
+            {
+                text = icon .. " " .. _("Show Items List"),
                 callback = function()
                     DX.d:showList()
                 end
             },
             {
-                text = icon .. DX.d:getControllerEntryName(" Show Page Navigator"),
+                text = icon .. " " .. _("Show Page Navigator"),
                 callback = function()
                     self:showPageNavigator()
                 end
             },
             {
-                text = icon .. DX.d:getControllerEntryName(" Add item"),
+                text = icon .. " " .. _("Add item"),
                 callback = function()
                     self:resetFilteredItems()
                     self:onShowNewItemForm()
                 end
             },
             {
-                text = icon .. DX.d:getControllerEntryName(" Translate interface"),
+                text = icon .. " " .. _(" Translate interface"),
                 callback = function()
                     DX.tm:manageTranslations()
                 end
             },
             {
-                text = KOR.icons.xray_settings_bare .. DX.d:getControllerEntryName(" Settings"),
+                text = KOR.icons.xray_settings_bare .. " " .. _(" Settings"),
                 callback = function()
                     DX.s.showSettingsManager()
                 end

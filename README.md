@@ -186,8 +186,8 @@ use can store information loaded from the e-book. This might e.g. be timeline-in
 * **TIP 2**: from the Wikipedia results dialog the user can save the information therein to the Reference Information. And then he/she can use the tappable reference index to quickly jump to text sections:
   ![Reference Information with tappable index](images/reference-information-with-tappable-index.png)
   Reference Information with tappable index
-* **TIP 3**: the user can assign a gesture ("Show tappable index of main DX-modules" under section "Reflowable
-  documents") to show a tappable overview of the main DX modules:
+* **TIP 3**: the user can assign a gesture ("Show Xray Center" under section "Reflowable
+  documents") to show the Xray Center. This is a tappable overview of the main DX modules:
   ![Tappable overview of main DX modules](images/main-dx-modules-overview.png)
   Tappable overview of the main DX modules
 
