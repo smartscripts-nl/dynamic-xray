@@ -252,20 +252,18 @@ function XrayDialogs:showXrayCenter()
     local width_facor = DX.s.is_mobile_device and 0.9 or 0.5
     self.main_modules_dialog = ButtonDialogTitle:new{
         title = _("Xray Center"),
-        top_buttons_left = DX.b:forMainModuleButtonsTopLeft(self),
+        top_buttons_left = DX.b:forXrayCenterTopLeft(self),
         button_width = 1,
         width = math_floor(math_min(Screen:getHeight(), Screen:getWidth()) * width_facor),
         font_weight = "normal",
         padding = 0,
-        --max_height = Screen:getHeight() - Screen:scaleBySize(70),
         sep_width = 0,
         close_callback = function()
-            UIManager:close(self.main_modules_dialog)
-            KOR.screenhelpers:refreshScreen()
+            KOR.dialogs:closeDialog(self.main_modules_dialog)
         end,
         no_bottom_spacer = true,
         modal = true,
-        buttons = DX.b:getMainModuleButtons(self),
+        buttons = DX.b:forXrayCenter(self),
     }
     UIManager:show(self.main_modules_dialog)
 end

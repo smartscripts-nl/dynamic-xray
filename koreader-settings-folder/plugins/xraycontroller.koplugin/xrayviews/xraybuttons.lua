@@ -22,7 +22,6 @@ local has_text = has_text
 local T = T
 local table_insert = table_insert
 local table_remove = table_remove
-local type = type
 
 local count
 
@@ -223,13 +222,6 @@ function XrayButtons:addMoreButton(buttons, indicator_buttons, props)
             self:handleMoreButtonClick(props, extra_buttons_count)
         end,
     })
-end
-
---- @param parent XrayDialogs
-function XrayButtons:forMainModuleButtonsTopLeft(parent)
-    local buttons = {}
-    self:insertGlobalDXHelpButton(buttons, parent)
-    return buttons
 end
 
 function XrayButtons:forMultipleBookSeriesActions(info_title, info_text, settings_callback)
@@ -574,142 +566,6 @@ function XrayButtons:forQuizletQuestionsTopLeft(parent)
     return buttons
 end
 
-function XrayButtons:closeDialog(dialog)
-    if not dialog then
-        return
-    elseif type(dialog) == "function" then
-        dialog()
-        return
-    end
-    UIManager:close(dialog)
-end
-
---- @param parent XrayDialogs
-function XrayButtons:getMainModuleButtons(parent)
-    local buttons = {}
-    local kb = " " .. KOR.icons.keyboard_bare .. " "
-    local has_items_enabled, has_items_color = KOR.buttonprops:getButtonState(DX.m.has_items)
-    local enabled, color
-
-    --* hotkeys for most of the below modules have been defined in ((KeyEvents#addHotkeysForReaderUI)):
-    table_insert(buttons, {{
-        text = T(_("Add Xray item %1 Shift+A"), kb),
-        align = "left",
-        callback = function()
-            UIManager:close(parent.main_modules_dialog)
-            DX.c:onShowNewItemForm()
-        end
-    }})
-    if KOR.ui["imagebookmarks"] then
-        local instance = KOR.ui["imagebookmarks"]
-        local favorites = instance.settings:getBookmarks(instance.doc_path)
-        enabled, color = KOR.buttonprops:getButtonState(has_items(favorites))
-        table_insert(buttons, {{
-            text = T(_("Favorite Images %1 Shift+I"), kb),
-            enabled = enabled,
-            fgcolor = color,
-            align = "left",
-            callback = function()
-                UIManager:close(parent.main_modules_dialog)
-                instance:onOpenImageBookmarksViewer()
-            end
-        }})
-    end
-    enabled, color = KOR.buttonprops:getButtonState(KOR.glossary:get(false, "return_boolean"))
-    table_insert(buttons, {{
-        text = T(_("Glossary %1 Shift+G"), kb),
-        enabled = enabled,
-        fgcolor = color,
-        align = "left",
-        callback = function()
-            UIManager:close(parent.main_modules_dialog)
-            KOR.glossary:showViewer()
-        end
-    }})
-    table_insert(buttons, {{
-        text = T(_("Items List %1 Shift+L"), kb),
-        enabled = has_items_enabled,
-        fgcolor = has_items_color,
-        align = "left",
-        callback = function()
-            UIManager:close(parent.main_modules_dialog)
-            DX.c:onShowList()
-        end
-    }})
-    table_insert(buttons, {{
-        text = T(_("Page Navigator %1 Shift+P"), kb),
-        enabled = has_items_enabled,
-        fgcolor = has_items_color,
-        align = "left",
-        callback = function()
-            UIManager:close(parent.main_modules_dialog)
-            DX.c:onShowPageNavigator()
-        end
-    }})
-    table_insert(buttons, {{
-        text = T(_("Quizlet-questions %1 Shift+Z"), kb),
-        enabled = has_items_enabled,
-        fgcolor = has_items_color,
-        align = "left",
-        callback = function()
-            UIManager:close(parent.main_modules_dialog)
-            DX.cb:execQuizletModeCallback()
-        end
-    }})
-    enabled, color = KOR.buttonprops:getButtonState(KOR.referenceinformation:hasInfo())
-    table_insert(buttons, {{
-        text = T(_("Reference Information %1 Shift+R"), kb),
-        enabled = enabled,
-        fgcolor = color,
-        align = "left",
-        callback = function()
-            UIManager:close(parent.main_modules_dialog)
-            KOR.glossary:showViewer()
-        end
-    }})
-    table_insert(buttons, {{
-        text = T(_("Series Manager %1 Shift+M"), kb),
-        align = "left",
-        callback = function()
-            UIManager:close(parent.main_modules_dialog)
-            DX.c:onShowCurrentSeries()
-        end
-    }})
-    table_insert(buttons, {{
-        text = T(_("Search Xray-item %1 Shift+Q"), kb),
-        enabled = has_items_enabled,
-        fgcolor = has_items_color,
-        align = "left",
-        callback = function()
-            UIManager:close(parent.main_modules_dialog)
-            DX.d:quickItemSearch()
-        end
-    }})
-    enabled, color = KOR.buttonprops:getButtonState(DX.m.has_items and has_items(DX.m:getTagGroupsWithCountsWithTotals()))
-    table_insert(buttons, {{
-        text = T(_("Tag-group selector %1 Shift+T"), kb),
-        enabled = enabled,
-        fgcolor = color,
-        align = "left",
-        callback = function()
-            UIManager:close(parent.main_modules_dialog)
-            DX.ta:showTagGroupSelector()
-        end
-    }})
-    table_insert(buttons, {{
-        text = T(_("UI Page Information popup %1 Shift+U"), kb),
-        enabled = has_items_enabled,
-        fgcolor = has_items_color,
-        align = "left",
-        callback = function()
-            UIManager:close(parent.main_modules_dialog)
-            DX.ta:showTagGroupSelector()
-        end
-    }})
-
-    return buttons
-end
-
 --* parent_dialog can in some cases be a function that returns a dialog instance:
 function XrayButtons:getSeriesManagerButton(parent_dialog)
 
@@ -717,7 +573,7 @@ function XrayButtons:getSeriesManagerButton(parent_dialog)
         return KOR.buttoninfopopup:forSeriesAll({
             callback = function()
                 DX.pn:closePageNavigator()
-                self:closeDialog(parent_dialog)
+                KOR.dialogs:closeDialog(parent_dialog)
                 KOR.seriesmanager:searchSerieMembers()
                 KOR.seriesmanager:onShowSeriesList()
             end
@@ -727,12 +583,12 @@ function XrayButtons:getSeriesManagerButton(parent_dialog)
     return KOR.buttonchoicepopup:forSeriesCurrentBook({
         callback = function()
             DX.pn:closePageNavigator()
-            self:closeDialog(parent_dialog)
+            KOR.dialogs:closeDialog(parent_dialog)
             KOR.seriesmanager:showSeriesForEbookPath()
         end,
         hold_callback = function()
             DX.pn:closePageNavigator()
-            self:closeDialog(parent_dialog)
+            KOR.dialogs:closeDialog(parent_dialog)
             KOR.seriesmanager:searchSerieMembers()
             KOR.seriesmanager:onShowSeriesList()
         end,
@@ -835,6 +691,147 @@ function XrayButtons:forUiInfoTopLeft(new_mode, new_trigger, parent)
     end
     self:insertGlobalDXHelpButton(buttons, parent)
 
+    return buttons
+end
+
+--- @param parent XrayDialogs
+function XrayButtons:forXrayCenter(parent)
+    local buttons = {}
+    local kb = " " .. KOR.icons.keyboard_bare .. " "
+    local has_items_enabled, has_items_color = KOR.buttonprops:getButtonState(DX.m.has_items)
+    local enabled, color
+
+    --* hotkeys for most of the below modules have been defined in ((KeyEvents#addHotkeysForReaderUI)):
+    table_insert(buttons, {{
+           text = T(_("Add Xray item %1 Shift+A"), kb),
+           align = "left",
+           callback = function()
+               KOR.dialogs:closeDialog(parent.main_modules_dialog)
+               DX.c:onShowNewItemForm()
+           end
+       }})
+    if KOR.ui["imagebookmarks"] then
+        local instance = KOR.ui["imagebookmarks"]
+        local favorites = instance.settings:getBookmarks(instance.doc_path)
+        enabled, color = KOR.buttonprops:getButtonState(has_items(favorites))
+        table_insert(buttons, {{
+           text = T(_("Favorite Images %1 Shift+I"), kb),
+           enabled = enabled,
+           fgcolor = color,
+           align = "left",
+           callback = function()
+               KOR.dialogs:closeDialog(parent.main_modules_dialog)
+               instance:onOpenImageBookmarksViewer()
+           end
+       }})
+    end
+    enabled, color = KOR.buttonprops:getButtonState(KOR.glossary:get(false, "return_boolean"))
+    table_insert(buttons, {{
+           text = T(_("Glossary %1 Shift+G"), kb),
+           enabled = enabled,
+           fgcolor = color,
+           align = "left",
+           callback = function()
+               KOR.dialogs:closeDialog(parent.main_modules_dialog)
+               KOR.glossary:showViewer()
+           end
+       }})
+    table_insert(buttons, {{
+           text = T(_("Items List %1 Shift+L"), kb),
+           enabled = has_items_enabled,
+           fgcolor = has_items_color,
+           align = "left",
+           callback = function()
+               KOR.dialogs:closeDialog(parent.main_modules_dialog)
+               DX.c:onShowList()
+           end
+       }})
+    table_insert(buttons, {{
+           text = T(_("Page Navigator %1 Shift+P"), kb),
+           enabled = has_items_enabled,
+           fgcolor = has_items_color,
+           align = "left",
+           callback = function()
+               KOR.dialogs:closeDialog(parent.main_modules_dialog)
+               DX.c:onShowPageNavigator()
+           end
+       }})
+    table_insert(buttons, {{
+           text = T(_("Quizlet-questions %1 Shift+Z"), kb),
+           enabled = has_items_enabled,
+           fgcolor = has_items_color,
+           align = "left",
+           callback = function()
+               KOR.dialogs:closeDialog(parent.main_modules_dialog)
+               DX.cb:execQuizletModeCallback()
+           end
+       }})
+    enabled, color = KOR.buttonprops:getButtonState(KOR.referenceinformation:hasInfo())
+    table_insert(buttons, {{
+           text = T(_("Reference Information %1 Shift+R"), kb),
+           enabled = enabled,
+           fgcolor = color,
+           align = "left",
+           callback = function()
+               KOR.dialogs:closeDialog(parent.main_modules_dialog)
+               KOR.glossary:showViewer()
+           end
+       }})
+    table_insert(buttons, {{
+           text = T(_("Series Manager %1 Shift+M"), kb),
+           align = "left",
+           callback = function()
+               KOR.dialogs:closeDialog(parent.main_modules_dialog)
+               DX.c:onShowCurrentSeries()
+           end
+       }})
+    table_insert(buttons, {{
+           text = T(_("Search on Wikipedia %1 Shift+W"), kb),
+           align = "left",
+           callback = function()
+               KOR.dialogs:closeDialog(parent.main_modules_dialog)
+               KOR.wikipedia:showWikipediaInputPrompt()
+           end
+       }})
+    table_insert(buttons, {{
+           text = T(_("Search Xray-item %1 Shift+Q"), kb),
+           enabled = has_items_enabled,
+           fgcolor = has_items_color,
+           align = "left",
+           callback = function()
+               KOR.dialogs:closeDialog(parent.main_modules_dialog)
+               DX.d:quickItemSearch()
+           end
+       }})
+    enabled, color = KOR.buttonprops:getButtonState(DX.m.has_items and has_items(DX.m:getTagGroupsWithCountsWithTotals()))
+    table_insert(buttons, {{
+           text = T(_("Tag-group selector %1 Shift+T"), kb),
+           enabled = enabled,
+           fgcolor = color,
+           align = "left",
+           callback = function()
+               KOR.dialogs:closeDialog(parent.main_modules_dialog)
+               DX.ta:showTagGroupSelector()
+           end
+       }})
+    table_insert(buttons, {{
+           text = T(_("UI Page Information %1 Shift+U"), kb),
+           enabled = has_items_enabled,
+           fgcolor = has_items_color,
+           align = "left",
+           callback = function()
+               KOR.dialogs:closeDialog(parent.main_modules_dialog)
+               DX.ta:showTagGroupSelector()
+           end
+       }})
+
+    return buttons
+end
+
+--- @param parent XrayDialogs
+function XrayButtons:forXrayCenterTopLeft(parent)
+    local buttons = {}
+    self:insertGlobalDXHelpButton(buttons, parent)
     return buttons
 end
 

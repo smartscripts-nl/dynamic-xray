@@ -93,6 +93,12 @@ function KeyEvents:addHotkeysForReaderUI(parent)
         return true
     end
 
+    readerui.key_events.SearchOnWikipediaUI = {{"Shift", {"W"}}}
+    readerui.onSearchOnWikipediaUI = function()
+        KOR.wikipedia:showWikipediaInputPrompt()
+        return true
+    end
+
     readerui.key_events.ShowGlossaryUI = { { "Shift", { "G" } } }
     readerui.onShowGlossaryUI = function()
         return KOR.glossary:showViewer()

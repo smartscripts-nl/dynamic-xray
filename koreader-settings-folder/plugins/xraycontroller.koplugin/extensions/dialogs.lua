@@ -510,6 +510,29 @@ function Dialogs:showDialogOnTopOfOverlay(show_dialog_callback)
     end)
 end
 
+--! watch out: the widget for which this is called, MUST have a getDims-method, for this to work optimally and as intended:
+function Dialogs:closeDialog(dialog)
+    if not dialog then
+        return
+    elseif type(dialog) == "function" then
+        dialog()
+        KOR.screenhelpers:refreshScreen()
+        return
+    end
+    local dialog_dims
+    if dialog.getDims then
+        dialog_dims = dialog:getDims()
+    end
+    UIManager:close(dialog)
+    if not dialog_dims then
+        KOR.screenhelpers:refreshScreen()
+        return
+    end
+    UIManager:setDirty(dialog, function()
+        return "ui", dialog_dims
+    end)
+end
+
 function Dialogs:closeOverlay()
     UIManager:close(self.overlay)
     self.overlay = nil
