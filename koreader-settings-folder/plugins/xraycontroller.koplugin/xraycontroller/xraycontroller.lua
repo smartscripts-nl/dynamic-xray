@@ -20,6 +20,7 @@ local has_no_items = has_no_items
 local has_no_text = has_no_text
 local pairs = pairs
 local pcall = pcall
+local T = T
 
 KOR:initBaseExtensions()
 
@@ -671,30 +672,31 @@ function XrayController:addToMainMenu(menu_items)
         }
     }
     icon = KOR.icons.lightning_bare
+    local kb = " " .. KOR.icons.keyboard_bare .. " "
     menu_items.dynamic_xray = {
         text = icon .. " " .. _(" Dynamic Xray"),
         enabled = enabled,
         sub_item_table = {
             {
-                text = icon .. " " .. _("Show Xray Center"),
+                text = icon .. " " .. T(_("Show Xray Center %1 Shift+X"), kb),
                 callback = function()
                     DX.d:showXrayCenter()
                 end
             },
             {
-                text = icon .. " " .. _("Show Items List"),
+                text = icon .. " " .. T(_("Show Items List %1 Shift+L"), kb),
                 callback = function()
                     DX.d:showList()
                 end
             },
             {
-                text = icon .. " " .. _("Show Page Navigator"),
+                text = icon .. " " .. T(_("Show Page Navigator %1 Shift+P"), kb),
                 callback = function()
                     self:showPageNavigator()
                 end
             },
             {
-                text = icon .. " " .. _("Add item"),
+                text = icon .. " " .. T(_("Add item %1 Shift+A"), kb),
                 callback = function()
                     self:resetFilteredItems()
                     self:onShowNewItemForm()

@@ -104,6 +104,12 @@ function KeyEvents:addHotkeysForReaderUI(parent)
         return KOR.glossary:showViewer()
     end
 
+    readerui.key_events.ShowXrayCenterUI = {{"Shift", {"X"}}}
+    readerui.onShowXrayCenterUI = function()
+        DX.d:showXrayCenter()
+        return true
+    end
+
     readerui.key_events.ShowXrayHelpUI = { { "Shift", { "H" } } }
     readerui.onShowXrayHelpUI = function()
         return DX.i:showGlobalDXHelp(parent)
@@ -157,7 +163,7 @@ function KeyEvents:addHotkeysForReaderUI(parent)
         return true
     end
 
-    readerui.key_events.ShowPageNavigatorUI = { { "Shift", { "X" } } }
+    readerui.key_events.ShowPageNavigatorUI = { { "Shift", { "P" } } }
     readerui.onShowPageNavigatorUI = function()
         --* because the Items List has an "add"-button, we show it, even if currently no Xray items are defined:
         DX.c:onShowPageNavigator()

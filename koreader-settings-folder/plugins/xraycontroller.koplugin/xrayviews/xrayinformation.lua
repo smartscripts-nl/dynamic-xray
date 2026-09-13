@@ -87,6 +87,9 @@ local XrayInformation = WidgetContainer:extend {
             <tr><td>Shift+M</td><td>]]
                     .. _("show current series books or Metadata of a non-series book")
                     .. [[</td></tr>
+            <tr><td>Shift+P</td><td>]]
+                    .. _("show Page Navigator")
+                    .. [[</td></tr>
             <tr><td>Shift+Q</td><td>]]
                     .. _("show the Quick-search dialog for Xray items")
                     .. [[</td></tr>
@@ -100,7 +103,7 @@ local XrayInformation = WidgetContainer:extend {
                     .. _("show UI Page Information Popup")
                     .. [[</td></tr>
             <tr><td>Shift+X</td><td>]]
-                    .. _("show Xray Page Navigator")
+                    .. _("show Xray Center")
                     .. [[</td></tr>
             <tr><td>Shift+Z</td><td>]]
                     .. _("show Quizlet-questions")
@@ -432,7 +435,7 @@ end
 function XrayInformation:showListAndViewerHelp(initial_tab)
 
     --* these hotkeys are mostly defined in ((KeyEvents#addHotkeysForXrayList)):
-    local list_info = DX.d.help_texts["list"] or T(_([[Shift+X = show Items List
+    local list_info = DX.d.help_texts["list"] or T(_([[Shift+L = show Items List
 
 Titlebar %1/%2 = items displayed in series/book mode
 Titlebar %3 = only linked items, from longpressed word
