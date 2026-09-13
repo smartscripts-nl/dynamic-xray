@@ -189,7 +189,7 @@ use can store information loaded from the e-book. This might e.g. be timeline-in
   Reference Information with tappable index
 * **TIP 3**: the user can assign a gesture ("Show Xray Center" under section "Reflowable
   documents") to show the Xray Center. This is a tappable overview of the main DX modules:
-  ![Tappable Xray Center](images/main-dx-modules-overview.png)
+  ![Tappable Xray Center](images/xray-center.png)
   Tappable Xray Center
 
 #### Glossary viewer
