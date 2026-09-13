@@ -247,11 +247,11 @@ function XrayDialogs:showNewItemForm(args)
     self.add_item_input:onShowKeyboard()
 end
 
---main:showMainModulesIndex
-function XrayDialogs:showMainModulesIndex()
+--main:showXrayCenter
+function XrayDialogs:showXrayCenter()
     local width_facor = DX.s.is_mobile_device and 0.9 or 0.5
     self.main_modules_dialog = ButtonDialogTitle:new{
-        title = _("Main DX modules"),
+        title = _("Xray Center"),
         top_buttons_left = DX.b:forMainModuleButtonsTopLeft(self),
         button_width = 1,
         width = math_floor(math_min(Screen:getHeight(), Screen:getWidth()) * width_facor),
