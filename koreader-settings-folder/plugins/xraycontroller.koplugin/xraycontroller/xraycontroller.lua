@@ -20,7 +20,6 @@ local has_no_items = has_no_items
 local has_no_text = has_no_text
 local pairs = pairs
 local pcall = pcall
-local T = T
 
 KOR:initBaseExtensions()
 
@@ -672,31 +671,31 @@ function XrayController:addToMainMenu(menu_items)
         }
     }
     icon = KOR.icons.lightning_bare
-    local kb = " " .. KOR.icons.keyboard_bare .. " "
+    local separator = " "
     menu_items.dynamic_xray = {
         text = icon .. " " .. _(" Dynamic Xray"),
         enabled = enabled,
         sub_item_table = {
             {
-                text = icon .. " " .. T(_("Show Xray Center %1 Shift+X"), kb),
+                text = icon .. DX.vd:addHotkeyInfo(_("Show Xray Center %1 %2", separator, "Shift+X")),
                 callback = function()
                     DX.d:showXrayCenter()
                 end
             },
             {
-                text = icon .. " " .. T(_("Show Items List %1 Shift+L"), kb),
+                text = icon .. DX.vd:addHotkeyInfo(_("Show Items List %1 %2", separator, "Shift+L")),
                 callback = function()
                     DX.d:showList()
                 end
             },
             {
-                text = icon .. " " .. T(_("Show Page Navigator %1 Shift+P"), kb),
+                text = icon .. DX.vd:addHotkeyInfo(_("Show Page Navigator %1 %2", separator, "Shift+P")),
                 callback = function()
                     self:showPageNavigator()
                 end
             },
             {
-                text = icon .. " " .. T(_("Add item %1 Shift+A"), kb),
+                text = icon .. DX.vd:addHotkeyInfo(_("Add item %1 %2", separator, "Shift+A")),
                 callback = function()
                     self:resetFilteredItems()
                     self:onShowNewItemForm()

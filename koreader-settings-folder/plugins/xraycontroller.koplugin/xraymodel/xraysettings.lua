@@ -216,6 +216,11 @@ local XraySettings = WidgetContainer:new{
             type = "number",
             after_change_callback = "reset_page_navigator_cache",
         },
+        menu_entries_add_hotkey_info = {
+            value = true,
+            explanation = _("If set to true, in Xray Center and in the DX menu entries in KOReader's main menu, hotkey information for entries/modules will be added."),
+            locked = 0,
+        },
         night_mode_color = {
             value = 0,
             explanation = _("This settings determines which color will be used for displaying several UI elements IN NIGHT MODE. Valid values: 0 - 5. 0 = white, 5 = a lighter grade of white."),
