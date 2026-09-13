@@ -702,8 +702,14 @@ function XrayButtons:forXrayCenter(parent)
     local enabled, color
 
     --* hotkeys for most of the below modules have been defined in ((KeyEvents#addHotkeysForReaderUI)):
+    local separator = "  "
+    --? for some reason separator for entries with text icons needs extra spaces:
+    local separator_wiki = "    "
     table_insert(buttons, {{
-           text = T(_("Add Xray item %1 Shift+A"), kb),
+           icon_text = {
+            icon = "add",
+            text = separator .. T(_("Add Xray item %1 Shift+A"), kb),
+        },
            align = "left",
            callback = function()
                KOR.dialogs:closeDialog(parent.main_modules_dialog)
@@ -715,9 +721,12 @@ function XrayButtons:forXrayCenter(parent)
         local favorites = instance.settings:getBookmarks(instance.doc_path)
         enabled, color = KOR.buttonprops:getButtonState(has_items(favorites))
         table_insert(buttons, {{
-           text = T(_("Favorite Images %1 Shift+I"), kb),
+           icon_text = {
+            icon = "image",
+            text = separator .. T(_("Favorite Images %1 Shift+I"), kb),
+            fgcolor = color,
+        },
            enabled = enabled,
-           fgcolor = color,
            align = "left",
            callback = function()
                KOR.dialogs:closeDialog(parent.main_modules_dialog)
@@ -727,9 +736,12 @@ function XrayButtons:forXrayCenter(parent)
     end
     enabled, color = KOR.buttonprops:getButtonState(KOR.glossary:get(false, "return_boolean"))
     table_insert(buttons, {{
-           text = T(_("Glossary %1 Shift+G"), kb),
+           icon_text = {
+            icon = "glossary-svgrepo-com",
+            text = separator .. T(_("Glossary %1 Shift+G"), kb),
+            fgcolor = color,
+        },
            enabled = enabled,
-           fgcolor = color,
            align = "left",
            callback = function()
                KOR.dialogs:closeDialog(parent.main_modules_dialog)
@@ -737,9 +749,13 @@ function XrayButtons:forXrayCenter(parent)
            end
        }})
     table_insert(buttons, {{
-           text = T(_("Items List %1 Shift+L"), kb),
+           icon_text = {
+                icon = "list",
+                icon_size_ratio = 0.48,
+                text = separator .. T(_("Items List %1 Shift+L"), kb),
+                fgcolor = has_items_color,
+            },
            enabled = has_items_enabled,
-           fgcolor = has_items_color,
            align = "left",
            callback = function()
                KOR.dialogs:closeDialog(parent.main_modules_dialog)
@@ -747,9 +763,13 @@ function XrayButtons:forXrayCenter(parent)
            end
        }})
     table_insert(buttons, {{
-           text = T(_("Page Navigator %1 Shift+P"), kb),
+           icon_text = {
+            icon = "navigator_wheel",
+            icon_size_ratio = 0.53,
+            text = separator .. T(_("Page Navigator %1 Shift+P"), kb),
+            fgcolor = has_items_color,
+        },
            enabled = has_items_enabled,
-           fgcolor = has_items_color,
            align = "left",
            callback = function()
                KOR.dialogs:closeDialog(parent.main_modules_dialog)
@@ -757,9 +777,13 @@ function XrayButtons:forXrayCenter(parent)
            end
        }})
     table_insert(buttons, {{
-           text = T(_("Quizlet-questions %1 Shift+Z"), kb),
+           icon_text = {
+            icon = "quizlet-svgrepo-com",
+            icon_size_ratio = 0.5,
+            text = separator .. T(_("Quizlet-questions %1 Shift+Z"), kb),
+            fgcolor = has_items_color,
+        },
            enabled = has_items_enabled,
-           fgcolor = has_items_color,
            align = "left",
            callback = function()
                KOR.dialogs:closeDialog(parent.main_modules_dialog)
@@ -768,9 +792,13 @@ function XrayButtons:forXrayCenter(parent)
        }})
     enabled, color = KOR.buttonprops:getButtonState(KOR.referenceinformation:hasInfo())
     table_insert(buttons, {{
-           text = T(_("Reference Information %1 Shift+R"), kb),
+           icon_text = {
+            icon = "index",
+            icon_size_ratio = 0.6,
+            text = separator .. T(_("Reference Information %1 Shift+R"), kb),
+            fgcolor = color,
+        },
            enabled = enabled,
-           fgcolor = color,
            align = "left",
            callback = function()
                KOR.dialogs:closeDialog(parent.main_modules_dialog)
@@ -778,7 +806,11 @@ function XrayButtons:forXrayCenter(parent)
            end
        }})
     table_insert(buttons, {{
-           text = T(_("Series Manager %1 Shift+M"), kb),
+           icon_text = {
+                icon = "seriesmanager",
+                icon_size_ratio = 0.6,
+                text = separator .. T(_("Series Manager %1 Shift+M"), kb),
+            },
            align = "left",
            callback = function()
                KOR.dialogs:closeDialog(parent.main_modules_dialog)
@@ -786,17 +818,20 @@ function XrayButtons:forXrayCenter(parent)
            end
        }})
     table_insert(buttons, {{
-           text = T(_("Search on Wikipedia %1 Shift+W"), kb),
+           text = KOR.icons.wikipedia_bare .. separator_wiki .. T(_("Search on Wikipedia %1 Shift+W"), kb),
            align = "left",
            callback = function()
                KOR.dialogs:closeDialog(parent.main_modules_dialog)
-               KOR.wikipedia:showWikipediaInputPrompt()
+               KOR.wikipedia:showWikipediaInputPrompt(nil, "register_dialog")
            end
        }})
     table_insert(buttons, {{
-           text = T(_("Search Xray-item %1 Shift+Q"), kb),
+       icon_text = {
+            icon = "quick-search",
+            text = separator .. T(_("Search Xray-item %1 Shift+Q"), kb),
+            fgcolor = has_items_color,
+        },
            enabled = has_items_enabled,
-           fgcolor = has_items_color,
            align = "left",
            callback = function()
                KOR.dialogs:closeDialog(parent.main_modules_dialog)
@@ -805,9 +840,13 @@ function XrayButtons:forXrayCenter(parent)
        }})
     enabled, color = KOR.buttonprops:getButtonState(DX.m.has_items and has_items(DX.m:getTagGroupsWithCountsWithTotals()))
     table_insert(buttons, {{
-           text = T(_("Tag-group selector %1 Shift+T"), kb),
+           icon_text = {
+                icon = "tags",
+                icon_size_ratio = 0.53,
+                text = separator .. T(_("Tag-group selector %1 Shift+T"), kb),
+                fgcolor = color,
+            },
            enabled = enabled,
-           fgcolor = color,
            align = "left",
            callback = function()
                KOR.dialogs:closeDialog(parent.main_modules_dialog)
@@ -815,13 +854,13 @@ function XrayButtons:forXrayCenter(parent)
            end
        }})
     table_insert(buttons, {{
-           text = T(_("UI Page Information %1 Shift+U"), kb),
+           text = KOR.icons.lightning_bare .. separator_wiki .. T(_("UI Page Information %1 Shift+U"), kb),
            enabled = has_items_enabled,
            fgcolor = has_items_color,
            align = "left",
            callback = function()
                KOR.dialogs:closeDialog(parent.main_modules_dialog)
-               DX.ta:showTagGroupSelector()
+               DX.u:uiInfoShow(nil, nil, "called_from_gesture")
            end
        }})
 

@@ -470,7 +470,17 @@ if do_dictionaries_patches then
         self:showDict(word, wikipedia_results, box, nil, dict_close_callback, dialog_id)
     end
 
-    function ReaderWikipedia:showWikipediaInputPrompt(callback)
+    function ReaderWikipedia:showWikipediaInputPrompt(callback, register_dialog)
+        --* this will be truthy when the search prompt is called from the Xray Center:
+        if register_dialog then
+            KOR.dialogsqueue:register({
+                id = "search_wikipedia_prompt",
+                restore = function()
+                    self:showWikipediaInputPrompt(callback)
+                end,
+            })
+        end
+
         local needle
         self.wikipedia_prompt = KOR.dialogs:prompt({
             title = _("Search on Wikipedia"),

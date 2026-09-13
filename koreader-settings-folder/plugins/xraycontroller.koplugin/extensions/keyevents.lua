@@ -154,19 +154,19 @@ function KeyEvents:addHotkeysForReaderUI(parent)
         return true
     end
 
-    readerui.key_events.ShowUiPageInformationUI = { { "Shift", { "U" } } }
+    readerui.key_events.ShowPageNavigatorUI = { { "Shift", { "P" } } }
+    readerui.onShowPageNavigatorUI = function()
+        --* because the Items List has an "add"-button, we show it, even if currently no Xray items are defined:
+        DX.c:onShowPageNavigator()
+        return true
+    end
+
+    readerui.key_events.ShowUiPageInformationUI = {{"Shift", {"U"}}}
     readerui.onShowUiPageInformationUI = function()
         if self:noXrayItemsMessageIsShown() then
             return true
         end
         DX.u:uiInfoShow(nil, nil, "called_from_gesture")
-        return true
-    end
-
-    readerui.key_events.ShowPageNavigatorUI = { { "Shift", { "P" } } }
-    readerui.onShowPageNavigatorUI = function()
-        --* because the Items List has an "add"-button, we show it, even if currently no Xray items are defined:
-        DX.c:onShowPageNavigator()
         return true
     end
 

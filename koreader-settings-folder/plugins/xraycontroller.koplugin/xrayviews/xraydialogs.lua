@@ -249,7 +249,14 @@ end
 
 --main:showXrayCenter
 function XrayDialogs:showXrayCenter()
-    local width_facor = DX.s.is_mobile_device and 0.9 or 0.5
+    KOR.dialogsqueue:register({
+        id = "xray_center",
+        restore = function()
+            self:showXrayCenter()
+        end,
+    })
+
+    local width_facor = DX.s.is_mobile_device and 0.9 or 0.53
     self.main_modules_dialog = ButtonDialogTitle:new{
         title = _("Xray Center"),
         top_buttons_left = DX.b:forXrayCenterTopLeft(self),
