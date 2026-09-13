@@ -81,11 +81,12 @@ Shift + H: show global DX Help information
 Shift + I: show favorite Images for current book (if ImageBookmarks plugin has been installed and user saved favorite images for the current ebook)
 Shift + L: show Xray List
 Shift + M: show Series Manager
+Shift + P: show Page Navigator
 Shift + Q: show the Quick-search dialog for Xray items
 Shift + R: show Reference information, saved by the user
 Shift + T: show the Tag-group selector
 Shift + U: show the UI Page Information popup
-Shift + X: show Xray Page Navigator
+Shift + X: show Xray Center
 Shift + Z: show quiZlet-questions
 
 --* SYNTACTIC SUGAR

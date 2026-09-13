@@ -115,11 +115,12 @@ DX has global hotkeys for calling its main dialogs:
 * Shift + I: show favorite Images for current book (if ImageBookmarks plugin has been installed and user saved favorite images for the current ebook)
 * Shift + L: show Xray List
 * Shift + M: show Series Manager
+* Shift + P: show Page Navigator
 * Shift + Q: show the Quick-search dialog for Xray items
 * Shift + R: show Reference information, saved by the user
 * Shift + T: show the Tag-group selector
 * Shift + U: show the UI Page Information popup
-* Shift + X: show Xray Page Navigator
+* Shift + X: show Xray Center
 * Shift + Z: show quiZlet-questions
 
 ### How to get the most Kindle-like experience
@@ -188,8 +189,8 @@ use can store information loaded from the e-book. This might e.g. be timeline-in
   Reference Information with tappable index
 * **TIP 3**: the user can assign a gesture ("Show Xray Center" under section "Reflowable
   documents") to show the Xray Center. This is a tappable overview of the main DX modules:
-  ![Tappable overview of main DX modules](images/main-dx-modules-overview.png)
-  Tappable overview of the main DX modules
+  ![Tappable Xray Center](images/main-dx-modules-overview.png)
+  Tappable Xray Center
 
 #### Glossary viewer
 
