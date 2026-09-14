@@ -485,13 +485,15 @@ function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_names3, hits_i
         return
     end
 
-    --* for this popup always reset the dialogs queue, because it will never be called from another module:
-    KOR.dialogsqueue:reset()
+    --* for this popup reset the dialogs queue - except when it was called from the Xray Center, see at the end of ((XrayButtons#forXrayCenter)) - because then is wasn't called from another dialog:
+    if not KOR.registry:getOnce("ui_info_called_from_xray_center") then
+        KOR.dialogsqueue:reset()
+    end
     local dialogs_queue_id = "xray_ui_page_information"
     KOR.dialogsqueue:register({
         id = dialogs_queue_id,
         restore = function()
-            self:showUiPageInfo(hits_names, hits_names2, hits_names3, hits_info, hits_info2, hits_info3, matches_count, haystack_text)
+            self:showUiPageInfo(hits_names, hits_names2, hits_names3, hits_info, hits_info2, hits_info3, matches_count)
         end,
     })
 

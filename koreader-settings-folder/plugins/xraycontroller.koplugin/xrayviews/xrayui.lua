@@ -461,6 +461,10 @@ function XrayUI:handleParagraphRegistration(p)
     return false
 end
 
+function XrayUI:pageHasItems()
+    return self.xray_page_info_rects and true or false
+end
+
 --- @private
 function XrayUI:setBookNeedles()
     if self.book_needles_string then

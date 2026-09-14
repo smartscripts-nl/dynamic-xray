@@ -850,13 +850,18 @@ function XrayButtons:forXrayCenter(parent)
                DX.ta:showTagGroupSelector()
            end
        }})
+    enabled, color = KOR.buttonprops:getButtonState(has_items_enabled and DX.u:pageHasItems())
     table_insert(buttons, {{
            text = DX.vd:addHotkeyInfo("UI Page Information %1 %2", separator, "Shift+U", KOR.icons.lightning_bare),
-           enabled = has_items_enabled,
-           fgcolor = has_items_color,
+           enabled = enabled,
+           fgcolor = color,
            align = "left",
            callback = function()
                KOR.dialogs:closeDialog(parent.main_modules_dialog)
+
+               --* with this prop we ensure that in ((XrayDialogs#showUiPageInfo)) KOR.dialogsqueue:reset() will NOT be called, which would otherwise remove Xray Center from the DialogsQueue:
+               KOR.registry:set("ui_info_called_from_xray_center", true)
+
                DX.u:uiInfoShow(nil, nil, "called_from_gesture")
            end
        }})
