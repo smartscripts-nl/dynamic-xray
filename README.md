@@ -218,8 +218,9 @@ An example of a Quizlet-question
 ![01 Xray marker in page](images/01-xray-marker-in-page.png)
 01 Xray marker in page
 
-![01b Xray items counts in footer](images/01b-xray-items_count-in-footer.png)
-01b Xray items counts in footer (see lightning icon). You'll have to manually modify ReaderFooter for this.
+![01b Tappable per item Xray markers](images/01b-tappable-per-item-xray-markers.png)
+01b Tappable markers (stars) for each item found in the page. Upon tapping, the item will be opened in the Item Viewer.
+NB: also notice the Xray items counts in the footer (lightning icon).
 
 ![02 Xray info dialog after click on marker](images/02-xray-info-dialog-after-click-on-marker.png)
 02 Xray info dialog after click on marker
