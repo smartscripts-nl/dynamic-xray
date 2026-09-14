@@ -700,6 +700,8 @@ function XrayButtons:forXrayCenter(parent)
     local has_items_enabled, has_items_color = KOR.buttonprops:getButtonState(DX.m.has_items)
     local enabled, color
 
+    --* non-icon_text entries below: Wikipedia, UI Page Information
+
     --* hotkeys for most of the below modules have been defined in ((KeyEvents#addHotkeysForReaderUI)):
     local separator = "  "
     table_insert(buttons, {{

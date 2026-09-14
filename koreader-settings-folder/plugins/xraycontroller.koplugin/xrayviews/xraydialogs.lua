@@ -891,6 +891,13 @@ function XrayDialogs:quickItemSearch()
         return
     end
 
+    KOR.dialogsqueue:register({
+        id = "quick_xray_item_search",
+        restore = function()
+            self:quickItemSearch()
+        end,
+    })
+
     --! use DX.vd.item_table[1] here instead of DX.vd.items, because the latter items collection might have been filtered:
     local pool = KOR.tables:shallowCopy(DX.vd.item_table[1])
     KOR.tables:sortByPropAscending(pool, "name")
