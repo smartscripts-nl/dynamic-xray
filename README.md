@@ -217,8 +217,8 @@ An example of a Quizlet-question
 
 ![01 Xray markers in page](images/01-tappable-per-item-xray-markers.png)
 01 Xray markers in page:
-* Lighting icon in text: upon tap opens UI Xray Page Information dialog.
-* Tappable markers (stars) for each item found in the page. Upon tapping, the item will be opened in the Item Viewer.
+* Lighting icon in text: upon tap opens UI Xray Page Information dialog (see image 02 below).
+* Tappable markers (stars) for each item found in the page. Upon tapping, the item will be opened in the Item Viewer (see image 04).
 * Lightning icon in footer shows the Xray items counts for the current page.
 
 ![02 Xray info dialog after click on marker](images/02-xray-info-dialog-after-click-on-marker.png)

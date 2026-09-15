@@ -24,7 +24,6 @@ local DX = DX
 local has_no_items = has_no_items
 local has_text = has_text
 local math_floor = math_floor
-local math_min = math_min
 local T = T
 local table_insert = table_insert
 local type = type
@@ -36,6 +35,8 @@ local Dialogs = WidgetContainer:extend{
     active_tab = 1,
     active_tab_index_enabled = false,
     active_tab_name = nil,
+    dropdown_dialog_max_height_factor = 0.90,
+    dropdown_dialog_width_factor = 0.65,
     dropdown_steps_info = _("1) optionally type - cast-insensitive - part of a name\n2) if you typed something, hit Enter, or tap on the dropdown button or the bottom-right button\n3) if the name you typed was only found in the name of one Xray item, the dialog will immediately send this item to the action\n4) if not, you can select an item in the dropdown field\n5) on that item the action will be performed\n\nAction: %1"),
     last_dialog_instance = nil,
     overlay = nil,
@@ -329,7 +330,7 @@ function Dialogs:confirm(question, callback, cancel_callback, wide_dialog, show_
         top_buttons_left = KOR.registry:getOnce("top_buttons_left"),
         text = question,
         wide_dialog = wide_dialog,
-        face = face or Font:getDefaultDialogFontFace(),
+        face = face or Font:getDefaultInputFontFace(),
         show_icon = show_icon,
         buttons = buttons,
     }
@@ -410,7 +411,7 @@ function Dialogs:prompt(args)
     config.buttons = buttons
     if not args.fields then
         config.text_type = args.is_password and "password" or "text"
-        config.description_face = args.description_face or Font:getDefaultDialogFontFace()
+        config.description_face = args.description_face or Font:getDefaultInputFontFace()
         config.cursor_at_end = args.cursor_at_end ~= false
     end
     local widget = args.fields and MultiInputDialog or InputDialog
@@ -438,6 +439,7 @@ function Dialogs:promptDropdown(title, description, dropdown_items, action, call
     local dialog
     dialog = InputDialog:new{
         input = "",
+        --* the dropdown items will be shown in a popup via ((InputDialog#init)) > ((InputDialog#generateDropdown)):
         dropdown_items = dropdown_items,
         condensed = true,
         allow_newline = false,
@@ -445,7 +447,10 @@ function Dialogs:promptDropdown(title, description, dropdown_items, action, call
         title = title,
         type = "text",
         description = description,
-        width = math_floor(math_min(Screen:getWidth(), Screen:getHeight()) * 0.9),
+        -- #((dropdown prompt dialog width))
+        --* compare computation of position of dropdown in ((anchor dropdown position computation)):
+        width = math_floor(Screen:getWidth() * self.dropdown_dialog_width_factor),
+        position = "left",
         top_buttons_left = {
             {
                 icon = "info-slender",
@@ -484,7 +489,7 @@ function Dialogs:promptDropdown(title, description, dropdown_items, action, call
                         count = #dropdown_items
                         for i = 1, count do
                             if dropdown_items[i].name == selected_label then
-                                --* e.g. callback as defined in ((XrayDialogs#quickItemSearch)):
+                                --* e.g. callback as defined in ((XrayDialogs#quickItemSearch)), to view the selected item in the Item Viewer:
                                 callback(dropdown_items[i])
                                 return
                             end

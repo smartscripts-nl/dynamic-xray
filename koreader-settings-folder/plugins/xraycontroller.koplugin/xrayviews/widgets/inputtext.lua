@@ -54,7 +54,7 @@ local InputText = InputContainer:extend{
                   --* not overflow if some text is appended and add new lines
     force_one_line = nil,
 
-    face = KOR.registry.default_dialog_font or Font:getDefaultDialogFontFace(),
+    face = KOR.registry.default_dialog_font or Font:getDefaultInputFontFace(),
     padding = Size.padding.default,
     margin = Size.margin.default,
     bordersize = Size.border.inputtext,

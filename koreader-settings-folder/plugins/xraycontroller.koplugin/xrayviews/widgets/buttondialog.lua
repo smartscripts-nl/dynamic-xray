@@ -79,6 +79,7 @@ local ButtonDialog = InputContainer:extend{
     pos = nil,
     after_close_callback = nil,
     modal = true,
+    anchor = nil,
 
     tap_close_callback = nil,
     alpha = nil, -- passed to MovableContainer
@@ -190,6 +191,7 @@ function ButtonDialog:init()
     end
     self.movable = MovableContainer:new{
             alpha = self.alpha,
+            anchor = self.anchor,
             FrameContainer:new{
                 scontainer or self.buttontable,
                 background = not self.readonly and KOR.colors.background or KOR.colors.black,

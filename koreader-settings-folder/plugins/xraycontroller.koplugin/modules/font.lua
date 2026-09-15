@@ -16,6 +16,7 @@ local lfs = require("libs/libkoreader-lfs")
 local logger = require("logger")
 local util = require("util")
 
+local DX = DX
 local G_reader_settings = G_reader_settings
 local ipairs = ipairs
 local pairs = pairs
@@ -506,11 +507,26 @@ end
 
 --* ==================== SMARTSCRIPTS =====================
 
-function Font:getDefaultDialogFontFace(add_size)
+function Font:getDefaultDescriptionFontFace(add_size)
+    if not add_size and KOR.registry.default_dialog_description_font then
+        return KOR.registry.default_dialog_description_font
+    end
+    local size = DX.s.is_mobile_device and 25 or 18
+    if add_size then
+        size = size + add_size
+    end
+    local face = self:getFace("smallffont", size)
+    if not add_size then
+        KOR.registry.default_dialog_description_font = face
+    end
+    return face
+end
+
+function Font:getDefaultInputFontFace(add_size)
     if not add_size and KOR.registry.default_dialog_font then
         return KOR.registry.default_dialog_font
     end
-    local size = 18
+    local size = DX.s.is_mobile_device and 35 or 18
     if add_size then
         size = size + add_size
     end

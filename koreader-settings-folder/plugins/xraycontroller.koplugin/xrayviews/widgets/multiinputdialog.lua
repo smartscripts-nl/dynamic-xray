@@ -44,7 +44,7 @@ local MultiInputDialog = InputDialog:extend{
     auto_height_field_index = nil,
     auto_height_field_tab_index = nil,
     bottom_v_padding = Size.padding.small,
-    description_face = Font:getDefaultDialogFontFace(),
+    description_face = Font:getDefaultDescriptionFontFace(),
     description_padding = Size.padding.small,
     description_prefix = "  ",
     description_margin = Size.margin.small,
@@ -54,7 +54,7 @@ local MultiInputDialog = InputDialog:extend{
     focus_field = nil,
     footer_description = nil,
     has_field_rows = false,
-    input_face = Font:getDefaultDialogFontFace(),
+    input_face = Font:getDefaultInputFontFace(),
     --* ALL fields, even those in inactive tabs:
     input_fields = {},
     keyboard_height = nil,
@@ -748,7 +748,7 @@ function MultiInputDialog:initWidgetProps()
     end
     self.input_description = {}
     --* Alex: for some reason (maybe because of InputDialog.init above?) we have to force the font here:
-    self.input_face = self.input_face or Font:getDefaultDialogFontFace()
+    self.input_face = self.input_face or Font:getDefaultInputFontFace()
     KOR.registry:unset("edit_button_target")
     self.full_width = self.title_bar and self.title_bar:getSize().w or self.width
     self.auto_height_field_present = false

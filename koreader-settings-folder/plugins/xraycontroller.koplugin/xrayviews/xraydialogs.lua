@@ -408,7 +408,7 @@ function XrayDialogs:showEditItemForm(args)
 end
 
 function XrayDialogs:showFilterDialog()
-    local face = Font:getDefaultDialogFontFace()
+    local face = Font:getDefaultInputFontFace()
     --KOR.dialogs:showOverlayReloaded()
     KOR.dialogs:showOverlay()
     self.filter_xray_items_input = InputDialog:new{
@@ -901,7 +901,7 @@ function XrayDialogs:quickItemSearch()
     --! use DX.vd.item_table[1] here instead of DX.vd.items, because the latter items collection might have been filtered:
     local pool = KOR.tables:shallowCopy(DX.vd.item_table[1])
     KOR.tables:sortByPropAscending(pool, "name")
-    KOR.dialogs:promptDropdown(_("Select a Xray-item"), _("select an item via ▼ - optionally first type part of the name:"), pool, _("show in Item Viewer"), function(selected_item)
+    KOR.dialogs:promptDropdown(_("Select a Xray-item"), _("select an item via ▼ - but first type here part of the name, to reduce the number of candidates:"), pool, _("show in Item Viewer"), function(selected_item)
         DX.d:viewItem(selected_item)
     end)
 end

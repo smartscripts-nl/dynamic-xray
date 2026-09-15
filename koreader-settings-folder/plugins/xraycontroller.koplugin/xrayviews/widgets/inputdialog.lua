@@ -114,6 +114,7 @@ local HorizontalSpan = require("ui/widget/horizontalspan")
 local InfoMessage = require("ui/widget/infomessage")
 local InputText = require("xrayviews/widgets/inputtext")
 local KOR = require("extensions/kor")
+local LeftContainer = require("ui/widget/container/leftcontainer")
 local MovableContainer = require("xrayviews/widgets/container/movablecontainer")
 local MultiConfirmBox = require("xrayviews/widgets/multiconfirmbox")
 local Size = require("modules/size")
@@ -198,14 +199,16 @@ local InputDialog = FocusManager:extend {
     is_movable = true,
 
     width = nil,
+    --* "center" or "left":
+    position = "center",
 
     text_width = nil,
     text_height = nil,
 
     bottom_v_padding = 0,
     --input_face = DX.s.is_android and getFace("x_smallinfofont", 18.5) or getFace("x_smallinfofont", 12),
-    input_face = Font:getDefaultDialogFontFace(),
-    description_face = Font:getDefaultDialogFontFace(),
+    input_face = Font:getDefaultInputFontFace(),
+    description_face = Font:getDefaultDescriptionFontFace(),
     input_padding = Size.padding.default,
     input_margin = Size.margin.default,
     button_padding = Size.padding.default,
@@ -255,6 +258,9 @@ function InputDialog:init()
     self.layout = { {} }
     self.screen_width = Screen:getWidth()
     self.screen_height = Screen:getHeight()
+    if self.position == "left" or self.dropdown_items then
+        self.is_movable = false
+    end
     if self.fullscreen then
         self.is_movable = false
         self.border_size = 0
@@ -341,7 +347,7 @@ function InputDialog:init()
         top_buttons_left = top_buttons_left,
         top_buttons_right = self.top_buttons_right,
         show_parent = self,
-    } or nil
+    }
 
     --* Vertical spaces added before and after InputText
     --* (these will be adjusted later to center the input text if needed)
@@ -450,8 +456,9 @@ function InputDialog:init()
         --* (will work in case of re-init as these are saved by onClose()
         self._top_line_num, self._charpos = self.view_pos_callback()
     end
+    -- #((width of dropdown input field))
     if self.dropdown_items then
-        self.text_width = math_floor(self.width * 0.85)
+        self.text_width = math_floor(self.width * 0.7)
     end
     self._input_widget = self.inputtext_class:new{
         text = self.input,
@@ -481,7 +488,6 @@ function InputDialog:init()
                             btn.callback()
                             return
                         end
-
                         self:commitDropdownItemViaEnter()
                         return
                     end
@@ -500,20 +506,8 @@ function InputDialog:init()
         top_line_num = self._top_line_num,
         charpos = self._charpos,
     }
-    local insert = self._input_widget
 
-    if self.dropdown_items then
-        self.dropdown_button, self.reset_button = self:getDropdownButtons()
-        local button_spacer = HorizontalSpan:new{
-            width = Screen:scaleBySize(8),
-        }
-        insert = HorizontalGroup:new{
-            self._input_widget,
-            self.dropdown_button,
-            button_spacer,
-            self.reset_button,
-        }
-    end
+    local insert = self.dropdown_items and self:generateDropdown() or self._input_widget
 
     if self.allow_newline then
         --* remove any enter_callback
@@ -583,7 +577,8 @@ function InputDialog:init()
     end
     local keyboard_height = self.keyboard_hidden and 0
             or self._input_widget:getKeyboardDimen().h
-    self[1] = CenterContainer:new{
+    local container = self.position == "center" and CenterContainer or LeftContainer
+    self[1] = container:new{
         dimen = Geom:new{
             w = self.screen_width,
             h = self.screen_height - keyboard_height,
@@ -610,6 +605,20 @@ function InputDialog:init()
     end
 end
 
+--- @private
+function InputDialog:generateDropdown()
+    self.dropdown_button, self.reset_button = self:getDropdownButtons()
+    local button_spacer = HorizontalSpan:new{
+        width = Screen:scaleBySize(8),
+    }
+    return HorizontalGroup:new{
+        self._input_widget,
+        self.dropdown_button,
+        button_spacer,
+        self.reset_button,
+    }
+end
+
 function InputDialog:addWidget(widget, re_init)
     table_insert(self.layout, #self.layout, { widget })
     if not re_init then
@@ -628,6 +637,10 @@ function InputDialog:addWidget(widget, re_init)
     end
     --* insert widget before the bottom buttons and their previous vspan
     table_insert(self.vgroup, #self.vgroup - 1, widget)
+end
+
+function InputDialog:getAddedWidgetAvailableWidth()
+    return self._input_widget.width
 end
 
 --! field_config MUST have a prop "dropdown_items":
@@ -693,7 +706,9 @@ end
 function InputDialog:showDropdown(field, dropdown_items, filter_text, callback)
     local buttons = {}
     local dialog
-    local width = Screen:scaleBySize(300)
+    -- #((dropdown entries width))
+    --* compare ((dropdown prompt dialog width)):
+    local width_factor = DX.s.is_ubuntu and 0.14 or 0.19
     local items_count = #dropdown_items
     if filter_text then
         filter_text = utf8lower(filter_text)
@@ -707,7 +722,8 @@ function InputDialog:showDropdown(field, dropdown_items, filter_text, callback)
             table_insert(buttons, {{
                 text = item_type == "string" and label or label.name,
                 bordersize = 0,
-                width = width,
+               width = not DX.s.is_mobile_device and
+                   math_floor(Screen:getWidth() * width_factor),
                 align = "left",
                 padding = 0,
                 callback = function()
@@ -738,24 +754,40 @@ function InputDialog:showDropdown(field, dropdown_items, filter_text, callback)
 
     --* if there are more than one matching (or unfiltered) items, show the dropdown:
     dialog = ButtonDialog:new{
-        button_width = 1,
-        forced_width = width,
+        width_is_dependent_on_button_count = DX.s.is_mobile_device,
         font_weight = "normal",
         padding = 0,
-        max_height = Screen:getHeight() - Screen:scaleBySize(70),
+        -- #((compute max height of the dropdown))
+        max_height = math_floor(self.screen_height * KOR.dialogs.dropdown_dialog_max_height_factor),
         sep_width = 0,
         no_bottom_spacer = true,
         tap_close_callback = function()
             self.dropdown_button_was_used = false
         end,
         modal = true,
+        --* compare computing width of dropdown in (()):
+        -- #((anchor dropdown position computation))
+        anchor = function()
+            --* so the dropdowns' x position must be half the screen width + the half the width of the dialog:
+            -- * max_height of dropdown set in ((compute max height of the dropdown)):
+            local shift_x = self.position == "center" and math_floor(self.screen_width / 2) or 0
+            local dialog_factor = self.position == "center" and 2 or 1
+            local available_height = self.screen_height - self._input_widget:getKeyboardDimen().h
+            return {
+                h = 1,
+                w = 1,
+                x = shift_x + math_floor(self.screen_width * (KOR.dialogs.dropdown_dialog_width_factor / dialog_factor)),
+                y = bcount <= 10 and
+                    math_floor(available_height / 2)
+                    or
+                    math_floor(((1 - KOR.dialogs.dropdown_dialog_max_height_factor) / 2) * available_height),
+            },
+            --* if this is returned, then prefer popdown from the anchor:
+            true
+        end,
         buttons = buttons,
     }
     UIManager:show(dialog)
-end
-
-function InputDialog:getAddedWidgetAvailableWidth()
-    return self._input_widget.width
 end
 
 function InputDialog:onTap()
@@ -1249,14 +1281,14 @@ function InputDialog:_addScrollButtons(nav_bar)
 
     --* Add the Up & Down buttons
     table_insert(row, {
-        text = "△",
+        icon = "up",
         id = "up",
         callback = function()
             self._input_widget:scrollUp()
         end,
     })
     table_insert(row, {
-        text = "▽",
+        icon = "down",
         id = "down",
         callback = function()
             self._input_widget:scrollDown()
@@ -1335,6 +1367,22 @@ function InputDialog:findCallback(keyboard_hidden_state, input_dialog, find_firs
 end
 
 --* ================== SMARTSCRIPTS ===================
+
+function InputDialog:commitDropdownItemViaEnter(field, dropdown_items)
+
+    field = field or self._input_widget
+    dropdown_items = dropdown_items or self.dropdown_items
+
+    --* the callback here, as last argument, will be called from a matching button in ((InputDialog#showDropdown)):
+    self:showDropdown(field, dropdown_items, field:getText(), function(selected_item)
+        if type(selected_item) == "string" then
+            field:setText(selected_item)
+        else
+            field:setText(selected_item.name)
+        end
+        self:commitForm(self)
+    end)
+end
 
 function InputDialog:scrollToBottom()
     self._input_widget:scrollToBottom()
@@ -1462,26 +1510,6 @@ function InputDialog:onActivateNextTab()
     end
     self.activate_tab_callback(self.active_tab)
     return true
-end
-
-function InputDialog:commitDropdownItemViaEnter(field, dropdown_items)
-
-    field = field or self._input_widget
-    dropdown_items = dropdown_items or self.dropdown_items
-
-    --* the callback here, as last argument, will be called from a matching button in ((InputDialog#showDropdown)):
-    self:showDropdown(field, dropdown_items, field:getText(), function(selected_item)
-        if type(selected_item) == "string" then
-            field:setText(selected_item)
-        else
-            field:setText(selected_item.name)
-        end
-        self:commitForm(self)
-    end)
-end
-
-function InputDialog:scrollToBottom()
-    self._input_widget:scrollToBottom()
 end
 
 return InputDialog

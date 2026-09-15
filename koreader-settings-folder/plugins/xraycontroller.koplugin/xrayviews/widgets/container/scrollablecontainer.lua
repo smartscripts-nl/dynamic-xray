@@ -25,8 +25,8 @@ local UIManager = require("ui/uimanager")
 local VerticalScrollBar = require("xrayviews/widgets/verticalscrollbar")
 local Input = Device.input
 local Screen = Device.screen
-local logger = require("logger")
 
+local logger_dbg = logger_dbg
 local math_floor = math_floor
 local math_max = math_max
 local math_round = math_round
@@ -528,7 +528,7 @@ function ScrollableContainer:onScrollableSwipe(_, ges)
     if not self._is_scrollable then
         return false
     end
-    logger.dbg("ScrollableContainer:onScrollableSwipe", ges)
+    logger_dbg("ScrollableContainer:onScrollableSwipe", ges)
     if not ges.pos:intersectWith(self.dimen) then
         -- with swipe, ges.pos is swipe's start position, which should
         -- be on us to consider it
@@ -569,7 +569,7 @@ function ScrollableContainer:onScrollableTouch(_, ges)
     end
     -- First "pan" event may already be outside of us, we need to
     -- remember any "touch" event on us prior to "pan"
-    logger.dbg("ScrollableContainer:onScrollableTouch", ges)
+    logger_dbg("ScrollableContainer:onScrollableTouch", ges)
     if ges.pos:intersectWith(self.dimen) then
         self._touch_pre_pan_was_inside = true
         self._scroll_relative_x = ges.pos.x
@@ -584,7 +584,7 @@ function ScrollableContainer:onScrollableHold(_, ges)
     if not self._is_scrollable then
         return false
     end
-    logger.dbg("ScrollableContainer:onScrollableHold", ges)
+    logger_dbg("ScrollableContainer:onScrollableHold", ges)
     if ges.pos:intersectWith(self.dimen) then
         self._scrolling = true -- start of pan
         self._scroll_relative_x = ges.pos.x
@@ -598,7 +598,7 @@ function ScrollableContainer:onScrollableHoldPan(_, ges)
     if not self._is_scrollable then
         return false
     end
-    logger.dbg("ScrollableContainer:onScrollableHoldPan", ges)
+    logger_dbg("ScrollableContainer:onScrollableHoldPan", ges)
     -- we may sometimes not see the "hold" event
     if ges.pos:intersectWith(self.dimen) or self._scrolling or self._touch_pre_pan_was_inside then
         self._touch_pre_pan_was_inside = false -- reset it
@@ -612,7 +612,7 @@ function ScrollableContainer:onScrollableHoldRelease(_, ges)
     if not self._is_scrollable then
         return false
     end
-    logger.dbg("ScrollableContainer:onScrollableHoldRelease", ges)
+    logger_dbg("ScrollableContainer:onScrollableHoldRelease", ges)
     if self._scrolling or self._touch_pre_pan_was_inside then
         self._scrolling = false
         if not self._scroll_relative_x or not self._scroll_relative_y then
@@ -633,7 +633,7 @@ function ScrollableContainer:onScrollablePan(_, ges)
     if not self._is_scrollable then
         return false
     end
-    logger.dbg("ScrollableContainer:onScrollablePan", ges)
+    logger_dbg("ScrollableContainer:onScrollablePan", ges)
     if ges.pos:intersectWith(self.dimen) or self._scrolling or self._touch_pre_pan_was_inside then
         self._touch_pre_pan_was_inside = false -- reset it
         self._scrolling = true
@@ -648,7 +648,7 @@ function ScrollableContainer:onScrollablePanRelease(_, ges)
     if not self._is_scrollable then
         return false
     end
-    logger.dbg("ScrollableContainer:onScrollablePanRelease", ges)
+    logger_dbg("ScrollableContainer:onScrollablePanRelease", ges)
     if self._scrolling then
         self:_scrollBy(-self._scroll_relative_x, -self._scroll_relative_y)
         self._scrolling = false

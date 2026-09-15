@@ -14,7 +14,9 @@ local type = type
 local Registry = WidgetContainer:new{
     clipboard_tab_texts = {},
     current_ebook = nil,
-    --* will be populated by ((Font#getDefaultDialogFontFace)):
+    --* will be populated by ((Font#getDefaultDescriptionFontFace)):
+    default_dialog_description_font = nil,
+    --* will be populated by ((Font#getDefaultInputFontFace)):
     default_dialog_font = nil,
     DX_icons_path_added = false,
     --* this value can be overwritten for Bigme by ((XrayController#initKORandDynamicXray)):
