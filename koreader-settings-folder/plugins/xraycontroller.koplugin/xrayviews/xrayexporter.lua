@@ -139,11 +139,13 @@ end
 
 --- @private
 function XrayExporter:exportInfoToFile()
-    local info =
-        self:getTitle(self.active_tab)
-        .. "\n" .. _("List generated") .. ": " ..
-        os_date("%Y-%m-%d") .. KOR.strings.white_line ..
-        self:getInfoText(self.active_tab, "iconless", 1)
+    local spacer = "\n"
+    local info = self:getTitle(self.active_tab)
+            .. spacer .. _("List generated") .. ": " .. os_date("%Y-%m-%d") .. KOR.strings.white_line .. _("Legend of icons:") .. spacer
+    for i = 1, 4 do
+        info = info .. DX.vd.iconless_item_icons[i][1] .. "= " .. DX.vd.iconless_item_icons[i][2] .. spacer
+    end
+    info = info .. spacer .. self:getInfoText(self.active_tab, "iconless", 1)
 
     info = self:addTagGroupNamesOverview(info)
     info = info:gsub("\n\n\n+", KOR.strings.white_line)

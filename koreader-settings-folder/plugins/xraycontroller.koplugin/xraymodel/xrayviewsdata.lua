@@ -41,6 +41,12 @@ local XrayViewsData = WidgetContainer:new{
     filter_string = "",
     filter_tag = nil,
     filter_xray_types = nil,
+    iconless_item_icons = {
+        {"♙ ", _("person")},
+        {"♟ ", _("important person")},
+        {"☼ ", _("term")},
+        {"☀ ", _("important term")},
+    },
     item_meta_info_template = "<tr><td><ul><li>%1</li></ul></td><td>&nbsp;</td><td>%2</td></tr>",
     item_table = { {}, {}, {} },
     item_table_for_filter = { {}, {}, {} },
@@ -1444,8 +1450,8 @@ function XrayViewsData:generateFirstLines(first_line, first_line_iconless, xray_
     --! dont_indent_first_line here is crucial, to ensure the first line has no indentation:
     first_line = KOR.strings:splitLinesToMaxLength(first_line, meta_indent, nil, "dont_indent_first_line") .. "\n"
     if is_also_for_export then
-        local important_marker = (xray_item.xray_type == 2 or xray_item.xray_type == 4) and "!" or ""
-        table_insert(first_line_iconless, important_marker)
+        local type_icon = self.iconless_item_icons[xray_item.xray_type][1]
+        table_insert(first_line_iconless, type_icon)
         table_insert(first_line_iconless, name)
         table_insert(first_line_iconless, ui_explanation)
         first_line_iconless = table_concat(first_line_iconless)
