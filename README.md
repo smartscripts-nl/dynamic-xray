@@ -272,32 +272,33 @@ An example of a Quizlet-question
 ![07c Larger field editor](images/07c-editor-tab-2-set-xray-type.png)
 07c Editor tab 2: set Xray type from popup dialog: person, important person, term or important term.
 
-![08 Help info for buttons](images/08-help-info-for-buttons.png)
-08 Help info for buttons
+![08 Series Manager with action buttons](images/11-series-manager-with-action-buttons.png)
+08 Series Manager with action buttons (NB: version in this repository will have fewer c.q. other buttons and icons than
+the ones depicted here, because they reflect functionality tied into my personal system)
 
-![09 Manage XraySettings in a tabbed interface.](images/09-manage-xray-settings.png)
-09 Manage XraySettings in a tabbed interface.
+![09 Help info for buttons](images/08-help-info-for-buttons.png)
+09 Help info for buttons
 
-![09b Manage DX hotkeys.](images/09b-user-configurable-dx-hotkeys.png)
-09b Manage DX hotkeys.
+![10 Manage XraySettings in a tabbed interface.](images/09-manage-xray-settings.png)
+10 Manage XraySettings in a tabbed interface.
 
-![09c Modify a DX hotkey.](images/09c-modify-a-dx-hotkey.png)
-09c Modify a DX hotkey
+![10b Manage DX hotkeys.](images/09b-user-configurable-dx-hotkeys.png)
+10b Manage DX hotkeys.
 
-![10 Interface translations list](images/10-interface-translations-list.png)
-09b Interface translations list
+![10c Modify a DX hotkey.](images/09c-modify-a-dx-hotkey.png)
+10c Modify a DX hotkey
 
-![10b Translations navigator](images/10b-translations-navigator.png)
-10b Translations navigator
+![11 Interface translations list](images/10-interface-translations-list.png)
+11 Interface translations list
 
-![10c Editing a translation](images/10c-editing-a-translation.png)
-10c Editing a translation
+![11b Translations navigator](images/10b-translations-navigator.png)
+11b Translations navigator
 
-![10d Help info for translations editor](images/10d-help-info-for-translations-editor.png)
-10d Help info for translations editor
+![11c Editing a translation](images/10c-editing-a-translation.png)
+11c Editing a translation
 
-![11 Series Manager with action buttons](images/11-series-manager-with-action-buttons.png)
-11 Series Manager with action buttons (NB: version in this repository will have fewer c.q. other buttons and icons than the ones depicted here, because they reflect functionality tied into my personal system)
+![11d Help info for translations editor](images/10d-help-info-for-translations-editor.png)
+11d Help info for translations editor
 
 ## DX Settings menu
 
