@@ -93,6 +93,12 @@ function KeyEvents:addHotkeysForReaderUI(parent)
         return true
     end
 
+    readerui.key_events.ShowXrayExporterUI = { { "Shift", { "E" } } }
+    readerui.onShowXrayExporterUI = function()
+        DX.ex:showExportXrayItemsDialog()
+        return true
+    end
+
     readerui.key_events.SearchOnWikipediaUI = {{"Shift", {"W"}}}
     readerui.onSearchOnWikipediaUI = function()
         KOR.wikipedia:showWikipediaInputPrompt()

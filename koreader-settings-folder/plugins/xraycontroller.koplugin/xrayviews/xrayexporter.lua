@@ -161,18 +161,18 @@ function XrayExporter:initData()
     if self.items then
         return true
     end
-    if not DX.vd.items then
+    if not DX.vd.item_table or not DX.vd.item_table[1] then
         return false
     end
 
-    KOR.columntexts:initDisplayColumnsCount(#DX.vd.items)
-    self.items, self.items2, self.items3, self.iconless_items = self:generateXrayItemsOverview(DX.vd.items, "for_all_items_list", 1)
+    KOR.columntexts:initDisplayColumnsCount(#DX.vd.item_table[1])
+    self.items, self.items2, self.items3, self.iconless_items = self:generateXrayItemsOverview(DX.vd.item_table[1], "for_all_items_list", 1)
 
-    KOR.columntexts:initDisplayColumnsCount(#DX.vd.persons)
-    self.persons, self.persons2, self.persons3, self.iconless_persons = self:generateXrayItemsOverview(DX.vd.persons, "for_all_items_list", 2)
+    KOR.columntexts:initDisplayColumnsCount(#DX.vd.item_table[2])
+    self.persons, self.persons2, self.persons3, self.iconless_persons = self:generateXrayItemsOverview(DX.vd.item_table[2], "for_all_items_list", 2)
 
-    KOR.columntexts:initDisplayColumnsCount(#DX.vd.terms)
-    self.terms, self.terms2, self.terms3, self.iconless_terms = self:generateXrayItemsOverview(DX.vd.terms, "for_all_items_list", 3)
+    KOR.columntexts:initDisplayColumnsCount(#DX.vd.item_table[3])
+    self.terms, self.terms2, self.terms3, self.iconless_terms = self:generateXrayItemsOverview(DX.vd.item_table[3], "for_all_items_list", 3)
 
     DX.ta:generateTagGroupsOverview(4)
 

@@ -72,6 +72,9 @@ local XrayInformation = WidgetContainer:extend {
             <tr><td>Shift+A</td><td>]]
                     .. _("Add a new Xray-item")
                     .. [[</td></tr>
+            <tr><td>Shift+E</td><td>]]
+                    .. _("Show items Exporter dialog")
+                    .. [[</td></tr>
             <tr><td>Shift+G</td><td>]]
                     .. _("show a Glossary for the current ebook - or add it by marking its boundaries in the ebook")
                     .. [[</td></tr>

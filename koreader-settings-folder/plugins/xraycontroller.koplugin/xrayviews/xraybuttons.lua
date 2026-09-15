@@ -749,8 +749,22 @@ function XrayButtons:forXrayCenter(parent)
        }})
     table_insert(buttons, {{
            icon_text = {
+                icon = "export-xray",
+                icon_size_ratio = 0.58,
+                text = DX.vd:addHotkeyInfo("Items Exporter %1 %2", separator, "Shift+E"),
+                fgcolor = has_items_color,
+            },
+           enabled = has_items_enabled,
+           align = "left",
+           callback = function()
+               KOR.dialogs:closeDialog(parent.main_modules_dialog)
+               DX.ex:showExportXrayItemsDialog()
+           end
+       }})
+    table_insert(buttons, {{
+           icon_text = {
                 icon = "list",
-                icon_size_ratio = 0.48,
+                icon_size_ratio = 0.55,
                 text = DX.vd:addHotkeyInfo("Items List %1 %2", separator, "Shift+L"),
                 fgcolor = has_items_color,
             },
