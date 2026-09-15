@@ -848,13 +848,9 @@ function TitleBar:addDialogQueueButton()
 
     --! dialog_queue_id must have been provided by the owner dialog of the title bar:
     --! don't use has_no_items(buttons) here; otherwise top_left_buttons with only DialogsQueue-back-button would not be possible:
-    if not buttons or not self.dialog_queue_id or not KOR.dialogsqueue:getParentId() or KOR.dialogsqueue:getQueueCount() < 2 then
+    if not buttons or not self.dialog_queue_id or not KOR.dialogsqueue:getParentId() or KOR.dialogsqueue:getQueueCount() < 2 or buttons[#buttons].icon == "back-small" then
         return
     end
-
-    --[[if #buttons > 0 and buttons[#buttons].icon == "back-small" then
-        table_remove(buttons)
-    end]]
 
     table_insert(buttons, KOR.buttonchoicepopup:forXrayReturnToCaller({
         info = T(_("back icon | :return to the dialog from which you opened the current item\n\n:close current dialog and return to the first opened dialog - %1 - in the dialog history"), KOR.dialogsqueue:getFirstDialogDescription()),
