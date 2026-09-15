@@ -421,7 +421,7 @@ function XrayTags:generateTagGroupsOverview(clipboard_tab_no)
     self.iconless_tag_groups = table_concat(paragraphs_iconless, "\n\n")
         :gsub("^\n+", "", 1)
 
-    KOR.registry:setClipboardTabText(clipboard_tab_no, self.iconless_tag_groups)
+    KOR.tabnavigator:setClipboardTabText(clipboard_tab_no, self.iconless_tag_groups)
 
     -- #((generate tag-groups info for XrayExporter))
     --! we need the code below, to get self.tag_groups etc. populated for ((XrayExporter#getInfoText)); otherwise the tag groups tab in XrayExporter would be empty!:

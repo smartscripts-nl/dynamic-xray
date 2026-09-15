@@ -9,6 +9,7 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 --- @class TabNavigator
 local TabNavigator = WidgetContainer:extend{
     active_tab = nil,
+    clipboard_tab_texts = {},
     parent = nil,
     tabs_table_buttons = nil,
 }
@@ -106,6 +107,14 @@ function TabNavigator:onActivateTab(tab_no)
     tn.tabs_table_buttons[1][tn.active_tab]:callback()
 
     return true
+end
+
+function TabNavigator:setClipboardTabText(tab_no, text)
+    self.clipboard_tab_texts[tab_no] = text
+end
+
+function TabNavigator:getClipboardTabText(tab_no)
+    return self.clipboard_tab_texts[tab_no]
 end
 
 return TabNavigator

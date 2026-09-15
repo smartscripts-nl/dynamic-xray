@@ -12,7 +12,6 @@ local type = type
 --* used as registry for global vars:
 --- @class Registry
 local Registry = WidgetContainer:new{
-    clipboard_tab_texts = {},
     current_ebook = nil,
     --* will be populated by ((Font#getDefaultDescriptionFontFace)):
     default_dialog_description_font = nil,
@@ -58,14 +57,6 @@ function Registry:getMenuSelectNumber(module, items_per_page)
     if subpage then
         return math_floor(subpage * items_per_page - 1)
     end
-end
-
-function Registry:setClipboardTabText(tab_no, text)
-    self.clipboard_tab_texts[tab_no] = text
-end
-
-function Registry:getClipboardTabText(tab_no)
-    return self.clipboard_tab_texts[tab_no]
 end
 
 function Registry:setMenuPage(module, page)

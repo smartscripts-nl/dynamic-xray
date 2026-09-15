@@ -93,9 +93,9 @@ function XrayExporter:getInfoText(active_tab, iconless, columns)
         --[[self.iconless_items,
         self.iconless_persons,
         self.iconless_terms,]]
-        KOR.registry:getClipboardTabText(1),
-        KOR.registry:getClipboardTabText(2),
-        KOR.registry:getClipboardTabText(3),
+        KOR.tabnavigator:getClipboardTabText(1),
+        KOR.tabnavigator:getClipboardTabText(2),
+        KOR.tabnavigator:getClipboardTabText(3),
         DX.ta.iconless_tag_groups,
     }
 
@@ -207,7 +207,7 @@ function XrayExporter:generateXrayItemsOverview(items, mode, clipboard_tab_no)
     end
 
     local iconless_data = table_concat(paragraphs_iconless, KOR.strings.white_line)
-    KOR.registry:setClipboardTabText(clipboard_tab_no, iconless_data)
+    KOR.tabnavigator:setClipboardTabText(clipboard_tab_no, iconless_data)
 
     --* returned here: column1, column2, column3, info_iconless; column2 and column3 will be set to nil when usage of text columns wasn't active:
     if use_two_column_display then
@@ -219,6 +219,7 @@ function XrayExporter:generateXrayItemsOverview(items, mode, clipboard_tab_no)
     return KOR.columntexts:getOneColumnText(column1, KOR.strings.white_line), nil, nil, iconless_data
 end
 
+--main: showExportXrayItemsDialog
 function XrayExporter:showExportXrayItemsDialog()
     if not self:initData() then
         return
