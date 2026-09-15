@@ -174,7 +174,7 @@ function XrayTags:resetTagGroups()
     self.tags_concatenated = nil
 end
 
-function XrayTags:getTagNamesForExporterOverview(info)
+function XrayTags:getTagGroupNamesForExporterOverview(info)
     local tag_groups = self.tags_concatenated or table_concat(DX.m.tag_groups, " - ")
     self.tags_concatenated = tag_groups
 
@@ -394,7 +394,7 @@ function XrayTags:generateTagGroup(tag)
     return taggroup_count, context_buttons
 end
 
-function XrayTags:generateTagGroupsOverview(clipboard_tab_no)
+function XrayTags:generateTagGroupsOverview(tab_no)
     local items = DX.vd.items
     local paragraphs = {}
     local paragraphs_iconless = {}
@@ -421,7 +421,7 @@ function XrayTags:generateTagGroupsOverview(clipboard_tab_no)
     self.iconless_tag_groups = table_concat(paragraphs_iconless, "\n\n")
         :gsub("^\n+", "", 1)
 
-    KOR.tabnavigator:setClipboardTabText(clipboard_tab_no, self.iconless_tag_groups)
+    KOR.tabnavigator:setPlainTabText(tab_no, self.iconless_tag_groups)
 
     -- #((generate tag-groups info for XrayExporter))
     --! we need the code below, to get self.tag_groups etc. populated for ((XrayExporter#getInfoText)); otherwise the tag groups tab in XrayExporter would be empty!:

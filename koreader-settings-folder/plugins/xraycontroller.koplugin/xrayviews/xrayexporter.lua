@@ -82,20 +82,16 @@ function XrayExporter:getExportDialogInfo(active_tab, columns)
     end
 
     local info = export_title .. data
-    return self:addTagNamesOverview(info)
+    return self:addTagGroupNamesOverview(info)
 end
 
 --- @private
 function XrayExporter:getInfoText(active_tab, iconless, columns)
     --* the tag-groups info below is generated via ((XrayExporter#initData)) > ((XrayTags#generateTagGroupsOverview)) > ((generate tag-groups info for XrayExporter)):
     local texts_for_copy = {
-        --? don't know why the lines commented out make KOReader crash:
-        --[[self.iconless_items,
+        self.iconless_items,
         self.iconless_persons,
-        self.iconless_terms,]]
-        KOR.tabnavigator:getClipboardTabText(1),
-        KOR.tabnavigator:getClipboardTabText(2),
-        KOR.tabnavigator:getClipboardTabText(3),
+        self.iconless_terms,
         DX.ta.iconless_tag_groups,
     }
 
@@ -109,6 +105,7 @@ function XrayExporter:getInfoText(active_tab, iconless, columns)
         }
         --* choose one of the above items:
         return info_texts[active_tab]
+
     elseif columns == 2 then
         info_texts = {
             self.items2,
@@ -136,8 +133,8 @@ function XrayExporter:getInfoText(active_tab, iconless, columns)
 end
 
 --- @private
-function XrayExporter:addTagNamesOverview(info)
-    return DX.ta:getTagNamesForExporterOverview(info)
+function XrayExporter:addTagGroupNamesOverview(info)
+    return DX.ta:getTagGroupNamesForExporterOverview(info)
 end
 
 --- @private
@@ -148,7 +145,7 @@ function XrayExporter:exportInfoToFile()
         os_date("%Y-%m-%d") .. KOR.strings.white_line ..
         self:getInfoText(self.active_tab, "iconless", 1)
 
-    info = self:addTagNamesOverview(info)
+    info = self:addTagGroupNamesOverview(info)
     info = info:gsub("\n\n\n+", KOR.strings.white_line)
 
     KOR.files:filePutcontents(DataStorage:getDataDir() .. "/xray-items.txt", info)
@@ -180,8 +177,8 @@ function XrayExporter:initData()
 end
 
 --- @param mode string Either "for_all_items_list", "for_linked_items_tab" or "for_tag_groups_tab"
---- @param clipboard_tab_no number Will successively have numbers 1 till 3
-function XrayExporter:generateXrayItemsOverview(items, mode, clipboard_tab_no)
+--- @param tab_no number Will successively have numbers 1 till 3
+function XrayExporter:generateXrayItemsOverview(items, mode, tab_no)
     local paragraphs_iconless = {}
     local paragraph, paragraph_iconless
     local column1, column2, column3 = {}, {}, {}
@@ -207,13 +204,15 @@ function XrayExporter:generateXrayItemsOverview(items, mode, clipboard_tab_no)
     end
 
     local iconless_data = table_concat(paragraphs_iconless, KOR.strings.white_line)
-    KOR.tabnavigator:setClipboardTabText(clipboard_tab_no, iconless_data)
+    KOR.tabnavigator:setPlainTabText(tab_no, iconless_data)
 
     --* returned here: column1, column2, column3, info_iconless; column2 and column3 will be set to nil when usage of text columns wasn't active:
     if use_two_column_display then
-        return KOR.columntexts:getTwoColumnTexts(column1, column2, KOR.strings.white_line), nil, iconless_data
+        column1, column2 = KOR.columntexts:getTwoColumnTexts(column1, column2, KOR.strings.white_line)
+        return column1, column2, nil, iconless_data
     elseif use_three_column_display then
-        return KOR.columntexts:getThreeColumnTexts(column1, column2, column3, KOR.strings.white_line), iconless_data
+        column1, column2, column3 = KOR.columntexts:getThreeColumnTexts(column1, column2, column3, KOR.strings.white_line)
+        return column1, column2, column3, iconless_data
     end
 
     return KOR.columntexts:getOneColumnText(column1, KOR.strings.white_line), nil, nil, iconless_data

@@ -90,8 +90,10 @@ function ColumnTexts:getThreeColumnTexts(column1_items, column2_items, column3_i
 	for i = 1, count do
 		if i <= first_column_limit then
 			target = first_column
+		elseif i <= second_column_limit then
+			target = column2_items
 		else
-			target = i <= second_column_limit and column2_items or column3_items
+			target = column3_items
 		end
 		table_insert(target, column1_items[i])
 	end

@@ -1233,7 +1233,7 @@ function TextViewer:getDefaultButtons()
     if self.has_copy_button then
         table_insert(default_buttons, 2, KOR.buttonchoicepopup:forTextViewerCopy({
             callback = function()
-                --* these tab_texts for the clipboard were set via ((TabNavigator#setClipboardTabText)):
+                --* these tab_texts for the clipboard were set via ((TabNavigator#setPlainTabText)):
                 local copy_text = KOR.registry.clipboard_tab_texts[self.active_tab]
                 if has_no_text(copy_text) then
                     KOR.messages:notify(tr("text in current dialog/tab was empty"))
@@ -1248,7 +1248,7 @@ function TextViewer:getDefaultButtons()
             end,
             hold_callback = function()
                 self:onClose()
-                --* these tab_texts for the clipboard were set via ((TabNavigator#setClipboardTabText)):
+                --* these tab_texts for the clipboard were set via ((TabNavigator#setPlainTabText)):
                 local copy_text = KOR.tabnavigator.clipboard_tab_texts[self.active_tab]
                 if has_no_text(copy_text) then
                     KOR.messages:notify(tr("text in current dialog/tab was empty"))

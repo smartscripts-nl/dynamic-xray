@@ -109,11 +109,11 @@ function TabNavigator:onActivateTab(tab_no)
     return true
 end
 
-function TabNavigator:setClipboardTabText(tab_no, text)
+function TabNavigator:setPlainTabText(tab_no, text)
     self.clipboard_tab_texts[tab_no] = text
 end
 
-function TabNavigator:getClipboardTabText(tab_no)
+function TabNavigator:getPlainTabText(tab_no)
     return self.clipboard_tab_texts[tab_no]
 end
 
