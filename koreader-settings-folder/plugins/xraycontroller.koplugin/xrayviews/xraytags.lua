@@ -44,6 +44,8 @@ local XrayTags = WidgetContainer:new{
     tag_groups2 = nil,
     tag_groups3 = nil,
 
+    iconless_tag_groups = nil,
+
     tags = nil,
     tags_concatenated = nil,
 }
@@ -167,15 +169,17 @@ function XrayTags:resetTagGroups()
     self.tag_groups2 = nil
     self.tag_groups3 = nil
 
+    self.iconless_tag_groups = nil
+
     self.tags_concatenated = nil
 end
 
-function XrayTags:getTagsForExporterOverview(info)
+function XrayTags:getTagNamesForExporterOverview(info)
     local tag_groups = self.tags_concatenated or table_concat(DX.m.tag_groups, " - ")
     self.tags_concatenated = tag_groups
 
     info = KOR.strings:split(info, "\n", "capture_empty_entity")
-    table_insert(info, 2, _("Tags in this overview") .. ": " .. self.tags_concatenated)
+    table_insert(info, 2, _("Tag-groups in the book") .. ": " .. self.tags_concatenated)
 
     return table_concat(info, "\n")
 end
@@ -220,6 +224,20 @@ function XrayTags:itemRemoveTag(item, tag)
         end
     end
     item.tags = table_concat(pruned, separator)
+end
+
+--- @private
+function XrayTags:resetItemForTagsSelection(item, for_one_item)
+    item.dim = nil
+    item.text = item.text:gsub(" " .. KOR.icons.checkboxes, "", 1)
+
+    --* then all items will be reset in a loop:
+    if not for_one_item then
+        return
+    end
+
+    self.select_for_tag_items[item.id] = nil
+    DX.d.xray_items_inner_menu:updateItems()
 end
 
 --- @private
@@ -400,8 +418,10 @@ function XrayTags:generateTagGroupsOverview(clipboard_tab_no)
         return
     end
 
-    KOR.registry:setClipboardTabText(clipboard_tab_no, table_concat(paragraphs_iconless, "\n\n")
-        :gsub("^\n+", "", 1))
+    self.iconless_tag_groups = table_concat(paragraphs_iconless, "\n\n")
+        :gsub("^\n+", "", 1)
+
+    KOR.registry:setClipboardTabText(clipboard_tab_no, self.iconless_tag_groups)
 
     -- #((generate tag-groups info for XrayExporter))
     --! we need the code below, to get self.tag_groups etc. populated for ((XrayExporter#getInfoText)); otherwise the tag groups tab in XrayExporter would be empty!:

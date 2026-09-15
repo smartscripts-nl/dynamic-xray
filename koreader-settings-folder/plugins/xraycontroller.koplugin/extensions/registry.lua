@@ -6,7 +6,7 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local AX_registry = AX_registry
 local AXR_registry = AXR_registry
 --! don't declare has_content or has_text or last_file locally here!
-local math = math
+local math_floor = math_floor
 local type = type
 
 --* used as registry for global vars:
@@ -56,12 +56,16 @@ end
 function Registry:getMenuSelectNumber(module, items_per_page)
     local subpage = self.menu_subpages[module]
     if subpage then
-        return math.floor(subpage * items_per_page - 1)
+        return math_floor(subpage * items_per_page - 1)
     end
 end
 
 function Registry:setClipboardTabText(tab_no, text)
     self.clipboard_tab_texts[tab_no] = text
+end
+
+function Registry:getClipboardTabText(tab_no)
+    return self.clipboard_tab_texts[tab_no]
 end
 
 function Registry:setMenuPage(module, page)
