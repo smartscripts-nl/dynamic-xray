@@ -225,13 +225,16 @@ An example of a Quizlet-question
 02 Xray info dialog after click on marker
 
 ![02b Page Navigator](images/02b-page-navigator.png)
-02b Page Navigator, with info panel with explanations of Xray items in the page.
+02b Page Navigator, with info panel with explanations of Xray items in the page
 
 ![02c Page Navigator: hotkeys](images/02c-page-navigator-hotkeys.png)
-02c Page Navigator: hotkeys.
+02c Page Navigator: hotkeys
 
-![02d Tappable popup with linked items](images/02d-info-popup-with-linked-items.png)
-02d Tappable popup with linked items after longpressing a name in the ebook
+![02d Legend of DX-icons](images/02d-legend-of-DX-icons.png)
+02d Legend of DX-icons
+
+![02e Tappable popup with linked items](images/02e-info-popup-with-linked-items.png)
+02e Tappable popup with linked items after longpressing a name in the ebook
 
 ![03 List of Xray items](images/03-list-of-xray-items.png)
 03 Items List
@@ -267,10 +270,10 @@ An example of a Quizlet-question
 07 Item Editor tab 2
 
 ![07b Larger field editor](images/07b-larger-field-editor.png)
-07b Larger field editor, called with edit button next to field. Handy for fields with longer content.
+07b Larger field editor, called with edit button next to field. Handy for fields with longer content
 
 ![07c Larger field editor](images/07c-editor-tab-2-set-xray-type.png)
-07c Editor tab 2: set Xray type from popup dialog: person, important person, term or important term.
+07c Editor tab 2: set Xray type from popup dialog: person, important person, term or important term
 
 ![08 Series Manager with action buttons](images/11-series-manager-with-action-buttons.png)
 08 Series Manager with action buttons (NB: version in this repository will have fewer c.q. other buttons and icons than
@@ -280,10 +283,10 @@ the ones depicted here, because they reflect functionality tied into my personal
 09 Help info for buttons
 
 ![10 Manage XraySettings in a tabbed interface.](images/09-manage-xray-settings.png)
-10 Manage XraySettings in a tabbed interface.
+10 Manage XraySettings in a tabbed interface
 
 ![10b Manage DX hotkeys.](images/09b-user-configurable-dx-hotkeys.png)
-10b Manage DX hotkeys.
+10b Manage DX hotkeys
 
 ![10c Modify a DX hotkey.](images/09c-modify-a-dx-hotkey.png)
 10c Modify a DX hotkey
