@@ -818,13 +818,16 @@ function XrayButtons:forXrayCenter(parent)
                KOR.glossary:showViewer()
            end
        }})
+    enabled, color = KOR.buttonprops:getButtonState(has_text(DX.m.current_series))
     table_insert(buttons, {{
            icon_text = {
                 icon = "seriesmanager",
                 icon_size_ratio = 0.6,
                 text = DX.vd:addHotkeyInfo(_("Series Manager %1 %2"), separator, "Shift+M"),
+                fgcolor = color,
             },
            align = "left",
+           enabled = enabled,
            callback = function()
                KOR.dialogs:closeDialog(parent.main_modules_dialog)
                DX.c:onShowCurrentSeries()
