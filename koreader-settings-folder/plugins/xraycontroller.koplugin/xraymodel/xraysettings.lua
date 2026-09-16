@@ -40,6 +40,12 @@ local XraySettings = WidgetContainer:new{
             explanation = _("If you don't want to let DX inject DX-buttons into KOReaders' Book Status Widget, set this value to false. The change will be visible after you restarted KOReader."),
             locked = 0,
         },
+        button_font_size = {
+            value = 16,
+            explanation = _("Set the font size of texts on buttons. For mobile devices a value around 28 might work best, for other devices around 16."),
+            locked = 0,
+            type = "number",
+        },
         enable_global_DX_tips = {
             value = true,
             explanation = _("If true, in the top left of several DX dialogs a lightbulb icon will be shown, with which the user can call general usage tips for DX."),

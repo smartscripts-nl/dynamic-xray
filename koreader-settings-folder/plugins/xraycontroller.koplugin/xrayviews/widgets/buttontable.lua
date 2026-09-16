@@ -4,13 +4,13 @@ local require = require
 local Button = require("xrayviews/widgets/button")
 local Device = require("device")
 local FocusManager = require("xrayviews/widgets/focusmanager")
+local Geom = require("ui/geometry")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local KOR = require("extensions/kor")
 local LineWidget = require("ui/widget/linewidget")
 local Size = require("modules/size")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local VerticalSpan = require("ui/widget/verticalspan")
-local Geom = require("ui/geometry")
 local Screen = Device.screen
 
 local math_floor = math_floor
@@ -40,7 +40,7 @@ local ButtonTable = FocusManager:extend{
 
     zero_sep = false,
     button_font_face = "cfont",
-    button_font_size = 18,
+    --* button_font_size is set in ((Button#setBasicButtonProps)), to value of DX.s.button_font_size, so configured by user...
 
     is_active_tab = false,
     background = nil,
@@ -286,7 +286,6 @@ function ButtonTable:generateButton(btn_entry, max_button_height, default_button
     config.padding_h = btn_entry.align == "left" and Size.padding.large or Size.padding.button
     config.text_font_bold = is_bold
     config.text_font_face = self.button_font_face or btn_entry.text_font_face
-    config.text_font_size = btn_entry.text_font_size or btn_entry.button_font_size or btn_entry.font_size or self.button_font_size
     --* if avoid_text_truncation prop is set: allow text to take more of the horizontal space if centered...
     --* show_parent can also be set...
 
@@ -297,6 +296,8 @@ function ButtonTable:generateButton(btn_entry, max_button_height, default_button
         end
         btn_entry.callback()
     end
+
+    --* here the button is instantiated:
     local button = Button:new(config)
 
     --* value computed here will be used in ((shrink button row)), after all the buttons (in a row?) have been generated:

@@ -72,7 +72,6 @@ local Button = InputContainer:extend{
     generate_inverted_icon = false,
     hidden = false,
     hold_callback = nil,
-    ignore_indicators_width = false,
     inhibit_input_after_click = false,
     icon = nil,
     icon_height = nil,
@@ -81,6 +80,7 @@ local Button = InputContainer:extend{
     icon_size_ratio = nil,
     icon_text = nil,
     icon_width = nil,
+    ignore_indicators_width = false,
     increase_top_padding = 0,
     indicator_color = KOR.colors.lighter_indicator_color,
     indicator_color_darker = KOR.colors.darker_indicator_color,
@@ -108,7 +108,7 @@ local Button = InputContainer:extend{
     text = nil, --* mandatory (unless icon is provided)
     text_font_bold = true,
     text_font_face = "cfont",
-    text_font_size = 18,
+    text_font_size = nil,
     text_func = nil,
     text_icon = nil,
     texticon_text = nil,
@@ -214,15 +214,13 @@ function Button:computeFixedIconDims()
         self.icon_height = fixed_icon_height
         self.icon_width = fixed_icon_height
         self.icon_size_ratio = nil
-        --* to make sure that the text label doesn't make a button higher:
-        if self.text_font_size > 18 then
-            self.text_font_size = 18
-        end
     end
 end
 
 --- @private
 function Button:setBasicButtonProps()
+    self.text_font_size = DX.s.button_font_size
+
     if self.font_bold ~= nil then
         self.text_font_bold = self.font_bold
     end
@@ -962,7 +960,7 @@ function Button:generateTextLabel(label)
         label_color = KOR.colors.white
     end
     local is_bold = not label.is_icon_text and self.text_font_bold or false
-    local font_size = (self.text_font_size or not label.is_icon_text) and self.text_font_size or self.text_font_size * 1.15
+    local font_size = not label.is_icon_text and self.text_font_size or self.text_font_size * 1.15
 
     -- #((mark active tab bold))
     --* ((TabFactory#setTabButtonAndContent)) can set this prop:
@@ -1012,6 +1010,7 @@ function Button:doTruncationTweaks(label_widget, label, label_color, is_bold)
         return label_widget
     end
     self.did_truncation_tweaks = false
+
     if label_widget.face.orig_size and label_widget:isTruncated() then
         self.did_truncation_tweaks = true
         local font_size_2_lines = TextBoxWidget:getFontSizeToFitHeight(self.reference_height, self.button_lines, 0)
@@ -1102,7 +1101,6 @@ function Button:setFontProps(icon_or_text, force_normal)
     end
     if is_table_prop and icon_or_text.text_font_face and icon_or_text.font_size then
         self.text_font_face = icon_or_text.text_font_face
-        self.text_font_size = icon_or_text.font_size
     end
 end
 
