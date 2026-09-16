@@ -707,7 +707,7 @@ function XrayButtons:forXrayCenter(parent)
     table_insert(buttons, {{
            icon_text = {
             icon = "add",
-            text = DX.vd:addHotkeyInfo("Add Xray item %1 %2", separator, "Shift+A"),
+            text = DX.vd:addHotkeyInfo(_("Add Xray item %1 %2"), separator, "Shift+A"),
         },
            align = "left",
            callback = function()
@@ -722,7 +722,7 @@ function XrayButtons:forXrayCenter(parent)
         table_insert(buttons, {{
            icon_text = {
             icon = "image",
-            text = DX.vd:addHotkeyInfo("Favorite Images %1 %2", separator, "Shift+I"),
+            text = DX.vd:addHotkeyInfo(_("Favorite Images %1 %2"), separator, "Shift+I"),
             fgcolor = color,
         },
            enabled = enabled,
@@ -737,7 +737,7 @@ function XrayButtons:forXrayCenter(parent)
     table_insert(buttons, {{
            icon_text = {
             icon = "glossary-svgrepo-com",
-            text = DX.vd:addHotkeyInfo("Glossary %1 %2", separator, "Shift+G"),
+            text = DX.vd:addHotkeyInfo(_("Glossary %1 %2"), separator, "Shift+G"),
             fgcolor = color,
         },
            enabled = enabled,
@@ -751,7 +751,7 @@ function XrayButtons:forXrayCenter(parent)
            icon_text = {
                 icon = "export-xray",
                 icon_size_ratio = 0.58,
-                text = DX.vd:addHotkeyInfo("Items Exporter %1 %2", separator, "Shift+E"),
+                text = DX.vd:addHotkeyInfo(_("Items Exporter %1 %2"), separator, "Shift+E"),
                 fgcolor = has_items_color,
             },
            enabled = has_items_enabled,
@@ -765,7 +765,7 @@ function XrayButtons:forXrayCenter(parent)
            icon_text = {
                 icon = "list",
                 icon_size_ratio = 0.55,
-                text = DX.vd:addHotkeyInfo("Items List %1 %2", separator, "Shift+L"),
+                text = DX.vd:addHotkeyInfo(_("Items List %1 %2"), separator, "Shift+L"),
                 fgcolor = has_items_color,
             },
            enabled = has_items_enabled,
@@ -779,7 +779,7 @@ function XrayButtons:forXrayCenter(parent)
            icon_text = {
             icon = "navigator_wheel",
             icon_size_ratio = 0.53,
-            text = DX.vd:addHotkeyInfo("Page Navigator %1 %2", separator, "Shift+P"),
+            text = DX.vd:addHotkeyInfo(_("Page Navigator %1 %2"), separator, "Shift+P"),
             fgcolor = has_items_color,
         },
            enabled = has_items_enabled,
@@ -793,7 +793,7 @@ function XrayButtons:forXrayCenter(parent)
            icon_text = {
             icon = "quizlet-svgrepo-com",
             icon_size_ratio = 0.5,
-            text = DX.vd:addHotkeyInfo("Quizlet-questions %1 %2", separator, "Shift+Z"),
+            text = DX.vd:addHotkeyInfo(_("Quizlet-questions %1 %2"), separator, "Shift+Z"),
             fgcolor = has_items_color,
         },
            enabled = has_items_enabled,
@@ -808,7 +808,7 @@ function XrayButtons:forXrayCenter(parent)
            icon_text = {
             icon = "index",
             icon_size_ratio = 0.6,
-            text = DX.vd:addHotkeyInfo("Reference Information %1 %2", separator, "Shift+R"),
+            text = DX.vd:addHotkeyInfo(_("Reference Information %1 %2"), separator, "Shift+R"),
             fgcolor = color,
         },
            enabled = enabled,
@@ -822,7 +822,7 @@ function XrayButtons:forXrayCenter(parent)
            icon_text = {
                 icon = "seriesmanager",
                 icon_size_ratio = 0.6,
-                text = DX.vd:addHotkeyInfo("Series Manager %1 %2", separator, "Shift+M"),
+                text = DX.vd:addHotkeyInfo(_("Series Manager %1 %2"), separator, "Shift+M"),
             },
            align = "left",
            callback = function()
@@ -831,7 +831,11 @@ function XrayButtons:forXrayCenter(parent)
            end
        }})
     table_insert(buttons, {{
-           text = DX.vd:addHotkeyInfo("Zoek op Wikipedia %1 %2", separator, "Shift+W", KOR.icons.wikipedia_bare),
+           icon_text = {
+               icon = "wikipedia",
+               text = DX.vd:addHotkeyInfo(_("Search on Wikipedia %1 %2"), separator, "Shift+W"),
+               fgcolor = has_items_color,
+           },
            align = "left",
            callback = function()
                KOR.dialogs:closeDialog(parent.main_modules_dialog)
@@ -841,7 +845,7 @@ function XrayButtons:forXrayCenter(parent)
     table_insert(buttons, {{
        icon_text = {
             icon = "quick-search",
-            text = DX.vd:addHotkeyInfo("Search Xray-item %1 %2", separator, "Shift+Q"),
+            text = DX.vd:addHotkeyInfo(_("Search Xray-item %1 %2"), separator, "Shift+Q"),
             fgcolor = has_items_color,
         },
            enabled = has_items_enabled,
@@ -856,7 +860,7 @@ function XrayButtons:forXrayCenter(parent)
            icon_text = {
                 icon = "tags",
                 icon_size_ratio = 0.53,
-                text = DX.vd:addHotkeyInfo("Tag-group selector %1 %2", separator, "Shift+T"),
+                text = DX.vd:addHotkeyInfo(_("Tag-group selector %1 %2"), separator, "Shift+T"),
                 fgcolor = color,
             },
            enabled = enabled,
@@ -868,9 +872,12 @@ function XrayButtons:forXrayCenter(parent)
        }})
     enabled, color = KOR.buttonprops:getButtonState(has_items_enabled and DX.u:pageHasItems())
     table_insert(buttons, {{
-           text = DX.vd:addHotkeyInfo("UI Page Information %1 %2", separator, "Shift+U", KOR.icons.lightning_bare),
+           icon_text = {
+               icon = "lightning",
+               text = DX.vd:addHotkeyInfo(_("UI Page Information %1 %2"), separator, "Shift+U"),
+               fgcolor = color,
+           },
            enabled = enabled,
-           fgcolor = color,
            align = "left",
            callback = function()
                KOR.dialogs:closeDialog(parent.main_modules_dialog)

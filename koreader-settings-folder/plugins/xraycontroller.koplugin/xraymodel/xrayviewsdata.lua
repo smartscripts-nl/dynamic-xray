@@ -1178,24 +1178,13 @@ end
 --- @param menu_entry string This param must have %1 and %2 placeholders
 --- @param separator string One or more spaces
 --- @param hotkey string E.g. "Shift+G"
---- @param text_icon string Only given for pure text entries with a text icon
-function XrayViewsData:addHotkeyInfo(menu_entry, separator, hotkey, text_icon)
-    --? for some reason separator for entries with textual icons needs extra spaces:
-    local separator_wiki = separator .. "  "
+function XrayViewsData:addHotkeyInfo(menu_entry, separator, hotkey)
 
-    if not DX.s.menu_entries_add_hotkey_info then
+    if not DX.s.menu_entries_add_hotkey_info or not hotkey then
         menu_entry = menu_entry:gsub(" %%.+$", "")
-        if text_icon then
-            return text_icon .. separator_wiki .. menu_entry
-        end
         return separator .. menu_entry
     end
 
-    if text_icon then
-        return text_icon .. separator_wiki .. T(menu_entry, " " .. KOR.icons.keyboard_bare .. " ", hotkey)
-    end
-
-    --* for icon_text menu items:
     return separator .. T(menu_entry, " " .. KOR.icons.keyboard_bare .. " ", hotkey)
 end
 
