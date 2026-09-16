@@ -707,7 +707,7 @@ function XrayButtons:forXrayCenter(parent)
     table_insert(buttons, {{
            icon_text = {
             icon = "add",
-            text = DX.vd:addHotkeyInfo("Add Xray item %1 %2", separator, "Shift+1"),
+            text = DX.vd:addHotkeyInfo("Add Xray item %1 %2", separator, "Shift+A"),
         },
            align = "left",
            callback = function()
