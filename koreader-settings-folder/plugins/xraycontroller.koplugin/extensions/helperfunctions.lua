@@ -20,8 +20,11 @@ lfs_dir = lfs.dir
 lfs_mkdir = lfs.mkdir
 lfs_rmdir = lfs.rmdir
 logger_err = logger.err
-logger_info = logger.info
-logger_warn = logger.warn
+--* don't overwrite my versions of these helper functions in ((logging-helper.lua)):
+if not logger_info then
+    logger_info = logger.info
+    logger_warn = logger.warn
+end
 math_abs = math.abs
 math_ceil = math.ceil
 math_floor = math.floor
@@ -53,6 +56,7 @@ table_move = table.move
 table_pack = table.pack
 table_remove = table.remove
 table_sort = table.sort
+unpack = table.unpack or unpack
 utf8lower = function(text)
     return Utf8Proc.lowercase(util.fixUtf8(text, "?"))
 end

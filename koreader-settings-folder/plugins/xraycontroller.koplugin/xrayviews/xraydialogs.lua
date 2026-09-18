@@ -489,9 +489,9 @@ function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_names3, hits_i
     if not KOR.registry:getOnce("ui_info_called_from_xray_center") then
         KOR.dialogsqueue:reset()
     end
-    local dialogs_queue_id = "xray_ui_page_information"
+    local dialog_queue_id = "xray_ui_page_information"
     KOR.dialogsqueue:register({
-        id = dialogs_queue_id,
+        id = dialog_queue_id,
         restore = function()
             self:showUiPageInfo(hits_names, hits_names2, hits_names3, hits_info, hits_info2, hits_info3, matches_count)
         end,
@@ -525,7 +525,7 @@ function XrayDialogs:showUiPageInfo(hits_names, hits_names2, hits_names3, hits_i
         },
         context_buttons = context_buttons,
         context_buttons_tab = 1,
-        dialogs_queue_id = dialogs_queue_id,
+        dialog_queue_id = dialog_queue_id,
         fullscreen = true,
         covers_fullscreen = true,
         modal = false,
