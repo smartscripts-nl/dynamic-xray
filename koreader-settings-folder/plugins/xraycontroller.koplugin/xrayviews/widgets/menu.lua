@@ -696,6 +696,7 @@ local Menu = FocusManager:extend{
     has_close_button = true,
     no_close_button = false,
 
+    dialog_queue_id = nil,
     collection = nil,
     after_close_callback = nil,
     --* used for setting and retrieving active subpage; see ((Menu#storeActivePage)):
@@ -785,6 +786,7 @@ function Menu:init(restore_dialog)
         end
 
         local title_bar_config = {
+            dialog_queue_id = self.dialog_queue_id,
             width = self.dimen.w,
             fullscreen = self.fullscreen,
             align = "center",
