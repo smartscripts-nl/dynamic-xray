@@ -48,6 +48,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
 - [Development history and usage](#development-history-and-usage)
 - [Icons](#icons)
 - [Tips for navigating through the code](#tips-for-navigating-through-the-code)
+- [Developer tools](#developer-tools)
 - [License](#license)
 
 ## DX under Android
