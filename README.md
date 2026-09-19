@@ -377,6 +377,11 @@ Most icons used by DX were downloaded from [Online Webfonts](https://www.onlinew
 
 * In Better Highlights settings set (( and )) as wikilink start and end - the default is [[ and ]] -, so you can add clickable comments to --(( )) lua commented blocks.
 
+## Developer tools
+
+For developers, I've uploaded a shell script to colorize KOReader log output and to focus on messages and errors triggered by user scripts. Works great in PhpStorm's Run tool window. An example of the output:
+![Colorized log tail output monitor](images/koreader-colorized-log-tail-output-monitor.png)
+
 ## License
 
 GNU General Public License (GPLv3): open source software, free to use, modify and distribute your version. Naming me as the author of the very first version would be nice.
