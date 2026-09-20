@@ -95,7 +95,17 @@ function DialogsQueue:restorePrevious(id)
     self.dialog_ids[id] = nil
     table_remove(self.queue)
 
-    --* restore the previous dialog:
+    --* save the restored queue id, so in the context that former id might be used to override a conflicting id; example of a calling context using this:
+    --[[
+        --* the Registry prop "dialog_queue_id" might have been set by some method:
+        local bookmarks_collection_id = KOR.registry:getOnce("dialog_queue_id")
+        local restored_id = KOR.registry:getOnce("restore_queue_id")
+        local dialog_queue_id = restored_id or bookmarks_collection_id or "bookmarks_list"
+        --* now register this dialog to DialogsQueue, with the correct dialog_queue_id and show the restored dialog...
+    ]]
+    KOR.registry:set("restore_queue_id", self.queue[count - 1].id)
+
+    --* now restore the previous dialog:
     self.queue[count - 1].restore()
 
     if not self.hold_action_alert_shown and not DX.s.no_back_to_previous_dialog_notification then
