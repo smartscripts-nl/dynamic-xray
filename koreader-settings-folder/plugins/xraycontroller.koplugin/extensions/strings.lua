@@ -131,6 +131,14 @@ function Strings:limitLength(text, max_length)
     return text
 end
 
+function Strings:removeBrokenWordAtEnd(text)
+    return text:gsub(" [^ ]+$", "")
+end
+
+function Strings:removeBrokenWordAtStart(text)
+    return text:gsub("^[^ ]+ ", "")
+end
+
 --* count is meant for loops: only on first loop convert strings to singular:
 function Strings:singular(text, icount)
     if icount == 1 then

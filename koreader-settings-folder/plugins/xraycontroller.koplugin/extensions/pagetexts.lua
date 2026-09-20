@@ -305,16 +305,10 @@ local function utf8_char_positions(str)
     return positions
 end
 
-function PageTexts:condenseTextAroundMarkers(html, context)
-    context = context or 300
-
-    local char_pos = utf8_char_positions(html)
+--- @private
+function PageTexts:insertRange(ranges, char_pos, byte_start, byte_end, context_length)
     local total_chars = #char_pos
-    local ranges = {}
     local from_char, to_char, char_start, char_end
-
-    --* search strong blocks (bytepositions):
-    for byte_start, byte_end in html:gmatch("()<strong>.-</strong>()") do
 
         --* find associated character-index:
         for i = 1, total_chars do
@@ -328,8 +322,8 @@ function PageTexts:condenseTextAroundMarkers(html, context)
         end
 
         if char_start and char_end then
-            from_char = math_max(1, char_start - context)
-            to_char = math_min(total_chars, char_end + context)
+        from_char = math_max(1, char_start - context_length)
+        to_char = math_min(total_chars, char_end + context_length)
 
             table_insert(ranges, {
                 from_char = from_char,
@@ -338,10 +332,18 @@ function PageTexts:condenseTextAroundMarkers(html, context)
         end
     end
 
-    if #ranges == 0 then
-        return ""
+--- @private
+function PageTexts:getBoldRanges(html, char_pos, context_length)
+    local ranges = {}
+    --* search strong blocks (bytepositions):
+    for byte_start, byte_end in html:gmatch("()<strong>.-</strong>()") do
+        self:insertRange(ranges, char_pos, byte_start, byte_end, context_length)
     end
+    return ranges
+end
 
+--- @private
+function PageTexts:getMergedRanges(ranges)
     table_sort(ranges, function(a, b)
         return a.from_char < b.from_char
     end)
@@ -358,10 +360,22 @@ function PageTexts:condenseTextAroundMarkers(html, context)
             table_insert(merged, cur)
         end
     end
+    return merged
+end
 
+--- @private
+function PageTexts:condenseTextAroundMarkers(html, context_length)
+
+    context_length = context_length or 300
+    local char_pos = utf8_char_positions(html)
+    local ranges = self:getBoldRanges(html, char_pos, context_length)
+    if #ranges == 0 then
+        return ""
+    end
+
+    local merged = self:getMergedRanges(ranges)
     --* rebuild:
     local result = {}
-
     local byte_from, byte_to, line, r
     count = #merged
     for i = 1, count do
@@ -370,10 +384,8 @@ function PageTexts:condenseTextAroundMarkers(html, context)
         byte_to = char_pos[r.to_char + 1]
         byte_to = byte_to and (byte_to - 1) or #html
         line = html:sub(byte_from, byte_to):gsub("^[,.?!;:a-z] ", "")
-        --* remove possibly broken words at start and end of line:
-        line = line
-            :gsub("^[^ ]+ ", "")
-            :gsub(" [^ ]+$", "")
+        line = KOR.strings:removeBrokenWordAtStart(line)
+        line = KOR.strings:removeBrokenWordAtEnd(line)
         table_insert(result, line)
     end
 
