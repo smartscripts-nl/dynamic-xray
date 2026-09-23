@@ -43,6 +43,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
     - [Notification: DX couldn't be initialized](#notification-that-dx-couldnt-be-initiated)
     - [User uses a database file other than "bookinfo_cache.sqlite3"](#user-uses-a-database-file-other-than-bookinfo_cachesqlite3)
 - [Issues to fix](#issues-to-fix)
+- [Coming soon...](#coming-soon)
 - [Todos](#todos)
 - [About the code](#about-the-code)
 - [Development history and usage](#development-history-and-usage)
@@ -334,20 +335,13 @@ PT_bookinfo_cache.sqlite3". In that case:
 ## Issues to fix
 * Currently none?
 
+## Coming soon...
+
+* Text snippets replacement in dialog fields. Works for both the onscreen and hardware keyboards. This will make it possible to enter Xray item descriptions faster.
+
 ## Todos
 * Update the demo movies in the GitHub releases section.
 * Base custom translations on indices instead of the texts they translate → continued usability of translations by the user much better protected, even when the actual text to be translated changes.
-* It is possible to add an item to the KOReader footer to show the total count of Xray items for the current ebook. But alas, ReaderFooter as it is now is much too convoluted and heavily relies on local vars, which to my best knowledge makes patching impossible. You could of course directly modify ReaderFooter yourself, but you'd then have to re-do this upon every update. You'd have to edit this module in several places, the most important modification being to add this function to the functions already present in footerTextGeneratorMap:
-```
-xray_items = function()
-  local items_count = #DX.vd.item_table[1]
-  if items_count == 0 then
-      return ""
-  end
-  local KOR = require("extensions/kor")
-  return KOR.icons.lightning_bare .. items_count
-end
-```
 
 ## About the code
 
