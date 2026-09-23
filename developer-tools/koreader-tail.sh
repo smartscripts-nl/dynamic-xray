@@ -8,8 +8,6 @@
 # attributes can be combined with ;
 # e.g. combine color with bold (1 = bold, 0 = reset all lay-out): \x1b[1;31m for bold red
 
-# you'll have to tinker with settings below to suit your personal needs...
-
 # ---- Config ----
 LOG_FILE="/var/log/syslog"
 HIST_LINES=800
@@ -18,6 +16,7 @@ PROCESS_NAME="koreader-ubuntu-restart\.desktop"
 PROCESS_NAME_SHORTENED="ubuntu"
 PROCESS_NAME_2="koreader-latest-restart\.desktop"
 PROCESS_NAME_SHORTENED_2="latest"
+PROCESS_NAMES="(ubuntu|latest)"
 
 RED=$'\x1b[31m' # to mark errors
 GREEN=$'\x1b[32m'
@@ -36,7 +35,7 @@ join_items() {
 
 APPLICATION_FILTER='koreader'
 EXCLUDE_FILTER_PATTERNS=(
-    '\.\.\.'
+    '\.\.\.$'
     '\-\-+'
     '[0-9]+\-[0-9]+\-[0-9]+ [0-9]+:[0-9]+:[0-9]+$'
     'a scroll'
@@ -53,14 +52,13 @@ EXCLUDE_FILTER_PATTERNS=(
     '[hw] = '
     'Inhibiting user input'
     'initializing for device'
-    'KOReader\-'
+    "KOReader\-${PROCESS_NAMES}"
     'launch'
     'lib_'
     'message repeated'
     'monolibtic'
     'No dialogs left'
     'Preparing'
-    'ReaderUI instance mismatch[^\n]+'
     'reader\.lua'
     'Restoring'
     'Starting'
@@ -73,25 +71,31 @@ EXCLUDE_FILTER=$(join_items "${EXCLUDE_FILTER_PATTERNS[@]}")
 
 ERROR_PATTERNS=(
     "'[^']+' expected near '[^']+'"
-    'attempt to call method [^\n]+'
+    "\[!\][^\n]+"
+    'attempt to call (method|upvalue) [^\n]+'
+    'attempt to compare nil with number'
     'attempt to compare number with nil'
     'attempt to concatenate[^\n]+'
     'attempt to get length of[^\n]+'
     'attempt to index a nil value'
     'attempt to index (field|local) [^\n]+'
     'attempt to index upvalue[^\n]+'
+    'attempt to perform arithmetic on field[^\n]+'
+    'bad argument[^\n]+'
     'cannot open'
     'ERROR (An error occurred while executing handler [^\n\r]+):'
     "error loading module '[^']+'"
     'Error when loading'
-    'Failed to initialize [a-z]+ plugin'
+    'failed to call event handler [a-zA-Z0-9]+'
+    'Failed to initialize [a-z_]+ plugin'
     # "in function" is critical for displaying stack traces:
-    "in function '[^']+'"
+    "in function( '[^']+')?"
     'in main chunk'
     'invalid value[^\n]+'
     'module [^ ]+ not found'
     'No such file or directory'
     'Patching failed'
+    'ReaderUI instance mismatch[^\n]+'
     'stack traceback:'
     'table index is nil'
     "unexpected symbol near '[^']+'"
@@ -108,6 +112,8 @@ colorize_line() {
 	    # General replacements
 	    "s/#011frontend/frontend/g"
 	    "s/#011\[C\]//g"
+	    "s/#011(\.\.\.)/\1/g"
+	    "s/#011//g"
 	    "s/..luajit://g"
 	    "s/\.[0-9]+\+[0-9]+:[0-9]+ MacBuntu\-i7//g"
 
@@ -117,7 +123,8 @@ colorize_line() {
 	    "s/(cannot open|from file|from file) ([a-zA-Z0-9./']+\.lua'?)/${RED}\1${RESET} ${BLUE}\2${RESET}/g"
 
 	    # File names and locations
-	    "s/([a-zA-Z0-9./']+\.lua:[0-9]+):/${BLUE}\1${RESET}/g"
+	    "s/([a-zA-Z0-9./']+\.lua:[0-9]+):?/${BLUE}\1${RESET}/g"
+	    "s/(opening file)/${GREEN}\1${RESET}/g"
 
 	    # Simplify process names
 	    "s/ ${PROCESS_NAME}\[[0-9]+\]:/ ${PROCESS_NAME_SHORTENED}/g"
@@ -129,7 +136,7 @@ colorize_line() {
 	    "s/(latest|ubuntu) [0-9]{2}\/[0-9]{2}\/[0-9]{2}\-[0-9]{2}:[0-9]{2}:[0-9]{2}/\1/g"
 
 	    # Remove date-time entries before parts of an echoed lua table
-	    "s/[0-9]+:[0-9]+:[0-9]+[ \t]+(ubuntu|latest) WARN([^\[{}]*)([\[{}])/WARN \2\3/g"
+	    "s/[0-9]+:[0-9]+:[0-9]+[ \t]+${PROCESS_NAMES} WARN([^\[{}]*)([\[{}])/WARN \2\3/g"
 
 	    # Log levels
 	    "s/INFO ([^\n]+)/${GREEN}\1${RESET}/g"
@@ -145,6 +152,7 @@ colorize_line() {
 	    "s/.+YELLOWYELLOW/YELLOWYELLOW/g"
 	    # now mark info lines yellow:
 	    "s/YELLOWYELLOW/${YELLOW}/g"
+	    "s/${PROCESS_NAMES} : /\1 /g"
 	)
 
 	sed_args=()
