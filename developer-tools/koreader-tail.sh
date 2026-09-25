@@ -24,6 +24,8 @@ YELLOW=$'\x1b[33m' # to mark warnings
 BLUE=$'\x1b[94m' # to mark files
 RESET=$'\x1b[0m' # to reset color formatting
 
+FILE_PATTERN="[-a-zA-Z0-9_./']+\.lua'?"
+
 REMOVE_LINES_FILTER_ENABLED=1
 
 join_items() {
@@ -120,10 +122,10 @@ colorize_line() {
 	    # Lua errors
 	    "s/(${ERROR_REGEX})/${RED}\1${RESET}/g"
     			# errors with mention of file:
-	    "s/(cannot open|from file|from file) ([a-zA-Z0-9./']+\.lua'?)/${RED}\1${RESET} ${BLUE}\2${RESET}/g"
+	    "s/(cannot open|from file|from file) (${FILE_PATTERN})/${RED}\1${RESET} ${BLUE}\2${RESET}/g"
 
 	    # File names and locations
-	    "s/([a-zA-Z0-9./']+\.lua:[0-9]+):?/${BLUE}\1${RESET}/g"
+	    "s/(${FILE_PATTERN}:[0-9]+):?/${BLUE}\1${RESET}/g"
 	    "s/(opening file)/${GREEN}\1${RESET}/g"
 
 	    # Simplify process names
@@ -133,7 +135,7 @@ colorize_line() {
 	    # Remove timestamps
 	    "s/\/[0-9]{4}\/[0-9]{2}\/[0-9]{2}\-[0-9]{2}:[0-9]{2}:[0-9]{2} //g"
 	    "s/[0-9]{4}\-[0-9]{2}\-[0-9]{2}T//g"
-	    "s/(latest|ubuntu) [0-9]{2}\/[0-9]{2}\/[0-9]{2}\-[0-9]{2}:[0-9]{2}:[0-9]{2}/\1/g"
+	    "s/${PROCESS_NAMES} [0-9]{2}\/[0-9]{2}\/[0-9]{2}\-[0-9]{2}:[0-9]{2}:[0-9]{2}/\1/g"
 
 	    # Remove date-time entries before parts of an echoed lua table
 	    "s/[0-9]+:[0-9]+:[0-9]+[ \t]+${PROCESS_NAMES} WARN([^\[{}]*)([\[{}])/WARN \2\3/g"
