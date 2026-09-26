@@ -3,6 +3,7 @@ local require = require
 
 local KOR = require("extensions/kor")
 local Screen = require("device").screen
+local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 
@@ -12,7 +13,7 @@ local T = T
 local table_concat = table_concat
 
 --- @class XrayInformation
-local XrayInformation = WidgetContainer:extend {
+local XrayInformation = WidgetContainer:extend{
     global_hotkeys_info_formatted = false,
     hotkey_contexts = {
         page_navigator = [[<strong>]] .. _("In Page Navigator") .. [[</strong><br>
@@ -135,6 +136,7 @@ local XrayInformation = WidgetContainer:extend {
     },
     mobile_width_factor = 0.97,
     reference_information_info = nil,
+    snippets_info_dialog = nil,
     width_factor = 0.85,
 }
 
@@ -433,6 +435,40 @@ function XrayInformation:showReliabilityIndicatorsExplanation()
         }
     })
     return true
+end
+
+function XrayInformation:showSnippetsExplanation(active_tab)
+
+    KOR.dialogsqueue:register({
+        id = "snippets_explanation",
+        restore = function()
+            self:showSnippetsExplanation(active_tab)
+        end,
+    })
+
+    active_tab = active_tab or 1
+    self.snippets_info_dialog = KOR.dialogs:textBoxTabbed(active_tab, {
+        title = _("Text commands & snippets"),
+        modal = true,
+        top_buttons_left = {
+            KOR.buttoninfopopup:forXraySettings({
+                callback = function()
+                    UIManager:close(self.snippets_info_dialog)
+                    DX.s.showSettingsManager()
+                end
+            }),
+        },
+        tabs = {
+            {
+                tab = _("General info"),
+                info = _("EDITING SNIPPETS\n\nLongpress an item.\n\nADDING SNIPPETS\n\nTap on the plus icon at the bottom of this list.\n\nDELETING SNIPPETS\n\nTap on the dustbin icon in the snippet editor or viewer dialogs.\n\nCASE-SENSITIVE INPUT\n\nIf, while typing, you enter the name of a snippet with an initial uppercase char, the resulting text will also start with an uppercase char..."),
+            },
+            {
+                tab = _("Commands & snippets"),
+                info = _("In DX input fields you can type special commands, to quickly delete some words, etc.:") .. "\n\n" .. KOR.textsnippets:getSnippetsHelp(),
+            },
+        },
+    })
 end
 
 function XrayInformation:showListAndViewerHelp(initial_tab)

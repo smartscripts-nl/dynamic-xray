@@ -23,6 +23,10 @@ function System:isClosingGesture(direction, excluded_direction)
 	return false
 end
 
+function System:inhibitInputOnGesture()
+	Input:inhibitInputUntil(2)
+end
+
 function System:inhibitInputOnHold()
 	--* currently this value is 0.9:
 	Input:inhibitInputUntil(self.hold_menu_input_delay)

@@ -55,6 +55,12 @@ function ScreenHelpers:getDialogWidthFactor()
     return self:isLandscapeScreen() and 0.58 or 0.85
 end
 
+function ScreenHelpers:refreshByDimen(dialog)
+    UIManager:setDirty(nil, function()
+        return "ui", dialog[1][1].dimen
+    end)
+end
+
 function ScreenHelpers:refreshDialog()
     --* refresh dialog, so e.g. no shadows of dialog lines remain:
     UIManager:setDirty(nil, "ui")

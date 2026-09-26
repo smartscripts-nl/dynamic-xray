@@ -414,6 +414,25 @@ function ButtonInfoPopup:forSeriesAll(props)
 	}, props)
 end
 
+function ButtonInfoPopup:forSnippetsAdd(props)
+	return ButtonProps:set({
+		icon = "add",
+		info = _("plus icon | Add a snippet."),
+		callback_label = _("add"),
+		--! callback defined by calling module
+	}, props)
+end
+
+function ButtonInfoPopup:forSnippetsManager(props)
+	return ButtonProps:set({
+		icon = "scissors",
+		icon_size_ratio_forced = 0.58,
+		info = _("scissors icon | Show text snippets manager."),
+		callback_label = _("show"),
+		--! callback defined by calling module
+	}, props)
+end
+
 function ButtonInfoPopup:forTextViewerOneScreenDown(props)
 	return ButtonProps:set({
 		icon = "down",

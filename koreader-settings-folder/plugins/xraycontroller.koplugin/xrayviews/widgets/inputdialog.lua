@@ -164,8 +164,6 @@ local InputDialog = FocusManager:extend {
     add_scroll_buttons = false, --* add scroll Up/Down buttons to first row of buttons
 
     add_nav_bar = false, --* append a row of page navigation buttons
-    --* add_nav_bar will be set to true if allow_new_line is true, but this prop, if true, prevents that:
-    force_no_navbar = false,
 
     --* note that the text widget can be scrolled with Swipe North/South even when no button
 
@@ -231,7 +229,9 @@ local InputDialog = FocusManager:extend {
     dropdown_button_was_used = false,
     dropdown_items = nil,
     reset_button = nil,
+    is_snippet_dialog = false,
 
+    buttons_container = nil,
     modal = true,
     titlebar_alignment = "center",
     force_save_enabled = false,
@@ -242,9 +242,11 @@ local InputDialog = FocusManager:extend {
     title_tab_buttons_left = nil,
     top_buttons_left = nil,
     top_buttons_right = nil,
-    _input_widget = nil,
+    vspan_after_input_text = nil,
+    vspan_before_input_text = nil,
 
     --* for internal use
+    _input_widget = nil,
     _text_modified = false, --* previous known modified status
     _top_line_num = nil,
     _charpos = nil,
@@ -255,6 +257,46 @@ local InputDialog = FocusManager:extend {
 }
 
 function InputDialog:init()
+    self:setModuleProps()
+    self:initTopButtons()
+    self:initTitleBar()
+    self:setPaddings()
+    --* In case of re-init(), keep backup of original buttons and restore them:
+    self:_backupRestoreButtons()
+    self:initDialogButtons()
+    self:setOrigTextHeight()
+    self:computeFieldDimensions()
+    self:setInputWidget()
+    self:mergeLayoutInVertical(self.button_table)
+    self:refocusWidget()
+    self:setSaveButtonText()
+    self:buildWidget()
+    self:registerTouch()
+    self:registerKeyEvents()
+    self:addWidgets()
+    KOR.registry.dialog_widget = self
+end
+
+--- @private
+function InputDialog:registerKeyEvents()
+    KOR.keyevents:registerHotkeysInputDialog(self)
+end
+
+--- @private
+function InputDialog:registerTouch()
+    if Device:isTouchDevice() then
+        --* is used to hide the keyboard with a tap outside of inputbox
+        self.ges_events.Tap = {
+            GestureRange:new{
+                ges = "tap",
+                range = self[1].dimen, --* screen above the keyboard
+            },
+        }
+    end
+end
+
+--- @private
+function InputDialog:setModuleProps()
     self.layout = { {} }
     self.screen_width = Screen:getWidth()
     self.screen_height = Screen:getHeight()
@@ -279,18 +321,21 @@ function InputDialog:init()
         self.keyboard_hidden = true
     end
 
-    if not self.force_no_navbar and (self.keyboard_hidden or self.allow_newline) then
+    if self.keyboard_hidden or self.allow_newline then
         self.add_nav_bar = true
     end
 
     if self.fullscreen or self.add_nav_bar then
         self.deny_keyboard_hiding = true
     end
+end
 
-    local tab_buttons_left, top_buttons_left, submenu_buttontable, button_props, text
+--- @private
+function InputDialog:initTopButtons()
+    local button_props, text
     --* can be set from MultiInputDialog:
     if self.title_tab_buttons_left then
-        tab_buttons_left = {}
+        self.tab_buttons_left = {}
         count = #self.title_tab_buttons_left
         for i = 1, count do
             text = self.title_tab_buttons_left[i]
@@ -304,10 +349,10 @@ function InputDialog:init()
                 end,
             }
             Button:addTitleBarTabButtonProps(button_props, i == self.active_tab)
-            table_insert(tab_buttons_left, Button:new(button_props))
+            table_insert(self.tab_buttons_left, Button:new(button_props))
         end
     elseif self.submenu_buttontable then
-        submenu_buttontable = {}
+        self.submenu_buttontable = {}
         count = #self.submenu_buttontable
         for i = 1, count do
             text = self.submenu_buttontable[i]
@@ -321,12 +366,34 @@ function InputDialog:init()
                 end,
             }
             Button:addTitleBarTabButtonProps(button_props, i == self.active_tab)
-            table_insert(submenu_buttontable, Button:new(button_props))
+            table_insert(self.submenu_buttontable, Button:new(button_props))
         end
-    else
-        top_buttons_left = self.top_buttons_left
     end
 
+    if self.tab_buttons_left then
+        self:addSnippetsManagerButton(self.tab_buttons_left)
+    else
+        self.top_buttons_left = self.top_buttons_left or {}
+        self:addSnippetsManagerButton(self.top_buttons_left)
+    end
+end
+
+--- @private
+function InputDialog:addSnippetsManagerButton(buttons)
+    if self.is_snippet_dialog then
+        return
+    end
+
+    table_insert(buttons, KOR.buttoninfopopup:forSnippetsManager({
+        callback = function()
+            UIManager:close(self)
+            KOR.textsnippets:showManager()
+        end
+    }))
+end
+
+--- @private
+function InputDialog:initTitleBar()
     --* title & description
     self.title_bar = self.title and TitleBar:new{
         width = self.width,
@@ -334,31 +401,34 @@ function InputDialog:init()
         align = self.titlebar_alignment,
         with_bottom_line = true,
         title = self.title,
-        title_shrink_font_to_fit = self.title_shrink_font_to_fit,
-        title_multilines = self.title_multilines,
-        subtitle = self.subtitle,
+        title_shrink_font_to_fit = true,
+        title_multilines = false,
+        higher_tab_buttons = true,
         close_callback = self.close_callback,
         bottom_v_padding = self.bottom_v_padding,
         --* this is a description line above an input field:
         info_text = self.description,
         info_text_face = self.description_face or Font:getFace("x_smallinfofont"),
-        submenu_buttontable = submenu_buttontable,
-        tab_buttons_left = tab_buttons_left,
-        top_buttons_left = top_buttons_left,
+        submenu_buttontable = self.submenu_buttontable,
+        tab_buttons_left = self.tab_buttons_left,
+        top_buttons_left = self.top_buttons_left,
         top_buttons_right = self.top_buttons_right,
         show_parent = self,
     }
+end
 
+--- @private
+function InputDialog:setPaddings()
     --* Vertical spaces added before and after InputText
     --* (these will be adjusted later to center the input text if needed)
     --* (can be disabled by setting condensed=true)
     local padding_width = self.condensed and 0 or Size.padding.default
-    local vspan_before_input_text = VerticalSpan:new{ width = padding_width }
-    local vspan_after_input_text = VerticalSpan:new{ width = padding_width }
+    self.vspan_before_input_text = VerticalSpan:new{width = padding_width}
+    self.vspan_after_input_text = VerticalSpan:new{width = padding_width}
+end
 
-    --* buttons
-    --* In case of re-init(), keep backup of original buttons and restore them
-    self:_backupRestoreButtons()
+--- @private
+function InputDialog:initDialogButtons()
     --* If requested, add predefined buttons alongside provided ones
     if self.save_callback then
         --* If save_callback provided, adds (Reset) / Save / Close buttons
@@ -371,7 +441,6 @@ function InputDialog:init()
         --* Up / Down buttons
         self:_addScrollButtons(false)
     end
-    --* buttons table
     self.button_table = ButtonTable:new{
         width = self.width - 2 * self.button_padding,
         button_font_face = "cfont",
@@ -381,14 +450,17 @@ function InputDialog:init()
         zero_sep = true,
         show_parent = self,
     }
-    local buttons_container = CenterContainer:new{
+    self.buttons_container = CenterContainer:new{
         dimen = Geom:new{
             w = self.width,
             h = self.button_table:getSize().h,
         },
         self.button_table,
     }
+end
 
+--- @private
+function InputDialog:setOrigTextHeight()
     --* remember provided text_height if any (to restore it on keyboard height change)
     if self.orig_text_height == nil then
         if self.text_height then
@@ -397,7 +469,10 @@ function InputDialog:init()
             self.orig_text_height = false
         end
     end
+end
 
+--- @private
+function InputDialog:computeFieldDimensions()
     --* inputText
     if not self.text_height or self.fullscreen then
         --* We need to find the best height to avoid screen overflow
@@ -428,10 +503,10 @@ function InputDialog:init()
         local available_height = self.screen_height
                 - 2 * self.border_size
                 - title_bar_height
-                - vspan_before_input_text:getSize().h
+            - self.vspan_before_input_text:getSize().h
                 - input_pad_height
-                - vspan_after_input_text:getSize().h
-                - buttons_container:getSize().h
+            - self.vspan_after_input_text:getSize().h
+            - self.buttons_container:getSize().h
                 - keyboard_height
 
         if self.fullscreen or self.use_available_height or text_height > available_height then
@@ -441,8 +516,8 @@ function InputDialog:init()
             local pad_height = available_height - self.text_height
             local pad_before = math_ceil(pad_height / 2)
             local pad_after = pad_height - pad_before
-            vspan_before_input_text.width = vspan_before_input_text.width + pad_before
-            vspan_after_input_text.width = vspan_after_input_text.width + pad_after
+            self.vspan_before_input_text.width = self.vspan_before_input_text.width + pad_before
+            self.vspan_after_input_text.width = self.vspan_after_input_text.width + pad_after
             if text_height > available_height then
                 self.cursor_at_end = false --* stay at start if overflowed
             end
@@ -460,6 +535,10 @@ function InputDialog:init()
     if self.dropdown_items then
         self.text_width = math_floor(self.width * 0.7)
     end
+end
+
+--- @private
+function InputDialog:setInputWidget()
     self._input_widget = self.inputtext_class:new{
         text = self.input,
         hint = self.input_hint,
@@ -507,59 +586,48 @@ function InputDialog:init()
         charpos = self._charpos,
     }
 
-    local insert = self.dropdown_items and self:generateDropdown() or self._input_widget
-
     if self.allow_newline then
         --* remove any enter_callback
         self._input_widget.enter_callback = nil
     end
-    self:mergeLayoutInVertical(self.button_table)
-    self:refocusWidget()
-    --* complementary setup for some of our added buttons
-    if self.save_callback then
-        local save_button = self.button_table:getButtonById("save")
-        if self.readonly then
-            save_button:setText(_("Read only"), save_button.width)
-        elseif not self._input_widget:isTextEditable() then
-            save_button:setText(_("Not editable"), save_button.width)
-        end
+end
+
+--- @private
+function InputDialog:setSaveButtonText()
+    if not self.save_callback then
+        return
     end
 
-    --* combine all
+    local save_button = self.button_table:getButtonById("save")
+    if self.readonly then
+        save_button:setText(_("Read only"), save_button.width)
+    elseif not self._input_widget:isTextEditable() then
+        save_button:setText(_("Not editable"), save_button.width)
+    end
+end
+
+--- @protected
+function InputDialog:buildWidget()
+    local insert = self.dropdown_items and self:generateDropdown() or self._input_widget
+
+        self.vgroup = VerticalGroup:new{
+            align = "left",
+        self.vspan_before_input_text,
+            CenterContainer:new{
+                dimen = Geom:new{
+                    w = self.width,
+                    h = self._input_widget:getSize().h,
+                },
+                insert,
+            },
+            --* added widgets may be inserted here
+        self.vspan_after_input_text,
+        self.buttons_container,
+        }
     if self.title and self.title_bar then
-        self.vgroup = VerticalGroup:new{
-            align = "left",
-            self.title_bar,
-            vspan_before_input_text,
-            CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.width,
-                    h = self._input_widget:getSize().h,
-                },
-                insert,
-            },
-            --* added widgets may be inserted here
-            vspan_after_input_text,
-            buttons_container,
-        }
-    else
-        self.vgroup = VerticalGroup:new{
-            align = "left",
-            vspan_before_input_text,
-            CenterContainer:new{
-                dimen = Geom:new{
-                    w = self.width,
-                    h = self._input_widget:getSize().h,
-                },
-                insert,
-            },
-            --* added widgets may be inserted here
-            vspan_after_input_text,
-            buttons_container,
-        }
+        table_insert(self.vgroup, 1, self.title_bar)
     end
 
-    --* Final widget
     self.dialog_frame = FrameContainer:new{
         radius = self.fullscreen and 0 or Size.radius.window,
         padding = 0,
@@ -586,22 +654,18 @@ function InputDialog:init()
         ignore_if_over = "height",
         frame,
     }
-    if Device:isTouchDevice() then
-        --* is used to hide the keyboard with a tap outside of inputbox
-        self.ges_events.Tap = {
-            GestureRange:new{
-                ges = "tap",
-                range = self[1].dimen, --* screen above the keyboard
-            },
-        }
     end
-    KOR.keyevents:registerHotkeysInputDialog(self)
-    if self._added_widgets then
-        local widget
-        for i = 1, #self._added_widgets do
-            widget = self._added_widgets[i]
-            self:addWidget(widget, true)
-        end
+
+--- @private
+function InputDialog:addWidgets()
+    if not self._added_widgets then
+        return
+    end
+
+    local widget
+    for i = 1, #self._added_widgets do
+        widget = self._added_widgets[i]
+        self:addWidget(widget, true)
     end
 end
 
@@ -841,6 +905,9 @@ end
 
 function InputDialog:onCloseWidget()
     self:onClose()
+    if self.after_close_callback then
+        self.after_close_callback()
+    end
     --* re-instate global hotkeys which were disabled in ((InputDialog#onShow)):
     DX.c:addGlobalHotkeys()
     KOR.registry:unset("xray_type_focusser")
@@ -912,6 +979,8 @@ function InputDialog:onClose()
     if self._input_widget.onCloseKeyboard then
         self._input_widget:onCloseKeyboard()
     end
+
+    KOR.screenhelpers:refreshByDimen(self)
 end
 
 function InputDialog:refreshButtons()
@@ -1165,7 +1234,7 @@ function InputDialog:_addScrollButtons(nav_bar)
                                     end,
                                 },
                                 {
-                                    text = KOR.icons.first_bare,
+                                    icon = "first",
                                     callback = function()
                                         self:findCallback(keyboard_hidden_state, input_dialog, true)
                                     end,
@@ -1201,7 +1270,7 @@ function InputDialog:_addScrollButtons(nav_bar)
                     if has_text(self.search_value) then
                         self:findCallback("force_hidden", nil, true, "force_next")
                     else
-                        KOR.messages:notify("nog geen zoekterm opgegeven...")
+                        KOR.messages:notify(_("no search term was entered"))
                     end
                 end,
             }))
@@ -1211,7 +1280,7 @@ function InputDialog:_addScrollButtons(nav_bar)
                     if has_text(self.search_value) then
                         self:findCallback("force_hidden", nil, false, "force_next")
                     else
-                        KOR.messages:notify("nog geen zoekterm opgegeven...")
+                        KOR.messages:notify(_("no search term was entered"))
                     end
                 end,
             }))
@@ -1386,114 +1455,6 @@ end
 
 function InputDialog:scrollToBottom()
     self._input_widget:scrollToBottom()
-end
-
-function InputDialog:showNonAsciiAlert(insertion)
-    if not insertion then
-        insertion = ""
-    end
-    KOR.dialogs:niceAlert("Let op!", "Non-ascii tekens aangetroffen, gebruik daarom " .. insertion .. "enkel het onscreen toetsenbord.\n\nTekstsnippets en -commando's niet beschikbaar voor het onscreen toetsenbord...", {
-        delay = 3,
-    })
-end
-
---* this method can get called because of ((dont block event handling for key presses)) in ((InputText)):
-function InputDialog:onGetHardwareInput()
-
-    --! see also ((load virtual keyboard)), ((load hardware keyboard))
-
-    --* see ((get pressed hardware key)):
-    local key = KOR.registry:getOnce("pressed_key")
-    --* see ((get active modifier key)):
-    if key then
-
-        local modifier = KOR.registry:getOnce("pressed_modifier")
-
-        -- #((enable tab activation with Shift+Space))
-        if key == " " and modifier then
-            return false
-        end
-
-        local prev_content = self._input_widget:getText()
-        if KOR.strings:hasNonAscii(prev_content) then
-            self:showNonAsciiAlert()
-            return false
-        end
-        local current_pos = self._input_widget:getCharPos()
-        local string_pos = current_pos - 1
-        local content_length = prev_content:len()
-
-        local enable_before_end_input = true
-        local new_content, is_command_handled, first_word_char, has_non_ascii
-
-        --* somewhere in the middle of the input:
-        if enable_before_end_input and content_length > 0 and string_pos ~= content_length then
-
-            local pre = prev_content:sub(1, string_pos)
-            local after = prev_content:sub(string_pos + 1)
-            new_content = pre .. key
-            local unmodified_length = new_content:len()
-
-            --* do nothing if non ascii chars encountered:
-            first_word_char, has_non_ascii = KOR.strings:getFirstWordChar(new_content)
-            if has_non_ascii then
-                self:showNonAsciiAlert("verder ")
-                new_content = new_content .. after
-                self._input_widget:setText(new_content)
-                --* call ((InputText#moveCursorToCharPos)):
-                self._input_widget:moveCursorToCharPos(current_pos + 1)
-                return
-            end
-
-            new_content, is_command_handled = KOR.substitutions:handleCommands(new_content, first_word_char)
-
-            if is_command_handled then
-                current_pos = current_pos + new_content:len() - unmodified_length - 1
-
-            elseif KOR.substitutions.enabled then
-                local charpos_correction
-                new_content, charpos_correction = KOR.substitutions:insert(new_content, first_word_char, "text_end_only")
-                current_pos = current_pos + charpos_correction
-            end
-
-            new_content = new_content .. after
-            new_content = KOR.substitutions:removeRedundantWhitespace(new_content)
-
-            self._input_widget:setText(new_content)
-            --* call ((InputText#moveCursorToCharPos)):
-            self._input_widget:moveCursorToCharPos(current_pos + 1)
-            --self._input_widget.charpos = current_pos + 1
-
-            --* at the end of the input:
-        else
-
-            new_content = prev_content .. key
-
-            first_word_char, has_non_ascii = KOR.strings:getFirstWordChar(new_content)
-            if has_non_ascii then
-                self:showNonAsciiAlert("verder ")
-                self._input_widget:setText(new_content)
-                --* call ((InputText#goToEnd)):
-                self._input_widget:goToEnd()
-                return
-            end
-
-            new_content = KOR.substitutions:removeRedundantWhitespace(new_content)
-
-            new_content, is_command_handled = KOR.substitutions:handleCommands(new_content, first_word_char)
-
-            --* no charpos_correction needed here, because we call ((InputText#goToEnd)):
-            if not is_command_handled and KOR.substitutions.enabled then
-                new_content = KOR.substitutions:insert(new_content, first_word_char, "text_end_only")
-            end
-
-            self._input_widget:setText(new_content)
-            --* call ((InputText#goToEnd)):
-            self._input_widget:goToEnd()
-        end
-    end
-
-    return true
 end
 
 function InputDialog:onIgnoreAltSpace()

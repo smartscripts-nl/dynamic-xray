@@ -6,13 +6,15 @@ local DataStorage = require("datastorage")
 local KOR = require("extensions/kor")
 local SQ3 = require("lua-ljsqlite3/init")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
-local T = require("ffi/util").template
 
 local pairs = pairs
+local T = T
 local table_insert = table.insert
 local table_sort = table.sort
 local tonumber = tonumber
 local type = type
+
+local count
 
 --- @class Databases
 local Databases = WidgetContainer:extend{
@@ -49,7 +51,31 @@ function Databases:closeStmts(stmt, ...)
     end
     local args = { ... }
     local istmt
-    local count = #args
+    count = #args
+    for i = 1, count do
+        istmt = args[i]
+        istmt:clearbind():reset():close()
+        istmt = nil
+    end
+    --* return nil, nil, nil, nil etc.
+end
+
+function Databases:closeSnippetsConnections(conn)
+    if conn and not conn._closed then
+        conn:close()
+        conn = nil
+    end
+    return nil
+end
+
+function Databases:closeSnippetsStmts(stmt, ...)
+    if stmt then
+        stmt:clearbind():reset():close()
+        stmt = nil
+    end
+    local args = {...}
+    local istmt
+    count = #args
     for i = 1, count do
         istmt = args[i]
         istmt:clearbind():reset():close()
@@ -85,6 +111,11 @@ function Databases:getDBconn()
     end
 
     return self:_getConn(), false
+end
+
+function Databases:getDBconnForSnippets()
+    self.database_folder = self.database_folder or DataStorage:getSettingsDir()
+    return SQ3.open(self.database_folder .. "/" .. "snippets.sqlite3")
 end
 
 function Databases:getNewItemId(conn)

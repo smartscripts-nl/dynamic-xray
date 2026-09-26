@@ -25,6 +25,7 @@ local pairs = pairs
 --- @field glossary Glossary
 --- @field html Html
 --- @field icons Icons
+--- @field informationmanager InformationManager
 --- @field informationmediator InformationMediator
 --- @field itemsmanager ItemsManager
 --- @field keyevents KeyEvents
@@ -46,6 +47,7 @@ local pairs = pairs
 --- @field tabfactory TabFactory
 --- @field tabnavigator TabNavigator
 --- @field tables Tables
+--- @field textsnippets TextSnippets
 --- @field wikipedia ReaderWikipedia
 local KOR = WidgetContainer:new{
 
@@ -89,6 +91,7 @@ local KOR = WidgetContainer:new{
 	glossary = nil,
 	html = nil,
 	icons = nil,
+	informationmanager = nil,
 	informationmediator = nil,
 	itemsmanager = nil,
 	keyevents = nil,
@@ -110,6 +113,7 @@ local KOR = WidgetContainer:new{
 	tabfactory = nil,
 	tabnavigator = nil,
 	tables = nil,
+	textsnippets = nil,
 
 	--- PLUGINS
 
@@ -136,6 +140,7 @@ local KOR = WidgetContainer:new{
 		"filedirnames",
 		"glossary",
 		"html",
+		"informationmanager",
 		"informationmediator",
 		"itemsmanager",
 		"labels",
@@ -152,6 +157,7 @@ local KOR = WidgetContainer:new{
 		"system",
 		"tabfactory",
 		"tabnavigator",
+		"textsnippets",
 	},
 
 	translations_source = nil,

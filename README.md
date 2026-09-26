@@ -31,10 +31,11 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
   - [How to get the most Kindle-like experience](#how-to-get-the-most-kindle-like-experience)
   - [Adding Xray items](#adding-xray-items)
   - [Displaying help information about the function of buttons](#displaying-help-information-about-the-function-of-buttons)
-- [Glossary and Reference Information viewers](#glossary-and-reference-information-viewers)
-  - [Reference Information viewer](#reference-information-viewer)
-  - [Glossary viewer](#glossary-viewer)
-- [Quizlet-mode for studying purposes](#quizlet-mode-for-studying-purposes)
+  - [Quickly entering or manipulating text by typing text snippets and commands](#quickly-entering-or-manipulating-text-by-typing-text-snippets-and-commands)
+  - [Glossary and Reference Information viewers](#glossary-and-reference-information-viewers)
+    - [Reference Information viewer](#reference-information-viewer)
+    - [Glossary viewer](#glossary-viewer)
+  - [Quizlet-mode for studying purposes](#quizlet-mode-for-studying-purposes)
 - [DX in action](#dx-in-action)
     - [Videos](#videos)
     - [Images](#images)
@@ -43,7 +44,6 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
     - [Notification: DX couldn't be initialized](#notification-that-dx-couldnt-be-initiated)
     - [User uses a database file other than "bookinfo_cache.sqlite3"](#user-uses-a-database-file-other-than-bookinfo_cachesqlite3)
 - [Issues to fix](#issues-to-fix)
-- [Coming soon...](#coming-soon)
 - [Todos](#todos)
 - [About the code](#about-the-code)
 - [Development history and usage](#development-history-and-usage)
@@ -175,6 +175,15 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 * A point signifies a one action button.
 * These actions can then be executed by tapping on the buttons at the bottom of the help dialog.
 * If you don't longpress the main button, which has the help information, but simply tap it, its main function will be immediately triggered.
+
+### Quickly entering or manipulating text by typing text snippets and commands
+
+DX has a Snippets Manager, to store text snippets for quickly entering longer texts by only typing the name of their snippet name:
+
+ * The Snippet Manager can be called by tapping on the scissors icon above DX forms.
+ * The case of the substituted text will be adapted to the case of the initial char of the name you typed. 
+ * You can also type special commands to quickly manipulated the text to the left of the cursor. E.g. 2w to remove the last two words, or sx to remove the last (part of a) sentence, or px to remove the entire last paragraph, etc.
+ * See for more information the help of the Snippets Manager. It is available by tapping on the info icon in the top left corner of the Snippets Manager dialog.
 
 ### Glossary and Reference Information viewers
 
@@ -334,10 +343,6 @@ PT_bookinfo_cache.sqlite3". In that case:
 
 ## Issues to fix
 * Currently none?
-
-## Coming soon...
-
-* Text snippets replacement in dialog fields. Works for both the onscreen and hardware keyboards. This will make it possible to enter Xray item descriptions faster.
 
 ## Todos
 * Update the demo movies in the GitHub releases section.

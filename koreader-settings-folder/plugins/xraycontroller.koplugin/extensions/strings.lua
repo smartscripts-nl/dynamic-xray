@@ -17,6 +17,7 @@ local table_concat = table_concat
 local table_insert = table_insert
 local table_sort = table_sort
 local type = type
+local util_splitToChars = util.splitToChars
 
 local count
 
@@ -105,28 +106,45 @@ function Strings:getKeywordsForMatchingFrom(subject, no_lower_case, add_singular
     end)
 end
 
-function Strings:getFirstWordChar(text)
-    local first_word_char, rest_of_word = text:match("%s%(?([%w\128-\255])([%w\128-\255]+)%)?%s?$")
+function Strings:getFirstCharOfLastWord(text)
+
+    local delimiter = "[).,;:!?\"']?%s?"
+
+    local one_character_word = text:match("%s[(\"']?([a-zA-Z])" .. delimiter .. "$")
+    if one_character_word then
+        return one_character_word:lower()
+    end
+
+    --* explanation of regex: search whitespace + (first_char)alpha_chars + whitespace? at end of string, and optionally bordered by parentheses):
+    local first_word_char = text:match("%s[(\"']?([%w\128-\255])[%w\128-\255]+" .. delimiter .. "$")
     if not first_word_char then
-        return nil, false
+        return nil
     end
-
-    local has_non_ascii = self:hasNonAscii(first_word_char .. rest_of_word)
-
     if first_word_char:match("%d") then
-        return first_word_char, has_non_ascii
+        return first_word_char
     end
 
-    return first_word_char:lower(), has_non_ascii
+    return first_word_char:lower()
 end
 
-function Strings:hasNonAscii(text)
+function Strings:hasNonAsciiCharacters(text)
     return text and text:find("[\128-\255]") ~= nil
 end
 
+--* get UTF-8-safe length of strings:
+function Strings:length(text)
+    if text == "" then
+        return 0
+    end
+    if self:hasNonAsciiCharacters(text) then
+        return #util_splitToChars(text)
+    end
+    return text:len()
+end
+
 function Strings:limitLength(text, max_length)
-    if text and text:len() > max_length then
-        text = text:sub(1, max_length - 3) .. "..."
+    if text and self:length(text) > max_length then
+        text = text:sub(1, max_length - 3) .. self.ellipsis
     end
     return text
 end

@@ -214,7 +214,7 @@ function HistogramWidget:paintBar(n, r, bb, xp, yp, i_x, i_y, i_w, i_h)
     --* indicate columns with most read pages by darker color:
     local color =
             #self.max_ratio_indices > 0
-            and KOR.tables:tableHas(self.max_ratio_indices, n)
+            and KOR.tables:has(self.max_ratio_indices, n)
             and
         self.histogram_bar_dark
         or

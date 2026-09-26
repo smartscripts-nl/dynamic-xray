@@ -21,8 +21,8 @@ local MultiInputDialog = require("xrayviews/widgets/multiinputdialog")
 local UIManager = require("ui/uimanager")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
-local Screen = require("device").screen
 local _ = KOR:initCustomTranslations()
+local Screen = require("device").screen
 local Size = require("ui/size")
 
 local DX = DX

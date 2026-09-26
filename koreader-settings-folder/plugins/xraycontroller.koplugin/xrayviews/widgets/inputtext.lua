@@ -22,12 +22,19 @@ local _ = require("gettext")
 local Screen = Device.screen
 
 local DX = DX
+local has_no_text = has_no_text
+local math_floor = math_floor
+local math_max = math_max
+local math_min = math_min
 local pairs = pairs
 local select = select
-local string = string
-local table = table
+local string_lower = string_lower
+local table_concat = table_concat
+local table_insert = table_insert
+local table_remove = table_remove
 local tostring = tostring
 local type = type
+local util_splitToChars = util.splitToChars
 
 local Keyboard -- Conditional instantiation
 local FocusManagerInstance -- Delayed instantiation
@@ -207,7 +214,7 @@ local function initTouchEvents()
                             if self.selection_start_pos > selection_end_pos then
                                 self.selection_start_pos, selection_end_pos = selection_end_pos + 1, self.selection_start_pos - 1
                             end
-                            local txt = table.concat(self.charlist, "", self.selection_start_pos, selection_end_pos)
+                            local txt = table_concat(self.charlist, "", self.selection_start_pos, selection_end_pos)
                             Device.input.setClipboardText(txt)
                             UIManager:show(Notification:new {
                                 text = _("Selection copied to clipboard."),
@@ -233,8 +240,8 @@ local function initTouchEvents()
                         show_menu = false,
                         text = is_clipboard_empty and _("(empty)") or clipboard_value,
                         fgcolor = is_clipboard_empty and Blitbuffer.COLOR_DARK_GRAY or Blitbuffer.COLOR_BLACK,
-                        width = math.floor(math.min(Screen:getWidth(), Screen:getHeight()) * 0.8),
-                        height = math.floor(math.max(Screen:getWidth(), Screen:getHeight()) * 0.4),
+                        width = math_floor(math_min(Screen:getWidth(), Screen:getHeight()) * 0.8),
+                        height = math_floor(math_max(Screen:getWidth(), Screen:getHeight()) * 0.4),
                         justified = false,
                         modal = true,
                         stop_events_propagation = true,
@@ -244,7 +251,7 @@ local function initTouchEvents()
                                     text = _("Copy all"),
                                     callback = function()
                                         UIManager:close(clipboard_dialog)
-                                        Device.input.setClipboardText(table.concat(self.charlist))
+                                        Device.input.setClipboardText(table_concat(self.charlist))
                                         UIManager:show(Notification:new {
                                             text = _("All text copied to clipboard."),
                                         })
@@ -254,7 +261,7 @@ local function initTouchEvents()
                                     text = _("Copy line"),
                                     callback = function()
                                         UIManager:close(clipboard_dialog)
-                                        local txt = table.concat(self.charlist, "", self:getStringPos())
+                                        local txt = table_concat(self.charlist, "", self:getStringPos())
                                         Device.input.setClipboardText(txt)
                                         UIManager:show(Notification:new {
                                             text = _("Line copied to clipboard."),
@@ -265,7 +272,7 @@ local function initTouchEvents()
                                     text = _("Copy word"),
                                     callback = function()
                                         UIManager:close(clipboard_dialog)
-                                        local txt = table.concat(self.charlist, "", self:getStringPos(true))
+                                        local txt = table_concat(self.charlist, "", self:getStringPos(true))
                                         Device.input.setClipboardText(txt)
                                         UIManager:show(Notification:new {
                                             text = _("Word copied to clipboard."),
@@ -390,7 +397,7 @@ function InputText:checkTextEditability()
         --* in :initTextBox(), when concatenated back to a string, matches
         --* the original text. (If this turns out too expensive, we could
         --* just compare their lengths)
-        self.is_text_editable = table.concat(self.charlist, "") == self.text
+        self.is_text_editable = table_concat(self.charlist, "") == self.text
     end
 end
 
@@ -441,21 +448,23 @@ function InputText:init()
     end
 end
 
---* This will be called when we add or del chars, as we need to recreate
---* the text widget to have the new text splittted into possibly different
---* lines than before
-function InputText:initTextBox(text, char_added)
+--* This will be called when we add or del chars, as we need to recreate the text widget to have the new text splittted into possibly different lines than before
+--* This method is upon load AND every time when a char is added via ((InputText#addChars))
+function InputText:initTextBox(text, char_added, charlist)
     if self.text_widget then
         self.text_widget:free(true)
     end
 
-    local charpos_correction = 0
+    -- #((snippets replacement))
+    if char_added and not self.is_snippet_dialog then
+        text = self:injectTextSnippets(text, charlist)
+    end
 
     self.text = text
     local fgcolor
     local show_charlist
     local show_text = text
-    if show_text == "" or show_text == nil then
+    if has_no_text(show_text) then
         --* no preset value, use hint text if set
         show_text = self.hint
         fgcolor = self.disabled_color
@@ -467,11 +476,12 @@ function InputText:initTextBox(text, char_added)
             show_text = self.text:gsub(
                 "(.-).", function() return "*" end)
             if char_added then
-                show_text = show_text:gsub(
-                    "(.)$", function() return self.text:sub(-1) end)
+                show_text = show_text:gsub("(.)$", function()
+                    return self.text:sub(-1)
+                end)
             end
         end
-        self.charlist = util.splitToChars(text)
+        self.charlist = util_splitToChars(text)
         --* keep previous cursor position if charpos not nil
         if self.charpos == nil then
             if self.cursor_at_end then
@@ -479,9 +489,6 @@ function InputText:initTextBox(text, char_added)
             else
                 self.charpos = 1
             end
-        end
-        if charpos_correction then
-            self.charpos = self.charpos + charpos_correction
         end
     end
     if self.is_password_type and self.show_password_toggle then
@@ -505,7 +512,7 @@ function InputText:initTextBox(text, char_added)
     else
         self._password_toggle = nil
     end
-    show_charlist = util.splitToChars(show_text)
+    show_charlist = util_splitToChars(show_text)
 
     if not self.height then
         --* If no height provided, measure the text widget height
@@ -654,6 +661,8 @@ function InputText:onKeyPress(key)
     end
 
     local handled = true
+    --* Ctrl and Alt not detected on BT keyboard...
+
     -- #((default hardware keys))
     --* Alt and Control were already skipped above:
     if not key["Shift"] then
@@ -725,7 +734,7 @@ function InputText:onKeyPress(key)
         if not Device.isSDL() and #key_code == 1 then
             local has_shifted = false
             if not key["Shift"] then
-                key_code = string.lower(key_code)
+                key_code = string_lower(key_code)
             else
                 for ikey, translation in pairs(self.shift_key_translations) do
                     if key_code == ikey then
@@ -751,15 +760,9 @@ function InputText:onKeyPress(key)
                 return false
             end
 
-            -- #((dont block event handling for key presses))
-            if not key["Shift"] and not has_shifted then
-                -- #((get pressed hardware key))
-                KOR.registry:set("pressed_key", key_code)
-            else
-                self:addChars(key_code)
-                --* no event handling needed anymore, so speed up:
-                return true
-            end
+            self:addChars(key_code)
+            --* no event handling needed anymore, so speed up:
+            return true
         end
         if is_alternative_key then
             return true --* Stop event propagate to FocusManager to void focus move
@@ -898,7 +901,7 @@ end
 function InputText:addChars(chars)
     if not chars then
         --* VirtualKeyboard:addChar(key) gave us 'nil' once (?!)
-        --* which would crash table.concat()
+        --* which would crash table_concat()
         return
     end
     if self.enter_callback and chars == "\n" then
@@ -917,13 +920,13 @@ function InputText:addChars(chars)
     --* remove spaces before punctuation:
     if self.charlist[self.charpos - 1] and self.charlist[self.charpos - 1] == " " and chars:match("^[,.?!:;] ?$") then
         self.charlist[self.charpos - 1] = chars
-        self.charpos = self.charpos + #util.splitToChars(chars) - 1
+        self.charpos = self.charpos + #util_splitToChars(chars) - 1
     else
-        table.insert(self.charlist, self.charpos, chars)
-        self.charpos = self.charpos + #util.splitToChars(chars)
+        table_insert(self.charlist, self.charpos, chars)
+        self.charpos = self.charpos + #util_splitToChars(chars)
     end
 
-    self:initTextBox(table.concat(self.charlist), true, chars)
+    self:initTextBox(table_concat(self.charlist), true, self.charlist)
 end
 
 function InputText:delChar()
@@ -933,8 +936,8 @@ function InputText:delChar()
     if self.charpos == 1 then return end
     self.charpos = self.charpos - 1
     self.is_text_edited = true
-    table.remove(self.charlist, self.charpos)
-    self:initTextBox(table.concat(self.charlist))
+    table_remove(self.charlist, self.charpos)
+    self:initTextBox(table_concat(self.charlist))
 end
 
 function InputText:delNextChar()
@@ -943,8 +946,8 @@ function InputText:delNextChar()
     end
     if self.charpos > #self.charlist then return end
     self.is_text_edited = true
-    table.remove(self.charlist, self.charpos)
-    self:initTextBox(table.concat(self.charlist))
+    table_remove(self.charlist, self.charpos)
+    self:initTextBox(table_concat(self.charlist))
 end
 
 function InputText:delToStartOfLine()
@@ -956,16 +959,16 @@ function InputText:delToStartOfLine()
     if self.charlist[self.charpos-1] == "\n" then
         --* If at start of line, just remove the \n and join the previous line
         self.charpos = self.charpos - 1
-        table.remove(self.charlist, self.charpos)
+        table_remove(self.charlist, self.charpos)
     else
         --* If not, remove chars until first found \n (but keeping it)
         while self.charpos > 1 and self.charlist[self.charpos-1] ~= "\n" do
             self.charpos = self.charpos - 1
-            table.remove(self.charlist, self.charpos)
+            table_remove(self.charlist, self.charpos)
         end
     end
     self.is_text_edited = true
-    self:initTextBox(table.concat(self.charlist))
+    self:initTextBox(table_concat(self.charlist))
 end
 
 --* For the following cursor/scroll methods, the text_widget deals
@@ -1063,10 +1066,47 @@ function InputText:setText(text, keep_edited_state)
 end
 
 
---* ==================== SMARTSCRIPTS =====================
-
 function InputText:getCharPos()
     return self.charpos
+end
+
+--main: replaceTextSnippets
+function InputText:injectTextSnippets(text, charlist)
+
+    if not charlist then
+        return text
+    end
+
+    --* charpos upon load (set below); so if at end of text, then self.charpos is 1 higher than the length of the string:
+
+    local text_length = #charlist
+    local cursor_is_in_text = self.charpos <= text_length
+    local start_text = text
+    local end_text
+    if cursor_is_in_text then
+        local start_table, end_table = KOR.tables:split(charlist, self.charpos)
+        start_text = table_concat(start_table)
+        end_text = table_concat(end_table)
+    end
+
+    local first_char = KOR.strings:getFirstCharOfLastWord(start_text)
+    if not first_char then
+        return text
+    end
+
+    local is_command_handled, new_pos
+    start_text, is_command_handled = KOR.textsnippets:handleCommands(start_text, first_char)
+
+    if is_command_handled then
+        self.charpos = KOR.strings:length(start_text) + 1
+
+    else
+        start_text, new_pos = KOR.textsnippets:insert(start_text, first_char)
+        if new_pos then
+            self.charpos = new_pos
+        end
+    end
+    return end_text and start_text .. end_text or start_text
 end
 
 return InputText

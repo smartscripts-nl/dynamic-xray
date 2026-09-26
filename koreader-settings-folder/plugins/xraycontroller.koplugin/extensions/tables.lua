@@ -98,6 +98,12 @@ function Tables:populateWithPlaceholders(items_count, default_value)
 end
 
 function Tables:getTableLength(itable)
+    if not itable then
+        return 0
+    end
+    if itable[1] and itable[2] then
+        return #itable
+    end
     local iteration = 0
     for _ in pairs(itable) do
         iteration = iteration + 1
@@ -330,7 +336,7 @@ function Tables:getMaxValue(subject)
     return max
 end
 
-function Tables:tableHas(itable, needle)
+function Tables:has(itable, needle)
     if not needle or not itable or #itable == 0 then
         return false
     end
@@ -342,8 +348,19 @@ function Tables:tableHas(itable, needle)
     return false
 end
 
-function Tables:tableHasNot(itable, needle)
-    return not self:tableHas(itable, needle)
+function Tables:hasNot(itable, needle)
+    return not self:has(itable, needle)
+end
+
+function Tables:split(subject, split_point)
+    local first, second = {}, {}
+    count = #subject
+    local target
+    for i = 1, count do
+        target = i >= split_point and second or first
+        table_insert(target, subject[i])
+    end
+    return first, second
 end
 
 function Tables:tableToMd5(subject)

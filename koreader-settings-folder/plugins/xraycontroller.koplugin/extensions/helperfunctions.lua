@@ -1,6 +1,7 @@
 
 local require = require
 
+local KOR = require("extensions/kor")
 local Math = require("optmath")
 local Utf8Proc = require("ffi/utf8proc")
 local lfs = require("libs/libkoreader-lfs")
@@ -120,7 +121,7 @@ function has_items(table_or_count)
     if type(table_or_count) == "number" and table_or_count > 0 then
         return true
     end
-    return type(table_or_count) == "table" and #table_or_count > 0 or false
+    return type(table_or_count) == "table" and KOR.tables:getTableLength(table_or_count) > 0 or false
 end
 
 function has_no_items(table_or_count)

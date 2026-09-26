@@ -27,6 +27,7 @@ local VerticalSpan = require("ui/widget/verticalspan")
 local Screen = Device.screen
 
 local DX = DX
+local G_reader_settings = G_reader_settings
 local math_floor = math_floor
 local table_insert = table_insert
 
@@ -44,6 +45,7 @@ local MultiInputDialog = InputDialog:extend{
     auto_height_field_index = nil,
     auto_height_field_tab_index = nil,
     bottom_v_padding = Size.padding.small,
+    button_spacer = nil,
     description_face = Font:getDefaultDescriptionFontFace(),
     description_padding = Size.padding.small,
     description_prefix = "  ",
@@ -76,6 +78,7 @@ function MultiInputDialog:init()
     --* NB: title and buttons are initialized in base class
     self:initMainContainers()
     self:initWidgetProps()
+    self:initSpacers()
     self:insertRows()
     self:insertFooterDescription()
     self:insertTopPadding()
@@ -83,7 +86,7 @@ function MultiInputDialog:init()
     self:insertButtonGroup()
     --* adapt content of MiddleContainer: either a field with auto field height, or a spacer, to push the buttons to just above the keyboard:
     self:adaptMiddleContainerHeight()
-    self:finalizeWidgetMID()
+    self:buildWidget()
     self:focusFocusField()
     KOR.dialogs:registerWidget(self)
 end
@@ -197,24 +200,21 @@ function MultiInputDialog:generateCustomEditButton(field)
         return false
     end
     field.custom_edit_button = Button:new(field.custom_edit_button)
-    self.custom_edit_button_spacer = HorizontalSpan:new{
-        width = Screen:scaleBySize(4),
-    }
 
-    local custom_edit_button_spacer_width = self.custom_edit_button_spacer:getSize().w
-    self.field_width = self.field_width - field.custom_edit_button:getSize().w - custom_edit_button_spacer_width
+    local button_spacer_width = self.button_spacer:getSize().w
+    self.field_width = self.field_width - field.custom_edit_button:getSize().w - button_spacer_width
 
     return true
 end
 
 --- @private
-function MultiInputDialog:setFieldWidth(field)
+function MultiInputDialog:setFieldWidth(field_config)
     self.field_width = math_floor(self.width * 0.9)
     if self.fields_count > 1 then
         --! don't make this factor bigger, because then in some situations fields don't fit and jump to next row:
         local factor = 0.49
         self.field_width = math_floor(self.field_width * factor)
-        if not self:generateCustomEditButton(field) and field.input_type ~= "number" then
+        if not self:generateCustomEditButton(field_config) and field_config.input_type ~= "number" then
             self.field_width = self.field_width - self.edit_button_width
         end
 
@@ -248,6 +248,11 @@ function MultiInputDialog:fieldAddToInputs(field_config, field_side)
         return field
     end
 
+    -- #((set dropdown field width))
+    local config = KOR.tables:shallowCopy(self.field_config)
+    if field_config.dropdown_items then
+        config.width = math_floor(self.screen_width * 0.6)
+    end
     field = field_config.type == "checkbox" and CheckButton:new{
             text = field_config.text,
             type = "checkbox",
@@ -256,7 +261,7 @@ function MultiInputDialog:fieldAddToInputs(field_config, field_side)
             callback = self.field_config.callback,
         }
         or
-        InputText:new(self.field_config)
+    InputText:new(config)
     table_insert(self.input_fields, field)
     self:fieldAddToCurrentTabFields(field)
     if self.field_config.focused then
@@ -303,13 +308,15 @@ function MultiInputDialog:isFocusField(field, height, field_side)
     local input_field_to_be_added = #self.input_fields + 1
     local focus_added = false
 
-    --* this param only used for debugging in my personal installation:
-    self.garbage = field
-
     --* self.focus_field set by caller is only applicable for tab 1 being active:
     if self.active_tab == 1 and input_field_to_be_added == self.focus_field and not self.a_field_was_focussed then
         self.a_field_was_focussed = true
         focus_added = true
+
+    elseif not self.active_tab and not self.a_field_was_focussed and field.focused then
+        self.a_field_was_focussed = true
+        focus_added = true
+        self.focus_field = input_field_to_be_added
     end
 
     --* give focus to first left_side field or to auto height field:
@@ -324,103 +331,108 @@ function MultiInputDialog:isFocusField(field, height, field_side)
         self.focus_field = input_field_to_be_added
     end
 
-    --* this param only used for debugging in my personal installation:
-    self.garbage = field
-
     return self.a_field_was_focussed
 end
 
 --- @private
 --- @param field_side number 1 if left side, 2 if right side
-function MultiInputDialog:setFieldProps(field, field_side)
+function MultiInputDialog:setFieldProps(field_config, field_side)
 
-    local force_one_line = self.force_one_line_field or field.force_one_line_height
-    local height = not field.height and force_one_line and self.one_line_height or field.height
+    local force_one_line = self.force_one_line_field or field_config.force_one_line_height
+    local height = not field_config.height and force_one_line and self.one_line_height or field_config.height
     if height == "auto" then
         self.auto_height_field_present = true
+    end
+    if field_config.dropdown_items then
+        field_config.allow_newline = false
+        field_config.scroll = false
     end
 
     self.field_config = {
         value_index =
-            field.field_nr,
+            field_config.field_nr,
         text =
-            self:setFieldProp(field.text, ""),
+            self:setFieldProp(field_config.text, ""),
         hint =
-            self:setFieldProp(field.hint, ""),
+            self:setFieldProp(field_config.hint, ""),
 
         --* for checkboxes; see ((MultiInputDialog checkbox example)):
         checked =
-            self:setFieldProp(field.checked == 1, false),
+            self:setFieldProp(field_config.checked == 1, false),
         callback =
-            field.callback,
+            field_config.callback,
         type =
-            field.type,
-
+            field_config.type,
         description =
-            field.description,
+            field_config.description,
+        dropdown_items =
+            field_config.dropdown_items,
+        --* this property was set from ((InformationManager#showAddDialog)) or ((InformationManager#showEditDialog)) and will be read in ((InputText#addChars)) > ((InputText#initTextBox)) and block snippet replacement there:
+        is_snippet_dialog =
+            self.is_snippet_dialog,
         info_popup_title =
-            field.info_popup_title,
+            field_config.info_popup_title,
         info_popup_text =
-            field.info_popup_text,
+            field_config.info_popup_text,
         tab =
-            field.tab,
+            field_config.tab,
         --* e.g. used to insert a button for setting xray_type of an Xray item in ((XrayFormsData#getFormFields)):
         custom_edit_button =
-            field.custom_edit_button,
+            field_config.custom_edit_button,
         disable_paste =
-            self:setFieldProp(field.disable_paste, false),
+            self:setFieldProp(field_config.disable_paste, false),
         left_side =
-            self:setFieldProp(field.left_side, false),
+            self:setFieldProp(field_config.left_side, false),
         right_side =
-            self:setFieldProp(field.right_side, false),
+            self:setFieldProp(field_config.right_side, false),
         width =
-            self:setFieldProp(field.width, self.field_width),
+            self:setFieldProp(field_config.width, self.field_width),
         height =
             height,
         -- #((force one line field height))
         force_one_line =
             force_one_line,
         allow_newline =
-            self:setFieldProp(field.allow_newline, false),
+            field_config.allow_newline,
         cursor_at_end =
-            field.cursor_at_end == true,
+            field_config.cursor_at_end == true,
         top_line_num =
-            self:setFieldProp(field.top_line_num, 1),
+            self:setFieldProp(field_config.top_line_num, 1),
         is_adaptable =
-            self:setFieldProp(field.is_adaptable, false),
+            self:setFieldProp(field_config.is_adaptable, false),
         input_type =
-            self:setFieldProp(field.input_type, "string"),
+            self:setFieldProp(field_config.input_type, "string"),
         text_type =
-            field.text_type,
+            field_config.text_type,
         face =
-            self:setFieldProp(field.input_face, self.input_face),
+            self:setFieldProp(field_config.input_face, self.input_face),
         --* this prop is used by InputText:
         focused =
-            self:isFocusField(field, height, field_side),
+            self:isFocusField(field_config, height, field_side),
         scroll =
-            self:setFieldProp(field.scroll, false),
+            field_config.scroll,
         scroll_by_pan =
-            self:setFieldProp(field.scroll_by_pan, false),
+            self:setFieldProp(field_config.scroll_by_pan, false),
         parent =
             self,
         padding =
-            field.padding,
+            field_config.padding,
         margin =
-            field.info_popup_text and 0 or field.margin,
+            field_config.info_popup_text and 0 or field_config.margin,
 
         --* allow these to be specified per field if needed
         alignment =
-            self:setFieldProp(field.alignment, self.alignment),
+            self:setFieldProp(field_config.alignment, self.alignment),
         justified =
-            self:setFieldProp(field.justified, self.justified),
+            self:setFieldProp(field_config.justified, self.justified),
         lang =
-            self:setFieldProp(field.lang, self.lang),
+            self:setFieldProp(field_config.lang, self.lang),
         para_direction_rtl =
-            self:setFieldProp(field.para_direction_rtl, self.para_direction_rtl),
+            self:setFieldProp(field_config.para_direction_rtl, self.para_direction_rtl),
         auto_para_direction =
-            self:setFieldProp(field.auto_para_direction, self.auto_para_direction),
+            self:setFieldProp(field_config.auto_para_direction, self.auto_para_direction),
         alignment_strict =
-            self:setFieldProp(field.alignment_strict, self.alignment_strict),
+            self:setFieldProp(field_config.alignment_strict, self.alignment_strict),
     }
 end
 
@@ -440,17 +452,45 @@ end
 --* compare ((MultiInputDialog#insertTwoFieldRow)):
 --- @private
 function MultiInputDialog:insertSingleFieldRow(field_config)
+
+    --- @type InputDialog parent
+    local parent = self
+
     if self.force_one_line_field then
         field_config.scroll = true
     end
     local field = self:fieldAddToInputs(field_config, LEFT_SIDE)
+    local field_height = field:getSize().h
+
+    if field_config.dropdown_items then
+        local dropdown_button, reset_button = parent:getDropdownButtons(field, field_config)
+        field = CenterContainer:new{
+            dimen = Geom:new{
+                w = self.full_width,
+                h = field_height,
+            },
+            VerticalGroup:new{
+                VerticalSpan:new{
+                    width = math_floor(self.screen_height * 0.6),
+                },
+                HorizontalGroup:new{
+                    self.button_spacer,
+                    self.button_spacer,
+                    --* width of this field was set in ((set dropdown field width)):
+                    field,
+                    dropdown_button,
+                    self.button_spacer,
+                    reset_button,
+                }
+            }
+        }
+    end
 
     if field_config.description then
         local desc_container = self:getDescriptionContainer(field, field_config)
         self:insertIntoTargetContainer(HorizontalGroup:new(desc_container))
     end
 
-    local field_height = field:getSize().h
     local group = CenterContainer:new{
         dimen = Geom:new{
             w = self.full_width,
@@ -470,6 +510,7 @@ function MultiInputDialog:insertTwoFieldRow(row)
     local has_descriptions = row[1].description
     local field
     for field_side = 1, 2 do
+        --* here we get the field_config per field in the row:
         field_config = row[field_side]
         if self.force_one_line_field then
             field_config.scroll = true
@@ -517,6 +558,7 @@ function MultiInputDialog:getDescriptionContainer(field, field_config)
     }
 end
 
+--* compare ((InputDialog#getDropdownButtons)) for a comparable way of attaching callbacks to fields:
 --- @private
 function MultiInputDialog:getDescription(field, field_config, width)
     --* limit width of popup info dialog:
@@ -627,6 +669,15 @@ function MultiInputDialog:getFieldContainer(field, field_config)
     local tile_height = field:getSize().h
     local has_no_button = (field.input_type == "number" and not field.custom_edit_button) or field_config.type == "checkbox"
 
+    if field_config.dropdown_items then
+        local dropdown_button, reset_button = self:getDropdownButtons(field, field_config)
+        field = HorizontalGroup:new{
+            field,
+            dropdown_button,
+            reset_button
+        }
+    end
+
     --* don't add edit field buttons for regular number fields without a custom edit button:
     if has_no_button then
         return CenterContainer:new{
@@ -660,7 +711,7 @@ function MultiInputDialog:getFieldContainer(field, field_config)
             HorizontalGroup:new{
                 align = "center",
                 field,
-                self.custom_edit_button_spacer,
+                self.button_spacer,
                 self.custom_edit_button,
             }
         }
@@ -718,7 +769,10 @@ end
 
 --- @private
 function MultiInputDialog:initMainContainers()
+
+    --! init base class:
     InputDialog.init(self)
+
     if self.title and self.title_bar then
         self.TopContainer = VerticalGroup:new{
             align = "left",
@@ -817,6 +871,13 @@ function MultiInputDialog:insertComputedHeightField(difference)
 end
 
 --- @private
+function MultiInputDialog:initSpacers()
+    self.button_spacer = HorizontalSpan:new{
+        width = Screen:scaleBySize(4),
+    }
+end
+
+--- @private
 function MultiInputDialog:insertRows()
     count = #self.fields
     self:setFieldEditButtonWidth()
@@ -900,9 +961,8 @@ function MultiInputDialog:registerFieldValues(row, is_field_set)
     table_insert(self.field_values, value)
 end
 
---* MID suffix to prevent future name clashes, should we also add InputDialog#finalizeWidget:
---- @private
-function MultiInputDialog:finalizeWidgetMID()
+--- @protected
+function MultiInputDialog:buildWidget()
     local config = {
         radius = self.fullscreen and 0 or Size.radius.window,
         bordersize = self.fullscreen and 0 or Size.border.window,
