@@ -38,6 +38,7 @@ local TextSnippets = WidgetContainer:extend{
         _("REPLACEMENTS"),
         " ",
         _("double space = \", \""),
+        _("1k, 2k etc. = add a comma 1 or 2 words back, etc."),
         " ",
         _("TRANSFORMATIONS"),
         " ",
@@ -45,7 +46,7 @@ local TextSnippets = WidgetContainer:extend{
         _("ucx = convert line to Ucfirst format"),
         " ",
         _("REDEFINED KEYS"),
-        _("(needed because some keys, like comma, are not available on BT/hardware keyboards)"),
+        _("(for BT/hardware keyboards, because some keys, like comma, are not available in that case)"),
         " ",
         _("hash = /"),
         _("dollar = :"),
@@ -202,7 +203,7 @@ function TextSnippets:handleCommands(content, first_word_char)
     end
 
     --* #w: remove n words from end:
-    local remove_words = content:match("%d+w")
+    local remove_words = content:match(" (%d+w)")
     if remove_words then
         local word_count = remove_words:gsub("w$", "", 1)
         word_count = tonumber(word_count)
@@ -214,9 +215,9 @@ function TextSnippets:handleCommands(content, first_word_char)
 
     --* convert line to uppercase heading by appending "hex" to text + space on that line:
     if first_word_char == "h" then
-        local heading = content:match("([^\n]+) [Uu]px")
+        local heading = content:match("([^\n]+) [Hh]ex")
         if heading then
-            return content:gsub("[^\n]+ [Uu]px", heading:upper(), 1), true
+            return content:gsub("[^\n]+ [Hh]ex", heading:upper(), 1), true
         end
     end
 
@@ -232,40 +233,43 @@ function TextSnippets:handleCommands(content, first_word_char)
     --* #x: remove n chars from end:
     local remove_count = content:match("(%d+)x$")
     if remove_count then
+        content = content:gsub(" %d+x$", "", 1)
         remove_count = tonumber(remove_count)
         local base = "."
-        local replace = base:rep(remove_count)
+        local replace = base:rep(remove_count) .. "$"
         return content
-            :gsub(replace .. remove_count .. "x$", "", 1), true
+            :gsub(replace, "", 1), true
     end
 
     --* #k: inject comma n words from end:
-    local inject_comma = content:match("%d+k$")
+    local inject_comma = content:match(" (%d+k)$")
     if inject_comma then
+        content = content:gsub(" (%d+k)$", "", 1)
         local word_count = inject_comma:gsub("k$", "", 1)
         word_count = tonumber(word_count)
-        local needle = " (" .. string_rep("[^ ]- ? +", word_count + 1)
-        needle = needle:gsub(" %? %+", "", 1)
-        needle = needle .. ") ?" .. inject_comma .. "$"
+        local needle = " +(" .. string_rep("[^ ]+ +", word_count)
+        --* remove last space:
+        needle = needle:gsub(" %+$", "", 1)
+        needle = needle .. ")$"
         return content
-            --* create needles like :gsub(" +([^ ]- ? +[^ ]- ? +[^ ]-) ?3k$", ", %1 ", 1)
+            --* create needles like :gsub(" +([^ ]+ +[^ ]+ +[^ ]+)$", ", %1 ", 1)
             :gsub(needle, ", %1", 1), true
     end
 
-    if content:match("[Ww]w$") then
+    if content:match(" [Ww]w$") then
         return content
             --* delete last word by appending "ww" to it:
-            :gsub(" [^ ]- ?[Ww]w$", " ", 1), true
+            :gsub(" [^ ]+ [Ww]w$", " ", 1), true
     end
 
-    if content:match("[XxSsPp]x$") then
+    if content:match(" [XxSsPp]x$") then
         return content
             --* delete last char by appending "xx" to it:
-            :gsub(". ?[Xx]x$", "", 1)
+            :gsub(". [Xx]x$", "", 1)
             --* delete last sentence (part) by appending "zx" to it:
-            :gsub("[^;:,.?!'\"\n]*[Ss]x$", "", 1)
+            :gsub("[^;:,.?!'\"\n]* [Ss]x$", "", 1)
             --* delete entire last paragraph part by appending "ax" to it:
-            :gsub("[^\n]*[Pp]x$", "", 1), true
+            :gsub("[^\n]* [Pp]x$", "", 1), true
     end
 
     --* show shortcuts explanation by typing "ii" at end of line:
