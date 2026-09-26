@@ -94,6 +94,8 @@ ERROR_PATTERNS=(
     "in function( '[^']+')?"
     'in main chunk'
     'invalid value[^\n]+'
+    'loop or previous'
+    'ljsqlite3\[error\][^\n]+'
     'module [^ ]+ not found'
     'No such file or directory'
     'Patching failed'
@@ -121,11 +123,14 @@ colorize_line() {
 
 	    # Lua errors
 	    "s/(${ERROR_REGEX})/${RED}\1${RESET}/g"
+	    # ..main.lua:2: [message]
+	    "s/lua(:[0-9]+):?/lua${BLUE}\1${RESET}/g"
     			# errors with mention of file:
 	    "s/(cannot open|from file|from file) (${FILE_PATTERN})/${RED}\1${RESET} ${BLUE}\2${RESET}/g"
 
 	    # File names and locations
-	    "s/(${FILE_PATTERN}:[0-9]+):?/${BLUE}\1${RESET}/g"
+	    "s/directory: (plugins)/directory: ${BLUE}\1${RESET}/g"
+	    "s/(${FILE_PATTERN})/${BLUE}\1${RESET}/g"
 	    "s/(opening file)/${GREEN}\1${RESET}/g"
 
 	    # Simplify process names
