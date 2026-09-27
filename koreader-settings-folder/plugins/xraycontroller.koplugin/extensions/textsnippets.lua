@@ -32,6 +32,7 @@ local TextSnippets = WidgetContainer:extend{
         _("ww = remove last word"),
         _("1w, 2w etc. = remove this number of Words"),
         _("sx = remove last sentence (part)"),
+        _("ssx = remove the entire last sentence"),
         _("px = remove last paragraph"),
         _("space+x = remove double spaces"),
         " ",
@@ -231,7 +232,7 @@ function TextSnippets:handleCommands(content, first_word_char)
     end
 
     --* #x: remove n chars from end:
-    local remove_count = content:match("(%d+)x$")
+    local remove_count = content:match(" (%d+)x$")
     if remove_count then
         content = content:gsub(" %d+x$", "", 1)
         remove_count = tonumber(remove_count)
@@ -258,24 +259,30 @@ function TextSnippets:handleCommands(content, first_word_char)
 
     if content:match(" [Ww]w$") then
         return content
-            --* delete last word by appending "ww" to it:
+            --* delete last word by appending " ww" to it:
             :gsub(" [^ ]+ [Ww]w$", " ", 1), true
+    end
+
+    --* delete entire last sentence by appending " ssx" to it:
+    if content:match(" [Ss]sx$") then
+        return content
+            :gsub("[^.?!\n]+[.?!'\"]? [Ss]sx$", "", 1)
     end
 
     if content:match(" [XxSsPp]x$") then
         return content
             --* delete last char by appending "xx" to it:
-            :gsub(". [Xx]x$", "", 1)
-            --* delete last sentence (part) by appending "zx" to it:
-            :gsub("[^;:,.?!'\"\n]* [Ss]x$", "", 1)
-            --* delete entire last paragraph part by appending "ax" to it:
+            :gsub(". ?[Xx]x$", "", 1)
+            --* delete last sentence (part) by appending " sx" to it:
+            :gsub("[^;:,.?!'\"\n]+[.?!'\"]? [Ss]x$", "", 1)
+            --* delete entire last paragraph part by appending " px" to it:
             :gsub("[^\n]* [Pp]x$", "", 1), true
     end
 
-    --* show shortcuts explanation by typing "ii" at end of line:
-    if content:match("ii$") then
+    --* show shortcuts explanation by typing " ii" at end of line:
+    if content:match(" ii$") then
         DX.i:showSnippetsExplanation(2)
-        return content:gsub("ii$", "", 1)
+        return content:gsub(" ii$", "", 1)
     end
 
     return content, false
