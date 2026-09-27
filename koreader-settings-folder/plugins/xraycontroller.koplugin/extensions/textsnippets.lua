@@ -46,6 +46,9 @@ local TextSnippets = WidgetContainer:extend{
         _("upx = convert line to Uppercase format"),
         _("ucx = convert line to Ucfirst format"),
         " ",
+        _("CURSOR PLACEMENT"),
+        _("1cs, 2cs etc. = position the cursor 1 or 2 sentences back, at the start of a sentence"),
+        " ",
         _("REDEFINED KEYS"),
         _("(for BT/hardware keyboards, because some keys, like comma, are not available in that case)"),
         " ",
@@ -197,7 +200,7 @@ function TextSnippets:closeDialogUponEscapeString(content)
     return true
 end
 
-function TextSnippets:handleCommands(content, first_word_char)
+function TextSnippets:handleCommands(content, first_word_char, charlist)
 
     if self:closeDialogUponEscapeString(content) then
         return "", false
@@ -261,6 +264,30 @@ function TextSnippets:handleCommands(content, first_word_char)
         return content
             --* delete last word by appending " ww" to it:
             :gsub(" [^ ]+ [Ww]w$", " ", 1), true
+    end
+
+    local lines_back_count = content:match(" (%d+)cs$")
+    --* delete entire last sentence by appending " zzx" to it:
+    if lines_back_count then
+        content = content:gsub(" %d+cs$", "", 1)
+        lines_back_count = tonumber(lines_back_count)
+        if not content:match("[.?!]") then
+            return content, false, 1
+        end
+        local lines = KOR.strings:split(content, "[.?!]")
+        local lines_count = #lines
+        if lines_count <= lines_back_count then
+            return content, true, 1
+        end
+        local lines_before_cursor = lines_count - lines_back_count
+        local new_charpos = 0
+        for i = 1, lines_before_cursor do
+            new_charpos = new_charpos + KOR.strings:length(lines[i]) + 1
+        end
+        while charlist[new_charpos + 1]:match("%s") do
+            new_charpos = new_charpos + 1
+        end
+        return content, true, new_charpos + 1
     end
 
     --* delete entire last sentence by appending " ssx" to it:

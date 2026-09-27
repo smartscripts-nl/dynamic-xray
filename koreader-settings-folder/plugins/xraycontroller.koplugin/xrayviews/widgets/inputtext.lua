@@ -1094,16 +1094,20 @@ function InputText:injectTextSnippets(text, charlist)
         return text
     end
 
-    local is_command_handled, new_pos
-    start_text, is_command_handled = KOR.textsnippets:handleCommands(start_text, first_char)
+    local is_command_handled, new_charpos
+    start_text, is_command_handled, new_charpos = KOR.textsnippets:handleCommands(start_text, first_char, charlist)
 
     if is_command_handled then
-        self.charpos = KOR.strings:length(start_text) + 1
+        if new_charpos then
+            self.charpos = new_charpos
+        else
+            self.charpos = KOR.strings:length(start_text) + 1
+        end
 
     else
-        start_text, new_pos = KOR.textsnippets:insert(start_text, first_char)
-        if new_pos then
-            self.charpos = new_pos
+        start_text, new_charpos = KOR.textsnippets:insert(start_text, first_char)
+        if new_charpos then
+            self.charpos = new_charpos
         end
     end
     return end_text and start_text .. end_text or start_text
