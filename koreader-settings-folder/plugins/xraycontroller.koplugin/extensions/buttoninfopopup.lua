@@ -426,8 +426,7 @@ end
 function ButtonInfoPopup:forSnippetsManager(props)
 	return ButtonProps:set({
 		icon = "scissors",
-		icon_size_ratio_forced = 0.58,
-		info = _("scissors icon | Show text snippets manager."),
+		info = _("scissors icon | Show text snippets manager. When the name of a snippet is typed in a DX form, it will be replaced by the text assigned to it.\n\nThe snippets work for both the onscreen and hardware keyboards."),
 		callback_label = _("show"),
 		--! callback defined by calling module
 	}, props)

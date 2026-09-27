@@ -178,7 +178,7 @@ DX uses mostly buttons with only icons, so without explanatory labels. However, 
 
 ### Quickly entering or manipulating text by typing names of text snippets and commands
 
-DX has a Snippets Manager, to store text snippets for quickly entering longer texts by only typing the name of their snippet name:
+DX has a Snippets Manager, to store text snippets for quickly entering longer texts by only typing the name of their snippet name. These snippets work for both the onscreen and for hardware keyboards.
 
  * The Snippet Manager can be called by tapping on the scissors icon above DX forms.
  * The case of the substituted text will be adapted to the case of the initial char of the name you typed. 
