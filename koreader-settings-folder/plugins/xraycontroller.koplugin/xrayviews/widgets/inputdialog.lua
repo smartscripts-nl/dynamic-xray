@@ -386,7 +386,6 @@ function InputDialog:addSnippetsManagerButton(buttons)
 
     table_insert(buttons, KOR.buttoninfopopup:forSnippetsManager({
         callback = function()
-            UIManager:close(self)
             KOR.textsnippets:showManager()
         end
     }))

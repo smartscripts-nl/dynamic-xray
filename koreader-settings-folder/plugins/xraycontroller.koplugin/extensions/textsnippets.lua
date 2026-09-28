@@ -2,74 +2,21 @@
 local require = require
 
 local KOR = require("extensions/kor")
-local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local _ = KOR:initCustomTranslations()
 
 local DX = DX
 local pairs = pairs
-local string_rep = string_rep
 local table_concat = table_concat
 local table_insert = table_insert
 local table_sort = table_sort
-local tonumber = tonumber
 
 local count
 
 --- @class TextSnippets
 local TextSnippets = WidgetContainer:extend{
-    commands_info = {
-        _("CALL THIS DIALOG"),
-        " ",
-        _("\"ii\" at end of line"),
-        " ",
-        _("DELETING TEXT QUICKLY (PARTIALLY)"),
-        " ",
-        _("Del = BackSpace"),
-        _("Shift+Del = Delete"),
-        _("1x, 2x etc. = remove this number of characters"),
-        _("xx = remove last character"),
-        _("ww = remove last word"),
-        _("1w, 2w etc. = remove this number of Words"),
-        _("sx = remove last sentence (part)"),
-        _("ssx = remove the entire last sentence"),
-        _("px = remove last paragraph"),
-        _("space+x = remove double spaces"),
-        " ",
-        _("REPLACEMENTS"),
-        " ",
-        _("double space = \", \""),
-        _("1k, 2k etc. = add a comma 1 or 2 words back, etc."),
-        " ",
-        _("TRANSFORMATIONS"),
-        " ",
-        _("upx = convert line to Uppercase format"),
-        _("ucx = convert line to Ucfirst format"),
-        " ",
-        _("CURSOR PLACEMENT"),
-        _("1cs, 2cs etc. = position the cursor 1 or 2 sentences back, at the start of a sentence"),
-        " ",
-        _("REDEFINED KEYS"),
-        _("(for BT/hardware keyboards, because some keys, like comma, are not available in that case)"),
-        " ",
-        _("hash = /"),
-        _("dollar = :"),
-        _("procent = ;"),
-        "^ = -",
-        _("ampersand = \""),
-        _("star = '"),
-        _("slash (bottom of keyboard) = ,"),
-        " ",
-        _("CLOSING INPUT FIELD"),
-        " ",
-        _("[space]esc[space] at end of input field"),
-        " ",
-        _("SNIPPETS"),
-        " ",
-    },
     help_info = nil,
-    --? for snippets we use optionally "t" as suffix instead of "z", which is reserved for input dialog commands in ((TextSnippets#handleCommands)) - is this info still relevant?:
-    --* these are loaded via InformationManager from table text_snippets:
+    --* these are loaded via InformationManager from table snippets:
     --! this list is grouped by subitems with first chars of snippet names, so snippets["a"], etc.:
     snippets = nil,
     snippets_table = "snippets",
@@ -116,12 +63,13 @@ function TextSnippets:getSnippetsHelp()
         return self.help_info
     end
     local snippets = self:getSnippetsList()
-    self.help_info = table_concat(KOR.tables:merge(self.commands_info, snippets), "\n")
+    self.help_info = table_concat(KOR.tables:merge(KOR.textcommands.commands_info, snippets), "\n")
     return self.help_info
 end
 
 function TextSnippets:showManager()
     self:updateSnippetsList()
+
     KOR.informationmanager:onShowInformationManager({
         db_table = self.snippets_table,
         dialog_title = _("Snippets Manager"),
@@ -180,139 +128,6 @@ function TextSnippets:insert(text, first_word_char)
     end
     --* the second return value is the (new) charpos:
     return text, KOR.strings:length(text) + 1
-end
-
---- @private
-function TextSnippets:closeDialogUponEscapeString(content)
-
-    if not content:match(" esc $") then
-        return false
-    end
-
-    if KOR.dialogsqueue:getQueueCount() > 1 then
-        KOR.dialogsqueue:restorePrevious()
-        return true
-    end
-
-    UIManager:close(KOR.registry.dialog_widget)
-    KOR.registry.dialog_widget = nil
-
-    return true
-end
-
-function TextSnippets:handleCommands(content, first_word_char, charlist)
-
-    if self:closeDialogUponEscapeString(content) then
-        return "", false
-    end
-
-    --* #w: remove n words from end:
-    local remove_words = content:match(" (%d+w)")
-    if remove_words then
-        local word_count = remove_words:gsub("w$", "", 1)
-        word_count = tonumber(word_count)
-        local needle = string_rep(" [^ ]- ?", word_count) .. remove_words
-        return content
-            --* created needles like :gsub(" [^ ]- ?1w$", " ", 1) etc.; replace the requested number of words by a space:
-            :gsub(needle, " ", 1), true
-    end
-
-    --* convert line to uppercase heading by appending "hex" to text + space on that line:
-    if first_word_char == "h" then
-        local heading = content:match("([^\n]+) [Hh]ex")
-        if heading then
-            return content:gsub("[^\n]+ [Hh]ex", heading:upper(), 1), true
-        end
-    end
-
-    --* convert sentence to ucfirst by appending "ucx" to text + space of that sentence:
-    if first_word_char == "u" then
-        local ucfirst = content:match("([^;:,.?!'\"\n]*) [Uu]cx")
-        if ucfirst then
-            ucfirst = KOR.strings:ucfirst(ucfirst, "force_only_first")
-            return content:gsub("[^\n]+ [Uu]cx", ucfirst, 1), true
-        end
-    end
-
-    --* #x: remove n chars from end:
-    local remove_count = content:match(" (%d+)x$")
-    if remove_count then
-        content = content:gsub(" %d+x$", "", 1)
-        remove_count = tonumber(remove_count)
-        local base = "."
-        local replace = base:rep(remove_count) .. "$"
-        return content
-            :gsub(replace, "", 1), true
-    end
-
-    --* #k: inject comma n words from end:
-    local inject_comma = content:match(" (%d+k)$")
-    if inject_comma then
-        content = content:gsub(" (%d+k)$", "", 1)
-        local word_count = inject_comma:gsub("k$", "", 1)
-        word_count = tonumber(word_count)
-        local needle = " +(" .. string_rep("[^ ]+ +", word_count)
-        --* remove last space:
-        needle = needle:gsub(" %+$", "", 1)
-        needle = needle .. ")$"
-        return content
-            --* create needles like :gsub(" +([^ ]+ +[^ ]+ +[^ ]+)$", ", %1 ", 1)
-            :gsub(needle, ", %1", 1), true
-    end
-
-    if content:match(" [Ww]w$") then
-        return content
-            --* delete last word by appending " ww" to it:
-            :gsub(" [^ ]+ [Ww]w$", " ", 1), true
-    end
-
-    local lines_back_count = content:match(" (%d+)cs$")
-    --* delete entire last sentence by appending " zzx" to it:
-    if lines_back_count then
-        content = content:gsub(" %d+cs$", "", 1)
-        lines_back_count = tonumber(lines_back_count)
-        if not content:match("[.?!]") then
-            return content, false, 1
-        end
-        local lines = KOR.strings:split(content, "[.?!]")
-        local lines_count = #lines
-        if lines_count <= lines_back_count then
-            return content, true, 1
-        end
-        local lines_before_cursor = lines_count - lines_back_count
-        local new_charpos = 0
-        for i = 1, lines_before_cursor do
-            new_charpos = new_charpos + KOR.strings:length(lines[i]) + 1
-        end
-        while charlist[new_charpos + 1]:match("%s") do
-            new_charpos = new_charpos + 1
-        end
-        return content, true, new_charpos + 1
-    end
-
-    --* delete entire last sentence by appending " ssx" to it:
-    if content:match(" [Ss]sx$") then
-        return content
-            :gsub("[^.?!\n]+[.?!'\"]? [Ss]sx$", "", 1)
-    end
-
-    if content:match(" [XxSsPp]x$") then
-        return content
-            --* delete last char by appending "xx" to it:
-            :gsub(". ?[Xx]x$", "", 1)
-            --* delete last sentence (part) by appending " sx" to it:
-            :gsub("[^;:,.?!'\"\n]+[.?!'\"]? [Ss]x$", "", 1)
-            --* delete entire last paragraph part by appending " px" to it:
-            :gsub("[^\n]* [Pp]x$", "", 1), true
-    end
-
-    --* show shortcuts explanation by typing " ii" at end of line:
-    if content:match(" ii$") then
-        DX.i:showSnippetsExplanation(2)
-        return content:gsub(" ii$", "", 1)
-    end
-
-    return content, false
 end
 
 return TextSnippets

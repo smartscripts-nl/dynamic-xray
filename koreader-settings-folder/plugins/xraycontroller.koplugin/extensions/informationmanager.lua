@@ -152,13 +152,6 @@ function InformationManager:onShowInformationManager(module_options)
     })
     ]]
 
-    KOR.dialogsqueue:register({
-        id = "information_manager",
-        restore = function()
-            self:onShowInformationManager(module_options)
-        end,
-    })
-
     if module_options.select_number then
         KOR.registry:set("force_select_number", module_options.select_number)
     end

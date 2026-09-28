@@ -457,7 +457,16 @@ function InputText:initTextBox(text, char_added, charlist)
 
     -- #((snippets replacement))
     if char_added and not self.is_snippet_dialog then
-        text = self:injectTextSnippets(text, charlist)
+        self:setTextParams(text, charlist)
+        --* should be set by previous call:
+        if self.first_char then
+            --* if something was modified, new self.charpos is changed by the 2 methods below:
+            local a_command_was_executed
+            text, a_command_was_executed = self:handleCommands(text, charlist)
+            if not a_command_was_executed then
+                text = self:injectTextSnippets()
+            end
+        end
     end
 
     self.text = text
@@ -1070,47 +1079,67 @@ function InputText:getCharPos()
     return self.charpos
 end
 
---main: replaceTextSnippets
-function InputText:injectTextSnippets(text, charlist)
-
+--- @private
+function InputText:setTextParams(text, charlist)
     if not charlist then
-        return text
+        self.first_char = nil
+        return
     end
-
     --* charpos upon load (set below); so if at end of text, then self.charpos is 1 higher than the length of the string:
+    --[[
+    if self.cursor_at_end then
+        self.charpos = #self.charlist + 1
+    else
+        self.charpos = 1
+    end
+    ]]
 
     local text_length = #charlist
     local cursor_is_in_text = self.charpos <= text_length
-    local start_text = text
-    local end_text
     if cursor_is_in_text then
         local start_table, end_table = KOR.tables:split(charlist, self.charpos)
-        start_text = table_concat(start_table)
-        end_text = table_concat(end_table)
-    end
-
-    local first_char = KOR.strings:getFirstCharOfLastWord(start_text)
-    if not first_char then
-        return text
-    end
-
-    local is_command_handled, new_charpos
-    start_text, is_command_handled, new_charpos = KOR.textsnippets:handleCommands(start_text, first_char, charlist)
-
-    if is_command_handled then
-        if new_charpos then
-            self.charpos = new_charpos
-        else
-            self.charpos = KOR.strings:length(start_text) + 1
-        end
-
+        self.start_text = table_concat(start_table)
+        self.end_text = table_concat(end_table)
     else
-        start_text, new_charpos = KOR.textsnippets:insert(start_text, first_char)
-        if new_charpos then
-            self.charpos = new_charpos
-        end
+        self.start_text = text
     end
-    return end_text and start_text .. end_text or start_text
+
+    self.first_char = KOR.strings:getFirstCharOfLastWord(self.start_text)
+end
+
+--- @private
+function InputText:handleCommands(text, charlist)
+
+    if not charlist then
+        return text, false
+    end
+
+    local a_command_was_executed, new_charpos
+    self.start_text, a_command_was_executed, new_charpos = KOR.textcommands:execute(self.start_text, self.first_char, charlist)
+    if not a_command_was_executed then
+        return text, false
+    end
+
+    if new_charpos then
+        self.charpos = new_charpos
+    else
+        self.charpos = KOR.strings:length(self.start_text) + 1
+    end
+
+    return (self.end_text and self.start_text .. self.end_text or self.start_text), true
+end
+
+--main: replaceTextSnippets
+--- @private
+function InputText:injectTextSnippets()
+
+    local new_charpos
+    --* no command was executed, so now look if we have to insert text snippets:
+    self.start_text, new_charpos = KOR.textsnippets:insert(self.start_text, self.first_char)
+    if new_charpos then
+        self.charpos = new_charpos
+    end
+    return self.end_text and self.start_text .. self.end_text or self.start_text
 end
 
 return InputText

@@ -47,6 +47,7 @@ local pairs = pairs
 --- @field tabfactory TabFactory
 --- @field tabnavigator TabNavigator
 --- @field tables Tables
+--- @field textcommands TextCommands
 --- @field textsnippets TextSnippets
 --- @field wikipedia ReaderWikipedia
 local KOR = WidgetContainer:new{
@@ -113,6 +114,7 @@ local KOR = WidgetContainer:new{
 	tabfactory = nil,
 	tabnavigator = nil,
 	tables = nil,
+	textcommands = nil,
 	textsnippets = nil,
 
 	--- PLUGINS
@@ -157,6 +159,7 @@ local KOR = WidgetContainer:new{
 		"system",
 		"tabfactory",
 		"tabnavigator",
+		"textcommands",
 		"textsnippets",
 	},
 

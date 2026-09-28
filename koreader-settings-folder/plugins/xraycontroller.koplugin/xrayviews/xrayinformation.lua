@@ -439,13 +439,6 @@ end
 
 function XrayInformation:showSnippetsExplanation(active_tab)
 
-    KOR.dialogsqueue:register({
-        id = "snippets_explanation",
-        restore = function()
-            self:showSnippetsExplanation(active_tab)
-        end,
-    })
-
     active_tab = active_tab or 1
     self.snippets_info_dialog = KOR.dialogs:textBoxTabbed(active_tab, {
         title = _("Text commands & snippets"),
