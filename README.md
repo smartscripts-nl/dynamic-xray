@@ -31,7 +31,7 @@ A KOReader plugin to view "xray items", i.e. user defined explanations of person
   - [How to get the most Kindle-like experience](#how-to-get-the-most-kindle-like-experience)
   - [Adding Xray items](#adding-xray-items)
   - [Displaying help information about the function of buttons](#displaying-help-information-about-the-function-of-buttons)
-  - [Quickly entering or manipulating text by typing text snippets and commands](#quickly-entering-or-manipulating-text-by-typing-text-snippets-and-commands)
+  - [Quickly entering or manipulating text by typing text snippets and commands](#quickly-entering-or-manipulating-text-by-typing-names-of-text-snippets-and-commands)
   - [Glossary and Reference Information viewers](#glossary-and-reference-information-viewers)
     - [Reference Information viewer](#reference-information-viewer)
     - [Glossary viewer](#glossary-viewer)

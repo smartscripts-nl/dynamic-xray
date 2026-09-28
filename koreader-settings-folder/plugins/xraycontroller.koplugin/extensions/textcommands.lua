@@ -43,8 +43,8 @@ local TextCommands = WidgetContainer:extend{
         _("CURSOR PLACEMENT"),
         " ",
         _("1cs, 2cs etc. = position the cursor 1 or 2 sentences back, at the start of a sentence"),
-        _("cb = place cursor at start of current text"),
-        _("ce = place cursor at end of current text"),
+        _("cps = place cursor at start of current text"),
+        _("cpe = place cursor at end of current text"),
         " ",
         _("REDEFINED KEYS"),
         _("(for BT/hardware keyboards, because some keys, like comma, are not available in that case)"),
@@ -86,10 +86,10 @@ function TextCommands:execute(content, first_word_char, charlist)
         { "RemoveLastWord" },
         --* #cr: position cursor # lines back:
         { "GoNLinesBack", first_word_char, charlist },
-        --* ce: position cursor at end of text in input field:
+        --* cpe: position cursor at end of text in input field:
         { "GotoTextEnd", first_word_char, charlist },
-        --* ce: position cursor at end of text in input field:
-        { "GotoTextEnd", first_word_char, charlist },
+        --* cps: position cursor at start of text in input field:
+        { "GotoTextStart" },
         --* delete entire last sentence by appending " zzx" to it:
         { "RemoveLastSentence" },
         --* delete last sentence part (e.g. to comma, ; or :) by appending " zx" to it:
@@ -157,13 +157,25 @@ function TextCommands.commandCloseForm(content)
     return content, true
 end
 
+local command
 --- @private
 function TextCommands.commandGotoTextEnd(content, first_word_char, charlist)
-    if content:match(" ce$") then
-        content = content:gsub(" ce$", "", 1)
+    command = " cpe$"
+    if content:match(command) then
+        content = content:gsub(command, " ", 1)
         return content, true, #charlist + 1
     end
     TextCommands.garbage = first_word_char
+    return content, false
+end
+
+--- @private
+function TextCommands.commandGotoTextStart(content)
+    command = " cps$"
+    if content:match(command) then
+        content = content:gsub(command, " ", 1)
+        return content, true, 1
+    end
     return content, false
 end
 
@@ -223,9 +235,10 @@ end
 
 --- @private
 function TextCommands.commandRemoveLastChar(content)
-    if content:match(". ?[Xx]x$") then
+    command = ". ?[Xx]x$"
+    if content:match(command) then
         return content
-            :gsub(". ?[Xx]x$", "", 1), true
+            :gsub(command, "", 1), true
     end
     return content, false
 end
