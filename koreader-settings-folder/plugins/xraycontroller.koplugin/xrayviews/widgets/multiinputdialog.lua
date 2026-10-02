@@ -367,6 +367,8 @@ function MultiInputDialog:setFieldProps(field_config, field_side)
             field_config.description,
         dropdown_items =
             field_config.dropdown_items,
+        dropdown_disable_filter =
+            field_config.dropdown_disable_filter,
         --* this property was set from ((InformationManager#showAddDialog)) or ((InformationManager#showEditDialog)) and will be read in ((InputText#addChars)) > ((InputText#initTextBox)) and block snippet replacement there:
         is_snippet_dialog =
             self.is_snippet_dialog,

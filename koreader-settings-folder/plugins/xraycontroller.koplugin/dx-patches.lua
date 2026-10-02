@@ -1552,6 +1552,22 @@ function ReaderSearch:onShowTextLocationsForNeedle(needle, case_insensitive)
     self:searchCallback(nil, needle, case_insensitive)
 end
 
+--- @private
+function ReaderSearch:savePreviousSearches(search_text)
+    local previous_searches_history = self.ui.doc_settings:readSetting("fulltext_search_previous_searches", {})
+    local new_history = { search_text }
+    count = #previous_searches_history
+    for i = 1, count do
+        if previous_searches_history[i] ~= search_text then
+            table_insert(new_history, previous_searches_history[i])
+        end
+        if i == DX.s.ReaderSearch_max_history_length then
+            break
+        end
+    end
+    self.ui.doc_settings:saveSetting("fulltext_search_previous_searches", new_history)
+end
+
 --* if reverse == 1 search backwards
 function ReaderSearch:searchCallback(reverse, xray_item_or_highlight_text, case_insensitive)
     local search_text = xray_item_or_highlight_text or self.input_dialog:getInputText()
@@ -1563,6 +1579,9 @@ function ReaderSearch:searchCallback(reverse, xray_item_or_highlight_text, case_
     --* in any order: we'd rather have them normalized, and expect the book content to
     --* be proper and normalized text.
     self.ui.doc_settings:saveSetting("fulltext_search_last_search_text", search_text)
+
+    self:savePreviousSearches(search_text)
+
     self.last_search_text = search_text --* if shown again, show it as it has been inputted
     search_text = Utf8Proc.normalize_NFC(search_text)
     self.start_page = self.ui.paging and self.view.state.page or self.ui.document:getXPointer()
@@ -1636,6 +1655,8 @@ function ReaderSearch:onShowFulltextSearchInput()
     self.input_dialog = InputDialog:new{
         title = tr("Enter text to search for"),
         width = math_floor(math_min(Screen:getWidth(), Screen:getHeight()) * 0.9),
+        dropdown_items = self.ui.doc_settings:readSetting("fulltext_search_previous_searches"),
+        dropdown_disable_filter = true,
         input = self.last_search_text or self.ui.doc_settings:readSetting("fulltext_search_last_search_text"),
         buttons = {
             {

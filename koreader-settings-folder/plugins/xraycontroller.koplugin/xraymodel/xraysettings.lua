@@ -351,6 +351,11 @@ local XraySettings = WidgetContainer:new{
             explanation = _("If true, a Quizlet-button will be added to the Page Information and the Items List dialogs. If you tap on that button, you can test your knowledge of Xray items for a book. This might be handy for studying purposes."),
             locked = 0,
         },
+        ReaderSearch_max_history_length = {
+            value = 25,
+            explanation = _("With this setting you can determine how many previous search terms the fulltext search dialog will at maximum make available for re-selection via a dropdown."),
+            locked = 0,
+        },
         --* SM stands for the Series Manager:
         SM_all_data_imported = {
             value = false,
