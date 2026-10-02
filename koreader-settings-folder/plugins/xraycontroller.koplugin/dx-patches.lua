@@ -32,7 +32,8 @@ local BookStatusWidget = require("ui/widget/bookstatuswidget")
 local Button = require("xrayviews/widgets/button")
 local ButtonDialog = require("xrayviews/widgets/buttondialog")
 local CanvasContext = require("document/canvascontext")
-local CheckButton = require("ui/widget/checkbutton")
+local CenterContainer = require("ui/widget/container/centercontainer")
+local CheckButton = require("xrayviews/widgets/checkbutton")
 --- @class CreDocument
 local CreDocument = require("document/credocument")
 local Device = require("device")
@@ -40,9 +41,11 @@ local DeviceListener = require("device/devicelistener")
 --- @class DictQuickLookup
 local DictQuickLookup = require("ui/widget/dictquicklookup")
 local Event = require("ui/event")
-local InfoMessage = require("ui/widget/infomessage")
-local InputDialog = require("ui/widget/inputdialog")
+local Geom = require("ui/geometry")
+local InfoMessage = require("xrayviews/widgets/infomessage")
+local InputDialog = require("xrayviews/widgets/inputdialog")
 local KOR = require("extensions/kor")
+local LineWidget = require("ui/widget/linewidget")
 local LuaSettings = require("luasettings")
 local Menu = require("xrayviews/widgets/menu")
 --- @class ReaderDictionary
@@ -58,7 +61,9 @@ local ReaderToc = require("apps/reader/modules/readertoc")
 --- @class ReaderView
 local ReaderView = require("apps/reader/modules/readerview")
 --- @class ReaderWikipedia
-local ReaderWikipedia = require("apps/reader/modules/readerwikipedia")local TextBoxWidget = require("ui/widget/textboxwidget")
+local ReaderWikipedia = require("apps/reader/modules/readerwikipedia")
+local Size = require("ui/size")
+local TextBoxWidget = require("xrayviews/widgets/textboxwidget")
 local TitleBar = require("xrayviews/widgets/titlebar")
 local TouchMenu = require("ui/widget/touchmenu")
 local Trapper = require("ui/trapper")
@@ -80,7 +85,10 @@ local Utf8Proc = require("ffi/utf8proc")
 local cre --* Delayed loading
 local error = error
 local G_reader_settings = G_reader_settings
+local ipairs = ipairs
 local logger_dbg = logger.dbg
+local math_floor = math.floor
+local math_min = math.min
 local next = next
 local pairs = pairs
 local pcall = pcall
@@ -104,7 +112,7 @@ local has_no_items = has_no_items
 local has_no_text = has_no_text
 local has_text = has_text
 
-local help_text = _([[
+local regex_help_text = _([[
 Regular expressions allow you to search for a matching pattern in a text. The simplest pattern is a simple sequence of characters, such as `James Bond`. There are many different varieties of regular expressions, but we support the ECMAScript syntax. The basics will be explained below.
 
 If you want to search for all occurrences of 'Mister Moore', 'Sir Moore' or 'Alfons Moore' but not for 'Lady Moore'.
@@ -1152,20 +1160,24 @@ end
 --- PATCH READERSEARCH
 -- #((PATCH READERSEARCH))
 
+local InputDialog_idx = select(2, userpatch.getUpValue(ReaderSearch.onShowFulltextSearchInput, "InputDialog"))
+userpatch.replaceUpValue(
+        ReaderSearch.onShowFulltextSearchInput,
+        InputDialog_idx,
+        InputDialog
+)
+
 ReaderSearch.all_hits = {}
 ReaderSearch.all_hits_current_item = 1
 ReaderSearch.last_search_text = ""
 ReaderSearch.whole_words_only = false
 ReaderSearch.cached_select_number = 1
 
+local org_ReaderSearch_init = ReaderSearch.init
 ReaderSearch.init = function(self)
-    self.ui.menu:registerToMainMenu(self)
-
+    org_ReaderSearch_init(self)
     --* number of words before and after the search string in All search results
     self.findall_nb_context_words = 80
-    self.findall_results_per_page = G_reader_settings:readSetting("fulltext_search_results_per_page") or 14
-    self.findall_results_max_lines = G_reader_settings:readSetting("fulltext_search_results_max_lines")
-
     KOR:registerModule("readersearch", self)
 end
 
@@ -1179,10 +1191,10 @@ function ReaderSearch:findAllText(search_text)
         local completed, res = Trapper:dismissableRunInSubprocess(function()
             if not self.whole_words_only then
                 return KOR.document:findAllText(search_text,
-                        self.case_insensitive, self.findall_nb_context_words, self.findall_max_hits, self.use_regex)
+                    self.case_insensitive, self.findall_nb_context_words, self.findall_max_hits, self.use_regex)
             else
                 return KOR.document:findAllTextWholeWords(search_text,
-                        self.case_insensitive, self.findall_nb_context_words, self.findall_max_hits)
+                    self.case_insensitive, self.findall_nb_context_words, self.findall_max_hits)
             end
         end, info)
         if not completed then
@@ -1553,6 +1565,22 @@ function ReaderSearch:searchCallback(reverse, xray_item_or_highlight_text, case_
     self.ui.doc_settings:saveSetting("fulltext_search_last_search_text", search_text)
     self.last_search_text = search_text --* if shown again, show it as it has been inputted
     search_text = Utf8Proc.normalize_NFC(search_text)
+    self.start_page = self.ui.paging and self.view.state.page or self.ui.document:getXPointer()
+
+    if xray_item_or_highlight_text then
+        -- from highlight dialog
+        self.case_insensitive = true
+        self.current_search_type = self.default_search_type
+    else
+        -- from input dialog
+        -- search_text comes from our keyboard, and may contain multiple diacritics ordered
+        -- in any order: we'd rather have them normalized, and expect the book content to
+        -- be proper and normalized text.
+        search_text = Utf8Proc.normalize_NFC(search_text)
+        self.case_insensitive = not self.check_button_case.checked
+        -- self.current_search_type is used as it is (from previous search, or updated by the buttons)
+    end
+
     if xray_item_or_highlight_text and not case_insensitive then
         self.use_regex = false
         self.case_insensitive = false
@@ -1560,9 +1588,10 @@ function ReaderSearch:searchCallback(reverse, xray_item_or_highlight_text, case_
         self.use_regex = false
         self.case_insensitive = true
     else
-        self.use_regex = self.check_button_regex.checked
+        self.use_regex = self.current_search_type.regex
         self.case_insensitive = not self.check_button_case.checked
     end
+
     --* when search dialog activated from Xray dialog, nog check_whole_words_only checkbox is available; so in that case assume true:
     self.whole_words_only = self.check_whole_words_only and self.check_whole_words_only.checked or false
     local regex_error = self.use_regex and KOR.document:checkRegex(search_text)
@@ -1588,7 +1617,7 @@ function ReaderSearch:searchCallback(reverse, xray_item_or_highlight_text, case_
         self.last_search_hash = nil
         --* calls the bottom button dialog!!!:
         --* so this is another dialog then ((ReaderSearch#onShowFulltextSearchInput)):
-        self:onShowSearchDialog(search_text, reverse, self.use_regex, self.case_insensitive)
+        self:onShowSearchDialog(search_text, reverse, self.current_search_type, self.case_insensitive)
         return
     end
 
@@ -1606,7 +1635,7 @@ function ReaderSearch:onShowFulltextSearchInput()
     -- #((initial readersearch dialog))
     self.input_dialog = InputDialog:new{
         title = tr("Enter text to search for"),
-        width = math_floor(math.min(Screen:getWidth(), Screen:getHeight()) * 0.9),
+        width = math_floor(math_min(Screen:getWidth(), Screen:getHeight()) * 0.9),
         input = self.last_search_text or self.ui.doc_settings:readSetting("fulltext_search_last_search_text"),
         buttons = {
             {
@@ -1657,24 +1686,68 @@ Hotkey %1 H]]),
         parent = self.input_dialog,
     }
     self.input_dialog:addWidget(self.check_button_case)
-    self.check_button_regex = CheckButton:new{
-        text = _("Regular expression (long-press for help)"),
-        checked = self.use_regex,
-        parent = self.input_dialog,
-        hold_callback = function()
-            UIManager:show(InfoMessage:new{
-                text = help_text,
-                width = Screen:getWidth() * 0.9,
-            })
-        end,
-    }
-    self.check_whole_words_only = CheckButton:new{
-        text = "Whole words",
-        checked = self.whole_words_only,
-        parent = self.input_dialog,
-    }
     if self.ui.rolling then
-        self.input_dialog:addWidget(self.check_button_regex)
+        -- Add mutually exclusive check buttons, to select one of our search types
+        -- (or none and use our default_search_type)
+        local separator_width = self.input_dialog:getAddedWidgetAvailableWidth()
+        local separator = CenterContainer:new{
+            dimen = Geom:new{
+                w = separator_width,
+                h = 2 * Size.span.vertical_large,
+            },
+            LineWidget:new{
+                background = KOR.colors.day_colors.menu_line,
+                dimen = Geom:new{
+                    w = separator_width,
+                    h = Size.line.medium,
+                }
+            },
+        }
+        self.input_dialog:addWidget(separator)
+
+        local search_type_buttons = {}
+        local search_type_buttons_refresh = function()
+            for _, button in ipairs(search_type_buttons) do
+                button.checked = button.checked_func()
+                button:enable() -- this updates its state
+            end
+        end
+        for _, search_type in ipairs(self.search_types) do
+            local button = CheckButton:new {
+                text = search_type.text,
+                checked_func = function()
+                    return search_type == self.current_search_type
+                end,
+                callback = function()
+                    -- Our buttons are mutually exclusive, but we can have
+                    -- none of them checked
+                    if self.current_search_type == search_type then
+                        -- All unchecked: back to default search type
+                        self.current_search_type = self.default_search_type
+                    else
+                        self.current_search_type = search_type
+                    end
+                    search_type_buttons_refresh()
+                end,
+                hold_callback = search_type.regex and function()
+                    UIManager:show(InfoMessage:new {
+                        text = regex_help_text,
+                        width = Screen:getWidth() * 0.9,
+                    })
+                end,
+                parent = self.input_dialog,
+            }
+            button.checked = button.checked_func()
+            table_insert(search_type_buttons, button)
+            self.input_dialog:addWidget(button)
+        end
+        search_type_buttons_refresh() -- update all buttons states
+
+        self.check_whole_words_only = CheckButton:new{
+            text = "Whole words",
+            checked = self.whole_words_only,
+            parent = self.input_dialog,
+        }
         self.input_dialog:addWidget(self.check_whole_words_only)
     end
 

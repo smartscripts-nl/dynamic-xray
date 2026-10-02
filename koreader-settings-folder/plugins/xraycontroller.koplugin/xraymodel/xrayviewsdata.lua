@@ -1180,6 +1180,10 @@ end
 --- @param hotkey string E.g. "Shift+G"
 function XrayViewsData:addHotkeyInfo(menu_entry, separator, hotkey)
 
+    if not separator then
+        separator = " - "
+    end
+
     if not DX.s.menu_entries_add_hotkey_info or not hotkey then
         menu_entry = menu_entry:gsub(" %%.+$", "")
         return separator .. menu_entry

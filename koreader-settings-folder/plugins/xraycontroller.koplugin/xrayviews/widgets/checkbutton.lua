@@ -55,6 +55,10 @@ end
 
 function CheckButton:initCheckButton(checked)
     self.checked = checked
+
+    --* added for identification in ((InputDialog#addWidget)), to attach additional widgets if needed:
+    KOR.registry:set("checkbutton_text", self.text)
+
     if self.radio then
         self._checkmark = RadioMark:new{
             checkable = self.checkable,

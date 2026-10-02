@@ -123,7 +123,6 @@ local UIManager = require("ui/uimanager")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local VerticalSpan = require("ui/widget/verticalspan")
 local Screen = Device.screen
-local T = require("ffi/util").template
 local util = require("util")
 local _ = require("gettext")
 
@@ -133,6 +132,7 @@ local has_text = has_text
 local math_ceil = math_ceil
 local math_floor = math_floor
 local math_min = math_min
+local T = T
 local table_insert = table_insert
 local table_remove = table_remove
 local tonumber = tonumber
@@ -700,6 +700,9 @@ function InputDialog:addWidget(widget, re_init)
     end
     --* insert widget before the bottom buttons and their previous vspan
     table_insert(self.vgroup, #self.vgroup - 1, widget)
+
+    --local checkbutton_text = KOR.registry:getOnce("checkbutton_text")
+
 end
 
 function InputDialog:getAddedWidgetAvailableWidth()
