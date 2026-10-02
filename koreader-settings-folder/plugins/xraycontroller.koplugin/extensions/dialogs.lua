@@ -30,6 +30,8 @@ local type = type
 
 local count
 
+local DGENERIC_ICON_SIZE = G_defaults:readSetting("DGENERIC_ICON_SIZE")
+
 --- @class Dialogs
 local Dialogs = WidgetContainer:extend{
     active_tab = 1,
@@ -122,6 +124,12 @@ function Dialogs:getThreeQuarterDialogWidth()
         iwidth = Screen:getWidth() - 80
     end
     return iwidth
+end
+
+function Dialogs:getIconDims(icon_size_ratio)
+    local size = DGENERIC_ICON_SIZE * icon_size_ratio
+    local dim = Screen:scaleBySize(size)
+    return dim, dim
 end
 
 --* see ((DIALOGS))
