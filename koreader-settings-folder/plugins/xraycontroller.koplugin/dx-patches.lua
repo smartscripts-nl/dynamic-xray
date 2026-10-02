@@ -1646,6 +1646,14 @@ function ReaderSearch:searchCallback(reverse, xray_item_or_highlight_text, case_
 end
 
 function ReaderSearch:onShowFulltextSearchInput()
+
+    KOR.dialogsqueue:register({
+        id = "fulltext_search",
+        restore = function()
+            self:onShowFulltextSearchInput()
+        end,
+    })
+
     local backward_text = "◁"
     local forward_text = "▷"
     if BD.mirroredUILayout() then
@@ -1656,7 +1664,7 @@ function ReaderSearch:onShowFulltextSearchInput()
         title = tr("Enter text to search for"),
         width = math_floor(math_min(Screen:getWidth(), Screen:getHeight()) * 0.9),
         dropdown_items = self.ui.doc_settings:readSetting("fulltext_search_previous_searches"),
-        dropdown_disable_filter = true,
+        dropdown_disable_immediate_commit = true,
         input = self.last_search_text or self.ui.doc_settings:readSetting("fulltext_search_last_search_text"),
         buttons = {
             {

@@ -228,7 +228,7 @@ local InputDialog = FocusManager:extend {
     dropdown_button = nil,
     dropdown_button_was_used = false,
     dropdown_items = nil,
-    dropdown_disable_filter = false,
+    dropdown_disable_immediate_commit = false,
     reset_button = nil,
     is_snippet_dialog = false,
 
@@ -1446,14 +1446,11 @@ function InputDialog:commitDropdownItemViaEnter(field, dropdown_items)
     dropdown_items = dropdown_items or self.dropdown_items
 
     --* the callback here, as last argument, will be called from a matching button in ((InputDialog#showDropdown)):
-    local filter_text = self.dropdown_disable_filter and "" or field:getText()
+    local filter_text = self.dropdown_disable_immediate_commit and "" or field:getText()
     self:showDropdown(field, dropdown_items, filter_text, function(selected_item)
-        if type(selected_item) == "string" then
-            field:setText(selected_item)
-        else
-            field:setText(selected_item.name)
-        end
-        if not self.dropdown_disable_filter then
+        local item_name = type(selected_item) == "string" and selected_item or selected_item.name
+        field:setText(item_name)
+        if not self.dropdown_disable_immediate_commit and has_text(item_name) then
             self:commitForm(self)
         end
     end)
