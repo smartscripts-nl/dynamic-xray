@@ -1670,6 +1670,9 @@ function ReaderSearch:onShowFulltextSearchInput()
         dropdown_items = DX.s.ReaderSearch_remember_history and self.ui.doc_settings:readSetting("fulltext_search_previous_searches"),
         dropdown_disable_immediate_commit = DX.s.ReaderSearch_remember_history,
         input = self.last_search_text or self.ui.doc_settings:readSetting("fulltext_search_last_search_text"),
+        close_callback = function()
+            UIManager:close(self.input_dialog)
+        end,
         top_buttons_left = DX.b:forReaderSearchTopLeft(self),
         buttons = DX.b:forReaderSearch(self),
     }

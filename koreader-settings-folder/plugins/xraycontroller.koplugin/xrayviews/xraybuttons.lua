@@ -2656,8 +2656,7 @@ function XrayButtons:forReaderSearch(parent)
             }),
             KOR.buttoninfopopup:forSearchAllLocations({
                 is_enter_default = true,
-                info = _([[search-list-icon | Show all occurrences of this Xray item in the current ebook.
-Hotkey %1 H]]),
+                info = _("search-list-icon | Show all occurrences of this Xray item in the current ebook."),
                 callback = function()
                     parent:searchCallback()
                 end,
