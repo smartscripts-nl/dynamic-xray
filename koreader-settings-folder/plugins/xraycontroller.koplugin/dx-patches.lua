@@ -27,7 +27,6 @@ local require = require
 --! VERY IMPORTANT: extend package.path and load the KOR system first!:
 --* ============ LOAD EXTENSIONS SYSTEM ===============
 
-local BD = require("ui/bidi")
 local BookStatusWidget = require("ui/widget/bookstatuswidget")
 local Button = require("xrayviews/widgets/button")
 local ButtonDialog = require("xrayviews/widgets/buttondialog")
@@ -1664,11 +1663,6 @@ function ReaderSearch:onShowFulltextSearchInput()
         end,
     })
 
-    local backward_text = "◁"
-    local forward_text = "▷"
-    if BD.mirroredUILayout() then
-        backward_text, forward_text = forward_text, backward_text
-    end
     -- #((initial readersearch dialog))
     self.input_dialog = InputDialog:new{
         title = tr("Enter text to search for"),
@@ -1676,47 +1670,8 @@ function ReaderSearch:onShowFulltextSearchInput()
         dropdown_items = DX.s.ReaderSearch_remember_history and self.ui.doc_settings:readSetting("fulltext_search_previous_searches"),
         dropdown_disable_immediate_commit = DX.s.ReaderSearch_remember_history,
         input = self.last_search_text or self.ui.doc_settings:readSetting("fulltext_search_last_search_text"),
-        buttons = {
-            {
-                {
-                    icon = "back",
-                    id = "close",
-                    callback = function()
-                        UIManager:close(self.input_dialog)
-                    end,
-                },
-                KOR.buttoninfopopup:forSearchResetFilter({
-                    callback = function()
-                        self.input_dialog:setInputText("")
-                    end
-                }),
-                KOR.buttoninfopopup:forSearchAllLocations({
-                    is_enter_default = true,
-                    info = tr([[search-list-icon | Show all occurrences of this Xray item in the current ebook.
-Hotkey %1 H]]),
-                    callback = function()
-                        self:searchCallback()
-                    end,
-                }),
-                {
-                    text = backward_text,
-                    callback = function()
-                        self:storeCurrentLocation()
-                        --* calls the bottom button dialog:
-                        self:searchCallback(1)
-                    end,
-                },
-                {
-                    text = forward_text,
-                    is_enter_default = true,
-                    callback = function()
-                        self:storeCurrentLocation()
-                        --* calls the bottom button dialog:
-                        self:searchCallback(0)
-                    end,
-                },
-            },
-        },
+        top_buttons_left = DX.b:forReaderSearchTopLeft(self),
+        buttons = DX.b:forReaderSearch(self),
     }
 
     self.check_button_case = CheckButton:new{

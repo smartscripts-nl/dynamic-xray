@@ -3,6 +3,7 @@
 
 local require = require
 
+local BD = require("ui/bidi")
 local Button = require("xrayviews/widgets/button")
 local ButtonDialogTitle = require("xrayviews/widgets/buttondialogtitle")
 local ButtonTable = require("xrayviews/widgets/buttontable")
@@ -2630,6 +2631,70 @@ function XrayButtons:injectReferenceButtons(caller_close_callback, buttons)
         }))
     end
     return top_buttons_right
+end
+
+--- @param parent ReaderSearch
+function XrayButtons:forReaderSearch(parent)
+    local backward_text = "◁"
+    local forward_text = "▷"
+    if BD.mirroredUILayout() then
+        backward_text, forward_text = forward_text, backward_text
+    end
+    return {
+        {
+            {
+                icon = "back",
+                id = "close",
+                callback = function()
+                    UIManager:close(parent.input_dialog)
+                end,
+            },
+            KOR.buttoninfopopup:forSearchResetFilter({
+                callback = function()
+                    parent.input_dialog:setInputText("")
+                end
+            }),
+            KOR.buttoninfopopup:forSearchAllLocations({
+                is_enter_default = true,
+                info = _([[search-list-icon | Show all occurrences of this Xray item in the current ebook.
+Hotkey %1 H]]),
+                callback = function()
+                    parent:searchCallback()
+                end,
+            }),
+            {
+                text = backward_text,
+                callback = function()
+                    parent:storeCurrentLocation()
+                    --* calls the bottom button dialog:
+                    parent:searchCallback(1)
+                end,
+            },
+            {
+                text = forward_text,
+                is_enter_default = true,
+                callback = function()
+                    parent:storeCurrentLocation()
+                    --* calls the bottom button dialog:
+                    parent:searchCallback(0)
+                end,
+            },
+        },
+    }
+end
+
+--- @param parent ReaderSearch
+function XrayButtons:forReaderSearchTopLeft(parent)
+    local buttons = {
+        KOR.buttoninfopopup:forXraySettings({
+            callback = function()
+                UIManager:close(parent.input_dialog)
+                DX.s.showSettingsManager()
+            end
+        }),
+    }
+    self:insertGlobalDXHelpButton(buttons, parent)
+    return buttons
 end
 
 --- @param parent XrayInformation
