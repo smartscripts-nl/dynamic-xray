@@ -1397,6 +1397,13 @@ function ReaderSearch:showHitWithContext(item, not_cached)
     self:closeHitviewer()
     KOR.dialogs:closeOverlay()
 
+    KOR.dialogsqueue:register({
+        id = "ReaderSearch_show_hit_context",
+        restore = function()
+            self:showHitWithContext(item, not_cached)
+        end,
+    })
+
     local context_string = item.full_text
     --* [[[ and ]]] - injected in ((ReaderSearch#onShowFindAllResults)) - will be replaced by <b> and </b> in ((Dialogs#htmlBox))
     context_string = KOR.html:textToHtml(context_string)
@@ -1422,8 +1429,15 @@ function ReaderSearch:showHitWithContext(item, not_cached)
         prev_item_callback = function()
             self:toPrevHit()
         end,
+        no_back_button = true,
         buttons_table = {
             {
+                {
+                    icon = "back",
+                    callback = function()
+                        self:closeHitviewer()
+                    end,
+                },
                 {
                     icon = "list",
                     --[[icon = "search-all",
@@ -1487,12 +1501,6 @@ function ReaderSearch:showHitWithContext(item, not_cached)
                     icon = "last",
                     callback = function()
                         self:toLastHit()
-                    end,
-                },
-                {
-                    icon = "back",
-                    callback = function()
-                        self:closeHitviewer()
                     end,
                 },
             },
