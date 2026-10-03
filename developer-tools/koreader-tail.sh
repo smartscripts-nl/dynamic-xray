@@ -12,9 +12,9 @@
 LOG_FILE="/var/log/syslog"
 HIST_LINES=800
 
-PROCESS_NAME="koreader-ubuntu-restart\.desktop"
+PROCESS_NAME="koreader-ubuntu\.desktop"
 PROCESS_NAME_SHORTENED="ubuntu"
-PROCESS_NAME_2="koreader-latest-restart\.desktop"
+PROCESS_NAME_2="koreader-latest\.desktop"
 PROCESS_NAME_SHORTENED_2="latest"
 PROCESS_NAMES="(ubuntu|latest)"
 
@@ -46,6 +46,7 @@ EXCLUDE_FILTER_PATTERNS=(
     'Current time'
     'Desktop\/koreader'
     'doublecmd\.desktop'
+    'Failed to load plugin'
     'ffi\.load'
     'ffi\.find'
     'for markdown parsing'
@@ -60,6 +61,8 @@ EXCLUDE_FILTER_PATTERNS=(
     'message repeated'
     'monolibtic'
     'No dialogs left'
+    'No plugins found'
+    'org\.gnome\.Terminal'
     'Preparing'
     'reader\.lua'
     'Restoring'
@@ -74,7 +77,7 @@ EXCLUDE_FILTER=$(join_items "${EXCLUDE_FILTER_PATTERNS[@]}")
 ERROR_PATTERNS=(
     "'[^']+' expected near '[^']+'"
     "\[!\][^\n]+"
-    'attempt to call (method|upvalue) [^\n]+'
+    'attempt to call (global|method|upvalue) [^\n]+'
     'attempt to compare nil with number'
     'attempt to compare number with nil'
     'attempt to concatenate[^\n]+'
