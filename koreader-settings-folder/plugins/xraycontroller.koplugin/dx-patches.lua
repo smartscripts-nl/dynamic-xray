@@ -1588,7 +1588,9 @@ function ReaderSearch:searchCallback(reverse, xray_item_or_highlight_text, case_
     --* be proper and normalized text.
     self.ui.doc_settings:saveSetting("fulltext_search_last_search_text", search_text)
 
-    self:savePreviousSearches(search_text)
+    if DX.s.ReaderSearch_remember_history then
+        self:savePreviousSearches(search_text)
+    end
 
     self.last_search_text = search_text --* if shown again, show it as it has been inputted
     search_text = Utf8Proc.normalize_NFC(search_text)
@@ -1671,8 +1673,8 @@ function ReaderSearch:onShowFulltextSearchInput()
     self.input_dialog = InputDialog:new{
         title = tr("Enter text to search for"),
         width = math_floor(math_min(Screen:getWidth(), Screen:getHeight()) * 0.9),
-        dropdown_items = self.ui.doc_settings:readSetting("fulltext_search_previous_searches"),
-        dropdown_disable_immediate_commit = true,
+        dropdown_items = DX.s.ReaderSearch_remember_history and self.ui.doc_settings:readSetting("fulltext_search_previous_searches"),
+        dropdown_disable_immediate_commit = DX.s.ReaderSearch_remember_history,
         input = self.last_search_text or self.ui.doc_settings:readSetting("fulltext_search_last_search_text"),
         buttons = {
             {

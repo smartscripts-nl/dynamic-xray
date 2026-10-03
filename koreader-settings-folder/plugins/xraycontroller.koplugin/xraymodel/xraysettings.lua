@@ -356,6 +356,11 @@ local XraySettings = WidgetContainer:new{
             explanation = _("With this setting you can determine how many previous search terms the fulltext search dialog will at maximum make available for re-selection via a dropdown."),
             locked = 0,
         },
+        ReaderSearch_remember_history = {
+            value = true,
+            explanation = _("With this setting you can determine whether the fulltext search dialog of KOReader remembers previous search term and populates a dropdown with them or not."),
+            locked = 0,
+        },
         --* SM stands for the Series Manager:
         SM_all_data_imported = {
             value = false,
