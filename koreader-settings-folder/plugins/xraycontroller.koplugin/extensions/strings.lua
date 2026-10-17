@@ -468,7 +468,7 @@ function Strings:splitParagraph(paragraph, lines, max_length)
     end
 end
 
-function Strings:splitLinesToMaxLength(text, first_line_indent, first_word, dont_indent_first_line, rest_indent, is_iconless)
+function Strings:splitLinesToMaxLength(text, first_line_indent, first_word, dont_indent_first_line, rest_indent, is_plain_text)
 
     if has_no_content(text) then
         return ""
@@ -476,36 +476,64 @@ function Strings:splitLinesToMaxLength(text, first_line_indent, first_word, dont
 
     --* let rest_indent be at least equal to first_line_indent, so no ugly soft wraps:
     self.rest_indent = rest_indent or first_line_indent and first_line_indent .. "   "
-    local max_length = DX.s.max_info_line_length
-    --* this might e.g. be set in ((XrayViewsData#generateXrayExportOrLinkedItemInfo)):
-    --* make line length correspond to the number of columns:
-    if not is_iconless and KOR.registry:get("split_lines_in_half") then
-        max_length = math_floor(max_length / 2)
-    elseif not is_iconless and KOR.registry:get("split_lines_in_thirds") then
-        max_length = math_floor(max_length / 3)
-    end
+    local max_length = self:getLineMaxLength(is_plain_text)
 
-    if has_content(first_word) then
-        text = first_word .. text
-    end
-    if first_line_indent and not dont_indent_first_line then
-        text = first_line_indent .. text
-    end
+    text = self:addLinePrefixes(text, first_word, first_line_indent, dont_indent_first_line)
     --* the most simple case, no further adaptation needed:
     if text:len() <= max_length then
         return text
     end
 
-    local lines = {}
-    self.first_line = true
+    text = self:addLineBreakAtEnd(text)
+    return self:reformatParagraphByMaxLength(text, max_length)
+end
 
+--- @private
+function Strings:addLineBreakAtEnd(text)
     --* iterate over every line, preserving blank lines:
     text = text:gsub("\r\n", "\n")
-
     if text:sub(-1) ~= "\n" then
-        text = text .. "\n"
+        return text .. "\n"
+    end
+    return text
+end
+
+--- @private
+function Strings:addLinePrefixes(text, first_word, first_line_indent, dont_indent_first_line)
+    if has_content(first_word) then
+        text = first_word .. text
+    end
+    if first_line_indent and not dont_indent_first_line then
+        return first_line_indent .. text
+    end
+    return text
+end
+
+--- @private
+function Strings:getLineMaxLength(is_plain_text)
+
+    if is_plain_text then
+        return DX.s.max_info_line_length
     end
 
+    --* make max line length correspond to the number of columns:
+    --* these Registry props might e.g. be set in ((XrayViewsData#generateXrayExportOrLinkedItemInfo)):
+    local cases = {
+        ["split_lines_in_half"] = 2,
+        ["split_lines_in_thirds"] = 3,
+    }
+    for index, columns_count in pairs(cases) do
+        if KOR.registry:get(index) then
+            return math_floor(DX.s.max_info_line_length / columns_count)
+        end
+    end
+    return DX.s.max_info_line_length
+end
+
+--- @private
+function Strings:reformatParagraphByMaxLength(text, max_length)
+    local lines = {}
+    self.first_line = true
     for paragraph in text:gmatch("(.-)\n") do
         if paragraph == "" then
             --* preserve blank line:
@@ -518,11 +546,11 @@ function Strings:splitLinesToMaxLength(text, first_line_indent, first_word, dont
     return table_concat(lines, "\n")
 end
 
-function Strings:splitLinesToMaxLengthIconLess(text, indent, first_word, dont_indent_first_line, after_first_line_indent)
+function Strings:splitLinesToMaxLengthPlainText(text, indent, first_word, dont_indent_first_line, after_first_line_indent)
     if has_no_content(text) then
         return ""
     end
-    return self:splitLinesToMaxLength(text, indent, first_word, dont_indent_first_line, after_first_line_indent, "is_iconless")
+    return self:splitLinesToMaxLength(text, indent, first_word, dont_indent_first_line, after_first_line_indent, "is_plain_text")
 end
 
 --* remove trailing and leading whitespace from string_

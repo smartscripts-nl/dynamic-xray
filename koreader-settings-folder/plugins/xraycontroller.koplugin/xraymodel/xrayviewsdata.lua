@@ -1342,7 +1342,7 @@ function XrayViewsData:generateAliasesInfo(item, iindent, for_all_items_list)
     aliases = KOR.strings:splitLinesToMaxLength(item.aliases, iindent, icon) .. "\n"
     if for_all_items_list then
         local noun = self:getKeywordsCount(item.aliases) == 1 and _("alias") .. ": " or _("aliases") .. ": "
-        aliases_iconless = KOR.strings:splitLinesToMaxLengthIconLess(item.aliases, iindent, noun) .. "\n"
+        aliases_iconless = KOR.strings:splitLinesToMaxLengthPlainText(item.aliases, iindent, noun) .. "\n"
     end
     return aliases, aliases_iconless
 end
@@ -1387,7 +1387,7 @@ function XrayViewsData:generateTagsInfo(item, iindent, for_all_items_list)
     tags = KOR.strings:splitLinesToMaxLength(item.tags, iindent, icon) .. "\n"
     if for_all_items_list then
         local noun = self:getKeywordsCount(item.tags) == 1 and _("tag") .. ": " or _("tags") .. ": "
-        tags_iconless = KOR.strings:splitLinesToMaxLengthIconLess(item.tags, iindent, noun) .. "\n"
+        tags_iconless = KOR.strings:splitLinesToMaxLengthPlainText(item.tags, iindent, noun) .. "\n"
     end
 
     return tags, tags_iconless
@@ -1404,7 +1404,7 @@ function XrayViewsData:generateLinkwordsInfo(item, iindent, for_all_items_list)
     linkwords = KOR.strings:splitLinesToMaxLength(item.linkwords, iindent, icon) .. "\n"
     if for_all_items_list then
         local noun = self:getKeywordsCount(item.linkwords) == 1 and _("link-term") .. ": " or _("link-terms") .. ": "
-        linkwords_iconless = KOR.strings:splitLinesToMaxLengthIconLess(item.linkwords, iindent, noun) .. "\n"
+        linkwords_iconless = KOR.strings:splitLinesToMaxLengthPlainText(item.linkwords, iindent, noun) .. "\n"
     end
 
     return linkwords, linkwords_iconless
@@ -1448,7 +1448,7 @@ function XrayViewsData:generateFirstLines(first_line, first_line_iconless, xray_
         table_insert(first_line_iconless, name)
         table_insert(first_line_iconless, ui_explanation)
         first_line_iconless = table_concat(first_line_iconless)
-        first_line_iconless = KOR.strings:splitLinesToMaxLengthIconLess(first_line_iconless, meta_indent, nil, "dont_indent_first_line") .. "\n"
+        first_line_iconless = KOR.strings:splitLinesToMaxLengthPlainText(first_line_iconless, meta_indent, nil, "dont_indent_first_line") .. "\n"
     end
 
     return first_line, first_line_iconless
